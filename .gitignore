@@ -1,0 +1,27 @@
+# python caches
+__pycache__
+
+# venv
+lib
+lib64
+share
+bin
+pyvenv.cfg
+
+# terraform caches
+.terraform*
+terraform.tfstate
+.terragrunt-cache
+
+# airflow cache
+tmp
+
+# env or editor config
+.python-version
+.vscode
+
+# generated files and folders
+.dev
+.test
+.staging
+.prod

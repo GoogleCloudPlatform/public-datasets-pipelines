@@ -1,0 +1,13 @@
+name: Lint YAML
+on: [pull_request]
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Python
+        uses: actions/setup-python@v2
+      - name: Install yamllint
+        run: python -m pip install yamllint
+      - name: Lint
+        run: yamllint .

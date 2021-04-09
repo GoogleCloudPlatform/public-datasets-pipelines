@@ -1,0 +1,194 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+resources:
+  # A list of GCP resources that are unique and specific to your pipeline.
+  #
+  # The currently supported resources are shown below. Use only the resources
+  # needed by your pipeline, and delete the rest of the examples.
+  #
+  # We will keep adding to the list below to support more Google Cloud resources
+  # over time. If a resource you need isn't supported, please file an issue on
+  # the repository.
+
+  - type: bigquery_table
+    # A Google BigQuery table to store your data. Requires a `bigquery_dataset`
+    # to be specified in the config (i.e. `dataset.yaml) for the dataset that
+    # this pipeline belongs in.
+    #
+    # Required Properties:
+    #   table_id
+    table_id: PIPELINE_FOLDER_NAME
+
+dag:
+  # The DAG acronym stands for directed acyclic graph. This block represents
+  # your data pipeline along with every property and configuration it needs to
+  # onboard your data.
+  initialize:
+    dag_id: PIPELINE_FOLDER_NAME
+    default_args:
+      owner: "Google"
+
+      # When set to True, keeps a task from getting triggered if the previous schedule for the task hasn’t succeeded
+      depends_on_past: False
+      start_date: '2021-03-01'
+    max_active_runs: 1
+    schedule_interval: "@once"  # run once a week at Sunday 12am
+    catchup: False
+    default_view: graph
+
+  tasks:
+    # This is where you specify the tasks (a.k.a. processes) that your data
+    # pipeline will run to onboard the data.
+    #
+    # As the examples below will show, every task must be represented by an
+    # Airflow operator. The list of suported operators are listed in
+    #
+    #   scripts/dag_imports.json
+    #
+    # If an operator you need isn't supported, please file an issue on the
+    # repository.
+    #
+    # Use the YAML list syntax in this block to specify every task for your
+    # pipeline.
+
+    - operator: "BashOperator"
+      # Initializes an Airflow BashOperator for the DAG. This operator can be
+      # used to
+      # - Download from HTTP sources
+      # - Run custom Python scripts
+      # - Run processes using specific packages that support CLI commands
+
+      # Task description
+      description: "Run a custom Python script that does "
+
+      args:
+        # Arguments supported by this operator:
+        # https://airflow.apache.org/docs/apache-airflow/1.10.14/howto/operator/bash.html
+
+        task_id: "sample_bash_task"
+        bash_command: |
+          mkdir -p $airflow_home/data/$dataset/$pipeline/run_date={{ ds }}
+          CUSTOM_ENV_VAR=$custom_env_var python $airflow_home/dags/$dataset/$pipeline/custom/some_script.py
+        env:
+          airflow_home: "{{ var.json.shared.airflow_home }}"
+          dataset: DATASET_FOLDER_NAME
+          pipeline: PIPELINE_FOLDER_NAME
+          custom_env_var: "some value that your custom script needs"
+
+    - operator: "GoogleCloudStorageToBigQueryOperator"
+      # Initializes GCS to BQ task for the DAG. This operator is used to load a
+      # CSV file from GCS into a BigQuery table
+
+      # Task description
+      description: "Task to load the CSV data to BigQuery table"
+
+      args:
+        # Arguments supported by this operator:
+        # http://airflow.apache.org/docs/apache-airflow/1.10.14/howto/operator/gcp/gcs.html#googlecloudstoragetobigqueryoperator
+
+        task_id: "sample_gcs_to_bq_task"
+
+        # The GCS bucket where the CSV file is located in.
+        bucket: "{{ var.json.shared.composer_bucket }}"
+
+        # The GCS object path for the CSV file
+        source_objects: ["data/DATASET_FOLDER_NAME/PIPELINE_FOLDER_NAME/run_date={{ ds }}/data.csv"]
+        source_format: "CSV"
+        destination_project_dataset_table: "DATASET_FOLDER_NAME.PIPELINE_FOLDER_NAME"
+
+        # Use this if your CSV file contains a header row
+        skip_leading_rows: 1
+
+        # How to write data to the table: overwrite, append, or write if empty
+        # See https://cloud.google.com/bigquery/docs/reference/auditlogs/rest/Shared.Types/WriteDisposition
+        write_disposition: "WRITE_TRUNCATE"
+
+        # The BigQuery table schema based on the CSV file. For more info, see
+        # https://cloud.google.com/bigquery/docs/schemas
+        schema_fields:
+          - name: "name"
+            type: "STRING"
+          - name: "string_col"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "date"
+            type: "DATE"
+          - name: "num_col"
+            type: "INTEGER"
+
+    - operator: "GoogleCloudStorageToGoogleCloudStorageOperator"
+      # Initializes a GCS-to-GCS task for the DAG. This operator is used to copy
+      # GCS objects from one location to another.
+
+      # Task description
+      description: "Task to archive the screenshots CSV file to the destination bucket"
+
+      args:
+        # Arguments supported by this operator:
+        # https://airflow.apache.org/docs/apache-airflow/1.10.14/_api/airflow/contrib/operators/gcs_to_gcs/index.html#airflow.contrib.operators.gcs_to_gcs.GoogleCloudStorageToGoogleCloudStorageOperator
+
+        task_id: "sample_gcs_to_gcs_task"
+        source_bucket: "{{ var.json.shared.composer_bucket }}"
+
+        # Use a trailing "/*" if you want to copy all objects under that path.
+        source_object: "data/DATASET_FOLDER_NAME/PIPELINE_FOLDER_NAME/run_date={{ ds }}/*"
+
+        destination_bucket: "{{ var.json.DATASET_FOLDER_NAME.destination_bucket }}"
+        destination_object: "datasets/DATASET_FOLDER_NAME/PIPELINE_FOLDER_NAME/run_date={{ ds }}/"
+
+        # Use this argument if you don't want to keep the source object/s.
+        move_object: True
+
+    - operator: "BigQueryOperator"
+      # Initializes a BigQuery operator that executes SQL queries in a specific
+      # BigQuery table.
+
+      # Task description
+      description: "Task to archive the screenshots CSV file to the destination bucket"
+
+      args:
+        # Arguments supported by this operator:
+        # https://airflow.apache.org/docs/apache-airflow/1.10.14/_api/airflow/contrib/operators/bigquery_operator/index.html#airflow.contrib.operators.bigquery_operator.BigQueryOperator
+
+        task_id: "sample_bq_sql_task"
+
+        # The SQL query to execute, along with query parameters. For more info,
+        # see https://cloud.google.com/bigquery/docs/parameterized-queries.
+        sql: "SELECT * FROM DATASET_FOLDER_NAME.PIPELINE_FOLDER_NAME LIMIT @max_rows"
+        query_params:
+          - name: "max_rows"
+            parameterType:
+              type: "INTEGER"
+            parameterValue:
+              value: 100
+
+        # The BigQuery destination table
+        destination_dataset_table: "destination_dataset.destination_table"
+
+        # How to write to the destination: overwrite, append, or write if empty
+        # See https://cloud.google.com/bigquery/docs/reference/auditlogs/rest/Shared.Types/WriteDisposition
+        write_disposition: "WRITE_TRUNCATE"
+
+
+  graph_paths:
+    # This is where you specify the relationships (i.e. directed paths/edges)
+    # among the tasks specified above. Use the bitshift operator to define the
+    # relationships and the `task_id` value above to represent tasks.
+    #
+    # For more info, see
+    # https://airflow.apache.org/docs/apache-airflow/stable/tutorial.html#setting-up-dependencies
+    - "sample_bash_task >> [sample_gcs_to_bq_task, sample_gcs_to_gcs_task]"
+    - "sample_gcs_to_bq_task >> sample_bq_sql_task"

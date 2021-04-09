@@ -1,0 +1,10 @@
+{
+    "DATASET_FOLDER_NAME": {
+        "sample_bucket": "YOUR_BUCKET_NAME"
+    },
+    "shared": {
+        "airflow_home": "/home/airflow",
+        "airflow_data_folder": "/home/airflow/gcs/data",
+        "composer_bucket": "YOUR_CLOUD_COMPOSER_BUCKET"
+    }
+}

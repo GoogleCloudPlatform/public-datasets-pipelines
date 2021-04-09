@@ -1,0 +1,24 @@
+{
+    "1.10.14": {
+        "BashOperator": {
+            "import": "from airflow.operators import bash_operator",
+            "class": "bash_operator.BashOperator"
+        },
+        "GoogleCloudStorageToBigQueryOperator": {
+            "import": "from airflow.contrib.operators import gcs_to_bq",
+            "class": "gcs_to_bq.GoogleCloudStorageToBigQueryOperator"
+        },
+        "GoogleCloudStorageToGoogleCloudStorageOperator": {
+            "import": "from airflow.contrib.operators import gcs_to_gcs",
+            "class": "gcs_to_gcs.GoogleCloudStorageToGoogleCloudStorageOperator"
+        },
+        "BigQueryOperator": {
+            "import": "from airflow.contrib.operators import bigquery_operator",
+            "class": "bigquery_operator.BigQueryOperator"
+        },
+        "KubernetesPodOperator": {
+            "import": "from airflow.contrib.operators import kubernetes_pod_operator",
+            "class": "kubernetes_pod_operator.KubernetesPodOperator"
+        }
+    }
+}

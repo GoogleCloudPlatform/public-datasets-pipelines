@@ -1,0 +1,13 @@
+name: Lint Terraform
+on: [pull_request]
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 0.12.25
+      - name: Terraform fmt
+        run: terraform fmt -check -recursive
+        continue-on-error: true

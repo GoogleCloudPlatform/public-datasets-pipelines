@@ -1,0 +1,38 @@
+# Copyright 2021 Google LLC
+
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#     https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+repos:
+  - repo: https://github.com/gruntwork-io/pre-commit
+    rev: v0.1.12
+    hooks:
+      - id: terraform-fmt
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.4.0
+    hooks:
+      - id: check-yaml
+  - repo: https://github.com/psf/black
+    rev: 20.8b1
+    hooks:
+      - id: black
+        name: black
+        language_version: python3
+  - repo: https://gitlab.com/pycqa/flake8
+    rev: '3.8.4'
+    hooks:
+      - id: flake8
+  - repo: https://github.com/pycqa/isort
+    rev: '5.6.4'
+    hooks:
+      - id: isort
+        args: ["--profile", "black", "--filter-files"]
