@@ -203,7 +203,9 @@ def uppercase_bq_schema_types(schema: list) -> list:
 
 def create_gitignored_env_path(dataset_id: str, env_path: pathlib.Path):
     if not (PROJECT_ROOT / "datasets" / dataset_id).exists():
-        raise FileNotFoundError(f"Directory {PROJECT_ROOT / 'datasets' / dataset_id} doesn't exist")
+        raise FileNotFoundError(
+            f"Directory {PROJECT_ROOT / 'datasets' / dataset_id} doesn't exist"
+        )
     (env_path / "datasets" / dataset_id).mkdir(parents=True, exist_ok=True)
 
 
@@ -211,7 +213,10 @@ def create_file_in_dot_and_project_dirs(
     dataset_id: str, contents: str, filename: str, env_path: pathlib.Path
 ):
     filepaths = []
-    for prefix in (env_path / "datasets" / dataset_id / "_terraform", DATASETS_PATH / dataset_id / "_terraform"):
+    for prefix in (
+        env_path / "datasets" / dataset_id / "_terraform",
+        DATASETS_PATH / dataset_id / "_terraform",
+    ):
         if not prefix.exists():
             prefix.mkdir(parents=True, exist_ok=True)
 
