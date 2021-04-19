@@ -159,7 +159,7 @@ def generate_tfvars_file(
         TEMPLATE_PATHS["tfvars"], {"tf_vars": tf_vars}
     )
 
-    target_path = env_path / "datasets" / dataset_id / "terraform.tfvars"
+    target_path = env_path / "datasets" / dataset_id / "_terraform" / "terraform.tfvars"
     write_to_file(contents + "\n", target_path)
     terraform_fmt(target_path)
     print_created_files([target_path])
@@ -202,6 +202,8 @@ def uppercase_bq_schema_types(schema: list) -> list:
 
 
 def create_gitignored_env_path(dataset_id: str, env_path: pathlib.Path):
+    if not (PROJECT_ROOT / "datasets" / dataset_id).exists():
+        raise FileNotFoundError(f"Directory {PROJECT_ROOT / 'datasets' / dataset_id} doesn't exist")
     (env_path / "datasets" / dataset_id).mkdir(parents=True, exist_ok=True)
 
 
@@ -209,7 +211,10 @@ def create_file_in_dot_and_project_dirs(
     dataset_id: str, contents: str, filename: str, env_path: pathlib.Path
 ):
     filepaths = []
-    for prefix in (env_path / "datasets" / dataset_id, DATASETS_PATH / dataset_id):
+    for prefix in (env_path / "datasets" / dataset_id / "_terraform", DATASETS_PATH / dataset_id / "_terraform"):
+        if not prefix.exists():
+            prefix.mkdir(parents=True, exist_ok=True)
+
         target_path = prefix / filename
         write_to_file(contents + "\n", target_path)
         terraform_fmt(target_path)
@@ -243,10 +248,9 @@ def terraform_fmt(target_file: pathlib.Path):
 
 
 def actuate_terraform_resources(dataset_id: str, env_path: pathlib.Path):
-    subprocess.check_call(["terraform", "init"], cwd=env_path / "datasets" / dataset_id)
-    subprocess.check_call(
-        ["terraform", "apply"], cwd=env_path / "datasets" / dataset_id
-    )
+    cwd = env_path / "datasets" / dataset_id / "_terraform"
+    subprocess.check_call(["terraform", "init"], cwd=cwd)
+    subprocess.check_call(["terraform", "apply"], cwd=cwd)
 
 
 def apply_substitutions_to_template(template: pathlib.Path, subs: dict) -> str:
