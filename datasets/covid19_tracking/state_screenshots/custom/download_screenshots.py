@@ -17,42 +17,55 @@ import csv
 import os
 import pathlib
 import typing
+from multiprocessing.pool import ThreadPool
 
 import requests
-from google.cloud import storage
 
 
-def main(csv_path: pathlib.Path, source_column: str, target_column: str):
-    gcs_client = storage.Client()
+def download_item(source_target: typing.Tuple[str, pathlib.Path]):
+    source_url, download_path = source_target
+    if not os.path.exists(download_path):
+        r = requests.get(source_url, stream=True)
+        if r.status_code == 200:
+            with open(download_path, "wb") as f:
+                for chunk in r:
+                    f.write(chunk)
+
+
+def download_parallel(source_targets: typing.List[typing.Tuple[str, pathlib.Path]]):
+    ThreadPool(10).imap_unordered(download_item, source_targets)
+
+
+def main(csv_path: pathlib.Path, source_column: str, download_prefix: str):
     with open(csv_path) as csv_file:
         csv_reader = csv.DictReader(csv_file, delimiter=",")
+        download_dir = pathlib.Path(download_prefix)
+
+        row_num = 0
+        source_targets = []
         for row in csv_reader:
+            # Example:
+            # https://covidtracking.com/screenshots/AL/AL-20210307-230802.png
             source_url = row[source_column]
-            gcs_bucket, gcs_path = decompose_gcs_uri(row[target_column])
+            state, filename = row[source_column].split("/")[-2:]
 
-            stream_http_to_gcs(gcs_client, source_url, gcs_bucket, gcs_path)
+            (download_dir / state).mkdir(parents=True, exist_ok=True)
+            source_targets.append((source_url, download_dir / state / filename))
 
+            row_num += 1
+            if row_num % 100 == 0:
+                download_parallel(source_targets)
+                source_targets = []
 
-def decompose_gcs_uri(gcs_uri: str) -> typing.Tuple[str, str]:
-    gcs_bucket, gcs_path = gcs_uri.replace("gs://", "").split("/", 1)
-    return gcs_bucket, gcs_path
-
-
-def stream_http_to_gcs(
-    client: storage.Client, source_url: str, gcs_bucket: str, gcs_path: str
-):
-    response = requests.get(source_url)
-    bucket = client.get_bucket(gcs_bucket)
-    blob = bucket.blob(gcs_path)
-    blob.upload_from_string(response.content, content_type="image/png")
+        download_parallel(source_targets)
 
 
 if __name__ == "__main__":
     assert os.environ["CSV_PATH"]
     assert os.environ["SOURCE_COLUMN"]
-    assert os.environ["TARGET_COLUMN"]
+    assert os.environ["DOWNLOAD_PREFIX"]
     main(
         csv_path=pathlib.Path(os.environ["CSV_PATH"]).expanduser(),
         source_column=os.environ["SOURCE_COLUMN"],
-        target_column=os.environ["TARGET_COLUMN"],
+        download_prefix=os.environ["DOWNLOAD_PREFIX"],
     )
