@@ -190,6 +190,7 @@ Every dataset and pipeline folder must contain a `dataset.yaml` and a `pipeline.
 
 # Best Practices
 
+- When naming BigQuery columns, always use snakecase and lowercase.
 - When provisioning resources for pipelines, a good rule-of-thumb is one bucket per dataset, where intermediate data used by various pipelines (under that dataset) are stored in distinct paths under the same bucket. For example:
 
   ```

@@ -117,7 +117,8 @@ dag:
         write_disposition: "WRITE_TRUNCATE"
 
         # The BigQuery table schema based on the CSV file. For more info, see
-        # https://cloud.google.com/bigquery/docs/schemas
+        # https://cloud.google.com/bigquery/docs/schemas.
+        # Always use snakecase and lowercase for column names.
         schema_fields:
           - name: "name"
             type: "STRING"
