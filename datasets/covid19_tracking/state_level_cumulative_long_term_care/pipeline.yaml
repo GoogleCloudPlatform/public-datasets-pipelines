@@ -68,8 +68,10 @@ dag:
         schema_fields:
           - name: "date"
             type: "DATE"
+            description: "Date of the observations"
           - name: "state"
             type: "STRING"
+            description: "2-letter postal abbreviation for the state"
           - name: "data_timestamp"
             type: "STRING"
             mode: "NULLABLE"
