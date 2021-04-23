@@ -66,8 +66,12 @@ with DAG(
         skip_leading_rows=1,
         write_disposition="WRITE_TRUNCATE",
         schema_fields=[
-            {"name": "date", "type": "DATE"},
-            {"name": "state", "type": "STRING"},
+            {"name": "date", "type": "DATE", "description": "Date of the observations"},
+            {
+                "name": "state",
+                "type": "STRING",
+                "description": "2-letter postal abbreviation for the state",
+            },
             {"name": "cases_total", "type": "INTEGER"},
             {"name": "cases_white", "type": "INTEGER", "mode": "NULLABLE"},
             {"name": "cases_black", "type": "INTEGER", "mode": "NULLABLE"},
@@ -85,7 +89,11 @@ with DAG(
                 "mode": "NULLABLE",
             },
             {"name": "cases_ethnicity_unknown", "type": "INTEGER", "mode": "NULLABLE"},
-            {"name": "deaths_total", "type": "INTEGER"},
+            {
+                "name": "deaths_total",
+                "type": "INTEGER",
+                "description": "Total cumulative number of people that have died",
+            },
             {"name": "deaths_white", "type": "INTEGER", "mode": "NULLABLE"},
             {"name": "deaths_black", "type": "INTEGER", "mode": "NULLABLE"},
             {"name": "deaths_latinx", "type": "INTEGER", "mode": "NULLABLE"},
