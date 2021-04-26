@@ -234,7 +234,7 @@ def check_existence_of_variables_file(file_path: pathlib.Path):
 
 
 def list_subdirs(path: pathlib.Path) -> typing.List[pathlib.Path]:
-    """ Returns a list of subdirectories """
+    """Returns a list of subdirectories"""
     subdirs = [f for f in path.iterdir() if f.is_dir() and not f.name[0] in (".", "_")]
     return subdirs
 
