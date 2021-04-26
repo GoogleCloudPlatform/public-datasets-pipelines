@@ -116,15 +116,17 @@ def test_main_generates_tf_files(
     )
 
     for path_prefix in (
-        ENV_DATASETS_PATH / dataset_path.name,
-        generate_terraform.DATASETS_PATH / dataset_path.name,
+        ENV_DATASETS_PATH / dataset_path.name / "_terraform",
+        generate_terraform.DATASETS_PATH / dataset_path.name / "_terraform",
     ):
         assert (path_prefix / "provider.tf").exists()
         assert (path_prefix / f"{dataset_path.name}_dataset.tf").exists()
         assert (path_prefix / f"{pipeline_path.name}_pipeline.tf").exists()
         assert (path_prefix / "variables.tf").exists()
 
-    assert (ENV_DATASETS_PATH / dataset_path.name / "terraform.tfvars").exists()
+    assert (
+        ENV_DATASETS_PATH / dataset_path.name / "_terraform" / "terraform.tfvars"
+    ).exists()
 
 
 pipeline_path_2 = pipeline_path
@@ -151,8 +153,8 @@ def test_main_with_multiple_pipelines(
     )
 
     for path_prefix in (
-        ENV_DATASETS_PATH / dataset_path.name,
-        generate_terraform.DATASETS_PATH / dataset_path.name,
+        ENV_DATASETS_PATH / dataset_path.name / "_terraform",
+        generate_terraform.DATASETS_PATH / dataset_path.name / "_terraform",
     ):
         assert (path_prefix / "provider.tf").exists()
         assert (path_prefix / f"{dataset_path.name}_dataset.tf").exists()
@@ -160,7 +162,9 @@ def test_main_with_multiple_pipelines(
         assert (path_prefix / f"{pipeline_path_2.name}_pipeline.tf").exists()
         assert (path_prefix / "variables.tf").exists()
 
-    assert (ENV_DATASETS_PATH / dataset_path.name / "terraform.tfvars").exists()
+    assert (
+        ENV_DATASETS_PATH / dataset_path.name / "_terraform" / "terraform.tfvars"
+    ).exists()
 
 
 def test_dataset_without_any_pipelines(
@@ -173,8 +177,8 @@ def test_dataset_without_any_pipelines(
     )
 
     for path_prefix in (
-        ENV_DATASETS_PATH / dataset_path.name,
-        generate_terraform.DATASETS_PATH / dataset_path.name,
+        ENV_DATASETS_PATH / dataset_path.name / "_terraform",
+        generate_terraform.DATASETS_PATH / dataset_path.name / "_terraform",
     ):
         assert (path_prefix / "provider.tf").exists()
         assert (path_prefix / f"{dataset_path.name}_dataset.tf").exists()
@@ -210,8 +214,8 @@ def test_generated_tf_files_contain_license_headers(
     ).read_text()
 
     for path_prefix in (
-        ENV_DATASETS_PATH / dataset_path.name,
-        generate_terraform.DATASETS_PATH / dataset_path.name,
+        ENV_DATASETS_PATH / dataset_path.name / "_terraform",
+        generate_terraform.DATASETS_PATH / dataset_path.name / "_terraform",
     ):
         assert (path_prefix / "provider.tf").read_text().count(license_header) == 1
         assert (path_prefix / f"{dataset_path.name}_dataset.tf").read_text().count(
@@ -223,7 +227,7 @@ def test_generated_tf_files_contain_license_headers(
         assert (path_prefix / "variables.tf").read_text().count(license_header) == 1
 
     assert (
-        ENV_DATASETS_PATH / dataset_path.name / "terraform.tfvars"
+        ENV_DATASETS_PATH / dataset_path.name / "_terraform" / "terraform.tfvars"
     ).read_text().count(license_header) == 1
 
 
@@ -256,8 +260,10 @@ def test_validation_on_generated_tf_files_in_dot_env_dir(
     )
     env_dataset_path = ENV_DATASETS_PATH / dataset_path.name
 
-    subprocess.check_call(["terraform", "init"], cwd=env_dataset_path)
-    subprocess.check_call(["terraform", "validate"], cwd=env_dataset_path)
+    subprocess.check_call(["terraform", "init"], cwd=env_dataset_path / "_terraform")
+    subprocess.check_call(
+        ["terraform", "validate"], cwd=env_dataset_path / "_terraform"
+    )
 
 
 def test_validation_on_generated_tf_files_in_project_dir(
@@ -277,5 +283,9 @@ def test_validation_on_generated_tf_files_in_project_dir(
     )
     project_dataset_path = generate_terraform.DATASETS_PATH / dataset_path.name
 
-    subprocess.check_call(["terraform", "init"], cwd=(project_dataset_path))
-    subprocess.check_call(["terraform", "validate"], cwd=(project_dataset_path))
+    subprocess.check_call(
+        ["terraform", "init"], cwd=(project_dataset_path / "_terraform")
+    )
+    subprocess.check_call(
+        ["terraform", "validate"], cwd=(project_dataset_path / "_terraform")
+    )

@@ -96,7 +96,7 @@ $ python scripts/generate_terraform.py \
     [--impersonating-acct] IMPERSONATING_SERVICE_ACCT
 ```
 
-This generates Terraform files (`*.tf`) in the dataset directory to represent which GCP resources need to be actuated. If you passed in the `--tf-apply` parameter, the command will also run `terraform apply` to actuate those resources.
+This generates Terraform files (`*.tf`) in a `_terraform` directory inside that dataset. The files contain instrastructure-as-code on which GCP resources need to be actuated for use by the pipelines. If you passed in the `--tf-apply` parameter, the command will also run `terraform apply` to actuate those resources.
 
 In addition, the command above creates a "dot" directory in the project root. The directory name is the value you pass to the `--env` parameter of the command. If no `--env` argument was passed, the value defaults to `dev` (which generates the `.dev` folder).
 
