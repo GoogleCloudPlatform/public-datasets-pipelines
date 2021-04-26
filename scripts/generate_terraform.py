@@ -153,6 +153,7 @@ def generate_tfvars_file(
         "project_num": project_num,
         "impersonating_acct": impersonating_acct,
         "region": region,
+        "env": env_path.name.replace(".", ""),
     }
 
     contents = apply_substitutions_to_template(

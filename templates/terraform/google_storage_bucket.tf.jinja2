@@ -15,9 +15,8 @@
  */
 
 
-{% set tf_resource_name = [dataset_id, env, name]|join("-") -%}
-resource "google_storage_bucket" "{{ tf_resource_name }}" {
-  name          = "${var.project_num}-{{ dataset_id }}-{{ env }}-{{ name }}"
+resource "google_storage_bucket" "{{ dataset_id }}-{{ name }}" {
+  name          = "${var.project_num}-{{ dataset_id }}-${var.env}-{{ name }}"
   force_destroy = true
   {% if location -%}
     location = "{{ location }}"
@@ -28,5 +27,5 @@ resource "google_storage_bucket" "{{ tf_resource_name }}" {
 }
 
 output "storage_bucket-{{ name }}-name" {
-  value = google_storage_bucket.{{ tf_resource_name }}.name
+  value = google_storage_bucket.{{ dataset_id }}-{{ name }}.name
 }
