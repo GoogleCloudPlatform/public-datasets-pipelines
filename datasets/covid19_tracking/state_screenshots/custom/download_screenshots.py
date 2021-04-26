@@ -23,6 +23,7 @@ import requests
 
 
 def download_item(source_target: typing.Tuple[str, pathlib.Path]):
+    """ThreadPool.imap_unordered accepts tuples as arguments to the callable"""
     source_url, download_path = source_target
     if not os.path.exists(download_path):
         r = requests.get(source_url, stream=True)
