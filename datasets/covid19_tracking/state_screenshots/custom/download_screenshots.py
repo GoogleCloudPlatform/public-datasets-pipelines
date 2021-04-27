@@ -22,7 +22,8 @@ from multiprocessing.pool import ThreadPool
 import requests
 
 CPU_FRACTION = 0.5
-NUM_PROCESSES = max(int(os.cpu_count() * CPU_FRACTION), 1)
+PROCESSES_PER_THREAD = 2
+WORKER_THREADS = max(int(os.cpu_count() * CPU_FRACTION), 1)
 
 
 def download_item(source_target: typing.Tuple[str, pathlib.Path]):
@@ -37,7 +38,7 @@ def download_item(source_target: typing.Tuple[str, pathlib.Path]):
 
 
 def download_parallel(source_targets: typing.List[typing.Tuple[str, pathlib.Path]]):
-    ThreadPool(NUM_PROCESSES).imap_unordered(download_item, source_targets)
+    ThreadPool(WORKER_THREADS).imap_unordered(download_item, source_targets)
 
 
 def main(csv_path: pathlib.Path, source_column: str, download_prefix: str):
@@ -57,7 +58,7 @@ def main(csv_path: pathlib.Path, source_column: str, download_prefix: str):
             source_targets.append((source_url, download_dir / state / filename))
 
             row_num += 1
-            if row_num % NUM_PROCESSES == 0:
+            if row_num % (WORKER_THREADS * PROCESSES_PER_THREAD) == 0:
                 download_parallel(source_targets)
                 source_targets = []
 
