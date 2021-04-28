@@ -82,7 +82,8 @@ def generate_csv_rows(url: str, gcs_path_prefix: str) -> typing.List[dict]:
         if td_date.text:
             current_date = datetime.strptime(td_date.text, "%B %d, %Y").date()
 
-        for link in td_screenshots.find_all("a"):
+        # Only get the last screenshot taken for the day
+        for link in td_screenshots.find_all("a")[-1:]:
             # Example:
             # https://covidtracking.com/screenshots/AL/AL-20200315-163235.png
             screenshot_url = link["href"]
