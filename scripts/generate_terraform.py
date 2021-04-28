@@ -153,6 +153,7 @@ def generate_tfvars_file(
         "project_num": project_num,
         "impersonating_acct": impersonating_acct,
         "region": region,
+        "env": env_path.name.replace(".", ""),
     }
 
     contents = apply_substitutions_to_template(
@@ -241,7 +242,7 @@ def write_to_file(contents: str, filepath: pathlib.Path):
 
 
 def list_subdirs(path: pathlib.Path) -> typing.List[pathlib.Path]:
-    """ Returns a list of subdirectories """
+    """Returns a list of subdirectories"""
     subdirs = [f for f in path.iterdir() if f.is_dir() and not f.name[0] in (".", "_")]
     return subdirs
 

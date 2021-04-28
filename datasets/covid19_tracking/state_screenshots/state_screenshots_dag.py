@@ -46,15 +46,25 @@ with DAG(
         },
     )
 
-    # Run the custom/download_screenshots.py script to download all screenshots to the pipeline's data folder
-    copy_screenshots_to_gcs = bash_operator.BashOperator(
-        task_id="copy_screenshots_to_gcs",
-        bash_command='CSV_PATH=$airflow_home/data/$dataset/$pipeline/run_date={{ ds }}/data.csv SOURCE_COLUMN="source_url" TARGET_COLUMN="google_cloud_storage_uri" python $airflow_home/dags/$dataset/$pipeline/custom/download_screenshots.py\n',
+    # Run the custom/download_screenshots.py script to download all the screenshots to the local file system (mounted GCS)
+    download_screenshots = bash_operator.BashOperator(
+        task_id="download_screenshots",
+        bash_command='CSV_PATH=$airflow_home/data/$dataset/$pipeline/run_date={{ ds }}/data.csv \\\nSOURCE_COLUMN="source_url" \\\nDOWNLOAD_PREFIX=$airflow_home/data/$dataset/$pipeline/run_date={{ ds }} \\\npython $airflow_home/dags/$dataset/$pipeline/custom/download_screenshots.py\n',
         env={
             "airflow_home": "{{ var.json.shared.airflow_home }}",
             "dataset": "covid19_tracking",
             "pipeline": "state_screenshots",
         },
+    )
+
+    # Upload all downloaded screenshots to the destination bucket
+    upload_screenshots_to_destination_bucket = gcs_to_gcs.GoogleCloudStorageToGoogleCloudStorageOperator(
+        task_id="upload_screenshots_to_destination_bucket",
+        source_bucket="{{ var.json.shared.composer_bucket }}",
+        source_object="data/covid19_tracking/state_screenshots/run_date={{ ds }}/*",
+        destination_bucket="{{ var.json.covid19_tracking.destination_bucket }}",
+        destination_object="datasets/covid19_tracking/state_screenshots/run_date={{ ds }}/",
+        move_object=True,
     )
 
     # Task to load the data from Airflow data folder to BigQuery
@@ -86,9 +96,12 @@ with DAG(
         source_object="data/covid19_tracking/state_screenshots/run_date={{ ds }}/*",
         destination_bucket="{{ var.json.covid19_tracking.destination_bucket }}",
         destination_object="datasets/covid19_tracking/state_screenshots/run_date={{ ds }}/",
-        move_object=True,
+        move_object=False,
     )
 
-    generate_csv_data_from_web_scraping >> copy_screenshots_to_gcs
-    copy_screenshots_to_gcs >> load_screenshots_to_bq_table
-    load_screenshots_to_bq_table >> archive_data_to_destination_bucket
+    generate_csv_data_from_web_scraping >> download_screenshots
+    download_screenshots >> upload_screenshots_to_destination_bucket
+    upload_screenshots_to_destination_bucket >> [
+        load_screenshots_to_bq_table,
+        archive_data_to_destination_bucket,
+    ]
