@@ -118,17 +118,21 @@ dag:
 
         # The BigQuery table schema based on the CSV file. For more info, see
         # https://cloud.google.com/bigquery/docs/schemas.
-        # Always use snake_case and lowercase for column names.
+        # Always use snake_case and lowercase for column names, and be explicit,
+        # i.e. specify modes for all columns.
         schema_fields:
           - name: "name"
             type: "STRING"
+            mode: "REQUIRED"
           - name: "string_col"
             type: "STRING"
             mode: "NULLABLE"
           - name: "date"
             type: "DATE"
+            mode: "REQUIRED"
           - name: "num_col"
             type: "INTEGER"
+            mode: "NULLABLE"
 
     - operator: "GoogleCloudStorageToGoogleCloudStorageOperator"
       # Initializes a GCS-to-GCS task for the DAG. This operator is used to copy
