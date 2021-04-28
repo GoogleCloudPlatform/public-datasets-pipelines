@@ -9,7 +9,7 @@ Cloud-native, data pipeline architecture for onboarding datasets to the [Google 
 # Requirements
 - Familiarity with [Apache Airflow](https://airflow.apache.org/docs/apache-airflow/1.10.14/concepts.html) (>=v1.10.14)
 - [pipenv](https://pipenv-fork.readthedocs.io/en/latest/install.html#installing-pipenv) for creating similar Python environments via `Pipfile.lock`
-- [gcloud](https://cloud.google.com/sdk/gcloud) command-line tool with Google Cloud Platform credentials configured. Instructions can be found here.
+- [gcloud](https://cloud.google.com/sdk/gcloud) command-line tool with Google Cloud Platform credentials configured. Instructions can be found [here](https://cloud.google.com/sdk/docs/initializing).
 - [Terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli) `>=v0.12`
 - [Google Cloud Composer](https://cloud.google.com/composer/docs/concepts/overview) environment running [Apache Airflow](https://airflow.apache.org/docs/apache-airflow/1.10.14/concepts.html) `v1.10.14,<2.0`. To create a new Cloud Composer environment, see [this guide](https://cloud.google.com/composer/docs/how-to/managing/creating).
 
@@ -96,7 +96,7 @@ $ python scripts/generate_terraform.py \
     [--impersonating-acct] IMPERSONATING_SERVICE_ACCT
 ```
 
-This generates Terraform files (`*.tf`) in the dataset directory to represent which GCP resources need to be actuated. If you passed in the `--tf-apply` parameter, the command will also run `terraform apply` to actuate those resources.
+This generates Terraform files (`*.tf`) in a `_terraform` directory inside that dataset. The files contain instrastructure-as-code on which GCP resources need to be actuated for use by the pipelines. If you passed in the `--tf-apply` parameter, the command will also run `terraform apply` to actuate those resources.
 
 In addition, the command above creates a "dot" directory in the project root. The directory name is the value you pass to the `--env` parameter of the command. If no `--env` argument was passed, the value defaults to `dev` (which generates the `.dev` folder).
 
@@ -190,7 +190,7 @@ Every dataset and pipeline folder must contain a `dataset.yaml` and a `pipeline.
 
 # Best Practices
 
-- When naming BigQuery columns, always use snakecase and lowercase.
+- When naming BigQuery columns, always use `snake_case` and lowercase.
 - When provisioning resources for pipelines, a good rule-of-thumb is one bucket per dataset, where intermediate data used by various pipelines (under that dataset) are stored in distinct paths under the same bucket. For example:
 
   ```
