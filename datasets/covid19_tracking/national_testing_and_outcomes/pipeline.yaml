@@ -58,6 +58,7 @@ dag:
         schema_fields:
           - name: "date"
             type: "DATE"
+            mode: "REQUIRED"
             description: "Date of the observations"
           - name: "death"
             type: "INTEGER"
