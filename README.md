@@ -9,7 +9,7 @@ Cloud-native, data pipeline architecture for onboarding datasets to the [Google 
 # Requirements
 - Familiarity with [Apache Airflow](https://airflow.apache.org/docs/apache-airflow/1.10.14/concepts.html) (>=v1.10.14)
 - [pipenv](https://pipenv-fork.readthedocs.io/en/latest/install.html#installing-pipenv) for creating similar Python environments via `Pipfile.lock`
-- [gcloud](https://cloud.google.com/sdk/gcloud) command-line tool with Google Cloud Platform credentials configured. Instructions can be found here.
+- [gcloud](https://cloud.google.com/sdk/gcloud) command-line tool with Google Cloud Platform credentials configured. Instructions can be found [here](https://cloud.google.com/sdk/docs/initializing).
 - [Terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli) `>=v0.12`
 - [Google Cloud Composer](https://cloud.google.com/composer/docs/concepts/overview) environment running [Apache Airflow](https://airflow.apache.org/docs/apache-airflow/1.10.14/concepts.html) `v1.10.14,<2.0`. To create a new Cloud Composer environment, see [this guide](https://cloud.google.com/composer/docs/how-to/managing/creating).
 
