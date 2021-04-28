@@ -55,7 +55,12 @@ with DAG(
         skip_leading_rows=1,
         write_disposition="WRITE_TRUNCATE",
         schema_fields=[
-            {"name": "date", "type": "DATE", "description": "Date of the observations"},
+            {
+                "name": "date",
+                "type": "DATE",
+                "mode": "REQUIRED",
+                "description": "Date of the observations",
+            },
             {
                 "name": "death",
                 "type": "INTEGER",

@@ -55,15 +55,22 @@ with DAG(
         skip_leading_rows=1,
         write_disposition="WRITE_TRUNCATE",
         schema_fields=[
-            {"name": "date", "type": "DATE", "description": "Date of the observations"},
+            {
+                "name": "date",
+                "type": "DATE",
+                "mode": "REQUIRED",
+                "description": "Date of the observations",
+            },
             {
                 "name": "state",
                 "type": "STRING",
+                "mode": "REQUIRED",
                 "description": "2-letter postal abbreviation for the state",
             },
             {
                 "name": "death",
                 "type": "INTEGER",
+                "mode": "NULLABLE",
                 "description": "Total cumulative number of people that have died",
             },
             {
@@ -75,6 +82,7 @@ with DAG(
             {
                 "name": "death_increase",
                 "type": "INTEGER",
+                "mode": "NULLABLE",
                 "description": "Number of new deaths reported",
             },
             {

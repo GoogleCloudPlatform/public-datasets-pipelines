@@ -66,16 +66,23 @@ with DAG(
         skip_leading_rows=1,
         write_disposition="WRITE_TRUNCATE",
         schema_fields=[
-            {"name": "date", "type": "DATE", "description": "Date of the observations"},
+            {
+                "name": "date",
+                "type": "DATE",
+                "mode": "REQUIRED",
+                "description": "Date of the observations",
+            },
             {
                 "name": "state",
                 "type": "STRING",
+                "mode": "REQUIRED",
                 "description": "2-letter postal abbreviation for the state",
             },
-            {"name": "location", "type": "STRING"},
+            {"name": "location", "type": "STRING", "mode": "REQUIRED"},
             {
                 "name": "city_or_county",
                 "type": "STRING",
+                "mode": "REQUIRED",
                 "description": "Category of the location",
             },
             {

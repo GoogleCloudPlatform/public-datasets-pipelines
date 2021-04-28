@@ -105,10 +105,16 @@ with DAG(
         skip_leading_rows=1,
         write_disposition="WRITE_TRUNCATE",
         schema_fields=[
-            {"name": "date", "type": "DATE", "description": "Date of the observations"},
+            {
+                "name": "date",
+                "type": "DATE",
+                "mode": "REQUIRED",
+                "description": "Date of the observations",
+            },
             {
                 "name": "state",
                 "type": "STRING",
+                "mode": "REQUIRED",
                 "description": "2-letter postal abbreviation for the state",
             },
             {
@@ -126,13 +132,14 @@ with DAG(
             {
                 "name": "facility_name",
                 "type": "STRING",
+                "mode": "REQUIRED",
                 "description": "The facility name in uppercase letters",
             },
-            {"name": "facility_type_state", "type": "STRING"},
-            {"name": "ctp_facility_category", "type": "STRING"},
-            {"name": "state_fed_regulated", "type": "STRING"},
-            {"name": "state_facility_id", "type": "STRING"},
-            {"name": "facility_cms_id", "type": "STRING"},
+            {"name": "facility_type_state", "type": "STRING", "mode": "NULLABLE"},
+            {"name": "ctp_facility_category", "type": "STRING", "mode": "NULLABLE"},
+            {"name": "state_fed_regulated", "type": "STRING", "mode": "NULLABLE"},
+            {"name": "state_facility_id", "type": "STRING", "mode": "NULLABLE"},
+            {"name": "facility_cms_id", "type": "STRING", "mode": "NULLABLE"},
             {"name": "date_outbreak_opened", "type": "STRING", "mode": "NULLABLE"},
             {"name": "date_outbreak_closed", "type": "STRING", "mode": "NULLABLE"},
             {"name": "outbreak_status", "type": "STRING", "mode": "NULLABLE"},
