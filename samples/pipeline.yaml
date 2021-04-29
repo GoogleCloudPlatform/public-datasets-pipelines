@@ -72,7 +72,7 @@ dag:
       # - Run processes using specific packages that support CLI commands
 
       # Task description
-      description: "Run a custom Python script that does "
+      description: "Run a custom Python script"
 
       args:
         # Arguments supported by this operator:
@@ -90,10 +90,10 @@ dag:
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       # Initializes GCS to BQ task for the DAG. This operator is used to load a
-      # CSV file from GCS into a BigQuery table
+      # CSV file from GCS into a BigQuery table.
 
       # Task description
-      description: "Task to load the CSV data to BigQuery table"
+      description: "Task to load CSV data to a BigQuery table"
 
       args:
         # Arguments supported by this operator:
@@ -139,19 +139,24 @@ dag:
       # GCS objects from one location to another.
 
       # Task description
-      description: "Task to archive the screenshots CSV file to the destination bucket"
+      description: "Task to run a GoogleCloudStorageToGoogleCloudStorageOperator"
 
       args:
         # Arguments supported by this operator:
         # https://airflow.apache.org/docs/apache-airflow/1.10.14/_api/airflow/contrib/operators/gcs_to_gcs/index.html#airflow.contrib.operators.gcs_to_gcs.GoogleCloudStorageToGoogleCloudStorageOperator
 
         task_id: "sample_gcs_to_gcs_task"
+
+        # The GCS bucket to copy the object/s from
         source_bucket: "{{ var.json.shared.composer_bucket }}"
 
         # Use a trailing "/*" if you want to copy all objects under that path.
         source_object: "data/DATASET_FOLDER_NAME/PIPELINE_FOLDER_NAME/run_date={{ ds }}/*"
 
+        # The GCS bucket to copy the object/s to
         destination_bucket: "{{ var.json.DATASET_FOLDER_NAME.destination_bucket }}"
+
+        # The GCS prefix to copy the object/s to
         destination_object: "datasets/DATASET_FOLDER_NAME/PIPELINE_FOLDER_NAME/run_date={{ ds }}/"
 
         # Use this argument if you don't want to keep the source object/s.
@@ -162,7 +167,7 @@ dag:
       # BigQuery table.
 
       # Task description
-      description: "Task to archive the screenshots CSV file to the destination bucket"
+      description: "Task to run a BigQueryOperator"
 
       args:
         # Arguments supported by this operator:
