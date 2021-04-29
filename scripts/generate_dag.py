@@ -30,6 +30,7 @@ OPERATORS = {
     "BashOperator",
     "GoogleCloudStorageToBigQueryOperator",
     "GoogleCloudStorageToGoogleCloudStorageOperator",
+    "GoogleCloudStorageDeleteOperator",
     "BigQueryOperator",
     "KubernetesPodOperator",
 }

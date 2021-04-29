@@ -14,7 +14,7 @@
 
 
 from airflow import DAG
-from airflow.contrib.operators import gcs_to_bq, gcs_to_gcs
+from airflow.contrib.operators import gcs_delete_operator, gcs_to_bq, gcs_to_gcs
 from airflow.operators import bash_operator
 
 default_args = {
@@ -64,7 +64,7 @@ with DAG(
         source_object="data/covid19_tracking/state_screenshots/run_date={{ ds }}/*",
         destination_bucket="{{ var.json.covid19_tracking.destination_bucket }}",
         destination_object="datasets/covid19_tracking/state_screenshots/run_date={{ ds }}/",
-        move_object=True,
+        move_object=False,
     )
 
     # Task to load the data from Airflow data folder to BigQuery
@@ -124,19 +124,16 @@ with DAG(
         ],
     )
 
-    # Task to archive the screenshots CSV file to the destination bucket
-    archive_data_to_destination_bucket = gcs_to_gcs.GoogleCloudStorageToGoogleCloudStorageOperator(
-        task_id="archive_data_to_destination_bucket",
-        source_bucket="{{ var.json.shared.composer_bucket }}",
-        source_object="data/covid19_tracking/state_screenshots/run_date={{ ds }}/*",
-        destination_bucket="{{ var.json.covid19_tracking.destination_bucket }}",
-        destination_object="datasets/covid19_tracking/state_screenshots/run_date={{ ds }}/",
-        move_object=False,
+    # Delete downloaded screenshots from the Cloud Composer bucket
+    delete_screenshots_from_composer_bucket = (
+        gcs_delete_operator.GoogleCloudStorageDeleteOperator(
+            task_id="delete_screenshots_from_composer_bucket",
+            bucket_name="{{ var.json.shared.composer_bucket }}",
+            prefix="data/covid19_tracking/state_screenshots/run_date={{ ds }}",
+        )
     )
 
     generate_csv_data_from_web_scraping >> download_screenshots
     download_screenshots >> upload_screenshots_to_destination_bucket
-    upload_screenshots_to_destination_bucket >> [
-        load_screenshots_to_bq_table,
-        archive_data_to_destination_bucket,
-    ]
+    upload_screenshots_to_destination_bucket >> load_screenshots_to_bq_table
+    load_screenshots_to_bq_table >> delete_screenshots_from_composer_bucket
