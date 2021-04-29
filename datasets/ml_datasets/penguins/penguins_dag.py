@@ -13,9 +13,8 @@
 # limitations under the License.
 
 
-from airflow.contrib.operators import gcs_to_bq
 from airflow import DAG
-
+from airflow.contrib.operators import gcs_to_bq
 
 default_args = {
     "owner": "Google",
