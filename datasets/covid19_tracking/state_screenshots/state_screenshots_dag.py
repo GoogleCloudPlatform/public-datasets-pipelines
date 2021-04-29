@@ -79,13 +79,48 @@ with DAG(
         skip_leading_rows=1,
         write_disposition="WRITE_TRUNCATE",
         schema_fields=[
-            {"name": "state", "type": "STRING"},
-            {"name": "state_name", "type": "STRING"},
-            {"name": "date", "type": "DATE"},
-            {"name": "source_type", "type": "STRING"},
-            {"name": "time_of_day", "type": "STRING"},
-            {"name": "source_url", "type": "STRING"},
-            {"name": "google_cloud_storage_uri", "type": "STRING"},
+            {
+                "name": "state",
+                "type": "STRING",
+                "mode": "REQUIRED",
+                "description": "2-letter postal abbreviation for the state",
+            },
+            {
+                "name": "state_name",
+                "type": "STRING",
+                "mode": "REQUIRED",
+                "description": "The full state name",
+            },
+            {
+                "name": "date",
+                "type": "DATE",
+                "mode": "REQUIRED",
+                "description": "Date of the observations",
+            },
+            {
+                "name": "source_type",
+                "type": "STRING",
+                "mode": "REQUIRED",
+                "description": "How far from the original event or phenomenon the information source is created. Can be one of primary, secondary, tertiary, quaternary",
+            },
+            {
+                "name": "time_of_day",
+                "type": "STRING",
+                "mode": "REQUIRED",
+                "description": "The time of day, based on a 12-hour clock in Eastern Time",
+            },
+            {
+                "name": "source_url",
+                "type": "STRING",
+                "mode": "REQUIRED",
+                "description": "The URL where the screenshot or file was originally found",
+            },
+            {
+                "name": "google_cloud_storage_uri",
+                "type": "STRING",
+                "mode": "REQUIRED",
+                "description": "The GCS location where the screenshot or file was copied to",
+            },
         ],
     )
 

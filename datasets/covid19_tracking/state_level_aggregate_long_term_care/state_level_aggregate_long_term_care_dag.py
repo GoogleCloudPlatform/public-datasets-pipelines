@@ -66,9 +66,19 @@ with DAG(
         skip_leading_rows=1,
         write_disposition="WRITE_TRUNCATE",
         schema_fields=[
-            {"name": "date", "type": "DATE"},
-            {"name": "state", "type": "STRING"},
-            {"name": "data_type", "type": "STRING"},
+            {
+                "name": "date",
+                "type": "DATE",
+                "mode": "REQUIRED",
+                "description": "Date of the observations",
+            },
+            {
+                "name": "state",
+                "type": "STRING",
+                "mode": "REQUIRED",
+                "description": "2-letter postal abbreviation for the state",
+            },
+            {"name": "data_type", "type": "STRING", "mode": "REQUIRED"},
             {
                 "name": "nursing_homes_resident_positives",
                 "type": "INTEGER",

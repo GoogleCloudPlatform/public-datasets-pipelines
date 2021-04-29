@@ -191,6 +191,7 @@ Every dataset and pipeline folder must contain a `dataset.yaml` and a `pipeline.
 # Best Practices
 
 - When naming BigQuery columns, always use `snake_case` and lowercase.
+- When specifying BigQuery schemas, be explicit and always include `name`, `type` and `mode` for every column. For column descriptions, derive it from the data source's definitions when available.
 - When provisioning resources for pipelines, a good rule-of-thumb is one bucket per dataset, where intermediate data used by various pipelines (under that dataset) are stored in distinct paths under the same bucket. For example:
 
   ```
