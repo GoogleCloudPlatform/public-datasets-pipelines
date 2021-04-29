@@ -19,6 +19,10 @@
         "KubernetesPodOperator": {
             "import": "from airflow.contrib.operators import kubernetes_pod_operator",
             "class": "kubernetes_pod_operator.KubernetesPodOperator"
+        },
+        "GoogleCloudStorageDeleteOperator": {
+            "import": "from airflow.contrib.operators import gcs_delete_operator",
+            "class": "gcs_delete_operator.GoogleCloudStorageDeleteOperator"
         }
     }
 }
