@@ -76,7 +76,8 @@ def generate_csv_rows(url: str, gcs_path_prefix: str) -> typing.List[dict]:
 
     rows = []
     current_date = None
-    for tr in tr_tags:
+    # Only get screenshots for the last 30 days
+    for tr in tr_tags[:30]:
         td_date, td_source_type, td_screenshots = tr.find_all("td")
 
         if td_date.text:
