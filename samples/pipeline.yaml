@@ -187,6 +187,27 @@ dag:
         # See https://cloud.google.com/bigquery/docs/reference/auditlogs/rest/Shared.Types/WriteDisposition
         write_disposition: "WRITE_TRUNCATE"
 
+    - operator: "GoogleCloudStorageDeleteOperator"
+      # Initializes a GCS operator that deletes all specified objects
+
+      # Task description
+      description: "Task to run a GoogleCloudStorageDeleteOperator"
+
+      args:
+        # Arguments supported by this operator:
+        # https://airflow.apache.org/docs/apache-airflow/1.10.14/_api/airflow/contrib/operators/gcs_delete_operator/index.html#airflow.contrib.operators.gcs_delete_operator.GoogleCloudStorageDeleteOperator
+        task_id: "sample_gcs_delete_task"
+
+        # The GCS bucket where the objects to delete are located.
+        bucket_name: "sample_bucket"
+
+        # List of objects to delete. These should be the names of objects in the bucket, not including gs://bucket/.
+        objects: ["path/to/some_object"]
+
+        # Alternatively, you can specify a prefix of objects to delete.
+        # All objects matching this prefix in the bucket will be deleted.
+        prefix: "prefix/to/delete"
+
 
   graph_paths:
     # This is where you specify the relationships (i.e. directed paths/edges)
@@ -197,3 +218,4 @@ dag:
     # https://airflow.apache.org/docs/apache-airflow/stable/tutorial.html#setting-up-dependencies
     - "sample_bash_task >> [sample_gcs_to_bq_task, sample_gcs_to_gcs_task]"
     - "sample_gcs_to_bq_task >> sample_bq_sql_task"
+    - "sample_bq_sql_task >> sample_gcs_delete_task"
