@@ -15,12 +15,12 @@
  */
 
 
-resource "google_storage_bucket" "vizgen_merfish-datasets" {
-  name                        = "${var.project_num}-vizgen_merfish-${var.env}-datasets"
+resource "google_storage_bucket" "public-vizgen-merfish" {
+  name                        = "public-vizgen-merfish${var.env == "prod" ? "" : "-${var.env}"}"
   force_destroy               = true
   uniform_bucket_level_access = true
 }
 
-output "storage_bucket-datasets-name" {
-  value = google_storage_bucket.vizgen_merfish-datasets.name
+output "storage_bucket-public-vizgen-merfish-name" {
+  value = google_storage_bucket.public-vizgen-merfish.name
 }
