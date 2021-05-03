@@ -30,18 +30,7 @@ resources:
     dataset_id: covid19_tracking
     description: BigQuery dataset to namespace all tables related to COVID-19
 
-  # Google Cloud Storage Bucket for intermediate data
-  # Because bucket names must to be globally unique, the `name` specified below
-  # will be mapped to the unique bucket name `{project_id}.{dataset_id}.{env}.{name}`.
-  # Optional: location
+  # Target bucket for the dataset
   - type: storage_bucket
-    name: "processing"
-    uniform_bucket_level_access: True
-
-  # Google Cloud Storage Bucket for fully processed data
-  # Because bucket names must to be globally unique, the `name` specified below
-  # will be mapped to the unique bucket name `{project_id}.{dataset_id}.{env}.{name}`.
-  # Optional: location
-  - type: storage_bucket
-    name: "destination"
+    name: "public-covid-tracking-project"
     uniform_bucket_level_access: True
