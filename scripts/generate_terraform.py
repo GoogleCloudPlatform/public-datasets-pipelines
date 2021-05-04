@@ -19,9 +19,7 @@ import pathlib
 import subprocess
 import typing
 
-import google.auth
 import jinja2
-from googleapiclient import discovery
 from ruamel import yaml
 
 CURRENT_PATH = pathlib.Path(__file__).resolve().parent
@@ -262,15 +260,6 @@ def actuate_terraform_resources(dataset_id: str, env_path: pathlib.Path):
 def apply_substitutions_to_template(template: pathlib.Path, subs: dict) -> str:
     j2_template = jinja2.Template(pathlib.Path(template).read_text())
     return j2_template.render(**subs)
-
-
-def gcp_project_number(project_id: str) -> str:
-    credentials, _ = google.auth.default()
-    service = discovery.build("cloudresourcemanager", "v1", credentials=credentials)
-
-    request = service.projects().get(projectId=project_id)
-    response = request.execute()
-    return response["projectNumber"]
 
 
 if __name__ == "__main__":
