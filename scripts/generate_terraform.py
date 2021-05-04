@@ -45,7 +45,7 @@ yaml = yaml.YAML(typ="safe")
 def main(
     dataset_id: str,
     project_id: str,
-    project_num: str,
+    bucket_name_prefix: str,
     region: str,
     impersonating_acct: str,
     env: str,
@@ -63,7 +63,7 @@ def main(
 
     generate_variables_tf(dataset_id, env_path)
     generate_tfvars_file(
-        project_id, project_num, dataset_id, region, impersonating_acct, env_path
+        project_id, bucket_name_prefix, dataset_id, region, impersonating_acct, env_path
     )
 
     if tf_apply:
@@ -142,7 +142,7 @@ def generate_variables_tf(dataset_id: str, env_path: pathlib.Path):
 
 def generate_tfvars_file(
     project_id: str,
-    project_num: str,
+    bucket_name_prefix: str,
     dataset_id: str,
     region: str,
     impersonating_acct: str,
@@ -150,7 +150,7 @@ def generate_tfvars_file(
 ):
     tf_vars = {
         "project_id": project_id,
-        "project_num": project_num,
+        "bucket_name_prefix": bucket_name_prefix,
         "impersonating_acct": impersonating_acct,
         "region": region,
         "env": env_path.name.replace(".", ""),
@@ -293,6 +293,15 @@ if __name__ == "__main__":
         help="The Google Cloud project ID",
     )
     parser.add_argument(
+        "-b",
+        "--bucket-name-prefix",
+        required=True,
+        type=str,
+        default="",
+        dest="bucket_name_prefix",
+        help="The prefix to use for GCS bucket names for global uniqueness",
+    )
+    parser.add_argument(
         "-e",
         "--env",
         type=str,
@@ -320,7 +329,7 @@ if __name__ == "__main__":
     main(
         args.dataset,
         args.project_id,
-        gcp_project_number(args.project_id),
+        args.bucket_name_prefix,
         args.region,
         args.impersonating_acct,
         args.env,
