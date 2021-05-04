@@ -16,7 +16,7 @@
 
 
 resource "google_storage_bucket" "{{ dataset_id }}-{{ name }}" {
-  name          = "${var.project_num}-{{ dataset_id }}-${var.env}-{{ name }}"
+  name          = "${var.bucket_name_prefix}-{{ name }}"
   force_destroy = true
   {% if location -%}
     location = "{{ location }}"
