@@ -16,7 +16,7 @@
 
 
 variable "project_id" {}
-variable "bucket_name_prefix" {}
+variable "project_num" {}
 variable "impersonating_acct" {}
 variable "region" {}
 variable "env" {}

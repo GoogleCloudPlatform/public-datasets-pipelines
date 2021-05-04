@@ -15,7 +15,7 @@
  */
 
 
-resource "google_storage_bucket" "{{ dataset_id }}-{{ name }}" {
+resource "google_storage_bucket" "{{ name }}" {
   name          = "${var.bucket_name_prefix}-{{ name }}"
   force_destroy = true
   {% if location -%}
@@ -27,5 +27,5 @@ resource "google_storage_bucket" "{{ dataset_id }}-{{ name }}" {
 }
 
 output "storage_bucket-{{ name }}-name" {
-  value = google_storage_bucket.{{ dataset_id }}-{{ name }}.name
+  value = google_storage_bucket.{{ name }}.name
 }
