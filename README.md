@@ -190,6 +190,7 @@ Every dataset and pipeline folder must contain a `dataset.yaml` and a `pipeline.
 
 # Best Practices
 
+- When running `scripts/generate_terraform.py`, the argument `--bucket-name-prefix` helps prevent GCS bucket name collisions because bucket names must be globally unique. Make the prefix as unique as possible, and specific to your own environment or use case.
 - When naming BigQuery columns, always use `snake_case` and lowercase.
 - When specifying BigQuery schemas, be explicit and always include `name`, `type` and `mode` for every column. For column descriptions, derive it from the data source's definitions when available.
 - When provisioning resources for pipelines, a good rule-of-thumb is one bucket per dataset, where intermediate data used by various pipelines (under that dataset) are stored in distinct paths under the same bucket. For example:
