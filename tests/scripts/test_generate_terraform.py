@@ -268,6 +268,37 @@ def test_bucket_names_must_not_contain_dots_and_google():
             generate_terraform.validate_bucket_name(name)
 
 
+def test_bucket_names_must_use_hyphens_instead_of_underscores():
+    for name in (
+        "test_underscore",
+        "test-bucket_with-underscore",
+    ):
+        with pytest.raises(ValueError):
+            generate_terraform.validate_bucket_name(name)
+
+
+def test_bucket_prefixes_must_use_hyphens_instead_of_underscores(
+    dataset_path,
+    project_id,
+    region,
+    impersonating_acct,
+    env,
+):
+    for prefix in (
+        "test_prefix",
+        "test-hyphens_and_underscores",
+    ):
+        with pytest.raises(ValueError):
+            generate_terraform.main(
+                dataset_path.name,
+                project_id,
+                prefix,
+                region,
+                impersonating_acct,
+                env,
+            )
+
+
 def test_validation_on_generated_tf_files_in_dot_env_dir(
     dataset_path,
     pipeline_path,
