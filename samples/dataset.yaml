@@ -64,10 +64,15 @@ resources:
     #
     # Because Cloud Storage bucket names must be globally unique, the `name`
     # specified below will be mapped to the unique bucket name:
-    # `{project_number}-{dataset_id}.{env}-{name}`
-    # Please ensure the resulting bucket name above is less than 64 characters
-    # as required by the Google Cloud Storage bucket naming rules. Also, bucket
-    # names cannot contain "google" or close misspellings, such as "g00gle".
+    #
+    #   `{bucket_name_prefix}-{name}`
+    #
+    # Where the bucket name prefix is supplied using the `--bucket-name-prefix`
+    # parameter when running `scripts/generate_terraform.py`.
+    #
+    # Use hyphenated syntax, e.g. `some-prefix-123`, for the names. Note that
+    # bucket names must not contain "google" or close misspellings, such as
+    # "g00gle".
     #
     # Required Properties:
     #   name
@@ -75,4 +80,4 @@ resources:
     # Optional Properties:
     #   location
     #   uniform_bucket_level_access (we suggest False for fine-grained access)
-    name: YOUR_BUCKET_NAME
+    name: YOUR-BUCKET-NAME

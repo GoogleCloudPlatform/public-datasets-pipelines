@@ -19,9 +19,7 @@ import pathlib
 import subprocess
 import typing
 
-import google.auth
 import jinja2
-from googleapiclient import discovery
 from ruamel import yaml
 
 CURRENT_PATH = pathlib.Path(__file__).resolve().parent
@@ -45,12 +43,14 @@ yaml = yaml.YAML(typ="safe")
 def main(
     dataset_id: str,
     project_id: str,
-    project_num: str,
+    bucket_name_prefix: str,
     region: str,
     impersonating_acct: str,
     env: str,
     tf_apply: bool = False,
 ):
+    validate_bucket_name(bucket_name_prefix)
+
     env_path = PROJECT_ROOT / f".{env}"
     create_gitignored_env_path(dataset_id, env_path)
 
@@ -63,7 +63,7 @@ def main(
 
     generate_variables_tf(dataset_id, env_path)
     generate_tfvars_file(
-        project_id, project_num, dataset_id, region, impersonating_acct, env_path
+        project_id, bucket_name_prefix, dataset_id, region, impersonating_acct, env_path
     )
 
     if tf_apply:
@@ -142,7 +142,7 @@ def generate_variables_tf(dataset_id: str, env_path: pathlib.Path):
 
 def generate_tfvars_file(
     project_id: str,
-    project_num: str,
+    bucket_name_prefix: str,
     dataset_id: str,
     region: str,
     impersonating_acct: str,
@@ -150,7 +150,7 @@ def generate_tfvars_file(
 ):
     tf_vars = {
         "project_id": project_id,
-        "project_num": project_num,
+        "bucket_name_prefix": bucket_name_prefix,
         "impersonating_acct": impersonating_acct,
         "region": region,
         "env": env_path.name.replace(".", ""),
@@ -193,7 +193,16 @@ def validate_bucket_name(name: str):
     # https://cloud.google.com/storage/docs/naming-buckets#requirements
     mapped_name = name.replace("0", "o").replace("1", "l").replace("3", "e")
     if "google" in mapped_name.lower():
-        raise ValueError
+        raise ValueError(
+            "Bucket names cannot contain 'google' or close misspellings, such"
+            " as 'g00gle' as mentioned in the bucket naming guidelines:"
+            " https://cloud.google.com/storage/docs/naming-buckets#requirements"
+        )
+
+    # We use the convention where hyphens are used for bucket names instead of
+    # underscores.
+    if "_" in mapped_name:
+        raise ValueError("Use hyphens over underscores for bucket names")
 
     return name
 
@@ -249,7 +258,9 @@ def list_subdirs(path: pathlib.Path) -> typing.List[pathlib.Path]:
 
 def terraform_fmt(target_file: pathlib.Path):
     subprocess.Popen(
-        f"terraform fmt -write=true {target_file}", stdout=subprocess.PIPE, shell=True
+        f"terraform fmt -write=true {target_file}",
+        stdout=subprocess.DEVNULL,
+        shell=True,
     )
 
 
@@ -262,15 +273,6 @@ def actuate_terraform_resources(dataset_id: str, env_path: pathlib.Path):
 def apply_substitutions_to_template(template: pathlib.Path, subs: dict) -> str:
     j2_template = jinja2.Template(pathlib.Path(template).read_text())
     return j2_template.render(**subs)
-
-
-def gcp_project_number(project_id: str) -> str:
-    credentials, _ = google.auth.default()
-    service = discovery.build("cloudresourcemanager", "v1", credentials=credentials)
-
-    request = service.projects().get(projectId=project_id)
-    response = request.execute()
-    return response["projectNumber"]
 
 
 if __name__ == "__main__":
@@ -291,6 +293,15 @@ if __name__ == "__main__":
         type=str,
         dest="project_id",
         help="The Google Cloud project ID",
+    )
+    parser.add_argument(
+        "-b",
+        "--bucket-name-prefix",
+        required=True,
+        type=str,
+        default="",
+        dest="bucket_name_prefix",
+        help="The prefix to use for GCS bucket names for global uniqueness",
     )
     parser.add_argument(
         "-e",
@@ -320,7 +331,7 @@ if __name__ == "__main__":
     main(
         args.dataset,
         args.project_id,
-        gcp_project_number(args.project_id),
+        args.bucket_name_prefix,
         args.region,
         args.impersonating_acct,
         args.env,
