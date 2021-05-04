@@ -91,12 +91,15 @@ $ python scripts/generate_terraform.py \
     --dataset DATASET_DIR_NAME \
     --gcp-project-id GCP_PROJECT_ID \
     --region REGION \
+    --bucket-name-prefix UNIQUE_BUCKET_PREFIX \
     [--env] dev \
     [--tf-apply] \
     [--impersonating-acct] IMPERSONATING_SERVICE_ACCT
 ```
 
 This generates Terraform files (`*.tf`) in a `_terraform` directory inside that dataset. The files contain instrastructure-as-code on which GCP resources need to be actuated for use by the pipelines. If you passed in the `--tf-apply` parameter, the command will also run `terraform apply` to actuate those resources.
+
+The `--bucket-name-prefix` is used to ensure that the buckets created by different environments and contributors are kept unique. This is to satisfy the rule where bucket names must be globally unique across all of GCS.
 
 In addition, the command above creates a "dot" directory in the project root. The directory name is the value you pass to the `--env` parameter of the command. If no `--env` argument was passed, the value defaults to `dev` (which generates the `.dev` folder).
 
