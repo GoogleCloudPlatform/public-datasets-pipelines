@@ -49,6 +49,8 @@ def main(
     env: str,
     tf_apply: bool = False,
 ):
+    validate_bucket_name(bucket_name_prefix)
+
     env_path = PROJECT_ROOT / f".{env}"
     create_gitignored_env_path(dataset_id, env_path)
 
@@ -191,7 +193,16 @@ def validate_bucket_name(name: str):
     # https://cloud.google.com/storage/docs/naming-buckets#requirements
     mapped_name = name.replace("0", "o").replace("1", "l").replace("3", "e")
     if "google" in mapped_name.lower():
-        raise ValueError
+        raise ValueError(
+            "Bucket names cannot contain 'google' or close misspellings, such"
+            " as 'g00gle' as mentioned in the bucket naming guidelines:"
+            " https://cloud.google.com/storage/docs/naming-buckets#requirements"
+        )
+
+    # We use the convention where hyphens are used for bucket names instead of
+    # underscores.
+    if "_" in mapped_name:
+        raise ValueError("Use hyphens over underscores for bucket names")
 
     return name
 
@@ -247,7 +258,9 @@ def list_subdirs(path: pathlib.Path) -> typing.List[pathlib.Path]:
 
 def terraform_fmt(target_file: pathlib.Path):
     subprocess.Popen(
-        f"terraform fmt -write=true {target_file}", stdout=subprocess.PIPE, shell=True
+        f"terraform fmt -write=true {target_file}",
+        stdout=subprocess.DEVNULL,
+        shell=True,
     )
 
 

@@ -80,4 +80,4 @@ resources:
     # Optional Properties:
     #   location
     #   uniform_bucket_level_access (we suggest False for fine-grained access)
-    name: YOUR_BUCKET_NAME
+    name: YOUR-BUCKET-NAME
