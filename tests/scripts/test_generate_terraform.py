@@ -52,8 +52,8 @@ def project_id() -> str:
 
 
 @pytest.fixture
-def project_num() -> str:
-    return "123456789"
+def bucket_name_prefix() -> str:
+    return "1234-zyxwvu"
 
 
 @pytest.fixture
@@ -103,7 +103,7 @@ def test_main_generates_tf_files(
     dataset_path,
     pipeline_path,
     project_id,
-    project_num,
+    bucket_name_prefix,
     region,
     impersonating_acct,
     env,
@@ -112,7 +112,12 @@ def test_main_generates_tf_files(
     shutil.copyfile(SAMPLE_YAML_PATHS["pipeline"], pipeline_path / "pipeline.yaml")
 
     generate_terraform.main(
-        dataset_path.name, project_id, project_num, region, impersonating_acct, env
+        dataset_path.name,
+        project_id,
+        bucket_name_prefix,
+        region,
+        impersonating_acct,
+        env,
     )
 
     for path_prefix in (
@@ -137,7 +142,7 @@ def test_main_with_multiple_pipelines(
     pipeline_path,
     pipeline_path_2,
     project_id,
-    project_num,
+    bucket_name_prefix,
     region,
     impersonating_acct,
     env,
@@ -149,7 +154,12 @@ def test_main_with_multiple_pipelines(
     shutil.copyfile(SAMPLE_YAML_PATHS["pipeline"], pipeline_path_2 / "pipeline.yaml")
 
     generate_terraform.main(
-        dataset_path.name, project_id, project_num, region, impersonating_acct, env
+        dataset_path.name,
+        project_id,
+        bucket_name_prefix,
+        region,
+        impersonating_acct,
+        env,
     )
 
     for path_prefix in (
@@ -168,12 +178,17 @@ def test_main_with_multiple_pipelines(
 
 
 def test_dataset_without_any_pipelines(
-    dataset_path, project_id, project_num, region, impersonating_acct, env
+    dataset_path, project_id, bucket_name_prefix, region, impersonating_acct, env
 ):
     shutil.copyfile(SAMPLE_YAML_PATHS["dataset"], dataset_path / "dataset.yaml")
 
     generate_terraform.main(
-        dataset_path.name, project_id, project_num, region, impersonating_acct, env
+        dataset_path.name,
+        project_id,
+        bucket_name_prefix,
+        region,
+        impersonating_acct,
+        env,
     )
 
     for path_prefix in (
@@ -185,11 +200,16 @@ def test_dataset_without_any_pipelines(
 
 
 def test_dataset_path_does_not_exist(
-    project_id, project_num, region, impersonating_acct, env
+    project_id, bucket_name_prefix, region, impersonating_acct, env
 ):
     with pytest.raises(FileNotFoundError):
         generate_terraform.main(
-            "non_existing_dir", project_id, project_num, region, impersonating_acct, env
+            "non_existing_dir",
+            project_id,
+            bucket_name_prefix,
+            region,
+            impersonating_acct,
+            env,
         )
 
 
@@ -197,7 +217,7 @@ def test_generated_tf_files_contain_license_headers(
     dataset_path,
     pipeline_path,
     project_id,
-    project_num,
+    bucket_name_prefix,
     region,
     impersonating_acct,
     env,
@@ -206,7 +226,12 @@ def test_generated_tf_files_contain_license_headers(
     shutil.copyfile(SAMPLE_YAML_PATHS["pipeline"], pipeline_path / "pipeline.yaml")
 
     generate_terraform.main(
-        dataset_path.name, project_id, project_num, region, impersonating_acct, env
+        dataset_path.name,
+        project_id,
+        bucket_name_prefix,
+        region,
+        impersonating_acct,
+        env,
     )
 
     license_header = pathlib.Path(
@@ -247,7 +272,7 @@ def test_validation_on_generated_tf_files_in_dot_env_dir(
     dataset_path,
     pipeline_path,
     project_id,
-    project_num,
+    bucket_name_prefix,
     region,
     impersonating_acct,
     env,
@@ -256,7 +281,12 @@ def test_validation_on_generated_tf_files_in_dot_env_dir(
     shutil.copyfile(SAMPLE_YAML_PATHS["pipeline"], pipeline_path / "pipeline.yaml")
 
     generate_terraform.main(
-        dataset_path.name, project_id, project_num, region, impersonating_acct, env
+        dataset_path.name,
+        project_id,
+        bucket_name_prefix,
+        region,
+        impersonating_acct,
+        env,
     )
     env_dataset_path = ENV_DATASETS_PATH / dataset_path.name
 
@@ -270,7 +300,7 @@ def test_validation_on_generated_tf_files_in_project_dir(
     dataset_path,
     pipeline_path,
     project_id,
-    project_num,
+    bucket_name_prefix,
     region,
     impersonating_acct,
     env,
@@ -279,7 +309,12 @@ def test_validation_on_generated_tf_files_in_project_dir(
     shutil.copyfile(SAMPLE_YAML_PATHS["pipeline"], pipeline_path / "pipeline.yaml")
 
     generate_terraform.main(
-        dataset_path.name, project_id, project_num, region, impersonating_acct, env
+        dataset_path.name,
+        project_id,
+        bucket_name_prefix,
+        region,
+        impersonating_acct,
+        env,
     )
     project_dataset_path = generate_terraform.DATASETS_PATH / dataset_path.name
 
