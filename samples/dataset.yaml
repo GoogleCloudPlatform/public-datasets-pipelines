@@ -70,8 +70,9 @@ resources:
     # Where the bucket name prefix is supplied using the `--bucket-name-prefix`
     # parameter when running `scripts/generate_terraform.py`.
     #
-    # Note that bucket names must not contain "google" or close misspellings,
-    # such as "g00gle".
+    # Use hyphenated syntax, e.g. `some-prefix-123`, for the names. Note that
+    # bucket names must not contain "google" or close misspellings, such as
+    # "g00gle".
     #
     # Required Properties:
     #   name
