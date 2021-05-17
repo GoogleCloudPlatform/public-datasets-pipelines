@@ -143,24 +143,12 @@ then your variables JSON file should look like this
 Deploy the DAG and the variables to your own Cloud Composer environment using one of the two commands:
 
 ```
-# If you're using Cloud Composer
 $ python scripts/deploy_dag.py \
   --dataset DATASET \
   --composer-env CLOUD_COMPOSER_ENVIRONMENT_NAME \
   --composer-bucket CLOUD_COMPOSER_BUCKET \
   --composer-region CLOUD_COMPOSER_REGION \
   --env ENV
-```
-
-or
-
-```
-# If you're using a local Airflow environment
-$ python scripts/deploy_dag.py \
-  --dataset DATASET \
-  --local \
-  [--airflow-home] (defaults to "~/airflow") \
-  [--env] (defaults to "dev")
 ```
 
 # Testing
