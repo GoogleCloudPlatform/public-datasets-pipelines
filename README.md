@@ -107,17 +107,29 @@ Consider this "dot" directory as your own dedicated space for prototyping. The f
 
 As a concrete example, the unit tests use a temporary `.test` directory as their environment.
 
-## 4. Generate DAG (directed acyclic graph) files
+## 4. Generate DAGs and container images
 
 Run the following command from the project root:
 
 ```bash
 $ python scripts/generate_dag.py \
     --dataset DATASET_DIR \
-    --pipeline PIPELINE_DIR
+    --pipeline PIPELINE_DIR \
+    [--skip-builds] \
+    [--env] dev
 ```
 
-This generates a Python file that represents the DAG for the pipeline (the dot dir also gets a copy). To standardize DAG files, the resulting Python code is based entirely out of the contents in the `pipeline.yaml` config file.
+This generates a Python file that represents the DAG (directed acyclic graph) for the pipeline (the dot dir also gets a copy). To standardize DAG files, the resulting Python code is based entirely out of the contents in the `pipeline.yaml` config file.
+
+Using `KubernetesPodOperator` requires having a container image available for use. The command above allows this architecture to build and push it to [Google Container Registry](https://cloud.google.com/container-registry) on your behalf. Follow the steps below to prepare your container image:
+
+1. Create an `_images` folder under your dataset folder if it doesn't exist.
+
+2. Inside the `_images` folder, create another folder and name it after what the image is expected to do, e.g. `process_shapefiles`, `read_cdf_metadata`.
+
+3. In that subfolder, create a [Dockerfile](https://docs.docker.com/engine/reference/builder/) and any scripts you need to process the data. Use the [COPY command](https://docs.docker.com/engine/reference/builder/#copy) in your `Dockerfile` to include your scripts in the image.
+
+Docker images will be built and pushed to GCR by default whenever the command above is run. To skip building and pushing images, use the optional `--skip-builds` flag.
 
 ## 5. Declare and set your pipeline variables
 

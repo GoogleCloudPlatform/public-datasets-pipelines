@@ -241,9 +241,9 @@ dag:
         #
         # 2. Inside the `_images` folder, create another folder and name it after what the image is expected to do, e.g. process_shapefiles, get_cdf_metadata.
         #
-        # 3. In that subfolder, create your `Dockerfile` and include other files you need (such as data processing scripts) as part of the image.
+        # 3. In that subfolder, create a Dockerfile (https://docs.docker.com/engine/reference/builder/) and any scripts you need to process the data. Use the `COPY` command (https://docs.docker.com/engine/reference/builder/#copy) in your `Dockerfile` to include your scripts in the image.
         #
-        # Docker images will be built and pushed to GCR when the generate_dag script is run. To skip image builds, use the `--skip-builds` flag when running `scripts/generate_dag.py`
+        # Docker images will be built and pushed to GCR by default whenever the `scripts/generate_dag.py` is run. To skip building and pushing images, use the optional `--skip-builds` flag.
         image: "{{ var.json.DATASET_FOLDER_NAME.container_registry.IMAGE_REPOSITORY }}"
 
         # Set the environment variables you need initialized in the container. Use these as input variables for the script your container is expected to perform.
