@@ -13,24 +13,6 @@ Cloud-native, data pipeline architecture for onboarding datasets to the [Google 
 - [Terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli) `>=v0.15.1`
 - [Google Cloud Composer](https://cloud.google.com/composer/docs/concepts/overview) environment running [Apache Airflow](https://airflow.apache.org/docs/apache-airflow/1.10.14/concepts.html) `v1.10.14,<2.0`. To create a new Cloud Composer environment, see [this guide](https://cloud.google.com/composer/docs/how-to/managing/creating).
 
-# Other Requirements
-
-## Google Cloud Resources
-
-Identify what Google Cloud resources need to be provisioned for your pipelines. Some examples are
-
-- BigQuery datasets and tables to store final, customer-facing data
-- GCS bucket to store intermediate, midstream data.
-- GCS bucket to store final, downstream, customer-facing data
-- Sometimes, for very large datasets, you might need to provision a [Dataflow](https://cloud.google.com/dataflow/docs) job
-
-## Authentication and Authorization
-
-Review any connection requirements needed to fetch data from the sources. We might need any of the following:
-
-- Authentication credentials (e.g. login credentials or API tokens)
-- Authorization grants (e.g. permissions granted for us to access the data source/s)
-
 # Environment Setup
 
 We use Pipenv to make environment setup more deterministic and uniform across different machines.
@@ -83,6 +65,12 @@ If you'd like to get started faster, you can inspect config files that already e
 - [covid19_tracking/national_testing_and_outcomes](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/datasets/covid19_tracking/national_testing_and_outcomes/pipeline.yaml) pipeline config (simple, only uses built-in Airflow operators)
 - [covid19_tracking/city_level_cases_and_deaths](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/datasets/covid19_tracking/city_level_cases_and_deaths/pipeline.yaml) pipeline config (involves custom data transforms)
 
+Every YAML file supports a `resources` block. To use this, identify what Google Cloud resources need to be provisioned for your pipelines. Some examples are
+
+- BigQuery datasets and tables to store final, customer-facing data
+- GCS bucket to store intermediate, midstream data.
+- GCS bucket to store final, downstream, customer-facing data
+- Sometimes, for very large datasets, you might need to provision a [Dataflow](https://cloud.google.com/dataflow/docs) job
 ## 3. Generate Terraform files and actuate GCP resources
 
 Run the following command from the project root:
