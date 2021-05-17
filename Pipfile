@@ -11,6 +11,8 @@ apache-airflow = {version = "==1.10.14", extras = ["google"]}
 black = "==20.8b1"
 flake8 = "==3.8.4"
 isort = "*"
+kubernetes = "*"
+pytest-mock = "*"
 pytest = "*"
 "ruamel.yaml" = "==0.16.12"
 Jinja2 = "*"
