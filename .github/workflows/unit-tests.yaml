@@ -18,7 +18,7 @@ jobs:
       - name: Install pipenv
         run: pip install pipenv
       - name: Install dependencies
-        run: pipenv install --dev
+        run: pipenv install --ignore-pipfile --dev
       - name: Initialize Airflow
         run: pipenv run airflow db init
       - name: Run tests
