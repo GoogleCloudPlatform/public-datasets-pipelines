@@ -127,7 +127,7 @@ Using `KubernetesPodOperator` requires having a container image available for us
 
 2. Inside the `_images` folder, create another folder and name it after what the image is expected to do, e.g. `process_shapefiles`, `read_cdf_metadata`.
 
-3. In that subfolder, create a [Dockerfile](https://docs.docker.com/engine/reference/builder/) and any scripts you need to process the data. Use the [COPY command](https://docs.docker.com/engine/reference/builder/#copy) in your `Dockerfile` to include your scripts in the image.
+3. In that subfolder, create a [Dockerfile](https://docs.docker.com/engine/reference/builder/) and any scripts you need to process the data. See the [`samples/container`](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/samples/container/) folder for an example. Use the [COPY command](https://docs.docker.com/engine/reference/builder/#copy) in your `Dockerfile` to include your scripts in the image.
 
 Docker images will be built and pushed to GCR by default whenever the command above is run. To skip building and pushing images, use the optional `--skip-builds` flag.
 
