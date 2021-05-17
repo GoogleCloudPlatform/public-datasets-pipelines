@@ -40,7 +40,7 @@ Follow the steps below to build a data pipeline for your dataset:
 ## 1. Create a folder hierarchy for your pipeline
 
 ```
-datasets/DATASET/PIPELINE
+mkdir -p datasets/DATASET/PIPELINE
 
 [example]
 datasets/covid19_tracking/national_testing_and_outcomes
