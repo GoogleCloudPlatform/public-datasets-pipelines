@@ -14,6 +14,7 @@
 
 
 import pathlib
+import random
 import shutil
 import subprocess
 import tempfile
@@ -48,6 +49,13 @@ def dataset_path() -> typing.Iterator[pathlib.Path]:
 def pipeline_path(dataset_path, suffix="_pipeline") -> typing.Iterator[pathlib.Path]:
     with tempfile.TemporaryDirectory(dir=dataset_path, suffix=suffix) as dir_path:
         yield pathlib.Path(dir_path)
+
+
+def generate_image_files(dataset_path: pathlib.Path, num_containers: int = 1):
+    for i in range(num_containers):
+        target_dir = dataset_path / "_images" / f"test_image_{i+1}"
+        target_dir.mkdir(parents=True, exist_ok=True)
+        (target_dir / "Dockerfile").touch()
 
 
 def copy_config_files_and_set_tmp_folder_names_as_ids(
@@ -245,3 +253,65 @@ def test_dag_id_in_py_file_is_prepended_with_dataset_id(
         pipeline_path.name, dataset_path.name
     )
     assert f'dag_id="{expected_dag_id}"' in dagpy_contents
+
+
+def test_build_images_copies_image_files_to_env_dir(
+    dataset_path: pathlib.Path, pipeline_path: pathlib.Path, env: str, mocker
+):
+    copy_config_files_and_set_tmp_folder_names_as_ids(dataset_path, pipeline_path)
+    generate_image_files(dataset_path, num_containers=random.randint(1, 3))
+
+    mocker.patch("scripts.generate_dag.build_and_push_image")
+    generate_dag.main(dataset_path.name, pipeline_path.name, env)
+
+    for image_dir in (dataset_path / "_images").iterdir():
+        copied_image_dir = (
+            ENV_DATASETS_PATH / dataset_path.name / "_images" / image_dir.name
+        )
+        assert copied_image_dir.exists()
+        assert copied_image_dir.is_dir()
+        assert (copied_image_dir / "Dockerfile").exists()
+
+
+def test_build_images_called_when_dataset_has_images_dir(
+    dataset_path: pathlib.Path, pipeline_path: pathlib.Path, env: str, mocker
+):
+    copy_config_files_and_set_tmp_folder_names_as_ids(dataset_path, pipeline_path)
+    generate_image_files(dataset_path, num_containers=random.randint(1, 3))
+
+    mocker.patch("scripts.generate_dag.build_images")
+    generate_dag.main(dataset_path.name, pipeline_path.name, env)
+    generate_dag.build_images.assert_called_once_with(dataset_path.name, env)
+
+
+def test_build_images_not_called_given_skip_builds_argument(
+    dataset_path: pathlib.Path, pipeline_path: pathlib.Path, env: str, mocker
+):
+    copy_config_files_and_set_tmp_folder_names_as_ids(dataset_path, pipeline_path)
+
+    mocker.patch("scripts.generate_dag.build_images")
+    generate_dag.main(dataset_path.name, pipeline_path.name, env, skip_builds=True)
+    assert not generate_dag.build_images.called
+
+
+def test_build_and_push_image_called_as_many_as_num_containers(
+    dataset_path: pathlib.Path, pipeline_path: pathlib.Path, env: str, mocker
+):
+    copy_config_files_and_set_tmp_folder_names_as_ids(dataset_path, pipeline_path)
+
+    num_containers = random.randint(1, 3)
+    generate_image_files(dataset_path, num_containers=num_containers)
+
+    mocker.patch("scripts.generate_dag.build_and_push_image")
+    generate_dag.main(dataset_path.name, pipeline_path.name, env)
+    assert generate_dag.build_and_push_image.call_count == num_containers
+
+
+def test_build_and_push_image_not_called_when_no_image_dirs_exist(
+    dataset_path: pathlib.Path, pipeline_path: pathlib.Path, env: str, mocker
+):
+    copy_config_files_and_set_tmp_folder_names_as_ids(dataset_path, pipeline_path)
+
+    mocker.patch("scripts.generate_dag.build_and_push_image")
+    generate_dag.main(dataset_path.name, pipeline_path.name, env)
+    assert not generate_dag.build_and_push_image.called

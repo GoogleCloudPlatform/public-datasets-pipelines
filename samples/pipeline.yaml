@@ -213,6 +213,67 @@ dag:
         # All objects matching this prefix in the bucket will be deleted.
         prefix: "prefix/to/delete"
 
+    - operator: "KubernetesPodOperator"
+      # Executes a task in a Kubernetes pod that uses the Cloud Composer environment's own CPU and memory resources.
+      #
+      # Note: Do NOT use this for very heavy workloads. This can potentially starve resources from Cloud Composer
+      # and affect data pipeline orchestration overall. Instead, use a different GKE cluster using Kubernetes
+      # Engine operators: https://github.com/apache/airflow/blob/master/airflow/providers/google/cloud/operators/kubernetes_engine.py
+
+      # Task description
+      description: "Task to run a KubernetesPodOperator"
+
+      args:
+        # Arguments supported by this operator:
+        # https://airflow.readthedocs.io/en/1.10.14/_api/airflow/contrib/operators/kubernetes_pod_operator/index.html#airflow.contrib.operators.kubernetes_pod_operator.KubernetesPodOperator
+
+        task_id: "sample_kube_pod_operator"
+
+        # The name of the pod in which the task will run. This will be used (plus a random suffix) to generate a pod id
+        name: "sample-kube-operator"
+
+        # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
+        namespace: "default"
+
+        # The Google Container Registry image URL. To prepare a Docker image to be used by this operator:
+        #
+        # 1. Create an `_images` folder under your dataset folder if it doesn't exist.
+        #
+        # 2. Inside the `_images` folder, create another folder and name it after what the image is expected to do, e.g. process_shapefiles, get_cdf_metadata.
+        #
+        # 3. In that subfolder, create a Dockerfile (https://docs.docker.com/engine/reference/builder/) and any scripts you need to process the data. Use the `COPY` command (https://docs.docker.com/engine/reference/builder/#copy) in your `Dockerfile` to include your scripts in the image.
+        #
+        # The resulting file tree for a dataset that uses two container images may look like
+        #
+        #   datasets
+        #   └── DATASET
+        #       ├── _images
+        #       │   ├── container_a
+        #       │   │   ├── Dockerfile
+        #       │   │   ├── requirements.txt
+        #       │   │   └── script.py
+        #       │   └── container_b
+        #       │       ├── Dockerfile
+        #       │       ├── requirements.txt
+        #       │       └── script.py
+        #       ├── _terraform/
+        #       ├── PIPELINE_A
+        #       ├── PIPELINE_B
+        #       ├── ...
+        #       └── dataset.yaml
+        #
+        # Docker images will be built and pushed to GCR by default whenever the `scripts/generate_dag.py` is run. To skip building and pushing images, use the optional `--skip-builds` flag.
+        image: "{{ var.json.DATASET_FOLDER_NAME.container_registry.IMAGE_REPOSITORY }}"
+
+        # Set the environment variables you need initialized in the container. Use these as input variables for the script your container is expected to perform.
+        env_vars:
+          TEST_ENV_VAR: "test-value"
+          ANOTHER_ENV_VAR: 12345
+
+        # Set resource limits for the pod here. For resource units in Kubernetes, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes
+        resources:
+          limit_memory: "250M"
+          limit_cpu: "1"
 
   graph_paths:
     # This is where you specify the relationships (i.e. directed paths/edges)

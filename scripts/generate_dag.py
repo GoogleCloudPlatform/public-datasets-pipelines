@@ -20,6 +20,7 @@ import re
 import subprocess
 import typing
 
+import google.auth
 import jinja2
 from ruamel import yaml
 
@@ -52,7 +53,24 @@ AIRFLOW_VERSION = "1.10.14"
 AIRFLOW_IMPORTS = json.load(open(CURRENT_PATH / "dag_imports.json"))
 
 
-def main(dataset_id: str, pipeline_id: str, env: str):
+def main(
+    dataset_id: str,
+    pipeline_id: str,
+    env: str,
+    all_pipelines: bool = False,
+    skip_builds: bool = False,
+):
+    if not skip_builds:
+        build_images(dataset_id, env)
+
+    if all_pipelines:
+        for pipeline_dir in list_subdirs(DATASETS_PATH / dataset_id):
+            generate_pipeline_dag(dataset_id, pipeline_dir.name, env)
+    else:
+        generate_pipeline_dag(dataset_id, pipeline_id, env)
+
+
+def generate_pipeline_dag(dataset_id: str, pipeline_id: str, env: str):
     pipeline_dir = DATASETS_PATH / dataset_id / pipeline_id
     config = yaml.load((pipeline_dir / "pipeline.yaml").read_text())
 
@@ -222,6 +240,52 @@ def copy_custom_callables_to_dot_dir(
         )
 
 
+def build_images(dataset_id: str, env: str):
+    parent_dir = DATASETS_PATH / dataset_id / "_images"
+    if not parent_dir.exists():
+        return
+
+    image_dirs = copy_image_files_to_dot_dir(
+        dataset_id, parent_dir, PROJECT_ROOT / f".{env}"
+    )
+    for image_dir in image_dirs:
+        build_and_push_image(dataset_id, image_dir)
+
+
+def copy_image_files_to_dot_dir(
+    dataset_id: str, parent_dir: pathlib.Path, env_dir: pathlib.Path
+) -> typing.List[pathlib.Path]:
+    target_dir = env_dir / "datasets" / dataset_id
+    target_dir.mkdir(parents=True, exist_ok=True)
+    subprocess.check_call(
+        ["cp", "-rf", str(parent_dir), str(target_dir)], cwd=PROJECT_ROOT
+    )
+
+    return list_subdirs(target_dir / "_images")
+
+
+def build_and_push_image(dataset_id: str, image_dir: pathlib.Path):
+    image_name = f"{dataset_id}__{image_dir.name}"
+    tag = f"gcr.io/{gcp_project_id()}/{image_name}"
+
+    # gcloud builds submit --tag gcr.io/PROJECT_ID/IMAGE_NAME
+    subprocess.check_call(
+        [
+            "gcloud",
+            "builds",
+            "submit",
+            "--tag",
+            str(tag),
+        ],
+        cwd=image_dir,
+    )
+
+
+def gcp_project_id(project_id: str = None) -> str:
+    _, project_id = google.auth.default()
+    return project_id
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Generate Terraform infra code for BigQuery datasets"
@@ -252,11 +316,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "--all-pipelines", required=False, dest="all_pipelines", action="store_true"
     )
+    parser.add_argument(
+        "--skip-builds", required=False, dest="skip_builds", action="store_true"
+    )
 
     args = parser.parse_args()
-
-    if args.all_pipelines:
-        for pipeline_dir in list_subdirs(DATASETS_PATH / args.dataset):
-            main(args.dataset, pipeline_dir.name, args.env)
-    else:
-        main(args.dataset, args.pipeline, args.env)
+    main(args.dataset, args.pipeline, args.env, args.all_pipelines, args.skip_builds)
