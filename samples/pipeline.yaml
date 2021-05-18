@@ -243,6 +243,25 @@ dag:
         #
         # 3. In that subfolder, create a Dockerfile (https://docs.docker.com/engine/reference/builder/) and any scripts you need to process the data. Use the `COPY` command (https://docs.docker.com/engine/reference/builder/#copy) in your `Dockerfile` to include your scripts in the image.
         #
+        # The resulting file tree for a dataset that uses two container images may look like
+        #
+        #   datasets
+        #   └── DATASET
+        #       ├── _images
+        #       │   ├── container_a
+        #       │   │   ├── Dockerfile
+        #       │   │   ├── requirements.txt
+        #       │   │   └── script.py
+        #       │   └── container_b
+        #       │       ├── Dockerfile
+        #       │       ├── requirements.txt
+        #       │       └── script.py
+        #       ├── _terraform/
+        #       ├── PIPELINE_A
+        #       ├── PIPELINE_B
+        #       ├── ...
+        #       └── dataset.yaml
+        #
         # Docker images will be built and pushed to GCR by default whenever the `scripts/generate_dag.py` is run. To skip building and pushing images, use the optional `--skip-builds` flag.
         image: "{{ var.json.DATASET_FOLDER_NAME.container_registry.IMAGE_REPOSITORY }}"
 

@@ -129,6 +129,27 @@ Using `KubernetesPodOperator` requires having a container image available for us
 
 3. In that subfolder, create a [Dockerfile](https://docs.docker.com/engine/reference/builder/) and any scripts you need to process the data. See the [`samples/container`](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/samples/container/) folder for an example. Use the [COPY command](https://docs.docker.com/engine/reference/builder/#copy) in your `Dockerfile` to include your scripts in the image.
 
+The resulting file tree for a dataset that uses two container images may look like
+
+```
+datasets
+└── DATASET
+    ├── _images
+    │   ├── container_a
+    │   │   ├── Dockerfile
+    │   │   ├── requirements.txt
+    │   │   └── script.py
+    │   └── container_b
+    │       ├── Dockerfile
+    │       ├── requirements.txt
+    │       └── script.py
+    ├── _terraform/
+    ├── PIPELINE_A
+    ├── PIPELINE_B
+    ├── ...
+    └── dataset.yaml
+```
+
 Docker images will be built and pushed to GCR by default whenever the command above is run. To skip building and pushing images, use the optional `--skip-builds` flag.
 
 ## 5. Declare and set your pipeline variables
