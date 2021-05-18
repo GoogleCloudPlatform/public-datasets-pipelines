@@ -18,9 +18,11 @@ FROM python:3.8
 # Allow statements and log messages to appear in Cloud logs
 ENV PYTHONUNBUFFERED True
 
-# Add your script's required packages here
-RUN pip install --no-cache-dir \
-    requests
+# Copy the requirements file into the image
+COPY requirements.txt ./
+
+# Install the packages specified in the requirements file
+RUN pip install --no-cache-dir -r requirements.txt
 
 # The WORKDIR instruction sets the working directory for any RUN, CMD,
 # ENTRYPOINT, COPY and ADD instructions that follow it in the Dockerfile.
