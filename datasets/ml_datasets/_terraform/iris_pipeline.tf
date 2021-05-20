@@ -15,13 +15,22 @@
  */
 
 
-provider "google" {
-  project = var.project_id
-  region  = var.region
+resource "google_bigquery_table" "iris" {
+  project    = var.project_id
+  dataset_id = "ml_datasets"
+  table_id   = "iris"
+
+
+
+  depends_on = [
+    google_bigquery_dataset.ml_datasets
+  ]
 }
 
-data "google_client_openid_userinfo" "me" {}
+output "bigquery_table-iris-table_id" {
+  value = google_bigquery_table.iris.table_id
+}
 
-output "impersonating-account" {
-  value = data.google_client_openid_userinfo.me.email
+output "bigquery_table-iris-id" {
+  value = google_bigquery_table.iris.id
 }
