@@ -87,7 +87,7 @@ dag:
         bash_command: |
           SOURCE_CSV=$airflow_data_folder/ml_datasets/iris/data-source-{{ ds }}.csv \
           TARGET_CSV=$airflow_data_folder/ml_datasets/iris/transformed-data-{{ ds }}.csv \
-          python $airflow_home/dags/$dataset/$pipeline/custom/transform_csv.py
+          python $airflow_home/dags/ml_datasets/iris/custom/transform_csv.py
         env:
           airflow_home: "{{ var.json.shared.airflow_home }}"
           airflow_data_folder: "{{ var.json.shared.airflow_data_folder }}"

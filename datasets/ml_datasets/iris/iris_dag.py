@@ -34,7 +34,7 @@ with DAG(
 ) as dag:
     download_csv_file = bash_operator.BashOperator(
         task_id="download_csv_file",
-        bash_command="mkdir -p $airflow_data_folder/ml_datasets/iris\ncurl -o $airflow_data_folder/ml_dataset/iris/data-source-{{ ds }}.csv -L $csv_source_url\n",
+        bash_command="mkdir -p $airflow_data_folder/ml_datasets/iris\ncurl -o $airflow_data_folder/ml_datasets/iris/data-source-{{ ds }}.csv -L $csv_source_url\n",
         env={
             "csv_source_url": "https://www.openml.org/data/get_csv/61/dataset_61_iris.csv",
             "airflow_data_folder": "{{ var.json.shared.airflow_data_folder }}",
@@ -44,7 +44,7 @@ with DAG(
     # Run a custom Python script
     transform_csv = bash_operator.BashOperator(
         task_id="transform_csv",
-        bash_command="SOURCE_CSV=$airflow_data_folder/ml_dataset/iris/data-source-{{ ds }}.csv TARGET_CSV=$airflow_data_folder/ml_dataset/iris/transformed-data-{{ ds }}.csv python $airflow_home/dags/$dataset/$pipeline/custom/transform_csv.py\n",
+        bash_command="SOURCE_CSV=$airflow_data_folder/ml_datasets/iris/data-source-{{ ds }}.csv \\\nTARGET_CSV=$airflow_data_folder/ml_datasets/iris/transformed-data-{{ ds }}.csv \\\npython $airflow_home/dags/ml_datasets/iris/custom/transform_csv.py\n",
         env={
             "airflow_home": "{{ var.json.shared.airflow_home }}",
             "airflow_data_folder": "{{ var.json.shared.airflow_data_folder }}",
