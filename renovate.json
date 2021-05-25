@@ -1,8 +1,10 @@
 {
-    "extends": [
-      "config:base"
-    ],
-    "prConcurrentLimit": 0,
-    "rebaseWhen": "never",
-    "masterIssue": true
+  "extends": [
+    "config:base"
+  ],
+  "prConcurrentLimit": 0,
+  "rebaseWhen": "never",
+  "masterIssue": true,
+  "labels": ["dependencies"],
+  "commitMessagePrefix": "chore:"
 }
