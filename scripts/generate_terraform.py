@@ -90,7 +90,7 @@ def generate_provider_tf(
         },
     )
 
-    create_file_in_dot_and_project_dirs(dataset_id, contents, "provider.tf", env_path)
+    create_file_in_dir_tree(dataset_id, contents, "provider.tf", env_path)
 
 
 def generate_backend_tf(
@@ -102,12 +102,14 @@ def generate_backend_tf(
     contents = apply_substitutions_to_template(
         TEMPLATE_PATHS["backend"],
         {
-            "tf_state_backend": tf_state_bucket,
+            "tf_state_bucket": tf_state_bucket,
             "tf_state_prefix": tf_state_prefix,
         },
     )
 
-    create_file_in_dot_and_project_dirs(dataset_id, contents, "backend.tf", env_path)
+    create_file_in_dir_tree(
+        dataset_id, contents, "backend.tf", env_path, use_project_dir=False
+    )
 
 
 def generate_dataset_tf(dataset_id: str, project_id: str, config: dict, env: str):
@@ -120,7 +122,7 @@ def generate_dataset_tf(dataset_id: str, project_id: str, config: dict, env: str
     for resource in config["resources"]:
         contents += tf_resource_contents(resource, copy.deepcopy(subs))
 
-    create_file_in_dot_and_project_dirs(
+    create_file_in_dir_tree(
         dataset_id, contents, f"{dataset_id}_dataset.tf", PROJECT_ROOT / f".{env}"
     )
 
@@ -151,14 +153,14 @@ def generate_pipeline_tf(
     for resource in config["resources"]:
         contents += tf_resource_contents(resource, {**subs, **resource})
 
-    create_file_in_dot_and_project_dirs(
+    create_file_in_dir_tree(
         dataset_id, contents, f"{pipeline_id}_pipeline.tf", env_path
     )
 
 
 def generate_variables_tf(dataset_id: str, env_path: pathlib.Path):
     contents = pathlib.Path(TEMPLATE_PATHS["variables"]).read_text()
-    create_file_in_dot_and_project_dirs(dataset_id, contents, "variables.tf", env_path)
+    create_file_in_dir_tree(dataset_id, contents, "variables.tf", env_path)
 
 
 def generate_tfvars_file(
@@ -240,14 +242,24 @@ def create_gitignored_env_path(dataset_id: str, env_path: pathlib.Path):
     (env_path / "datasets" / dataset_id).mkdir(parents=True, exist_ok=True)
 
 
-def create_file_in_dot_and_project_dirs(
-    dataset_id: str, contents: str, filename: str, env_path: pathlib.Path
+def create_file_in_dir_tree(
+    dataset_id: str,
+    contents: str,
+    filename: str,
+    env_path: pathlib.Path,
+    use_env_dir: bool = True,
+    use_project_dir: bool = True,
 ):
     filepaths = []
-    for prefix in (
-        env_path / "datasets" / dataset_id / "_terraform",
-        DATASETS_PATH / dataset_id / "_terraform",
-    ):
+    prefixes = []
+
+    if use_env_dir:
+        prefixes.append(env_path / "datasets" / dataset_id / "_terraform")
+
+    if use_project_dir:
+        prefixes.append(DATASETS_PATH / dataset_id / "_terraform")
+
+    for prefix in prefixes:
         if not prefix.exists():
             prefix.mkdir(parents=True, exist_ok=True)
 
