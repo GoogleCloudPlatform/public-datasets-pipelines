@@ -13,7 +13,7 @@
       "updateTypes": ["patch"]
     },
     {
-      "packagePatterns": ["apache-airflow"],
+      "packagePatterns": ["python"],
       "allowedVersions": [">=3.8,<3.9"]
     }
   ]
