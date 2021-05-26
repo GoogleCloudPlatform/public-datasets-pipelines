@@ -48,6 +48,8 @@ def main(
     region: str,
     impersonating_acct: str,
     env: str,
+    tf_state_bucket: str,
+    tf_state_prefix: str,
     tf_apply: bool = False,
 ):
     validate_bucket_name(bucket_name_prefix)
@@ -56,6 +58,7 @@ def main(
     create_gitignored_env_path(dataset_id, env_path)
 
     generate_provider_tf(project_id, dataset_id, region, impersonating_acct, env_path)
+    generate_backend_tf(dataset_id, tf_state_bucket, tf_state_prefix, env_path)
 
     dataset_config = yaml.load(open(DATASETS_PATH / dataset_id / "dataset.yaml"))
     generate_dataset_tf(dataset_id, project_id, dataset_config, env)
@@ -88,6 +91,23 @@ def generate_provider_tf(
     )
 
     create_file_in_dot_and_project_dirs(dataset_id, contents, "provider.tf", env_path)
+
+
+def generate_backend_tf(
+    dataset_id: str, tf_state_bucket: str, tf_state_prefix: str, env_path: pathlib.Path
+):
+    if not tf_state_bucket:
+        return
+
+    contents = apply_substitutions_to_template(
+        TEMPLATE_PATHS["backend"],
+        {
+            "tf_state_backend": tf_state_bucket,
+            "tf_state_prefix": tf_state_prefix,
+        },
+    )
+
+    create_file_in_dot_and_project_dirs(dataset_id, contents, "backend.tf", env_path)
 
 
 def generate_dataset_tf(dataset_id: str, project_id: str, config: dict, env: str):
@@ -305,6 +325,19 @@ if __name__ == "__main__":
         help="The prefix to use for GCS bucket names for global uniqueness",
     )
     parser.add_argument(
+        "--tf-state-bucket",
+        type=str,
+        dest="tf_state_bucket",
+        help="The GCS bucket name for the Terraform remote state",
+    )
+    parser.add_argument(
+        "--tf-state-prefix",
+        type=str,
+        default="terraform/state",
+        dest="tf_state_prefix",
+        help="The GCS bucket prefix for the Terraform remote state",
+    )
+    parser.add_argument(
         "-e",
         "--env",
         type=str,
@@ -336,5 +369,7 @@ if __name__ == "__main__":
         args.region,
         args.impersonating_acct,
         args.env,
+        args.tf_state_bucket,
+        args.tf_state_prefix,
         args.tf_apply,
     )
