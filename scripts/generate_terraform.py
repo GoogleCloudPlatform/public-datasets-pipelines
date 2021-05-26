@@ -35,6 +35,7 @@ TEMPLATE_PATHS = {
     "tfvars": TEMPLATES_PATH / "terraform.tfvars.jinja2",
     "variables": TEMPLATES_PATH / "variables.tf.jinja2",
     "provider": TEMPLATES_PATH / "provider.tf.jinja2",
+    "backend": TEMPLATES_PATH / "backend.tf.jinja2",
 }
 
 yaml = yaml.YAML(typ="safe")
