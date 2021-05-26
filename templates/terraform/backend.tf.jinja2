@@ -17,7 +17,7 @@
 
 terraform {
   backend "gcs" {
-    bucket = {{ tf_state_bucket }}
-    prefix = {{ tf_state_prefix }}
+    bucket = "{{ tf_state_bucket }}"
+    prefix = "{{ tf_state_prefix }}"
   }
 }
