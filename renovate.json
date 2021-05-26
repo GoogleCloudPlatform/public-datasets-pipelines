@@ -8,12 +8,12 @@
   "labels": ["dependencies"],
   "packageRules": [
     {
-      "packagePatterns": ["apache-airflow"],
+      "matchPackageNames": ["apache-airflow"],
       "allowedVersions": ">=1.10.14,<2.0",
-      "updateTypes": ["patch"]
+      "matchUpdateTypes": ["patch"]
     },
     {
-      "packagePatterns": ["python"],
+      "matchPackageNames": ["python"],
       "allowedVersions": ">=3.8,<3.9"
     }
   ]
