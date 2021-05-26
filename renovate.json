@@ -9,12 +9,12 @@
   "packageRules": [
     {
       "packagePatterns": ["apache-airflow"],
-      "allowedVersions": [">=1.10.14,<2.0"],
+      "allowedVersions": ">=1.10.14,<2.0",
       "updateTypes": ["patch"]
     },
     {
       "packagePatterns": ["python"],
-      "allowedVersions": [">=3.8,<3.9"]
+      "allowedVersions": ">=3.8,<3.9"
     }
   ]
 }
