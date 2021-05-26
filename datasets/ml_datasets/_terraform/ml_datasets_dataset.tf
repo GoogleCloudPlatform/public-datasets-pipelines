@@ -18,7 +18,7 @@
 resource "google_bigquery_dataset" "ml_datasets" {
   dataset_id = "ml_datasets"
   project    = var.project_id
-  }
+}
 
 output "bigquery_dataset-ml_datasets-dataset_id" {
   value = google_bigquery_dataset.ml_datasets.dataset_id
