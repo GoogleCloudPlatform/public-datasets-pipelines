@@ -27,6 +27,7 @@ def main(
     local: bool,
     env_path: pathlib.Path,
     dataset_id: str,
+    pipeline: str = None,
     airflow_home: pathlib.Path = None,
     composer_env: str = None,
     composer_bucket: str = None,
@@ -41,7 +42,12 @@ def main(
     )
 
     print("========== AIRFLOW DAGS ==========")
-    for pipeline_path in list_subdirs(env_path / "datasets" / dataset_id):
+    if pipeline:
+        pipelines = [env_path / "datasets" / pipeline]
+    else:
+        pipelines = list_subdirs(env_path / "datasets" / dataset_id)
+
+    for pipeline_path in pipelines:
         copy_custom_callables_to_airflow_dags_folder(
             local,
             env_path,
@@ -326,6 +332,7 @@ if __name__ == "__main__":
         local=args.local,
         env_path=PROJECT_ROOT / f".{args.env}",
         dataset_id=args.dataset,
+        pipeline=args.pipeline,
         airflow_home=airflow_path,
         composer_env=args.composer_env,
         composer_bucket=args.composer_bucket,
