@@ -172,6 +172,51 @@ def test_script_always_requires_dataset_arg(
     )
 
 
+pipeline_path_2 = pipeline_path
+
+
+def test_script_with_pipeline_arg_deploys_only_that_pipeline(
+    dataset_path: pathlib.Path,
+    pipeline_path: pathlib.Path,
+    pipeline_path_2: pathlib.Path,
+    airflow_home: pathlib.Path,
+    env: str,
+):
+    setup_dag_and_variables(
+        dataset_path,
+        pipeline_path,
+        airflow_home,
+        env,
+        f"{dataset_path.name}_variables.json",
+    )
+
+    setup_dag_and_variables(
+        dataset_path,
+        pipeline_path_2,
+        airflow_home,
+        env,
+        f"{dataset_path.name}_variables.json",
+    )
+
+    deploy_dag.main(
+        local=True,
+        env_path=ENV_PATH,
+        dataset_id=dataset_path.name,
+        pipeline=pipeline_path_2.name,
+        airflow_home=airflow_home,
+        composer_env=None,
+        composer_bucket=None,
+        composer_region=None,
+    )
+
+    assert not (
+        airflow_home / "dags" / f"{dataset_path.name}__{pipeline_path.name}_dag.py"
+    ).exists()
+    assert (
+        airflow_home / "dags" / f"{dataset_path.name}__{pipeline_path_2.name}_dag.py"
+    ).exists()
+
+
 def test_script_without_local_flag_requires_cloud_composer_args(env: str):
     with pytest.raises(subprocess.CalledProcessError):
         # No --composer-env parameter
