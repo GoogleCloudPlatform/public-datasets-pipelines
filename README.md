@@ -7,6 +7,7 @@ Cloud-native, data pipeline architecture for onboarding datasets to the [Google 
 ![public-datasets-pipelines](https://user-images.githubusercontent.com/1208372/113048389-7b8af100-9170-11eb-9156-a9c114fa6920.png)
 
 # Requirements
+- Python `>=3.6.10,<3.9`. We currently use `3.8`. For more info, see the [Cloud Composer version list](https://cloud.google.com/composer/docs/concepts/versioning/composer-versions).
 - Familiarity with [Apache Airflow](https://airflow.apache.org/docs/apache-airflow/1.10.14/concepts.html) (>=v1.10.14)
 - [pipenv](https://pipenv-fork.readthedocs.io/en/latest/install.html#installing-pipenv) for creating similar Python environments via `Pipfile.lock`
 - [gcloud](https://cloud.google.com/sdk/gcloud) command-line tool with Google Cloud Platform credentials configured. Instructions can be found [here](https://cloud.google.com/sdk/docs/initializing).
