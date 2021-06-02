@@ -183,11 +183,14 @@ Deploy the DAG and the variables to your own Cloud Composer environment using on
 ```
 $ python scripts/deploy_dag.py \
   --dataset DATASET \
+  [--pipeline PIPELINE] \
   --composer-env CLOUD_COMPOSER_ENVIRONMENT_NAME \
   --composer-bucket CLOUD_COMPOSER_BUCKET \
   --composer-region CLOUD_COMPOSER_REGION \
   --env ENV
 ```
+
+The specifying an argument to `--pipeline` is optional. By default, the script deploys all pipelines under the given `--dataset` argument.
 
 # Testing
 
