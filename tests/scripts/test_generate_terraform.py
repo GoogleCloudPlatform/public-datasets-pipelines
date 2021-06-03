@@ -14,6 +14,7 @@
 
 
 import pathlib
+import re
 import shutil
 import subprocess
 import tempfile
@@ -442,6 +443,56 @@ def test_dataset_tf_file_contains_description_when_specified(
         assert (path_prefix / f"{dataset_path.name}_dataset.tf").read_text().count(
             f"description = \"{bq_dataset['description']}\""
         ) == 1
+
+
+def test_dataset_tf_has_no_bq_dataset_description_when_unspecified(
+    dataset_path,
+    pipeline_path,
+    project_id,
+    bucket_name_prefix,
+    region,
+    impersonating_acct,
+    env,
+):
+    shutil.copyfile(SAMPLE_YAML_PATHS["dataset"], dataset_path / "dataset.yaml")
+    shutil.copyfile(SAMPLE_YAML_PATHS["pipeline"], pipeline_path / "pipeline.yaml")
+
+    config = yaml.load(open(dataset_path / "dataset.yaml"))
+
+    # Get the first bigquery_dataset resource and delete the `description` field
+    bq_dataset = next(
+        (r for r in config["resources"] if r["type"] == "bigquery_dataset")
+    )
+    del bq_dataset["description"]
+    with open(dataset_path / "dataset.yaml", "w") as file:
+        yaml.dump(config, file)
+
+    generate_terraform.main(
+        dataset_path.name,
+        project_id,
+        bucket_name_prefix,
+        region,
+        impersonating_acct,
+        env,
+        None,
+        None,
+    )
+
+    # Match the "google_bigquery_dataset" properties, i.e. any lines between the
+    # curly braces, in the *_dataset.tf file
+    regexp = r"\"google_bigquery_dataset\" \"" + dataset_path.name + r"\" \{(.*?)\}"
+    bq_dataset_tf_string = re.compile(regexp, flags=re.MULTILINE | re.DOTALL)
+
+    for path_prefix in (
+        ENV_DATASETS_PATH / dataset_path.name / "_terraform",
+        generate_terraform.DATASETS_PATH / dataset_path.name / "_terraform",
+    ):
+        result = bq_dataset_tf_string.search(
+            (path_prefix / f"{dataset_path.name}_dataset.tf").read_text()
+        )
+
+        assert re.search(r"dataset_id\s+\=", result.group(1))
+        assert not re.search(r"description\s+\=", result.group(1))
 
 
 def test_pipeline_tf_contains_bq_table_description_when_specified(
