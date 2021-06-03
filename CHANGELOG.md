@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.2.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.1.0...v1.2.0) (2021-06-02)
+
+
+### Features
+
+* Configure Renovate ([#36](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/36)) ([d6fd93b](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/d6fd93be13de29e83254072e082d20c36e7b4991))
+* Support deploying a single pipeline in a dataset ([#46](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/46)) ([8bdb8d7](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/8bdb8d797beaa1f44e0fd6c93864474cd535ab36))
+* Support Terraform remote state when generating GCP resources ([#39](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/39)) ([9e01936](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/9e0193695262646a04dabb04a866712a070688d4))
+
 ## [1.1.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.0.0...v1.1.0) (2021-05-26)
 
 

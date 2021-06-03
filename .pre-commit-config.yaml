@@ -18,7 +18,7 @@ repos:
     hooks:
       - id: terraform-fmt
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.4.0
+    rev: v4.0.1
     hooks:
       - id: check-yaml
   - repo: https://github.com/psf/black
@@ -28,11 +28,11 @@ repos:
         name: black
         language_version: python3
   - repo: https://gitlab.com/pycqa/flake8
-    rev: '3.8.4'
+    rev: '3.9.2'
     hooks:
       - id: flake8
   - repo: https://github.com/pycqa/isort
-    rev: '5.6.4'
+    rev: '5.8.0'
     hooks:
       - id: isort
         args: ["--profile", "black", "--filter-files"]

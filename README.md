@@ -82,6 +82,8 @@ $ python scripts/generate_terraform.py \
     --region REGION \
     --bucket-name-prefix UNIQUE_BUCKET_PREFIX \
     [--env] dev \
+    [--tf-state-bucket] \
+    [--tf-state-prefix] \
     [--tf-apply] \
     [--impersonating-acct] IMPERSONATING_SERVICE_ACCT
 ```
@@ -89,6 +91,8 @@ $ python scripts/generate_terraform.py \
 This generates Terraform files (`*.tf`) in a `_terraform` directory inside that dataset. The files contain instrastructure-as-code on which GCP resources need to be actuated for use by the pipelines. If you passed in the `--tf-apply` parameter, the command will also run `terraform apply` to actuate those resources.
 
 The `--bucket-name-prefix` is used to ensure that the buckets created by different environments and contributors are kept unique. This is to satisfy the rule where bucket names must be globally unique across all of GCS. Use hyphenated names (`some-prefix-123`) instead of snakecase or underscores (`some_prefix_123`).
+
+The `--tf-state-bucket` and `--tf-state-prefix` parameters can be optionally used if one needs to use a remote store for the Terraform state. This will create a `backend.tf` file that points to the GCS bucket and prefix to use in storing the Terraform state. For more info, see the [Terraform docs for using GCS backends](https://www.terraform.io/docs/language/settings/backends/gcs.html).
 
 In addition, the command above creates a "dot" directory in the project root. The directory name is the value you pass to the `--env` parameter of the command. If no `--env` argument was passed, the value defaults to `dev` (which generates the `.dev` folder).
 
@@ -179,11 +183,14 @@ Deploy the DAG and the variables to your own Cloud Composer environment using on
 ```
 $ python scripts/deploy_dag.py \
   --dataset DATASET \
+  [--pipeline PIPELINE] \
   --composer-env CLOUD_COMPOSER_ENVIRONMENT_NAME \
   --composer-bucket CLOUD_COMPOSER_BUCKET \
   --composer-region CLOUD_COMPOSER_REGION \
   --env ENV
 ```
+
+The specifying an argument to `--pipeline` is optional. By default, the script deploys all pipelines under the given `--dataset` argument.
 
 # Testing
 
