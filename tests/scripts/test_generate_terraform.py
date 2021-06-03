@@ -444,6 +444,45 @@ def test_dataset_tf_file_contains_description_when_specified(
         ) == 1
 
 
+def test_pipeline_tf_contains_bq_table_description_when_specified(
+    dataset_path,
+    pipeline_path,
+    project_id,
+    bucket_name_prefix,
+    region,
+    impersonating_acct,
+    env,
+):
+    shutil.copyfile(SAMPLE_YAML_PATHS["dataset"], dataset_path / "dataset.yaml")
+    shutil.copyfile(SAMPLE_YAML_PATHS["pipeline"], pipeline_path / "pipeline.yaml")
+
+    generate_terraform.main(
+        dataset_path.name,
+        project_id,
+        bucket_name_prefix,
+        region,
+        impersonating_acct,
+        env,
+        None,
+        None,
+    )
+
+    config = yaml.load(open(pipeline_path / "pipeline.yaml"))
+    bq_table = next(
+        (r for r in config["resources"] if r["type"] == "bigquery_table"), None
+    )
+    assert bq_table
+    assert bq_table["description"]
+
+    for path_prefix in (
+        ENV_DATASETS_PATH / dataset_path.name / "_terraform",
+        generate_terraform.DATASETS_PATH / dataset_path.name / "_terraform",
+    ):
+        assert (path_prefix / f"{pipeline_path.name}_pipeline.tf").read_text().count(
+            f"description = \"{bq_table['description']}\""
+        ) == 1
+
+
 def test_bucket_names_must_not_contain_dots_and_google():
     for name in (
         "test.bucket.name",
