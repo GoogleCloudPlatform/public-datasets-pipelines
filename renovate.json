@@ -1,0 +1,19 @@
+{
+  "extends": [
+    "config:base"
+  ],
+  "prConcurrentLimit": 0,
+  "rebaseWhen": "never",
+  "masterIssue": true,
+  "labels": ["dependencies"],
+  "packageRules": [
+    {
+      "matchPackageNames": ["apache-airflow"],
+      "allowedVersions": ">=1.10.14,<2.0"
+    },
+    {
+      "matchPackageNames": ["python"],
+      "allowedVersions": ">=3.8,<3.9"
+    }
+  ]
+}
