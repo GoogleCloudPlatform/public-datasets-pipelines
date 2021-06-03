@@ -15,14 +15,9 @@
  */
 
 
-provider "google" {
-  project                     = var.project_id
-  impersonate_service_account = var.impersonating_acct
-  region                      = var.region
-}
-
-data "google_client_openid_userinfo" "me" {}
-
-output "impersonating-account" {
-  value = data.google_client_openid_userinfo.me.email
+terraform {
+  backend "gcs" {
+    bucket = "{{ tf_state_bucket }}"
+    prefix = "{{ tf_state_prefix }}"
+  }
 }

@@ -14,7 +14,6 @@
 
 
 import argparse
-import copy
 import pathlib
 import subprocess
 import typing
@@ -35,6 +34,7 @@ TEMPLATE_PATHS = {
     "tfvars": TEMPLATES_PATH / "terraform.tfvars.jinja2",
     "variables": TEMPLATES_PATH / "variables.tf.jinja2",
     "provider": TEMPLATES_PATH / "provider.tf.jinja2",
+    "backend": TEMPLATES_PATH / "backend.tf.jinja2",
 }
 
 yaml = yaml.YAML(typ="safe")
@@ -47,6 +47,8 @@ def main(
     region: str,
     impersonating_acct: str,
     env: str,
+    tf_state_bucket: str,
+    tf_state_prefix: str,
     tf_apply: bool = False,
 ):
     validate_bucket_name(bucket_name_prefix)
@@ -55,6 +57,7 @@ def main(
     create_gitignored_env_path(dataset_id, env_path)
 
     generate_provider_tf(project_id, dataset_id, region, impersonating_acct, env_path)
+    generate_backend_tf(dataset_id, tf_state_bucket, tf_state_prefix, env_path)
 
     dataset_config = yaml.load(open(DATASETS_PATH / dataset_id / "dataset.yaml"))
     generate_dataset_tf(dataset_id, project_id, dataset_config, env)
@@ -86,7 +89,26 @@ def generate_provider_tf(
         },
     )
 
-    create_file_in_dot_and_project_dirs(dataset_id, contents, "provider.tf", env_path)
+    create_file_in_dir_tree(dataset_id, contents, "provider.tf", env_path)
+
+
+def generate_backend_tf(
+    dataset_id: str, tf_state_bucket: str, tf_state_prefix: str, env_path: pathlib.Path
+):
+    if not tf_state_bucket:
+        return
+
+    contents = apply_substitutions_to_template(
+        TEMPLATE_PATHS["backend"],
+        {
+            "tf_state_bucket": tf_state_bucket,
+            "tf_state_prefix": tf_state_prefix,
+        },
+    )
+
+    create_file_in_dir_tree(
+        dataset_id, contents, "backend.tf", env_path, use_project_dir=False
+    )
 
 
 def generate_dataset_tf(dataset_id: str, project_id: str, config: dict, env: str):
@@ -97,9 +119,9 @@ def generate_dataset_tf(dataset_id: str, project_id: str, config: dict, env: str
 
     contents = ""
     for resource in config["resources"]:
-        contents += tf_resource_contents(resource, copy.deepcopy(subs))
+        contents += tf_resource_contents(resource, {**resource, **subs})
 
-    create_file_in_dot_and_project_dirs(
+    create_file_in_dir_tree(
         dataset_id, contents, f"{dataset_id}_dataset.tf", PROJECT_ROOT / f".{env}"
     )
 
@@ -130,14 +152,14 @@ def generate_pipeline_tf(
     for resource in config["resources"]:
         contents += tf_resource_contents(resource, {**subs, **resource})
 
-    create_file_in_dot_and_project_dirs(
+    create_file_in_dir_tree(
         dataset_id, contents, f"{pipeline_id}_pipeline.tf", env_path
     )
 
 
 def generate_variables_tf(dataset_id: str, env_path: pathlib.Path):
     contents = pathlib.Path(TEMPLATE_PATHS["variables"]).read_text()
-    create_file_in_dot_and_project_dirs(dataset_id, contents, "variables.tf", env_path)
+    create_file_in_dir_tree(dataset_id, contents, "variables.tf", env_path)
 
 
 def generate_tfvars_file(
@@ -219,14 +241,24 @@ def create_gitignored_env_path(dataset_id: str, env_path: pathlib.Path):
     (env_path / "datasets" / dataset_id).mkdir(parents=True, exist_ok=True)
 
 
-def create_file_in_dot_and_project_dirs(
-    dataset_id: str, contents: str, filename: str, env_path: pathlib.Path
+def create_file_in_dir_tree(
+    dataset_id: str,
+    contents: str,
+    filename: str,
+    env_path: pathlib.Path,
+    use_env_dir: bool = True,
+    use_project_dir: bool = True,
 ):
     filepaths = []
-    for prefix in (
-        env_path / "datasets" / dataset_id / "_terraform",
-        DATASETS_PATH / dataset_id / "_terraform",
-    ):
+    prefixes = []
+
+    if use_env_dir:
+        prefixes.append(env_path / "datasets" / dataset_id / "_terraform")
+
+    if use_project_dir:
+        prefixes.append(DATASETS_PATH / dataset_id / "_terraform")
+
+    for prefix in prefixes:
         if not prefix.exists():
             prefix.mkdir(parents=True, exist_ok=True)
 
@@ -304,6 +336,19 @@ if __name__ == "__main__":
         help="The prefix to use for GCS bucket names for global uniqueness",
     )
     parser.add_argument(
+        "--tf-state-bucket",
+        type=str,
+        dest="tf_state_bucket",
+        help="The GCS bucket name for the Terraform remote state",
+    )
+    parser.add_argument(
+        "--tf-state-prefix",
+        type=str,
+        default="terraform/state",
+        dest="tf_state_prefix",
+        help="The GCS bucket prefix for the Terraform remote state",
+    )
+    parser.add_argument(
         "-e",
         "--env",
         type=str,
@@ -335,5 +380,7 @@ if __name__ == "__main__":
         args.region,
         args.impersonating_acct,
         args.env,
+        args.tf_state_bucket,
+        args.tf_state_prefix,
         args.tf_apply,
     )

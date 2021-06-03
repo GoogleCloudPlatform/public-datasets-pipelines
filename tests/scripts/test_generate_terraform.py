@@ -19,6 +19,7 @@ import subprocess
 import tempfile
 
 import pytest
+from ruamel import yaml
 
 from scripts import generate_terraform
 
@@ -30,6 +31,8 @@ SAMPLE_YAML_PATHS = {
 
 ENV_PATH = PROJECT_ROOT / ".test"
 ENV_DATASETS_PATH = ENV_PATH / "datasets"
+
+yaml = yaml.YAML(typ="safe")
 
 
 @pytest.fixture
@@ -90,6 +93,16 @@ def bq_table_resource() -> dict:
 
 
 @pytest.fixture
+def tf_state_bucket() -> str:
+    return "test-terraform-state-bucket"
+
+
+@pytest.fixture
+def tf_state_prefix() -> str:
+    return "test/terraform/state"
+
+
+@pytest.fixture
 def env() -> str:
     return "test"
 
@@ -100,6 +113,63 @@ def test_tf_templates_exist():
 
 
 def test_main_generates_tf_files(
+    dataset_path,
+    pipeline_path,
+    project_id,
+    bucket_name_prefix,
+    region,
+    impersonating_acct,
+    env,
+    tf_state_bucket,
+    tf_state_prefix,
+):
+    shutil.copyfile(SAMPLE_YAML_PATHS["dataset"], dataset_path / "dataset.yaml")
+    shutil.copyfile(SAMPLE_YAML_PATHS["pipeline"], pipeline_path / "pipeline.yaml")
+
+    generate_terraform.main(
+        dataset_path.name,
+        project_id,
+        bucket_name_prefix,
+        region,
+        impersonating_acct,
+        env,
+        tf_state_bucket,
+        tf_state_prefix,
+    )
+
+    for path_prefix in (
+        ENV_DATASETS_PATH / dataset_path.name / "_terraform",
+        generate_terraform.DATASETS_PATH / dataset_path.name / "_terraform",
+    ):
+        assert (path_prefix / "provider.tf").exists()
+        assert (path_prefix / f"{dataset_path.name}_dataset.tf").exists()
+        assert (path_prefix / f"{pipeline_path.name}_pipeline.tf").exists()
+        assert (path_prefix / "variables.tf").exists()
+
+    assert not (
+        generate_terraform.DATASETS_PATH
+        / dataset_path.name
+        / "_terraform"
+        / "terraform.tfvars"
+    ).exists()
+
+    assert (
+        ENV_DATASETS_PATH / dataset_path.name / "_terraform" / "terraform.tfvars"
+    ).exists()
+
+    assert not (
+        generate_terraform.DATASETS_PATH
+        / dataset_path.name
+        / "_terraform"
+        / "backend.tf"
+    ).exists()
+
+    assert (
+        ENV_DATASETS_PATH / dataset_path.name / "_terraform" / "backend.tf"
+    ).exists()
+
+
+def test_main_without_tf_remote_state_generates_tf_files_except_backend_tf(
     dataset_path,
     pipeline_path,
     project_id,
@@ -118,6 +188,8 @@ def test_main_generates_tf_files(
         region,
         impersonating_acct,
         env,
+        None,
+        None,
     )
 
     for path_prefix in (
@@ -128,6 +200,14 @@ def test_main_generates_tf_files(
         assert (path_prefix / f"{dataset_path.name}_dataset.tf").exists()
         assert (path_prefix / f"{pipeline_path.name}_pipeline.tf").exists()
         assert (path_prefix / "variables.tf").exists()
+        assert not (path_prefix / "backend.tf").exists()
+
+    assert not (
+        generate_terraform.DATASETS_PATH
+        / dataset_path.name
+        / "_terraform"
+        / "terraform.tfvars"
+    ).exists()
 
     assert (
         ENV_DATASETS_PATH / dataset_path.name / "_terraform" / "terraform.tfvars"
@@ -146,6 +226,8 @@ def test_main_with_multiple_pipelines(
     region,
     impersonating_acct,
     env,
+    tf_state_bucket,
+    tf_state_prefix,
 ):
     assert pipeline_path.name != pipeline_path_2.name
 
@@ -160,6 +242,8 @@ def test_main_with_multiple_pipelines(
         region,
         impersonating_acct,
         env,
+        tf_state_bucket,
+        tf_state_prefix,
     )
 
     for path_prefix in (
@@ -172,13 +256,38 @@ def test_main_with_multiple_pipelines(
         assert (path_prefix / f"{pipeline_path_2.name}_pipeline.tf").exists()
         assert (path_prefix / "variables.tf").exists()
 
+    assert not (
+        generate_terraform.DATASETS_PATH
+        / dataset_path.name
+        / "_terraform"
+        / "terraform.tfvars"
+    ).exists()
+
     assert (
         ENV_DATASETS_PATH / dataset_path.name / "_terraform" / "terraform.tfvars"
     ).exists()
 
+    assert not (
+        generate_terraform.DATASETS_PATH
+        / dataset_path.name
+        / "_terraform"
+        / "backend.tf"
+    ).exists()
+
+    assert (
+        ENV_DATASETS_PATH / dataset_path.name / "_terraform" / "backend.tf"
+    ).exists()
+
 
 def test_dataset_without_any_pipelines(
-    dataset_path, project_id, bucket_name_prefix, region, impersonating_acct, env
+    dataset_path,
+    project_id,
+    bucket_name_prefix,
+    region,
+    impersonating_acct,
+    env,
+    tf_state_bucket,
+    tf_state_prefix,
 ):
     shutil.copyfile(SAMPLE_YAML_PATHS["dataset"], dataset_path / "dataset.yaml")
 
@@ -189,6 +298,8 @@ def test_dataset_without_any_pipelines(
         region,
         impersonating_acct,
         env,
+        tf_state_bucket,
+        tf_state_prefix,
     )
 
     for path_prefix in (
@@ -198,9 +309,37 @@ def test_dataset_without_any_pipelines(
         assert (path_prefix / "provider.tf").exists()
         assert (path_prefix / f"{dataset_path.name}_dataset.tf").exists()
 
+    assert not (
+        generate_terraform.DATASETS_PATH
+        / dataset_path.name
+        / "_terraform"
+        / "terraform.tfvars"
+    ).exists()
+
+    assert (
+        ENV_DATASETS_PATH / dataset_path.name / "_terraform" / "terraform.tfvars"
+    ).exists()
+
+    assert not (
+        generate_terraform.DATASETS_PATH
+        / dataset_path.name
+        / "_terraform"
+        / "backend.tf"
+    ).exists()
+
+    assert (
+        ENV_DATASETS_PATH / dataset_path.name / "_terraform" / "backend.tf"
+    ).exists()
+
 
 def test_dataset_path_does_not_exist(
-    project_id, bucket_name_prefix, region, impersonating_acct, env
+    project_id,
+    bucket_name_prefix,
+    region,
+    impersonating_acct,
+    env,
+    tf_state_bucket,
+    tf_state_prefix,
 ):
     with pytest.raises(FileNotFoundError):
         generate_terraform.main(
@@ -210,6 +349,8 @@ def test_dataset_path_does_not_exist(
             region,
             impersonating_acct,
             env,
+            tf_state_bucket,
+            tf_state_prefix,
         )
 
 
@@ -221,6 +362,8 @@ def test_generated_tf_files_contain_license_headers(
     region,
     impersonating_acct,
     env,
+    tf_state_bucket,
+    tf_state_prefix,
 ):
     shutil.copyfile(SAMPLE_YAML_PATHS["dataset"], dataset_path / "dataset.yaml")
     shutil.copyfile(SAMPLE_YAML_PATHS["pipeline"], pipeline_path / "pipeline.yaml")
@@ -232,6 +375,8 @@ def test_generated_tf_files_contain_license_headers(
         region,
         impersonating_acct,
         env,
+        tf_state_bucket,
+        tf_state_prefix,
     )
 
     license_header = pathlib.Path(
@@ -254,6 +399,49 @@ def test_generated_tf_files_contain_license_headers(
     assert (
         ENV_DATASETS_PATH / dataset_path.name / "_terraform" / "terraform.tfvars"
     ).read_text().count(license_header) == 1
+
+    assert (
+        ENV_DATASETS_PATH / dataset_path.name / "_terraform" / "backend.tf"
+    ).read_text().count(license_header) == 1
+
+
+def test_dataset_tf_file_contains_description_when_specified(
+    dataset_path,
+    pipeline_path,
+    project_id,
+    bucket_name_prefix,
+    region,
+    impersonating_acct,
+    env,
+):
+    shutil.copyfile(SAMPLE_YAML_PATHS["dataset"], dataset_path / "dataset.yaml")
+    shutil.copyfile(SAMPLE_YAML_PATHS["pipeline"], pipeline_path / "pipeline.yaml")
+
+    generate_terraform.main(
+        dataset_path.name,
+        project_id,
+        bucket_name_prefix,
+        region,
+        impersonating_acct,
+        env,
+        None,
+        None,
+    )
+
+    config = yaml.load(open(dataset_path / "dataset.yaml"))
+    bq_dataset = next(
+        (r for r in config["resources"] if r["type"] == "bigquery_dataset"), None
+    )
+    assert bq_dataset
+    assert bq_dataset["description"]
+
+    for path_prefix in (
+        ENV_DATASETS_PATH / dataset_path.name / "_terraform",
+        generate_terraform.DATASETS_PATH / dataset_path.name / "_terraform",
+    ):
+        assert (path_prefix / f"{dataset_path.name}_dataset.tf").read_text().count(
+            f"description = \"{bq_dataset['description']}\""
+        ) == 1
 
 
 def test_bucket_names_must_not_contain_dots_and_google():
@@ -283,6 +471,8 @@ def test_bucket_prefixes_must_use_hyphens_instead_of_underscores(
     region,
     impersonating_acct,
     env,
+    tf_state_bucket,
+    tf_state_prefix,
 ):
     for prefix in (
         "test_prefix",
@@ -296,6 +486,8 @@ def test_bucket_prefixes_must_use_hyphens_instead_of_underscores(
                 region,
                 impersonating_acct,
                 env,
+                tf_state_bucket,
+                tf_state_prefix,
             )
 
 
@@ -318,6 +510,8 @@ def test_validation_on_generated_tf_files_in_dot_env_dir(
         region,
         impersonating_acct,
         env,
+        None,
+        None,
     )
     env_dataset_path = ENV_DATASETS_PATH / dataset_path.name
 
@@ -346,6 +540,8 @@ def test_validation_on_generated_tf_files_in_project_dir(
         region,
         impersonating_acct,
         env,
+        None,
+        None,
     )
     project_dataset_path = generate_terraform.DATASETS_PATH / dataset_path.name
 

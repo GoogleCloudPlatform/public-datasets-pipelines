@@ -20,7 +20,7 @@ resource "google_bigquery_table" "penguins" {
   dataset_id = "ml_datasets"
   table_id   = "penguins"
 
-  
+
 
   depends_on = [
     google_bigquery_dataset.ml_datasets
