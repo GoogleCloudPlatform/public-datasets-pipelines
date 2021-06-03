@@ -15,7 +15,7 @@ kubernetes = "*"
 pandas-gbq = "==0.14.1"
 pytest-mock = "*"
 pytest = "*"
-"ruamel.yaml" = "==0.16.12"
+"ruamel.yaml" = "==0.17.7"
 Jinja2 = "*"
 SQLAlchemy = "==1.3.15"
 
