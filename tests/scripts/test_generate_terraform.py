@@ -19,6 +19,7 @@ import subprocess
 import tempfile
 
 import pytest
+from ruamel import yaml
 
 from scripts import generate_terraform
 
@@ -30,6 +31,8 @@ SAMPLE_YAML_PATHS = {
 
 ENV_PATH = PROJECT_ROOT / ".test"
 ENV_DATASETS_PATH = ENV_PATH / "datasets"
+
+yaml = yaml.YAML(typ="safe")
 
 
 @pytest.fixture
