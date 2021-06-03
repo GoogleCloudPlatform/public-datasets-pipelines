@@ -259,6 +259,43 @@ def test_generated_tf_files_contain_license_headers(
     ).read_text().count(license_header) == 1
 
 
+def test_dataset_tf_file_contains_description_when_specified(
+    dataset_path,
+    pipeline_path,
+    project_id,
+    bucket_name_prefix,
+    region,
+    impersonating_acct,
+    env,
+):
+    shutil.copyfile(SAMPLE_YAML_PATHS["dataset"], dataset_path / "dataset.yaml")
+    shutil.copyfile(SAMPLE_YAML_PATHS["pipeline"], pipeline_path / "pipeline.yaml")
+
+    generate_terraform.main(
+        dataset_path.name,
+        project_id,
+        bucket_name_prefix,
+        region,
+        impersonating_acct,
+        env,
+    )
+
+    config = yaml.load(open(dataset_path / "dataset.yaml"))
+    bq_dataset = next(
+        (r for r in config["resources"] if r["type"] == "bigquery_dataset"), None
+    )
+    assert bq_dataset
+    assert bq_dataset["description"]
+
+    for path_prefix in (
+        ENV_DATASETS_PATH / dataset_path.name / "_terraform",
+        generate_terraform.DATASETS_PATH / dataset_path.name / "_terraform",
+    ):
+        assert (path_prefix / f"{dataset_path.name}_dataset.tf").read_text().count(
+            f"description = \"{bq_dataset['description']}\""
+        ) == 1
+
+
 def test_bucket_names_must_not_contain_dots_and_google():
     for name in (
         "test.bucket.name",
