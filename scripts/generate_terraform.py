@@ -14,7 +14,6 @@
 
 
 import argparse
-import copy
 import pathlib
 import subprocess
 import typing
@@ -120,7 +119,7 @@ def generate_dataset_tf(dataset_id: str, project_id: str, config: dict, env: str
 
     contents = ""
     for resource in config["resources"]:
-        contents += tf_resource_contents(resource, copy.deepcopy(subs))
+        contents += tf_resource_contents(resource, {**resource, **subs})
 
     create_file_in_dir_tree(
         dataset_id, contents, f"{dataset_id}_dataset.tf", PROJECT_ROOT / f".{env}"
