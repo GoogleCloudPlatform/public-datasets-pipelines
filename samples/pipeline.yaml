@@ -32,6 +32,9 @@ resources:
     #   table_id
     table_id: PIPELINE_FOLDER_NAME
 
+    # Description of the table
+    description: "This is a table description."
+
 dag:
   # The DAG acronym stands for directed acyclic graph. This block represents
   # your data pipeline along with every property and configuration it needs to

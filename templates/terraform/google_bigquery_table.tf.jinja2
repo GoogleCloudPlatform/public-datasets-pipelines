@@ -20,12 +20,14 @@ resource "google_bigquery_table" "{{ table_id }}" {
   dataset_id = "{{ dataset_id }}"
   table_id   = "{{ table_id }}"
 
+  {% if description -%}
+    description = "{{ description }}"
+  {%- endif %}
   {% if schema -%}
     schema = <<EOF
     {{ schema }}
     EOF
   {%- endif %}
-
   depends_on = [
     google_bigquery_dataset.{{ dataset_id }}
   ]
