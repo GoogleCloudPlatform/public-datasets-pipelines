@@ -14,34 +14,32 @@
 
 ---
 resources:
-  # A list of GCP resources that are unique and specific to your pipeline.
-  #
-  # The currently supported resources are shown below. Use only the resources
-  # needed by your pipeline, and delete the rest of the examples.
-  #
-  # We will keep adding to the list below to support more Google Cloud resources
-  # over time. If a resource you need isn't supported, please file an issue on
-  # the repository.
-
   - type: bigquery_table
-    # A Google BigQuery table to store your data. Requires a `bigquery_dataset`
-    # to be specified in the config (i.e. `dataset.yaml) for the dataset that
-    # this pipeline belongs in.
-    #
-    # Required Properties:
-    #   table_id
+    table_id: facility_boundary_us_drive_15min
+  - type: bigquery_table
+    table_id: facility_boundary_us_drive_30min
+  - type: bigquery_table
+    table_id: facility_boundary_us_drive_45min
+  - type: bigquery_table
+    table_id: facility_boundary_us_transit_30min
+  - type: bigquery_table
+    table_id: facility_boundary_us_transit_45min
+  - type: bigquery_table
+    table_id: facility_boundary_us_transit_60min
+  - type: bigquery_table
     table_id: facility_boundary_us_walk_15min
+  - type: bigquery_table
+    table_id: facility_boundary_us_walk_30min
+  - type: bigquery_table
+    table_id: facility_boundary_us_walk_45min
+  - type: bigquery_table
+    table_id: facility_boundary_us_walk_60min
 
 dag:
-  # The DAG acronym stands for directed acyclic graph. This block represents
-  # your data pipeline along with every property and configuration it needs to
-  # onboard your data.
   initialize:
     dag_id: vaccination_access_to_bq
     default_args:
       owner: "Google"
-
-      # When set to True, keeps a task from getting triggered if the previous schedule for the task hasn’t succeeded
       depends_on_past: False
       start_date: '2021-05-01'
     max_active_runs: 1
@@ -50,52 +48,16 @@ dag:
     default_view: graph
 
   tasks:
-    # This is where you specify the tasks (a.k.a. processes) that your data
-    # pipeline will run to onboard the data.
-    #
-    # As the examples below will show, every task must be represented by an
-    # Airflow operator. The list of suported operators are listed in
-    #
-    #   scripts/dag_imports.json
-    #
-    # If an operator you need isn't supported, please file an issue on the
-    # repository.
-    #
-    # Use the YAML list syntax in this block to specify every task for your
-    # pipeline.
-
     - operator: "GoogleCloudStorageToBigQueryOperator"
-      # Initializes GCS to BQ task for the DAG. This operator is used to load a
-      # CSV file from GCS into a BigQuery table.
-
-      # Task description
-      description: "Task to load CSV file from covid19-open-data bucket to facility_boundary_us_walk_15min"
-
+      description: "Task to load CSV file from covid19-open-data bucket to facility_boundary_us_drive_15min"
       args:
-        # Arguments supported by this operator:
-        # http://airflow.apache.org/docs/apache-airflow/1.10.14/howto/operator/gcp/gcs.html#googlecloudstoragetobigqueryoperator
-
-        task_id: "gcs_to_bq_table"
-
-        # The GCS bucket where the CSV file is located in.
-        bucket: "covid19-open-data"
-
-        # The GCS object path for the CSV file
-        source_objects: ["covid19-vaccination-access/facility_boundary_us_walk_15min.csv"]
+        task_id: "gcs_to_bq_table_us_drive_15min"
+        bucket: "{{ var.json.vaccination_access.source_bucket }}"
+        source_objects: ["{{ var.json.vaccination_access.source_prefix }}/facility_boundary_us_drive_15min.csv"]
         source_format: "CSV"
-        destination_project_dataset_table: "vaccination_access.facility_boundary_us_walk_15min"
-
-        # Use this if your CSV file contains a header row
+        destination_project_dataset_table: "vaccination_access.facility_boundary_us_drive_15min"
         skip_leading_rows: 1
-
-        # How to write data to the table: overwrite, append, or write if empty
-        # See https://cloud.google.com/bigquery/docs/reference/auditlogs/rest/Shared.Types/WriteDisposition
         write_disposition: "WRITE_TRUNCATE"
-
-        # The BigQuery table schema based on the CSV file. For more info, see
-        # https://cloud.google.com/bigquery/docs/schemas.
-        # Always use snake_case and lowercase for column names, and be explicit,
-        # i.e. specify modes for all columns.
         schema_fields:
           - name: "facility_place_id"
             type: "STRING"
@@ -140,14 +102,530 @@ dag:
             type: "INTEGER"
             mode: "NULLABLE"
           - name: "facility_catchment_boundary"
+            type: "GEOGRAPHY"
+            mode: "NULLABLE"
+
+    - operator: "GoogleCloudStorageToBigQueryOperator"
+      description: "Task to load CSV file from covid19-open-data bucket to facility_boundary_us_drive_30min"
+      args:
+        task_id: "gcs_to_bq_table_us_drive_30min"
+        bucket: "{{ var.json.vaccination_access.source_bucket }}"
+        source_objects: ["{{ var.json.vaccination_access.source_prefix }}/facility_boundary_us_drive_30min.csv"]
+        source_format: "CSV"
+        destination_project_dataset_table: "vaccination_access.facility_boundary_us_drive_30min"
+        skip_leading_rows: 1
+        write_disposition: "WRITE_TRUNCATE"
+        schema_fields:
+          - name: "facility_place_id"
             type: "STRING"
+            mode: "REQUIRED"
+          - name: "facility_provider_id"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_name"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_latitude"
+            type: "FLOAT"
+            mode: "REQUIRED"
+          - name: "facility_longitude"
+            type: "FLOAT"
+            mode: "REQUIRED"
+          - name: "facility_country_region"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_country_code"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_sub_region_1"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_sub_region_1_code"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_sub_region_2"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_sub_region_2_code"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_region_place_id"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "mode_of_transportation"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "travel_time_threshold_minutes"
+            type: "INTEGER"
+            mode: "NULLABLE"
+          - name: "facility_catchment_boundary"
+            type: "GEOGRAPHY"
+            mode: "NULLABLE"
+
+    - operator: "GoogleCloudStorageToBigQueryOperator"
+      description: "Task to load CSV file from covid19-open-data bucket to facility_boundary_us_drive_45min"
+      args:
+        task_id: "gcs_to_bq_table_us_drive_45min"
+        bucket: "{{ var.json.vaccination_access.source_bucket }}"
+        source_objects: ["{{ var.json.vaccination_access.source_prefix }}/facility_boundary_us_drive_45min.csv"]
+        source_format: "CSV"
+        destination_project_dataset_table: "vaccination_access.facility_boundary_us_drive_45min"
+        skip_leading_rows: 1
+        write_disposition: "WRITE_TRUNCATE"
+        schema_fields:
+          - name: "facility_place_id"
+            type: "STRING"
+            mode: "REQUIRED"
+          - name: "facility_provider_id"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_name"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_latitude"
+            type: "FLOAT"
+            mode: "REQUIRED"
+          - name: "facility_longitude"
+            type: "FLOAT"
+            mode: "REQUIRED"
+          - name: "facility_country_region"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_country_code"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_sub_region_1"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_sub_region_1_code"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_sub_region_2"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_sub_region_2_code"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_region_place_id"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "mode_of_transportation"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "travel_time_threshold_minutes"
+            type: "INTEGER"
+            mode: "NULLABLE"
+          - name: "facility_catchment_boundary"
+            type: "GEOGRAPHY"
+            mode: "NULLABLE"
+
+    - operator: "GoogleCloudStorageToBigQueryOperator"
+      description: "Task to load CSV file from covid19-open-data bucket to facility_boundary_us_transit_30min"
+      args:
+        task_id: "gcs_to_bq_table_us_transit_30min"
+        bucket: "{{ var.json.vaccination_access.source_bucket }}"
+        source_objects: ["{{ var.json.vaccination_access.source_prefix }}/facility_boundary_us_transit_30min.csv"]
+        source_format: "CSV"
+        destination_project_dataset_table: "vaccination_access.facility_boundary_us_transit_30min"
+        skip_leading_rows: 1
+        write_disposition: "WRITE_TRUNCATE"
+        schema_fields:
+          - name: "facility_place_id"
+            type: "STRING"
+            mode: "REQUIRED"
+          - name: "facility_provider_id"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_name"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_latitude"
+            type: "FLOAT"
+            mode: "REQUIRED"
+          - name: "facility_longitude"
+            type: "FLOAT"
+            mode: "REQUIRED"
+          - name: "facility_country_region"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_country_code"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_sub_region_1"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_sub_region_1_code"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_sub_region_2"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_sub_region_2_code"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_region_place_id"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "mode_of_transportation"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "travel_time_threshold_minutes"
+            type: "INTEGER"
+            mode: "NULLABLE"
+          - name: "facility_catchment_boundary"
+            type: "GEOGRAPHY"
+            mode: "NULLABLE"
+
+    - operator: "GoogleCloudStorageToBigQueryOperator"
+      description: "Task to load CSV file from covid19-open-data bucket to facility_boundary_us_transit_45min"
+      args:
+        task_id: "gcs_to_bq_table_us_transit_45min"
+        bucket: "{{ var.json.vaccination_access.source_bucket }}"
+        source_objects: ["{{ var.json.vaccination_access.source_prefix }}/facility_boundary_us_transit_45min.csv"]
+        source_format: "CSV"
+        destination_project_dataset_table: "vaccination_access.facility_boundary_us_transit_45min"
+        skip_leading_rows: 1
+        write_disposition: "WRITE_TRUNCATE"
+        schema_fields:
+          - name: "facility_place_id"
+            type: "STRING"
+            mode: "REQUIRED"
+          - name: "facility_provider_id"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_name"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_latitude"
+            type: "FLOAT"
+            mode: "REQUIRED"
+          - name: "facility_longitude"
+            type: "FLOAT"
+            mode: "REQUIRED"
+          - name: "facility_country_region"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_country_code"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_sub_region_1"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_sub_region_1_code"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_sub_region_2"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_sub_region_2_code"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_region_place_id"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "mode_of_transportation"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "travel_time_threshold_minutes"
+            type: "INTEGER"
+            mode: "NULLABLE"
+          - name: "facility_catchment_boundary"
+            type: "GEOGRAPHY"
+            mode: "NULLABLE"
+
+    - operator: "GoogleCloudStorageToBigQueryOperator"
+      description: "Task to load CSV file from covid19-open-data bucket to facility_boundary_us_transit_60min"
+      args:
+        task_id: "gcs_to_bq_table_us_transit_60min"
+        bucket: "{{ var.json.vaccination_access.source_bucket }}"
+        source_objects: ["{{ var.json.vaccination_access.source_prefix }}/facility_boundary_us_transit_60min.csv"]
+        source_format: "CSV"
+        destination_project_dataset_table: "vaccination_access.facility_boundary_us_transit_60min"
+        skip_leading_rows: 1
+        write_disposition: "WRITE_TRUNCATE"
+        schema_fields:
+          - name: "facility_place_id"
+            type: "STRING"
+            mode: "REQUIRED"
+          - name: "facility_provider_id"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_name"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_latitude"
+            type: "FLOAT"
+            mode: "REQUIRED"
+          - name: "facility_longitude"
+            type: "FLOAT"
+            mode: "REQUIRED"
+          - name: "facility_country_region"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_country_code"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_sub_region_1"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_sub_region_1_code"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_sub_region_2"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_sub_region_2_code"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_region_place_id"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "mode_of_transportation"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "travel_time_threshold_minutes"
+            type: "INTEGER"
+            mode: "NULLABLE"
+          - name: "facility_catchment_boundary"
+            type: "GEOGRAPHY"
+            mode: "NULLABLE"
+
+    - operator: "GoogleCloudStorageToBigQueryOperator"
+      description: "Task to load CSV file from covid19-open-data bucket to facility_boundary_us_walk_15min"
+      args:
+        task_id: "gcs_to_bq_table_us_walk_15min"
+        bucket: "{{ var.json.vaccination_access.source_bucket }}"
+        source_objects: ["{{ var.json.vaccination_access.source_prefix }}/facility_boundary_us_walk_15min.csv"]
+        source_format: "CSV"
+        destination_project_dataset_table: "vaccination_access.facility_boundary_us_walk_15min"
+        skip_leading_rows: 1
+        write_disposition: "WRITE_TRUNCATE"
+        schema_fields:
+          - name: "facility_place_id"
+            type: "STRING"
+            mode: "REQUIRED"
+          - name: "facility_provider_id"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_name"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_latitude"
+            type: "FLOAT"
+            mode: "REQUIRED"
+          - name: "facility_longitude"
+            type: "FLOAT"
+            mode: "REQUIRED"
+          - name: "facility_country_region"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_country_code"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_sub_region_1"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_sub_region_1_code"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_sub_region_2"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_sub_region_2_code"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_region_place_id"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "mode_of_transportation"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "travel_time_threshold_minutes"
+            type: "INTEGER"
+            mode: "NULLABLE"
+          - name: "facility_catchment_boundary"
+            type: "GEOGRAPHY"
+            mode: "NULLABLE"
+
+    - operator: "GoogleCloudStorageToBigQueryOperator"
+      description: "Task to load CSV file from covid19-open-data bucket to facility_boundary_us_walk_30min"
+      args:
+        task_id: "gcs_to_bq_table_us_walk_30min"
+        bucket: "{{ var.json.vaccination_access.source_bucket }}"
+        source_objects: ["{{ var.json.vaccination_access.source_prefix }}/facility_boundary_us_walk_30min.csv"]
+        source_format: "CSV"
+        destination_project_dataset_table: "vaccination_access.facility_boundary_us_walk_30min"
+        skip_leading_rows: 1
+        write_disposition: "WRITE_TRUNCATE"
+        schema_fields:
+          - name: "facility_place_id"
+            type: "STRING"
+            mode: "REQUIRED"
+          - name: "facility_provider_id"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_name"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_latitude"
+            type: "FLOAT"
+            mode: "REQUIRED"
+          - name: "facility_longitude"
+            type: "FLOAT"
+            mode: "REQUIRED"
+          - name: "facility_country_region"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_country_code"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_sub_region_1"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_sub_region_1_code"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_sub_region_2"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_sub_region_2_code"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_region_place_id"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "mode_of_transportation"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "travel_time_threshold_minutes"
+            type: "INTEGER"
+            mode: "NULLABLE"
+          - name: "facility_catchment_boundary"
+            type: "GEOGRAPHY"
+            mode: "NULLABLE"
+
+    - operator: "GoogleCloudStorageToBigQueryOperator"
+      description: "Task to load CSV file from covid19-open-data bucket to facility_boundary_us_walk_45min"
+      args:
+        task_id: "gcs_to_bq_table_us_walk_45min"
+        bucket: "{{ var.json.vaccination_access.source_bucket }}"
+        source_objects: ["{{ var.json.vaccination_access.source_prefix }}/facility_boundary_us_walk_45min.csv"]
+        source_format: "CSV"
+        destination_project_dataset_table: "vaccination_access.facility_boundary_us_walk_45min"
+        skip_leading_rows: 1
+        write_disposition: "WRITE_TRUNCATE"
+        schema_fields:
+          - name: "facility_place_id"
+            type: "STRING"
+            mode: "REQUIRED"
+          - name: "facility_provider_id"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_name"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_latitude"
+            type: "FLOAT"
+            mode: "REQUIRED"
+          - name: "facility_longitude"
+            type: "FLOAT"
+            mode: "REQUIRED"
+          - name: "facility_country_region"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_country_code"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_sub_region_1"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_sub_region_1_code"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_sub_region_2"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_sub_region_2_code"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_region_place_id"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "mode_of_transportation"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "travel_time_threshold_minutes"
+            type: "INTEGER"
+            mode: "NULLABLE"
+          - name: "facility_catchment_boundary"
+            type: "GEOGRAPHY"
+            mode: "NULLABLE"
+
+    - operator: "GoogleCloudStorageToBigQueryOperator"
+      description: "Task to load CSV file from covid19-open-data bucket to facility_boundary_us_walk_60min"
+      args:
+        task_id: "gcs_to_bq_table_us_walk_60min"
+        bucket: "{{ var.json.vaccination_access.source_bucket }}"
+        source_objects: ["{{ var.json.vaccination_access.source_prefix }}/facility_boundary_us_walk_60min.csv"]
+        source_format: "CSV"
+        destination_project_dataset_table: "vaccination_access.facility_boundary_us_walk_60min"
+        skip_leading_rows: 1
+        write_disposition: "WRITE_TRUNCATE"
+        schema_fields:
+          - name: "facility_place_id"
+            type: "STRING"
+            mode: "REQUIRED"
+          - name: "facility_provider_id"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_name"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_latitude"
+            type: "FLOAT"
+            mode: "REQUIRED"
+          - name: "facility_longitude"
+            type: "FLOAT"
+            mode: "REQUIRED"
+          - name: "facility_country_region"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_country_region_code"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_sub_region_1"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_sub_region_1_code"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_sub_region_2"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_sub_region_2_code"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "facility_region_place_id"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "mode_of_transportation"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "travel_time_threshold_minutes"
+            type: "INTEGER"
+            mode: "NULLABLE"
+          - name: "facility_catchment_boundary"
+            type: "GEOGRAPHY"
             mode: "NULLABLE"
 
   graph_paths:
-    # This is where you specify the relationships (i.e. directed paths/edges)
-    # among the tasks specified above. Use the bitshift operator to define the
-    # relationships and the `task_id` value above to represent tasks.
-    #
-    # For more info, see
-    # https://airflow.apache.org/docs/apache-airflow/stable/tutorial.html#setting-up-dependencies
-    - "gcs_to_bq_table"
+    - "gcs_to_bq_table_us_drive_15min"
+    - "gcs_to_bq_table_us_drive_30min"
+    - "gcs_to_bq_table_us_drive_45min"
+    - "gcs_to_bq_table_us_transit_30min"
+    - "gcs_to_bq_table_us_transit_45min"
+    - "gcs_to_bq_table_us_transit_60min"
+    - "gcs_to_bq_table_us_walk_15min"
+    - "gcs_to_bq_table_us_walk_30min"
+    - "gcs_to_bq_table_us_walk_45min"
+    - "gcs_to_bq_table_us_walk_60min"
