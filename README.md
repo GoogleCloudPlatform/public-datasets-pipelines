@@ -4,7 +4,7 @@ Cloud-native, data pipeline architecture for onboarding datasets to the [Google 
 
 # Overview
 
-![public-datasets-pipelines](https://user-images.githubusercontent.com/1208372/113048389-7b8af100-9170-11eb-9156-a9c114fa6920.png)
+![public-datasets-pipelines](images/architecture.png)
 
 # Requirements
 - Python `>=3.6.10,<3.9`. We currently use `3.8`. For more info, see the [Cloud Composer version list](https://cloud.google.com/composer/docs/concepts/versioning/composer-versions).
