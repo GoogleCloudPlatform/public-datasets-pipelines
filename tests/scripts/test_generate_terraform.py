@@ -14,6 +14,7 @@
 
 
 import pathlib
+import random
 import re
 import shutil
 import subprocess
@@ -582,6 +583,72 @@ def test_pipeline_tf_has_no_bq_table_description_when_unspecified(
 
         assert re.search(r"table_id\s+\=", result.group(1))
         assert not re.search(r"description\s+\=", result.group(1))
+
+
+def test_bq_table_name_starts_with_digits_but_tf_resource_name_does_not(
+    dataset_path,
+    pipeline_path,
+    project_id,
+    bucket_name_prefix,
+    region,
+    impersonating_acct,
+    env,
+):
+    shutil.copyfile(SAMPLE_YAML_PATHS["dataset"], dataset_path / "dataset.yaml")
+    shutil.copyfile(SAMPLE_YAML_PATHS["pipeline"], pipeline_path / "pipeline.yaml")
+
+    config = yaml.load(open(pipeline_path / "pipeline.yaml"))
+    table_name_starting_with_digit = f"{str(random.randint(0, 9))}_table"
+
+    # In the YAML config, set the BigQuery table name to start with a digit
+    bq_table = next(
+        (r for r in config["resources"] if r["type"] == "bigquery_table"), None
+    )
+    bq_table["table_id"] = table_name_starting_with_digit
+    with open(pipeline_path / "pipeline.yaml", "w") as file:
+        yaml.dump(config, file)
+
+    generate_terraform.main(
+        dataset_path.name,
+        project_id,
+        bucket_name_prefix,
+        region,
+        impersonating_acct,
+        env,
+        None,
+        None,
+    )
+
+    # Match the Terraform resource name and the table_id value in the BigQuery
+    # table's resource definition. As a concrete example, substrings in
+    # ALL_CAPS are matched below:
+    #
+    # resource "google_bigquery_table" "RESOURCE_NAME_STARTING_WITH_NONDIGIT" {
+    #   description = ""
+    #   table_id    = "TABLE_NAME_STARTING_WITH_DIGIT"
+    # }
+    tf_resource_regexp = r"\"google_bigquery_table\" \"([a-zA-Z0-9_-]+)\" .*?"
+    table_id_regexp = r"table_id\s+\= \"(.*?)\"\n"
+    matcher = re.compile(
+        tf_resource_regexp + table_id_regexp,
+        flags=re.MULTILINE | re.DOTALL,
+    )
+
+    for path_prefix in (
+        ENV_DATASETS_PATH / dataset_path.name / "_terraform",
+        generate_terraform.DATASETS_PATH / dataset_path.name / "_terraform",
+    ):
+        result = matcher.search(
+            (path_prefix / f"{pipeline_path.name}_pipeline.tf").read_text()
+        )
+
+        tf_resource_name = result.group(1)
+        table_id = result.group(2)
+
+        assert table_id == table_name_starting_with_digit
+        assert not tf_resource_name[0].isdigit()
+        assert table_id[0].isdigit()
+        assert table_id in tf_resource_name
 
 
 def test_bucket_names_must_not_contain_dots_and_google():
