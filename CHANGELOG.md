@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.2.0...v1.3.0) (2021-06-08)
+
+
+### Features
+
+* Support BigQuery table descriptions ([#59](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/59)) ([4b364a1](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/4b364a1c02fc6abef7d4b7884c14eef14c988fd6))
+
 ## [1.2.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.1.0...v1.2.0) (2021-06-02)
 
 
