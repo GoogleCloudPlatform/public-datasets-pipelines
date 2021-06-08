@@ -1,6 +1,6 @@
 # Public Datasets Pipelines
 
-Cloud-native, data pipeline architecture for onboarding datasets to the [Google Cloud Public Datasets Program](https://cloud.google.com/public-datasets).
+Cloud-native, data pipeline architecture for onboarding public datasets to [Datasets for Google Cloud](https://cloud.google.com/solutions/datasets).
 
 # Overview
 
