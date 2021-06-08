@@ -79,7 +79,7 @@ dag:
 
       args:
         # Arguments supported by this operator:
-        # https://airflow.apache.org/docs/apache-airflow/1.10.14/howto/operator/bash.html
+        # https://airflow.apache.org/docs/apache-airflow/1.10.15/howto/operator/bash.html
 
         task_id: "sample_bash_task"
         bash_command: |
@@ -100,7 +100,7 @@ dag:
 
       args:
         # Arguments supported by this operator:
-        # http://airflow.apache.org/docs/apache-airflow/1.10.14/howto/operator/gcp/gcs.html#googlecloudstoragetobigqueryoperator
+        # http://airflow.apache.org/docs/apache-airflow/1.10.15/howto/operator/gcp/gcs.html#googlecloudstoragetobigqueryoperator
 
         task_id: "sample_gcs_to_bq_task"
 
@@ -146,7 +146,7 @@ dag:
 
       args:
         # Arguments supported by this operator:
-        # https://airflow.apache.org/docs/apache-airflow/1.10.14/_api/airflow/contrib/operators/gcs_to_gcs/index.html#airflow.contrib.operators.gcs_to_gcs.GoogleCloudStorageToGoogleCloudStorageOperator
+        # https://airflow.apache.org/docs/apache-airflow/1.10.15/_api/airflow/contrib/operators/gcs_to_gcs/index.html#airflow.contrib.operators.gcs_to_gcs.GoogleCloudStorageToGoogleCloudStorageOperator
 
         task_id: "sample_gcs_to_gcs_task"
 
@@ -174,7 +174,7 @@ dag:
 
       args:
         # Arguments supported by this operator:
-        # https://airflow.apache.org/docs/apache-airflow/1.10.14/_api/airflow/contrib/operators/bigquery_operator/index.html#airflow.contrib.operators.bigquery_operator.BigQueryOperator
+        # https://airflow.apache.org/docs/apache-airflow/1.10.15/_api/airflow/contrib/operators/bigquery_operator/index.html#airflow.contrib.operators.bigquery_operator.BigQueryOperator
 
         task_id: "sample_bq_sql_task"
 
@@ -203,7 +203,7 @@ dag:
 
       args:
         # Arguments supported by this operator:
-        # https://airflow.apache.org/docs/apache-airflow/1.10.14/_api/airflow/contrib/operators/gcs_delete_operator/index.html#airflow.contrib.operators.gcs_delete_operator.GoogleCloudStorageDeleteOperator
+        # https://airflow.apache.org/docs/apache-airflow/1.10.15/_api/airflow/contrib/operators/gcs_delete_operator/index.html#airflow.contrib.operators.gcs_delete_operator.GoogleCloudStorageDeleteOperator
         task_id: "sample_gcs_delete_task"
 
         # The GCS bucket where the objects to delete are located.
@@ -228,7 +228,7 @@ dag:
 
       args:
         # Arguments supported by this operator:
-        # https://airflow.readthedocs.io/en/1.10.14/_api/airflow/contrib/operators/kubernetes_pod_operator/index.html#airflow.contrib.operators.kubernetes_pod_operator.KubernetesPodOperator
+        # https://airflow.readthedocs.io/en/1.10.15/_api/airflow/contrib/operators/kubernetes_pod_operator/index.html#airflow.contrib.operators.kubernetes_pod_operator.KubernetesPodOperator
 
         task_id: "sample_kube_pod_operator"
 
