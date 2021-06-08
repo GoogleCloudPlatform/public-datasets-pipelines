@@ -7,7 +7,7 @@ name = "pypi"
 beautifulsoup4 = "==4.9.3"
 
 [dev-packages]
-apache-airflow = {version = "==1.10.14", extras = ["google"]}
+apache-airflow = {version = "==1.10.15", extras = ["google"]}
 black = "==20.8b1"
 flake8 = "==3.9.2"
 isort = "*"
