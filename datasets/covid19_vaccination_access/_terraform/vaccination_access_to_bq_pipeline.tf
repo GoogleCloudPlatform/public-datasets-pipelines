@@ -17,13 +17,13 @@
 
 resource "google_bigquery_table" "facility_boundary_us_all" {
   project    = var.project_id
-  dataset_id = "vaccination_access"
+  dataset_id = "covid19_vaccination_access"
   table_id   = "facility_boundary_us_all"
 
 
 
   depends_on = [
-    google_bigquery_dataset.vaccination_access
+    google_bigquery_dataset.covid19_vaccination_access
   ]
 }
 
@@ -37,13 +37,13 @@ output "bigquery_table-facility_boundary_us_all-id" {
 
 resource "google_bigquery_table" "facility_boundary_us_drive" {
   project    = var.project_id
-  dataset_id = "vaccination_access"
+  dataset_id = "covid19_vaccination_access"
   table_id   = "facility_boundary_us_drive"
 
 
 
   depends_on = [
-    google_bigquery_dataset.vaccination_access
+    google_bigquery_dataset.covid19_vaccination_access
   ]
 }
 
@@ -57,13 +57,13 @@ output "bigquery_table-facility_boundary_us_drive-id" {
 
 resource "google_bigquery_table" "facility_boundary_us_transit" {
   project    = var.project_id
-  dataset_id = "vaccination_access"
+  dataset_id = "covid19_vaccination_access"
   table_id   = "facility_boundary_us_transit"
 
 
 
   depends_on = [
-    google_bigquery_dataset.vaccination_access
+    google_bigquery_dataset.covid19_vaccination_access
   ]
 }
 
@@ -77,13 +77,13 @@ output "bigquery_table-facility_boundary_us_transit-id" {
 
 resource "google_bigquery_table" "facility_boundary_us_walk" {
   project    = var.project_id
-  dataset_id = "vaccination_access"
+  dataset_id = "covid19_vaccination_access"
   table_id   = "facility_boundary_us_walk"
 
 
 
   depends_on = [
-    google_bigquery_dataset.vaccination_access
+    google_bigquery_dataset.covid19_vaccination_access
   ]
 }
 

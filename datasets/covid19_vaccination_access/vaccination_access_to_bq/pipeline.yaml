@@ -29,7 +29,7 @@ resources:
 
 dag:
   initialize:
-    dag_id: covid19-vaccination-access_to_bq
+    dag_id: vaccination_access_to_bq
     default_args:
       owner: "Google"
       depends_on_past: False
@@ -44,10 +44,10 @@ dag:
       description: "Task to load CSV file from covid19-open-data bucket to facility_boundary_us_all"
       args:
         task_id: "gcs_to_bq_table_us_all"
-        bucket: "{{ var.json.covid19-vaccination-access.source_bucket }}"
-        source_objects: ["{{ var.json.covid19-vaccination-access.source_prefix }}/facility-boundary-us-all.csv"]
+        bucket: "{{ var.json.covid19_vaccination_access.source_bucket }}"
+        source_objects: ["{{ var.json.covid19_vaccination_access.source_prefix }}/facility-boundary-us-all.csv"]
         source_format: "CSV"
-        destination_project_dataset_table: "covid19-vaccination-access.facility_boundary_us_all"
+        destination_project_dataset_table: "covid19_vaccination_access.facility_boundary_us_all"
         skip_leading_rows: 1
         write_disposition: "WRITE_TRUNCATE"
         schema_fields:
@@ -116,8 +116,8 @@ dag:
       description: "Task to load CSV file from covid19-open-data bucket to facility_boundary_us_drive"
       args:
         task_id: "gcs_to_bq_table_us_drive"
-        bucket: "{{ var.json.covid19-vaccination-access.source_bucket }}"
-        source_objects: ["{{ var.json.covid19-vaccination-access.source_prefix }}/facility-boundary-us-drive.csv"]
+        bucket: "{{ var.json.covid19_vaccination_access.source_bucket }}"
+        source_objects: ["{{ var.json.covid19_vaccination_access.source_prefix }}/facility-boundary-us-drive.csv"]
         source_format: "CSV"
         destination_project_dataset_table: "covid19_vaccination_access.facility_boundary_us_drive"
         skip_leading_rows: 1
@@ -188,10 +188,10 @@ dag:
       description: "Task to load CSV file from covid19-open-data bucket to facility_boundary_us_transit"
       args:
         task_id: "gcs_to_bq_table_us_transit"
-        bucket: "{{ var.json.covid19-vaccination-access.source_bucket }}"
-        source_objects: ["{{ var.json.covid19-vaccination-access.source_prefix }}/facility-boundary-us-transit.csv"]
+        bucket: "{{ var.json.covid19_vaccination_access.source_bucket }}"
+        source_objects: ["{{ var.json.covid19_vaccination_access.source_prefix }}/facility-boundary-us-transit.csv"]
         source_format: "CSV"
-        destination_project_dataset_table: "covid19-vaccination-access.facility_boundary_us_transit"
+        destination_project_dataset_table: "covid19_vaccination_access.facility_boundary_us_transit"
         skip_leading_rows: 1
         write_disposition: "WRITE_TRUNCATE"
         schema_fields:
@@ -261,10 +261,10 @@ dag:
       description: "Task to load CSV file from covid19-open-data bucket to facility_boundary_us_walk"
       args:
         task_id: "gcs_to_bq_table_us_walk"
-        bucket: "{{ var.json.covid19-vaccination-access.source_bucket }}"
-        source_objects: ["{{ var.json.covid19-vaccination-access.source_prefix }}/facility-boundary-us-walk.csv"]
+        bucket: "{{ var.json.covid19_vaccination_access.source_bucket }}"
+        source_objects: ["{{ var.json.covid19_vaccination_access.source_prefix }}/facility-boundary-us-walk.csv"]
         source_format: "CSV"
-        destination_project_dataset_table: "covid19-vaccination-access.facility_boundary_us_walk"
+        destination_project_dataset_table: "covid19_vaccination_access.facility_boundary_us_walk"
         skip_leading_rows: 1
         write_disposition: "WRITE_TRUNCATE"
         schema_fields:
