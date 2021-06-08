@@ -16,8 +16,9 @@
 
 
 resource "google_bigquery_dataset" "covid19_vaccination_access" {
-  dataset_id = "covid19_vaccination_access"
-  project    = var.project_id
+  dataset_id  = "covid19_vaccination_access"
+  project     = var.project_id
+  description = "The dataset contains catchment areas surrounding COVID-19 vaccination sites (sometimes called facilities). A catchment area represents the area within which a site can be reached within a designated period of time. Each vaccination site has a number of catchment areas, each representing a combination of a typical traveling time (for example, 15 minutes or less) and mode of transport (such as, walking, driving, or public transport)."
 }
 
 output "bigquery_dataset-covid19_vaccination_access-dataset_id" {

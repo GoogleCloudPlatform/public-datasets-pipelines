@@ -55,4 +55,4 @@ resources:
     #   description   (A user-friendly description of the dataset)
     #   location      (The geographic location where the dataset should reside)
     dataset_id: covid19_vaccination_access
-    description: ~
+    description: "The dataset contains catchment areas surrounding COVID-19 vaccination sites (sometimes called facilities). A catchment area represents the area within which a site can be reached within a designated period of time. Each vaccination site has a number of catchment areas, each representing a combination of a typical traveling time (for example, 15 minutes or less) and mode of transport (such as, walking, driving, or public transport)."
