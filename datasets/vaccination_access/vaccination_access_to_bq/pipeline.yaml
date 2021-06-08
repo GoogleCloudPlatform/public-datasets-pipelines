@@ -16,8 +16,11 @@
 resources:
   - type: bigquery_table
     table_id: facility_boundary_us_all
+  - type: bigquery_table
     table_id: facility_boundary_us_drive
+  - type: bigquery_table
     table_id: facility_boundary_us_transit
+  - type: bigquery_table
     table_id: facility_boundary_us_walk
 
 dag:
@@ -90,7 +93,6 @@ dag:
             type: "GEOGRAPHY"
             mode: "NULLABLE"
 
-  tasks:
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV file from covid19-open-data bucket to facility_boundary_us_drive"
       args:
@@ -148,7 +150,6 @@ dag:
             type: "GEOGRAPHY"
             mode: "NULLABLE"
 
-  tasks:
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV file from covid19-open-data bucket to facility_boundary_us_transit"
       args:
@@ -206,7 +207,6 @@ dag:
             type: "GEOGRAPHY"
             mode: "NULLABLE"
 
-  tasks:
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV file from covid19-open-data bucket to facility_boundary_us_walk"
       args:
