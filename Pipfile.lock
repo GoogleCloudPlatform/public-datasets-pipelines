@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "ff78aa421ddfa09730674310623363151c0e99918be494ec4ad9c228afb75e1c"
+            "sha256": "b99542d84099f5e10599c59b74502ba52106a122d3829239c3b6fbec0b91e76f"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -338,7 +338,7 @@
             "hashes": [
                 "sha256:bbf4467f41c56cf1fd8a5870d2556f419c572aad2b4085757581c3f9b4d7767a"
             ],
-            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4' and python_version < '4.0'",
+            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4' and python_version < '4'",
             "version": "==3.25.1"
         },
         "flask-login": {
@@ -981,11 +981,11 @@
         },
         "pandas-gbq": {
             "hashes": [
-                "sha256:41b90794f0a6fff98180ee812d359a676ab06209d83471a2352bbd106b7e121f",
-                "sha256:d3a6ca5c704eb6aaeeb8bbe99855a050462ff5118e0d8ab22c9495ec9324a0df"
+                "sha256:823ac4bc673ca98a42459212394c50589bbe545e8c5afd50f928732961640e16",
+                "sha256:833dd0f2fac76cbaed7c23ff4e096b659cb8251b1e54d9e1e9f98d0a05bd7b81"
             ],
             "index": "pypi",
-            "version": "==0.14.1"
+            "version": "==0.15.0"
         },
         "pathspec": {
             "hashes": [
@@ -1630,7 +1630,7 @@
                 "sha256:8d7eaa5a82a1cac232164990f04874c594c9453ec55eef02eab885aa02fc17a2",
                 "sha256:f5321fbe4bf3fefa0efd0bfe7fb14e90909eb62a48ccda331726b4319897dd5e"
             ],
-            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4' and python_version < '4.0'",
+            "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4' and python_version < '4'",
             "version": "==1.25.11"
         },
         "websocket-client": {
