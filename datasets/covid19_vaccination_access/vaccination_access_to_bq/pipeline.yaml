@@ -15,16 +15,16 @@
 ---
 resources:
   - type: bigquery_table
-    table_id: facility-boundary-us-all
+    table_id: facility_boundary_us_all
     description: "This table is formed by combining the data from the individual US tables of drive, transit and walk. It represents the boundaries of areas surrounding vaccination facilities from which people can reach the facility within certain duration. It is computed for 3 travel modes of drive, transit and walk and for predetermined time periods."
   - type: bigquery_table
-    table_id: facility-boundary-us-drive
+    table_id: facility_boundary_us_drive
     description: "This table represents the boundaries of areas surrounding vaccination facilities from which people can reach the facility by driving within predetermined time periods."
   - type: bigquery_table
-    table_id: facility-boundary-us-transit
+    table_id: facility_boundary_us_transit
     description: "This table represents the boundaries of areas surrounding vaccination facilities from which people can reach the facility by public transit within predetermined time periods."
   - type: bigquery_table
-    table_id: facility-boundary-us-walk
+    table_id: facility_boundary_us_walk
     description: "This table represents the boundaries of areas surrounding vaccination facilities from which people can reach the facility by walking within predetermined time periods."
 
 dag:
@@ -41,13 +41,13 @@ dag:
 
   tasks:
     - operator: "GoogleCloudStorageToBigQueryOperator"
-      description: "Task to load CSV file from covid19-open-data bucket to facility-boundary-us-all"
+      description: "Task to load CSV file from covid19-open-data bucket to facility_boundary_us_all"
       args:
         task_id: "gcs_to_bq_table_us_all"
         bucket: "{{ var.json.covid19-vaccination-access.source_bucket }}"
         source_objects: ["{{ var.json.covid19-vaccination-access.source_prefix }}/facility-boundary-us-all.csv"]
         source_format: "CSV"
-        destination_project_dataset_table: "covid19-vaccination-access.facility-boundary-us-all"
+        destination_project_dataset_table: "covid19-vaccination-access.facility_boundary_us_all"
         skip_leading_rows: 1
         write_disposition: "WRITE_TRUNCATE"
         schema_fields:
@@ -113,13 +113,13 @@ dag:
             description: "A GeoJSON representation of the catchment area boundary of the site, for a particular mode of transportation and travel time threshold. Consists of multiple latitude and longitude points."
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
-      description: "Task to load CSV file from covid19-open-data bucket to facility-boundary-us-drive"
+      description: "Task to load CSV file from covid19-open-data bucket to facility_boundary_us_drive"
       args:
         task_id: "gcs_to_bq_table_us_drive"
         bucket: "{{ var.json.covid19-vaccination-access.source_bucket }}"
         source_objects: ["{{ var.json.covid19-vaccination-access.source_prefix }}/facility-boundary-us-drive.csv"]
         source_format: "CSV"
-        destination_project_dataset_table: "covid19-vaccination-access.facility-boundary-us-drive"
+        destination_project_dataset_table: "covid19_vaccination_access.facility_boundary_us_drive"
         skip_leading_rows: 1
         write_disposition: "WRITE_TRUNCATE"
         schema_fields:
@@ -185,13 +185,13 @@ dag:
             description: "A GeoJSON representation of the catchment area boundary of the site, for a particular mode of transportation and travel time threshold. Consists of multiple latitude and longitude points."
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
-      description: "Task to load CSV file from covid19-open-data bucket to facility-boundary-us-transit"
+      description: "Task to load CSV file from covid19-open-data bucket to facility_boundary_us_transit"
       args:
         task_id: "gcs_to_bq_table_us_transit"
         bucket: "{{ var.json.covid19-vaccination-access.source_bucket }}"
         source_objects: ["{{ var.json.covid19-vaccination-access.source_prefix }}/facility-boundary-us-transit.csv"]
         source_format: "CSV"
-        destination_project_dataset_table: "covid19-vaccination-access.facility-boundary-us-transit"
+        destination_project_dataset_table: "covid19-vaccination-access.facility_boundary_us_transit"
         skip_leading_rows: 1
         write_disposition: "WRITE_TRUNCATE"
         schema_fields:
@@ -258,13 +258,13 @@ dag:
 
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
-      description: "Task to load CSV file from covid19-open-data bucket to facility-boundary-us-walk"
+      description: "Task to load CSV file from covid19-open-data bucket to facility_boundary_us_walk"
       args:
         task_id: "gcs_to_bq_table_us_walk"
         bucket: "{{ var.json.covid19-vaccination-access.source_bucket }}"
         source_objects: ["{{ var.json.covid19-vaccination-access.source_prefix }}/facility-boundary-us-walk.csv"]
         source_format: "CSV"
-        destination_project_dataset_table: "covid19-vaccination-access.facility-boundary-us-walk"
+        destination_project_dataset_table: "covid19-vaccination-access.facility_boundary_us_walk"
         skip_leading_rows: 1
         write_disposition: "WRITE_TRUNCATE"
         schema_fields:

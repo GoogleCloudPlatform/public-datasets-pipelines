@@ -17,7 +17,7 @@ dataset:
   # to users of your data on the Google Cloud website.
 
   # Must be exactly the same name as the folder name your dataset.yaml is in.
-  name: vaccination_access
+  name: covid19_vaccination_access
 
   # A friendly, human-readable name of the dataset
   friendly_name: ~
@@ -54,5 +54,5 @@ resources:
     #   friendly_name (A user-friendly name of the dataset)
     #   description   (A user-friendly description of the dataset)
     #   location      (The geographic location where the dataset should reside)
-    dataset_id: vaccination_access
+    dataset_id: covid19_vaccination_access
     description: ~
