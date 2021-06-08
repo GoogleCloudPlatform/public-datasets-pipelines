@@ -15,7 +15,7 @@
  */
 
 
-resource "google_bigquery_table" "{{ table_id }}" {
+resource "google_bigquery_table" "{{ tf_resource_name }}" {
   project    = var.project_id
   dataset_id = "{{ dataset_id }}"
   table_id   = "{{ table_id }}"
@@ -34,9 +34,9 @@ resource "google_bigquery_table" "{{ table_id }}" {
 }
 
 output "bigquery_table-{{ table_id }}-table_id" {
-  value = google_bigquery_table.{{ table_id }}.table_id
+  value = google_bigquery_table.{{ tf_resource_name }}.table_id
 }
 
 output "bigquery_table-{{ table_id }}-id" {
-  value = google_bigquery_table.{{ table_id }}.id
+  value = google_bigquery_table.{{ tf_resource_name }}.id
 }
