@@ -15,25 +15,10 @@
 ---
 resources:
   - type: bigquery_table
-    table_id: facility_boundary_us_drive_15min
-  - type: bigquery_table
-    table_id: facility_boundary_us_drive_30min
-  - type: bigquery_table
-    table_id: facility_boundary_us_drive_45min
-  - type: bigquery_table
-    table_id: facility_boundary_us_transit_30min
-  - type: bigquery_table
-    table_id: facility_boundary_us_transit_45min
-  - type: bigquery_table
-    table_id: facility_boundary_us_transit_60min
-  - type: bigquery_table
-    table_id: facility_boundary_us_walk_15min
-  - type: bigquery_table
-    table_id: facility_boundary_us_walk_30min
-  - type: bigquery_table
-    table_id: facility_boundary_us_walk_45min
-  - type: bigquery_table
-    table_id: facility_boundary_us_walk_60min
+    table_id: facility_boundary_us_all
+    table_id: facility_boundary_us_drive
+    table_id: facility_boundary_us_transit
+    table_id: facility_boundary_us_walk
 
 dag:
   initialize:
@@ -49,13 +34,13 @@ dag:
 
   tasks:
     - operator: "GoogleCloudStorageToBigQueryOperator"
-      description: "Task to load CSV file from covid19-open-data bucket to facility_boundary_us_drive_15min"
+      description: "Task to load CSV file from covid19-open-data bucket to facility_boundary_us_all"
       args:
-        task_id: "gcs_to_bq_table_us_drive_15min"
+        task_id: "gcs_to_bq_table_us_all"
         bucket: "{{ var.json.vaccination_access.source_bucket }}"
-        source_objects: ["{{ var.json.vaccination_access.source_prefix }}/facility_boundary_us_drive_15min.csv"]
+        source_objects: ["{{ var.json.vaccination_access.source_prefix }}/facility_boundary_us_all.csv"]
         source_format: "CSV"
-        destination_project_dataset_table: "vaccination_access.facility_boundary_us_drive_15min"
+        destination_project_dataset_table: "vaccination_access.facility_boundary_us_all"
         skip_leading_rows: 1
         write_disposition: "WRITE_TRUNCATE"
         schema_fields:
@@ -105,14 +90,15 @@ dag:
             type: "GEOGRAPHY"
             mode: "NULLABLE"
 
+  tasks:
     - operator: "GoogleCloudStorageToBigQueryOperator"
-      description: "Task to load CSV file from covid19-open-data bucket to facility_boundary_us_drive_30min"
+      description: "Task to load CSV file from covid19-open-data bucket to facility_boundary_us_drive"
       args:
-        task_id: "gcs_to_bq_table_us_drive_30min"
+        task_id: "gcs_to_bq_table_us_drive"
         bucket: "{{ var.json.vaccination_access.source_bucket }}"
-        source_objects: ["{{ var.json.vaccination_access.source_prefix }}/facility_boundary_us_drive_30min.csv"]
+        source_objects: ["{{ var.json.vaccination_access.source_prefix }}/facility_boundary_us_drive.csv"]
         source_format: "CSV"
-        destination_project_dataset_table: "vaccination_access.facility_boundary_us_drive_30min"
+        destination_project_dataset_table: "vaccination_access.facility_boundary_us_drive"
         skip_leading_rows: 1
         write_disposition: "WRITE_TRUNCATE"
         schema_fields:
@@ -162,14 +148,15 @@ dag:
             type: "GEOGRAPHY"
             mode: "NULLABLE"
 
+  tasks:
     - operator: "GoogleCloudStorageToBigQueryOperator"
-      description: "Task to load CSV file from covid19-open-data bucket to facility_boundary_us_drive_45min"
+      description: "Task to load CSV file from covid19-open-data bucket to facility_boundary_us_transit"
       args:
-        task_id: "gcs_to_bq_table_us_drive_45min"
+        task_id: "gcs_to_bq_table_us_transit"
         bucket: "{{ var.json.vaccination_access.source_bucket }}"
-        source_objects: ["{{ var.json.vaccination_access.source_prefix }}/facility_boundary_us_drive_45min.csv"]
+        source_objects: ["{{ var.json.vaccination_access.source_prefix }}/facility_boundary_us_transit.csv"]
         source_format: "CSV"
-        destination_project_dataset_table: "vaccination_access.facility_boundary_us_drive_45min"
+        destination_project_dataset_table: "vaccination_access.facility_boundary_us_transit"
         skip_leading_rows: 1
         write_disposition: "WRITE_TRUNCATE"
         schema_fields:
@@ -219,14 +206,15 @@ dag:
             type: "GEOGRAPHY"
             mode: "NULLABLE"
 
+  tasks:
     - operator: "GoogleCloudStorageToBigQueryOperator"
-      description: "Task to load CSV file from covid19-open-data bucket to facility_boundary_us_transit_30min"
+      description: "Task to load CSV file from covid19-open-data bucket to facility_boundary_us_walk"
       args:
-        task_id: "gcs_to_bq_table_us_transit_30min"
+        task_id: "gcs_to_bq_table_us_walk"
         bucket: "{{ var.json.vaccination_access.source_bucket }}"
-        source_objects: ["{{ var.json.vaccination_access.source_prefix }}/facility_boundary_us_transit_30min.csv"]
+        source_objects: ["{{ var.json.vaccination_access.source_prefix }}/facility_boundary_us_walk.csv"]
         source_format: "CSV"
-        destination_project_dataset_table: "vaccination_access.facility_boundary_us_transit_30min"
+        destination_project_dataset_table: "vaccination_access.facility_boundary_us_walk"
         skip_leading_rows: 1
         write_disposition: "WRITE_TRUNCATE"
         schema_fields:
@@ -249,348 +237,6 @@ dag:
             type: "STRING"
             mode: "NULLABLE"
           - name: "facility_country_code"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_sub_region_1"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_sub_region_1_code"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_sub_region_2"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_sub_region_2_code"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_region_place_id"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "mode_of_transportation"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "travel_time_threshold_minutes"
-            type: "INTEGER"
-            mode: "NULLABLE"
-          - name: "facility_catchment_boundary"
-            type: "GEOGRAPHY"
-            mode: "NULLABLE"
-
-    - operator: "GoogleCloudStorageToBigQueryOperator"
-      description: "Task to load CSV file from covid19-open-data bucket to facility_boundary_us_transit_45min"
-      args:
-        task_id: "gcs_to_bq_table_us_transit_45min"
-        bucket: "{{ var.json.vaccination_access.source_bucket }}"
-        source_objects: ["{{ var.json.vaccination_access.source_prefix }}/facility_boundary_us_transit_45min.csv"]
-        source_format: "CSV"
-        destination_project_dataset_table: "vaccination_access.facility_boundary_us_transit_45min"
-        skip_leading_rows: 1
-        write_disposition: "WRITE_TRUNCATE"
-        schema_fields:
-          - name: "facility_place_id"
-            type: "STRING"
-            mode: "REQUIRED"
-          - name: "facility_provider_id"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_name"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_latitude"
-            type: "FLOAT"
-            mode: "REQUIRED"
-          - name: "facility_longitude"
-            type: "FLOAT"
-            mode: "REQUIRED"
-          - name: "facility_country_region"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_country_code"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_sub_region_1"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_sub_region_1_code"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_sub_region_2"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_sub_region_2_code"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_region_place_id"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "mode_of_transportation"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "travel_time_threshold_minutes"
-            type: "INTEGER"
-            mode: "NULLABLE"
-          - name: "facility_catchment_boundary"
-            type: "GEOGRAPHY"
-            mode: "NULLABLE"
-
-    - operator: "GoogleCloudStorageToBigQueryOperator"
-      description: "Task to load CSV file from covid19-open-data bucket to facility_boundary_us_transit_60min"
-      args:
-        task_id: "gcs_to_bq_table_us_transit_60min"
-        bucket: "{{ var.json.vaccination_access.source_bucket }}"
-        source_objects: ["{{ var.json.vaccination_access.source_prefix }}/facility_boundary_us_transit_60min.csv"]
-        source_format: "CSV"
-        destination_project_dataset_table: "vaccination_access.facility_boundary_us_transit_60min"
-        skip_leading_rows: 1
-        write_disposition: "WRITE_TRUNCATE"
-        schema_fields:
-          - name: "facility_place_id"
-            type: "STRING"
-            mode: "REQUIRED"
-          - name: "facility_provider_id"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_name"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_latitude"
-            type: "FLOAT"
-            mode: "REQUIRED"
-          - name: "facility_longitude"
-            type: "FLOAT"
-            mode: "REQUIRED"
-          - name: "facility_country_region"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_country_code"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_sub_region_1"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_sub_region_1_code"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_sub_region_2"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_sub_region_2_code"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_region_place_id"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "mode_of_transportation"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "travel_time_threshold_minutes"
-            type: "INTEGER"
-            mode: "NULLABLE"
-          - name: "facility_catchment_boundary"
-            type: "GEOGRAPHY"
-            mode: "NULLABLE"
-
-    - operator: "GoogleCloudStorageToBigQueryOperator"
-      description: "Task to load CSV file from covid19-open-data bucket to facility_boundary_us_walk_15min"
-      args:
-        task_id: "gcs_to_bq_table_us_walk_15min"
-        bucket: "{{ var.json.vaccination_access.source_bucket }}"
-        source_objects: ["{{ var.json.vaccination_access.source_prefix }}/facility_boundary_us_walk_15min.csv"]
-        source_format: "CSV"
-        destination_project_dataset_table: "vaccination_access.facility_boundary_us_walk_15min"
-        skip_leading_rows: 1
-        write_disposition: "WRITE_TRUNCATE"
-        schema_fields:
-          - name: "facility_place_id"
-            type: "STRING"
-            mode: "REQUIRED"
-          - name: "facility_provider_id"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_name"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_latitude"
-            type: "FLOAT"
-            mode: "REQUIRED"
-          - name: "facility_longitude"
-            type: "FLOAT"
-            mode: "REQUIRED"
-          - name: "facility_country_region"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_country_code"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_sub_region_1"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_sub_region_1_code"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_sub_region_2"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_sub_region_2_code"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_region_place_id"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "mode_of_transportation"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "travel_time_threshold_minutes"
-            type: "INTEGER"
-            mode: "NULLABLE"
-          - name: "facility_catchment_boundary"
-            type: "GEOGRAPHY"
-            mode: "NULLABLE"
-
-    - operator: "GoogleCloudStorageToBigQueryOperator"
-      description: "Task to load CSV file from covid19-open-data bucket to facility_boundary_us_walk_30min"
-      args:
-        task_id: "gcs_to_bq_table_us_walk_30min"
-        bucket: "{{ var.json.vaccination_access.source_bucket }}"
-        source_objects: ["{{ var.json.vaccination_access.source_prefix }}/facility_boundary_us_walk_30min.csv"]
-        source_format: "CSV"
-        destination_project_dataset_table: "vaccination_access.facility_boundary_us_walk_30min"
-        skip_leading_rows: 1
-        write_disposition: "WRITE_TRUNCATE"
-        schema_fields:
-          - name: "facility_place_id"
-            type: "STRING"
-            mode: "REQUIRED"
-          - name: "facility_provider_id"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_name"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_latitude"
-            type: "FLOAT"
-            mode: "REQUIRED"
-          - name: "facility_longitude"
-            type: "FLOAT"
-            mode: "REQUIRED"
-          - name: "facility_country_region"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_country_code"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_sub_region_1"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_sub_region_1_code"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_sub_region_2"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_sub_region_2_code"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_region_place_id"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "mode_of_transportation"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "travel_time_threshold_minutes"
-            type: "INTEGER"
-            mode: "NULLABLE"
-          - name: "facility_catchment_boundary"
-            type: "GEOGRAPHY"
-            mode: "NULLABLE"
-
-    - operator: "GoogleCloudStorageToBigQueryOperator"
-      description: "Task to load CSV file from covid19-open-data bucket to facility_boundary_us_walk_45min"
-      args:
-        task_id: "gcs_to_bq_table_us_walk_45min"
-        bucket: "{{ var.json.vaccination_access.source_bucket }}"
-        source_objects: ["{{ var.json.vaccination_access.source_prefix }}/facility_boundary_us_walk_45min.csv"]
-        source_format: "CSV"
-        destination_project_dataset_table: "vaccination_access.facility_boundary_us_walk_45min"
-        skip_leading_rows: 1
-        write_disposition: "WRITE_TRUNCATE"
-        schema_fields:
-          - name: "facility_place_id"
-            type: "STRING"
-            mode: "REQUIRED"
-          - name: "facility_provider_id"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_name"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_latitude"
-            type: "FLOAT"
-            mode: "REQUIRED"
-          - name: "facility_longitude"
-            type: "FLOAT"
-            mode: "REQUIRED"
-          - name: "facility_country_region"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_country_code"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_sub_region_1"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_sub_region_1_code"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_sub_region_2"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_sub_region_2_code"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_region_place_id"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "mode_of_transportation"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "travel_time_threshold_minutes"
-            type: "INTEGER"
-            mode: "NULLABLE"
-          - name: "facility_catchment_boundary"
-            type: "GEOGRAPHY"
-            mode: "NULLABLE"
-
-    - operator: "GoogleCloudStorageToBigQueryOperator"
-      description: "Task to load CSV file from covid19-open-data bucket to facility_boundary_us_walk_60min"
-      args:
-        task_id: "gcs_to_bq_table_us_walk_60min"
-        bucket: "{{ var.json.vaccination_access.source_bucket }}"
-        source_objects: ["{{ var.json.vaccination_access.source_prefix }}/facility_boundary_us_walk_60min.csv"]
-        source_format: "CSV"
-        destination_project_dataset_table: "vaccination_access.facility_boundary_us_walk_60min"
-        skip_leading_rows: 1
-        write_disposition: "WRITE_TRUNCATE"
-        schema_fields:
-          - name: "facility_place_id"
-            type: "STRING"
-            mode: "REQUIRED"
-          - name: "facility_provider_id"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_name"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_latitude"
-            type: "FLOAT"
-            mode: "REQUIRED"
-          - name: "facility_longitude"
-            type: "FLOAT"
-            mode: "REQUIRED"
-          - name: "facility_country_region"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "facility_country_region_code"
             type: "STRING"
             mode: "NULLABLE"
           - name: "facility_sub_region_1"
@@ -619,13 +265,7 @@ dag:
             mode: "NULLABLE"
 
   graph_paths:
-    - "gcs_to_bq_table_us_drive_15min"
-    - "gcs_to_bq_table_us_drive_30min"
-    - "gcs_to_bq_table_us_drive_45min"
-    - "gcs_to_bq_table_us_transit_30min"
-    - "gcs_to_bq_table_us_transit_45min"
-    - "gcs_to_bq_table_us_transit_60min"
-    - "gcs_to_bq_table_us_walk_15min"
-    - "gcs_to_bq_table_us_walk_30min"
-    - "gcs_to_bq_table_us_walk_45min"
-    - "gcs_to_bq_table_us_walk_60min"
+    - "gcs_to_bq_table_us_all"
+    - "gcs_to_bq_table_us_drive"
+    - "gcs_to_bq_table_us_transit"
+    - "gcs_to_bq_table_us_walk"
