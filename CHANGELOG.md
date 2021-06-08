@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.4.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.3.0...v1.4.0) (2021-06-08)
+
+
+### Features
+
+* Onboard COVID-19 Vaccination Access dataset ([#74](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/74)) ([e68b4f8](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/e68b4f87c19e1c1d1c370c042861fb17d6d89957))
+
+
+### Bug Fixes
+
+* Terraform resource names can't start with digits, but BQ tables can ([#70](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/70)) ([7c0f339](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/7c0f339f20ca1384eab96a4a3f9cb784f63ab52d))
+
 ## [1.3.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.2.0...v1.3.0) (2021-06-08)
 
 
