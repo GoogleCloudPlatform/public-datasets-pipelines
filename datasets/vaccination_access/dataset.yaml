@@ -23,7 +23,7 @@ dataset:
   friendly_name: ~
 
   # A short, descriptive summary of the dataset.
-  description: ~
+  description: "The dataset contains catchment areas surrounding COVID-19 vaccination sites (sometimes called facilities). A catchment area represents the area within which a site can be reached within a designated period of time. Each vaccination site has a number of catchment areas, each representing a combination of a typical traveling time (for example, 15 minutes or less) and mode of transport (such as, walking, driving, or public transport)."
 
   # A list of sources the dataset is derived from, using the YAML list syntax.
   dataset_sources: ~
