@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.3.1](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.3.0...v1.3.1) (2021-06-08)
+
+
+### Bug Fixes
+
+* Terraform resource names can't start with digits, but BQ tables can ([#70](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/70)) ([7c0f339](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/7c0f339f20ca1384eab96a4a3f9cb784f63ab52d))
+
 ## [1.3.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.2.0...v1.3.0) (2021-06-08)
 
 
