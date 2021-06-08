@@ -1,5 +1,5 @@
 {
-    "1.10.14": {
+    "1.10.15": {
         "BashOperator": {
             "import": "from airflow.operators import bash_operator",
             "class": "bash_operator.BashOperator"
