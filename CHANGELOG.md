@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.4.1](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.4.0...v1.4.1) (2021-06-09)
+
+
+### Bug Fixes
+
+* Update `covid19_vaccination_access` tables to use `facility_country_region_code` column ([#80](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/80)) ([6d01c95](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/6d01c953bd53f728cf50f2f712be5b442a59e50a))
+
 ## [1.4.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.3.0...v1.4.0) (2021-06-08)
 
 
