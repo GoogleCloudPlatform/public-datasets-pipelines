@@ -81,7 +81,7 @@ with DAG(
                 "description": "The name of the country or region in English. For example, United States.",
             },
             {
-                "name": "facility_country_code",
+                "name": "facility_country_region_code",
                 "type": "STRING",
                 "mode": "NULLABLE",
                 "description": "The ISO 3166-1 code for the country or region. For example, US.",
@@ -186,7 +186,7 @@ with DAG(
                 "description": "The name of the country or region in English. For example, United States.",
             },
             {
-                "name": "facility_country_code",
+                "name": "facility_country_region_code",
                 "type": "STRING",
                 "mode": "NULLABLE",
                 "description": "The ISO 3166-1 code for the country or region. For example, US.",
@@ -291,7 +291,7 @@ with DAG(
                 "description": "The name of the country or region in English. For example, United States.",
             },
             {
-                "name": "facility_country_code",
+                "name": "facility_country_region_code",
                 "type": "STRING",
                 "mode": "NULLABLE",
                 "description": "The ISO 3166-1 code for the country or region. For example, US.",
@@ -396,7 +396,7 @@ with DAG(
                 "description": "The name of the country or region in English. For example, United States.",
             },
             {
-                "name": "facility_country_code",
+                "name": "facility_country_region_code",
                 "type": "STRING",
                 "mode": "NULLABLE",
                 "description": "The ISO 3166-1 code for the country or region. For example, US.",

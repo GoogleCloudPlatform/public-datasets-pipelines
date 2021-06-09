@@ -20,7 +20,7 @@ resource "google_bigquery_table" "facility_boundary_us_all" {
   dataset_id = "covid19_vaccination_access"
   table_id   = "facility_boundary_us_all"
 
-
+  description = "This table is formed by combining the data from the individual US tables of drive, transit and walk. It represents the boundaries of areas surrounding vaccination facilities from which people can reach the facility within certain duration. It is computed for 3 travel modes of drive, transit and walk and for predetermined time periods."
 
   depends_on = [
     google_bigquery_dataset.covid19_vaccination_access
@@ -40,7 +40,7 @@ resource "google_bigquery_table" "facility_boundary_us_drive" {
   dataset_id = "covid19_vaccination_access"
   table_id   = "facility_boundary_us_drive"
 
-
+  description = "This table represents the boundaries of areas surrounding vaccination facilities from which people can reach the facility by driving within predetermined time periods."
 
   depends_on = [
     google_bigquery_dataset.covid19_vaccination_access
@@ -60,7 +60,7 @@ resource "google_bigquery_table" "facility_boundary_us_transit" {
   dataset_id = "covid19_vaccination_access"
   table_id   = "facility_boundary_us_transit"
 
-
+  description = "This table represents the boundaries of areas surrounding vaccination facilities from which people can reach the facility by public transit within predetermined time periods."
 
   depends_on = [
     google_bigquery_dataset.covid19_vaccination_access
@@ -80,7 +80,7 @@ resource "google_bigquery_table" "facility_boundary_us_walk" {
   dataset_id = "covid19_vaccination_access"
   table_id   = "facility_boundary_us_walk"
 
-
+  description = "This table represents the boundaries of areas surrounding vaccination facilities from which people can reach the facility by walking within predetermined time periods."
 
   depends_on = [
     google_bigquery_dataset.covid19_vaccination_access
