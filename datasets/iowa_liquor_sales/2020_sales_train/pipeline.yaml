@@ -80,7 +80,7 @@ dag:
         # The SQL query to execute, along with query parameters. For more info,
         # see https://cloud.google.com/bigquery/docs/parameterized-queries.
         sql: "SELECT date, store_name, MAX(city) as city, MAX(zip_code) as zip_code, MAX(county) as county, SUM(sale_dollars) AS sale_dollars FROM `bigquery-public-data.iowa_liquor_sales.sales` WHERE REGEXP_CONTAINS(CAST(date AS String), \"2020-\") GROUP BY date, store_name"
-        
+
         use_legacy_sql: False
 
         # The BigQuery destination table
