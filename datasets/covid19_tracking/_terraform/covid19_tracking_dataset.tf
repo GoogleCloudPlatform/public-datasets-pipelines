@@ -16,8 +16,9 @@
 
 
 resource "google_bigquery_dataset" "covid19_tracking" {
-  dataset_id = "covid19_tracking"
-  project    = var.project_id
+  dataset_id  = "covid19_tracking"
+  project     = var.project_id
+  description = "BigQuery dataset for the COVID-19 Tracking Project"
 }
 
 output "bigquery_dataset-covid19_tracking-dataset_id" {
