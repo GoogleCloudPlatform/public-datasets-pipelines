@@ -16,6 +16,10 @@
             "import": "from airflow.contrib.operators import bigquery_operator",
             "class": "bigquery_operator.BigQueryOperator"
         },
+        "BigQueryToBigQueryOperator": {
+            "import": "from airflow.contrib.operators import bigquery_to_bigquery",
+            "class": "bigquery_to_bigquery.BigQueryToBigQueryOperator"
+        },
         "KubernetesPodOperator": {
             "import": "from airflow.contrib.operators import kubernetes_pod_operator",
             "class": "kubernetes_pod_operator.KubernetesPodOperator"
