@@ -15,12 +15,12 @@
  */
 
 
-resource "google_bigquery_table" "2020_sales_train" {
+resource "google_bigquery_table" "bqt_2020_sales_train" {
   project    = var.project_id
   dataset_id = "iowa_liquor_sales"
   table_id   = "2020_sales_train"
 
-  
+
 
   depends_on = [
     google_bigquery_dataset.iowa_liquor_sales
@@ -28,9 +28,9 @@ resource "google_bigquery_table" "2020_sales_train" {
 }
 
 output "bigquery_table-2020_sales_train-table_id" {
-  value = google_bigquery_table.2020_sales_train.table_id
+  value = google_bigquery_table.bqt_2020_sales_train.table_id
 }
 
 output "bigquery_table-2020_sales_train-id" {
-  value = google_bigquery_table.2020_sales_train.id
+  value = google_bigquery_table.bqt_2020_sales_train.id
 }

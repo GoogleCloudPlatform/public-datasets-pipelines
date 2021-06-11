@@ -79,16 +79,12 @@ dag:
 
         # The SQL query to execute, along with query parameters. For more info,
         # see https://cloud.google.com/bigquery/docs/parameterized-queries.
-        sql: "SELECT date, store_name, MAX(city) as city, MAX(zip_code) as zip_code, MAX(county) as county, SUM(sale_dollars) AS sale_dollars FROM `bigquery-public-data.iowa_liquor_sales.sales` WHERE REGEXP_CONTAINS(CAST(date AS String), @prefix) GROUP BY date, store_name"
-        query_params:
-          - name: "prefix"
-            parameterType:
-              type: "STRING"
-            parameterValue:
-              value: "2021-"
+        sql: "SELECT date, store_name, MAX(city) as city, MAX(zip_code) as zip_code, MAX(county) as county, SUM(sale_dollars) AS sale_dollars FROM `bigquery-public-data.iowa_liquor_sales.sales` WHERE REGEXP_CONTAINS(CAST(date AS String), r\"2021-0[1-4]\") GROUP BY date, store_name"
+
+        use_legacy_sql: False
 
         # The BigQuery destination table
-        destination_dataset_table: "iowa_liquor_sales.2021_sales_predict"
+        destination_dataset_table: "iowa_liquor_sales_forecasting.2021_sales_predict"
 
         # How to write to the destination: overwrite, append, or write if empty
         # See https://cloud.google.com/bigquery/docs/reference/auditlogs/rest/Shared.Types/WriteDisposition
@@ -109,13 +105,9 @@ dag:
 
         # The SQL query to execute, along with query parameters. For more info,
         # see https://cloud.google.com/bigquery/docs/parameterized-queries.
-        sql: "UPDATE `iowa_liquor_sales.2021_sales_predict` SET sale_dollars = NULL WHERE REGEXP_CONTAINS(CAST(date as String), @prefix)"
-        query_params:
-          - name: "prefix"
-            parameterType:
-              type: "STRING"
-            parameterValue:
-              value: "2021-04-"
+        sql: "UPDATE `iowa_liquor_sales_forecasting.2021_sales_predict` SET sale_dollars = NULL WHERE REGEXP_CONTAINS(CAST(date as String), \"2021-04-\")"
+
+        use_legacy_sql: False
 
   graph_paths:
     # This is where you specify the relationships (i.e. directed paths/edges)

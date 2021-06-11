@@ -16,8 +16,9 @@
 
 
 resource "google_bigquery_dataset" "iowa_liquor_sales" {
-  dataset_id = "iowa_liquor_sales"
-  project    = var.project_id
+  dataset_id  = "iowa_liquor_sales"
+  project     = var.project_id
+  description = "A time series dataset containing samples drawn from the Iowa Liquor Retail Sales dataset. Data were made available by the Iowa Department of Commerce. It is provided under the Creative Commons Zero v1.0 Universal license. For more details, see: https://pantheon.corp.google.com/marketplace/product/iowa-department-of-commerce/iowa-liquor-sales"
 }
 
 output "bigquery_dataset-iowa_liquor_sales-dataset_id" {
