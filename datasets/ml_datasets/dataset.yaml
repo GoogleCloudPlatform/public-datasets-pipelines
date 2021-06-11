@@ -54,4 +54,4 @@ resources:
     #   description   (A user-friendly description of the dataset)
     #   location      (The geographic location where the dataset should reside)
     dataset_id: ml_datasets
-    description: "A tabular dataset of penguin measurements alongside species and habitat information. Data were collected and made available by Dr. Kristen Gorman and the Palmer Station, Antarctica LTER, a member of the Long Term Ecological Research Network. It is provided under the Creative Commons Zero v1.0 Universal license. For more details, see: https://github.com/allisonhorst/palmerpenguins"
+    description: ~
