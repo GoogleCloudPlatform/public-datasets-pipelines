@@ -437,13 +437,21 @@ def test_dataset_tf_file_contains_description_when_specified(
     assert bq_dataset
     assert bq_dataset["description"]
 
+    # Match the "google_bigquery_dataset" properties, i.e. any lines between the
+    # curly braces, in the *_dataset.tf file
+    regexp = r"\"google_bigquery_dataset\" \"" + dataset_path.name + r"\" \{(.*?)\}"
+    bq_dataset_tf_string = re.compile(regexp, flags=re.MULTILINE | re.DOTALL)
+
     for path_prefix in (
         ENV_DATASETS_PATH / dataset_path.name / "_terraform",
         generate_terraform.DATASETS_PATH / dataset_path.name / "_terraform",
     ):
-        assert (path_prefix / f"{dataset_path.name}_dataset.tf").read_text().count(
-            f"description = \"{bq_dataset['description']}\""
-        ) == 1
+        result = bq_dataset_tf_string.search(
+            (path_prefix / f"{dataset_path.name}_dataset.tf").read_text()
+        )
+
+        assert re.search(r"dataset_id\s+\=", result.group(1))
+        assert re.search(r"description\s+\=", result.group(1))
 
 
 def test_dataset_tf_has_no_bq_dataset_description_when_unspecified(
@@ -526,13 +534,21 @@ def test_pipeline_tf_contains_bq_table_description_when_specified(
     assert bq_table
     assert bq_table["description"]
 
+    # Match the "google_bigquery_table" properties, i.e. any lines between the
+    # curly braces, in the *_pipeline.tf file
+    regexp = r"\"google_bigquery_table\" \"" + bq_table["table_id"] + r"\" \{(.*?)\}"
+    bq_table_tf_string = re.compile(regexp, flags=re.MULTILINE | re.DOTALL)
+
     for path_prefix in (
         ENV_DATASETS_PATH / dataset_path.name / "_terraform",
         generate_terraform.DATASETS_PATH / dataset_path.name / "_terraform",
     ):
-        assert (path_prefix / f"{pipeline_path.name}_pipeline.tf").read_text().count(
-            f"description = \"{bq_table['description']}\""
-        ) == 1
+        result = bq_table_tf_string.search(
+            (path_prefix / f"{pipeline_path.name}_pipeline.tf").read_text()
+        )
+
+        assert re.search(r"table_id\s+\=", result.group(1))
+        assert re.search(r"description\s+\=", result.group(1))
 
 
 def test_pipeline_tf_has_no_bq_table_description_when_unspecified(
