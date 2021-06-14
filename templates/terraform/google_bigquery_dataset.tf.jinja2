@@ -27,6 +27,13 @@ resource "google_bigquery_dataset" "{{ dataset_id }}" {
   {% if location -%}
     location = "{{ location }}"
   {% endif -%}
+
+  lifecycle {
+    ignore_changes = [
+      access,
+      last_modified_time
+    ]
+  }
 }
 
 output "bigquery_dataset-{{ dataset_id }}-dataset_id" {
