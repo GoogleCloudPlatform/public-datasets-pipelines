@@ -15,22 +15,22 @@
  */
 
 
-resource "google_bigquery_table" "bqt_2020_sales_train" {
+resource "google_bigquery_table" "bqt_2021_sales_predict" {
   project    = var.project_id
-  dataset_id = "iowa_liquor_sales"
-  table_id   = "2020_sales_train"
+  dataset_id = "iowa_liquor_sales_forecasting"
+  table_id   = "2021_sales_predict"
 
 
 
   depends_on = [
-    google_bigquery_dataset.iowa_liquor_sales
+    google_bigquery_dataset.iowa_liquor_sales_forecasting
   ]
 }
 
-output "bigquery_table-2020_sales_train-table_id" {
-  value = google_bigquery_table.bqt_2020_sales_train.table_id
+output "bigquery_table-2021_sales_predict-table_id" {
+  value = google_bigquery_table.bqt_2021_sales_predict.table_id
 }
 
-output "bigquery_table-2020_sales_train-id" {
-  value = google_bigquery_table.bqt_2020_sales_train.id
+output "bigquery_table-2021_sales_predict-id" {
+  value = google_bigquery_table.bqt_2021_sales_predict.id
 }

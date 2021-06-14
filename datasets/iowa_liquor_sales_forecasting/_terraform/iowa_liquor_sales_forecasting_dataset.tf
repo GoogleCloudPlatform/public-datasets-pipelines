@@ -15,12 +15,12 @@
  */
 
 
-resource "google_bigquery_dataset" "iowa_liquor_sales" {
-  dataset_id  = "iowa_liquor_sales"
+resource "google_bigquery_dataset" "iowa_liquor_sales_forecasting" {
+  dataset_id  = "iowa_liquor_sales_forecasting"
   project     = var.project_id
-  description = "A time series dataset containing samples drawn from the Iowa Liquor Retail Sales dataset. Data were made available by the Iowa Department of Commerce. It is provided under the Creative Commons Zero v1.0 Universal license. For more details, see: https://pantheon.corp.google.com/marketplace/product/iowa-department-of-commerce/iowa-liquor-sales"
+  description = "A time series dataset containing samples drawn from the Iowa Liquor Retail Sales dataset. Data were made available by the Iowa Department of Commerce. It is provided under the Creative Commons Zero v1.0 Universal license. For more details, see: https://console.cloud.google.com/marketplace/product/iowa-department-of-commerce/iowa-liquor-sales"
 }
 
-output "bigquery_dataset-iowa_liquor_sales-dataset_id" {
-  value = google_bigquery_dataset.iowa_liquor_sales.dataset_id
+output "bigquery_dataset-iowa_liquor_sales_forecasting-dataset_id" {
+  value = google_bigquery_dataset.iowa_liquor_sales_forecasting.dataset_id
 }

@@ -15,13 +15,22 @@
  */
 
 
-provider "google" {
-  project = var.project_id
-  region  = var.region
+resource "google_bigquery_table" "bqt_2020_sales_train" {
+  project    = var.project_id
+  dataset_id = "iowa_liquor_sales_forecasting"
+  table_id   = "2020_sales_train"
+
+
+
+  depends_on = [
+    google_bigquery_dataset.iowa_liquor_sales_forecasting
+  ]
 }
 
-data "google_client_openid_userinfo" "me" {}
+output "bigquery_table-2020_sales_train-table_id" {
+  value = google_bigquery_table.bqt_2020_sales_train.table_id
+}
 
-output "impersonating-account" {
-  value = data.google_client_openid_userinfo.me.email
+output "bigquery_table-2020_sales_train-id" {
+  value = google_bigquery_table.bqt_2020_sales_train.id
 }

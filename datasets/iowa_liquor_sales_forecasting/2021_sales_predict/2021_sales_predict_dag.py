@@ -24,7 +24,7 @@ default_args = {
 
 
 with DAG(
-    dag_id="iowa_liquor_sales.2021_sales_predict",
+    dag_id="iowa_liquor_sales_forecasting.2021_sales_predict",
     default_args=default_args,
     max_active_runs=1,
     schedule_interval="@once",

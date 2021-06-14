@@ -15,22 +15,14 @@
  */
 
 
-resource "google_bigquery_table" "bqt_2021_sales_predict" {
-  project    = var.project_id
-  dataset_id = "iowa_liquor_sales"
-  table_id   = "2021_sales_predict"
-
-
-
-  depends_on = [
-    google_bigquery_dataset.iowa_liquor_sales
-  ]
+provider "google" {
+  project                     = var.project_id
+  impersonate_service_account = var.impersonating_acct
+  region                      = var.region
 }
 
-output "bigquery_table-2021_sales_predict-table_id" {
-  value = google_bigquery_table.bqt_2021_sales_predict.table_id
-}
+data "google_client_openid_userinfo" "me" {}
 
-output "bigquery_table-2021_sales_predict-id" {
-  value = google_bigquery_table.bqt_2021_sales_predict.id
+output "impersonating-account" {
+  value = data.google_client_openid_userinfo.me.email
 }
