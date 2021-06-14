@@ -15,7 +15,7 @@
 ---
 resources:
   - type: bigquery_table
-    table_id: top_n_terms
+    table_id: top_terms
     description: "Daily top 25 terms in the United States with score, ranking, time, and designated market area"
 
   - type: bigquery_table
@@ -24,7 +24,7 @@ resources:
 
 dag:
   initialize:
-    dag_id: top_n_terms
+    dag_id: top_terms
     default_args:
       owner: "Google"
       depends_on_past: False
