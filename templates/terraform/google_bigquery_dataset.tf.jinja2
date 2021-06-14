@@ -30,7 +30,6 @@ resource "google_bigquery_dataset" "{{ dataset_id }}" {
 
   lifecycle {
     ignore_changes = [
-      access,
       last_modified_time
     ]
   }
