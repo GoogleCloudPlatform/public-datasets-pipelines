@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.5.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.4.1...v1.5.0) (2021-06-14)
+
+
+### Datasets
+
+* Onboard Iowa liquor sales forecasting samples for Vertex AI Forecasting tutorial ([#85](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/85)) ([d832327](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/d8323277a96ff0b7c8e032fa823da3d431069fb9))
+
+
+### Features
+
+* Support BigQueryToBigQueryOperator ([#86](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/86)) ([fd26476](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/fd26476b78bc013d7192a8e6dbd6278be991a0f4))
+
 ### [1.4.1](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.4.0...v1.4.1) (2021-06-09)
 
 
