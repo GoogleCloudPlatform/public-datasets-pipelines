@@ -5,7 +5,7 @@
 
 ### Datasets
 
-* * Onboard Iowa liquor sales forecasting samples for Vertex AI Forecasting tutorial ([#85](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/85)) ([d832327](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/d8323277a96ff0b7c8e032fa823da3d431069fb9))
+* Onboard Iowa liquor sales forecasting samples for Vertex AI Forecasting tutorial ([#85](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/85)) ([d832327](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/d8323277a96ff0b7c8e032fa823da3d431069fb9))
 
 
 ### Features
