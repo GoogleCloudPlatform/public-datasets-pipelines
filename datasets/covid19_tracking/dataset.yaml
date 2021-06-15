@@ -28,7 +28,7 @@ resources:
   # Optional: friendly_name, description, location
   - type: bigquery_dataset
     dataset_id: covid19_tracking
-    description: BigQuery dataset to namespace all tables related to COVID-19
+    description: BigQuery dataset for the COVID-19 Tracking Project
 
   - type: storage_bucket
     name: "covid-tracking-project"
