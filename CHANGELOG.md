@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.5.1](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.5.0...v1.5.1) (2021-06-15)
+
+
+### Bug Fixes
+
+* Fix BigQuery dataset descriptions for `covid19_tracking` and `ml_datasets`  ([#83](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/83)) ([b5b7640](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/b5b7640bd35534ce64a17e9a0a82b88cbeb9dfd0))
+
 ## [1.5.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.4.1...v1.5.0) (2021-06-14)
 
 
