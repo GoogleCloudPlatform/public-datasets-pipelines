@@ -113,6 +113,30 @@ def copy_variables_to_airflow_data_folder(
         run_gsutil_cmd(["cp", filename, gcs_uri], cwd=cwd)
 
 
+def run_cloud_composer_vars_import(
+    composer_env: str,
+    composer_region: str,
+    airflow_path: pathlib.Path,
+    cwd: pathlib.Path,
+):
+    subprocess.check_call(
+        [
+            "gcloud",
+            "composer",
+            "environments",
+            "run",
+            str(composer_env),
+            "--location",
+            str(composer_region),
+            "variables",
+            "--",
+            "--import",
+            str(airflow_path),
+        ],
+        cwd=cwd,
+    )
+
+
 def import_variables_to_airflow_env(
     local: bool,
     env_path: pathlib.Path,
@@ -140,21 +164,8 @@ def import_variables_to_airflow_env(
         gcs_uri = f"gs://{composer_bucket}/data/variables/{filename}"
         airflow_path = f"/home/airflow/gcs/data/variables/{filename}"
         print(f"\nImporting Airflow variables from {gcs_uri} ({airflow_path})...\n")
-        subprocess.check_call(
-            [
-                "gcloud",
-                "composer",
-                "environments",
-                "run",
-                str(composer_env),
-                "--location",
-                str(composer_region),
-                "variables",
-                "--",
-                "--import",
-                str(airflow_path),
-            ],
-            cwd=cwd,
+        run_cloud_composer_vars_import(
+            composer_env, composer_region, airflow_path, cwd=cwd
         )
 
 
