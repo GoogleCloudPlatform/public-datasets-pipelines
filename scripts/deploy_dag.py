@@ -67,6 +67,10 @@ def main(
         )
 
 
+def run_gsutil_cmd(args: typing.List[str], cwd: pathlib.Path):
+    subprocess.check_call(["gsutil"] + args, cwd=cwd)
+
+
 def copy_variables_to_airflow_data_folder(
     local: bool,
     env_path: pathlib.Path,
@@ -106,7 +110,7 @@ def copy_variables_to_airflow_data_folder(
             f"  Source:\n  {cwd / filename}\n\n"
             f"  Destination:\n  {gcs_uri}\n"
         )
-        subprocess.check_call(["gsutil", "cp", filename, gcs_uri], cwd=cwd)
+        run_gsutil_cmd(["cp", filename, gcs_uri], cwd=cwd)
 
 
 def import_variables_to_airflow_env(
@@ -189,7 +193,7 @@ def copy_generated_dag_to_airflow_dags_folder(
             f"  Source:\n  {cwd / filename}\n\n"
             f"  Destination:\n  {target}\n"
         )
-        subprocess.check_call(["gsutil", "cp", filename, target], cwd=cwd)
+        run_gsutil_cmd(["cp", filename, target], cwd=cwd)
 
 
 def copy_custom_callables_to_airflow_dags_folder(
@@ -231,7 +235,7 @@ def copy_custom_callables_to_airflow_dags_folder(
             f"  Source:\n  {cwd / 'custom'}\n\n"
             f"  Destination:\n  {target}\n"
         )
-        subprocess.check_call(["gsutil", "cp", "-r", "custom", target], cwd=cwd)
+        run_gsutil_cmd(["cp", "-r", "custom", target], cwd=cwd)
 
 
 def check_existence_of_variables_file(file_path: pathlib.Path):
