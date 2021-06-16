@@ -14,6 +14,7 @@
 
 
 from airflow import DAG
+from airflow.contrib.operators import gcs_to_bq, kubernetes_pod_operator
 from airflow.operators import bash_operator
 
 default_args = {
@@ -44,4 +45,69 @@ with DAG(
         },
     )
 
-    austin_311_service_requests_download_csv
+    # Run CSV transform within kubernetes pod
+    austin_311_service_requests_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+        task_id="austin_311_service_requests_transform_csv",
+        name="ren_header_conv_dt_fmt",
+        namespace="default",
+        image="{{ var.json.austin_311.container_registry.austin_311__ren_hdrs_conv_dt }}",
+        env_vars={
+            "SOURCE_FILE": "{{ var.json.shared.airflow_home }}/data/austin_311/311_service_requests/data.csv",
+            "TARGET_FILE": "{{ var.json.shared.airflow_home }}/data/austin_311/311_service_requests/data_output.csv",
+        },
+        resources={"limit_memory": "1G", "limit_cpu": "2"},
+    )
+
+    # Task to load CSV data to a BigQuery table
+    load_austin_311_service_requests_to_bq = (
+        gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+            task_id="load_austin_311_service_requests_to_bq",
+            bucket="{{ var.json.shared.composer_bucket }}",
+            source_objects=["data/austin_311/311_service_requests/data_output.csv"],
+            source_format="CSV",
+            destination_project_dataset_table="austin_311.311_service_requests",
+            skip_leading_rows=1,
+            write_disposition="WRITE_TRUNCATE",
+            schema_fields=[
+                {"name": "unique_key", "type": "STRING", "mode": "NULLABLE"},
+                {"name": "complaint_type", "type": "STRING", "mode": "NULLABLE"},
+                {"name": "complaint_description", "type": "STRING", "mode": "NULLABLE"},
+                {"name": "owning_department", "type": "STRING", "mode": "NULLABLE"},
+                {"name": "source", "type": "STRING", "mode": "NULLABLE"},
+                {"name": "status", "type": "STRING", "mode": "NULLABLE"},
+                {"name": "status_change_date", "type": "TIMESTAMP", "mode": "NULLABLE"},
+                {"name": "created_date", "type": "TIMESTAMP", "mode": "NULLABLE"},
+                {"name": "last_update_date", "type": "TIMESTAMP", "mode": "NULLABLE"},
+                {"name": "close_date", "type": "TIMESTAMP", "mode": "NULLABLE"},
+                {"name": "incident_address", "type": "STRING", "mode": "NULLABLE"},
+                {"name": "street_number", "type": "STRING", "mode": "NULLABLE"},
+                {"name": "street_name", "type": "STRING", "mode": "NULLABLE"},
+                {"name": "city", "type": "STRING", "mode": "NULLABLE"},
+                {"name": "incident_zip", "type": "STRING", "mode": "NULLABLE"},
+                {"name": "county", "type": "STRING", "mode": "NULLABLE"},
+                {
+                    "name": "state_plane_x_coordinate",
+                    "type": "STRING",
+                    "mode": "NULLABLE",
+                },
+                {
+                    "name": "state_plane_y_coordinate",
+                    "type": "FLOAT",
+                    "mode": "NULLABLE",
+                },
+                {"name": "latitude", "type": "FLOAT", "mode": "NULLABLE"},
+                {"name": "longitude", "type": "FLOAT", "mode": "NULLABLE"},
+                {"name": "location", "type": "STRING", "mode": "NULLABLE"},
+                {
+                    "name": "council_district_code",
+                    "type": "INTEGER",
+                    "mode": "NULLABLE",
+                },
+                {"name": "map_page", "type": "STRING", "mode": "NULLABLE"},
+                {"name": "map_tile", "type": "STRING", "mode": "NULLABLE"},
+            ],
+        )
+    )
+
+    austin_311_service_requests_download_csv >> austin_311_service_requests_transform_csv
+    austin_311_service_requests_transform_csv >> load_austin_311_service_requests_to_bq

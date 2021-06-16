@@ -17,8 +17,8 @@
 #       Column Name                         Type            Length / Format                 Description
 #
 #       Service Request (SR) Number         String          255                             "The service request tracking number."
-#       SR Type Code                        String          255                             
-#       SR Description                      String          255         
+#       SR Type Code                        String          255
+#       SR Description                      String          255
 #       Owning Department                   String          512                             "Owning department of SR type."
 #       Method Received                     String          255                             "Contact method SR was received from.  \n\nMass entry requests are submitted by dept. in groups after work is completed."
 #       SR Status                           String          255                             "SR status.  Duplicate statuses indicate that issue had previously been reported recently."
@@ -42,58 +42,111 @@
 #       Map Tile                            String          255                             "SR location corresponding map page."
 
 
-# import csv
 import os
 import pathlib
-import typing
-import vaex
 from datetime import datetime
 
+import vaex
 
-def main(source_path: pathlib.Path, target_path: pathlib.Path):
-    with open(source_path) as csv_source:
-        csv_reader = csv.reader(csv_source, delimiter=",")
-        headers = parse_headers(next(csv_reader))
-
-        with open(target_path, "w") as csv_target:
-            csv_writer = csv.writer(csv_target, delimiter=",")
-            csv_writer.writerow(headers)
-
-            for row in csv_reader:
-                csv_writer.writerow(parse_row(row))
+# import typing
 
 
-def parse_headers(raw_headers: typing.List[str]) -> typing.List[str]:
-    headers = []
-    for raw_header in raw_headers:
-        if raw_header == "City or County?":
-            raw_header = "city_or_county"
-        headers.append(raw_header.lower())
-    return headers
+def main(source_file: pathlib.Path, target_file: pathlib.Path):
+
+    # open the input file
+    df = vaex.open(str(source_file))
+
+    # steps in the pipeline
+    rename_headers(df)
+    convert_dt_values(df)
+    delete_newlines_from_column(df, col_name="location")
+    filter_null_rows(df)
+
+    # save to output file
+    save_to_new_file(df, file_path=str(target_file))
 
 
-def parse_row(raw_row: list) -> list:
-    row = []
-    for idx, val in enumerate(raw_row):
-        if idx == 0:  # index 0 is the `Date` field with format `YYYYMMDD`
-            val = str(datetime.strptime(val, "%Y%m%d").date())
+def rename_headers(df):
+    header_names = {
+        "Service Request (SR) Number": "unique_key",
+        "SR Type Code": "complaint_type",
+        "SR Description": "complaint_description",
+        "Owning Department": "owning_department",
+        "Method Received": "source",
+        "SR Status": "status",
+        "Status Change Date": "status_change_date",
+        "Created Date": "created_date",
+        "Last Update Date": "last_update_date",
+        "Close Date": "close_date",
+        "SR Location": "incident_address",
+        "Street Number": "street_number",
+        "Street Name": "street_name",
+        "City": "city",
+        "Zip Code": "incident_zip",
+        "County": "county",
+        "State Plane X Coordinate": "state_plane_x_coordinate",
+        "State Plane Y Coordinate": "state_plane_y_coordinate",
+        "Latitude Coordinate": "latitude",
+        "Longitude Coordinate": "longitude",
+        "(Latitude.Longitude)": "location",
+        "Council District": "council_district_code",
+        "Map Page": "map_page",
+        "Map Tile": "map_tile",
+    }
 
-        if idx >= 4:  # values that should be numeric start at the 4th column
-            if val == "N/A" or val.startswith("<") or val.startswith("~"):
-                val = ""
-            elif "," in val:  # convert integers represented as strings: "1,234"
-                val = int(val.replace(",", ""))
-            elif val == "7/1":  # a row for Idaho has a string value "7/1"
-                val = 7
+    for old_name, new_name in header_names.items():
+        df.rename(old_name, new_name)
 
-        row.append(val)
-    return row
+
+def convert_dt_format(dt_str):
+    # Old format: MM/dd/yyyy hh:mm:ss aa
+    # New format: yyyy-MM-dd HH:mm:ss
+    if dt_str is None or len(dt_str) == 0:
+        return dt_str
+    else:
+        return datetime.strptime(dt_str, "%m/%d/%Y %H:%M:%S %p").strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
+
+
+def convert_dt_values(df):
+    dt_cols = [
+        "status_change_date",
+        "created_date",
+        "last_update_date",
+        "close_date",
+    ]
+
+    for dt_col in dt_cols:
+        df[dt_col] = df[dt_col].apply(convert_dt_format)
+
+
+def delete_newlines(val):
+    if val is None or len(val) == 0:
+        return val
+    else:
+        if val.find("\n") > 0:
+            return val.replace("\n", "")
+        else:
+            return val
+
+
+def delete_newlines_from_column(df, col_name):
+    if df[col_name] is not None:
+        if df[col_name].str.len() > 0:
+            df[col_name] = df[col_name].apply(delete_newlines)
+
+
+def filter_null_rows(df):
+    df = df[df.unique_key != ""]
+
+
+def save_to_new_file(df, file_path):
+    df.export_csv(file_path)
 
 
 if __name__ == "__main__":
-    assert os.environ["SOURCE_CSV"]
-    assert os.environ["TARGET_CSV"]
     main(
-        source_path=pathlib.Path(os.environ["SOURCE_CSV"]).expanduser(),
-        target_path=pathlib.Path(os.environ["TARGET_CSV"]).expanduser(),
+        source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
+        target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
     )
