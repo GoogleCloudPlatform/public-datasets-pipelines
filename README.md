@@ -147,15 +147,15 @@ Docker images will be built and pushed to GCR by default whenever the command ab
 
 ## 5. Declare and set your pipeline variables
 
-Running the command in the previous step will parse your pipeline config and inform you about the templated variables that need to be set for your pipeline to run.
+Running the command in the previous step will parse your pipeline config and inform you about the templated variables that need to be set for your pipeline to run, if any.
 
-All variables used by a dataset must have their values set in
+If your pipeline doesn't use any Airflow variables, you can skip this step. Otherwise, create the following file
 
 ```
   [.dev|.test]/datasets/{DATASET}/{DATASET}_variables.json
 ```
 
-Airflow variables use JSON dot notation to access the variable's value. For example, if you're using the following variables in your pipeline config:
+Pipelines use the JSON dot notation to access Airflow variables. Make sure to nest your variables in the JSON file under some namespace, typically your dataset's name. Airflow variables are globally accessed by any pipeline, which means nesting your variables helps avoid collisions. For example, if you're using the following variables in your pipeline config:
 
 - `{{ var.json.shared.composer_bucket }}`
 - `{{ var.json.parent.nested }}`
