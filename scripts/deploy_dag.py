@@ -17,6 +17,7 @@ import argparse
 import pathlib
 import subprocess
 import typing
+import warnings
 
 CURRENT_PATH = pathlib.Path(__file__).resolve().parent
 PROJECT_ROOT = CURRENT_PATH.parent
@@ -84,7 +85,9 @@ def copy_variables_to_airflow_data_folder(
     cwd = env_path / "datasets" / dataset_id
     filename = f"{dataset_id}_variables.json"
 
-    check_existence_of_variables_file(cwd / filename)
+    if not (cwd / filename).exists():
+        warnings.warn(f"Airflow variables file {filename} does not exist.")
+        return
 
     if local:
         """
