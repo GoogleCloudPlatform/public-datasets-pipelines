@@ -17,6 +17,7 @@ import argparse
 import pathlib
 import subprocess
 import typing
+import warnings
 
 CURRENT_PATH = pathlib.Path(__file__).resolve().parent
 PROJECT_ROOT = CURRENT_PATH.parent
@@ -67,6 +68,10 @@ def main(
         )
 
 
+def run_gsutil_cmd(args: typing.List[str], cwd: pathlib.Path):
+    subprocess.check_call(["gsutil"] + args, cwd=cwd)
+
+
 def copy_variables_to_airflow_data_folder(
     local: bool,
     env_path: pathlib.Path,
@@ -80,7 +85,9 @@ def copy_variables_to_airflow_data_folder(
     cwd = env_path / "datasets" / dataset_id
     filename = f"{dataset_id}_variables.json"
 
-    check_existence_of_variables_file(cwd / filename)
+    if not (cwd / filename).exists():
+        warnings.warn(f"Airflow variables file {filename} does not exist.")
+        return
 
     if local:
         """
@@ -106,7 +113,31 @@ def copy_variables_to_airflow_data_folder(
             f"  Source:\n  {cwd / filename}\n\n"
             f"  Destination:\n  {gcs_uri}\n"
         )
-        subprocess.check_call(["gsutil", "cp", filename, gcs_uri], cwd=cwd)
+        run_gsutil_cmd(["cp", filename, gcs_uri], cwd=cwd)
+
+
+def run_cloud_composer_vars_import(
+    composer_env: str,
+    composer_region: str,
+    airflow_path: pathlib.Path,
+    cwd: pathlib.Path,
+):
+    subprocess.check_call(
+        [
+            "gcloud",
+            "composer",
+            "environments",
+            "run",
+            str(composer_env),
+            "--location",
+            str(composer_region),
+            "variables",
+            "--",
+            "--import",
+            str(airflow_path),
+        ],
+        cwd=cwd,
+    )
 
 
 def import_variables_to_airflow_env(
@@ -136,21 +167,8 @@ def import_variables_to_airflow_env(
         gcs_uri = f"gs://{composer_bucket}/data/variables/{filename}"
         airflow_path = f"/home/airflow/gcs/data/variables/{filename}"
         print(f"\nImporting Airflow variables from {gcs_uri} ({airflow_path})...\n")
-        subprocess.check_call(
-            [
-                "gcloud",
-                "composer",
-                "environments",
-                "run",
-                str(composer_env),
-                "--location",
-                str(composer_region),
-                "variables",
-                "--",
-                "--import",
-                str(airflow_path),
-            ],
-            cwd=cwd,
+        run_cloud_composer_vars_import(
+            composer_env, composer_region, airflow_path, cwd=cwd
         )
 
 
@@ -189,7 +207,7 @@ def copy_generated_dag_to_airflow_dags_folder(
             f"  Source:\n  {cwd / filename}\n\n"
             f"  Destination:\n  {target}\n"
         )
-        subprocess.check_call(["gsutil", "cp", filename, target], cwd=cwd)
+        run_gsutil_cmd(["cp", filename, target], cwd=cwd)
 
 
 def copy_custom_callables_to_airflow_dags_folder(
@@ -231,7 +249,7 @@ def copy_custom_callables_to_airflow_dags_folder(
             f"  Source:\n  {cwd / 'custom'}\n\n"
             f"  Destination:\n  {target}\n"
         )
-        subprocess.check_call(["gsutil", "cp", "-r", "custom", target], cwd=cwd)
+        run_gsutil_cmd(["cp", "-r", "custom", target], cwd=cwd)
 
 
 def check_existence_of_variables_file(file_path: pathlib.Path):
