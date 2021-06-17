@@ -58,7 +58,7 @@ Use only underscores and alpha-numeric characters for the names.
 
 If you created a new dataset directory above, you need to create a `datasets/DATASET/dataset.yaml` config file. See this [section](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/README.md#yaml-config-reference) for the `dataset.yaml` reference.
 
-Create a `datasets/DATASET/PIPELINE/pipeline.yaml` config file for your pipeline. See this section for the `pipeline.yaml` reference.
+Create a `datasets/DATASET/PIPELINE/pipeline.yaml` config file for your pipeline. See [here](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/samples/pipeline.yaml) for the `pipeline.yaml` reference.
 
 If you'd like to get started faster, you can inspect config files that already exist in the repository and infer the patterns from there:
 
