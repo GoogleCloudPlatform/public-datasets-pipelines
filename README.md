@@ -76,7 +76,7 @@ Every YAML file supports a `resources` block. To use this, identify what Google 
 
 Run the following command from the project root:
 ```bash
-$ python scripts/generate_terraform.py \
+$ pipenv run python scripts/generate_terraform.py \
     --dataset DATASET_DIR_NAME \
     --gcp-project-id GCP_PROJECT_ID \
     --region REGION \
@@ -105,7 +105,7 @@ As a concrete example, the unit tests use a temporary `.test` directory as their
 Run the following command from the project root:
 
 ```bash
-$ python scripts/generate_dag.py \
+$ pipenv run python scripts/generate_dag.py \
     --dataset DATASET_DIR \
     --pipeline PIPELINE_DIR \
     [--skip-builds] \
@@ -181,7 +181,7 @@ then your variables JSON file should look like this
 Deploy the DAG and the variables to your own Cloud Composer environment using one of the two commands:
 
 ```
-$ python scripts/deploy_dag.py \
+$ pipenv run python scripts/deploy_dag.py \
   --dataset DATASET \
   [--pipeline PIPELINE] \
   --composer-env CLOUD_COMPOSER_ENVIRONMENT_NAME \
