@@ -3,7 +3,7 @@
 ## [1.6.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.5.1...v1.6.0) (2021-06-17)
 
 
-### Features
+### Datasets
 
 * Onboard Google Trends dataset for top N terms ([#92](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/92)) ([df96d1d](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/df96d1d2f936bb4c7213cb9a4ef9ec90ff02fbad))
 
