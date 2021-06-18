@@ -42,16 +42,26 @@
 #       Map Tile                            String          255                             "SR location corresponding map page."
 
 
+import logging
 import os
 import pathlib
+import subprocess
 from datetime import datetime
 
+import requests
 import vaex
 
 # import typing
 
 
-def main(source_file: pathlib.Path, target_file: pathlib.Path):
+def main(
+    source_url: str,
+    source_file: pathlib.Path,
+    target_file: pathlib.Path,
+    target_gcs_bucket: str,
+    target_gcs_path: str,
+):
+    download_file(source_url, source_file)
 
     # open the input file
     df = vaex.open(str(source_file))
@@ -64,6 +74,9 @@ def main(source_file: pathlib.Path, target_file: pathlib.Path):
 
     # save to output file
     save_to_new_file(df, file_path=str(target_file))
+
+    # upload to GCS
+    upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
 
 def rename_headers(df):
@@ -145,8 +158,28 @@ def save_to_new_file(df, file_path):
     df.export_csv(file_path)
 
 
+def download_file(source_url: str, source_file: pathlib.Path):
+    logging.info(f"Downloading {source_url} into {source_file}")
+    r = requests.get(source_url, stream=True)
+    if r.status_code == 200:
+        with open(source_file, "wb") as f:
+            for chunk in r:
+                f.write(chunk)
+    else:
+        logging.error(f"Couldn't download {source_url}: {r.text}")
+
+
+def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:
+    subprocess.check_call(["gsutil", "cp", file_path, f"gs://{gcs_bucket}/{gcs_path}"])
+
+
 if __name__ == "__main__":
+    logging.getLogger().setLevel(logging.INFO)
+
     main(
+        source_url=os.environ["SOURCE_URL"],
         source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
+        target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
+        target_gcs_path=os.environ["TARGET_GCS_PATH"],
     )

@@ -37,22 +37,6 @@ dag:
     default_view: graph
 
   tasks:
-
-    - operator: "BashOperator"
-      description: "Download source CSV file for austin 311 service requests data table"
-
-      args:
-
-        task_id: "austin_311_service_requests_download_csv"
-        bash_command: |
-          mkdir -p $airflow_home/data/$dataset/$pipeline
-          curl -o $airflow_home/data/$dataset/$pipeline/data.csv -L $csv_source_url
-        env:
-          airflow_home: "{{ var.json.shared.airflow_home }}"
-          dataset: austin_311
-          pipeline: 311_service_requests
-          csv_source_url: "https://data.austintexas.gov/api/views/i26j-ai4z/rows.csv?accessType=DOWNLOAD"
-
     - operator: "KubernetesPodOperator"
 
       # Task description
@@ -75,7 +59,7 @@ dag:
 
         # Set the environment variables you need initialized in the container. Use these as input variables for the script your container is expected to perform.
         env_vars:
-          SOURCE_FILE: "{{ var.json.shared.airflow_home }}/data/austin_311/311_service_requests/data.csv" 
+          SOURCE_FILE: "{{ var.json.shared.airflow_home }}/data/austin_311/311_service_requests/data.csv"
           TARGET_FILE: "{{ var.json.shared.airflow_home }}/data/austin_311/311_service_requests/data_output.csv"
 
         # Set resource limits for the pod here. For resource units in Kubernetes, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes
@@ -185,5 +169,3 @@ dag:
   graph_paths:
     - "austin_311_service_requests_download_csv >> austin_311_service_requests_transform_csv"
     - "austin_311_service_requests_transform_csv >> load_austin_311_service_requests_to_bq"
-
-
