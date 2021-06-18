@@ -21,6 +21,8 @@ ENV PYTHONUNBUFFERED True
 # Copy the requirements file into the image
 COPY requirements.txt ./
 
+RUN pip3 list
+
 # Install the packages specified in the requirements file
 RUN pip install --no-cache-dir -r requirements.txt
 

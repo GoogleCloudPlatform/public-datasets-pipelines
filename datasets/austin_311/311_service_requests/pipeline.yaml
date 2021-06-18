@@ -62,6 +62,8 @@ dag:
 
         task_id: "austin_311_service_requests_transform_csv"
 
+        image_pull_policy: "Always"
+
         # The name of the pod in which the task will run. This will be used (plus a random suffix) to generate a pod id
         name: "ren_header_conv_dt_fmt"
 
