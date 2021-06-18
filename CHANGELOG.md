@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.6.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.5.1...v1.6.0) (2021-06-17)
+
+
+### Datasets
+
+* Onboard Google Trends dataset for top N terms ([#92](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/92)) ([df96d1d](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/df96d1d2f936bb4c7213cb9a4ef9ec90ff02fbad))
+
+
+### Bug Fixes
+
+* Allow DAG deploys without `variables.json` ([#91](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/91)) ([8eaaae9](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/8eaaae9e69a8f33086083311efd4cb4359c7ac39))
+
 ### [1.5.1](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.5.0...v1.5.1) (2021-06-15)
 
 
