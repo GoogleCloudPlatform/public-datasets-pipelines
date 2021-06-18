@@ -14,11 +14,14 @@
 
 
 import pathlib
+import random
+import re
 import shutil
 import subprocess
 import tempfile
 
 import pytest
+from ruamel import yaml
 
 from scripts import generate_terraform
 
@@ -30,6 +33,8 @@ SAMPLE_YAML_PATHS = {
 
 ENV_PATH = PROJECT_ROOT / ".test"
 ENV_DATASETS_PATH = ENV_PATH / "datasets"
+
+yaml = yaml.YAML(typ="safe")
 
 
 @pytest.fixture
@@ -400,6 +405,266 @@ def test_generated_tf_files_contain_license_headers(
     assert (
         ENV_DATASETS_PATH / dataset_path.name / "_terraform" / "backend.tf"
     ).read_text().count(license_header) == 1
+
+
+def test_dataset_tf_file_contains_description_when_specified(
+    dataset_path,
+    pipeline_path,
+    project_id,
+    bucket_name_prefix,
+    region,
+    impersonating_acct,
+    env,
+):
+    shutil.copyfile(SAMPLE_YAML_PATHS["dataset"], dataset_path / "dataset.yaml")
+    shutil.copyfile(SAMPLE_YAML_PATHS["pipeline"], pipeline_path / "pipeline.yaml")
+
+    generate_terraform.main(
+        dataset_path.name,
+        project_id,
+        bucket_name_prefix,
+        region,
+        impersonating_acct,
+        env,
+        None,
+        None,
+    )
+
+    config = yaml.load(open(dataset_path / "dataset.yaml"))
+    bq_dataset = next(
+        (r for r in config["resources"] if r["type"] == "bigquery_dataset"), None
+    )
+    assert bq_dataset
+    assert bq_dataset["description"]
+
+    # Match the "google_bigquery_dataset" properties, i.e. any lines between the
+    # curly braces, in the *_dataset.tf file
+    regexp = r"\"google_bigquery_dataset\" \"" + dataset_path.name + r"\" \{(.*?)\}"
+    bq_dataset_tf_string = re.compile(regexp, flags=re.MULTILINE | re.DOTALL)
+
+    for path_prefix in (
+        ENV_DATASETS_PATH / dataset_path.name / "_terraform",
+        generate_terraform.DATASETS_PATH / dataset_path.name / "_terraform",
+    ):
+        result = bq_dataset_tf_string.search(
+            (path_prefix / f"{dataset_path.name}_dataset.tf").read_text()
+        )
+
+        assert re.search(r"dataset_id\s+\=", result.group(1))
+        assert re.search(r"description\s+\=", result.group(1))
+
+
+def test_dataset_tf_has_no_bq_dataset_description_when_unspecified(
+    dataset_path,
+    pipeline_path,
+    project_id,
+    bucket_name_prefix,
+    region,
+    impersonating_acct,
+    env,
+):
+    shutil.copyfile(SAMPLE_YAML_PATHS["dataset"], dataset_path / "dataset.yaml")
+    shutil.copyfile(SAMPLE_YAML_PATHS["pipeline"], pipeline_path / "pipeline.yaml")
+
+    config = yaml.load(open(dataset_path / "dataset.yaml"))
+
+    # Get the first bigquery_dataset resource and delete the `description` field
+    bq_dataset = next(
+        (r for r in config["resources"] if r["type"] == "bigquery_dataset")
+    )
+    del bq_dataset["description"]
+    with open(dataset_path / "dataset.yaml", "w") as file:
+        yaml.dump(config, file)
+
+    generate_terraform.main(
+        dataset_path.name,
+        project_id,
+        bucket_name_prefix,
+        region,
+        impersonating_acct,
+        env,
+        None,
+        None,
+    )
+
+    # Match the "google_bigquery_dataset" properties, i.e. any lines between the
+    # curly braces, in the *_dataset.tf file
+    regexp = r"\"google_bigquery_dataset\" \"" + dataset_path.name + r"\" \{(.*?)\}"
+    bq_dataset_tf_string = re.compile(regexp, flags=re.MULTILINE | re.DOTALL)
+
+    for path_prefix in (
+        ENV_DATASETS_PATH / dataset_path.name / "_terraform",
+        generate_terraform.DATASETS_PATH / dataset_path.name / "_terraform",
+    ):
+        result = bq_dataset_tf_string.search(
+            (path_prefix / f"{dataset_path.name}_dataset.tf").read_text()
+        )
+
+        assert re.search(r"dataset_id\s+\=", result.group(1))
+        assert not re.search(r"description\s+\=", result.group(1))
+
+
+def test_pipeline_tf_contains_bq_table_description_when_specified(
+    dataset_path,
+    pipeline_path,
+    project_id,
+    bucket_name_prefix,
+    region,
+    impersonating_acct,
+    env,
+):
+    shutil.copyfile(SAMPLE_YAML_PATHS["dataset"], dataset_path / "dataset.yaml")
+    shutil.copyfile(SAMPLE_YAML_PATHS["pipeline"], pipeline_path / "pipeline.yaml")
+
+    generate_terraform.main(
+        dataset_path.name,
+        project_id,
+        bucket_name_prefix,
+        region,
+        impersonating_acct,
+        env,
+        None,
+        None,
+    )
+
+    config = yaml.load(open(pipeline_path / "pipeline.yaml"))
+    bq_table = next(
+        (r for r in config["resources"] if r["type"] == "bigquery_table"), None
+    )
+    assert bq_table
+    assert bq_table["description"]
+
+    # Match the "google_bigquery_table" properties, i.e. any lines between the
+    # curly braces, in the *_pipeline.tf file
+    regexp = r"\"google_bigquery_table\" \"" + bq_table["table_id"] + r"\" \{(.*?)\}"
+    bq_table_tf_string = re.compile(regexp, flags=re.MULTILINE | re.DOTALL)
+
+    for path_prefix in (
+        ENV_DATASETS_PATH / dataset_path.name / "_terraform",
+        generate_terraform.DATASETS_PATH / dataset_path.name / "_terraform",
+    ):
+        result = bq_table_tf_string.search(
+            (path_prefix / f"{pipeline_path.name}_pipeline.tf").read_text()
+        )
+
+        assert re.search(r"table_id\s+\=", result.group(1))
+        assert re.search(r"description\s+\=", result.group(1))
+
+
+def test_pipeline_tf_has_no_bq_table_description_when_unspecified(
+    dataset_path,
+    pipeline_path,
+    project_id,
+    bucket_name_prefix,
+    region,
+    impersonating_acct,
+    env,
+):
+    shutil.copyfile(SAMPLE_YAML_PATHS["dataset"], dataset_path / "dataset.yaml")
+    shutil.copyfile(SAMPLE_YAML_PATHS["pipeline"], pipeline_path / "pipeline.yaml")
+
+    config = yaml.load(open(pipeline_path / "pipeline.yaml"))
+
+    # Get the first bigquery_table resource and delete the `description` field
+    bq_table = next(
+        (r for r in config["resources"] if r["type"] == "bigquery_table"), None
+    )
+    del bq_table["description"]
+    with open(pipeline_path / "pipeline.yaml", "w") as file:
+        yaml.dump(config, file)
+
+    generate_terraform.main(
+        dataset_path.name,
+        project_id,
+        bucket_name_prefix,
+        region,
+        impersonating_acct,
+        env,
+        None,
+        None,
+    )
+
+    # Match the "google_bigquery_table" properties, i.e. any lines between the
+    # curly braces, in the *_pipeline.tf file
+    regexp = r"\"google_bigquery_table\" \"" + bq_table["table_id"] + r"\" \{(.*?)\}"
+    bq_table_tf_string = re.compile(regexp, flags=re.MULTILINE | re.DOTALL)
+
+    for path_prefix in (
+        ENV_DATASETS_PATH / dataset_path.name / "_terraform",
+        generate_terraform.DATASETS_PATH / dataset_path.name / "_terraform",
+    ):
+        result = bq_table_tf_string.search(
+            (path_prefix / f"{pipeline_path.name}_pipeline.tf").read_text()
+        )
+
+        assert re.search(r"table_id\s+\=", result.group(1))
+        assert not re.search(r"description\s+\=", result.group(1))
+
+
+def test_bq_table_name_starts_with_digits_but_tf_resource_name_does_not(
+    dataset_path,
+    pipeline_path,
+    project_id,
+    bucket_name_prefix,
+    region,
+    impersonating_acct,
+    env,
+):
+    shutil.copyfile(SAMPLE_YAML_PATHS["dataset"], dataset_path / "dataset.yaml")
+    shutil.copyfile(SAMPLE_YAML_PATHS["pipeline"], pipeline_path / "pipeline.yaml")
+
+    config = yaml.load(open(pipeline_path / "pipeline.yaml"))
+    table_name_starting_with_digit = f"{str(random.randint(0, 9))}_table"
+
+    # In the YAML config, set the BigQuery table name to start with a digit
+    bq_table = next(
+        (r for r in config["resources"] if r["type"] == "bigquery_table"), None
+    )
+    bq_table["table_id"] = table_name_starting_with_digit
+    with open(pipeline_path / "pipeline.yaml", "w") as file:
+        yaml.dump(config, file)
+
+    generate_terraform.main(
+        dataset_path.name,
+        project_id,
+        bucket_name_prefix,
+        region,
+        impersonating_acct,
+        env,
+        None,
+        None,
+    )
+
+    # Match the Terraform resource name and the table_id value in the BigQuery
+    # table's resource definition. As a concrete example, substrings in
+    # ALL_CAPS are matched below:
+    #
+    # resource "google_bigquery_table" "RESOURCE_NAME_STARTING_WITH_NONDIGIT" {
+    #   description = ""
+    #   table_id    = "TABLE_NAME_STARTING_WITH_DIGIT"
+    # }
+    tf_resource_regexp = r"\"google_bigquery_table\" \"([a-zA-Z0-9_-]+)\" .*?"
+    table_id_regexp = r"table_id\s+\= \"(.*?)\"\n"
+    matcher = re.compile(
+        tf_resource_regexp + table_id_regexp,
+        flags=re.MULTILINE | re.DOTALL,
+    )
+
+    for path_prefix in (
+        ENV_DATASETS_PATH / dataset_path.name / "_terraform",
+        generate_terraform.DATASETS_PATH / dataset_path.name / "_terraform",
+    ):
+        result = matcher.search(
+            (path_prefix / f"{pipeline_path.name}_pipeline.tf").read_text()
+        )
+
+        tf_resource_name = result.group(1)
+        table_id = result.group(2)
+
+        assert table_id == table_name_starting_with_digit
+        assert not tf_resource_name[0].isdigit()
+        assert table_id[0].isdigit()
+        assert table_id in tf_resource_name
 
 
 def test_bucket_names_must_not_contain_dots_and_google():

@@ -15,28 +15,22 @@
  */
 
 
-resource "google_bigquery_table" "{{ tf_resource_name }}" {
+resource "google_bigquery_table" "bqt_2021_sales_predict" {
   project    = var.project_id
-  dataset_id = "{{ dataset_id }}"
-  table_id   = "{{ table_id }}"
+  dataset_id = "iowa_liquor_sales_forecasting"
+  table_id   = "2021_sales_predict"
 
-  {% if description -%}
-    description = "{{ description }}"
-  {%- endif %}
-  {% if schema -%}
-    schema = <<EOF
-    {{ schema }}
-    EOF
-  {%- endif %}
+
+
   depends_on = [
-    google_bigquery_dataset.{{ dataset_id }}
+    google_bigquery_dataset.iowa_liquor_sales_forecasting
   ]
 }
 
-output "bigquery_table-{{ table_id }}-table_id" {
-  value = google_bigquery_table.{{ tf_resource_name }}.table_id
+output "bigquery_table-2021_sales_predict-table_id" {
+  value = google_bigquery_table.bqt_2021_sales_predict.table_id
 }
 
-output "bigquery_table-{{ table_id }}-id" {
-  value = google_bigquery_table.{{ tf_resource_name }}.id
+output "bigquery_table-2021_sales_predict-id" {
+  value = google_bigquery_table.bqt_2021_sales_predict.id
 }

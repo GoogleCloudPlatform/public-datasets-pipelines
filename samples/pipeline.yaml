@@ -32,6 +32,9 @@ resources:
     #   table_id
     table_id: PIPELINE_FOLDER_NAME
 
+    # Description of the table
+    description: "This is a table description."
+
 dag:
   # The DAG acronym stands for directed acyclic graph. This block represents
   # your data pipeline along with every property and configuration it needs to
@@ -76,7 +79,7 @@ dag:
 
       args:
         # Arguments supported by this operator:
-        # https://airflow.apache.org/docs/apache-airflow/1.10.14/howto/operator/bash.html
+        # https://airflow.apache.org/docs/apache-airflow/1.10.15/howto/operator/bash.html
 
         task_id: "sample_bash_task"
         bash_command: |
@@ -97,7 +100,7 @@ dag:
 
       args:
         # Arguments supported by this operator:
-        # http://airflow.apache.org/docs/apache-airflow/1.10.14/howto/operator/gcp/gcs.html#googlecloudstoragetobigqueryoperator
+        # http://airflow.apache.org/docs/apache-airflow/1.10.15/howto/operator/gcp/gcs.html#googlecloudstoragetobigqueryoperator
 
         task_id: "sample_gcs_to_bq_task"
 
@@ -143,7 +146,7 @@ dag:
 
       args:
         # Arguments supported by this operator:
-        # https://airflow.apache.org/docs/apache-airflow/1.10.14/_api/airflow/contrib/operators/gcs_to_gcs/index.html#airflow.contrib.operators.gcs_to_gcs.GoogleCloudStorageToGoogleCloudStorageOperator
+        # https://airflow.apache.org/docs/apache-airflow/1.10.15/_api/airflow/contrib/operators/gcs_to_gcs/index.html#airflow.contrib.operators.gcs_to_gcs.GoogleCloudStorageToGoogleCloudStorageOperator
 
         task_id: "sample_gcs_to_gcs_task"
 
@@ -171,7 +174,7 @@ dag:
 
       args:
         # Arguments supported by this operator:
-        # https://airflow.apache.org/docs/apache-airflow/1.10.14/_api/airflow/contrib/operators/bigquery_operator/index.html#airflow.contrib.operators.bigquery_operator.BigQueryOperator
+        # https://airflow.apache.org/docs/apache-airflow/1.10.15/_api/airflow/contrib/operators/bigquery_operator/index.html#airflow.contrib.operators.bigquery_operator.BigQueryOperator
 
         task_id: "sample_bq_sql_task"
 
@@ -200,7 +203,7 @@ dag:
 
       args:
         # Arguments supported by this operator:
-        # https://airflow.apache.org/docs/apache-airflow/1.10.14/_api/airflow/contrib/operators/gcs_delete_operator/index.html#airflow.contrib.operators.gcs_delete_operator.GoogleCloudStorageDeleteOperator
+        # https://airflow.apache.org/docs/apache-airflow/1.10.15/_api/airflow/contrib/operators/gcs_delete_operator/index.html#airflow.contrib.operators.gcs_delete_operator.GoogleCloudStorageDeleteOperator
         task_id: "sample_gcs_delete_task"
 
         # The GCS bucket where the objects to delete are located.
@@ -225,7 +228,7 @@ dag:
 
       args:
         # Arguments supported by this operator:
-        # https://airflow.readthedocs.io/en/1.10.14/_api/airflow/contrib/operators/kubernetes_pod_operator/index.html#airflow.contrib.operators.kubernetes_pod_operator.KubernetesPodOperator
+        # https://airflow.readthedocs.io/en/1.10.15/_api/airflow/contrib/operators/kubernetes_pod_operator/index.html#airflow.contrib.operators.kubernetes_pod_operator.KubernetesPodOperator
 
         task_id: "sample_kube_pod_operator"
 
@@ -275,6 +278,16 @@ dag:
           limit_memory: "250M"
           limit_cpu: "1"
 
+    - operator: "BigQueryToBigQueryOperator"
+      description: "Task to run a BQ to BQ operator"
+
+      args:
+        task_id: "sample_bq_to_bq_task"
+        source_project_dataset_tables: ["{{ var.json.DATASET_FOLDER_NAME.PIPELINE_NAME.source_project_dataset_table }}"]
+        destination_project_dataset_table: "{{ var.json.DATASET_FOLDER_NAME.PIPELINE_NAME.destination_project_dataset_table }}"
+        impersonation_chain: "{{ var.json.DATASET_FOLDER_NAME.service_account }}"
+        write_disposition: "WRITE_TRUNCATE"
+
   graph_paths:
     # This is where you specify the relationships (i.e. directed paths/edges)
     # among the tasks specified above. Use the bitshift operator to define the
@@ -283,5 +296,5 @@ dag:
     # For more info, see
     # https://airflow.apache.org/docs/apache-airflow/stable/tutorial.html#setting-up-dependencies
     - "sample_bash_task >> [sample_gcs_to_bq_task, sample_gcs_to_gcs_task]"
-    - "sample_gcs_to_bq_task >> sample_bq_sql_task"
+    - "sample_gcs_to_bq_task >> [sample_bq_sql_task, sample_bq_to_bq_task]"
     - "sample_bq_sql_task >> sample_gcs_delete_task"

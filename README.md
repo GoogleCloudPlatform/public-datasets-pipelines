@@ -1,18 +1,18 @@
 # Public Datasets Pipelines
 
-Cloud-native, data pipeline architecture for onboarding datasets to the [Google Cloud Public Datasets Program](https://cloud.google.com/public-datasets).
+Cloud-native, data pipeline architecture for onboarding public datasets to [Datasets for Google Cloud](https://cloud.google.com/solutions/datasets).
 
 # Overview
 
-![public-datasets-pipelines](https://user-images.githubusercontent.com/1208372/113048389-7b8af100-9170-11eb-9156-a9c114fa6920.png)
+![public-datasets-pipelines](images/architecture.png)
 
 # Requirements
 - Python `>=3.6.10,<3.9`. We currently use `3.8`. For more info, see the [Cloud Composer version list](https://cloud.google.com/composer/docs/concepts/versioning/composer-versions).
-- Familiarity with [Apache Airflow](https://airflow.apache.org/docs/apache-airflow/1.10.14/concepts.html) (>=v1.10.14)
+- Familiarity with [Apache Airflow](https://airflow.apache.org/docs/apache-airflow/1.10.15/concepts.html) (>=v1.10.15)
 - [pipenv](https://pipenv-fork.readthedocs.io/en/latest/install.html#installing-pipenv) for creating similar Python environments via `Pipfile.lock`
 - [gcloud](https://cloud.google.com/sdk/gcloud) command-line tool with Google Cloud Platform credentials configured. Instructions can be found [here](https://cloud.google.com/sdk/docs/initializing).
 - [Terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli) `>=v0.15.1`
-- [Google Cloud Composer](https://cloud.google.com/composer/docs/concepts/overview) environment running [Apache Airflow](https://airflow.apache.org/docs/apache-airflow/1.10.14/concepts.html) `>=v1.10.14,<2.0`. To create a new Cloud Composer environment, see [this guide](https://cloud.google.com/composer/docs/how-to/managing/creating).
+- [Google Cloud Composer](https://cloud.google.com/composer/docs/concepts/overview) environment running [Apache Airflow](https://airflow.apache.org/docs/apache-airflow/1.10.15/concepts.html) `>=v1.10.15,<2.0`. To create a new Cloud Composer environment, see [this guide](https://cloud.google.com/composer/docs/how-to/managing/creating).
 
 # Environment Setup
 
@@ -58,7 +58,7 @@ Use only underscores and alpha-numeric characters for the names.
 
 If you created a new dataset directory above, you need to create a `datasets/DATASET/dataset.yaml` config file. See this [section](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/README.md#yaml-config-reference) for the `dataset.yaml` reference.
 
-Create a `datasets/DATASET/PIPELINE/pipeline.yaml` config file for your pipeline. See this section for the `pipeline.yaml` reference.
+Create a `datasets/DATASET/PIPELINE/pipeline.yaml` config file for your pipeline. See [here](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/samples/pipeline.yaml) for the `pipeline.yaml` reference.
 
 If you'd like to get started faster, you can inspect config files that already exist in the repository and infer the patterns from there:
 
@@ -76,7 +76,7 @@ Every YAML file supports a `resources` block. To use this, identify what Google 
 
 Run the following command from the project root:
 ```bash
-$ python scripts/generate_terraform.py \
+$ pipenv run python scripts/generate_terraform.py \
     --dataset DATASET_DIR_NAME \
     --gcp-project-id GCP_PROJECT_ID \
     --region REGION \
@@ -105,7 +105,7 @@ As a concrete example, the unit tests use a temporary `.test` directory as their
 Run the following command from the project root:
 
 ```bash
-$ python scripts/generate_dag.py \
+$ pipenv run python scripts/generate_dag.py \
     --dataset DATASET_DIR \
     --pipeline PIPELINE_DIR \
     [--skip-builds] \
@@ -147,15 +147,15 @@ Docker images will be built and pushed to GCR by default whenever the command ab
 
 ## 5. Declare and set your pipeline variables
 
-Running the command in the previous step will parse your pipeline config and inform you about the templated variables that need to be set for your pipeline to run.
+Running the command in the previous step will parse your pipeline config and inform you about the templated variables that need to be set for your pipeline to run, if any.
 
-All variables used by a dataset must have their values set in
+If your pipeline doesn't use any Airflow variables, you can skip this step. Otherwise, create the following file
 
 ```
   [.dev|.test]/datasets/{DATASET}/{DATASET}_variables.json
 ```
 
-Airflow variables use JSON dot notation to access the variable's value. For example, if you're using the following variables in your pipeline config:
+Pipelines use the JSON dot notation to access Airflow variables. Make sure to nest your variables in the JSON file under some namespace, typically your dataset's name. Airflow variables are globally accessed by any pipeline, which means nesting your variables helps avoid collisions. For example, if you're using the following variables in your pipeline config:
 
 - `{{ var.json.shared.composer_bucket }}`
 - `{{ var.json.parent.nested }}`
@@ -181,13 +181,16 @@ then your variables JSON file should look like this
 Deploy the DAG and the variables to your own Cloud Composer environment using one of the two commands:
 
 ```
-$ python scripts/deploy_dag.py \
+$ pipenv run python scripts/deploy_dag.py \
   --dataset DATASET \
+  [--pipeline PIPELINE] \
   --composer-env CLOUD_COMPOSER_ENVIRONMENT_NAME \
   --composer-bucket CLOUD_COMPOSER_BUCKET \
   --composer-region CLOUD_COMPOSER_REGION \
   --env ENV
 ```
+
+The specifying an argument to `--pipeline` is optional. By default, the script deploys all pipelines under the given `--dataset` argument.
 
 # Testing
 

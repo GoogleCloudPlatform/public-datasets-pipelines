@@ -33,6 +33,7 @@ OPERATORS = {
     "GoogleCloudStorageToGoogleCloudStorageOperator",
     "GoogleCloudStorageDeleteOperator",
     "BigQueryOperator",
+    "BigQueryToBigQueryOperator",
     "KubernetesPodOperator",
 }
 
@@ -49,7 +50,7 @@ TEMPLATE_PATHS = {
     "default_args": AIRFLOW_TEMPLATES_PATH / "default_args.py.jinja2",
 }
 
-AIRFLOW_VERSION = "1.10.14"
+AIRFLOW_VERSION = "1.10.15"
 AIRFLOW_IMPORTS = json.load(open(CURRENT_PATH / "dag_imports.json"))
 
 

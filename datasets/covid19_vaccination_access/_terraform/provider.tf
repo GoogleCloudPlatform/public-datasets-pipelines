@@ -15,28 +15,14 @@
  */
 
 
-resource "google_bigquery_table" "{{ tf_resource_name }}" {
-  project    = var.project_id
-  dataset_id = "{{ dataset_id }}"
-  table_id   = "{{ table_id }}"
-
-  {% if description -%}
-    description = "{{ description }}"
-  {%- endif %}
-  {% if schema -%}
-    schema = <<EOF
-    {{ schema }}
-    EOF
-  {%- endif %}
-  depends_on = [
-    google_bigquery_dataset.{{ dataset_id }}
-  ]
+provider "google" {
+  project                     = var.project_id
+  impersonate_service_account = var.impersonating_acct
+  region                      = var.region
 }
 
-output "bigquery_table-{{ table_id }}-table_id" {
-  value = google_bigquery_table.{{ tf_resource_name }}.table_id
-}
+data "google_client_openid_userinfo" "me" {}
 
-output "bigquery_table-{{ table_id }}-id" {
-  value = google_bigquery_table.{{ tf_resource_name }}.id
+output "impersonating-account" {
+  value = data.google_client_openid_userinfo.me.email
 }

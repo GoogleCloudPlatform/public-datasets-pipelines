@@ -17,13 +17,13 @@ dataset:
   # to users of your data on the Google Cloud website.
 
   # Must be exactly the same name as the folder name your dataset.yaml is in.
-  name: ml_datasets
+  name: covid19_vaccination_access
 
   # A friendly, human-readable name of the dataset
   friendly_name: ~
 
   # A short, descriptive summary of the dataset.
-  description: ~
+  description: "The dataset contains catchment areas surrounding COVID-19 vaccination sites (sometimes called facilities). A catchment area represents the area within which a site can be reached within a designated period of time. Each vaccination site has a number of catchment areas, each representing a combination of a typical traveling time (for example, 15 minutes or less) and mode of transport (such as, walking, driving, or public transport)."
 
   # A list of sources the dataset is derived from, using the YAML list syntax.
   dataset_sources: ~
@@ -31,6 +31,7 @@ dataset:
   # A list of terms and conditions that users of the dataset should agree on,
   # using the YAML list syntax.
   terms_of_use: ~
+
 
 resources:
   # A list of Google Cloud resources needed by your dataset. In principle, all
@@ -53,5 +54,5 @@ resources:
     #   friendly_name (A user-friendly name of the dataset)
     #   description   (A user-friendly description of the dataset)
     #   location      (The geographic location where the dataset should reside)
-    dataset_id: ml_datasets
-    description: ~
+    dataset_id: covid19_vaccination_access
+    description: "The dataset contains catchment areas surrounding COVID-19 vaccination sites (sometimes called facilities). A catchment area represents the area within which a site can be reached within a designated period of time. Each vaccination site has a number of catchment areas, each representing a combination of a typical traveling time (for example, 15 minutes or less) and mode of transport (such as, walking, driving, or public transport)."

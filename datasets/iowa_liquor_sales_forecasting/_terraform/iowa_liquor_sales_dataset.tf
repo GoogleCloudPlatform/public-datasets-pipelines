@@ -15,22 +15,12 @@
  */
 
 
-resource "google_bigquery_dataset" "covid19_tracking" {
-  dataset_id  = "covid19_tracking"
+resource "google_bigquery_dataset" "iowa_liquor_sales" {
+  dataset_id  = "iowa_liquor_sales"
   project     = var.project_id
-  description = "BigQuery dataset for the COVID-19 Tracking Project"
+  description = "A time series dataset containing samples drawn from the Iowa Liquor Retail Sales dataset. Data were made available by the Iowa Department of Commerce. It is provided under the Creative Commons Zero v1.0 Universal license. For more details, see: https://console.cloud.google.com/marketplace/product/iowa-department-of-commerce/iowa-liquor-sales"
 }
 
-output "bigquery_dataset-covid19_tracking-dataset_id" {
-  value = google_bigquery_dataset.covid19_tracking.dataset_id
-}
-
-resource "google_storage_bucket" "covid-tracking-project" {
-  name                        = "${var.bucket_name_prefix}-covid-tracking-project"
-  force_destroy               = true
-  uniform_bucket_level_access = true
-}
-
-output "storage_bucket-covid-tracking-project-name" {
-  value = google_storage_bucket.covid-tracking-project.name
+output "bigquery_dataset-iowa_liquor_sales-dataset_id" {
+  value = google_bigquery_dataset.iowa_liquor_sales.dataset_id
 }

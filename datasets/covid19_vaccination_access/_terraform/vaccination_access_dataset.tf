@@ -15,28 +15,11 @@
  */
 
 
-resource "google_bigquery_table" "{{ tf_resource_name }}" {
+resource "google_bigquery_dataset" "vaccination_access" {
+  dataset_id = "vaccination_access"
   project    = var.project_id
-  dataset_id = "{{ dataset_id }}"
-  table_id   = "{{ table_id }}"
-
-  {% if description -%}
-    description = "{{ description }}"
-  {%- endif %}
-  {% if schema -%}
-    schema = <<EOF
-    {{ schema }}
-    EOF
-  {%- endif %}
-  depends_on = [
-    google_bigquery_dataset.{{ dataset_id }}
-  ]
 }
 
-output "bigquery_table-{{ table_id }}-table_id" {
-  value = google_bigquery_table.{{ tf_resource_name }}.table_id
-}
-
-output "bigquery_table-{{ table_id }}-id" {
-  value = google_bigquery_table.{{ tf_resource_name }}.id
+output "bigquery_dataset-vaccination_access-dataset_id" {
+  value = google_bigquery_dataset.vaccination_access.dataset_id
 }
