@@ -48,7 +48,7 @@ with DAG(
             "DAYS_ROLLING": "10",
             "BATCH_SIZE": "50",
         },
-        resources={"limit_memory": "512M", "limit_cpu": "2"},
+        resources={"request_memory": "4G", "request_cpu": "4"},
     )
 
     copy_files_in_last_n_days
