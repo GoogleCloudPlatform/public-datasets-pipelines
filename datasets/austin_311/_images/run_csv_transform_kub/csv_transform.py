@@ -45,11 +45,11 @@
 import logging
 import os
 import pathlib
-import subprocess
 from datetime import datetime
 
 import requests
 import vaex
+from google.cloud import storage
 
 # import typing
 
@@ -61,21 +61,32 @@ def main(
     target_gcs_bucket: str,
     target_gcs_path: str,
 ):
+    logging.info(f"Downloading file {source_url}")
     download_file(source_url, source_file)
 
     # open the input file
+    logging.info(f"Opening file {source_file}")
     df = vaex.open(str(source_file))
 
     # steps in the pipeline
+    logging.info(f"Transforming.. {source_file}")
     rename_headers(df)
-    convert_dt_values(df)
+    convert_values(df)
     delete_newlines_from_column(df, col_name="location")
     filter_null_rows(df)
 
     # save to output file
-    save_to_new_file(df, file_path=str(target_file))
+    logging.info(f"Saving to output file.. {target_file}")
+    try:
+        save_to_new_file(df, file_path=str(target_file))
+    except Exception as e:
+        logging.error(f"Error saving output file: {e}.")
+    logging.info("..Done!")
 
     # upload to GCS
+    logging.info(
+        f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
+    )
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
 
@@ -122,7 +133,7 @@ def convert_dt_format(dt_str):
         )
 
 
-def convert_dt_values(df):
+def convert_values(df):
     dt_cols = [
         "status_change_date",
         "created_date",
@@ -132,6 +143,10 @@ def convert_dt_values(df):
 
     for dt_col in dt_cols:
         df[dt_col] = df[dt_col].apply(convert_dt_format)
+
+    int_cols = ["council_district_code"]
+    for int_col in int_cols:
+        df[int_col] = df[int_col].astype("int32")
 
 
 def delete_newlines(val):
@@ -170,7 +185,10 @@ def download_file(source_url: str, source_file: pathlib.Path):
 
 
 def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:
-    subprocess.check_call(["gsutil", "cp", file_path, f"gs://{gcs_bucket}/{gcs_path}"])
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(gcs_bucket)
+    blob = bucket.blob(gcs_path)
+    blob.upload_from_filename(file_path)
 
 
 if __name__ == "__main__":
