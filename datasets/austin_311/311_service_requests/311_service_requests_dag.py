@@ -15,7 +15,6 @@
 
 from airflow import DAG
 from airflow.contrib.operators import gcs_to_bq, kubernetes_pod_operator
-from airflow.operators import bash_operator
 
 default_args = {
     "owner": "Google",
@@ -33,29 +32,21 @@ with DAG(
     default_view="graph",
 ) as dag:
 
-    # Download source CSV file for austin 311 service requests data table
-    austin_311_service_requests_download_csv = bash_operator.BashOperator(
-        task_id="austin_311_service_requests_download_csv",
-        bash_command="mkdir -p $airflow_home/data/$dataset/$pipeline\ncurl -o $airflow_home/data/$dataset/$pipeline/data.csv -L $csv_source_url\n",
-        env={
-            "airflow_home": "{{ var.json.shared.airflow_home }}",
-            "dataset": "austin_311",
-            "pipeline": "311_service_requests",
-            "csv_source_url": "https://data.austintexas.gov/api/views/i26j-ai4z/rows.csv?accessType=DOWNLOAD",
-        },
-    )
-
     # Run CSV transform within kubernetes pod
     austin_311_service_requests_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
         task_id="austin_311_service_requests_transform_csv",
-        name="ren_header_conv_dt_fmt",
+        image_pull_policy="Always",
+        name="austin311",
         namespace="default",
-        image="{{ var.json.austin_311.container_registry.austin_311__ren_hdrs_conv_dt }}",
+        image="{{ var.json.austin_311.container_registry.run_csv_transform_kub }}",
         env_vars={
-            "SOURCE_FILE": "{{ var.json.shared.airflow_home }}/data/austin_311/311_service_requests/data.csv",
-            "TARGET_FILE": "{{ var.json.shared.airflow_home }}/data/austin_311/311_service_requests/data_output.csv",
+            "SOURCE_URL": "https://data.austintexas.gov/api/views/i26j-ai4z/rows.csv",
+            "SOURCE_FILE": "/custom/data.csv",
+            "TARGET_FILE": "/custom/data_output.csv",
+            "TARGET_GCS_BUCKET": "{{ var.json.shared.composer_bucket }}",
+            "TARGET_GCS_PATH": "data/austin_311/311_service_requests/data_output.csv",
         },
-        resources={"limit_memory": "1G", "limit_cpu": "2"},
+        resources={"request_memory": "4G", "request_cpu": "2"},
     )
 
     # Task to load CSV data to a BigQuery table
@@ -109,5 +100,4 @@ with DAG(
         )
     )
 
-    austin_311_service_requests_download_csv >> austin_311_service_requests_transform_csv
     austin_311_service_requests_transform_csv >> load_austin_311_service_requests_to_bq
