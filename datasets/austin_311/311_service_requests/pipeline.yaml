@@ -76,25 +76,25 @@ dag:
       args:
         task_id: "load_austin_311_service_requests_to_bq"
 
-      # The GCS bucket where the CSV file is located in.
+        # The GCS bucket where the CSV file is located in.
         bucket: "{{ var.json.shared.composer_bucket }}"
 
-      # The GCS object path for the CSV file
+        # The GCS object path for the CSV file
         source_objects: ["data/austin_311/311_service_requests/data_output.csv"]
         source_format: "CSV"
         destination_project_dataset_table: "austin_311.311_service_requests"
 
-      # Use this if your CSV file contains a header row
+        # Use this if your CSV file contains a header row
         skip_leading_rows: 1
 
-      # How to write data to the table: overwrite, append, or write if empty
-      # See https://cloud.google.com/bigquery/docs/reference/auditlogs/rest/Shared.Types/WriteDisposition
+        # How to write data to the table: overwrite, append, or write if empty
+        # See https://cloud.google.com/bigquery/docs/reference/auditlogs/rest/Shared.Types/WriteDisposition
         write_disposition: "WRITE_TRUNCATE"
 
-      # The BigQuery table schema based on the CSV file. For more info, see
-      # https://cloud.google.com/bigquery/docs/schemas.
-      # Always use snake_case and lowercase for column names, and be explicit,
-      # i.e. specify modes for all columns.
+        # The BigQuery table schema based on the CSV file. For more info, see
+        # https://cloud.google.com/bigquery/docs/schemas.
+        # Always use snake_case and lowercase for column names, and be explicit,
+        # i.e. specify modes for all columns.
         schema_fields:
           - name: "unique_key"
             type: "STRING"
