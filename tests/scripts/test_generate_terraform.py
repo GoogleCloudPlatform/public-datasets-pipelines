@@ -454,6 +454,44 @@ def test_dataset_tf_file_contains_description_when_specified(
         assert re.search(r"description\s+\=", result.group(1))
 
 
+def test_bq_dataset_can_have_a_description_with_newlines_and_quotes(
+    dataset_path,
+    pipeline_path,
+    project_id,
+    bucket_name_prefix,
+    region,
+    impersonating_acct,
+    env,
+):
+    shutil.copyfile(SAMPLE_YAML_PATHS["dataset"], dataset_path / "dataset.yaml")
+    shutil.copyfile(SAMPLE_YAML_PATHS["pipeline"], pipeline_path / "pipeline.yaml")
+
+    config = yaml.load(open(dataset_path / "dataset.yaml"))
+
+    # Get a bigquery_dataset resource and modify the `description` field
+    bq_dataset = next(
+        (r for r in config["resources"] if r["type"] == "bigquery_dataset"), None
+    )
+    test_description = 'Multiline\nstring with\n"quotes"'
+    bq_dataset["description"] = test_description
+    with open(dataset_path / "dataset.yaml", "w") as file:
+        yaml.dump(config, file)
+
+    generate_terraform.main(
+        dataset_path.name,
+        project_id,
+        bucket_name_prefix,
+        region,
+        impersonating_acct,
+        env,
+        None,
+        None,
+    )
+
+    env_dataset_path = ENV_DATASETS_PATH / dataset_path.name
+    subprocess.check_call(["terraform", "fmt"], cwd=env_dataset_path / "_terraform")
+
+
 def test_dataset_tf_has_no_bq_dataset_description_when_unspecified(
     dataset_path,
     pipeline_path,
@@ -599,6 +637,43 @@ def test_pipeline_tf_has_no_bq_table_description_when_unspecified(
 
         assert re.search(r"table_id\s+\=", result.group(1))
         assert not re.search(r"description\s+\=", result.group(1))
+
+
+def test_bq_table_can_have_a_description_with_newlines_and_quotes(
+    dataset_path,
+    pipeline_path,
+    project_id,
+    bucket_name_prefix,
+    region,
+    impersonating_acct,
+    env,
+):
+    shutil.copyfile(SAMPLE_YAML_PATHS["dataset"], dataset_path / "dataset.yaml")
+    shutil.copyfile(SAMPLE_YAML_PATHS["pipeline"], pipeline_path / "pipeline.yaml")
+
+    config = yaml.load(open(pipeline_path / "pipeline.yaml"))
+
+    # Get a bigquery_table resource and modify the `description` field
+    bq_table = next(
+        (r for r in config["resources"] if r["type"] == "bigquery_table"), None
+    )
+    bq_table["description"] = 'Multiline\nstring with\n"quotes"'
+    with open(pipeline_path / "pipeline.yaml", "w") as file:
+        yaml.dump(config, file)
+
+    generate_terraform.main(
+        dataset_path.name,
+        project_id,
+        bucket_name_prefix,
+        region,
+        impersonating_acct,
+        env,
+        None,
+        None,
+    )
+
+    env_dataset_path = ENV_DATASETS_PATH / dataset_path.name
+    subprocess.check_call(["terraform", "fmt"], cwd=env_dataset_path / "_terraform")
 
 
 def test_bq_table_name_starts_with_digits_but_tf_resource_name_does_not(
