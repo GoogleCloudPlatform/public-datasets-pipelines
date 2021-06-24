@@ -1,5 +1,12 @@
 # Changelog
 
+### [1.6.1](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.6.0...v1.6.1) (2021-06-24)
+
+
+### Bug Fixes
+
+* Allow newline and quotes for BQ dataset and table descriptions ([#103](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/103)) ([ef01fe6](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/ef01fe6c176c5d3cbecd14a173efd6ad45fc2805))
+
 ## [1.6.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.5.1...v1.6.0) (2021-06-17)
 
 
