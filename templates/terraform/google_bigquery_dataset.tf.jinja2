@@ -22,7 +22,7 @@ resource "google_bigquery_dataset" "{{ dataset_id }}" {
     friendly_name = "{{ friendly_name }}"
   {% endif -%}
   {% if description -%}
-    description = "{{ description }}"
+    description = {{ description|tojson }}
   {% endif -%}
   {% if location -%}
     location = "{{ location }}"

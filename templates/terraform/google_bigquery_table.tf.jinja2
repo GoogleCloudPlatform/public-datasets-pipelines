@@ -21,7 +21,7 @@ resource "google_bigquery_table" "{{ tf_resource_name }}" {
   table_id   = "{{ table_id }}"
 
   {% if description -%}
-    description = "{{ description }}"
+    description = {{ description|tojson }}
   {%- endif %}
   {% if schema -%}
     schema = <<EOF
