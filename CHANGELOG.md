@@ -3,7 +3,7 @@
 ## [1.7.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.6.0...v1.7.0) (2021-06-24)
 
 
-### Features
+### Datasets
 
 * Onboard BLS - CPSAAT 2020 dataset ([#105](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/105)) ([61f4394](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/61f439493fcf24d8d9a29362a8498b38389686ef))
 
