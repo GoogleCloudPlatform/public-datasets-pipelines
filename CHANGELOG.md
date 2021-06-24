@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.7.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.6.0...v1.7.0) (2021-06-24)
+
+
+### Features
+
+* Onboard BLS - CPSAAT 2020 dataset ([#105](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/105)) ([61f4394](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/61f439493fcf24d8d9a29362a8498b38389686ef))
+
+
+### Bug Fixes
+
+* Allow newline and quotes for BQ dataset and table descriptions ([#103](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/103)) ([ef01fe6](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/ef01fe6c176c5d3cbecd14a173efd6ad45fc2805))
+
 ## [1.6.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.5.1...v1.6.0) (2021-06-17)
 
 
