@@ -27,7 +27,7 @@ with DAG(
     dag_id="bls.cpsaat18",
     default_args=default_args,
     max_active_runs=1,
-    schedule_interval="@once",
+    schedule_interval="@yearly",
     catchup=False,
     default_view="graph",
 ) as dag:
