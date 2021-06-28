@@ -195,10 +195,10 @@ output "bigquery_table-dar_region_non_intersectional_representation-id" {
   value = google_bigquery_table.dar_region_non_intersectional_representation.id
 }
 
-resource "google_bigquery_table" "dar_selfid" {
+resource "google_bigquery_table" "dar_self_id" {
   project    = var.project_id
   dataset_id = "google_dei"
-  table_id   = "dar_selfid"
+  table_id   = "dar_self_id"
 
   description = "This table contains the representation of Googlers globally who identify as LGBTQ+, members of the military or veterans, people with disabilities, or non-binary genders. Some data may be intentionally redacted due to security and privacy restrictions regarding smaller n-counts. In those cases, the data is displayed as a null value."
 
@@ -207,10 +207,10 @@ resource "google_bigquery_table" "dar_selfid" {
   ]
 }
 
-output "bigquery_table-dar_selfid-table_id" {
-  value = google_bigquery_table.dar_selfid.table_id
+output "bigquery_table-dar_self_id-table_id" {
+  value = google_bigquery_table.dar_self_id.table_id
 }
 
-output "bigquery_table-dar_selfid-id" {
-  value = google_bigquery_table.dar_selfid.id
+output "bigquery_table-dar_self_id-id" {
+  value = google_bigquery_table.dar_self_id.id
 }

@@ -60,7 +60,7 @@ resources:
     deletion_protection: False
 
   - type: bigquery_table
-    table_id: dar_selfid
+    table_id: dar_self_id
     description: "This table contains the representation of Googlers globally who identify as LGBTQ+, members of the military or veterans, people with disabilities, or non-binary genders. Some data may be intentionally redacted due to security and privacy restrictions regarding smaller n-counts. In those cases, the data is displayed as a null value."
     deletion_protection: False
 
@@ -500,11 +500,11 @@ dag:
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
       args:
-        task_id: "load_selfid_to_bq"
+        task_id: "load_self_id_to_bq"
         bucket: "{{ var.json.google_dei.storage_bucket }}"
-        source_objects: ["DAR/selfid.csv"]
+        source_objects: ["DAR/self_id.csv"]
         source_format: "CSV"
-        destination_project_dataset_table: "google_dei.dar_selfid"
+        destination_project_dataset_table: "google_dei.dar_self_id"
         skip_leading_rows: 1
         write_disposition: "WRITE_TRUNCATE"
         schema_fields:
@@ -531,4 +531,4 @@ dag:
     - "load_region_non_intersectional_attrition_to_bq"
     - "load_region_non_intersectional_hiring_to_bq"
     - "load_region_non_intersectional_representation_to_bq"
-    - "load_selfid_to_bq"
+    - "load_self_id_to_bq"

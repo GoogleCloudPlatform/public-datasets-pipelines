@@ -618,12 +618,12 @@ with DAG(
     )
 
     # Task to load CSV data to a BigQuery table
-    load_selfid_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
-        task_id="load_selfid_to_bq",
+    load_self_id_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+        task_id="load_self_id_to_bq",
         bucket="{{ var.json.google_dei.storage_bucket }}",
-        source_objects=["DAR/selfid.csv"],
+        source_objects=["DAR/self_id.csv"],
         source_format="CSV",
-        destination_project_dataset_table="google_dei.dar_selfid",
+        destination_project_dataset_table="google_dei.dar_self_id",
         skip_leading_rows=1,
         write_disposition="WRITE_TRUNCATE",
         schema_fields=[
@@ -657,4 +657,4 @@ with DAG(
     load_region_non_intersectional_attrition_to_bq
     load_region_non_intersectional_hiring_to_bq
     load_region_non_intersectional_representation_to_bq
-    load_selfid_to_bq
+    load_self_id_to_bq
