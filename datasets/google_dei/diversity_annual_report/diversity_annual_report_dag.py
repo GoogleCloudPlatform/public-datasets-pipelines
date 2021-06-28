@@ -281,13 +281,13 @@ with DAG(
             },
             {
                 "name": "gender_global_female",
-                "description": "The percentage of global Googlers who are female",
+                "description": "The percentage of global Googlers who identify as female",
                 "type": "float",
                 "mode": "nullable",
             },
             {
                 "name": "gender_global_male",
-                "description": "The percentage of global Googlers who are male",
+                "description": "The percentage of global Googlers who identify as male",
                 "type": "float",
                 "mode": "nullable",
             },
