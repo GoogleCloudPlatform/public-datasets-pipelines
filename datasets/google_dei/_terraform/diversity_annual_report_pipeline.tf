@@ -20,7 +20,7 @@ resource "google_bigquery_table" "dar_intersectional_attrition" {
   dataset_id = "google_dei"
   table_id   = "dar_intersectional_attrition"
 
-  description = "This table contains the attrition index score of Googlers in the U.S. cut by both race and gender. Some data may be intentionally redacted due to security and privacy restrictions regarding smaller n-counts. In those cases, the data is displayed as a null value."
+  description = "This table contains the attrition index score of Googlers in the U.S. cut by race and gender combined. Some data may be intentionally redacted due to security and privacy restrictions regarding smaller n-counts. In those cases, the data is displayed as a null value."
 
   depends_on = [
     google_bigquery_dataset.google_dei
@@ -40,7 +40,7 @@ resource "google_bigquery_table" "dar_intersectional_hiring" {
   dataset_id = "google_dei"
   table_id   = "dar_intersectional_hiring"
 
-  description = "This table contains the hiring representation of Googlers in the U.S. cut by both race and gender. Some data may be intentionally redacted due to security and privacy restrictions regarding smaller n-counts. In those cases, the data is displayed as a null value."
+  description = "This table contains the hiring breakdown of Googlers in the U.S. cut by race and gender combined. Some data may be intentionally redacted due to security and privacy restrictions regarding smaller n-counts. In those cases, the data is displayed as a null value."
 
   depends_on = [
     google_bigquery_dataset.google_dei
@@ -60,7 +60,7 @@ resource "google_bigquery_table" "dar_intersectional_representation" {
   dataset_id = "google_dei"
   table_id   = "dar_intersectional_representation"
 
-  description = "This table contains the representation of Googlers in the U.S. cut by both race and gender. Some data may be intentionally redacted due to security and privacy restrictions regarding smaller n-counts. In those cases, the data is displayed as a null value."
+  description = "This table contains the representation of Googlers in the U.S. cut by race and gender combined. Some data may be intentionally redacted due to security and privacy restrictions regarding smaller n-counts. In those cases, the data is displayed as a null value."
 
   depends_on = [
     google_bigquery_dataset.google_dei
@@ -80,7 +80,7 @@ resource "google_bigquery_table" "dar_non_intersectional_representation" {
   dataset_id = "google_dei"
   table_id   = "dar_non_intersectional_representation"
 
-  description = "This table contains the representation of Googlers in the U.S. cut by race, and the representation of Googlers cut by gender globally."
+  description = "This table contains the representation of Googlers in the U.S. cut by race and gender separately and the representation of global Googlers cut by gender. Some data may be intentionally redacted due to security and privacy restrictions regarding smaller n-counts. In those cases, the data is displayed as a null value."
 
   depends_on = [
     google_bigquery_dataset.google_dei
@@ -100,7 +100,7 @@ resource "google_bigquery_table" "dar_non_intersectional_attrition" {
   dataset_id = "google_dei"
   table_id   = "dar_non_intersectional_attrition"
 
-  description = "This table contains the attrition index score of Googlers in the U.S. cut by race, and the attrition index score of Googlers cut by gender globally."
+  description = "This table contains the attrition index score of Googlers in the U.S. cut by race and gender separately and the attrition index score of global Googlers cut by gender. Some data may be intentionally redacted due to security and privacy restrictions regarding smaller n-counts. In those cases, the data is displayed as a null value."
 
   depends_on = [
     google_bigquery_dataset.google_dei
@@ -120,7 +120,7 @@ resource "google_bigquery_table" "dar_non_intersectional_hiring" {
   dataset_id = "google_dei"
   table_id   = "dar_non_intersectional_hiring"
 
-  description = "This table contains the hiring representation of Googlers in the U.S. cut by race, and the hiring representation of Googlers cut by gender globally. Some data may be intentionally redacted due to security and privacy restrictions regarding smaller n-counts. In those cases, the data is displayed as a null value."
+  description = "This table contains the hiring breakdown of Googlers in the U.S. cut by race and gender separately and the hiring breakdown of global Googlers cut by gender. Some data may be intentionally redacted due to security and privacy restrictions regarding smaller n-counts. In those cases, the data is displayed as a null value."
 
   depends_on = [
     google_bigquery_dataset.google_dei
@@ -140,7 +140,7 @@ resource "google_bigquery_table" "dar_region_non_intersectional_attrition" {
   dataset_id = "google_dei"
   table_id   = "dar_region_non_intersectional_attrition"
 
-  description = "This table contains the attrition index score of Googlers cut by gender globally. Some data may be intentionally redacted due to security and privacy restrictions regarding smaller n-counts. In those cases, the data is displayed as a null value."
+  description = "This table contains the attrition index score of Googlers in the regions (EMEA, APAC, and the Americas) cut by gender. “Americas” includes all countries in North and South America in which we operate, excluding the U.S. Some data may be intentionally redacted due to security and privacy restrictions regarding smaller n-counts. In those cases, the data is displayed as a null value."
 
   depends_on = [
     google_bigquery_dataset.google_dei
@@ -160,7 +160,7 @@ resource "google_bigquery_table" "dar_region_non_intersectional_hiring" {
   dataset_id = "google_dei"
   table_id   = "dar_region_non_intersectional_hiring"
 
-  description = "This table contains the hiring representation of Googlers cut by gender globally. Some data may be intentionally redacted due to security and privacy restrictions regarding smaller n-counts. In those cases, the data is displayed as a null value."
+  description = "This table contains the hiring breakdown of Googlers in the regions (EMEA, APAC, and the Americas) cut by gender. “Americas” includes all countries in North and South America in which we operate, excluding the U.S. Some data may be intentionally redacted due to security and privacy restrictions regarding smaller n-counts. In those cases, the data is displayed as a null value."
 
   depends_on = [
     google_bigquery_dataset.google_dei
@@ -180,7 +180,7 @@ resource "google_bigquery_table" "dar_region_non_intersectional_representation" 
   dataset_id = "google_dei"
   table_id   = "dar_region_non_intersectional_representation"
 
-  description = "This table contains the representation of Googlers cut by race and gender globally. Some data may be intentionally redacted due to security and privacy restrictions regarding smaller n-counts. In those cases, the data is displayed as a null value."
+  description = "This table contains the representation of Googlers in the regions (EMEA, APAC, and the Americas) cut by race and gender. “Americas” includes all countries in North and South America in which we operate, excluding the U.S. Some data may be intentionally redacted due to security and privacy restrictions regarding smaller n-counts. In those cases, the data is displayed as a null value."
 
   depends_on = [
     google_bigquery_dataset.google_dei
@@ -200,7 +200,7 @@ resource "google_bigquery_table" "dar_selfid" {
   dataset_id = "google_dei"
   table_id   = "dar_selfid"
 
-  description = "This table contains the representation of Googlers who self-identified as LGBQ+ and/or Trans+, as having a disability, as being or having been members of the military, as non-binary. Some data may be intentionally redacted due to security and privacy restrictions regarding smaller n-counts. In those cases, the data is displayed as a null value."
+  description = "This table contains the representation of Googlers globally who identify as LGBTQ+, members of the military or veterans, people with disabilities, or non-binary genders. Some data may be intentionally redacted due to security and privacy restrictions regarding smaller n-counts. In those cases, the data is displayed as a null value."
 
   depends_on = [
     google_bigquery_dataset.google_dei
