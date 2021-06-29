@@ -105,19 +105,19 @@ with DAG(
                 "mode": "REQUIRED",
             },
             {
-                "name": "snf_covid19_vaccination",
+                "name": "sni_covid19_vaccination",
                 "description": "The scaled normalized interest related to all COVID-19 vaccination for the region and date. For example, 87.02. Empty when data isn’t available.",
                 "type": "FLOAT",
                 "mode": "NULLABLE",
             },
             {
-                "name": "snf_vaccination_intent",
+                "name": "sni_vaccination_intent",
                 "description": "The scaled normalized interest related to vaccination intent for the region and date. For example, 22.69. Empty when data isn’t available.",
                 "type": "FLOAT",
                 "mode": "NULLABLE",
             },
             {
-                "name": "snf_safety_side_effects",
+                "name": "sni_safety_side_effects",
                 "description": "The scaled normalized interest related to safety and side effects of the vaccines for the region and date. For example, 17.96. Empty when data isn’t available.",
                 "type": "FLOAT",
                 "mode": "NULLABLE",
