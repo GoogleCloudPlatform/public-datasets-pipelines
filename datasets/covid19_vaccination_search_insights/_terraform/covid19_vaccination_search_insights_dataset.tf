@@ -18,7 +18,7 @@
 resource "google_bigquery_dataset" "covid19_vaccination_search_insights" {
   dataset_id  = "covid19_vaccination_search_insights"
   project     = var.project_id
-  description = "The COVID-19 Vaccination Search Insights shows aggregated, anonymized trends in searches patterns related to COVID-19 vaccination. The dataset provides a time series for each region showing the relative interest of searches per category of interest."
+  description = "Terms of use\nTo download or use the data, you must agree to the Google Terms of Service: https://policies.google.com/terms\n\nDescription\nThe COVID-19 Vaccination Search Insights data shows aggregated, anonymized trends in searches related to COVID-19 vaccination. The dataset provides a weekly time series for each region showing the relative interest of Google searches related to COVID-19 vaccination, across several categories.\n\nThe data is intended to help public health officials design, target, and evaluate public education campaigns.\n\nTo explore and download the data, use our interactive dashboard: http://goo.gle/covid19vaccinationinsights\nTo learn more about the dataset, how we generate it and preserve privacy, read the data documentation:\nhttps://storage.googleapis.com/gcs-public-datasets/COVID-19%20Vaccination%20Search%20Insights%20documentation.pdf"
 }
 
 output "bigquery_dataset-covid19_vaccination_search_insights-dataset_id" {
