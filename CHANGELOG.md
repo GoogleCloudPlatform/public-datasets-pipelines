@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.8.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.7.0...v1.8.0) (2021-07-01)
+
+
+### Features
+
+* Onboard Google Diversity Annual Report 2021 dataset ([#111](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/111)) ([13ebee9](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/13ebee906c52ec60959bbe3f8e0d6190f7934f9d))
+
+
+### Bug Fixes
+
+* Minor revisions to DAR dataset and table descriptions ([#115](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/115)) ([f2389d6](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/f2389d6bff110c4cc322aa9393542e76ae895a63))
+
 ## [1.7.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.6.0...v1.7.0) (2021-06-24)
 
 
