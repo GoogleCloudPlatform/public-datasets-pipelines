@@ -140,7 +140,7 @@ resource "google_bigquery_table" "dar_region_non_intersectional_attrition" {
   dataset_id = "google_dei"
   table_id   = "dar_region_non_intersectional_attrition"
 
-  description = "This table contains the attrition index score of Googlers in the regions (EMEA, APAC, and the Americas) cut by gender. “Americas” includes all countries in North and South America in which we operate, excluding the U.S. Some data may be intentionally redacted due to security and privacy restrictions regarding smaller n-counts. In those cases, the data is displayed as a null value."
+  description = "This table contains the attrition index score of Googlers in the regions (EMEA, APAC, and the Americas) cut by gender. \"Americas\" includes all countries in North and South America in which we operate, excluding the U.S. Some data may be intentionally redacted due to security and privacy restrictions regarding smaller n-counts. In those cases, the data is displayed as a null value."
 
   depends_on = [
     google_bigquery_dataset.google_dei
@@ -160,7 +160,7 @@ resource "google_bigquery_table" "dar_region_non_intersectional_hiring" {
   dataset_id = "google_dei"
   table_id   = "dar_region_non_intersectional_hiring"
 
-  description = "This table contains the hiring breakdown of Googlers in the regions (EMEA, APAC, and the Americas) cut by gender. “Americas” includes all countries in North and South America in which we operate, excluding the U.S. Some data may be intentionally redacted due to security and privacy restrictions regarding smaller n-counts. In those cases, the data is displayed as a null value."
+  description = "This table contains the hiring breakdown of Googlers in the regions (EMEA, APAC, and the Americas) cut by gender. \"Americas\" includes all countries in North and South America in which we operate, excluding the U.S. Some data may be intentionally redacted due to security and privacy restrictions regarding smaller n-counts. In those cases, the data is displayed as a null value."
 
   depends_on = [
     google_bigquery_dataset.google_dei
@@ -180,7 +180,7 @@ resource "google_bigquery_table" "dar_region_non_intersectional_representation" 
   dataset_id = "google_dei"
   table_id   = "dar_region_non_intersectional_representation"
 
-  description = "This table contains the representation of Googlers in the regions (EMEA, APAC, and the Americas) cut by race and gender. “Americas” includes all countries in North and South America in which we operate, excluding the U.S. Some data may be intentionally redacted due to security and privacy restrictions regarding smaller n-counts. In those cases, the data is displayed as a null value."
+  description = "This table contains the representation of Googlers in the regions (EMEA, APAC, and the Americas) cut by race and gender. \"Americas\" includes all countries in North and South America in which we operate, excluding the U.S. Some data may be intentionally redacted due to security and privacy restrictions regarding smaller n-counts. In those cases, the data is displayed as a null value."
 
   depends_on = [
     google_bigquery_dataset.google_dei
