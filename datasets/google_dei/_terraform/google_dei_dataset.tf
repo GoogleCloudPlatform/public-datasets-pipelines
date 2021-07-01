@@ -18,7 +18,7 @@
 resource "google_bigquery_dataset" "google_dei" {
   dataset_id  = "google_dei"
   project     = var.project_id
-  description = "The diversity annual report from Google provides data on the representation, hiring, and retention of employees in our company including race and gender demographics."
+  description = "Diversity, Equity, and Inclusion (DEI) includes demographic data on workforce representation, hiring, and attrition of employees at Google"
 }
 
 output "bigquery_dataset-google_dei-dataset_id" {
