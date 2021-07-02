@@ -33,6 +33,9 @@ resource "google_bigquery_table" "{{ tf_resource_name }}" {
   {% if clustering -%}
     clustering = {{ clustering|tojson }}
   {%- endif %}
+  {% if deletion_protection -%}
+    deletion_protection = {{ deletion_protection|tojson }}
+  {%- endif %}
   {% if schema -%}
     schema = <<EOF
     {{ schema }}
