@@ -268,6 +268,9 @@ dag:
         # Docker images will be built and pushed to GCR by default whenever the `scripts/generate_dag.py` is run. To skip building and pushing images, use the optional `--skip-builds` flag.
         image: "{{ var.json.DATASET_FOLDER_NAME.container_registry.IMAGE_REPOSITORY }}"
 
+        # Always pull the latest image. We recommend to keep this as "Always".
+        image_pull_policy: "Always"
+
         # Set the environment variables you need initialized in the container. Use these as input variables for the script your container is expected to perform.
         env_vars:
           TEST_ENV_VAR: "test-value"
