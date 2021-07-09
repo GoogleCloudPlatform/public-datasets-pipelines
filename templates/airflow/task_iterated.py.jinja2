@@ -1,0 +1,32 @@
+{%- if iterate.get("enumerate") -%}
+  {%- if iterate["type"] == "range" %}
+    {% set iterable = "enumerate(" + iterate["type"] + "(" + iterate["args"]|join(", ") + "))" %}
+  {%- else %}
+    {% set iterable = "enumerate(" + iterate["type"] + "(" + iterate["args"]|tojson + "))" %}
+  {%- endif -%}
+{%- else -%}
+  {%- if iterate["type"] == "range" %}
+    {% set iterable = iterate["type"] + "(" + iterate["args"]|join(", ") + ")" %}
+  {%- else %}
+    {% set iterable = iterate["type"] + "(" + iterate["args"]|tojson + ")" %}
+  {%- endif -%}
+{%- endif -%}
+
+{% filter indent(width=4) %}
+for {{ iterate["vars"]|join(", ") }} in {{ iterable }}:
+    t[{{ args["task_id"] }}] = {{ namespaced_operator }}(
+    {%- for name, val in args.items() %}
+        {%- if val is string and val.startswith("f\"") %}
+        {{ name }}={{ val }},
+        {%- elif val is iterable and (val is not string and val is not mapping) %}
+        {{ name }}=[
+            {% for el in val -%}
+            {{ el }},
+            {% endfor -%}
+        ],
+        {%- else %}
+        {{ name }}={{ val|tojson if val is string else val }},
+        {%- endif -%}
+    {%- endfor %}
+    )
+{% endfilter %}

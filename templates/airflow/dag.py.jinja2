@@ -17,6 +17,7 @@
 
 {{ default_args }}
 
+t = {}
 {{ dag_context }}
     {%- for task in tasks -%}
         {{ task }}
