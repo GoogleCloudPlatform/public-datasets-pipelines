@@ -45,6 +45,7 @@ AIRFLOW_TEMPLATES_PATH = PROJECT_ROOT / "templates" / "airflow"
 TEMPLATE_PATHS = {
     "dag": AIRFLOW_TEMPLATES_PATH / "dag.py.jinja2",
     "task": AIRFLOW_TEMPLATES_PATH / "task.py.jinja2",
+    "task_iterated": AIRFLOW_TEMPLATES_PATH / "task_iterated.py.jinja2",
     "license": AIRFLOW_TEMPLATES_PATH / "license_header.py.jinja2",
     "dag_context": AIRFLOW_TEMPLATES_PATH / "dag_context.py.jinja2",
     "default_args": AIRFLOW_TEMPLATES_PATH / "default_args.py.jinja2",
@@ -138,10 +139,20 @@ def generate_dag_context(config: dict, dataset_id: str) -> str:
 
 def generate_task_contents(task: dict) -> str:
     validate_task(task)
-    return jinja2.Template(TEMPLATE_PATHS["task"].read_text()).render(
-        **task,
-        namespaced_operator=AIRFLOW_IMPORTS[AIRFLOW_VERSION][task["operator"]]["class"],
-    )
+    if task.get("iterate"):
+        return jinja2.Template(TEMPLATE_PATHS["task_iterated"].read_text()).render(
+            **task,
+            namespaced_operator=AIRFLOW_IMPORTS[AIRFLOW_VERSION][task["operator"]][
+                "class"
+            ],
+        )
+    else:
+        return jinja2.Template(TEMPLATE_PATHS["task"].read_text()).render(
+            **task,
+            namespaced_operator=AIRFLOW_IMPORTS[AIRFLOW_VERSION][task["operator"]][
+                "class"
+            ],
+        )
 
 
 def dag_init(config: dict) -> dict:
