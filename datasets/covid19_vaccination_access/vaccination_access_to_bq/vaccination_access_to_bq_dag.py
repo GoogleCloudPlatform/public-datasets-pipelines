@@ -22,6 +22,8 @@ default_args = {
     "start_date": "2021-05-01",
 }
 
+t = {}
+
 
 with DAG(
     dag_id="covid19_vaccination_access.vaccination_access_to_bq",
@@ -32,427 +34,120 @@ with DAG(
     default_view="graph",
 ) as dag:
 
-    # Task to load CSV file from covid19-open-data bucket to facility_boundary_us_all
-    gcs_to_bq_table_us_all = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
-        task_id="gcs_to_bq_table_us_all",
-        bucket="{{ var.json.covid19_vaccination_access.source_bucket }}",
-        source_objects=[
-            "{{ var.json.covid19_vaccination_access.source_prefix }}/facility-boundary-us-all.csv"
-        ],
-        source_format="CSV",
-        destination_project_dataset_table="covid19_vaccination_access.facility_boundary_us_all",
-        skip_leading_rows=1,
-        write_disposition="WRITE_TRUNCATE",
-        schema_fields=[
-            {
-                "name": "facility_place_id",
-                "type": "STRING",
-                "mode": "REQUIRED",
-                "description": "The Google Place ID of the vaccination site. For example, ChIJV3woGFkSK4cRWP9s3-kIFGk.",
-            },
-            {
-                "name": "facility_provider_id",
-                "type": "STRING",
-                "mode": "NULLABLE",
-                "description": "An identifier imported from the provider of the vaccination site information. In the US, we use the ID provided by VaccineFinder when available. For example, 7ede5bd5-44da-4a59-b4d9-b3a49c53472c.",
-            },
-            {
-                "name": "facility_name",
-                "type": "STRING",
-                "mode": "NULLABLE",
-                "description": "The name of the vaccination site. For example, St. Joseph's Hospital.",
-            },
-            {
-                "name": "facility_latitude",
-                "type": "FLOAT",
-                "mode": "REQUIRED",
-                "description": "The latitude of the vaccination site. For example, 36.0507",
-            },
-            {
-                "name": "facility_longitude",
-                "type": "FLOAT",
-                "mode": "REQUIRED",
-                "description": "The longitude of the vaccination site. For example, 41.4356",
-            },
-            {
-                "name": "facility_country_region",
-                "type": "STRING",
-                "mode": "NULLABLE",
-                "description": "The name of the country or region in English. For example, United States.",
-            },
-            {
-                "name": "facility_country_region_code",
-                "type": "STRING",
-                "mode": "NULLABLE",
-                "description": "The ISO 3166-1 code for the country or region. For example, US.",
-            },
-            {
-                "name": "facility_sub_region_1",
-                "type": "STRING",
-                "mode": "NULLABLE",
-                "description": "The name of a region in the country. For example, California.",
-            },
-            {
-                "name": "facility_sub_region_1_code",
-                "type": "STRING",
-                "mode": "NULLABLE",
-                "description": "A country-specific ISO 3166-2 code for the region. For example, US-CA.",
-            },
-            {
-                "name": "facility_sub_region_2",
-                "type": "STRING",
-                "mode": "NULLABLE",
-                "description": "The name (or type) of a region in the country. Typically a subdivision of sub_region_1. For example, Santa Clara County or municipal_borough.",
-            },
-            {
-                "name": "facility_sub_region_2_code",
-                "type": "STRING",
-                "mode": "NULLABLE",
-                "description": "In the US, the FIPS code for a US county (or equivalent). For example, 06085.",
-            },
-            {
-                "name": "facility_region_place_id",
-                "type": "STRING",
-                "mode": "NULLABLE",
-                "description": "The Google place ID for the most-specific region, used in Google Places API and on Google Maps. For example, ChIJd_Y0eVIvkIARuQyDN0F1LBA.",
-            },
-            {
-                "name": "mode_of_transportation",
-                "type": "STRING",
-                "mode": "NULLABLE",
-                "description": "The mode of transport used to calculate the catchment boundary. For example, driving.",
-            },
-            {
-                "name": "travel_time_threshold_minutes",
-                "type": "INTEGER",
-                "mode": "NULLABLE",
-                "description": "The maximum travel time, in minutes, used to calculate the catchment boundary. For example, 30.",
-            },
-            {
-                "name": "facility_catchment_boundary",
-                "type": "GEOGRAPHY",
-                "mode": "NULLABLE",
-                "description": "A GeoJSON representation of the catchment area boundary of the site, for a particular mode of transportation and travel time threshold. Consists of multiple latitude and longitude points.",
-            },
-        ],
-    )
+    for tbl in list(
+        [
+            "facility_boundary_us_all",
+            "facility_boundary_us_drive",
+            "facility_boundary_us_transit",
+            "facility_boundary_us_walk",
+        ]
+    ):
 
-    # Task to load CSV file from covid19-open-data bucket to facility_boundary_us_drive
-    gcs_to_bq_table_us_drive = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
-        task_id="gcs_to_bq_table_us_drive",
-        bucket="{{ var.json.covid19_vaccination_access.source_bucket }}",
-        source_objects=[
-            "{{ var.json.covid19_vaccination_access.source_prefix }}/facility-boundary-us-drive.csv"
-        ],
-        source_format="CSV",
-        destination_project_dataset_table="covid19_vaccination_access.facility_boundary_us_drive",
-        skip_leading_rows=1,
-        write_disposition="WRITE_TRUNCATE",
-        schema_fields=[
-            {
-                "name": "facility_place_id",
-                "type": "STRING",
-                "mode": "REQUIRED",
-                "description": "The Google Place ID of the vaccination site. For example, ChIJV3woGFkSK4cRWP9s3-kIFGk.",
-            },
-            {
-                "name": "facility_provider_id",
-                "type": "STRING",
-                "mode": "NULLABLE",
-                "description": "An identifier imported from the provider of the vaccination site information. In the US, we use the ID provided by VaccineFinder when available. For example, 7ede5bd5-44da-4a59-b4d9-b3a49c53472c.",
-            },
-            {
-                "name": "facility_name",
-                "type": "STRING",
-                "mode": "NULLABLE",
-                "description": "The name of the vaccination site. For example, St. Joseph's Hospital.",
-            },
-            {
-                "name": "facility_latitude",
-                "type": "FLOAT",
-                "mode": "REQUIRED",
-                "description": "The latitude of the vaccination site. For example, 36.0507",
-            },
-            {
-                "name": "facility_longitude",
-                "type": "FLOAT",
-                "mode": "REQUIRED",
-                "description": "The longitude of the vaccination site. For example, 41.4356",
-            },
-            {
-                "name": "facility_country_region",
-                "type": "STRING",
-                "mode": "NULLABLE",
-                "description": "The name of the country or region in English. For example, United States.",
-            },
-            {
-                "name": "facility_country_region_code",
-                "type": "STRING",
-                "mode": "NULLABLE",
-                "description": "The ISO 3166-1 code for the country or region. For example, US.",
-            },
-            {
-                "name": "facility_sub_region_1",
-                "type": "STRING",
-                "mode": "NULLABLE",
-                "description": "The name of a region in the country. For example, California.",
-            },
-            {
-                "name": "facility_sub_region_1_code",
-                "type": "STRING",
-                "mode": "NULLABLE",
-                "description": "A country-specific ISO 3166-2 code for the region. For example, US-CA.",
-            },
-            {
-                "name": "facility_sub_region_2",
-                "type": "STRING",
-                "mode": "NULLABLE",
-                "description": "The name (or type) of a region in the country. Typically a subdivision of sub_region_1. For example, Santa Clara County or municipal_borough.",
-            },
-            {
-                "name": "facility_sub_region_2_code",
-                "type": "STRING",
-                "mode": "NULLABLE",
-                "description": "In the US, the FIPS code for a US county (or equivalent). For example, 06085.",
-            },
-            {
-                "name": "facility_region_place_id",
-                "type": "STRING",
-                "mode": "NULLABLE",
-                "description": "The Google place ID for the most-specific region, used in Google Places API and on Google Maps. For example, ChIJd_Y0eVIvkIARuQyDN0F1LBA.",
-            },
-            {
-                "name": "mode_of_transportation",
-                "type": "STRING",
-                "mode": "NULLABLE",
-                "description": "The mode of transport used to calculate the catchment boundary. For example, driving.",
-            },
-            {
-                "name": "travel_time_threshold_minutes",
-                "type": "INTEGER",
-                "mode": "NULLABLE",
-                "description": "The maximum travel time, in minutes, used to calculate the catchment boundary. For example, 30.",
-            },
-            {
-                "name": "facility_catchment_boundary",
-                "type": "GEOGRAPHY",
-                "mode": "NULLABLE",
-                "description": "A GeoJSON representation of the catchment area boundary of the site, for a particular mode of transportation and travel time threshold. Consists of multiple latitude and longitude points.",
-            },
-        ],
-    )
+        t[f"gcs_to_bq_table_{tbl}"] = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+            task_id=f"gcs_to_bq_table_{tbl}",
+            bucket="{{ var.json.covid19_vaccination_access.source_bucket }}",
+            source_objects=[
+                f"{{ var.json.covid19_vaccination_access.source_prefix }}/{tbl.replace('_','-')}.csv",
+            ],
+            source_format="CSV",
+            destination_project_dataset_table=f"covid19_vaccination_access.{tbl}",
+            skip_leading_rows=1,
+            write_disposition="WRITE_TRUNCATE",
+            schema_fields=[
+                {
+                    "name": "facility_place_id",
+                    "type": "STRING",
+                    "mode": "REQUIRED",
+                    "description": "The Google Place ID of the vaccination site. For example, ChIJV3woGFkSK4cRWP9s3-kIFGk.",
+                },
+                {
+                    "name": "facility_provider_id",
+                    "type": "STRING",
+                    "mode": "NULLABLE",
+                    "description": "An identifier imported from the provider of the vaccination site information. In the US, we use the ID provided by VaccineFinder when available. For example, 7ede5bd5-44da-4a59-b4d9-b3a49c53472c.",
+                },
+                {
+                    "name": "facility_name",
+                    "type": "STRING",
+                    "mode": "NULLABLE",
+                    "description": "The name of the vaccination site. For example, St. Joseph's Hospital.",
+                },
+                {
+                    "name": "facility_latitude",
+                    "type": "FLOAT",
+                    "mode": "REQUIRED",
+                    "description": "The latitude of the vaccination site. For example, 36.0507",
+                },
+                {
+                    "name": "facility_longitude",
+                    "type": "FLOAT",
+                    "mode": "REQUIRED",
+                    "description": "The longitude of the vaccination site. For example, 41.4356",
+                },
+                {
+                    "name": "facility_country_region",
+                    "type": "STRING",
+                    "mode": "NULLABLE",
+                    "description": "The name of the country or region in English. For example, United States.",
+                },
+                {
+                    "name": "facility_country_region_code",
+                    "type": "STRING",
+                    "mode": "NULLABLE",
+                    "description": "The ISO 3166-1 code for the country or region. For example, US.",
+                },
+                {
+                    "name": "facility_sub_region_1",
+                    "type": "STRING",
+                    "mode": "NULLABLE",
+                    "description": "The name of a region in the country. For example, California.",
+                },
+                {
+                    "name": "facility_sub_region_1_code",
+                    "type": "STRING",
+                    "mode": "NULLABLE",
+                    "description": "A country-specific ISO 3166-2 code for the region. For example, US-CA.",
+                },
+                {
+                    "name": "facility_sub_region_2",
+                    "type": "STRING",
+                    "mode": "NULLABLE",
+                    "description": "The name (or type) of a region in the country. Typically a subdivision of sub_region_1. For example, Santa Clara County or municipal_borough.",
+                },
+                {
+                    "name": "facility_sub_region_2_code",
+                    "type": "STRING",
+                    "mode": "NULLABLE",
+                    "description": "In the US, the FIPS code for a US county (or equivalent). For example, 06085.",
+                },
+                {
+                    "name": "facility_region_place_id",
+                    "type": "STRING",
+                    "mode": "NULLABLE",
+                    "description": "The Google place ID for the most-specific region, used in Google Places API and on Google Maps. For example, ChIJd_Y0eVIvkIARuQyDN0F1LBA.",
+                },
+                {
+                    "name": "mode_of_transportation",
+                    "type": "STRING",
+                    "mode": "NULLABLE",
+                    "description": "The mode of transport used to calculate the catchment boundary. For example, driving.",
+                },
+                {
+                    "name": "travel_time_threshold_minutes",
+                    "type": "INTEGER",
+                    "mode": "NULLABLE",
+                    "description": "The maximum travel time, in minutes, used to calculate the catchment boundary. For example, 30.",
+                },
+                {
+                    "name": "facility_catchment_boundary",
+                    "type": "GEOGRAPHY",
+                    "mode": "NULLABLE",
+                    "description": "A GeoJSON representation of the catchment area boundary of the site, for a particular mode of transportation and travel time threshold. Consists of multiple latitude and longitude points.",
+                },
+            ],
+        )
 
-    # Task to load CSV file from covid19-open-data bucket to facility_boundary_us_transit
-    gcs_to_bq_table_us_transit = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
-        task_id="gcs_to_bq_table_us_transit",
-        bucket="{{ var.json.covid19_vaccination_access.source_bucket }}",
-        source_objects=[
-            "{{ var.json.covid19_vaccination_access.source_prefix }}/facility-boundary-us-transit.csv"
-        ],
-        source_format="CSV",
-        destination_project_dataset_table="covid19_vaccination_access.facility_boundary_us_transit",
-        skip_leading_rows=1,
-        write_disposition="WRITE_TRUNCATE",
-        schema_fields=[
-            {
-                "name": "facility_place_id",
-                "type": "STRING",
-                "mode": "REQUIRED",
-                "description": "The Google Place ID of the vaccination site. For example, ChIJV3woGFkSK4cRWP9s3-kIFGk.",
-            },
-            {
-                "name": "facility_provider_id",
-                "type": "STRING",
-                "mode": "NULLABLE",
-                "description": "An identifier imported from the provider of the vaccination site information. In the US, we use the ID provided by VaccineFinder when available. For example, 7ede5bd5-44da-4a59-b4d9-b3a49c53472c.",
-            },
-            {
-                "name": "facility_name",
-                "type": "STRING",
-                "mode": "NULLABLE",
-                "description": "The name of the vaccination site. For example, St. Joseph's Hospital.",
-            },
-            {
-                "name": "facility_latitude",
-                "type": "FLOAT",
-                "mode": "REQUIRED",
-                "description": "The latitude of the vaccination site. For example, 36.0507",
-            },
-            {
-                "name": "facility_longitude",
-                "type": "FLOAT",
-                "mode": "REQUIRED",
-                "description": "The longitude of the vaccination site. For example, 41.4356",
-            },
-            {
-                "name": "facility_country_region",
-                "type": "STRING",
-                "mode": "NULLABLE",
-                "description": "The name of the country or region in English. For example, United States.",
-            },
-            {
-                "name": "facility_country_region_code",
-                "type": "STRING",
-                "mode": "NULLABLE",
-                "description": "The ISO 3166-1 code for the country or region. For example, US.",
-            },
-            {
-                "name": "facility_sub_region_1",
-                "type": "STRING",
-                "mode": "NULLABLE",
-                "description": "The name of a region in the country. For example, California.",
-            },
-            {
-                "name": "facility_sub_region_1_code",
-                "type": "STRING",
-                "mode": "NULLABLE",
-                "description": "A country-specific ISO 3166-2 code for the region. For example, US-CA.",
-            },
-            {
-                "name": "facility_sub_region_2",
-                "type": "STRING",
-                "mode": "NULLABLE",
-                "description": "The name (or type) of a region in the country. Typically a subdivision of sub_region_1. For example, Santa Clara County or municipal_borough.",
-            },
-            {
-                "name": "facility_sub_region_2_code",
-                "type": "STRING",
-                "mode": "NULLABLE",
-                "description": "In the US, the FIPS code for a US county (or equivalent). For example, 06085.",
-            },
-            {
-                "name": "facility_region_place_id",
-                "type": "STRING",
-                "mode": "NULLABLE",
-                "description": "The Google place ID for the most-specific region, used in Google Places API and on Google Maps. For example, ChIJd_Y0eVIvkIARuQyDN0F1LBA.",
-            },
-            {
-                "name": "mode_of_transportation",
-                "type": "STRING",
-                "mode": "NULLABLE",
-                "description": "The mode of transport used to calculate the catchment boundary. For example, driving.",
-            },
-            {
-                "name": "travel_time_threshold_minutes",
-                "type": "INTEGER",
-                "mode": "NULLABLE",
-                "description": "The maximum travel time, in minutes, used to calculate the catchment boundary. For example, 30.",
-            },
-            {
-                "name": "facility_catchment_boundary",
-                "type": "GEOGRAPHY",
-                "mode": "NULLABLE",
-                "description": "A GeoJSON representation of the catchment area boundary of the site, for a particular mode of transportation and travel time threshold. Consists of multiple latitude and longitude points.",
-            },
-        ],
-    )
-
-    # Task to load CSV file from covid19-open-data bucket to facility_boundary_us_walk
-    gcs_to_bq_table_us_walk = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
-        task_id="gcs_to_bq_table_us_walk",
-        bucket="{{ var.json.covid19_vaccination_access.source_bucket }}",
-        source_objects=[
-            "{{ var.json.covid19_vaccination_access.source_prefix }}/facility-boundary-us-walk.csv"
-        ],
-        source_format="CSV",
-        destination_project_dataset_table="covid19_vaccination_access.facility_boundary_us_walk",
-        skip_leading_rows=1,
-        write_disposition="WRITE_TRUNCATE",
-        schema_fields=[
-            {
-                "name": "facility_place_id",
-                "type": "STRING",
-                "mode": "REQUIRED",
-                "description": "The Google Place ID of the vaccination site. For example, ChIJV3woGFkSK4cRWP9s3-kIFGk.",
-            },
-            {
-                "name": "facility_provider_id",
-                "type": "STRING",
-                "mode": "NULLABLE",
-                "description": "An identifier imported from the provider of the vaccination site information. In the US, we use the ID provided by VaccineFinder when available. For example, 7ede5bd5-44da-4a59-b4d9-b3a49c53472c.",
-            },
-            {
-                "name": "facility_name",
-                "type": "STRING",
-                "mode": "NULLABLE",
-                "description": "The name of the vaccination site. For example, St. Joseph's Hospital.",
-            },
-            {
-                "name": "facility_latitude",
-                "type": "FLOAT",
-                "mode": "REQUIRED",
-                "description": "The latitude of the vaccination site. For example, 36.0507",
-            },
-            {
-                "name": "facility_longitude",
-                "type": "FLOAT",
-                "mode": "REQUIRED",
-                "description": "The longitude of the vaccination site. For example, 41.4356",
-            },
-            {
-                "name": "facility_country_region",
-                "type": "STRING",
-                "mode": "NULLABLE",
-                "description": "The name of the country or region in English. For example, United States.",
-            },
-            {
-                "name": "facility_country_region_code",
-                "type": "STRING",
-                "mode": "NULLABLE",
-                "description": "The ISO 3166-1 code for the country or region. For example, US.",
-            },
-            {
-                "name": "facility_sub_region_1",
-                "type": "STRING",
-                "mode": "NULLABLE",
-                "description": "The name of a region in the country. For example, California.",
-            },
-            {
-                "name": "facility_sub_region_1_code",
-                "type": "STRING",
-                "mode": "NULLABLE",
-                "description": "A country-specific ISO 3166-2 code for the region. For example, US-CA.",
-            },
-            {
-                "name": "facility_sub_region_2",
-                "type": "STRING",
-                "mode": "NULLABLE",
-                "description": "The name (or type) of a region in the country. Typically a subdivision of sub_region_1. For example, Santa Clara County or municipal_borough.",
-            },
-            {
-                "name": "facility_sub_region_2_code",
-                "type": "STRING",
-                "mode": "NULLABLE",
-                "description": "In the US, the FIPS code for a US county (or equivalent). For example, 06085.",
-            },
-            {
-                "name": "facility_region_place_id",
-                "type": "STRING",
-                "mode": "NULLABLE",
-                "description": "The Google place ID for the most-specific region, used in Google Places API and on Google Maps. For example, ChIJd_Y0eVIvkIARuQyDN0F1LBA.",
-            },
-            {
-                "name": "mode_of_transportation",
-                "type": "STRING",
-                "mode": "NULLABLE",
-                "description": "The mode of transport used to calculate the catchment boundary. For example, driving.",
-            },
-            {
-                "name": "travel_time_threshold_minutes",
-                "type": "INTEGER",
-                "mode": "NULLABLE",
-                "description": "The maximum travel time, in minutes, used to calculate the catchment boundary. For example, 30.",
-            },
-            {
-                "name": "facility_catchment_boundary",
-                "type": "GEOGRAPHY",
-                "mode": "NULLABLE",
-                "description": "A GeoJSON representation of the catchment area boundary of the site, for a particular mode of transportation and travel time threshold. Consists of multiple latitude and longitude points.",
-            },
-        ],
-    )
-
-    gcs_to_bq_table_us_all
-    gcs_to_bq_table_us_drive
-    gcs_to_bq_table_us_transit
-    gcs_to_bq_table_us_walk
+    t["gcs_to_bq_table_facility_boundary_us_all"]
+    t["gcs_to_bq_table_facility_boundary_us_drive"]
+    t["gcs_to_bq_table_facility_boundary_us_transit"]
+    t["gcs_to_bq_table_facility_boundary_us_walk"]
