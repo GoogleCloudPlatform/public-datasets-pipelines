@@ -106,19 +106,37 @@ def generate_pipeline_dag(dataset_id: str, pipeline_id: str, env: str):
 
 
 def generate_dag(config: dict, dataset_id: str) -> str:
-    return jinja2.Template(TEMPLATE_PATHS["dag"].read_text()).render(
+    return j2_env.get_template("dag.py.jinja2").render(
         package_imports=generate_package_imports(config),
         default_args=generate_default_args(config),
         dag_context=generate_dag_context(config, dataset_id),
-        tasks=generate_tasks(config),
+        tasks=config["dag"]["tasks"],
+        has_iterated_task=has_iterated_task(config),
+        airflow_ns=AIRFLOW_IMPORTS[AIRFLOW_VERSION],
         graph_paths=config["dag"]["graph_paths"],
     )
 
 
+def has_iterated_task(config: dict) -> bool:
+    for task in config["dag"]["tasks"]:
+        if task.get("iterate"):
+            return True
+    return False
+
+
+def collect_operator_imports(
+    tasks: typing.List[str], contents: typing.Set[str]
+) -> None:
+    for task in tasks:
+        if task.get("iterate"):
+            collect_operator_imports(task["iterate"]["iteration"], contents)
+        else:
+            contents.add(AIRFLOW_IMPORTS[AIRFLOW_VERSION][task["operator"]]["import"])
+
+
 def generate_package_imports(config: dict) -> str:
     contents = {"from airflow import DAG"}
-    for task in config["dag"]["tasks"]:
-        contents.add(AIRFLOW_IMPORTS[AIRFLOW_VERSION][task["operator"]]["import"])
+    collect_operator_imports(config["dag"]["tasks"], contents)
     return "\n".join(contents)
 
 
@@ -145,20 +163,10 @@ def generate_dag_context(config: dict, dataset_id: str) -> str:
 
 def generate_task_contents(task: dict) -> str:
     validate_task(task)
-    if task.get("iterate"):
-        return jinja2.Template(TEMPLATE_PATHS["task_iterated"].read_text()).render(
-            **task,
-            namespaced_operator=AIRFLOW_IMPORTS[AIRFLOW_VERSION][task["operator"]][
-                "class"
-            ],
-        )
-    else:
-        return jinja2.Template(TEMPLATE_PATHS["task"].read_text()).render(
-            **task,
-            namespaced_operator=AIRFLOW_IMPORTS[AIRFLOW_VERSION][task["operator"]][
-                "class"
-            ],
-        )
+    return jinja2.Template(TEMPLATE_PATHS["task"].read_text()).render(
+        task=task,
+        airflow_ns=AIRFLOW_IMPORTS[AIRFLOW_VERSION],
+    )
 
 
 def dag_init(config: dict) -> dict:
