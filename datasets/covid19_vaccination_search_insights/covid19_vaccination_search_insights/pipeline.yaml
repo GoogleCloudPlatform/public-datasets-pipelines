@@ -123,7 +123,7 @@ resources:
 
 dag:
   initialize:
-    dag_id: vaccination_search_insights_to_bq
+    dag_id: covid19_vaccination_search_insights
     default_args:
       owner: "Google"
       depends_on_past: False

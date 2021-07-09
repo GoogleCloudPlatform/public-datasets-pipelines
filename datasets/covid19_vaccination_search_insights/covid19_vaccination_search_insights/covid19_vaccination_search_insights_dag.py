@@ -24,7 +24,7 @@ default_args = {
 
 
 with DAG(
-    dag_id="covid19_vaccination_search_insights.vaccination_search_insights_to_bq",
+    dag_id="covid19_vaccination_search_insights.covid19_vaccination_search_insights",
     default_args=default_args,
     max_active_runs=1,
     schedule_interval="@hourly",
