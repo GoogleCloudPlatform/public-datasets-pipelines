@@ -17,12 +17,17 @@
 
 {{ default_args }}
 
+{% if has_iterated_task %}
 t = {}
-{{ dag_context }}
-    {%- for task in tasks -%}
-        {{ task }}
-    {%- endfor %}
+{% endif %}
 
-    {% for path in graph_paths -%}
-        {{ path|indent() }}
-    {% endfor %}
+{{ dag_context }}
+{% for _task in tasks %}
+    {% with task = _task, indent_level = 1 %}
+        {% include "task.py.jinja2" %}
+    {% endwith %}
+{%- endfor %}
+
+{% for path in graph_paths %}
+    {{ path|indent() }}
+{% endfor %}
