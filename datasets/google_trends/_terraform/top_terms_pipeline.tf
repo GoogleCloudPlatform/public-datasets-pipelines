@@ -21,7 +21,47 @@ resource "google_bigquery_table" "top_terms" {
   table_id   = "top_terms"
 
   description = "Daily top 25 terms in the United States with score, ranking, time, and designated market area"
+  time_partitioning {
+    type = "DAY"
 
+    field = "refresh_date"
+
+    require_partition_filter = false
+  }
+
+
+  schema = <<EOF
+    [
+  {
+    "name": "rank",
+    "type": "INTEGER"
+  },
+  {
+    "name": "refresh_date",
+    "type": "DATE"
+  },
+  {
+    "name": "dma_name",
+    "type": "STRING"
+  },
+  {
+    "name": "dma_id",
+    "type": "INTEGER"
+  },
+  {
+    "name": "term",
+    "type": "STRING"
+  },
+  {
+    "name": "week",
+    "type": "DATE"
+  },
+  {
+    "name": "score",
+    "type": "INTEGER"
+  }
+]
+    EOF
   depends_on = [
     google_bigquery_dataset.google_trends
   ]
@@ -41,7 +81,47 @@ resource "google_bigquery_table" "top_rising_terms" {
   table_id   = "top_rising_terms"
 
   description = "Daily top rising terms in the United States with score, ranking, time, and designated market area"
+  time_partitioning {
+    type = "DAY"
 
+    field = "refresh_date"
+
+    require_partition_filter = false
+  }
+
+
+  schema = <<EOF
+    [
+  {
+    "name": "rank",
+    "type": "INTEGER"
+  },
+  {
+    "name": "refresh_date",
+    "type": "DATE"
+  },
+  {
+    "name": "dma_name",
+    "type": "STRING"
+  },
+  {
+    "name": "dma_id",
+    "type": "INTEGER"
+  },
+  {
+    "name": "term",
+    "type": "STRING"
+  },
+  {
+    "name": "week",
+    "type": "DATE"
+  },
+  {
+    "name": "score",
+    "type": "INTEGER"
+  }
+]
+    EOF
   depends_on = [
     google_bigquery_dataset.google_trends
   ]
