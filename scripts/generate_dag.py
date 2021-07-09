@@ -54,6 +54,12 @@ TEMPLATE_PATHS = {
 AIRFLOW_VERSION = "1.10.15"
 AIRFLOW_IMPORTS = json.load(open(CURRENT_PATH / "dag_imports.json"))
 
+j2_env = jinja2.Environment(
+    loader=jinja2.FileSystemLoader(AIRFLOW_TEMPLATES_PATH),
+    lstrip_blocks=True,
+    trim_blocks=True,
+)
+
 
 def main(
     dataset_id: str,
