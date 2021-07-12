@@ -542,7 +542,7 @@ def test_dataset_tf_has_no_bq_dataset_description_when_unspecified(
         assert not re.search(r"description\s+\=", result.group(1))
 
 
-def test_pipeline_tf_contains_bq_table_description_when_specified(
+def test_pipeline_tf_contains_optional_properties_when_specified(
     dataset_path,
     pipeline_path,
     project_id,
@@ -571,10 +571,13 @@ def test_pipeline_tf_contains_bq_table_description_when_specified(
     )
     assert bq_table
     assert bq_table["description"]
+    assert bq_table["time_partitioning"]
+    assert bq_table["clustering"]
+    assert bq_table["deletion_protection"]
 
     # Match the "google_bigquery_table" properties, i.e. any lines between the
     # curly braces, in the *_pipeline.tf file
-    regexp = r"\"google_bigquery_table\" \"" + bq_table["table_id"] + r"\" \{(.*?)\}"
+    regexp = r"\"google_bigquery_table\" \"" + bq_table["table_id"] + r"\" \{(.*?)^\}"
     bq_table_tf_string = re.compile(regexp, flags=re.MULTILINE | re.DOTALL)
 
     for path_prefix in (
@@ -587,9 +590,12 @@ def test_pipeline_tf_contains_bq_table_description_when_specified(
 
         assert re.search(r"table_id\s+\=", result.group(1))
         assert re.search(r"description\s+\=", result.group(1))
+        assert re.search(r"time_partitioning\s+\{", result.group(1))
+        assert re.search(r"clustering\s+\=", result.group(1))
+        assert re.search(r"deletion_protection\s+\=", result.group(1))
 
 
-def test_pipeline_tf_has_no_bq_table_description_when_unspecified(
+def test_pipeline_tf_has_no_optional_properties_when_unspecified(
     dataset_path,
     pipeline_path,
     project_id,
@@ -608,6 +614,9 @@ def test_pipeline_tf_has_no_bq_table_description_when_unspecified(
         (r for r in config["resources"] if r["type"] == "bigquery_table"), None
     )
     del bq_table["description"]
+    del bq_table["time_partitioning"]
+    del bq_table["clustering"]
+    del bq_table["deletion_protection"]
     with open(pipeline_path / "pipeline.yaml", "w") as file:
         yaml.dump(config, file)
 
@@ -624,7 +633,7 @@ def test_pipeline_tf_has_no_bq_table_description_when_unspecified(
 
     # Match the "google_bigquery_table" properties, i.e. any lines between the
     # curly braces, in the *_pipeline.tf file
-    regexp = r"\"google_bigquery_table\" \"" + bq_table["table_id"] + r"\" \{(.*?)\}"
+    regexp = r"\"google_bigquery_table\" \"" + bq_table["table_id"] + r"\" \{(.*?)^\}"
     bq_table_tf_string = re.compile(regexp, flags=re.MULTILINE | re.DOTALL)
 
     for path_prefix in (
@@ -637,6 +646,9 @@ def test_pipeline_tf_has_no_bq_table_description_when_unspecified(
 
         assert re.search(r"table_id\s+\=", result.group(1))
         assert not re.search(r"description\s+\=", result.group(1))
+        assert not re.search(r"time_partitioning\s+\{", result.group(1))
+        assert not re.search(r"clustering\s+\=", result.group(1))
+        assert not re.search(r"deletion_protection\s+\=", result.group(1))
 
 
 def test_bq_table_can_have_a_description_with_newlines_and_quotes(

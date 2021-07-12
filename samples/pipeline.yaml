@@ -32,8 +32,30 @@ resources:
     #   table_id
     table_id: PIPELINE_FOLDER_NAME
 
+    # Optional Properties:
     # Description of the table
     description: "This is a table description."
+
+    # Time-based partitioning configuration. There is no need for this property
+    # if you have a relatively small dataset to host on a BigQuery table.
+    time_partitioning:
+
+      # The supported types are DAY, HOUR, MONTH, and YEAR, which will generate one partition per day, hour, month, and year, respectively.
+      type: "DAY"
+
+      # If set to true, queries over this table require a partition filter that can be used for partition elimination to be specified.
+      require_partition_filter: false
+
+    # Specifies column names to use for data clustering. Up to four top-level columns are allowed, and should be specified in descending priority order.
+    clustering:
+      - "column_1"
+      - "column_2"
+      - "column_3"
+
+    # The table cannot be deleted without first disabling this property.
+    # Unless this field is set to false in Terraform state, a `terraform destroy`
+    # or `terraform apply` that would delete the table will fail.
+    deletion_protection: true
 
 dag:
   # The DAG acronym stands for directed acyclic graph. This block represents
