@@ -19,7 +19,7 @@ limitations under the License.
 
 {# If the task is non-iterated, i.e. a single operator, render as usual. #}
 {%- if not task.get("iterate") %}
-    {% if has_iterated_task %}
+    {% if dag_has_iterated_task %}
         {% set task_name = "t[" + task["args"]["task_id"] + "]" %}
     {% else %}
         {% set task_name = task["args"]["task_id"] %}

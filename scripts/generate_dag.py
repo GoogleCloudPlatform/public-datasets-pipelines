@@ -111,13 +111,13 @@ def generate_dag(config: dict, dataset_id: str) -> str:
         default_args=generate_default_args(config),
         dag_context=generate_dag_context(config, dataset_id),
         tasks=config["dag"]["tasks"],
-        has_iterated_task=has_iterated_task(config),
+        dag_has_iterated_task=dag_has_iterated_task(config),
         airflow_ns=AIRFLOW_IMPORTS[AIRFLOW_VERSION],
         graph_paths=config["dag"]["graph_paths"],
     )
 
 
-def has_iterated_task(config: dict) -> bool:
+def dag_has_iterated_task(config: dict) -> bool:
     for task in config["dag"]["tasks"]:
         if task.get("iterate"):
             return True
