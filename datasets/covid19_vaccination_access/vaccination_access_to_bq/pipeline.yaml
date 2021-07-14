@@ -124,7 +124,14 @@ dag:
                   description: "A GeoJSON representation of the catchment area boundary of the site, for a particular mode of transportation and travel time threshold. Consists of multiple latitude and longitude points."
 
   graph_paths:
-    - t["gcs_to_bq_table_facility_boundary_us_all"]
-    - t["gcs_to_bq_table_facility_boundary_us_drive"]
-    - t["gcs_to_bq_table_facility_boundary_us_transit"]
-    - t["gcs_to_bq_table_facility_boundary_us_walk"]
+    - iterate:
+        type: "list"
+        args:
+          - "facility_boundary_us_all"
+          - "facility_boundary_us_drive"
+          - "facility_boundary_us_transit"
+          - "facility_boundary_us_walk"
+        vars:
+          - tbl
+        iteration:
+          - upstream: f"gcs_to_bq_table_{tbl}"

@@ -147,7 +147,13 @@ with DAG(
             ],
         )
 
-    t["gcs_to_bq_table_facility_boundary_us_all"]
-    t["gcs_to_bq_table_facility_boundary_us_drive"]
-    t["gcs_to_bq_table_facility_boundary_us_transit"]
-    t["gcs_to_bq_table_facility_boundary_us_walk"]
+    for tbl in list(
+        [
+            "facility_boundary_us_all",
+            "facility_boundary_us_drive",
+            "facility_boundary_us_transit",
+            "facility_boundary_us_walk",
+        ]
+    ):
+
+        t[f"gcs_to_bq_table_{tbl}"]
