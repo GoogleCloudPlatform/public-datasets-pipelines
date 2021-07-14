@@ -36,7 +36,7 @@ pipenv run airflow initdb
 
 Configuring, generating, and deploying data pipelines in a programmatic, standardized, and scalable way is the main purpose of this repository.
 
-Follow the steps below to build a data pipeline for your dataset:
+Follow the steps below to build a data pipeline for your dataset..
 
 ## 1. Create a folder hierarchy for your pipeline
 
