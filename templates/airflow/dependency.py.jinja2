@@ -1,0 +1,90 @@
+{#
+Copyright 2021 Google LLC
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+#}
+
+{% set indent_size = 4 * indent_level %}
+{% filter indent(width=indent_size) -%}
+
+{#
+If the dep isn't iterated, i.e. a single edge or dependency, render as usual but
+determine whether or not the `t` dict needs to be used to refer to DAG tasks.
+#}
+{%- if not dep.get("iterate") %}
+    {% if dag_has_iterated_task %}
+        {% if dep["upstream"] | is_list %}
+            {% set upstream = "[t[" + dep["upstream"]|join(", t[") + "]]" %}
+        {% else %}
+            {% set upstream = "t[" + dep["upstream"] + "]" %}
+        {% endif %}
+    {% else %}
+        {% if dep["upstream"] | is_list %}
+            {% set upstream = "[" + dep["upstream"]|join(", ") + "]" %}
+        {% else %}
+            {% set upstream = dep["upstream"] %}
+        {% endif %}
+    {% endif %}
+
+    {# Prepare downstream dependency part, if specified on the YAML config. #}
+    {% if dep.get("downstream") %}
+        {% if dag_has_iterated_task %}
+            {% if dep["downstream"] | is_list %}
+                {% set downstream = "[t[" + dep["downstream"]|join(", t[") + "]]" %}
+            {% else %}
+                {% set downstream = "t[" + dep["downstream"] + "]" %}
+            {% endif %}
+        {% else %}
+            {% if dep["downstream"] | is_list %}
+                {% set downstream = "[" + dep["downstream"]|join(", ") + "]" %}
+            {% else %}
+                {% set downstream = "" + dep["downstream"] %}
+            {% endif %}
+        {% endif %}
+    {% endif %}
+
+    {# Finally, render the dependencies using bitshift operators #}
+    {% if dep.get("downstream") %}
+        {{ upstream + " >> " + downstream }}
+    {% else %}
+        {{ upstream }}
+    {% endif %}
+
+{#
+If the dependency is iterated, first render the Python for loop statement,
+
+    for iter_vars in iterable:
+
+then, recursively call this template for each dependency in the iteration.
+#}
+{% else %}
+    {% set iterate = dep["iterate"] %}
+    {% if iterate["type"] == "range" %}
+        {% set iterable = iterate["type"] + "(" + iterate["args"]|join(", ") + ")" %}
+    {% else %}
+        {% set iterable = iterate["type"] + "(" + iterate["args"]|tojson + ")" %}
+    {% endif -%}
+
+    {%- if iterate.get("enumerate") %}
+        {% set iterable = "enumerate(" + iterable + ")" %}
+    {% endif -%}
+
+    {%- set iter_vars = iterate["vars"]|join(", ") %}
+    for {{ iter_vars }} in {{ iterable }}:
+    {% for _dep in iterate["iteration"] %}
+        {% with dep = _dep, indent_level = indent_level + 1 %}
+            {% include "dependency.py.jinja2" %}
+        {% endwith -%}
+    {% endfor %}
+{% endif %}
+{% endfilter %}

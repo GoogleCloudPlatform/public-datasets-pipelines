@@ -28,6 +28,8 @@ t = {}
     {% endwith %}
 {%- endfor %}
 
-{% for path in graph_paths %}
-    {{ path|indent() }}
+{% for _dep in graph_paths %}
+    {% with dep = _dep, indent_level = 1 %}
+        {% include "dependency.py.jinja2" %}
+    {% endwith %}
 {% endfor %}
