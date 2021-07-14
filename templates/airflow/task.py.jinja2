@@ -26,12 +26,12 @@ limitations under the License.
     {% endif %}
     {{ task_name }} = {{ airflow_ns[task["operator"]]["class"] }}(
         {% for name, val in task["args"].items() %}
-            {% if val is string and val.startswith("f\"") %}
+            {% if val | is_fstring %}
                 {{ name }}={{ val }},
-            {% elif val is iterable and (val is not string and val is not mapping) %}
+            {% elif val | is_list %}
                 {{ name }}=[
                     {% for el in val %}
-                        {% if el is string and el.startswith("f\"") %}
+                        {% if el | is_fstring %}
                             {{ el }},
                         {% else %}
                             {{ el|tojson if el is string else el }},

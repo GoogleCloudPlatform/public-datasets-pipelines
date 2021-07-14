@@ -60,6 +60,13 @@ j2_env = jinja2.Environment(
     trim_blocks=True,
 )
 
+j2_env.filters.update(
+    {
+        "is_list": lambda val: isinstance(val, list),
+        "is_fstring": lambda val: isinstance(val, str) and val.startswith('f"'),
+    }
+)
+
 
 def main(
     dataset_id: str,
