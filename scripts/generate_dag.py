@@ -90,6 +90,7 @@ def generate_pipeline_dag(dataset_id: str, pipeline_id: str, env: str):
     config = yaml.load((pipeline_dir / "pipeline.yaml").read_text())
 
     validate_dag_id_existence_and_format(config)
+    validate_tasks(config["dag"]["tasks"])
     dag_contents = generate_dag(config, dataset_id)
 
     target_path = pipeline_dir / f"{pipeline_id}_dag.py"
@@ -147,13 +148,6 @@ def generate_package_imports(config: dict) -> str:
     return "\n".join(contents)
 
 
-def generate_tasks(config: dict) -> list:
-    contents = []
-    for task in config["dag"]["tasks"]:
-        contents.append(generate_task_contents(task))
-    return contents
-
-
 def generate_default_args(config: dict) -> str:
     return jinja2.Template(TEMPLATE_PATHS["default_args"].read_text()).render(
         default_args=dag_init(config)["default_args"]
@@ -165,14 +159,6 @@ def generate_dag_context(config: dict, dataset_id: str) -> str:
     return jinja2.Template(TEMPLATE_PATHS["dag_context"].read_text()).render(
         dag_init=dag_params,
         namespaced_dag_id=namespaced_dag_id(dag_params["dag_id"], dataset_id),
-    )
-
-
-def generate_task_contents(task: dict) -> str:
-    validate_task(task)
-    return jinja2.Template(TEMPLATE_PATHS["task"].read_text()).render(
-        task=task,
-        airflow_ns=AIRFLOW_IMPORTS[AIRFLOW_VERSION],
     )
 
 
@@ -194,6 +180,26 @@ def validate_dag_id_existence_and_format(config: dict):
         raise ValueError(
             "`dag_id` must contain only alphanumeric, dot, and underscore characters"
         )
+
+
+def validate_tasks(tasks: typing.List[dict]):
+    for task in tasks:
+        if task.get("iterate"):
+            validate_iterate(task["iterate"])
+            validate_tasks(task["iterate"]["iteration"])
+        else:
+            validate_task(task)
+
+
+def validate_iterate(iterate: dict):
+    if not iterate.get("type"):
+        raise KeyError("`type` must exist in iterate block as iterable type")
+
+    if not iterate.get("args"):
+        raise KeyError("`args` must exist in iterate block as iterable arguments")
+
+    if not iterate.get("vars"):
+        raise KeyError("`vars` must exist in iterate block as iteration variables")
 
 
 def validate_task(task: dict):
