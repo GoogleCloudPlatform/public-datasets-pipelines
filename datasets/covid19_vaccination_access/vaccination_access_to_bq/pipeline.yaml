@@ -56,7 +56,10 @@ dag:
               task_id: f"gcs_to_bq_table_{tbl}"
               bucket: "{{ var.json.covid19_vaccination_access.source_bucket }}"
               source_objects:
-                - f"{{ var.json.covid19_vaccination_access.source_prefix }}/{tbl.replace('_','-')}.csv"
+                # Two curly braces to escapes ONE curly brace in f-strings.
+                # Because double curly braces are needed to access Airflow vars,
+                # we need to use four curly braces in the f-string.
+                - f"{{{{ var.json.covid19_vaccination_access.source_prefix }}}}/{tbl.replace('_','-')}.csv"
               source_format: "CSV"
               destination_project_dataset_table: f"covid19_vaccination_access.{tbl}"
               skip_leading_rows: 1

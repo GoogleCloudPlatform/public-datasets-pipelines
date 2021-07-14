@@ -47,7 +47,7 @@ with DAG(
             task_id=f"gcs_to_bq_table_{tbl}",
             bucket="{{ var.json.covid19_vaccination_access.source_bucket }}",
             source_objects=[
-                f"{{ var.json.covid19_vaccination_access.source_prefix }}/{tbl.replace('_','-')}.csv",
+                f"{{{{ var.json.covid19_vaccination_access.source_prefix }}}}/{tbl.replace('_','-')}.csv",
             ],
             source_format="CSV",
             destination_project_dataset_table=f"covid19_vaccination_access.{tbl}",
