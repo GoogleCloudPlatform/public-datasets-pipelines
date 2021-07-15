@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.9.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.8.0...v1.9.0) (2021-07-15)
+
+
+### Features
+
+* Onboard Vaccination Search Insights dataset ([#113](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/113)) ([ad39cfa](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/ad39cfa45fa1d2fecc228874b8b9e8b0fb44236e))
+* Support partitioning, clustering, and protection properties for BQ tables ([#116](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/116)) ([288c5a2](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/288c5a2476f61079f226c2f2c21390489dbab4a6))
+
 ## [1.8.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.7.0...v1.8.0) (2021-07-01)
 
 
