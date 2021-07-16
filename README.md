@@ -145,17 +145,37 @@ datasets
 
 Docker images will be built and pushed to GCR by default whenever the command above is run. To skip building and pushing images, use the optional `--skip-builds` flag.
 
-## 5. Declare and set your pipeline variables
+## 5. Declare and set your Airflow variables
 
-Running the command in the previous step will parse your pipeline config and inform you about the templated variables that need to be set for your pipeline to run, if any.
+Running the command in the previous step will parse your pipeline config and inform you about the Airflow variables that your pipeline expects to use and must be defined.
 
-If your pipeline doesn't use any Airflow variables, you can skip this step. Otherwise, create the following file
+If your pipeline doesn't use any Airflow variables, you can skip this step. 
+
+There are two types of variables that pipelines can use: **shared** and **dataset-specific**. Shared variables are those that can be reused by other pipelines in the same Airflow or Cloud Composer environment. These are variables that stay constant from pipeline to pipeline. Examples of shared variables include your Cloud Composer environment name and bucket, your GCP project ID, and paths to the Airflow DAG and data folders. To prevent duplication, specify your shared variables in one place:
+
+```
+  [.dev|.test]/datasets/shared_variables.json
+```
+
+and inside the file, nest the variables under a common parent key. For example:
+
+```
+{
+  "shared": {
+    "composer_name": "test-pipelines-abcde1234",
+    "composer_bucket": "us-east4-test-pipelines-abcde1234-bucket",
+    "airflow_data_folder": "/home/airflow/gcs/data"
+  }
+}
+```
+
+For dataset-specific variables, create the following file
 
 ```
   [.dev|.test]/datasets/{DATASET}/{DATASET}_variables.json
 ```
 
-Pipelines use the JSON dot notation to access Airflow variables. Make sure to nest your variables in the JSON file under some namespace, typically your dataset's name. Airflow variables are globally accessed by any pipeline, which means nesting your variables helps avoid collisions. For example, if you're using the following variables in your pipeline config:
+In general, pipelines use the JSON dot notation to access Airflow variables. Make sure to define and nest your variables under some parent key when writing to the JSON files above. We recommend using your dataset's name as the parent key, to mimic the same structure as the folder hierarchy. Airflow variables are globally accessed by any pipeline, which means nesting your variables helps avoid collisions. For example, if you're using the following variables in your pipeline config:
 
 - `{{ var.json.shared.composer_bucket }}`
 - `{{ var.json.parent.nested }}`
@@ -165,9 +185,6 @@ then your variables JSON file should look like this
 
 ```json
 {
-  "shared": {
-    "composer_bucket": "us-east4-test-pipelines-abcde1234-bucket"
-  },
   "parent": {
     "nested": "some value",
     "another_nested": "another value"
