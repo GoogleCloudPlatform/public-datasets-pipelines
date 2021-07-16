@@ -195,8 +195,12 @@ def test_script_can_deploy_without_variables_files(
     assert not (ENV_DATASETS_PATH / "shared_variables.json").exists()
 
     # Delete the dataset-specific variables file
-    (ENV_DATASETS_PATH / dataset_path.name / f"{dataset_path.name}_variables.json").unlink()
-    assert not (ENV_DATASETS_PATH / dataset_path.name / f"{dataset_path.name}_variables.json").exists()
+    (
+        ENV_DATASETS_PATH / dataset_path.name / f"{dataset_path.name}_variables.json"
+    ).unlink()
+    assert not (
+        ENV_DATASETS_PATH / dataset_path.name / f"{dataset_path.name}_variables.json"
+    ).exists()
 
     mocker.patch("scripts.deploy_dag.run_gsutil_cmd")
     mocker.patch("scripts.deploy_dag.run_cloud_composer_vars_import")

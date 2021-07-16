@@ -147,7 +147,9 @@ def generate_task_contents(task: dict) -> str:
 
 
 def generate_shared_variables_file(env: str) -> None:
-    pathlib.Path(PROJECT_ROOT / f".{env}" / "datasets" / "shared_variables.json").touch()
+    pathlib.Path(
+        PROJECT_ROOT / f".{env}" / "datasets" / "shared_variables.json"
+    ).touch()
 
 
 def dag_init(config: dict) -> dict:
