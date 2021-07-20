@@ -175,6 +175,41 @@ def test_script_always_requires_dataset_arg(
 pipeline_path_2 = pipeline_path
 
 
+def test_script_can_deploy_without_variables_file(
+    dataset_path: pathlib.Path,
+    pipeline_path: pathlib.Path,
+    airflow_home: pathlib.Path,
+    env: str,
+    mocker,
+):
+    setup_dag_and_variables(
+        dataset_path,
+        pipeline_path,
+        airflow_home,
+        env,
+        f"{dataset_path.name}_variables.json",
+    )
+
+    # Delete the variables file
+    vars_file = f"{dataset_path.name}_variables.json"
+    (ENV_DATASETS_PATH / dataset_path.name / vars_file).unlink()
+    assert not (ENV_DATASETS_PATH / dataset_path.name / vars_file).exists()
+
+    mocker.patch("scripts.deploy_dag.run_gsutil_cmd")
+    mocker.patch("scripts.deploy_dag.run_cloud_composer_vars_import")
+
+    deploy_dag.main(
+        local=False,
+        env_path=ENV_PATH,
+        dataset_id=dataset_path.name,
+        pipeline=pipeline_path.name,
+        airflow_home=airflow_home,
+        composer_env="test-env",
+        composer_bucket="test-bucket",
+        composer_region="test-region",
+    )
+
+
 def test_script_with_pipeline_arg_deploys_only_that_pipeline(
     dataset_path: pathlib.Path,
     pipeline_path: pathlib.Path,

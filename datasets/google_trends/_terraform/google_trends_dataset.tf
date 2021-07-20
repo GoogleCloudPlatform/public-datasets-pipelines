@@ -15,20 +15,12 @@
  */
 
 
-resource "google_bigquery_dataset" "{{ dataset_id }}" {
-  dataset_id = "{{ dataset_id }}"
-  project    = var.project_id
-  {% if friendly_name -%}
-    friendly_name = "{{ friendly_name }}"
-  {% endif -%}
-  {% if description -%}
-    description = {{ description|tojson }}
-  {% endif -%}
-  {% if location -%}
-    location = "{{ location }}"
-  {% endif -%}
+resource "google_bigquery_dataset" "google_trends" {
+  dataset_id  = "google_trends"
+  project     = var.project_id
+  description = "The Google Trends dataset will provide critical signals that individual users and businesses alike can leverage to make better data-driven decisions. This dataset simplifies the manual interaction with the existing Google Trends UI by automating and exposing anonymized, aggregated, and indexed search data in BigQuery."
 }
 
-output "bigquery_dataset-{{ dataset_id }}-dataset_id" {
-  value = google_bigquery_dataset.{{ dataset_id }}.dataset_id
+output "bigquery_dataset-google_trends-dataset_id" {
+  value = google_bigquery_dataset.google_trends.dataset_id
 }

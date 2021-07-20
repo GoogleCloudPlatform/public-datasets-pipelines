@@ -1,5 +1,48 @@
 # Changelog
 
+## [1.9.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.8.0...v1.9.0) (2021-07-15)
+
+
+### Datasets
+
+* Onboard Vaccination Search Insights dataset ([#113](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/113)) ([ad39cfa](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/ad39cfa45fa1d2fecc228874b8b9e8b0fb44236e))
+
+
+### Features
+
+* Support partitioning, clustering, and protection properties for BQ tables ([#116](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/116)) ([288c5a2](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/288c5a2476f61079f226c2f2c21390489dbab4a6))
+
+## [1.8.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.7.0...v1.8.0) (2021-07-01)
+
+
+### Features
+
+* Onboard Google Diversity Annual Report 2021 dataset ([#111](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/111)) ([13ebee9](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/13ebee906c52ec60959bbe3f8e0d6190f7934f9d))
+
+## [1.7.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.6.0...v1.7.0) (2021-06-24)
+
+
+### Datasets
+
+* Onboard BLS - CPSAAT 2020 dataset ([#105](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/105)) ([61f4394](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/61f439493fcf24d8d9a29362a8498b38389686ef))
+
+
+### Bug Fixes
+
+* Allow newline and quotes for BQ dataset and table descriptions ([#103](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/103)) ([ef01fe6](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/ef01fe6c176c5d3cbecd14a173efd6ad45fc2805))
+
+## [1.6.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.5.1...v1.6.0) (2021-06-17)
+
+
+### Datasets
+
+* Onboard Google Trends dataset for top N terms ([#92](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/92)) ([df96d1d](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/df96d1d2f936bb4c7213cb9a4ef9ec90ff02fbad))
+
+
+### Bug Fixes
+
+* Allow DAG deploys without `variables.json` ([#91](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/91)) ([8eaaae9](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/8eaaae9e69a8f33086083311efd4cb4359c7ac39))
+
 ### [1.5.1](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.5.0...v1.5.1) (2021-06-15)
 
 

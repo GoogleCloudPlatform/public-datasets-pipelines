@@ -15,20 +15,11 @@
  */
 
 
-resource "google_bigquery_dataset" "{{ dataset_id }}" {
-  dataset_id = "{{ dataset_id }}"
+resource "google_bigquery_dataset" "google_diversity" {
+  dataset_id = "google_diversity"
   project    = var.project_id
-  {% if friendly_name -%}
-    friendly_name = "{{ friendly_name }}"
-  {% endif -%}
-  {% if description -%}
-    description = {{ description|tojson }}
-  {% endif -%}
-  {% if location -%}
-    location = "{{ location }}"
-  {% endif -%}
 }
 
-output "bigquery_dataset-{{ dataset_id }}-dataset_id" {
-  value = google_bigquery_dataset.{{ dataset_id }}.dataset_id
+output "bigquery_dataset-google_diversity-dataset_id" {
+  value = google_bigquery_dataset.google_diversity.dataset_id
 }
