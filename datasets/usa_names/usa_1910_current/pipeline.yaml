@@ -26,12 +26,10 @@ dag:
     dag_id: "usa_1910_current"
     default_args:
       owner: "Google"
-
-      # When set to True, keeps a task from getting triggered if the previous schedule for the task hasn't succeeded
       depends_on_past: False
       start_date: '2021-06-17'
     max_active_runs: 1
-    schedule_interval: "@daily"
+    schedule_interval: "@monthly"
     catchup: False
     default_view: graph
 
