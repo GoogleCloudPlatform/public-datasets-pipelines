@@ -20,6 +20,9 @@ resource "google_bigquery_table" "usa_1910_current" {
   dataset_id = "usa_names"
   table_id   = "usa_1910_current"
 
+  description = "The table contains the number of applicants for a Social Security card by year of birth and sex. The number of such applicants is restricted to U.S. births where the year of birth, sex, State of birth (50 States and District of Columbia) are known, and where the given name is at least 2 characters long.\n\nsource: http://www.ssa.gov/OACT/babynames/limits.html"
+
+
 
 
   depends_on = [

@@ -18,19 +18,9 @@
 resource "google_bigquery_dataset" "usa_names" {
   dataset_id  = "usa_names"
   project     = var.project_id
-  description = "This public dataset was created by the Social Security Administration and contains all names from Social Security card applications for births that occurred in the United States after 1879. Note that many people born before 1937 never applied for a Social Security card, so their names are not included in this data. For others who did apply, records may not show the place of birth, and again their names are not included in the data. TWO_NEWLINES_HERE_PLEASE All data are from a 100% sample of records on Social Security card applications as of the end of February 2015.  To safeguard privacy, the Social Security Administration restricts names to those with at least 5 occurrences."
+  description = "This public dataset was created by the Social Security Administration and contains all names from Social Security card applications for births that occurred in the United States after 1879. Note that many people born before 1937 never applied for a Social Security card, so their names are not included in this data. For others who did apply, records may not show the place of birth, and again their names are not included in the data.\n\nAll data are from a 100% sample of records on Social Security card applications as of the end of February 2015.  To safeguard privacy, the Social Security Administration restricts names to those with at least 5 occurrences."
 }
 
 output "bigquery_dataset-usa_names-dataset_id" {
   value = google_bigquery_dataset.usa_names.dataset_id
-}
-
-resource "google_storage_bucket" "usa-names" {
-  name                        = "${var.bucket_name_prefix}-usa-names"
-  force_destroy               = true
-  uniform_bucket_level_access = true
-}
-
-output "storage_bucket-usa-names-name" {
-  value = google_storage_bucket.usa-names.name
 }
