@@ -37,31 +37,22 @@ dag:
     - operator: "BashOperator"
       description: "Task to copy `namesbystate.zip` from Social Security Administration to GCS"
       args:
-        task_id: "copy_zip_file_to_gcs"
+        task_id: "download_and_process_source_zip_file"
         bash_command: |
-          echo $airflow_data_folder
-          echo $zip_source_url
-          mkdir -p $airflow_data_folder/usa_names/usa_1910_current
-          curl -o $airflow_data_folder/usa_names/usa_1910_current/namesbystate-{{ ds }}.zip -L $zip_source_url
+          mkdir -p $data_dir/{{ ds }}
+          curl -o $data_dir/{{ ds }}/namesbystate.zip -L $zip_source_url
+          unzip $data_dir/{{ ds }}/namesbystate.zip -d $data_dir/{{ ds }}
+          cat $data_dir/{{ ds }}/*.TXT >> $data_dir/{{ ds }}/data.csv
         env:
           zip_source_url: "https://www.ssa.gov/OACT/babynames/state/namesbystate.zip"
-          airflow_data_folder: "{{ var.json.shared.airflow_data_folder }}"
-
-    - operator: "BashOperator"
-      description: "Task to extract `namesbystate.zip`"
-      args:
-        task_id: "unzip"
-        bash_command: |
-          unzip $airflow_data_folder/usa_names/usa_1910_current/namesbystate-{{ ds }}.zip -d $airflow_data_folder/usa_names/usa_1910_current/namesbystate-{{ ds }}
-        env:
-          airflow_data_folder: "{{ var.json.shared.airflow_data_folder }}"
+          data_dir: "/home/airflow/gcs/data/usa_names/usa_1910_current"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load the data from Airflow data folder to BigQuery"
       args:
         task_id: "load_csv_file_to_bq_table"
         bucket: "{{ var.json.shared.composer_bucket }}"
-        source_objects: ["data/usa_names/usa_1910_current/namesbystate-{{ ds }}/*.TXT"]
+        source_objects: ["data/usa_names/usa_1910_current/{{ ds }}/data.csv"]
         source_format: "CSV"
         destination_project_dataset_table: "usa_names.usa_1910_current"
         skip_leading_rows: 0
@@ -88,17 +79,5 @@ dag:
             description: Number of occurrences of the name
             mode: NULLABLE
 
-    - operator: "GoogleCloudStorageToGoogleCloudStorageOperator"
-      description: "Task to archive the zip file in the destination bucket"
-      args:
-        task_id: "archive_zip_file_to_destination_bucket"
-        source_bucket: "{{ var.json.shared.composer_bucket }}"
-        source_object: "data/usa_names/usa_1910_current/namesbystate-{{ ds }}.zip"
-        destination_bucket: "{{ var.json.usa_names.destination_bucket }}"
-        destination_object: "datasets/usa_names/usa_1910_current/namesbystate-{{ ds }}.zip"
-        move_object: True
-
   graph_paths:
-    - "copy_csv_file_to_gcs >> unzip"
-    - "unzip >> load_csv_file_to_bq_table"
-    - "load_csv_file_to_bq_table >> archive_csv_file_to_destination_bucket"
+    - "download_and_process_source_zip_file >> load_csv_file_to_bq_table"
