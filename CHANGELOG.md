@@ -3,7 +3,7 @@
 ## [1.10.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.9.0...v1.10.0) (2021-07-21)
 
 
-### Features
+### Datasets
 
 * Onboard USA names dataset ([#96](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/96)) ([eb28f0f](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/eb28f0f0247278febea955ecb4081c09b634e97b))
 
