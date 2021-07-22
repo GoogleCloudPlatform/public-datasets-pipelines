@@ -175,7 +175,7 @@ def test_script_always_requires_dataset_arg(
 pipeline_path_2 = pipeline_path
 
 
-def test_script_can_deploy_without_variables_file(
+def test_script_can_deploy_without_variables_files(
     dataset_path: pathlib.Path,
     pipeline_path: pathlib.Path,
     airflow_home: pathlib.Path,
@@ -190,10 +190,17 @@ def test_script_can_deploy_without_variables_file(
         f"{dataset_path.name}_variables.json",
     )
 
-    # Delete the variables file
-    vars_file = f"{dataset_path.name}_variables.json"
-    (ENV_DATASETS_PATH / dataset_path.name / vars_file).unlink()
-    assert not (ENV_DATASETS_PATH / dataset_path.name / vars_file).exists()
+    # Delete the shared variables file
+    (ENV_DATASETS_PATH / "shared_variables.json").unlink()
+    assert not (ENV_DATASETS_PATH / "shared_variables.json").exists()
+
+    # Delete the dataset-specific variables file
+    (
+        ENV_DATASETS_PATH / dataset_path.name / f"{dataset_path.name}_variables.json"
+    ).unlink()
+    assert not (
+        ENV_DATASETS_PATH / dataset_path.name / f"{dataset_path.name}_variables.json"
+    ).exists()
 
     mocker.patch("scripts.deploy_dag.run_gsutil_cmd")
     mocker.patch("scripts.deploy_dag.run_cloud_composer_vars_import")
@@ -382,6 +389,7 @@ def test_script_with_local_flag_copies_files_to_local_airflow_env(
         composer_region=None,
     )
 
+    assert (airflow_home / "data" / "variables" / "shared_variables.json").exists()
     assert (airflow_home / "data" / "variables" / variables_filename).exists()
     assert (airflow_home / "dags" / dag_filename).exists()
 

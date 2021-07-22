@@ -70,6 +70,8 @@ def main(
     else:
         generate_pipeline_dag(dataset_id, pipeline_id, env)
 
+    generate_shared_variables_file(env)
+
 
 def generate_pipeline_dag(dataset_id: str, pipeline_id: str, env: str):
     pipeline_dir = DATASETS_PATH / dataset_id / pipeline_id
@@ -142,6 +144,12 @@ def generate_task_contents(task: dict) -> str:
         **task,
         namespaced_operator=AIRFLOW_IMPORTS[AIRFLOW_VERSION][task["operator"]]["class"],
     )
+
+
+def generate_shared_variables_file(env: str) -> None:
+    pathlib.Path(
+        PROJECT_ROOT / f".{env}" / "datasets" / "shared_variables.json"
+    ).touch()
 
 
 def dag_init(config: dict) -> dict:
