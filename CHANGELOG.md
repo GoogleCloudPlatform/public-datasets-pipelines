@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.11.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.10.0...v1.11.0) (2021-07-22)
+
+
+### Features
+
+* Adds Google license header bot config ([#106](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/106)) ([d587689](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/d5876898c96436400d940e754ed2fce4eda8ba4f))
+* Use a single file for shared Airflow variables ([#122](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/122)) ([f5d227d](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/f5d227de7d30439e80346612856723292c6f46e7))
+
 ## [1.10.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.9.0...v1.10.0) (2021-07-21)
 
 
