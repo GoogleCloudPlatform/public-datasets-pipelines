@@ -216,7 +216,7 @@ Every dataset and pipeline folder must contain a `dataset.yaml` and a `pipeline.
   ```
   |chapter          |section|subsection          |page|
   |-----------------|-------|--------------------|----|
-  |Operating Systems|       |                    |55  |
+  |Operating Systems|       |                    |50  |
   |Operating Systems|Linux  |                    |51  |
   |Operating Systems|Linux  |The Linux Filesystem|51  |
   |Operating Systems|Linux  |Users & Groups      |58  |
