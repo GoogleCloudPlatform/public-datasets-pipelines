@@ -127,6 +127,19 @@ def test_main_copies_custom_dir_if_it_exists(
         assert (path_prefix / "custom").is_dir()
 
 
+def test_main_creates_shared_variables_file(
+    dataset_path: pathlib.Path, pipeline_path: pathlib.Path, env: str
+):
+    copy_config_files_and_set_tmp_folder_names_as_ids(dataset_path, pipeline_path)
+    custom_path = dataset_path / pipeline_path.name / "custom"
+    custom_path.mkdir(parents=True, exist_ok=True)
+
+    generate_dag.main(dataset_path.name, pipeline_path.name, env)
+
+    assert (ENV_DATASETS_PATH / "shared_variables.json").exists()
+    assert not (ENV_DATASETS_PATH / "shared_variables.json").is_dir()
+
+
 def test_main_only_depends_on_pipeline_yaml(
     dataset_path: pathlib.Path, pipeline_path: pathlib.Path, env: str
 ):

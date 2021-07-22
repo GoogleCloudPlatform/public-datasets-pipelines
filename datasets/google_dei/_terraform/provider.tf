@@ -15,20 +15,14 @@
  */
 
 
-resource "google_bigquery_dataset" "{{ dataset_id }}" {
-  dataset_id = "{{ dataset_id }}"
-  project    = var.project_id
-  {% if friendly_name -%}
-    friendly_name = "{{ friendly_name }}"
-  {% endif -%}
-  {% if description -%}
-    description = {{ description|tojson }}
-  {% endif -%}
-  {% if location -%}
-    location = "{{ location }}"
-  {% endif -%}
+provider "google" {
+  project                     = var.project_id
+  impersonate_service_account = var.impersonating_acct
+  region                      = var.region
 }
 
-output "bigquery_dataset-{{ dataset_id }}-dataset_id" {
-  value = google_bigquery_dataset.{{ dataset_id }}.dataset_id
+data "google_client_openid_userinfo" "me" {}
+
+output "impersonating-account" {
+  value = data.google_client_openid_userinfo.me.email
 }

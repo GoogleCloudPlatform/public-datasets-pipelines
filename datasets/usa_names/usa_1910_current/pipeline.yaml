@@ -1,0 +1,83 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+resources:
+  - type: bigquery_table
+    table_id: usa_1910_current
+    description: |-
+      The table contains the number of applicants for a Social Security card by year of birth and sex. The number of such applicants is restricted to U.S. births where the year of birth, sex, State of birth (50 States and District of Columbia) are known, and where the given name is at least 2 characters long.
+
+      source: http://www.ssa.gov/OACT/babynames/limits.html
+
+dag:
+  initialize:
+    dag_id: "usa_1910_current"
+    default_args:
+      owner: "Google"
+      depends_on_past: False
+      start_date: '2021-06-17'
+    max_active_runs: 1
+    schedule_interval: "@monthly"
+    catchup: False
+    default_view: graph
+
+  tasks:
+    - operator: "BashOperator"
+      description: "Task to copy `namesbystate.zip` from Social Security Administration to GCS"
+      args:
+        task_id: "download_and_process_source_zip_file"
+        bash_command: |
+          mkdir -p $data_dir/{{ ds }}
+          curl -o $data_dir/{{ ds }}/namesbystate.zip -L $zip_source_url
+          unzip $data_dir/{{ ds }}/namesbystate.zip -d $data_dir/{{ ds }}
+          cat $data_dir/{{ ds }}/*.TXT >> $data_dir/{{ ds }}/data.csv
+        env:
+          zip_source_url: "https://www.ssa.gov/OACT/babynames/state/namesbystate.zip"
+          data_dir: "/home/airflow/gcs/data/usa_names/usa_1910_current"
+
+    - operator: "GoogleCloudStorageToBigQueryOperator"
+      description: "Task to load the data from Airflow data folder to BigQuery"
+      args:
+        task_id: "load_csv_file_to_bq_table"
+        bucket: "{{ var.json.shared.composer_bucket }}"
+        source_objects: ["data/usa_names/usa_1910_current/{{ ds }}/data.csv"]
+        source_format: "CSV"
+        destination_project_dataset_table: "usa_names.usa_1910_current"
+        skip_leading_rows: 0
+        write_disposition: "WRITE_TRUNCATE"
+        schema_fields:
+          - name: state
+            type: STRING
+            description: 2-digit state code
+            mode: NULLABLE
+          - name: gender
+            type: STRING
+            description: Sex (M=male or F=female)
+            mode: NULLABLE
+          - name: year
+            type: INTEGER
+            description: 4-digit year of birth
+            mode: NULLABLE
+          - name: name
+            type: STRING
+            description: Given name of a person at birth
+            mode: NULLABLE
+          - name: number
+            type: INTEGER
+            description: Number of occurrences of the name
+            mode: NULLABLE
+
+  graph_paths:
+    - "download_and_process_source_zip_file >> load_csv_file_to_bq_table"

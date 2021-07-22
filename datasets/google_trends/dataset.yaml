@@ -17,7 +17,7 @@ dataset:
   # to users of your data on the Google Cloud website.
 
   # Must be exactly the same name as the folder name your dataset.yaml is in.
-  name: ml_datasets
+  name: google_trends
 
   # A friendly, human-readable name of the dataset
   friendly_name: ~
@@ -31,6 +31,7 @@ dataset:
   # A list of terms and conditions that users of the dataset should agree on,
   # using the YAML list syntax.
   terms_of_use: ~
+
 
 resources:
   # A list of Google Cloud resources needed by your dataset. In principle, all
@@ -53,5 +54,5 @@ resources:
     #   friendly_name (A user-friendly name of the dataset)
     #   description   (A user-friendly description of the dataset)
     #   location      (The geographic location where the dataset should reside)
-    dataset_id: ml_datasets
-    description: ~
+    dataset_id: google_trends
+    description: "The Google Trends dataset will provide critical signals that individual users and businesses alike can leverage to make better data-driven decisions. This dataset simplifies the manual interaction with the existing Google Trends UI by automating and exposing anonymized, aggregated, and indexed search data in BigQuery."

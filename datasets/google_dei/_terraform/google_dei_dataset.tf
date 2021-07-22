@@ -15,22 +15,22 @@
  */
 
 
-resource "google_bigquery_dataset" "covid19_tracking" {
-  dataset_id  = "covid19_tracking"
+resource "google_bigquery_dataset" "google_dei" {
+  dataset_id  = "google_dei"
   project     = var.project_id
-  description = "BigQuery dataset for the COVID-19 Tracking Project"
+  description = "Diversity, Equity, and Inclusion (DEI) includes demographic data on workforce representation, hiring, and attrition of employees at Google"
 }
 
-output "bigquery_dataset-covid19_tracking-dataset_id" {
-  value = google_bigquery_dataset.covid19_tracking.dataset_id
+output "bigquery_dataset-google_dei-dataset_id" {
+  value = google_bigquery_dataset.google_dei.dataset_id
 }
 
-resource "google_storage_bucket" "covid-tracking-project" {
-  name                        = "${var.bucket_name_prefix}-covid-tracking-project"
+resource "google_storage_bucket" "ggl-dei" {
+  name                        = "${var.bucket_name_prefix}-ggl-dei"
   force_destroy               = true
   uniform_bucket_level_access = true
 }
 
-output "storage_bucket-covid-tracking-project-name" {
-  value = google_storage_bucket.covid-tracking-project.name
+output "storage_bucket-ggl-dei-name" {
+  value = google_storage_bucket.ggl-dei.name
 }
