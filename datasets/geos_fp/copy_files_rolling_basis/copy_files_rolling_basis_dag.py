@@ -14,7 +14,7 @@
 
 
 from airflow import DAG
-from airflow.contrib.operators import kubernetes_pod_operator
+from airflow.contrib.operators import gcs_delete_operator, kubernetes_pod_operator
 
 default_args = {
     "owner": "Google",
@@ -32,23 +32,155 @@ with DAG(
     default_view="graph",
 ) as dag:
 
-    # Copy files to GCS on a 10-day rolling basis
-    copy_files_in_last_n_days = kubernetes_pod_operator.KubernetesPodOperator(
-        task_id="copy_files_in_last_n_days",
+    # Copy files to GCS on the specified date
+    copy_files_dated_today = kubernetes_pod_operator.KubernetesPodOperator(
+        task_id="copy_files_dated_today",
         name="geosfp",
         namespace="default",
-        image="{{ var.json.geos_fp.container_registry.crawl_and_download }}",
+        image="{{ var.json.geos_fp.container_registry.rolling_copy }}",
         image_pull_policy="Always",
         env_vars={
             "BASE_URL": "https://portal.nccs.nasa.gov/datashare/gmao/geos-fp/das",
-            "TODAY": "{{ ds }}",
+            "TODAY_DIFF": "0",
             "DOWNLOAD_DIR": "/geos_fp/data",
-            "MANIFEST_PATH": "/geos_fp/manifest.txt",
             "TARGET_BUCKET": "{{ var.json.geos_fp.destination_bucket }}",
-            "DAYS_ROLLING": "10",
-            "BATCH_SIZE": "50",
+            "BATCH_SIZE": "10",
         },
-        resources={"request_memory": "4G", "request_cpu": "4"},
+        resources={"request_memory": "1G", "request_cpu": "1"},
     )
 
-    copy_files_in_last_n_days
+    # Copy files to GCS on the specified date
+    copy_files_dated_today_minus_1_day = kubernetes_pod_operator.KubernetesPodOperator(
+        task_id="copy_files_dated_today_minus_1_day",
+        name="geosfp",
+        namespace="default",
+        image="{{ var.json.geos_fp.container_registry.rolling_copy }}",
+        image_pull_policy="Always",
+        env_vars={
+            "BASE_URL": "https://portal.nccs.nasa.gov/datashare/gmao/geos-fp/das",
+            "TODAY_DIFF": "1",
+            "DOWNLOAD_DIR": "/geos_fp/data",
+            "TARGET_BUCKET": "{{ var.json.geos_fp.destination_bucket }}",
+            "BATCH_SIZE": "10",
+        },
+        resources={"request_memory": "1G", "request_cpu": "1"},
+    )
+
+    # Copy files to GCS on the specified date
+    copy_files_dated_today_minus_2_days = kubernetes_pod_operator.KubernetesPodOperator(
+        task_id="copy_files_dated_today_minus_2_days",
+        name="geosfp",
+        namespace="default",
+        image="{{ var.json.geos_fp.container_registry.rolling_copy }}",
+        image_pull_policy="Always",
+        env_vars={
+            "BASE_URL": "https://portal.nccs.nasa.gov/datashare/gmao/geos-fp/das",
+            "TODAY_DIFF": "2",
+            "DOWNLOAD_DIR": "/geos_fp/data",
+            "TARGET_BUCKET": "{{ var.json.geos_fp.destination_bucket }}",
+            "BATCH_SIZE": "10",
+        },
+        resources={"request_memory": "1G", "request_cpu": "1"},
+    )
+
+    # Copy files to GCS on a 10-day rolling basis
+    copy_files_dated_today_minus_3_days = kubernetes_pod_operator.KubernetesPodOperator(
+        task_id="copy_files_dated_today_minus_3_days",
+        name="geosfp",
+        namespace="default",
+        image="{{ var.json.geos_fp.container_registry.rolling_copy }}",
+        image_pull_policy="Always",
+        env_vars={
+            "BASE_URL": "https://portal.nccs.nasa.gov/datashare/gmao/geos-fp/das",
+            "TODAY_DIFF": "3",
+            "DOWNLOAD_DIR": "/geos_fp/data",
+            "TARGET_BUCKET": "{{ var.json.geos_fp.destination_bucket }}",
+            "BATCH_SIZE": "10",
+        },
+        resources={"request_memory": "1G", "request_cpu": "1"},
+    )
+
+    # Copy files to GCS on a 10-day rolling basis
+    copy_files_dated_today_minus_4_days = kubernetes_pod_operator.KubernetesPodOperator(
+        task_id="copy_files_dated_today_minus_4_days",
+        name="geosfp",
+        namespace="default",
+        image="{{ var.json.geos_fp.container_registry.rolling_copy }}",
+        image_pull_policy="Always",
+        env_vars={
+            "BASE_URL": "https://portal.nccs.nasa.gov/datashare/gmao/geos-fp/das",
+            "TODAY_DIFF": "4",
+            "DOWNLOAD_DIR": "/geos_fp/data",
+            "TARGET_BUCKET": "{{ var.json.geos_fp.destination_bucket }}",
+            "BATCH_SIZE": "10",
+        },
+        resources={"request_memory": "1G", "request_cpu": "1"},
+    )
+
+    # Copy files to GCS on a 10-day rolling basis
+    copy_files_dated_today_minus_5_days = kubernetes_pod_operator.KubernetesPodOperator(
+        task_id="copy_files_dated_today_minus_5_days",
+        name="geosfp",
+        namespace="default",
+        image="{{ var.json.geos_fp.container_registry.rolling_copy }}",
+        image_pull_policy="Always",
+        env_vars={
+            "BASE_URL": "https://portal.nccs.nasa.gov/datashare/gmao/geos-fp/das",
+            "TODAY_DIFF": "5",
+            "DOWNLOAD_DIR": "/geos_fp/data",
+            "TARGET_BUCKET": "{{ var.json.geos_fp.destination_bucket }}",
+            "BATCH_SIZE": "10",
+        },
+        resources={"request_memory": "1G", "request_cpu": "1"},
+    )
+
+    # Copy files to GCS on a 10-day rolling basis
+    copy_files_dated_today_minus_6_days = kubernetes_pod_operator.KubernetesPodOperator(
+        task_id="copy_files_dated_today_minus_6_days",
+        name="geosfp",
+        namespace="default",
+        image="{{ var.json.geos_fp.container_registry.rolling_copy }}",
+        image_pull_policy="Always",
+        env_vars={
+            "BASE_URL": "https://portal.nccs.nasa.gov/datashare/gmao/geos-fp/das",
+            "TODAY_DIFF": "6",
+            "DOWNLOAD_DIR": "/geos_fp/data",
+            "TARGET_BUCKET": "{{ var.json.geos_fp.destination_bucket }}",
+            "BATCH_SIZE": "10",
+        },
+        resources={"request_memory": "1G", "request_cpu": "1"},
+    )
+
+    # Copy files to GCS on a 10-day rolling basis
+    copy_files_dated_today_minus_7_days = kubernetes_pod_operator.KubernetesPodOperator(
+        task_id="copy_files_dated_today_minus_7_days",
+        name="geosfp",
+        namespace="default",
+        image="{{ var.json.geos_fp.container_registry.rolling_copy }}",
+        image_pull_policy="Always",
+        env_vars={
+            "BASE_URL": "https://portal.nccs.nasa.gov/datashare/gmao/geos-fp/das",
+            "TODAY_DIFF": "7",
+            "DOWNLOAD_DIR": "/geos_fp/data",
+            "TARGET_BUCKET": "{{ var.json.geos_fp.destination_bucket }}",
+            "BATCH_SIZE": "10",
+        },
+        resources={"request_memory": "1G", "request_cpu": "1"},
+    )
+
+    # Deletes GCS data more than 7 days ago
+    delete_old_data = gcs_delete_operator.GoogleCloudStorageDeleteOperator(
+        task_id="delete_old_data",
+        bucket_name="{{ var.json.geos_fp.destination_bucket }}",
+        prefix='Y{{ macros.ds_format(macros.ds_add(ds, -8), "%Y-%m-%d", "%Y") }}/M{{ macros.ds_format(macros.ds_add(ds, -8), "%Y-%m-%d", "%m") }}/D{{ macros.ds_format(macros.ds_add(ds, -8), "%Y-%m-%d", "%d") }}',
+    )
+
+    delete_old_data
+    copy_files_dated_today
+    copy_files_dated_today_minus_1_day
+    copy_files_dated_today_minus_2_days
+    copy_files_dated_today_minus_3_days
+    copy_files_dated_today_minus_4_days
+    copy_files_dated_today_minus_5_days
+    copy_files_dated_today_minus_6_days
+    copy_files_dated_today_minus_7_days
