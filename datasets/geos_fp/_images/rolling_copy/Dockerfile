@@ -24,6 +24,9 @@ COPY requirements.txt ./
 # Install the packages specified in the requirements file
 RUN python3 -m pip install --no-cache-dir -r requirements.txt
 
+# Install wget 
+RUN apt-get install wget
+
 # The WORKDIR instruction sets the working directory for any RUN, CMD,
 # ENTRYPOINT, COPY and ADD instructions that follow it in the Dockerfile.
 # If the WORKDIR doesn’t exist, it will be created even if it’s not used in
