@@ -45,6 +45,9 @@ dag:
         resources:
           request_memory: "1G"
           request_cpu: "1"
+        retries: 3
+        retry_delay: 300
+        retry_exponential_backoff: true
 
     - operator: "KubernetesPodOperator"
       description: "Copy files to GCS on the specified date"
@@ -63,6 +66,9 @@ dag:
         resources:
           request_memory: "1G"
           request_cpu: "1"
+        retries: 3
+        retry_delay: 300
+        retry_exponential_backoff: true
 
     - operator: "KubernetesPodOperator"
       description: "Copy files to GCS on the specified date"
@@ -81,6 +87,9 @@ dag:
         resources:
           request_memory: "1G"
           request_cpu: "1"
+        retries: 3
+        retry_delay: 300
+        retry_exponential_backoff: true
 
     - operator: "KubernetesPodOperator"
       description: "Copy files to GCS on a 10-day rolling basis"
@@ -99,6 +108,9 @@ dag:
         resources:
           request_memory: "1G"
           request_cpu: "1"
+        retries: 3
+        retry_delay: 300
+        retry_exponential_backoff: true
 
     - operator: "KubernetesPodOperator"
       description: "Copy files to GCS on a 10-day rolling basis"
@@ -117,6 +129,9 @@ dag:
         resources:
           request_memory: "1G"
           request_cpu: "1"
+        retries: 3
+        retry_delay: 300
+        retry_exponential_backoff: true
 
     - operator: "KubernetesPodOperator"
       description: "Copy files to GCS on a 10-day rolling basis"
@@ -135,6 +150,9 @@ dag:
         resources:
           request_memory: "1G"
           request_cpu: "1"
+        retries: 3
+        retry_delay: 300
+        retry_exponential_backoff: true
 
     - operator: "KubernetesPodOperator"
       description: "Copy files to GCS on a 10-day rolling basis"
@@ -153,6 +171,9 @@ dag:
         resources:
           request_memory: "1G"
           request_cpu: "1"
+        retries: 3
+        retry_delay: 300 
+        retry_exponential_backoff: true
 
     - operator: "KubernetesPodOperator"
       description: "Copy files to GCS on a 10-day rolling basis"
@@ -171,6 +192,9 @@ dag:
         resources:
           request_memory: "1G"
           request_cpu: "1"
+        retries: 3
+        retry_delay: 300 
+        retry_exponential_backoff: true
 
     - operator: "GoogleCloudStorageDeleteOperator"
       description: "Deletes GCS data more than 7 days ago"

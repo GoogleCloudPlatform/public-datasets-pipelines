@@ -47,6 +47,9 @@ with DAG(
             "BATCH_SIZE": "10",
         },
         resources={"request_memory": "1G", "request_cpu": "1"},
+        retries=3,
+        retry_delay=300,
+        retry_exponential_backoff=True,
     )
 
     # Copy files to GCS on the specified date
@@ -64,6 +67,9 @@ with DAG(
             "BATCH_SIZE": "10",
         },
         resources={"request_memory": "1G", "request_cpu": "1"},
+        retries=3,
+        retry_delay=300,
+        retry_exponential_backoff=True,
     )
 
     # Copy files to GCS on the specified date
@@ -81,6 +87,9 @@ with DAG(
             "BATCH_SIZE": "10",
         },
         resources={"request_memory": "1G", "request_cpu": "1"},
+        retries=3,
+        retry_delay=300,
+        retry_exponential_backoff=True,
     )
 
     # Copy files to GCS on a 10-day rolling basis
@@ -98,6 +107,9 @@ with DAG(
             "BATCH_SIZE": "10",
         },
         resources={"request_memory": "1G", "request_cpu": "1"},
+        retries=3,
+        retry_delay=300,
+        retry_exponential_backoff=True,
     )
 
     # Copy files to GCS on a 10-day rolling basis
@@ -115,6 +127,9 @@ with DAG(
             "BATCH_SIZE": "10",
         },
         resources={"request_memory": "1G", "request_cpu": "1"},
+        retries=3,
+        retry_delay=300,
+        retry_exponential_backoff=True,
     )
 
     # Copy files to GCS on a 10-day rolling basis
@@ -132,6 +147,9 @@ with DAG(
             "BATCH_SIZE": "10",
         },
         resources={"request_memory": "1G", "request_cpu": "1"},
+        retries=3,
+        retry_delay=300,
+        retry_exponential_backoff=True,
     )
 
     # Copy files to GCS on a 10-day rolling basis
@@ -149,6 +167,9 @@ with DAG(
             "BATCH_SIZE": "10",
         },
         resources={"request_memory": "1G", "request_cpu": "1"},
+        retries=3,
+        retry_delay=300,
+        retry_exponential_backoff=True,
     )
 
     # Copy files to GCS on a 10-day rolling basis
@@ -166,6 +187,9 @@ with DAG(
             "BATCH_SIZE": "10",
         },
         resources={"request_memory": "1G", "request_cpu": "1"},
+        retries=3,
+        retry_delay=300,
+        retry_exponential_backoff=True,
     )
 
     # Deletes GCS data more than 7 days ago
