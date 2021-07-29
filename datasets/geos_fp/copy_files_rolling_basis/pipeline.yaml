@@ -179,7 +179,7 @@ dag:
         task_id: "delete_old_data"
         bucket_name: "{{ var.json.geos_fp.destination_bucket }}"
         prefix: Y{{ macros.ds_format(macros.ds_add(ds, -8), "%Y-%m-%d", "%Y") }}/M{{ macros.ds_format(macros.ds_add(ds, -8), "%Y-%m-%d", "%m") }}/D{{ macros.ds_format(macros.ds_add(ds, -8), "%Y-%m-%d", "%d") }}
-#
+
   graph_paths:
     - "delete_old_data"
     - "copy_files_dated_today"
