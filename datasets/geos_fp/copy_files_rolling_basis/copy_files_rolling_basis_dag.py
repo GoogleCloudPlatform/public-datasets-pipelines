@@ -50,6 +50,7 @@ with DAG(
         retries=3,
         retry_delay=300,
         retry_exponential_backoff=True,
+        startup_timeout_seconds=600,
     )
 
     # Copy files to GCS on the specified date
@@ -70,6 +71,7 @@ with DAG(
         retries=3,
         retry_delay=300,
         retry_exponential_backoff=True,
+        startup_timeout_seconds=600,
     )
 
     # Copy files to GCS on the specified date
@@ -90,6 +92,7 @@ with DAG(
         retries=3,
         retry_delay=300,
         retry_exponential_backoff=True,
+        startup_timeout_seconds=600,
     )
 
     # Copy files to GCS on a 10-day rolling basis
@@ -110,6 +113,7 @@ with DAG(
         retries=3,
         retry_delay=300,
         retry_exponential_backoff=True,
+        startup_timeout_seconds=600,
     )
 
     # Copy files to GCS on a 10-day rolling basis
@@ -130,6 +134,7 @@ with DAG(
         retries=3,
         retry_delay=300,
         retry_exponential_backoff=True,
+        startup_timeout_seconds=600,
     )
 
     # Copy files to GCS on a 10-day rolling basis
@@ -150,6 +155,7 @@ with DAG(
         retries=3,
         retry_delay=300,
         retry_exponential_backoff=True,
+        startup_timeout_seconds=600,
     )
 
     # Copy files to GCS on a 10-day rolling basis
@@ -170,6 +176,7 @@ with DAG(
         retries=3,
         retry_delay=300,
         retry_exponential_backoff=True,
+        startup_timeout_seconds=600,
     )
 
     # Copy files to GCS on a 10-day rolling basis
@@ -190,13 +197,14 @@ with DAG(
         retries=3,
         retry_delay=300,
         retry_exponential_backoff=True,
+        startup_timeout_seconds=600,
     )
 
     # Deletes GCS data more than 7 days ago
     delete_old_data = gcs_delete_operator.GoogleCloudStorageDeleteOperator(
         task_id="delete_old_data",
         bucket_name="{{ var.json.geos_fp.destination_bucket }}",
-        prefix='Y{{ macros.ds_format(macros.ds_add(ds, -8), "%Y-%m-%d", "%Y") }}/M{{ macros.ds_format(macros.ds_add(ds, -8), "%Y-%m-%d", "%m") }}/D{{ macros.ds_format(macros.ds_add(ds, -8), "%Y-%m-%d", "%d") }}',
+        prefix="{{ macros.ds_format(macros.ds_add(ds, -8), \u0027%Y-%m-%d\u0027, \u0027Y%Y/M%m/D%d\u0027) }}",
     )
 
     delete_old_data

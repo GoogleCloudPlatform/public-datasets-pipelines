@@ -48,6 +48,7 @@ dag:
         retries: 3
         retry_delay: 300
         retry_exponential_backoff: true
+        startup_timeout_seconds: 600
 
     - operator: "KubernetesPodOperator"
       description: "Copy files to GCS on the specified date"
@@ -69,6 +70,7 @@ dag:
         retries: 3
         retry_delay: 300
         retry_exponential_backoff: true
+        startup_timeout_seconds: 600
 
     - operator: "KubernetesPodOperator"
       description: "Copy files to GCS on the specified date"
@@ -90,6 +92,7 @@ dag:
         retries: 3
         retry_delay: 300
         retry_exponential_backoff: true
+        startup_timeout_seconds: 600
 
     - operator: "KubernetesPodOperator"
       description: "Copy files to GCS on a 10-day rolling basis"
@@ -111,6 +114,7 @@ dag:
         retries: 3
         retry_delay: 300
         retry_exponential_backoff: true
+        startup_timeout_seconds: 600
 
     - operator: "KubernetesPodOperator"
       description: "Copy files to GCS on a 10-day rolling basis"
@@ -132,6 +136,7 @@ dag:
         retries: 3
         retry_delay: 300
         retry_exponential_backoff: true
+        startup_timeout_seconds: 600
 
     - operator: "KubernetesPodOperator"
       description: "Copy files to GCS on a 10-day rolling basis"
@@ -153,6 +158,7 @@ dag:
         retries: 3
         retry_delay: 300
         retry_exponential_backoff: true
+        startup_timeout_seconds: 600
 
     - operator: "KubernetesPodOperator"
       description: "Copy files to GCS on a 10-day rolling basis"
@@ -174,6 +180,7 @@ dag:
         retries: 3
         retry_delay: 300 
         retry_exponential_backoff: true
+        startup_timeout_seconds: 600
 
     - operator: "KubernetesPodOperator"
       description: "Copy files to GCS on a 10-day rolling basis"
@@ -195,14 +202,14 @@ dag:
         retries: 3
         retry_delay: 300 
         retry_exponential_backoff: true
+        startup_timeout_seconds: 600
 
     - operator: "GoogleCloudStorageDeleteOperator"
       description: "Deletes GCS data more than 7 days ago"
-
       args:
         task_id: "delete_old_data"
         bucket_name: "{{ var.json.geos_fp.destination_bucket }}"
-        prefix: Y{{ macros.ds_format(macros.ds_add(ds, -8), "%Y-%m-%d", "%Y") }}/M{{ macros.ds_format(macros.ds_add(ds, -8), "%Y-%m-%d", "%m") }}/D{{ macros.ds_format(macros.ds_add(ds, -8), "%Y-%m-%d", "%d") }}
+        prefix: "{{ macros.ds_format(macros.ds_add(ds, -8), '%Y-%m-%d', 'Y%Y/M%m/D%d') }}"
 
   graph_paths:
     - "delete_old_data"
