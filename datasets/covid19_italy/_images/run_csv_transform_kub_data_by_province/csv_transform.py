@@ -50,11 +50,13 @@ def main(
 
     # To fix an issue with vaex where it breaks when the first word in the source file is "data"
     # we have to replace the "data" with "data_1", which seems to resolve loading errors: Attribute not set
-    os.system(f"sed -i 's/data,stato,codice_regione,denominazione_regione,codice_provincia,denominazione_provincia,sigla_provincia,lat,long,totale_casi,note,codice_nuts_1,codice_nuts_2,codice_nuts_3/data_1,stato,codice_regione,denominazione_regione,codice_provincia,denominazione_provincia,sigla_provincia,lat,long,totale_casi,note,codice_nuts_1,codice_nuts_2,codice_nuts_3/g' {source_file}")
+    #os.system(f"sed -i 's/data,stato,codice_regione,denominazione_regione,codice_provincia,denominazione_provincia,sigla_provincia,lat,long,totale_casi,note,codice_nuts_1,codice_nuts_2,codice_nuts_3/data_1,stato,codice_regione,denominazione_regione,codice_provincia,denominazione_provincia,sigla_provincia,lat,long,totale_casi,note,codice_nuts_1,codice_nuts_2,codice_nuts_3/g' {source_file}")
 
     # open the input file
     logging.info(f"Opening file {source_file}")
-    df = vaex.open(str(source_file), convert=False)
+    #df = vaex.open(str(source_file), convert=False)
+    df = pd.read_csv(str(source_file))
+
 
     # steps in the pipeline
     logging.info(f"Transformation Process Starting.. {source_file}")
@@ -64,7 +66,7 @@ def main(
     rename_headers(df)
 
     # convert vaex DF to pandas DF
-    df = df[:].to_pandas_df()
+    #df = df[:].to_pandas_df()
 
     # create location_geom
     logging.info(f"Transform: Creating Geometry Column.. {source_file}")
@@ -121,7 +123,7 @@ def convert_dt_format(date_str, time_str):
 
 def rename_headers(df):
     header_names = {
-        "data_1": "date",
+        "data": "date",
         "stato":"country",
         "codice_regione": "region_code",
         "denominazione_regione": "region_name",
@@ -134,8 +136,7 @@ def rename_headers(df):
         "note": "note",
     }
 
-    for old_name, new_name in header_names.items():
-        df.rename(old_name, new_name)
+    df = df.rename(columns=header_names,inplace=True)
 
 
 def save_to_new_file(df, file_path):
