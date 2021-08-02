@@ -15,5 +15,11 @@
         "container_registry": {
             "run_csv_transform_kub_data_by_region": "gcr.io/bigquery-public-data-dev/covid19_italy__run_csv_transform_kub_data_by_region:latest"
         }
+    },
+    "covid19_italy_national_trends": {
+        "destination_bucket": "public-datasets-dev-covid19-italy-project",
+        "container_registry": {
+            "run_csv_transform_kub_data_by_region": "gcr.io/bigquery-public-data-dev/covid19_italy__run_csv_transform_kub_national_trends:latest"
+        }
     }
 }
