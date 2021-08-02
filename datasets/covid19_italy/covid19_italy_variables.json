@@ -1,0 +1,19 @@
+{
+    "shared": {
+        "composer_bucket": "us-central1-datasets-pipeli-64f97116-bucket",
+        "airflow_data_folder": "/home/airflow/gcs/data",
+        "airflow_home": "/home/airflow/gcs"
+    },
+    "covid19_italy_data_by_province": {
+        "destination_bucket": "public-datasets-dev-covid19-italy-project",
+        "container_registry": {
+            "run_csv_transform_kub_data_by_province": "gcr.io/bigquery-public-data-dev/covid19_italy__run_csv_transform_kub_data_by_province:latest"
+        }
+    },
+    "covid19_italy_data_by_region": {
+        "destination_bucket": "public-datasets-dev-covid19-italy-project",
+        "container_registry": {
+            "run_csv_transform_kub_data_by_region": "gcr.io/bigquery-public-data-dev/covid19_italy__run_csv_transform_kub_data_by_region:latest"
+        }
+    }
+}
