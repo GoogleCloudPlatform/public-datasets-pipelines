@@ -46,6 +46,8 @@ dag:
 
         task_id: "chicago_crime_transform_csv"
 
+        startup_timeout_seconds: 600
+
         # The name of the pod in which the task will run. This will be used (plus a random suffix) to generate a pod id
         name: "crime"
 
@@ -68,7 +70,7 @@ dag:
         # Set resource limits for the pod here. For resource units in Kubernetes, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes
         resources:
           request_memory: "4G"
-          request_cpu: "8"
+          request_cpu: "1"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
