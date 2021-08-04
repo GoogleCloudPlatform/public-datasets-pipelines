@@ -19,13 +19,9 @@ import datetime
 import logging
 import os
 import pathlib
-import pdb  # trace stack dev
-import re
 
-import numpy as np
 import pandas as pd
 import requests
-import vaex
 from google.cloud import storage
 
 
@@ -38,25 +34,20 @@ def main(
 ):
 
     logging.info(
-        f"Covid-19 Italy (By Province) process started at "
+        "Covid-19 Italy (By Province) process started at "
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
 
     logging.info("creating 'files' folder")
-    pathlib.Path('./files').mkdir(parents=True, exist_ok=True)
+    pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
 
     logging.info(f"Downloading file {source_url}")
     download_file(source_url, source_file)
 
-    # To fix an issue with vaex where it breaks when the first word in the source file is "data"
-    # we have to replace the "data" with "data_1", which seems to resolve loading errors: Attribute not set
-    #os.system(f"sed -i 's/data,stato,codice_regione,denominazione_regione,codice_provincia,denominazione_provincia,sigla_provincia,lat,long,totale_casi,note,codice_nuts_1,codice_nuts_2,codice_nuts_3/data_1,stato,codice_regione,denominazione_regione,codice_provincia,denominazione_provincia,sigla_provincia,lat,long,totale_casi,note,codice_nuts_1,codice_nuts_2,codice_nuts_3/g' {source_file}")
-
     # open the input file
     logging.info(f"Opening file {source_file}")
-    #df = vaex.open(str(source_file), convert=False)
-    df = pd.read_csv(str(source_file))
 
+    df = pd.read_csv(str(source_file))
 
     # steps in the pipeline
     logging.info(f"Transformation Process Starting.. {source_file}")
@@ -65,15 +56,18 @@ def main(
     logging.info(f"Transform: Renaming Headers.. {source_file}")
     rename_headers(df)
 
-    # convert vaex DF to pandas DF
-    #df = df[:].to_pandas_df()
-
     # create location_geom
     logging.info(f"Transform: Creating Geometry Column.. {source_file}")
-    df['location_geom'] = "POINT(" + df['longitude'].astype(str).replace("nan", "") + " " + df['latitude'].astype(str).replace("nan", "") + ")"
+    df["location_geom"] = (
+        "POINT("
+        + df["longitude"].astype(str).replace("nan", "")
+        + " "
+        + df["latitude"].astype(str).replace("nan", "")
+        + ")"
+    )
 
     # reorder headers in output
-    logging.info(f"Transform: Reordering headers..")
+    logging.info("Transform: Reordering headers..")
     df = df[
         [
             "date",
@@ -110,7 +104,7 @@ def main(
 
     # log completion
     logging.info(
-        f"Covid-19 Italy (By Province) process completed at "
+        "Covid-19 Italy (By Province) process completed at "
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
 
@@ -124,19 +118,19 @@ def convert_dt_format(date_str, time_str):
 def rename_headers(df):
     header_names = {
         "data": "date",
-        "stato":"country",
+        "stato": "country",
         "codice_regione": "region_code",
         "denominazione_regione": "region_name",
         "lat": "latitude",
-        "long":	"longitude",
-        "codice_provincia":	"province_code",
+        "long": "longitude",
+        "codice_provincia": "province_code",
         "denominazione_provincia": "province_name",
         "sigla_provincia": "province_abbreviation",
         "totale_casi": "confirmed_cases",
         "note": "note",
     }
 
-    df = df.rename(columns=header_names,inplace=True)
+    df = df.rename(columns=header_names, inplace=True)
 
 
 def save_to_new_file(df, file_path):
