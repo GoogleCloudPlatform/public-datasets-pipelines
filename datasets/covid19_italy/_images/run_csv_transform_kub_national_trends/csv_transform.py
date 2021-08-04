@@ -14,7 +14,6 @@
 
 # CSV transform for: covid19_italy.national_trends
 
-# import modules
 import datetime
 import logging
 import os
@@ -44,13 +43,9 @@ def main(
     logging.info(f"Downloading file {source_url}")
     download_file(source_url, source_file)
 
-    # To fix an issue with vaex where it breaks when the first word in the source file is "data"
-    # we have to replace the "data" with "data_1", which seems to resolve loading errors: Attribute not set
-    # os.system(f"sed -i 's/data,stato,codice_regione,denominazione_regione,codice_provincia,denominazione_provincia,sigla_provincia,lat,long,totale_casi,note,codice_nuts_1,codice_nuts_2,codice_nuts_3/data_1,stato,codice_regione,denominazione_regione,codice_provincia,denominazione_provincia,sigla_provincia,lat,long,totale_casi,note,codice_nuts_1,codice_nuts_2,codice_nuts_3/g' {source_file}")
-
     # open the input file
     logging.info(f"Opening file {source_file}")
-    # df = vaex.open(str(source_file), convert=False)
+
     df = pd.read_csv(str(source_file))
 
     # steps in the pipeline
@@ -106,7 +101,7 @@ def main(
 
 
 def convert_dt_format(date_str, time_str):
-    #  date_str, time_str
+    # date_str, time_str
     # 10/26/2014,13:12:00
     return str(datetime.datetime.strptime(date_str, "%m/%d/%Y").date()) + " " + time_str
 

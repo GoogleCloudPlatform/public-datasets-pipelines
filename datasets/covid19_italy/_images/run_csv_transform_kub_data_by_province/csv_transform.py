@@ -14,7 +14,6 @@
 
 # CSV transform for: covid19_italy.data_by_province
 
-# import modules
 import datetime
 import logging
 import os
