@@ -51,9 +51,9 @@ with DAG(
     )
 
     # Task to load CSV data to a BigQuery table
-    load_covid19_italy_data_by_region_us_to_bq = (
+    load_covid19_italy_data_by_region_to_bq = (
         gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
-            task_id="load_covid19_italy_data_by_region_us_to_bq",
+            task_id="load_covid19_italy_data_by_region_to_bq",
             bucket="{{ var.json.shared.composer_bucket }}",
             source_objects=["data/covid19_italy/data_by_region/data_output.csv"],
             source_format="CSV",
@@ -111,9 +111,9 @@ with DAG(
                     "mode": "NULLABLE",
                 },
                 {"name": "tests_performed", "type": "INTEGER", "mode": "NULLABLE"},
-                {"name": "note", "type": "INTEGER", "mode": "NULLABLE"},
+                {"name": "note", "type": "STRING", "mode": "NULLABLE"},
             ],
         )
     )
 
-    covid19_italy_data_by_region_transform_csv >> load_covid19_italy_data_by_region_us_to_bq
+    covid19_italy_data_by_region_transform_csv >> load_covid19_italy_data_by_region_to_bq
