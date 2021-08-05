@@ -111,4 +111,7 @@ with DAG(
         )
     )
 
-    covid19_italy_national_trends_transform_csv >> load_covid19_italy_national_trends_to_bq
+(
+    covid19_italy_national_trends_transform_csv
+    >> load_covid19_italy_national_trends_to_bq
+)

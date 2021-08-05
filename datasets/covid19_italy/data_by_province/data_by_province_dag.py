@@ -77,4 +77,7 @@ with DAG(
         )
     )
 
-    covid19_italy_data_by_province_transform_csv >> load_covid19_italy_data_by_province_to_bq
+(
+    covid19_italy_data_by_province_transform_csv
+    >> load_covid19_italy_data_by_province_to_bq
+)
