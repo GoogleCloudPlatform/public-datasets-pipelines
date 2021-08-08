@@ -225,6 +225,37 @@ def test_script_can_deploy_without_variables_files(
     )
 
 
+def test_script_errors_out_when_deploying_airflow2_dag_to_airflow1_env(
+    dataset_path: pathlib.Path,
+    pipeline_path: pathlib.Path,
+    airflow_home: pathlib.Path,
+    env: str,
+    mocker,
+):
+    setup_dag_and_variables(
+        dataset_path,
+        pipeline_path,
+        airflow_home,
+        env,
+        f"{dataset_path.name}_variables.json",
+    )
+
+    mocker.patch("scripts.deploy_dag.get_dag_airflow_version", return_value=2)
+    mocker.patch("scripts.deploy_dag.composer_airflow_version", return_value=1)
+
+    with pytest.raises(Exception):
+        deploy_dag.main(
+            local=False,
+            env_path=ENV_PATH,
+            dataset_id=dataset_path.name,
+            pipeline=pipeline_path.name,
+            airflow_home=airflow_home,
+            composer_env="test-env",
+            composer_bucket="test-bucket",
+            composer_region="test-region",
+        )
+
+
 def test_script_with_pipeline_arg_deploys_only_that_pipeline(
     dataset_path: pathlib.Path,
     pipeline_path: pathlib.Path,
