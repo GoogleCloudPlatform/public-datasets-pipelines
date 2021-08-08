@@ -90,6 +90,13 @@ def copy_config_files_and_set_tmp_folder_names_as_ids(
         )
     )
     generate_dag.write_to_file(pipeline_yaml_str, pipeline_path / "pipeline.yaml")
+    (ENV_DATASETS_PATH / dataset_path.name / pipeline_path.name).mkdir(
+        parents=True, exist_ok=True
+    )
+    shutil.copyfile(
+        pipeline_path / "pipeline.yaml",
+        ENV_DATASETS_PATH / dataset_path.name / pipeline_path.name / "pipeline.yaml",
+    )
 
 
 def create_airflow_folders(airflow_home: pathlib.Path):
@@ -204,6 +211,7 @@ def test_script_can_deploy_without_variables_files(
 
     mocker.patch("scripts.deploy_dag.run_gsutil_cmd")
     mocker.patch("scripts.deploy_dag.run_cloud_composer_vars_import")
+    mocker.patch("scripts.deploy_dag.composer_airflow_version", return_value=1)
 
     deploy_dag.main(
         local=False,

@@ -110,6 +110,20 @@ def test_main_generates_dag_files(
         assert (path_prefix / f"{pipeline_path.name}_dag.py").exists()
 
 
+def test_main_copies_pipeline_yaml_file(
+    dataset_path: pathlib.Path, pipeline_path: pathlib.Path, env: str
+):
+    copy_config_files_and_set_tmp_folder_names_as_ids(dataset_path, pipeline_path)
+
+    generate_dag.main(dataset_path.name, pipeline_path.name, env)
+
+    for path_prefix in (
+        pipeline_path,
+        ENV_DATASETS_PATH / dataset_path.name / pipeline_path.name,
+    ):
+        assert (path_prefix / "pipeline.yaml").exists()
+
+
 def test_main_copies_custom_dir_if_it_exists(
     dataset_path: pathlib.Path, pipeline_path: pathlib.Path, env: str
 ):
