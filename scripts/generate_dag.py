@@ -50,7 +50,7 @@ TEMPLATE_PATHS = {
     "default_args": AIRFLOW_TEMPLATES_PATH / "default_args.py.jinja2",
 }
 
-DEFAULT_AIRFLOW_VERSION = 1
+DEFAULT_AIRFLOW_VERSION = 2
 AIRFLOW_IMPORTS = json.load(open(CURRENT_PATH / "dag_imports.json"))
 
 

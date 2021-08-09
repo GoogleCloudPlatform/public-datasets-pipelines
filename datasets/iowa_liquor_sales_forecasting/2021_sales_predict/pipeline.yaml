@@ -36,6 +36,7 @@ dag:
   # The DAG acronym stands for directed acyclic graph. This block represents
   # your data pipeline along with every property and configuration it needs to
   # onboard your data.
+  airflow_version: 1
   initialize:
     dag_id: 2021_sales_predict
     default_args:

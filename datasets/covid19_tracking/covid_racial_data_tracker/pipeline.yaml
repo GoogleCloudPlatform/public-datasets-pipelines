@@ -19,6 +19,7 @@ resources:
 
 dag:
   initialize:
+    airflow_version: 1
     dag_id: "covid_racial_data_tracker"
     default_args:
       owner: "Google"
