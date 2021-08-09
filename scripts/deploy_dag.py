@@ -58,13 +58,15 @@ def main(
     else:
         pipelines = list_subdirs(env_path / "datasets" / dataset_id)
 
-    #  if local:
-    #      runtime_airflow_version = local_airflow_version()
-    #  else:
-    #      runtime_airflow_version = composer_airflow_version(composer_env, composer_region)
+    if local:
+        runtime_airflow_version = local_airflow_version()
+    else:
+        runtime_airflow_version = composer_airflow_version(
+            composer_env, composer_region
+        )
 
     for pipeline_path in pipelines:
-        #  check_airflow_version_compatibility(pipeline_path, runtime_airflow_version)
+        check_airflow_version_compatibility(pipeline_path, runtime_airflow_version)
 
         copy_custom_callables_to_airflow_dags_folder(
             local,
