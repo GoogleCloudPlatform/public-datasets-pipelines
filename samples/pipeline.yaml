@@ -12,6 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
+# ===== NOTE =====
+# This YAML config template is used to write DAGs that use Airflow 1.10 operators.
+# You can keep using this template when deploying to an environment that uses Airflow 2,
+# they will keep working due to backport compatibility.
+#
+# For tracking progress on the YAML config templates that use Airflow 2 operators, see
+# https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/137.
+
 ---
 resources:
   # A list of GCP resources that are unique and specific to your pipeline.
@@ -58,6 +67,9 @@ resources:
     deletion_protection: true
 
 dag:
+  # Specify the Airflow version of the operators used by the DAG. Defaults to Airflow 1 when unspecified.
+  airflow_version: 1
+
   # The DAG acronym stands for directed acyclic graph. This block represents
   # your data pipeline along with every property and configuration it needs to
   # onboard your data.
