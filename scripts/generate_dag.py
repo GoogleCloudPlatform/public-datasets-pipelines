@@ -143,9 +143,11 @@ def generate_task_contents(task: dict, airflow_version: str) -> str:
 
 
 def generate_shared_variables_file(env: str) -> None:
-    pathlib.Path(
+    shared_variables_file = pathlib.Path(
         PROJECT_ROOT / f".{env}" / "datasets" / "shared_variables.json"
-    ).touch()
+    )
+    shared_variables_file.touch()
+    shared_variables_file.write_text("{}", encoding="utf-8")
 
 
 def dag_init(config: dict) -> dict:
