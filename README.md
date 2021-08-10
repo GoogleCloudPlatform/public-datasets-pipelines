@@ -58,7 +58,9 @@ Use only underscores and alpha-numeric characters for the names.
 
 If you created a new dataset directory above, you need to create a `datasets/DATASET/dataset.yaml` config file. See this [section](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/README.md#yaml-config-reference) for the `dataset.yaml` reference.
 
-Create a `datasets/DATASET/PIPELINE/pipeline.yaml` config file for your pipeline. See [here](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/samples/pipeline.yaml) for the `pipeline.yaml` reference.
+Create a `datasets/DATASET/PIPELINE/pipeline.yaml` config file for your pipeline. See [here](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/samples/) for the `pipeline.yaml` references. 
+
+For a YAML config template using Airflow 1.10 operators, see [`samples/pipeline.airflow1.yaml`](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/samples/pipeline.airflow1.yaml).
 
 If you'd like to get started faster, you can inspect config files that already exist in the repository and infer the patterns from there:
 
@@ -219,10 +221,14 @@ $ pipenv run python -m pytest -v
 
 # YAML Config Reference
 
-Every dataset and pipeline folder must contain a `dataset.yaml` and a `pipeline.yaml` configuration file, respectively:
+Every dataset and pipeline folder must contain a `dataset.yaml` and a `pipeline.yaml` configuration file, respectively.
 
-- For dataset configuration syntax, see [`samples/dataset.yaml`](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/samples/dataset.yaml) as a reference.
-- For pipeline configuration syntax, see [`samples/pipeline.yaml`](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/samples/pipeline.yaml) as a reference.
+The `samples` folder contains references for the YAML config files, complete with descriptions for config blocks and Airflow operators and parameters. When creating a new dataset or pipeline, you can copy them to your specific dataset/pipeline paths to be used as templates.
+
+- For dataset configuration syntax, see the [`samples/dataset.yaml`](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/samples/dataset.yaml) reference.
+- For pipeline configuration syntax:
+  - For the default Airflow 2 operators, see the [`samples/pipeline.yaml`](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/samples/pipeline.yaml) reference.
+  - If you'd like to use Airflow 1.10 operators, see the [`samples/pipeline.airflow1.yaml`](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/samples/pipeline.yaml) as a reference.
 
 
 # Best Practices
