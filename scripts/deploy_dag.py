@@ -27,7 +27,7 @@ yaml = yaml.YAML(typ="safe")
 CURRENT_PATH = pathlib.Path(__file__).resolve().parent
 PROJECT_ROOT = CURRENT_PATH.parent
 DATASETS_PATH = PROJECT_ROOT / "datasets"
-DEFAULT_AIRFLOW_VERSION = 1
+DEFAULT_AIRFLOW_VERSION = 2
 
 
 class IncompatibilityError(Exception):
