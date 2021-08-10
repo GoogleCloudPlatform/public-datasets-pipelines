@@ -65,6 +65,7 @@ resources:
     deletion_protection: False
 
 dag:
+  airflow_version: 1
   initialize:
     dag_id: diversity_annual_report
     default_args:

@@ -19,6 +19,7 @@ resources:
     description: "Current population survey 18: Employed persons by detailed industry, sex, race, and Hispanic or Latino ethnicity"
 
 dag:
+  airflow_version: 1
   initialize:
     dag_id: cpsaat18
     default_args:

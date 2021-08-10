@@ -110,6 +110,20 @@ def test_main_generates_dag_files(
         assert (path_prefix / f"{pipeline_path.name}_dag.py").exists()
 
 
+def test_main_copies_pipeline_yaml_file(
+    dataset_path: pathlib.Path, pipeline_path: pathlib.Path, env: str
+):
+    copy_config_files_and_set_tmp_folder_names_as_ids(dataset_path, pipeline_path)
+
+    generate_dag.main(dataset_path.name, pipeline_path.name, env)
+
+    for path_prefix in (
+        pipeline_path,
+        ENV_DATASETS_PATH / dataset_path.name / pipeline_path.name,
+    ):
+        assert (path_prefix / "pipeline.yaml").exists()
+
+
 def test_main_copies_custom_dir_if_it_exists(
     dataset_path: pathlib.Path, pipeline_path: pathlib.Path, env: str
 ):
@@ -138,6 +152,64 @@ def test_main_creates_shared_variables_file(
 
     assert (ENV_DATASETS_PATH / "shared_variables.json").exists()
     assert not (ENV_DATASETS_PATH / "shared_variables.json").is_dir()
+
+
+def test_main_uses_airflow1_operators_when_airflow_version_is_set_to_1(
+    dataset_path: pathlib.Path, pipeline_path: pathlib.Path, env: str
+):
+    copy_config_files_and_set_tmp_folder_names_as_ids(dataset_path, pipeline_path)
+
+    # Verify that the template uses Airflow 1
+    config = yaml.load(open(pipeline_path / "pipeline.yaml"))
+    assert config["dag"]["airflow_version"] == 1
+
+    generate_dag.main(dataset_path.name, pipeline_path.name, env)
+
+    for path_prefix in (
+        pipeline_path,
+        ENV_DATASETS_PATH / dataset_path.name / pipeline_path.name,
+    ):
+        assert (path_prefix / f"{pipeline_path.name}_dag.py").exists()
+        assert (
+            "airflow.contrib.operators"
+            in (path_prefix / f"{pipeline_path.name}_dag.py").read_text()
+        )
+        assert (
+            "airflow.providers.google"
+            not in (path_prefix / f"{pipeline_path.name}_dag.py").read_text()
+        )
+
+
+#  Requires a pipeline.yaml config that uses Airflow2 operators. Soon to follow.
+#  See https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/137
+@pytest.mark.skip()
+def test_main_defaults_to_using_airflow2_when_airflow_version_is_unspecified(
+    dataset_path: pathlib.Path, pipeline_path: pathlib.Path, env: str
+):
+    copy_config_files_and_set_tmp_folder_names_as_ids(dataset_path, pipeline_path)
+
+    config = yaml.load(open(pipeline_path / "pipeline.yaml"))
+
+    # Delete the `airflow_version` field in the pipeline YAML config
+    del config["dag"]["airflow_version"]
+    with open(pipeline_path / "pipeline.yaml", "w") as file:
+        yaml.dump(config, file)
+
+    generate_dag.main(dataset_path.name, pipeline_path.name, env)
+
+    for path_prefix in (
+        pipeline_path,
+        ENV_DATASETS_PATH / dataset_path.name / pipeline_path.name,
+    ):
+        assert (path_prefix / f"{pipeline_path.name}_dag.py").exists()
+        assert (
+            "providers.google"
+            in (path_prefix / f"{pipeline_path.name}_dag.py").read_text()
+        )
+        assert (
+            "airflow.contrib.operators"
+            not in (path_prefix / f"{pipeline_path.name}_dag.py").read_text()
+        )
 
 
 def test_main_only_depends_on_pipeline_yaml(

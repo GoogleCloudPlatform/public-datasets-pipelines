@@ -28,6 +28,7 @@ resources:
     description: "This table represents the boundaries of areas surrounding vaccination facilities from which people can reach the facility by walking within predetermined time periods."
 
 dag:
+  airflow_version: 1
   initialize:
     dag_id: vaccination_access_to_bq
     default_args:
