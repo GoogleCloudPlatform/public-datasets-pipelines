@@ -175,7 +175,7 @@ def import_variables_to_airflow_env(
     airflow variables import .{ENV}/datasets/{DATASET_ID}/variables.json
 
     [remote]
-    gcloud composer environments run COMPOSER_ENV --location COMPOSER_REGION variables -- --import /home/airflow/gcs/data/variables/{DATASET_ID}_variables.json
+    gcloud composer environments run COMPOSER_ENV --location COMPOSER_REGION variables -- import /home/airflow/gcs/data/variables/{DATASET_ID}_variables.json
     """
     for cwd, filename in (
         (env_path / "datasets", "shared_variables.json"),
