@@ -233,6 +233,21 @@ The `samples` folder contains references for the YAML config files, complete wit
 
 # Best Practices
 
+- When your tabular data contains percentage values, represent them as floats between 0 to 1.
+- To represent hierarchical data in BigQuery, use either: 
+  - (Recommended) Nested columns in BigQuery. For more info, see [the documentation on nested and repeated columns](https://cloud.google.com/bigquery/docs/nested-repeated).
+  - Or, represent each level as a separate column. For example, if you have the following hierarchy: `chapter > section > subsection`, then represent them as
+
+    ```
+    |chapter          |section|subsection          |page|
+    |-----------------|-------|--------------------|----|
+    |Operating Systems|       |                    |50  |
+    |Operating Systems|Linux  |                    |51  |
+    |Operating Systems|Linux  |The Linux Filesystem|51  |
+    |Operating Systems|Linux  |Users & Groups      |58  |
+    |Operating Systems|Linux  |Distributions       |70  |
+    ```
+
 - When running `scripts/generate_terraform.py`, the argument `--bucket-name-prefix` helps prevent GCS bucket name collisions because bucket names must be globally unique. Use hyphens over underscores for the prefix and make it as unique as possible, and specific to your own environment or use case.
 - When naming BigQuery columns, always use `snake_case` and lowercase.
 - When specifying BigQuery schemas, be explicit and always include `name`, `type` and `mode` for every column. For column descriptions, derive it from the data source's definitions when available.
