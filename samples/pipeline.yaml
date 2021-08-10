@@ -59,7 +59,7 @@ resources:
     deletion_protection: true
 
 dag:
-  # Specify the Airflow version of the operators used by the DAG. Defaults to Airflow 2 when unspecified.
+  # [Required] Specify the Airflow version of the operators used by the DAG.
   airflow_version: 2
 
   # The DAG acronym stands for directed acyclic graph. This block represents
