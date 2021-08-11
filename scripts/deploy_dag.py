@@ -27,7 +27,7 @@ yaml = yaml.YAML(typ="safe")
 CURRENT_PATH = pathlib.Path(__file__).resolve().parent
 PROJECT_ROOT = CURRENT_PATH.parent
 DATASETS_PATH = PROJECT_ROOT / "datasets"
-DEFAULT_AIRFLOW_VERSION = 1
+DEFAULT_AIRFLOW_VERSION = 2
 
 
 class IncompatibilityError(Exception):
@@ -175,7 +175,7 @@ def import_variables_to_airflow_env(
     airflow variables import .{ENV}/datasets/{DATASET_ID}/variables.json
 
     [remote]
-    gcloud composer environments run COMPOSER_ENV --location COMPOSER_REGION variables -- --import /home/airflow/gcs/data/variables/{DATASET_ID}_variables.json
+    gcloud composer environments run COMPOSER_ENV --location COMPOSER_REGION variables -- import /home/airflow/gcs/data/variables/{DATASET_ID}_variables.json
     """
     for cwd, filename in (
         (env_path / "datasets", "shared_variables.json"),

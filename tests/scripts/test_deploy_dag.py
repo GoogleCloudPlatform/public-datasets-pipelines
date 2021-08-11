@@ -211,7 +211,7 @@ def test_script_can_deploy_without_variables_files(
 
     mocker.patch("scripts.deploy_dag.run_gsutil_cmd")
     mocker.patch("scripts.deploy_dag.run_cloud_composer_vars_import")
-    mocker.patch("scripts.deploy_dag.composer_airflow_version", return_value=1)
+    mocker.patch("scripts.deploy_dag.composer_airflow_version", return_value=2)
 
     deploy_dag.main(
         local=False,

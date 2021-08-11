@@ -46,6 +46,10 @@
         "import": "from airflow.providers.google.cloud.operators import gcs",
         "class": "gcs.GCSDeleteObjectsOperator"
       },
+      "BigQueryExecuteQueryOperator": {
+        "import": "from airflow.providers.google.cloud.operators import bigquery",
+        "class": "bigquery.BigQueryExecuteQueryOperator"
+      },
       "BigQueryInsertJobOperator": {
         "import": "from airflow.providers.google.cloud.operators import bigquery",
         "class": "bigquery.BigQueryInsertJobOperator"
@@ -53,6 +57,18 @@
       "KubernetesPodOperator": {
           "import": "from airflow.providers.cncf.kubernetes.operators import kubernetes_pod",
           "class": "kubernetes_pod.KubernetesPodOperator"
+      },
+      "GKEStartPodOperator": {
+          "import": "from airflow.providers.google.cloud.operators import kubernetes_engine",
+          "class": "kubernetes_engine.GKEStartPodOperator"
+      },
+      "GKECreateClusterOperator": {
+          "import": "from airflow.providers.google.cloud.operators import kubernetes_engine",
+          "class": "kubernetes_engine.GKECreateClusterOperator"
+      },
+      "GKEDeleteClusterOperator": {
+          "import": "from airflow.providers.google.cloud.operators import kubernetes_engine",
+          "class": "kubernetes_engine.GKEDeleteClusterOperator"
       }
-    }
+   }
 }

@@ -27,16 +27,6 @@ from ruamel import yaml
 yaml = yaml.YAML(typ="safe")
 
 
-OPERATORS = {
-    "BashOperator",
-    "GoogleCloudStorageToBigQueryOperator",
-    "GoogleCloudStorageToGoogleCloudStorageOperator",
-    "GoogleCloudStorageDeleteOperator",
-    "BigQueryOperator",
-    "BigQueryToBigQueryOperator",
-    "KubernetesPodOperator",
-}
-
 CURRENT_PATH = pathlib.Path(__file__).resolve().parent
 PROJECT_ROOT = CURRENT_PATH.parent
 DATASETS_PATH = PROJECT_ROOT / "datasets"
@@ -52,6 +42,7 @@ TEMPLATE_PATHS = {
 
 DEFAULT_AIRFLOW_VERSION = 2
 AIRFLOW_IMPORTS = json.load(open(CURRENT_PATH / "dag_imports.json"))
+AIRFLOW_VERSIONS = list(AIRFLOW_IMPORTS.keys())
 
 
 def main(
@@ -77,6 +68,7 @@ def generate_pipeline_dag(dataset_id: str, pipeline_id: str, env: str):
     pipeline_dir = DATASETS_PATH / dataset_id / pipeline_id
     config = yaml.load((pipeline_dir / "pipeline.yaml").read_text())
 
+    validate_airflow_version_existence_and_value(config)
     validate_dag_id_existence_and_format(config)
     dag_contents = generate_dag(config, dataset_id)
 
@@ -135,7 +127,7 @@ def generate_dag_context(config: dict, dataset_id: str) -> str:
 
 
 def generate_task_contents(task: dict, airflow_version: str) -> str:
-    validate_task(task)
+    validate_task(task, airflow_version)
     return jinja2.Template(TEMPLATE_PATHS["task"].read_text()).render(
         **task,
         namespaced_operator=AIRFLOW_IMPORTS[airflow_version][task["operator"]]["class"],
@@ -162,6 +154,14 @@ def namespaced_dag_id(dag_id: str, dataset_id: str) -> str:
     return f"{dataset_id}.{dag_id}"
 
 
+def validate_airflow_version_existence_and_value(config: dict):
+    if "airflow_version" not in config["dag"]:
+        raise KeyError("Missing required parameter:`dag.airflow_version`")
+
+    if str(config["dag"]["airflow_version"]) not in AIRFLOW_VERSIONS:
+        raise ValueError("`dag.airflow_version` must be a valid Airflow major version")
+
+
 def validate_dag_id_existence_and_format(config: dict):
     init = dag_init(config)
     if not init.get("dag_id"):
@@ -174,12 +174,14 @@ def validate_dag_id_existence_and_format(config: dict):
         )
 
 
-def validate_task(task: dict):
+def validate_task(task: dict, airflow_version: str):
     if not task.get("operator"):
         raise KeyError(f"`operator` key must exist in {task}")
 
-    if not task["operator"] in OPERATORS:
-        raise ValueError(f"`task.operator` must be one of {list(OPERATORS)}")
+    if not task["operator"] in AIRFLOW_IMPORTS[airflow_version]:
+        raise ValueError(
+            f"`task.operator` must be one of {list(AIRFLOW_IMPORTS[airflow_version].keys())}"
+        )
 
     if not task["args"].get("task_id"):
         raise KeyError(f"`args.task_id` key must exist in {task}")
