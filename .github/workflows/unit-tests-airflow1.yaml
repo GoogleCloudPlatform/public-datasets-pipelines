@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: Run unit tests
+name: Run unit tests for Airflow 1.10 operators
 on: [pull_request]
 jobs:
   build:
@@ -35,5 +35,7 @@ jobs:
         run: pipenv install --ignore-pipfile --dev
       - name: Initialize Airflow
         run: pipenv run airflow db init
+      - name: Setup Airflow 1.10 pipeline YAML config
+        run: cp samples/pipeline.airflow1.yaml samples/pipeline.yaml
       - name: Run tests
         run: pipenv run python -m pytest -v

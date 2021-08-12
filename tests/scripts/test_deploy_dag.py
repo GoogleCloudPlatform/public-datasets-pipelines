@@ -90,6 +90,13 @@ def copy_config_files_and_set_tmp_folder_names_as_ids(
         )
     )
     generate_dag.write_to_file(pipeline_yaml_str, pipeline_path / "pipeline.yaml")
+    (ENV_DATASETS_PATH / dataset_path.name / pipeline_path.name).mkdir(
+        parents=True, exist_ok=True
+    )
+    shutil.copyfile(
+        pipeline_path / "pipeline.yaml",
+        ENV_DATASETS_PATH / dataset_path.name / pipeline_path.name / "pipeline.yaml",
+    )
 
 
 def create_airflow_folders(airflow_home: pathlib.Path):
@@ -204,6 +211,7 @@ def test_script_can_deploy_without_variables_files(
 
     mocker.patch("scripts.deploy_dag.run_gsutil_cmd")
     mocker.patch("scripts.deploy_dag.run_cloud_composer_vars_import")
+    mocker.patch("scripts.deploy_dag.composer_airflow_version", return_value=2)
 
     deploy_dag.main(
         local=False,
@@ -215,6 +223,37 @@ def test_script_can_deploy_without_variables_files(
         composer_bucket="test-bucket",
         composer_region="test-region",
     )
+
+
+def test_script_errors_out_when_deploying_airflow2_dag_to_airflow1_env(
+    dataset_path: pathlib.Path,
+    pipeline_path: pathlib.Path,
+    airflow_home: pathlib.Path,
+    env: str,
+    mocker,
+):
+    setup_dag_and_variables(
+        dataset_path,
+        pipeline_path,
+        airflow_home,
+        env,
+        f"{dataset_path.name}_variables.json",
+    )
+
+    mocker.patch("scripts.deploy_dag.get_dag_airflow_version", return_value=2)
+    mocker.patch("scripts.deploy_dag.composer_airflow_version", return_value=1)
+
+    with pytest.raises(Exception):
+        deploy_dag.main(
+            local=False,
+            env_path=ENV_PATH,
+            dataset_id=dataset_path.name,
+            pipeline=pipeline_path.name,
+            airflow_home=airflow_home,
+            composer_env="test-env",
+            composer_bucket="test-bucket",
+            composer_region="test-region",
+        )
 
 
 def test_script_with_pipeline_arg_deploys_only_that_pipeline(
