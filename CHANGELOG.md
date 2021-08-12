@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.0.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.11.0...v2.0.0) (2021-08-11)
+
+
+### ⚠ BREAKING CHANGES
+
+* Pipeline YAML template using Airflow 2 operators (#138)
+* Adds support for Airflow 2 Cloud Composer environment and operators (#134)
+
+### Features
+
+* Adds support for Airflow 2 Cloud Composer environment and operators ([#134](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/134)) ([b2749c6](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/b2749c61fc62cfc97b81831f664022c354bc8de9))
+* Pipeline YAML template using Airflow 2 operators ([#138](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/138)) ([90ae7cd](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/90ae7cd5a3eec5da2d790233425c4e98530b25ac))
+
 ## [1.11.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.10.0...v1.11.0) (2021-07-22)
 
 
