@@ -29,7 +29,7 @@ This uses the `Pipfile.lock` found in the project root and installs all the deve
 Finally, initialize the Airflow database:
 
 ```bash
-pipenv run airflow initdb
+pipenv run airflow db init
 ```
 
 # Building Data Pipelines
