@@ -23,4 +23,3 @@ resources:
   - type: bigquery_dataset
     dataset_id: google_cloud_release_notes
     description: "This dataset contains release notes for the majority of generally available Google Cloud products found on cloud.google.com. You can use this BigQuery public dataset to consume release notes programmatically across all products. HTML versions of release notes are available within each product's documentation and also in a filterable format at https://console.cloud.google.com/release-notes."
-
