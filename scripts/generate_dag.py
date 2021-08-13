@@ -27,16 +27,6 @@ from ruamel import yaml
 yaml = yaml.YAML(typ="safe")
 
 
-OPERATORS = {
-    "BashOperator",
-    "GoogleCloudStorageToBigQueryOperator",
-    "GoogleCloudStorageToGoogleCloudStorageOperator",
-    "GoogleCloudStorageDeleteOperator",
-    "BigQueryOperator",
-    "BigQueryToBigQueryOperator",
-    "KubernetesPodOperator",
-}
-
 CURRENT_PATH = pathlib.Path(__file__).resolve().parent
 PROJECT_ROOT = CURRENT_PATH.parent
 DATASETS_PATH = PROJECT_ROOT / "datasets"
@@ -50,8 +40,9 @@ TEMPLATE_PATHS = {
     "default_args": AIRFLOW_TEMPLATES_PATH / "default_args.py.jinja2",
 }
 
-AIRFLOW_VERSION = "1.10.15"
+DEFAULT_AIRFLOW_VERSION = 2
 AIRFLOW_IMPORTS = json.load(open(CURRENT_PATH / "dag_imports.json"))
+AIRFLOW_VERSIONS = list(AIRFLOW_IMPORTS.keys())
 
 
 def main(
@@ -77,27 +68,22 @@ def generate_pipeline_dag(dataset_id: str, pipeline_id: str, env: str):
     pipeline_dir = DATASETS_PATH / dataset_id / pipeline_id
     config = yaml.load((pipeline_dir / "pipeline.yaml").read_text())
 
+    validate_airflow_version_existence_and_value(config)
     validate_dag_id_existence_and_format(config)
     dag_contents = generate_dag(config, dataset_id)
 
-    target_path = pipeline_dir / f"{pipeline_id}_dag.py"
-    create_file_in_dot_and_project_dirs(
-        dataset_id,
-        pipeline_id,
-        dag_contents,
-        target_path.name,
-        PROJECT_ROOT / f".{env}",
-    )
-    write_to_file(dag_contents, target_path)
+    dag_path = pipeline_dir / f"{pipeline_id}_dag.py"
+    dag_path.touch()
+    write_to_file(dag_contents, dag_path)
+    format_python_code(dag_path)
 
-    copy_custom_callables_to_dot_dir(
+    copy_files_to_dot_dir(
         dataset_id,
         pipeline_id,
         PROJECT_ROOT / f".{env}",
     )
 
     print_airflow_variables(dataset_id, dag_contents, env)
-    format_python_code(target_path)
 
 
 def generate_dag(config: dict, dataset_id: str) -> str:
@@ -111,16 +97,18 @@ def generate_dag(config: dict, dataset_id: str) -> str:
 
 
 def generate_package_imports(config: dict) -> str:
+    _airflow_version = airflow_version(config)
     contents = {"from airflow import DAG"}
     for task in config["dag"]["tasks"]:
-        contents.add(AIRFLOW_IMPORTS[AIRFLOW_VERSION][task["operator"]]["import"])
+        contents.add(AIRFLOW_IMPORTS[_airflow_version][task["operator"]]["import"])
     return "\n".join(contents)
 
 
 def generate_tasks(config: dict) -> list:
+    _airflow_version = airflow_version(config)
     contents = []
     for task in config["dag"]["tasks"]:
-        contents.append(generate_task_contents(task))
+        contents.append(generate_task_contents(task, _airflow_version))
     return contents
 
 
@@ -138,26 +126,40 @@ def generate_dag_context(config: dict, dataset_id: str) -> str:
     )
 
 
-def generate_task_contents(task: dict) -> str:
-    validate_task(task)
+def generate_task_contents(task: dict, airflow_version: str) -> str:
+    validate_task(task, airflow_version)
     return jinja2.Template(TEMPLATE_PATHS["task"].read_text()).render(
         **task,
-        namespaced_operator=AIRFLOW_IMPORTS[AIRFLOW_VERSION][task["operator"]]["class"],
+        namespaced_operator=AIRFLOW_IMPORTS[airflow_version][task["operator"]]["class"],
     )
 
 
 def generate_shared_variables_file(env: str) -> None:
-    pathlib.Path(
+    shared_variables_file = pathlib.Path(
         PROJECT_ROOT / f".{env}" / "datasets" / "shared_variables.json"
-    ).touch()
+    )
+    shared_variables_file.touch()
+    shared_variables_file.write_text("{}", encoding="utf-8")
 
 
 def dag_init(config: dict) -> dict:
     return config["dag"].get("initialize") or config["dag"].get("init")
 
 
+def airflow_version(config: dict) -> str:
+    return str(config["dag"].get("airflow_version", DEFAULT_AIRFLOW_VERSION))
+
+
 def namespaced_dag_id(dag_id: str, dataset_id: str) -> str:
     return f"{dataset_id}.{dag_id}"
+
+
+def validate_airflow_version_existence_and_value(config: dict):
+    if "airflow_version" not in config["dag"]:
+        raise KeyError("Missing required parameter:`dag.airflow_version`")
+
+    if str(config["dag"]["airflow_version"]) not in AIRFLOW_VERSIONS:
+        raise ValueError("`dag.airflow_version` must be a valid Airflow major version")
 
 
 def validate_dag_id_existence_and_format(config: dict):
@@ -172,12 +174,14 @@ def validate_dag_id_existence_and_format(config: dict):
         )
 
 
-def validate_task(task: dict):
+def validate_task(task: dict, airflow_version: str):
     if not task.get("operator"):
         raise KeyError(f"`operator` key must exist in {task}")
 
-    if not task["operator"] in OPERATORS:
-        raise ValueError(f"`task.operator` must be one of {list(OPERATORS)}")
+    if not task["operator"] in AIRFLOW_IMPORTS[airflow_version]:
+        raise ValueError(
+            f"`task.operator` must be one of {list(AIRFLOW_IMPORTS[airflow_version].keys())}"
+        )
 
     if not task["args"].get("task_id"):
         raise KeyError(f"`args.task_id` key must exist in {task}")
@@ -219,34 +223,13 @@ def print_airflow_variables(dataset_id: str, dag_contents: str, env: str):
     print()
 
 
-def create_file_in_dot_and_project_dirs(
-    dataset_id: str,
-    pipeline_id: str,
-    contents: str,
-    filename: str,
-    env_dir: pathlib.Path,
-):
-    print("\nCreated\n")
-    for prefix in (
-        env_dir / "datasets" / dataset_id / pipeline_id,
-        DATASETS_PATH / dataset_id / pipeline_id,
-    ):
-        prefix.mkdir(parents=True, exist_ok=True)
-        target_path = prefix / filename
-        write_to_file(contents + "\n", target_path)
-        print(f"  - {target_path.relative_to(PROJECT_ROOT)}")
-
-
-def copy_custom_callables_to_dot_dir(
-    dataset_id: str, pipeline_id: str, env_dir: pathlib.Path
-):
-    callables_dir = DATASETS_PATH / dataset_id / pipeline_id / "custom"
-    if callables_dir.exists():
-        target_dir = env_dir / "datasets" / dataset_id / pipeline_id
-        target_dir.mkdir(parents=True, exist_ok=True)
-        subprocess.check_call(
-            ["cp", "-rf", str(callables_dir), str(target_dir)], cwd=PROJECT_ROOT
-        )
+def copy_files_to_dot_dir(dataset_id: str, pipeline_id: str, env_dir: pathlib.Path):
+    source_dir = PROJECT_ROOT / "datasets" / dataset_id / pipeline_id
+    target_dir = env_dir / "datasets" / dataset_id
+    target_dir.mkdir(parents=True, exist_ok=True)
+    subprocess.check_call(
+        ["cp", "-rf", str(source_dir), str(target_dir)], cwd=PROJECT_ROOT
+    )
 
 
 def build_images(dataset_id: str, env: str):
