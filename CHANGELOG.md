@@ -1,5 +1,12 @@
 # Changelog
 
+### [2.0.1](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v2.0.0...v2.0.1) (2021-08-13)
+
+
+### Bug Fixes
+
+* Revised Airflow DB initialization command ([#141](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/141)) ([47b4717](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/47b47172f331b9096a98083dfefe31d81dc79696))
+
 ## [2.0.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.11.0...v2.0.0) (2021-08-11)
 
 
