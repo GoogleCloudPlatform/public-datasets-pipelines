@@ -16,6 +16,7 @@
 resources: ~
 
 dag:
+  airflow_version: 1
   initialize:
     dag_id: copy_files_rolling_basis
     default_args:
