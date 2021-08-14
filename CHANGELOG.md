@@ -3,7 +3,7 @@
 ## [2.1.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v2.0.0...v2.1.0) (2021-08-13)
 
 
-### Features
+### Datasets
 
 * Onboard Google Cloud Release Notes dataset ([#133](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/133)) ([5c98c05](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/5c98c052ea74b7cb474a6bc86ea25e1cffe8cb9a))
 
