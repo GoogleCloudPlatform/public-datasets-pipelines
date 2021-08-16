@@ -23,6 +23,10 @@ resources:
     description: "covid19 Italy Data By Region"
 
 dag:
+
+  # [Required] Specify the Airflow version of the operators used by the DAG.
+  airflow_version: 1
+
   initialize:
     dag_id: data_by_region
     default_args:
@@ -57,7 +61,7 @@ dag:
         image_pull_policy: "Always"
 
         # Docker images will be built and pushed to GCR by default whenever the `scripts/generate_dag.py` is run. To skip building and pushing images, use the optional `--skip-builds` flag.
-        image: "{{ var.json.covid19_italy_data_by_region.container_registry.run_csv_transform_kub_data_by_region }}"
+        image: "{{ var.json.covid19_italy.container_registry.run_csv_transform_kub }}"
 
         # Set the environment variables you need initialized in the container. Use these as input variables for the script your container is expected to perform.
         env_vars:
@@ -66,6 +70,11 @@ dag:
           TARGET_FILE: "files/data_output.csv"
           TARGET_GCS_BUCKET: "{{ var.json.shared.composer_bucket }}"
           TARGET_GCS_PATH: "data/covid19_italy/data_by_region/data_output.csv"
+          CSV_HEADERS: >-
+           ["date","country","region_code","region_name","latitude","longitude","location_geom","hospitalized_patients_symptoms","hospitalized_patients_intensive_care","total_hospitalized_patients","home_confinement_cases","total_current_confirmed_cases","new_current_confirmed_cases","new_total_confirmed_cases","recovered","deaths","total_confirmed_cases","tests_performed","note"]
+          RENAME_MAPPINGS: >-
+           {"data": "date","stato": "country","codice_regione": "region_code","denominazione_regione": "region_name","lat": "latitude","long": "longitude","ricoverati_con_sintomi": "hospitalized_patients_symptoms","terapia_intensiva": "hospitalized_patients_intensive_care","totale_ospedalizzati": "total_hospitalized_patients","isolamento_domiciliare": "home_confinement_cases","totale_positivi": "total_current_confirmed_cases","variazione_totale_positivi": "new_current_confirmed_cases","nuovi_positivi": "new_total_confirmed_cases","note": "note","dimessi_guariti": "recovered","totale_casi": "total_confirmed_cases","tamponi": "tests_performed","deceduti": "deaths"}
+          PIPELINE_NAME: "data_by_region"
 
 
         # Set resource limits for the pod here. For resource units in Kubernetes, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes
@@ -77,7 +86,7 @@ dag:
       description: "Task to load CSV data to a BigQuery table"
 
       args:
-        task_id: "load_covid19_italy_data_by_region_us_to_bq"
+        task_id: "load_covid19_italy_data_by_region_to_bq"
 
         # The GCS bucket where the CSV file is located in.
         bucket: "{{ var.json.shared.composer_bucket }}"
@@ -155,12 +164,9 @@ dag:
             type: "INTEGER"
             mode: "NULLABLE"
           - name: "note"
-            type: "INTEGER"
+            type: "STRING"
             mode: "NULLABLE"
 
 
   graph_paths:
-    - "covid19_italy_data_by_region_transform_csv >> load_covid19_italy_data_by_region_us_to_bq"
-
-  # graph_paths:
-  #  - "covid19_italy_data_by_region_transform_csv"
+    - "covid19_italy_data_by_region_transform_csv >> load_covid19_italy_data_by_region_to_bq"

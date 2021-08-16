@@ -266,6 +266,7 @@ def build_and_push_image(dataset_id: str, image_dir: pathlib.Path):
             "gcloud",
             "builds",
             "submit",
+            "--async",
             "--tag",
             str(tag),
         ],

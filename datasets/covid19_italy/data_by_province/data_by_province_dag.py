@@ -39,13 +39,16 @@ with DAG(
         name="covid19_italy_data_by_province",
         namespace="default",
         image_pull_policy="Always",
-        image="{{ var.json.covid19_italy_data_by_province.container_registry.run_csv_transform_kub_data_by_province }}",
+        image="{{ var.json.covid19_italy.container_registry.run_csv_transform_kub }}",
         env_vars={
             "SOURCE_URL": "https://raw.githubusercontent.com/pcm-dpc/COVID-19/master/dati-province/dpc-covid19-ita-province.csv",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
             "TARGET_GCS_BUCKET": "{{ var.json.shared.composer_bucket }}",
             "TARGET_GCS_PATH": "data/covid19_italy/data_by_province/data_output.csv",
+            "CSV_HEADERS": '["date","country","region_code","region_name","province_code","province_name","province_abbreviation","latitude","longitude","location_geom","confirmed_cases","note"]',
+            "RENAME_MAPPINGS": '{"data": "date","stato": "country","codice_regione": "region_code","denominazione_regione": "region_name","lat": "latitude","long": "longitude","codice_provincia": "province_code","denominazione_provincia": "province_name","sigla_provincia": "province_abbreviation","totale_casi": "confirmed_cases","note": "note"}',
+            "PIPELINE_NAME": "data_by_province",
         },
         resources={"request_memory": "4G", "request_cpu": "1"},
     )
@@ -77,7 +80,4 @@ with DAG(
         )
     )
 
-(
-    covid19_italy_data_by_province_transform_csv
-    >> load_covid19_italy_data_by_province_to_bq
-)
+    covid19_italy_data_by_province_transform_csv >> load_covid19_italy_data_by_province_to_bq

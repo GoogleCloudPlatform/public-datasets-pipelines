@@ -23,6 +23,10 @@ resources:
     description: "covid19 Italy Data By Province"
 
 dag:
+
+  # [Required] Specify the Airflow version of the operators used by the DAG.
+  airflow_version: 1
+
   initialize:
     dag_id: data_by_province
     default_args:
@@ -58,7 +62,7 @@ dag:
         image_pull_policy: "Always"
 
         # Docker images will be built and pushed to GCR by default whenever the `scripts/generate_dag.py` is run. To skip building and pushing images, use the optional `--skip-builds` flag.
-        image: "{{ var.json.covid19_italy_data_by_province.container_registry.run_csv_transform_kub_data_by_province }}"
+        image: "{{ var.json.covid19_italy.container_registry.run_csv_transform_kub }}"
 
         # Set the environment variables you need initialized in the container. Use these as input variables for the script your container is expected to perform.
         env_vars:
@@ -67,7 +71,11 @@ dag:
           TARGET_FILE: "files/data_output.csv"
           TARGET_GCS_BUCKET: "{{ var.json.shared.composer_bucket }}"
           TARGET_GCS_PATH: "data/covid19_italy/data_by_province/data_output.csv"
-
+          CSV_HEADERS: >-
+           ["date","country","region_code","region_name","province_code","province_name","province_abbreviation","latitude","longitude","location_geom","confirmed_cases","note"]
+          RENAME_MAPPINGS: >-
+           {"data": "date","stato": "country","codice_regione": "region_code","denominazione_regione": "region_name","lat": "latitude","long": "longitude","codice_provincia": "province_code","denominazione_provincia": "province_name","sigla_provincia": "province_abbreviation","totale_casi": "confirmed_cases","note": "note"}
+          PIPELINE_NAME: "data_by_province"
 
         # Set resource limits for the pod here. For resource units in Kubernetes, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes
         resources:
@@ -140,6 +148,3 @@ dag:
 
   graph_paths:
     - "covid19_italy_data_by_province_transform_csv >> load_covid19_italy_data_by_province_to_bq"
-
-  # graph_paths:
-  #  - "covid19_italy_data_by_province_transform_csv"

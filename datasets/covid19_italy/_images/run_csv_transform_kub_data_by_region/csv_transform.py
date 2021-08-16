@@ -64,6 +64,9 @@ def main(
         + ")"
     )
 
+    # replace blank POINT( ) valye with blank
+    df.location_geom = df.location_geom.replace("POINT( )", "")
+
     # reorder headers in output
     logging.info("Transform: Reordering headers..")
     df = df[
