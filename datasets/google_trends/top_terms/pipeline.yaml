@@ -93,6 +93,7 @@ resources:
       ]
 
 dag:
+  airflow_version: 1
   initialize:
     dag_id: top_terms
     default_args:

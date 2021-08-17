@@ -18,6 +18,7 @@ resources:
     table_id: state_facility_level_long_term_care
 
 dag:
+  airflow_version: 1
   initialize:
     dag_id: "state_facility_level_long_term_care"
     default_args:

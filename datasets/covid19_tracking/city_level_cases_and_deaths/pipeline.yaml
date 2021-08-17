@@ -18,6 +18,7 @@ resources:
     table_id: city_level_cases_and_deaths
 
 dag:
+  airflow_version: 1
   initialize:
     dag_id: "city_level_cases_and_deaths"
     default_args:

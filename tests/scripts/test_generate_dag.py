@@ -13,6 +13,7 @@
 # limitations under the License.
 
 
+import json
 import pathlib
 import random
 import shutil
@@ -35,6 +36,9 @@ SAMPLE_YAML_PATHS = {
 
 ENV_PATH = generate_dag.PROJECT_ROOT / ".test"
 ENV_DATASETS_PATH = ENV_PATH / "datasets"
+
+AIRFLOW_IMPORTS = json.load(open(PROJECT_ROOT / "scripts" / "dag_imports.json"))
+AIRFLOW_VERSIONS = list(AIRFLOW_IMPORTS.keys())
 
 
 @pytest.fixture
@@ -110,6 +114,20 @@ def test_main_generates_dag_files(
         assert (path_prefix / f"{pipeline_path.name}_dag.py").exists()
 
 
+def test_main_copies_pipeline_yaml_file(
+    dataset_path: pathlib.Path, pipeline_path: pathlib.Path, env: str
+):
+    copy_config_files_and_set_tmp_folder_names_as_ids(dataset_path, pipeline_path)
+
+    generate_dag.main(dataset_path.name, pipeline_path.name, env)
+
+    for path_prefix in (
+        pipeline_path,
+        ENV_DATASETS_PATH / dataset_path.name / pipeline_path.name,
+    ):
+        assert (path_prefix / "pipeline.yaml").exists()
+
+
 def test_main_copies_custom_dir_if_it_exists(
     dataset_path: pathlib.Path, pipeline_path: pathlib.Path, env: str
 ):
@@ -138,6 +156,72 @@ def test_main_creates_shared_variables_file(
 
     assert (ENV_DATASETS_PATH / "shared_variables.json").exists()
     assert not (ENV_DATASETS_PATH / "shared_variables.json").is_dir()
+
+
+def test_main_raises_an_error_when_airflow_version_is_not_specified(
+    dataset_path: pathlib.Path, pipeline_path: pathlib.Path, env: str
+):
+    copy_config_files_and_set_tmp_folder_names_as_ids(dataset_path, pipeline_path)
+    config = yaml.load(open(pipeline_path / "pipeline.yaml"))
+
+    # Don't specify the `airflow_version`
+    del config["dag"]["airflow_version"]
+    with open(pipeline_path / "pipeline.yaml", "w") as file:
+        yaml.dump(config, file)
+
+    with pytest.raises(KeyError):
+        generate_dag.main(dataset_path.name, pipeline_path.name, env)
+
+
+def test_main_raises_an_error_when_airflow_version_is_incorrect(
+    dataset_path: pathlib.Path, pipeline_path: pathlib.Path, env: str
+):
+    copy_config_files_and_set_tmp_folder_names_as_ids(dataset_path, pipeline_path)
+    config = yaml.load(open(pipeline_path / "pipeline.yaml"))
+
+    # Set an incorrect `airflow_version`
+    config["dag"]["airflow_version"] = "789"
+    with open(pipeline_path / "pipeline.yaml", "w") as file:
+        yaml.dump(config, file)
+
+    with pytest.raises(ValueError):
+        generate_dag.main(dataset_path.name, pipeline_path.name, env)
+
+
+def test_main_uses_airflow_operators_based_on_airflow_version_specified_in_the_config(
+    dataset_path: pathlib.Path, pipeline_path: pathlib.Path, env: str
+):
+    copy_config_files_and_set_tmp_folder_names_as_ids(dataset_path, pipeline_path)
+
+    config = yaml.load(open(pipeline_path / "pipeline.yaml"))
+    airflow_version = config["dag"]["airflow_version"]
+
+    generate_dag.main(dataset_path.name, pipeline_path.name, env)
+
+    for path_prefix in (
+        pipeline_path,
+        ENV_DATASETS_PATH / dataset_path.name / pipeline_path.name,
+    ):
+        assert (path_prefix / f"{pipeline_path.name}_dag.py").exists()
+
+        if airflow_version == "1":
+            assert (
+                "airflow.contrib.operators"
+                in (path_prefix / f"{pipeline_path.name}_dag.py").read_text()
+            )
+            assert (
+                "airflow.providers.google"
+                not in (path_prefix / f"{pipeline_path.name}_dag.py").read_text()
+            )
+        elif airflow_version == "2":
+            assert (
+                "airflow.contrib.operators"
+                not in (path_prefix / f"{pipeline_path.name}_dag.py").read_text()
+            )
+            assert (
+                "airflow.providers.google"
+                in (path_prefix / f"{pipeline_path.name}_dag.py").read_text()
+            )
 
 
 def test_main_only_depends_on_pipeline_yaml(
@@ -171,25 +255,26 @@ def test_main_errors_out_on_nonexisting_pipeline_yaml(
 
 
 def test_checks_for_task_operator_and_id():
-    valid_task = {
-        "operator": "GoogleCloudStorageToBigQueryOperator",
-        "args": {"task_id": "load_gcs_to_bq"},
-    }
-    generate_dag.validate_task(valid_task)
+    for airflow_version in AIRFLOW_VERSIONS:
+        valid_task = {
+            "operator": "GoogleCloudStorageToBigQueryOperator",
+            "args": {"task_id": "load_gcs_to_bq"},
+        }
+        generate_dag.validate_task(valid_task, airflow_version)
 
-    non_existing_operator = {
-        "operator": "NonExisting",
-        "args": {"task_id": "load_gcs_to_bq"},
-    }
-    with pytest.raises(ValueError):
-        generate_dag.validate_task(non_existing_operator)
+        non_existing_operator = {
+            "operator": "NonExisting",
+            "args": {"task_id": "load_gcs_to_bq"},
+        }
+        with pytest.raises(ValueError):
+            generate_dag.validate_task(non_existing_operator, airflow_version)
 
-    non_existing_task_id = {
-        "operator": "GoogleCloudStorageToBigQueryOperator",
-        "args": {"some_arg": "some_val"},
-    }
-    with pytest.raises(KeyError):
-        generate_dag.validate_task(non_existing_task_id)
+        non_existing_task_id = {
+            "operator": "GoogleCloudStorageToBigQueryOperator",
+            "args": {"some_arg": "some_val"},
+        }
+        with pytest.raises(KeyError):
+            generate_dag.validate_task(non_existing_task_id, airflow_version)
 
 
 def test_generated_dag_file_loads_properly_in_python(

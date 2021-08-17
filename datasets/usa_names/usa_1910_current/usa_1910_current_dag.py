@@ -14,8 +14,8 @@
 
 
 from airflow import DAG
-from airflow.contrib.operators import gcs_to_bq
-from airflow.operators import bash_operator
+from airflow.operators import bash
+from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
     "owner": "Google",
@@ -34,7 +34,7 @@ with DAG(
 ) as dag:
 
     # Task to copy `namesbystate.zip` from Social Security Administration to GCS
-    download_and_process_source_zip_file = bash_operator.BashOperator(
+    download_and_process_source_zip_file = bash.BashOperator(
         task_id="download_and_process_source_zip_file",
         bash_command="mkdir -p $data_dir/{{ ds }}\ncurl -o $data_dir/{{ ds }}/namesbystate.zip -L $zip_source_url\nunzip $data_dir/{{ ds }}/namesbystate.zip -d $data_dir/{{ ds }}\ncat $data_dir/{{ ds }}/*.TXT \u003e\u003e $data_dir/{{ ds }}/data.csv\n",
         env={
@@ -44,7 +44,7 @@ with DAG(
     )
 
     # Task to load the data from Airflow data folder to BigQuery
-    load_csv_file_to_bq_table = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    load_csv_file_to_bq_table = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_csv_file_to_bq_table",
         bucket="{{ var.json.shared.composer_bucket }}",
         source_objects=["data/usa_names/usa_1910_current/{{ ds }}/data.csv"],

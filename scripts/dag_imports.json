@@ -1,5 +1,5 @@
 {
-    "1.10.15": {
+    "1": {
         "BashOperator": {
             "import": "from airflow.operators import bash_operator",
             "class": "bash_operator.BashOperator"
@@ -28,5 +28,47 @@
             "import": "from airflow.contrib.operators import gcs_delete_operator",
             "class": "gcs_delete_operator.GoogleCloudStorageDeleteOperator"
         }
-    }
+    },
+    "2": {
+      "BashOperator": {
+        "import": "from airflow.operators import bash",
+        "class": "bash.BashOperator"
+      },
+      "GoogleCloudStorageToBigQueryOperator": {
+        "import": "from airflow.providers.google.cloud.transfers import gcs_to_bigquery",
+        "class": "gcs_to_bigquery.GCSToBigQueryOperator"
+      },
+      "GoogleCloudStorageToGoogleCloudStorageOperator": {
+        "import": "from airflow.providers.google.cloud.transfers import gcs_to_gcs",
+        "class": "gcs_to_gcs.GCSToGCSOperator"
+      },
+      "GoogleCloudStorageDeleteOperator": {
+        "import": "from airflow.providers.google.cloud.operators import gcs",
+        "class": "gcs.GCSDeleteObjectsOperator"
+      },
+      "BigQueryExecuteQueryOperator": {
+        "import": "from airflow.providers.google.cloud.operators import bigquery",
+        "class": "bigquery.BigQueryExecuteQueryOperator"
+      },
+      "BigQueryInsertJobOperator": {
+        "import": "from airflow.providers.google.cloud.operators import bigquery",
+        "class": "bigquery.BigQueryInsertJobOperator"
+      },
+      "KubernetesPodOperator": {
+          "import": "from airflow.providers.cncf.kubernetes.operators import kubernetes_pod",
+          "class": "kubernetes_pod.KubernetesPodOperator"
+      },
+      "GKEStartPodOperator": {
+          "import": "from airflow.providers.google.cloud.operators import kubernetes_engine",
+          "class": "kubernetes_engine.GKEStartPodOperator"
+      },
+      "GKECreateClusterOperator": {
+          "import": "from airflow.providers.google.cloud.operators import kubernetes_engine",
+          "class": "kubernetes_engine.GKECreateClusterOperator"
+      },
+      "GKEDeleteClusterOperator": {
+          "import": "from airflow.providers.google.cloud.operators import kubernetes_engine",
+          "class": "kubernetes_engine.GKEDeleteClusterOperator"
+      }
+   }
 }
