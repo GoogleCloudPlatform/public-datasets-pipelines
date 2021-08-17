@@ -46,15 +46,9 @@ import math
 import os
 import pathlib
 
-# import numpy as np
+import pandas as pd
 import requests
-import vaex
 from google.cloud import storage
-
-# import pdb
-
-
-# import typing
 
 
 def main(
@@ -78,7 +72,7 @@ def main(
 
     # open the input file
     logging.info(f"Opening file {source_file}")
-    df = vaex.open(str(source_file))
+    df = pd.read_csv(source_file)
 
     # steps in the pipeline
     logging.info(f"Transforming.. {source_file}")
@@ -93,7 +87,7 @@ def main(
 
     logging.info("Transform: Reordering headers..")
     df = df[
-        [
+            [
             "unique_key",
             "case_number",
             "date",
@@ -151,7 +145,7 @@ def main(
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
     logging.info(
-        "Austin bikeshare stations process completed at "
+        "Chicago crime process completed at "
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
 
@@ -197,11 +191,10 @@ def rename_headers(df):
         "Updated On": "updated_on",
         "Latitude": "latitude",
         "Longitude": "longitude",
-        "Location": "location"
+        "Location": "location",
     }
 
-    for old_name, new_name in header_names.items():
-        df.rename(old_name, new_name)
+    df.rename(columns=header_names, inplace=True)
 
 
 def convert_dt_format(dt_str):
@@ -216,10 +209,7 @@ def convert_dt_format(dt_str):
 
 
 def convert_values(df):
-    dt_cols = [
-        "date" , 
-        "updated_on"
-    ]
+    dt_cols = ["date", "updated_on"]
 
     for dt_col in dt_cols:
         df[dt_col] = df[dt_col].apply(convert_dt_format)
@@ -234,7 +224,7 @@ def filter_null_rows(df):
 
 
 def save_to_new_file(df, file_path):
-    df.export_csv(file_path)
+    df.to_csv(file_path, index=False)
 
 
 def download_file(source_url: str, source_file: pathlib.Path):

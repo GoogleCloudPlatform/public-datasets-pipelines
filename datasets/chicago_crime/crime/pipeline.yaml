@@ -23,6 +23,7 @@ resources:
     description: "chicago crime dataset"
 
 dag:
+  airflow_version: 1
   initialize:
     dag_id: crime
     default_args:
@@ -69,8 +70,8 @@ dag:
 
         # Set resource limits for the pod here. For resource units in Kubernetes, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes
         resources:
-          request_memory: "4G"
-          request_cpu: "1"
+          request_memory: "8G"
+          request_cpu: "2"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"

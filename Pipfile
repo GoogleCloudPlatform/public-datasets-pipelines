@@ -5,6 +5,7 @@ name = "pypi"
 
 [packages]
 beautifulsoup4 = "==4.9.3"
+vaex = "*"
 
 [dev-packages]
 apache-airflow = "==2.1.1"
