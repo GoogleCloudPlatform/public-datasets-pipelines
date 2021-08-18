@@ -24,7 +24,6 @@ resources:
 
 dag:
 
-  # [Required] Specify the Airflow version of the operators used by the DAG.
   airflow_version: 1
 
   initialize:
