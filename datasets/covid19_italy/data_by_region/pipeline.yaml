@@ -24,7 +24,7 @@ resources:
 
 dag:
 
-  # [Required] Specify the Airflow version of the operators used by the DAG.
+# [Required] Specify the Airflow version of the operators used by the DAG.
   airflow_version: 1
 
   initialize:
@@ -34,7 +34,7 @@ dag:
 
       # When set to True, keeps a task from getting triggered if the previous schedule for the task hasn’t succeeded
       depends_on_past: False
-      start_date: '2021-03-01'
+      start_date: '2021-04-01'
     max_active_runs: 1
     schedule_interval: "@daily"  # run once a week at Sunday 12am
     catchup: False
@@ -75,7 +75,6 @@ dag:
           RENAME_MAPPINGS: >-
            {"data": "date","stato": "country","codice_regione": "region_code","denominazione_regione": "region_name","lat": "latitude","long": "longitude","ricoverati_con_sintomi": "hospitalized_patients_symptoms","terapia_intensiva": "hospitalized_patients_intensive_care","totale_ospedalizzati": "total_hospitalized_patients","isolamento_domiciliare": "home_confinement_cases","totale_positivi": "total_current_confirmed_cases","variazione_totale_positivi": "new_current_confirmed_cases","nuovi_positivi": "new_total_confirmed_cases","note": "note","dimessi_guariti": "recovered","totale_casi": "total_confirmed_cases","tamponi": "tests_performed","deceduti": "deaths"}
           PIPELINE_NAME: "data_by_region"
-
 
         # Set resource limits for the pod here. For resource units in Kubernetes, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes
         resources:

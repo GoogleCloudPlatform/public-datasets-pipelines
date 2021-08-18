@@ -34,7 +34,7 @@ def main(
     target_gcs_path: str,
     headers: typing.List[str],
     rename_mappings: dict,
-    pipeline_name: str
+    pipeline_name: str,
 ):
 
     logging.info(
@@ -62,7 +62,7 @@ def main(
 
     # create location_geom
     logging.info(f"Transform: Creating Geometry Column.. {pipeline_name}")
-    if pipeline_name== "data_by_province" or pipeline_name== "data_by_region":
+    if pipeline_name == "data_by_province" or pipeline_name == "data_by_region":
         df["location_geom"] = (
             "POINT("
             + df["longitude"].astype(str).replace("nan", "")
@@ -145,5 +145,5 @@ if __name__ == "__main__":
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
         headers=json.loads(os.environ["CSV_HEADERS"]),
         rename_mappings=json.loads(os.environ["RENAME_MAPPINGS"]),
-        pipeline_name=os.environ["PIPELINE_NAME"]
+        pipeline_name=os.environ["PIPELINE_NAME"],
     )

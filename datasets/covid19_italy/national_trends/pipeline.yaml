@@ -34,7 +34,7 @@ dag:
 
       # When set to True, keeps a task from getting triggered if the previous schedule for the task hasn’t succeeded
       depends_on_past: False
-      start_date: '2021-03-01'
+      start_date: '2021-04-01'
     max_active_runs: 1
     schedule_interval: "@daily"  # run once a week at Sunday 12am
     catchup: False

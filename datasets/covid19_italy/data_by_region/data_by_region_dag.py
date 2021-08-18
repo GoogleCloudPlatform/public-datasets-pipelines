@@ -19,7 +19,7 @@ from airflow.contrib.operators import gcs_to_bq, kubernetes_pod_operator
 default_args = {
     "owner": "Google",
     "depends_on_past": False,
-    "start_date": "2021-03-01",
+    "start_date": "2021-04-01",
 }
 
 
