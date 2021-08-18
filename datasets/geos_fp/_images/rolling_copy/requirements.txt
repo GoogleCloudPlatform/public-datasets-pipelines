@@ -1,0 +1,3 @@
+BeautifulSoup4
+requests
+google-cloud-storage
