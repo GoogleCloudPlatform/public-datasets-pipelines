@@ -1,3 +1,0 @@
-requests
-vaex
-google-cloud-storage
