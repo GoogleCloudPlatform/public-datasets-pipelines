@@ -8,11 +8,11 @@ Cloud-native, data pipeline architecture for onboarding public datasets to [Data
 
 # Requirements
 - Python `>=3.6.10,<3.9`. We currently use `3.8`. For more info, see the [Cloud Composer version list](https://cloud.google.com/composer/docs/concepts/versioning/composer-versions).
-- Familiarity with [Apache Airflow](https://airflow.apache.org/docs/apache-airflow/1.10.15/concepts.html) (>=v1.10.15)
+- Familiarity with [Apache Airflow](https://airflow.apache.org/docs/apache-airflow/stable/concepts/index.html) (>=v2.1)
 - [pipenv](https://pipenv-fork.readthedocs.io/en/latest/install.html#installing-pipenv) for creating similar Python environments via `Pipfile.lock`
 - [gcloud](https://cloud.google.com/sdk/gcloud) command-line tool with Google Cloud Platform credentials configured. Instructions can be found [here](https://cloud.google.com/sdk/docs/initializing).
 - [Terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli) `>=v0.15.1`
-- [Google Cloud Composer](https://cloud.google.com/composer/docs/concepts/overview) environment running [Apache Airflow](https://airflow.apache.org/docs/apache-airflow/1.10.15/concepts.html) `>=v1.10.15,<2.0`. To create a new Cloud Composer environment, see [this guide](https://cloud.google.com/composer/docs/how-to/managing/creating).
+- [Google Cloud Composer](https://cloud.google.com/composer/docs/concepts/overview) environment running [Apache Airflow](https://airflow.apache.org/docs/apache-airflow/stable/concepts.html) `>=2.0`. To create a new Cloud Composer environment, see [this guide](https://cloud.google.com/composer/docs/how-to/managing/creating).
 
 # Environment Setup
 
@@ -29,7 +29,7 @@ This uses the `Pipfile.lock` found in the project root and installs all the deve
 Finally, initialize the Airflow database:
 
 ```bash
-pipenv run airflow initdb
+pipenv run airflow db init
 ```
 
 # Building Data Pipelines
@@ -58,7 +58,9 @@ Use only underscores and alpha-numeric characters for the names.
 
 If you created a new dataset directory above, you need to create a `datasets/DATASET/dataset.yaml` config file. See this [section](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/README.md#yaml-config-reference) for the `dataset.yaml` reference.
 
-Create a `datasets/DATASET/PIPELINE/pipeline.yaml` config file for your pipeline. See [here](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/samples/pipeline.yaml) for the `pipeline.yaml` reference.
+Create a `datasets/DATASET/PIPELINE/pipeline.yaml` config file for your pipeline. See [here](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/samples/) for the `pipeline.yaml` references. 
+
+For a YAML config template using Airflow 1.10 operators, see [`samples/pipeline.airflow1.yaml`](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/samples/pipeline.airflow1.yaml).
 
 If you'd like to get started faster, you can inspect config files that already exist in the repository and infer the patterns from there:
 
@@ -145,17 +147,37 @@ datasets
 
 Docker images will be built and pushed to GCR by default whenever the command above is run. To skip building and pushing images, use the optional `--skip-builds` flag.
 
-## 5. Declare and set your pipeline variables
+## 5. Declare and set your Airflow variables
 
-Running the command in the previous step will parse your pipeline config and inform you about the templated variables that need to be set for your pipeline to run, if any.
+Running the command in the previous step will parse your pipeline config and inform you about the Airflow variables that your pipeline expects to use and must be defined.
 
-If your pipeline doesn't use any Airflow variables, you can skip this step. Otherwise, create the following file
+If your pipeline doesn't use any Airflow variables, you can skip this step. 
+
+There are two types of variables that pipelines can use: **shared** and **dataset-specific**. Shared variables are those that can be reused by other pipelines in the same Airflow or Cloud Composer environment. These are variables that stay constant from pipeline to pipeline. Examples of shared variables include your Cloud Composer environment name and bucket, your GCP project ID, and paths to the Airflow DAG and data folders. To prevent duplication, specify your shared variables in one place:
+
+```
+  [.dev|.test]/datasets/shared_variables.json
+```
+
+and inside the file, nest the variables under a common parent key. For example:
+
+```
+{
+  "shared": {
+    "composer_name": "test-pipelines-abcde1234",
+    "composer_bucket": "us-east4-test-pipelines-abcde1234-bucket",
+    "airflow_data_folder": "/home/airflow/gcs/data"
+  }
+}
+```
+
+For dataset-specific variables, create the following file
 
 ```
   [.dev|.test]/datasets/{DATASET}/{DATASET}_variables.json
 ```
 
-Pipelines use the JSON dot notation to access Airflow variables. Make sure to nest your variables in the JSON file under some namespace, typically your dataset's name. Airflow variables are globally accessed by any pipeline, which means nesting your variables helps avoid collisions. For example, if you're using the following variables in your pipeline config:
+In general, pipelines use the JSON dot notation to access Airflow variables. Make sure to define and nest your variables under some parent key when writing to the JSON files above. We recommend using your dataset's name as the parent key, to mimic the same structure as the folder hierarchy. Airflow variables are globally accessed by any pipeline, which means nesting your variables helps avoid collisions. For example, if you're using the following variables in your pipeline config:
 
 - `{{ var.json.shared.composer_bucket }}`
 - `{{ var.json.parent.nested }}`
@@ -165,9 +187,6 @@ then your variables JSON file should look like this
 
 ```json
 {
-  "shared": {
-    "composer_bucket": "us-east4-test-pipelines-abcde1234-bucket"
-  },
   "parent": {
     "nested": "some value",
     "another_nested": "another value"
@@ -202,13 +221,32 @@ $ pipenv run python -m pytest -v
 
 # YAML Config Reference
 
-Every dataset and pipeline folder must contain a `dataset.yaml` and a `pipeline.yaml` configuration file, respectively:
+Every dataset and pipeline folder must contain a `dataset.yaml` and a `pipeline.yaml` configuration file, respectively.
 
-- For dataset configuration syntax, see [`samples/dataset.yaml`](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/samples/dataset.yaml) as a reference.
-- For pipeline configuration syntax, see [`samples/pipeline.yaml`](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/samples/pipeline.yaml) as a reference.
+The `samples` folder contains references for the YAML config files, complete with descriptions for config blocks and Airflow operators and parameters. When creating a new dataset or pipeline, you can copy them to your specific dataset/pipeline paths to be used as templates.
+
+- For dataset configuration syntax, see the [`samples/dataset.yaml`](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/samples/dataset.yaml) reference.
+- For pipeline configuration syntax:
+  - For the default Airflow 2 operators, see the [`samples/pipeline.yaml`](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/samples/pipeline.yaml) reference.
+  - If you'd like to use Airflow 1.10 operators, see the [`samples/pipeline.airflow1.yaml`](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/samples/pipeline.yaml) as a reference.
 
 
 # Best Practices
+
+- When your tabular data contains percentage values, represent them as floats between 0 to 1.
+- To represent hierarchical data in BigQuery, use either: 
+  - (Recommended) Nested columns in BigQuery. For more info, see [the documentation on nested and repeated columns](https://cloud.google.com/bigquery/docs/nested-repeated).
+  - Or, represent each level as a separate column. For example, if you have the following hierarchy: `chapter > section > subsection`, then represent them as
+
+    ```
+    |chapter          |section|subsection          |page|
+    |-----------------|-------|--------------------|----|
+    |Operating Systems|       |                    |50  |
+    |Operating Systems|Linux  |                    |51  |
+    |Operating Systems|Linux  |The Linux Filesystem|51  |
+    |Operating Systems|Linux  |Users & Groups      |58  |
+    |Operating Systems|Linux  |Distributions       |70  |
+    ```
 
 - When running `scripts/generate_terraform.py`, the argument `--bucket-name-prefix` helps prevent GCS bucket name collisions because bucket names must be globally unique. Use hyphens over underscores for the prefix and make it as unique as possible, and specific to your own environment or use case.
 - When naming BigQuery columns, always use `snake_case` and lowercase.

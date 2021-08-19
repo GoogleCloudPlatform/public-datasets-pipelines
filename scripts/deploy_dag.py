@@ -14,14 +14,24 @@
 
 
 import argparse
+import json
 import pathlib
 import subprocess
 import typing
 import warnings
 
+from ruamel import yaml
+
+yaml = yaml.YAML(typ="safe")
+
 CURRENT_PATH = pathlib.Path(__file__).resolve().parent
 PROJECT_ROOT = CURRENT_PATH.parent
 DATASETS_PATH = PROJECT_ROOT / "datasets"
+DEFAULT_AIRFLOW_VERSION = 2
+
+
+class IncompatibilityError(Exception):
+    pass
 
 
 def main(
@@ -44,11 +54,20 @@ def main(
 
     print("========== AIRFLOW DAGS ==========")
     if pipeline:
-        pipelines = [env_path / "datasets" / pipeline]
+        pipelines = [env_path / "datasets" / dataset_id / pipeline]
     else:
         pipelines = list_subdirs(env_path / "datasets" / dataset_id)
 
+    if local:
+        runtime_airflow_version = local_airflow_version()
+    else:
+        runtime_airflow_version = composer_airflow_version(
+            composer_env, composer_region
+        )
+
     for pipeline_path in pipelines:
+        check_airflow_version_compatibility(pipeline_path, runtime_airflow_version)
+
         copy_custom_callables_to_airflow_dags_folder(
             local,
             env_path,
@@ -80,40 +99,42 @@ def copy_variables_to_airflow_data_folder(
     composer_bucket: str = None,
 ):
     """
-    cd .{ENV}/{DATASET_ID}
+    cd .{ENV}/datasets or .{ENV}/datasets/{dataset_id}
     """
-    cwd = env_path / "datasets" / dataset_id
-    filename = f"{dataset_id}_variables.json"
+    for cwd, filename in (
+        (env_path / "datasets", "shared_variables.json"),
+        (env_path / "datasets" / dataset_id, f"{dataset_id}_variables.json"),
+    ):
 
-    if not (cwd / filename).exists():
-        warnings.warn(f"Airflow variables file {filename} does not exist.")
-        return
+        if not (cwd / filename).exists():
+            warnings.warn(f"Airflow variables file {filename} does not exist.")
+            continue
 
-    if local:
-        """
-        cp {DATASET_ID}_variables.json {AIRFLOW_HOME}/data/variables/{DATASET_ID}_variables.json
-        """
-        target_path = airflow_home / "data" / "variables" / filename
-        target_path.mkdir(parents=True, exist_ok=True)
-        print(
-            "\nCopying variables JSON file into Airflow data folder\n\n"
-            f"  Source:\n  {cwd / filename}\n\n"
-            f"  Destination:\n  {target_path}\n"
-        )
+        if local:
+            """
+            cp {DATASET_ID}_variables.json {AIRFLOW_HOME}/data/variables/{filename}
+            """
+            target_path = airflow_home / "data" / "variables" / filename
+            target_path.mkdir(parents=True, exist_ok=True)
+            print(
+                "\nCopying variables JSON file into Airflow data folder\n\n"
+                f"  Source:\n  {cwd / filename}\n\n"
+                f"  Destination:\n  {target_path}\n"
+            )
 
-        subprocess.check_call(["cp", "-rf", filename, str(target_path)], cwd=cwd)
-    else:
-        """
-        [remote]
-        gsutil cp {DATASET_ID}_variables.json gs://{COMPOSER_BUCKET}/data/variables/{DATASET_ID}_variables.json...
-        """
-        gcs_uri = f"gs://{composer_bucket}/data/variables/{filename}"
-        print(
-            "\nCopying variables JSON file into Cloud Composer data folder\n\n"
-            f"  Source:\n  {cwd / filename}\n\n"
-            f"  Destination:\n  {gcs_uri}\n"
-        )
-        run_gsutil_cmd(["cp", filename, gcs_uri], cwd=cwd)
+            subprocess.check_call(["cp", "-rf", filename, str(target_path)], cwd=cwd)
+        else:
+            """
+            [remote]
+            gsutil cp {DATASET_ID}_variables.json gs://{COMPOSER_BUCKET}/data/variables/{filename}...
+            """
+            gcs_uri = f"gs://{composer_bucket}/data/variables/{filename}"
+            print(
+                "\nCopying variables JSON file into Cloud Composer data folder\n\n"
+                f"  Source:\n  {cwd / filename}\n\n"
+                f"  Destination:\n  {gcs_uri}\n"
+            )
+            run_gsutil_cmd(["cp", filename, gcs_uri], cwd=cwd)
 
 
 def run_cloud_composer_vars_import(
@@ -125,6 +146,7 @@ def run_cloud_composer_vars_import(
     subprocess.check_call(
         [
             "gcloud",
+            "beta",
             "composer",
             "environments",
             "run",
@@ -133,7 +155,7 @@ def run_cloud_composer_vars_import(
             str(composer_region),
             "variables",
             "--",
-            "--import",
+            "import",
             str(airflow_path),
         ],
         cwd=cwd,
@@ -153,23 +175,24 @@ def import_variables_to_airflow_env(
     airflow variables import .{ENV}/datasets/{DATASET_ID}/variables.json
 
     [remote]
-    gcloud composer environments run COMPOSER_ENV --location COMPOSER_REGION variables -- --import /home/airflow/gcs/data/variables/{DATASET_ID}_variables.json
+    gcloud composer environments run COMPOSER_ENV --location COMPOSER_REGION variables -- import /home/airflow/gcs/data/variables/{DATASET_ID}_variables.json
     """
-    cwd = env_path / "datasets" / dataset_id
-    filename = f"{dataset_id}_variables.json"
-
-    if local:
-        print(f"\nImporting Airflow variables from {cwd / filename}...\n")
-        subprocess.check_call(
-            ["airflow", "variables", "import", str(cwd / filename)], cwd=cwd
-        )
-    else:
-        gcs_uri = f"gs://{composer_bucket}/data/variables/{filename}"
-        airflow_path = f"/home/airflow/gcs/data/variables/{filename}"
-        print(f"\nImporting Airflow variables from {gcs_uri} ({airflow_path})...\n")
-        run_cloud_composer_vars_import(
-            composer_env, composer_region, airflow_path, cwd=cwd
-        )
+    for cwd, filename in (
+        (env_path / "datasets", "shared_variables.json"),
+        (env_path / "datasets" / dataset_id, f"{dataset_id}_variables.json"),
+    ):
+        if local:
+            print(f"\nImporting Airflow variables from {cwd / filename}...\n")
+            subprocess.check_call(
+                ["airflow", "variables", "import", str(cwd / filename)], cwd=cwd
+            )
+        else:
+            gcs_uri = f"gs://{composer_bucket}/data/variables/{filename}"
+            airflow_path = f"/home/airflow/gcs/data/variables/{filename}"
+            print(f"\nImporting Airflow variables from {gcs_uri} ({airflow_path})...\n")
+            run_cloud_composer_vars_import(
+                composer_env, composer_region, airflow_path, cwd=cwd
+            )
 
 
 def copy_generated_dag_to_airflow_dags_folder(
@@ -261,6 +284,60 @@ def list_subdirs(path: pathlib.Path) -> typing.List[pathlib.Path]:
     """Returns a list of subdirectories"""
     subdirs = [f for f in path.iterdir() if f.is_dir() and not f.name[0] in (".", "_")]
     return subdirs
+
+
+def local_airflow_version() -> str:
+    airflow_version = subprocess.run(
+        ["airflow", "version"], stdout=subprocess.PIPE
+    ).stdout.decode("utf-8")
+    return 2 if airflow_version.startswith("2") else 1
+
+
+def composer_airflow_version(composer_env: str, composer_region: str) -> str:
+    composer_env = json.loads(
+        subprocess.run(
+            [
+                "gcloud",
+                "composer",
+                "environments",
+                "describe",
+                composer_env,
+                "--location",
+                composer_region,
+                "--format",
+                "json",
+            ],
+            stdout=subprocess.PIPE,
+        ).stdout.decode("utf-8")
+    )
+
+    # Example image version: composer-1.17.0-preview.8-airflow-2.1.1
+    image_version = composer_env["config"]["softwareConfig"]["imageVersion"]
+
+    airflow_version = image_version.split("-airflow-")[-1]
+    return 2 if airflow_version.startswith("2") else 1
+
+
+def get_dag_airflow_version(config: dict) -> int:
+    return config["dag"].get("airflow_version", DEFAULT_AIRFLOW_VERSION)
+
+
+def check_airflow_version_compatibility(
+    pipeline_path: pathlib.Path, runtime_airflow_version: int
+) -> None:
+    """If a DAG uses Airflow 2 operators but the runtime version uses Airflow 1,
+    raise a compatibility error. On the other hand, DAGs using Airflow 1.x operators
+    can still run in an Airflow 2 runtime environment via backport providers.
+    """
+    dag_airflow_version = get_dag_airflow_version(
+        yaml.load((pipeline_path / "pipeline.yaml").read_text())
+    )
+
+    if dag_airflow_version > runtime_airflow_version:
+        raise IncompatibilityError(
+            f"The DAG {pipeline_path.name} uses Airflow 2, but"
+            " you are deploying to an Airflow 1.x environment."
+        )
 
 
 if __name__ == "__main__":

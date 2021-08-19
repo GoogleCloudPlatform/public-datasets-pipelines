@@ -122,6 +122,7 @@ resources:
       ]
 
 dag:
+  airflow_version: 1
   initialize:
     dag_id: covid19_vaccination_search_insights
     default_args:

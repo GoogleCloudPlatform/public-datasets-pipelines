@@ -1,5 +1,45 @@
 # Changelog
 
+## [2.1.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v2.0.0...v2.1.0) (2021-08-13)
+
+
+### Datasets
+
+* Onboard Google Cloud Release Notes dataset ([#133](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/133)) ([5c98c05](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/5c98c052ea74b7cb474a6bc86ea25e1cffe8cb9a))
+
+
+### Bug Fixes
+
+* Revised Airflow DB initialization command ([#141](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/141)) ([47b4717](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/47b47172f331b9096a98083dfefe31d81dc79696))
+
+## [2.0.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.11.0...v2.0.0) (2021-08-11)
+
+
+### ⚠ BREAKING CHANGES
+
+* Pipeline YAML template using Airflow 2 operators (#138)
+* Adds support for Airflow 2 Cloud Composer environment and operators (#134)
+
+### Features
+
+* Adds support for Airflow 2 Cloud Composer environment and operators ([#134](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/134)) ([b2749c6](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/b2749c61fc62cfc97b81831f664022c354bc8de9))
+* Pipeline YAML template using Airflow 2 operators ([#138](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/138)) ([90ae7cd](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/90ae7cd5a3eec5da2d790233425c4e98530b25ac))
+
+## [1.11.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.10.0...v1.11.0) (2021-07-22)
+
+
+### Features
+
+* Adds Google license header bot config ([#106](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/106)) ([d587689](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/d5876898c96436400d940e754ed2fce4eda8ba4f))
+* Use a single file for shared Airflow variables ([#122](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/122)) ([f5d227d](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/f5d227de7d30439e80346612856723292c6f46e7))
+
+## [1.10.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.9.0...v1.10.0) (2021-07-21)
+
+
+### Datasets
+
+* Onboard USA names dataset ([#96](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/96)) ([eb28f0f](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/eb28f0f0247278febea955ecb4081c09b634e97b))
+
 ## [1.9.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.8.0...v1.9.0) (2021-07-15)
 
 
