@@ -23,6 +23,7 @@ resources:
     description: "austin bikeshare stations"
 
 dag:
+  airflow_version: 1
   initialize:
     dag_id: bikeshare_stations
     default_args:

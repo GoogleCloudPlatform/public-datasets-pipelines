@@ -50,8 +50,7 @@ with DAG(
     )
 
     # Task to load CSV data to a BigQuery table
-    load_chicago_crime_to_bq = (
-        gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    load_chicago_crime_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
         task_id="load_chicago_crime_to_bq",
         bucket="{{ var.json.shared.composer_bucket }}",
         source_objects=["data/chicago_crime/crime/data_output.csv"],
@@ -84,6 +83,5 @@ with DAG(
             {"name": "location", "type": "string", "mode": "nullable"},
         ],
     )
-)
 
     chicago_crime_transform_csv >> load_chicago_crime_to_bq

@@ -115,7 +115,7 @@ def main(
             "updated_on",
             "latitude",
             "longitude",
-            "location"
+            "location",
         ]
     ]
 
@@ -197,7 +197,7 @@ def rename_headers(df):
         "Updated On": "updated_on",
         "Latitude": "latitude",
         "Longitude": "longitude",
-        "Location": "location"
+        "Location": "location",
     }
 
     for old_name, new_name in header_names.items():
@@ -216,10 +216,7 @@ def convert_dt_format(dt_str):
 
 
 def convert_values(df):
-    dt_cols = [
-        "date" , 
-        "updated_on"
-    ]
+    dt_cols = ["date", "updated_on"]
 
     for dt_col in dt_cols:
         df[dt_col] = df[dt_col].apply(convert_dt_format)

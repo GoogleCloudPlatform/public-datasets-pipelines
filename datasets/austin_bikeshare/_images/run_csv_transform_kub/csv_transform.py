@@ -78,15 +78,21 @@ def main(
 
     logging.info(f"Transform: Rename columns.. {source_file}")
     rename_headers(df)
-    # df['city_asset_number'] = df.city_asset_number.astype('int')
-    # df["number_of_docks"] = df.number_of_docks.astype('int')
-    # df["footprint_length"] = df.footprint_length.astype('int')
-    # df["council_district"] = df.council_district.astype('int')
 
     logging.info(f"Transform: Converting date values.. {source_file}")
     convert_values(df)
 
+    logging.info(f"Transform: filtering rows for.. {source_file}")
     filter_null_rows(df)
+
+    logging.info(f"Transform: converting to integer... {source_file}")
+    # convert data type format to integer
+    df["city_asset_number"] = df["city_asset_number"].apply(convert_to_int)
+    df["number_of_docks"] = df["number_of_docks"].apply(convert_to_int)
+    df["footprint_length"] = df["footprint_length"].apply(convert_to_int)
+    df["council_district"] = df["council_district"].apply(convert_to_int)
+    # convert data type format to float
+    df["footprint_width"] = df["footprint_width"].apply(resolve_nan)
 
     logging.info("Transform: Reordering headers..")
     df = df[
@@ -107,19 +113,6 @@ def main(
             "modified_date",
         ]
     ]
-
-    # df.fillna("")
-
-    # convert data type format to integer
-    df["city_asset_number"] = df["city_asset_number"].apply(convert_to_int)
-    df["number_of_docks"] = df["number_of_docks"].apply(convert_to_int)
-    df["footprint_length"] = df["footprint_length"].apply(convert_to_int)
-    df["council_district"] = df["council_district"].apply(convert_to_int)
-
-    # convert data type format to float
-    df["footprint_width"] = df["footprint_width"].apply(resolve_nan)
-
-    # pdb.set_trace()
 
     # save to output file
     logging.info(f"Saving to output file.. {target_file}")
