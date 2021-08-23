@@ -23,56 +23,28 @@ resources:
   # We will keep adding to the list below to support more Google Cloud resources
   # over time. If a resource you need isn't supported, please file an issue on
   # the repository.
-
   - type: bigquery_table
     # A Google BigQuery table to store your data. Requires a `bigquery_dataset`
     # to be specified in the config (i.e. `dataset.yaml) for the dataset that
     # this pipeline belongs in.
-    #
-    # Required Properties:
-    #   table_id
     table_id: datacenter_cfe
-
-    # Optional Properties:
-    # Description of the table
-    description: ~
 
 dag:
   # [Required] Specify the Airflow version of the operators used by the DAG.
   airflow_version: 2
 
-  # The DAG acronym stands for directed acyclic graph. This block represents
-  # your data pipeline along with every property and configuration it needs to
-  # onboard your data.
   initialize:
-    dag_id: PIPELINE_FOLDER_NAME
+    dag_id: datacenter_cfe
     default_args:
       owner: "Google"
-
-      # When set to True, keeps a task from getting triggered if the previous schedule for the task hasn’t succeeded
       depends_on_past: False
-      start_date: '2021-03-01'
+      start_date: '2021-08-23'
     max_active_runs: 1
-    schedule_interval: "@once"
+    schedule_interval: "@once"  # The pipeline will be run manually once a year after new data is released
     catchup: False
     default_view: graph
 
   tasks:
-    # This is where you specify the tasks (a.k.a. processes) that your data
-    # pipeline will run to onboard the data.
-    #
-    # As the examples below will show, every task must be represented by an
-    # Airflow operator. The list of suported operators are listed in
-    #
-    #   scripts/dag_imports.json
-    #
-    # If an operator you need isn't supported, please file an issue on the
-    # repository.
-    #
-    # Use the YAML list syntax in this block to specify every task for your
-    # pipeline.
-
-    
     - operator: "GoogleCloudStorageToBigQueryOperator"
       # Initializes GCS to BQ task for the DAG. This operator is used to load a
       # JSON, CSV, Avro, ORC, or Parquet data from GCS into a BigQuery table.
@@ -86,10 +58,10 @@ dag:
         task_id: "cfe_gcs_to_bq"
 
         # The GCS bucket where the CSV file is located in.
-        bucket: "{{ var.json.shared.composer_bucket }}"
+        bucket: "{{ var.json.google_cfe.source_bucket }}"
 
-        # The GCS object path for the CSV file
-        source_objects: ["data/DATASET_FOLDER_NAME/PIPELINE_FOLDER_NAME/run_date={{ ds }}/data.csv"]
+        # Use the CSV file containing data from 2019 up to the previous year
+        source_objects: ["data/2019-to-{{ macros.ds_format(macros.ds_add(ds, -366), '%Y-%m-%d', '%Y') }}.csv"]
         source_format: "CSV"
         destination_project_dataset_table: "google_cfe.datacenter_cfe"
 
@@ -100,10 +72,6 @@ dag:
         # See https://cloud.google.com/bigquery/docs/reference/auditlogs/rest/Shared.Types/WriteDisposition
         write_disposition: "WRITE_TRUNCATE"
 
-        # The BigQuery table schema based on the CSV file. For more info, see
-        # https://cloud.google.com/bigquery/docs/schemas.
-        # Always use snake_case and lowercase for column names, and be explicit,
-        # i.e. specify modes for all columns.
         schema_fields:
           - name: "year"
             type: "INTEGER"
@@ -124,20 +92,11 @@ dag:
           - name: "location"
             type: "STRING"
             mode: "REQUIRED"
-            description: "This is the "friendly name" of the Cloud Region. For Google Data Centers that are not Cloud regions, the location will be the country (non-US) or the state (US) that the Data Center is located in."
+            description: "This is the \"friendly name\" of the Cloud Region. For Google Data Centers that are not Cloud regions, the location will be the country (non-US) or the state (US) that the Data Center is located in."
           - name: "google_cfe"
             type: "FLOAT"
             mode: "NULLABLE"
-            description: "This metric is calculated for every hour in every region and tells us what percentage of the energy we consumed during an hour that is carbon-free. We take into account the carbon-free energy that’s already supplied by the grid, in addition to the investments we have made in renewable energy in that location to reach our 24/7 carbon-free objective (https://www.gstatic.com/gumdrop/sustainability/247-carbon-free-energy.pdf). We then aggregate the available average hourly CFE percentage for each region for the year. We do not currently have the hourly energy information available for calculating the metrics for all regions. We anticipate rolling out the calculated metrics using hourly data to regions as the data becomes available."
+            description: "This metric is calculated for every hour in every region and tells us what percentage of the energy we consumed during an hour that is carbon-free. We take into account the carbon-free energy that's already supplied by the grid, in addition to the investments we have made in renewable energy in that location to reach our 24/7 carbon-free objective (https://www.gstatic.com/gumdrop/sustainability/247-carbon-free-energy.pdf). We then aggregate the available average hourly CFE percentage for each region for the year. We do not currently have the hourly energy information available for calculating the metrics for all regions. We anticipate rolling out the calculated metrics using hourly data to regions as the data becomes available."
 
-    # Initializes a GCS-to-GCS task for the DAG. This operator is used to copy or move
-    # GCS objects from one location to another.
- 
-  graph_paths: 
-    # This is where you specify the relationships (i.e. directed paths/edges)
-    # among the tasks specified above. Use the bitshift operator to define the
-    # relationships and the `task_id` value above to represent tasks.
-    #
-    # For more info, see
-    # https://airflow.apache.org/docs/apache-airflow/stable/tutorial.html#setting-up-dependencies
+  graph_paths:
     - "cfe_gcs_to_bq"
