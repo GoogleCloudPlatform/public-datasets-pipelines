@@ -48,19 +48,15 @@ def main(
     logging.info(f"Downloading file {source_url}")
     download_file(source_url, source_file)
 
-    # open the input file
     logging.info(f"Opening file {source_file}")
 
     df = pd.read_csv(str(source_file))
 
-    # steps in the pipeline
     logging.info(f"Transformation Process Starting.. {source_file}")
 
-    # rename the headers
     logging.info(f"Transform: Renaming Headers.. {source_file}")
     rename_headers(df, rename_mappings)
 
-    # create location_geom
     logging.info(f"Transform: Creating Geometry Column.. {pipeline_name}")
     if pipeline_name == "data_by_province" or pipeline_name == "data_by_region":
         df["location_geom"] = (
@@ -70,21 +66,16 @@ def main(
             + df["latitude"].astype(str).replace("nan", "")
             + ")"
         )
-        # replace blank POINT( ) valye with blank
         df.location_geom = df.location_geom.replace("POINT( )", "")
 
-    # reorder headers in output
     logging.info("Transform: Reordering headers..")
     df = df[headers]
 
-    # steps in the pipeline
     logging.info(f"Transformation Process complete .. {source_file}")
 
-    # save to output file
     logging.info(f"Saving to output file.. {target_file}")
 
     try:
-        # save_to_new_file(df, file_path=str(target_file))
         save_to_new_file(df, file_path=str(target_file))
     except Exception as e:
         logging.error(f"Error saving output file: {e}.")
@@ -101,9 +92,7 @@ def main(
     )
 
 
-def convert_dt_format(date_str, time_str):
-    #  date_str, time_str
-    # 10/26/2014,13:12:00
+def convert_dt_format(date_str: str, time_str: str):
     return str(datetime.datetime.strptime(date_str, "%m/%d/%Y").date()) + " " + time_str
 
 
@@ -111,7 +100,7 @@ def rename_headers(df, rename_mappings: dict):
     df.rename(columns=rename_mappings, inplace=True)
 
 
-def save_to_new_file(df, file_path):
+def save_to_new_file(df, file_path: str):
     df.to_csv(file_path, float_format="%.0f", index=False)
 
 
@@ -136,7 +125,6 @@ def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) 
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
 
-    # if os.environ["PIPELINE"] == 'data_by_province':
     main(
         source_url=os.environ["SOURCE_URL"],
         source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),

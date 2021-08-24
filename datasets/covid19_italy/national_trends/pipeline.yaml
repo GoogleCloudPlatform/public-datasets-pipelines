@@ -20,7 +20,7 @@ resources:
     table_id: national_trends
 
     # Description of the table
-    description: "covid19 Italy National Trends"
+    description: "COVID-19 Italy National Trends"
 
 dag:
 
@@ -36,7 +36,7 @@ dag:
       depends_on_past: False
       start_date: '2021-04-01'
     max_active_runs: 1
-    schedule_interval: "@daily"  # run once a week at Sunday 12am
+    schedule_interval: "@daily"
     catchup: False
     default_view: graph
 
@@ -49,7 +49,7 @@ dag:
 
       args:
 
-        task_id: "covid19_italy_national_trends_transform_csv"
+        task_id: "national_trends_transform_csv"
         startup_timeout_seconds: 600
 
 
@@ -66,7 +66,7 @@ dag:
 
         # Set the environment variables you need initialized in the container. Use these as input variables for the script your container is expected to perform.
         env_vars:
-          SOURCE_URL: https://raw.githubusercontent.com/pcm-dpc/COVID-19/master/dati-andamento-nazionale/dpc-covid19-ita-andamento-nazionale.csv
+          SOURCE_URL: "https://raw.githubusercontent.com/pcm-dpc/COVID-19/master/dati-andamento-nazionale/dpc-covid19-ita-andamento-nazionale.csv"
           SOURCE_FILE: "files/data.csv"
           TARGET_FILE: "files/data_output.csv"
           TARGET_GCS_BUCKET: "{{ var.json.shared.composer_bucket }}"
@@ -86,7 +86,7 @@ dag:
       description: "Task to load CSV data to a BigQuery table"
 
       args:
-        task_id: "load_covid19_italy_national_trends_to_bq"
+        task_id: "load_national_trends_to_bq"
 
         # The GCS bucket where the CSV file is located in.
         bucket: "{{ var.json.shared.composer_bucket }}"
@@ -153,9 +153,4 @@ dag:
             mode: "NULLABLE"
 
   graph_paths:
-    - "covid19_italy_national_trends_transform_csv >> load_covid19_italy_national_trends_to_bq"
-
-
-
-
-
+    - "national_trends_transform_csv >> load_national_trends_to_bq"

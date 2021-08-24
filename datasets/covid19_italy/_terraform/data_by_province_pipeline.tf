@@ -20,7 +20,7 @@ resource "google_bigquery_table" "data_by_province" {
   dataset_id = "covid19_italy"
   table_id   = "data_by_province"
 
-  description = "covid19 Italy Data By Province"
+  description = "COVID-19 Italy Data By Province"
 
 
 

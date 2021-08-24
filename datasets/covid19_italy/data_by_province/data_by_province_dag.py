@@ -33,8 +33,8 @@ with DAG(
 ) as dag:
 
     # Run CSV transform within kubernetes pod
-    covid19_italy_data_by_province_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
-        task_id="covid19_italy_data_by_province_transform_csv",
+    data_by_province_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+        task_id="data_by_province_transform_csv",
         startup_timeout_seconds=600,
         name="covid19_italy_data_by_province",
         namespace="default",
@@ -54,30 +54,28 @@ with DAG(
     )
 
     # Task to load CSV data to a BigQuery table
-    load_covid19_italy_data_by_province_to_bq = (
-        gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
-            task_id="load_covid19_italy_data_by_province_to_bq",
-            bucket="{{ var.json.shared.composer_bucket }}",
-            source_objects=["data/covid19_italy/data_by_province/data_output.csv"],
-            source_format="CSV",
-            destination_project_dataset_table="covid19_italy.data_by_province",
-            skip_leading_rows=1,
-            write_disposition="WRITE_TRUNCATE",
-            schema_fields=[
-                {"name": "date", "type": "TIMESTAMP", "mode": "NULLABLE"},
-                {"name": "country", "type": "STRING", "mode": "NULLABLE"},
-                {"name": "region_code", "type": "STRING", "mode": "NULLABLE"},
-                {"name": "name", "type": "STRING", "mode": "NULLABLE"},
-                {"name": "province_code", "type": "STRING", "mode": "NULLABLE"},
-                {"name": "province_name", "type": "STRING", "mode": "NULLABLE"},
-                {"name": "province_abbreviation", "type": "STRING", "mode": "NULLABLE"},
-                {"name": "latitude", "type": "FLOAT", "mode": "NULLABLE"},
-                {"name": "longitude", "type": "FLOAT", "mode": "NULLABLE"},
-                {"name": "location_geom", "type": "GEOGRAPHY", "mode": "NULLABLE"},
-                {"name": "confirmed_cases", "type": "INTEGER", "mode": "NULLABLE"},
-                {"name": "note", "type": "STRING", "mode": "NULLABLE"},
-            ],
-        )
+    load_data_by_province_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+        task_id="load_data_by_province_to_bq",
+        bucket="{{ var.json.shared.composer_bucket }}",
+        source_objects=["data/covid19_italy/data_by_province/data_output.csv"],
+        source_format="CSV",
+        destination_project_dataset_table="covid19_italy.data_by_province",
+        skip_leading_rows=1,
+        write_disposition="WRITE_TRUNCATE",
+        schema_fields=[
+            {"name": "date", "type": "TIMESTAMP", "mode": "NULLABLE"},
+            {"name": "country", "type": "STRING", "mode": "NULLABLE"},
+            {"name": "region_code", "type": "STRING", "mode": "NULLABLE"},
+            {"name": "name", "type": "STRING", "mode": "NULLABLE"},
+            {"name": "province_code", "type": "STRING", "mode": "NULLABLE"},
+            {"name": "province_name", "type": "STRING", "mode": "NULLABLE"},
+            {"name": "province_abbreviation", "type": "STRING", "mode": "NULLABLE"},
+            {"name": "latitude", "type": "FLOAT", "mode": "NULLABLE"},
+            {"name": "longitude", "type": "FLOAT", "mode": "NULLABLE"},
+            {"name": "location_geom", "type": "GEOGRAPHY", "mode": "NULLABLE"},
+            {"name": "confirmed_cases", "type": "INTEGER", "mode": "NULLABLE"},
+            {"name": "note", "type": "STRING", "mode": "NULLABLE"},
+        ],
     )
 
-    covid19_italy_data_by_province_transform_csv >> load_covid19_italy_data_by_province_to_bq
+    data_by_province_transform_csv >> load_data_by_province_to_bq

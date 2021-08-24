@@ -20,7 +20,7 @@ resource "google_bigquery_table" "national_trends" {
   dataset_id = "covid19_italy"
   table_id   = "national_trends"
 
-  description = "covid19 Italy National Trends"
+  description = "COVID-19 Italy National Trends"
 
 
 
