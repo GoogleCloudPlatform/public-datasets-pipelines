@@ -33,7 +33,7 @@ dag:
       depends_on_past: False
       start_date: '2021-03-01'
     max_active_runs: 1
-    schedule_interval: "@daily"  
+    schedule_interval: "@daily"
     catchup: False
     default_view: graph
 
@@ -71,7 +71,7 @@ dag:
           PIPELINE_NAME: "last_updated"
           CSV_HEADERS: >-
             ["report_data_updated_date"]
-          RENAME_MAPPINGS: >- 
+          RENAME_MAPPINGS: >-
             {"Report_Data_Updated_Date": "report_data_updated_date"}
 
         # Set resource limits for the pod here. For resource units in Kubernetes, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes
@@ -106,10 +106,10 @@ dag:
         # i.e. specify modes for all columns.
 
         schema_fields:
-          - name        : "report_data_updated_date"
-            type        : "Date"
+          - name : "report_data_updated_date"
+            type : "Date"
             description : "The date the report data was most reecntly updated"
-            mode        : "nullable"
+            mode : "nullable"
 
 
   graph_paths:

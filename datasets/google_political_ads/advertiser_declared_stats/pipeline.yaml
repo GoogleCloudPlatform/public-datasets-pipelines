@@ -33,7 +33,7 @@ dag:
       depends_on_past: False
       start_date: "2021-03-01"
     max_active_runs: 1
-    schedule_interval: "@daily"  
+    schedule_interval: "@daily"
     catchup: False
     default_view: graph
 
@@ -71,9 +71,9 @@ dag:
           PIPELINE_NAME: "advertiser_declared_stats"
           CSV_HEADERS: >-
             ["advertiser_id","advertiser_declared_name","advertiser_declared_regulatory_id","advertiser_declared_scope","advertiser_declared_promoter_name","advertiser_declared_promoter_address"]
-          RENAME_MAPPINGS: >- 
+          RENAME_MAPPINGS: >-
             {"Advertiser_ID" : "advertiser_id","Advertiser_Declared_Name" : "advertiser_declared_name","Advertiser_Declared_Regulatory_ID" : "advertiser_declared_regulatory_id","Advertiser_Declared_Scope" : "advertiser_declared_scope","Advertiser_Declared_Promoter_Name" : "advertiser_declared_promoter_name","Advertiser_Declared_Promoter_Address" : "advertiser_declared_promoter_address"}
-            
+
 
         # Set resource limits for the pod here. For resource units in Kubernetes, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes
         resources:
@@ -107,30 +107,30 @@ dag:
         # i.e. specify modes for all columns.
 
         schema_fields:
-          - name        : "advertiser_id"
-            type        : "string"
+          - name : "advertiser_id"
+            type : "string"
             description : "ID of the advertiser who purchased the ad."
-            mode        : "nullable"
-          - name        : "advertiser_declared_name"
-            type        : "string"
+            mode : "nullable"
+          - name : "advertiser_declared_name"
+            type : "string"
             description : "The advertiser’s committee declared name."
-            mode        : "nullable"
-          - name        : "advertiser_declared_regulatory_id"
-            type        : "string"
+            mode : "nullable"
+          - name : "advertiser_declared_regulatory_id"
+            type : "string"
             description : "Committee declared identification number."
-            mode        : "nullable"
-          - name        : "advertiser_declared_scope"
-            type        : "string"
+            mode : "nullable"
+          - name : "advertiser_declared_scope"
+            type : "string"
             description : "Committee-provided information about the candidate and office or ballot proposition and jurisdiction to which the advertisement refers which is separate from our verification process."
-            mode        : "nullable"
-          - name        : "advertiser_declared_promoter_name"
-            type        : "string"
+            mode : "nullable"
+          - name : "advertiser_declared_promoter_name"
+            type : "string"
             description : "The New Zealand advertiser’s declared Promoter Statement name."
-            mode        : "nullable"
-          - name        : "advertiser_declared_promoter_address"
-            type        : "string"
+            mode : "nullable"
+          - name : "advertiser_declared_promoter_address"
+            type : "string"
             description : "The New Zealand advertiser’s declared Promoter Statement address."
-            mode        : "nullable"
+            mode : "nullable"
 
 
   graph_paths:
