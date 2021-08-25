@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# CSV transform for: covid19_italy
-
 import datetime
 import json
 import logging
@@ -35,7 +33,7 @@ def main(
     headers: typing.List[str],
     rename_mappings: dict,
     pipeline_name: str,
-):
+) -> None:
 
     logging.info(
         "Covid-19 Italy process started at "
@@ -85,26 +83,25 @@ def main(
     )
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
-    # log completion
     logging.info(
         "Covid-19 Italy process completed at "
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
 
 
-def convert_dt_format(date_str: str, time_str: str):
+def convert_dt_format(date_str: str, time_str: str) -> None:
     return str(datetime.datetime.strptime(date_str, "%m/%d/%Y").date()) + " " + time_str
 
 
-def rename_headers(df, rename_mappings: dict):
+def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
     df.rename(columns=rename_mappings, inplace=True)
 
 
-def save_to_new_file(df, file_path: str):
+def save_to_new_file(df: pd.DataFrame, file_path: str) -> None:
     df.to_csv(file_path, float_format="%.0f", index=False)
 
 
-def download_file(source_url: str, source_file: pathlib.Path):
+def download_file(source_url: str, source_file: pathlib.Path) -> None:
     logging.info(f"Downloading {source_url} into {source_file}")
     r = requests.get(source_url, stream=True)
     if r.status_code == 200:

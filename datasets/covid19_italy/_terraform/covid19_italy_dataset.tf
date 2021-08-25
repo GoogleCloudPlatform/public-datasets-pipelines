@@ -18,7 +18,7 @@
 resource "google_bigquery_dataset" "covid19_italy" {
   dataset_id  = "covid19_italy"
   project     = var.project_id
-  description = "ETL Processes for Covid 19 Italy"
+  description = "COVID-19 Italy"
 }
 
 output "bigquery_dataset-covid19_italy-dataset_id" {

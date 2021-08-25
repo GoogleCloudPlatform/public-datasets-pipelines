@@ -23,7 +23,7 @@ dataset:
   friendly_name: covid19_italy
 
   # A short, descriptive summary of the dataset.
-  description: covid19_italy
+  description: COVID-19 Italy
 
   # A list of sources the dataset is derived from, using the YAML list syntax.
   dataset_sources: ~
@@ -55,4 +55,4 @@ resources:
     #   description   (A user-friendly description of the dataset)
     #   location      (The geographic location where the dataset should reside)
     dataset_id: covid19_italy
-    description: "ETL Processes for Covid 19 Italy"
+    description: "COVID-19 Italy"
