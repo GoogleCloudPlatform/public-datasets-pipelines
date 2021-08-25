@@ -20,7 +20,7 @@ resources:
     table_id: last_updated
 
     # Description of the table
-    description: "last_updated dataset"
+    description: "This table contains the information of the latest updated date for the Political Ads report. All dates provided are per UTC time zone."
 
 dag:
   airflow_version: 1
@@ -114,8 +114,3 @@ dag:
 
   graph_paths:
     - "last_updated_transform_csv >> load_last_updated_to_bq"
-
-
-
-
-    

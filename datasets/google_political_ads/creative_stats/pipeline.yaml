@@ -20,7 +20,7 @@ resources:
     table_id: creative_stats
 
     # Description of the table
-    description: "creative_stats dataset"
+    description: "This table contains the information for election ads that have appeared on Google Ads Services. Ad-level targeting data was added to this file in April 2020. ad_id is referenced from: campaign_targeting.ads_list Data that was previously available in the `google_political_ads.campaign_targeting` table has been deprecated and removed in favor of this table."
 
 dag:
   airflow_version: 1
@@ -285,8 +285,3 @@ dag:
 
   graph_paths:
     - "creative_stats_transform_csv >> load_creative_stats_to_bq"
-
-
-
-
-    

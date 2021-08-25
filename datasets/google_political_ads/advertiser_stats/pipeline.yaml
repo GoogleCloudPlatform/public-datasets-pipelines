@@ -20,7 +20,7 @@ resources:
     table_id: advertiser_stats
 
     # Description of the table
-    description: "advertiser_stats dataset"
+    description: "This table contains the information about advertisers who have run an election ad on Google Ads Services with at least one impression. The table's primary key is advertiser_id. This table relates to the others in this dataset, with the following connections between columns: advertiser_id is referenced from: advertiser_weekly_spend.advertiser_id campaign_targeting.advertiser_id creative_stats.advertiser_id advertiser_name is referenced from: advertiser_weekly_spend.advertiser_name campaign_targeting.advertiser_name advertiser_id.advertiser_name"
 
 dag:
   airflow_version: 1
@@ -186,9 +186,4 @@ dag:
 
 
   graph_paths:
-    - "advertiser_stats_transform_csv >> load_advertiser_stats_to_bq"
-
-
-
-
-    
+    - "advertiser_stats_transform_csv >> load_advertiser_stats_to_bq"  

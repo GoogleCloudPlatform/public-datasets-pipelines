@@ -20,7 +20,7 @@ resources:
     table_id: geo_spend
 
     # Description of the table
-    description: "geo_spend dataset"
+    description: "This table contains the information for how much is spent buying election ads on Google Ads Services. The data is aggregated by Congressional district. The primary key is state, congressional_district."
 
 dag:
   airflow_version: 1
@@ -174,8 +174,4 @@ dag:
 
   graph_paths:
     - "geo_spend_transform_csv >> load_geo_spend_to_bq"
-
-
-
-
     

@@ -20,7 +20,7 @@ resources:
     table_id: top_keywords_history
 
     # Description of the table
-    description: "top_keywords_history dataset"
+    description: "The “Top Keywords” section of the US report was removed and updates to this table were terminated in December 2019. The table reflects historical data. This table contains the information for the top six keywords on which political advertisers have spent money during an election cycle. This data is only provided for US elections. The primary key is election_cycle, report_date."
 
 dag:
   airflow_version: 1
@@ -174,8 +174,3 @@ dag:
 
   graph_paths:
     - "top_keywords_history_transform_csv >> load_top_keywords_history_to_bq"
-
-
-
-
-    

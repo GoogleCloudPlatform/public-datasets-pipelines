@@ -20,7 +20,7 @@ resources:
     table_id: campaign_targeting
 
     # Description of the table
-    description: "campaign_targeting dataset"
+    description: "This table was deprecated and ad-level targeting information was made available in the `google_political_ads.creative_stats` BigQuery table, effective April 2020. This table contains the information related to ad campaigns run by advertisers."
 
 dag:
   airflow_version: 1
@@ -68,7 +68,7 @@ dag:
           TARGET_FILE: "files/data_output.csv"
           TARGET_GCS_BUCKET: "{{ var.json.shared.composer_bucket }}"
           TARGET_GCS_PATH: "data/google_political_ads/campaign_targeting/data_output.csv"
-          PIPELINE_NAME: "creative_stats"
+          PIPELINE_NAME: "campaign_targeting"
           CSV_HEADERS: >-
             ["campaign_id","age_targeting","gender_targeting","geo_targeting_included","geo_targeting_excluded","start_date","end_date","ads_list","advertiser_id","advertiser_name"]
           RENAME_MAPPINGS: >- 
@@ -150,8 +150,3 @@ dag:
 
   graph_paths:
     - "campaign_targeting_transform_csv >> load_campaign_targeting_to_bq"
-
-
-
-
-    

@@ -38,7 +38,7 @@ def main(
     headers: typing.List[str],
     rename_mappings: dict,
     pipeline_name: str,
-):
+) -> None:
 
     logging.info(
         f"google political ads {pipeline_name} process started at "
@@ -86,7 +86,6 @@ def main(
     except Exception as e:
         logging.error(f"Error saving output file: {e}.")
 
-    # upload to GCS
     logging.info(
         f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
     )
@@ -98,7 +97,7 @@ def main(
     )
 
 
-def save_to_new_file(df, file_path: str):
+def save_to_new_file(df: pd.DataFrame, file_path: str) -> None:
     df.to_csv(file_path, index=False)
 
 
@@ -109,7 +108,7 @@ def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) 
     blob.upload_from_filename(file_path)
 
 
-def download_file(source_url: str, source_file: pathlib.Path):
+def download_file(source_url: str, source_file: pathlib.Path) -> None:
     logging.info(f"Downloading {source_url} into {source_file}")
     r = requests.get(source_url, stream=True)
     if r.status_code == 200:
@@ -120,7 +119,7 @@ def download_file(source_url: str, source_file: pathlib.Path):
         logging.error(f"Couldn't download {source_url}: {r.text}")
 
 
-def read_csv_file(source_file: pathlib.Path, source_csv_name: str):
+def read_csv_file(source_file: pathlib.Path, source_csv_name: str) -> pd.DataFrame:
     with ZipFile(source_file) as zipfiles:
         file_list = zipfiles.namelist()
         csv_files = fnmatch.filter(file_list, source_csv_name)
@@ -129,7 +128,7 @@ def read_csv_file(source_file: pathlib.Path, source_csv_name: str):
     return df
 
 
-def rename_headers(df, rename_mappings: dict):
+def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
     df.rename(columns=rename_mappings, inplace=True)
 
 

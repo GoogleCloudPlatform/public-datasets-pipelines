@@ -20,7 +20,7 @@ resources:
     table_id: advertiser_weekly_spend
 
     # Description of the table
-    description: "advertiser_weekly_spend dataset"
+    description: "This table contains the information for how much an advertiser spent on political ads during a given week. The table's primary key is advertiser_id, election_cycle, week_start_date"
 
 dag:
   airflow_version: 1
@@ -178,8 +178,3 @@ dag:
 
   graph_paths:
     - "advertiser_weekly_spend_transform_csv >> load_advertiser_weekly_spend_to_bq"
-
-
-
-
-    

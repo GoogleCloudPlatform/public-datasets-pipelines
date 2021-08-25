@@ -23,7 +23,23 @@ dataset:
   friendly_name: google_political_ads
 
   # A short, descriptive summary of the dataset.
-  description: Google political ads  datasets
+  description: |-
+    Overview: This dataset contains information on how much money is spent by verified advertisers on political advertising across Google Ad Services. In addition, insights on demographic targeting used in political ad campaigns by these advertisers are also provided. Finally, links to the actual political ad in the Google Transparency Report (https://transparencyreport.google.com/) are provided. Data for an election expires 7 years after the election. After this point, the data are removed from the dataset and are no longer available.
+
+    Update frequency: Weekly
+
+    Dataset source: Transparency Report: Political Advertising on Google  
+
+    Terms of use: 
+
+    See the GCP Marketplace listing for more details and sample queries: https://console.cloud.google.com/marketplace/details/transparency-report/google-political-ads
+
+    For more information see:
+    The Political Advertising on Google Transparency Report at
+    https://transparencyreport.google.com/political-ads/home
+
+    The supporting Frequently Asked Questions at
+    https://support.google.com/transparencyreport/answer/9575640?hl=en&ref_topic=7295796
 
   # A list of sources the dataset is derived from, using the YAML list syntax.
   dataset_sources: ~
@@ -55,4 +71,20 @@ resources:
     #   description   (A user-friendly description of the dataset)
     #   location      (The geographic location where the dataset should reside)
     dataset_id: google_political_ads
-    description: google_political_ads 
+    description: |-
+        Overview: This dataset contains information on how much money is spent by verified advertisers on political advertising across Google Ad Services. In addition, insights on demographic targeting used in political ad campaigns by these advertisers are also provided. Finally, links to the actual political ad in the Google Transparency Report (https://transparencyreport.google.com/) are provided. Data for an election expires 7 years after the election. After this point, the data are removed from the dataset and are no longer available.
+
+        Update frequency: Weekly
+
+        Dataset source: Transparency Report: Political Advertising on Google  
+
+        Terms of use: 
+
+        See the GCP Marketplace listing for more details and sample queries: https://console.cloud.google.com/marketplace/details/transparency-report/google-political-ads
+
+        For more information see:
+        The Political Advertising on Google Transparency Report at
+        https://transparencyreport.google.com/political-ads/home
+
+        The supporting Frequently Asked Questions at
+        https://support.google.com/transparencyreport/answer/9575640?hl=en&ref_topic=7295796 
