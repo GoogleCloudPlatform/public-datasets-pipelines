@@ -106,10 +106,10 @@ dag:
         # i.e. specify modes for all columns.
 
         schema_fields:
-          - name : "report_data_updated_date"
-            type : "Date"
-            description : "The date the report data was most reecntly updated"
-            mode : "nullable"
+          - name: "report_data_updated_date"
+            type: "Date"
+            description: "The date the report data was most reecntly updated"
+            mode: "nullable"
 
 
   graph_paths:
