@@ -23,7 +23,7 @@ dataset:
   friendly_name: cms_medicare
 
   # A short, descriptive summary of the dataset.
-  description: cms_medicare
+  description: CMS Medicare
 
   # A list of sources the dataset is derived from, using the YAML list syntax.
   dataset_sources: ~
@@ -55,4 +55,4 @@ resources:
     #   description   (A user-friendly description of the dataset)
     #   location      (The geographic location where the dataset should reside)
     dataset_id: cms_medicare
-    description: "ETL Processes for CMS Medicare"
+    description: "CMS Medicare"

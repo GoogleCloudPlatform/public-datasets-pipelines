@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# CSV transform for: cms_medicare
-
 import datetime
 import fnmatch
 import json
@@ -37,7 +35,7 @@ def main(
     headers: typing.List[str],
     rename_mappings: dict,
     pipeline_name: str,
-):
+) -> None:
 
     logging.info(
         "CMS Medicare process started at "
@@ -50,7 +48,6 @@ def main(
     logging.info(f"Downloading file {source_url}")
     download_file(source_url, source_file)
 
-    # open the input file
     logging.info(f"Opening file {source_file}")
 
     if (
@@ -88,29 +85,22 @@ def main(
 
         df = pd.read_csv(str(source_file))
 
-    # steps in the pipeline
     logging.info(f"Transformation Process Starting.. {source_file}")
 
-    # rename the headers
     logging.info(f"Transform: Renaming Headers.. {source_file}")
     rename_headers(df, rename_mappings)
 
-    # remove empty rows
     logging.info(f"Transform: Filtering null identity records.. {source_file}")
     filter_null_rows(df, pipeline_name)
 
-    # reorder headers in output
     logging.info("Transform: Reordering headers..")
     df = df[headers]
 
-    # steps in the pipeline
     logging.info(f"Transformation Process complete .. {source_file}")
 
-    # save to output file
     logging.info(f"Saving to output file.. {target_file}")
 
     try:
-        # save_to_new_file(df, file_path=str(target_file))
         save_to_new_file(df, file_path=str(target_file))
     except Exception as e:
         logging.error(f"Error saving output file: {e}.")
@@ -120,24 +110,21 @@ def main(
     )
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
-    # log completion
     logging.info(
         "CMS Medicare process completed at "
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
 
 
-def convert_dt_format(date_str, time_str):
-    #  date_str, time_str
-    # 10/26/2014,13:12:00
+def convert_dt_format(date_str: str, time_str: str):
     return str(datetime.datetime.strptime(date_str, "%m/%d/%Y").date()) + " " + time_str
 
 
-def rename_headers(df, rename_mappings: dict):
+def rename_headers(df: pd.DataFrame, rename_mappings: dict):
     df.rename(columns=rename_mappings, inplace=True)
 
 
-def filter_null_rows(df, pipeline_name):
+def filter_null_rows(df: pd.DataFrame, pipeline_name: str):
     if (
         pipeline_name == "inpatient_charges_2011"
         or pipeline_name == "inpatient_charges_2012"
@@ -166,11 +153,11 @@ def filter_null_rows(df, pipeline_name):
         df = df
 
 
-def save_to_new_file(df, file_path):
+def save_to_new_file(df: pd.DataFrame, file_path: str):
     df.to_csv(file_path, float_format="%.0f", index=False)
 
 
-def download_file(source_url: str, source_file: pathlib.Path):
+def download_file(source_url: str, source_file: pathlib.Path) -> None:
     logging.info(f"Downloading {source_url} into {source_file}")
     r = requests.get(source_url, stream=True)
     if r.status_code == 200:
@@ -191,7 +178,6 @@ def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) 
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
 
-    # if os.environ["PIPELINE"] == 'inpatient_charges':
     main(
         source_url=os.environ["SOURCE_URL"],
         source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),

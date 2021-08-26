@@ -20,11 +20,10 @@ resources:
     table_id: inpatient_charges_2011
 
     # Description of the table
-    description: ":CMS-Medicare Inpatient Charges 2011"
+    description: ":CMS Medicare Inpatient Charges 2011"
 
 dag:
 
-  # [Required] Specify the Airflow version of the operators used by the DAG.
   airflow_version: 1
 
   initialize:
