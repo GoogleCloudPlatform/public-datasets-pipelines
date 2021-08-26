@@ -20,7 +20,7 @@ resources:
     table_id: citibike_stations
 
     # Description of the table
-    description: "new_york_citibike_stationsspc"
+    description: ""
 
 dag:
   initialize:
@@ -49,6 +49,8 @@ dag:
 
         # The name of the pod in which the task will run. This will be used (plus a random suffix) to generate a pod id
         name: "citibike_stations"
+
+        startup_timeout_seconds: 600
 
         # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
         namespace: "default"

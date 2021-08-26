@@ -21,7 +21,6 @@ import pathlib
 
 import pandas as pd
 import requests
-import vaex
 from google.cloud import storage
 
 
@@ -31,7 +30,7 @@ def main(
     target_file: pathlib.Path,
     target_gcs_bucket: str,
     target_gcs_path: str,
-):
+) -> None:
 
     logging.info(
         "New York Citibike - Citibike Stations process started at "
@@ -55,17 +54,12 @@ def main(
     logging.info(f"Downloading stations file {source_url_status}")
     download_file_json(source_url_status, source_file_status)
 
-    # open the stations input file
     logging.info(f"Opening stations file {source_file_stations}")
-    df_stations = vaex.open(source_file_stations)
-    df_stations = df_stations.to_pandas_df()
+    df_stations = pd.read_csv(source_file_stations)
 
-    # open the stations input file
     logging.info(f"Opening status file {source_file_status}")
-    df_status = vaex.open(source_file_status)
-    df_status = df_status.to_pandas_df()
+    df_status = pd.read_csv(source_file_status)
 
-    # merge the files on station_id
     logging.info("Merging files")
     df = df_stations.merge(df_status, left_on="station_id", right_on="station_id")
 
@@ -93,10 +87,7 @@ def main(
         ]
     ]
 
-    # cleaning rental methods data
-    logging.info("Cleaning data points")
-
-    # resolving list to string
+    logging.info("Cleaning data points - Rental Methods")
     df["rental_methods"] = df_stations["rental_methods"].astype("string")
     df["rental_methods"] = (
         str(pd.Series(df_stations["rental_methods"])[0])
@@ -105,7 +96,7 @@ def main(
         .replace("]", "")
     )
 
-    # resolving booleans
+    logging.info("Resolving boolean datapoints")
     if str(df["eightd_has_key_dispenser"]) == "0":
         df["eightd_has_key_dispenser"] = "false"
     else:
@@ -123,27 +114,18 @@ def main(
     else:
         df["is_returning"] = "true"
 
-    # # open the input file
-    # logging.info(f"Opening file {source_file}")
-    # df = vaex.open(str(source_file), convert=False)
-
-    # steps in the pipeline
     logging.info(f"Transformation Process Starting.. {source_file}")
 
-    # convert datetime
     logging.info("Converting Datetime")
     df["last_reported"] = (
         df["last_reported"].astype(str).astype(int).apply(datetime_from_int)
-    )  # .apply(datetime.datetime.fromtimestamp(int(df["last_reported1"[:]])).strftime('%Y-%m-%d %H:%M:%S'))
+    )
 
-    # steps in the pipeline
     logging.info(f"Transformation Process complete .. {source_file}")
 
-    # save to output file
     logging.info(f"Saving to output file.. {target_file}")
 
     try:
-        # save_to_new_file(df, file_path=str(target_file))
         save_to_new_file(df, file_path=str(target_file))
     except Exception as e:
         logging.error(f"Error saving output file: {e}.")
@@ -153,24 +135,21 @@ def main(
     )
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
-    # log completion
     logging.info(
         "New York Citibike - Citibike Stations process completed at "
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
 
 
-def datetime_from_int(dt_int: int):
+def datetime_from_int(dt_int: int) -> str:
     return datetime.datetime.fromtimestamp(dt_int).strftime("%Y-%m-%d %H:%M:%S")
 
 
-def convert_dt_format(date_str, time_str):
-    #  date_str, time_str
-    # 10/26/2014,13:12:00
+def convert_dt_format(date_str: str, time_str: str) -> str:
     return str(datetime.datetime.strptime(date_str, "%m/%d/%Y").date()) + " " + time_str
 
 
-def rename_headers(df):
+def rename_headers(df) -> None:
     header_names = {
         "lat": "latitude",
         "lon": "longitude",
@@ -180,11 +159,11 @@ def rename_headers(df):
         df.rename(old_name, new_name)
 
 
-def save_to_new_file(df, file_path):
+def save_to_new_file(df, file_path) -> None:
     df.to_csv(file_path, float_format="%.0f", index=False)
 
 
-def download_file_json(source_url: str, source_file: pathlib.Path):
+def download_file_json(source_url: str, source_file: pathlib.Path) -> None:
 
     # this function extracts the json from a source url and creates
     # a csv file from that data to be used as an input file

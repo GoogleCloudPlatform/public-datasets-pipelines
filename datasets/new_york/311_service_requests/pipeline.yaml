@@ -20,10 +20,10 @@ resources:
     table_id: 311_service_requests
 
     # Description of the table
-    description: "new_yorkspc"
+    description: "NYC 311 service requests logs"
 
 dag:
-  airflow_version: 2
+  airflow-version: 1
   initialize:
     dag_id: 311_service_requests
     default_args:
@@ -50,6 +50,8 @@ dag:
 
         # The name of the pod in which the task will run. This will be used (plus a random suffix) to generate a pod id
         name: "311_service_requests"
+
+        startup_timeout_seconds: 600
 
         # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
         namespace: "default"

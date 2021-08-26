@@ -12,21 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# CSV transform for: austin_311.311_service_request
-
-# import modules
 import datetime
 import logging
 import os
 import pathlib
-
-# import numpy as np
 import re
 
 import pandas as pd
 import requests
-
-# import csv
 from google.cloud import storage
 
 
@@ -36,72 +29,64 @@ def main(
     target_file: pathlib.Path,
     target_gcs_bucket: str,
     target_gcs_path: str,
-):
+) -> None:
 
     logging.info(
         "New York Tree Census 1995 process started at "
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
 
-    logging.info(f"Downloading file {source_url}")
+    logging.info(f"Downloading {source_url} into {source_file}")
     download_file(source_url, source_file)
 
-    # open the input file
     logging.info(f"Opening file {source_file}")
     df = pd.read_csv(source_file)
 
-    # steps in the pipeline
     logging.info(f"Transformation Process Starting.. {source_file}")
 
-    # rename the headers
     logging.info(f"Transform: Renaming Headers.. {source_file}")
     rename_headers(df)
 
-    # trim whitespace
-    df["Spc_Latin"] = df["Spc_Latin"].str.strip()
+    df["spc_latin"] = df["spc_latin"].str.strip()
 
-    # reorder headers in output
     logging.info("Transform: Reordering headers..")
     df = df[
         [
-            "RecordId",
-            "Address",
-            "House_Number",
-            "Street",
-            "Postcode_Original",
-            "Community Board_Original",
-            "Site",
-            "Species",
-            "Diameter",
-            "Condition",
-            "Wires",
-            "Sidewalk_Condition",
-            "Support_Structure",
-            "Borough",
-            "X",
-            "Y",
-            "Longitude",
-            "Latitude",
-            "CB_New",
-            "Zip_New",
-            "CensusTract_2010",
-            "CensusBlock_2010",
-            "NTA_2010",
-            "SegmentID",
-            "Spc_Common",
-            "Spc_Latin",
-            "Location",
+            "recordid",
+            "address",
+            "house_number",
+            "street",
+            "zip_original",
+            "cb_original",
+            "site",
+            "species",
+            "diameter",
+            "status",
+            "wires",
+            "sidewalk_condition",
+            "support_structure",
+            "borough",
+            "x",
+            "y",
+            "longitude",
+            "latitude",
+            "cb_new",
+            "zip_new",
+            "censustract_2010",
+            "censusblock_2010",
+            "nta_2010",
+            "segmentid",
+            "spc_common",
+            "spc_latin",
+            "location",
         ]
     ]
 
-    # steps in the pipeline
     logging.info(f"Transformation Process complete .. {source_file}")
 
-    # save to output file
     logging.info(f"Saving to output file.. {target_file}")
 
     try:
-        # save_to_new_file(df, file_path=str(target_file))
         save_to_new_file(df, file_path=str(target_file))
     except Exception as e:
         logging.error(f"Error saving output file: {e}.")
@@ -111,20 +96,17 @@ def main(
     )
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
-    # log completion
     logging.info(
         "New York Tree Census 1995 process completed at "
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
 
 
-def convert_dt_format(date_str, time_str):
-    #  date_str, time_str
-    # 10/26/2014,13:12:00
+def convert_dt_format(date_str: str, time_str: str) -> str:
     return str(datetime.datetime.strptime(date_str, "%m/%d/%Y").date()) + " " + time_str
 
 
-def rename_headers(df):
+def rename_headers(df: pd.DataFrame) -> None:
     header_names = {
         "RecordId": "recordid",
         "Address": "address",
@@ -155,22 +137,20 @@ def rename_headers(df):
         "Location": "location",
     }
 
-    # for old_name, new_name in header_names.items():
-    df.rename(columns=header_names)
+    df.rename(columns=header_names, inplace=True)
 
 
-def replace_value(val):
+def replace_value(val: str) -> str:
     if val is None or len(val) == 0:
         return val
     else:
         if val.find("\n") > 0:
-            # return val.replace("\n", "")
-            return re.sub(r"(^\d):(\d{2}:\d{2})", "0$1:$2", val)
+            return re.sub(r"(^\\d):(\\d{2}:\\d{2})", "0$1:$2", val)
         else:
             return val
 
 
-def replace_values_regex(df):
+def replace_values_regex(df: pd.DataFrame) -> None:
     header_names = {"checkout_time"}
 
     for dt_col in header_names:
@@ -179,16 +159,15 @@ def replace_values_regex(df):
                 df[dt_col] = df[dt_col].apply(replace_value)
 
 
-def filter_null_rows(df):
+def filter_null_rows(df: pd.DataFrame) -> None:
     df = df[df.trip_id != ""]
 
 
-def save_to_new_file(df, file_path):
+def save_to_new_file(df: pd.DataFrame, file_path: str) -> None:
     df.to_csv(file_path, index=False)
 
 
-def download_file(source_url: str, source_file: pathlib.Path):
-    logging.info(f"Downloading {source_url} into {source_file}")
+def download_file(source_url: str, source_file: pathlib.Path) -> None:
     r = requests.get(source_url, stream=True)
     if r.status_code == 200:
         with open(source_file, "wb") as f:

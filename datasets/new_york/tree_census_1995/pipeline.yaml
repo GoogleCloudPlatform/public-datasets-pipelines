@@ -20,7 +20,7 @@ resources:
     table_id: tree_census_1995
 
     # Description of the table
-    description: "new_yorkspc"
+    description: ""
 
 dag:
   initialize:

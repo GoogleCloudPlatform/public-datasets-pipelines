@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# import modules
 import datetime
 import logging
 import os
@@ -29,30 +28,26 @@ def main(
     target_file: pathlib.Path,
     target_gcs_bucket: str,
     target_gcs_path: str,
-):
+) -> None:
 
     logging.info(
         "New York 311 Service Requests process started at "
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
 
+    logging.info(f"Downloading {source_url} into {source_file}")
     download_file(source_url, source_file)
 
-    # open the input file
     logging.info(f"Opening file {source_file}")
     df = pd.read_csv(source_file)
 
-    # steps in the pipeline
     logging.info(f"Transformation Process Starting.. {source_file}")
 
-    # rename the headers
     logging.info(f"Transform: Renaming Headers.. {source_file}")
     rename_headers(df)
 
-    # remove rows where unique key is empty
     df = df[df["unique_key"] != ""]
 
-    # convert date format
     df["created_date"] = df["created_date"].apply(convert_dt_format)
     df["closed_date"] = df["closed_date"].apply(convert_dt_format)
     df["due_date"] = df["due_date"].apply(convert_dt_format)
@@ -60,7 +55,6 @@ def main(
         convert_dt_format
     )
 
-    # reorder headers in output
     logging.info("Transform: Reordering headers..")
     df = df[
         [
@@ -108,14 +102,11 @@ def main(
         ]
     ]
 
-    # steps in the pipeline
     logging.info(f"Transformation Process complete .. {source_file}")
 
-    # save to output file
     logging.info(f"Saving to output file.. {target_file}")
 
     try:
-        # save_to_new_file(df, file_path=str(target_file))
         save_to_new_file(df, file_path=str(target_file))
     except Exception as e:
         logging.error(f"Error saving output file: {e}.")
@@ -132,7 +123,7 @@ def main(
     )
 
 
-def convert_dt_format(dt_str: str):
+def convert_dt_format(dt_str: str) -> str:
     if dt_str is None or len(str(dt_str)) == 0 or str(dt_str) == "nan":
         return str(dt_str)
     else:
@@ -141,7 +132,7 @@ def convert_dt_format(dt_str: str):
         )
 
 
-def rename_headers(df):
+def rename_headers(df: pd.DataFrame) -> None:
     header_names = {
         "Unique Key": "unique_key",
         "Created Date": "created_date",
@@ -189,12 +180,11 @@ def rename_headers(df):
     df = df.rename(columns=header_names, inplace=True)
 
 
-def save_to_new_file(df, file_path):
+def save_to_new_file(df: pd.DataFrame, file_path: str) -> None:
     df.to_csv(file_path)
 
 
-def download_file(source_url: str, source_file: pathlib.Path):
-    logging.info(f"Downloading {source_url} into {source_file}")
+def download_file(source_url: str, source_file: pathlib.Path) -> None:
     r = requests.get(source_url, stream=True)
     if r.status_code == 200:
         with open(source_file, "wb") as f:
