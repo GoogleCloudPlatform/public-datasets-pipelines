@@ -1,0 +1,176 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+resources:
+
+  - type: bigquery_table
+    # Required Properties:
+    table_id: top_keywords_history
+
+    # Description of the table
+    description: "The “Top Keywords” section of the US report was removed and updates to this table were terminated in December 2019. The table reflects historical data. This table contains the information for the top six keywords on which political advertisers have spent money during an election cycle. This data is only provided for US elections. The primary key is election_cycle, report_date."
+
+dag:
+  airflow_version: 1
+  initialize:
+    dag_id: top_keywords_history
+    default_args:
+      owner: "Google"
+
+      # When set to True, keeps a task from getting triggered if the previous schedule for the task hasn’t succeeded
+      depends_on_past: False
+      start_date: '2021-03-01'
+    max_active_runs: 1
+    schedule_interval: "@daily"
+    catchup: False
+    default_view: graph
+
+  tasks:
+    - operator: "KubernetesPodOperator"
+
+      # Task description
+      description: "Run CSV transform within kubernetes pod"
+
+      args:
+
+        task_id: "top_keywords_history_transform_csv"
+
+        startup_timeout_seconds: 600
+
+        # The name of the pod in which the task will run. This will be used (plus a random suffix) to generate a pod id
+        name: "top_keywords_history"
+
+        # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
+        namespace: "default"
+
+        image_pull_policy: "Always"
+
+        # Docker images will be built and pushed to GCR by default whenever the `scripts/generate_dag.py` is run. To skip building and pushing images, use the optional `--skip-builds` flag.
+        image: "{{ var.json.google_political_ads.container_registry.run_csv_transform_kub }}"
+
+        # Set the environment variables you need initialized in the container. Use these as input variables for the script your container is expected to perform.
+        env_vars:
+          SOURCE_URL: "https://storage.googleapis.com/transparencyreport/google-political-ads-transparency-bundle.zip"
+          SOURCE_FILE: "files/data.zip"
+          FILE_NAME: "google-political-ads-transparency-bundle/google-political-ads-top-keywords-history.csv"
+          TARGET_FILE: "files/data_output.csv"
+          TARGET_GCS_BUCKET: "{{ var.json.shared.composer_bucket }}"
+          TARGET_GCS_PATH: "data/google_political_ads/top_keywords_history/data_output.csv"
+          PIPELINE_NAME: "top_keywords_history"
+          CSV_HEADERS: >-
+            ["election_cycle","report_date","keyword_1","spend_usd_1","keyword_2","spend_usd_2","keyword_3","spend_usd_3","keyword_4","spend_usd_4","keyword_5","spend_usd_5","keyword_6","spend_usd_6","region","elections"]
+          RENAME_MAPPINGS: >-
+            {"Election_Cycle": "election_cycle","Report_Date": "report_date","Keyword_1": "keyword_1","Spend_USD_1": "spend_usd_1","Keyword_2": "keyword_2","Spend_USD_2": "spend_usd_2","Keyword_3": "keyword_3","Spend_USD_3": "spend_usd_3","Keyword_4": "keyword_4","Spend_USD_4": "spend_usd_4","Keyword_5": "keyword_5","Spend_USD_5": "spend_usd_5","Keyword_6": "keyword_6","Spend_USD_6": "spend_usd_6","Region": "region","Elections": "elections"}
+
+        # Set resource limits for the pod here. For resource units in Kubernetes, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes
+        resources:
+          request_memory: "2G"
+          request_cpu: "1"
+
+    - operator: "GoogleCloudStorageToBigQueryOperator"
+      description: "Task to load CSV data to a BigQuery table"
+
+      args:
+        task_id: "load_top_keywords_history_to_bq"
+
+        # The GCS bucket where the CSV file is located in.
+        bucket: "{{ var.json.shared.composer_bucket }}"
+
+        # The GCS object path for the CSV file
+        source_objects: ["data/google_political_ads/top_keywords_history/data_output.csv"]
+        source_format: "CSV"
+        destination_project_dataset_table: "google_political_ads.top_keywords_history"
+
+        # Use this if your CSV file contains a header row
+        skip_leading_rows: 1
+
+        # How to write data to the table: overwrite, append, or write if empty
+        # See https://cloud.google.com/bigquery/docs/reference/auditlogs/rest/Shared.Types/WriteDisposition
+        write_disposition: "WRITE_TRUNCATE"
+
+        # The BigQuery table schema based on the CSV file. For more info, see
+        # https://cloud.google.com/bigquery/docs/schemas.
+        # Always use snake_case and lowercase for column names, and be explicit,
+        # i.e. specify modes for all columns.
+
+        schema_fields:
+          - name: "election_cycle"
+            type: "string"
+            description: "[DEPRECATED] This field is deprecated in favor of the Region and Elections field. It will be deleted some time after July 2019."
+            mode: "nullable"
+          - name: "report_date"
+            type: "date"
+            description: "[DEPRECATED] The start date for the week where the spending was reported."
+            mode: "nullable"
+          - name: "keyword_1"
+            type: "string"
+            description: " [DEPRECATED] Keyword with the most spend by advertisers for political ads"
+            mode: "nullable"
+          - name: "spend_usd_1"
+            type: "integer"
+            description: "[DEPRECATED] Total spend in USD for Keyword_1."
+            mode: "nullable"
+          - name: "keyword_2"
+            type: "string"
+            description: "[DEPRECATED] Keyword with the next most spend by advertisers for political ads"
+            mode: "nullable"
+          - name: "spend_usd_2"
+            type: "integer"
+            description: "[DEPRECATED] Total spend in USD for Keyword_2."
+            mode: "nullable"
+          - name: "keyword_3"
+            type: "string"
+            description: "[DEPRECATED] Keyword with the next most spend by advertisers for political ads"
+            mode: "nullable"
+          - name: "spend_usd_3"
+            type: "integer"
+            description: "[DEPRECATED] Total spend in USD for Keyword_3."
+            mode: "nullable"
+          - name: "keyword_4"
+            type: "string"
+            description: "[DEPRECATED] Keyword with the next most spend by advertisers for political ads"
+            mode: "nullable"
+          - name: "spend_usd_4"
+            type: "integer"
+            description: "[DEPRECATED] Total spend in USD for Keyword_4."
+            mode: "nullable"
+          - name: "keyword_5"
+            type: "string"
+            description: "[DEPRECATED] Keyword with the next most spend by advertisers for political ads"
+            mode: "nullable"
+          - name: "spend_usd_5"
+            type: "integer"
+            description: "[DEPRECATED] Total spend in USD for Keyword_5."
+            mode: "nullable"
+          - name: "keyword_6"
+            type: "string"
+            description: "[DEPRECATED] Keyword with the next most spend by advertisers for political ads"
+            mode: "nullable"
+          - name: "spend_usd_6"
+            type: "integer"
+            description: "[DEPRECATED] Total spend in USD for Keyword_6."
+            mode: "nullable"
+          - name: "region"
+            type: "string"
+            description: "[DEPRECATED] The region where advertisers used these keywords."
+            mode: "nullable"
+          - name: "elections"
+            type: "string"
+            description: "[DEPRECATED] The elections during which these keywords were used."
+            mode: "nullable"
+
+
+  graph_paths:
+    - "top_keywords_history_transform_csv >> load_top_keywords_history_to_bq"
