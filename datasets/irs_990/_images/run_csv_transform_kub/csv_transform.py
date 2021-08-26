@@ -24,8 +24,6 @@ import typing
 from urllib.parse import urlparse
 
 import pandas as pd
-
-# import numpy as np
 import requests
 from google.cloud import storage
 
@@ -39,7 +37,7 @@ def main(
     headers: typing.List[str],
     rename_mappings: dict,
     pipeline_name: str,
-):
+) -> None:
 
     logging.info(
         f"irs 990 {pipeline_name} process started at "
@@ -52,9 +50,7 @@ def main(
     logging.info(f"Downloading file from {source_url}... ")
     download_file(source_url, source_file)
 
-    # open the input file
-    logging.info(f"Opening file {source_file}... ")
-
+    logging.info(f"Opening file {source_file} ... ")
     str_value = os.path.basename(urlparse(source_url).path)
 
     if re.search("zip", str_value):
@@ -64,22 +60,15 @@ def main(
     else:
         df = pd.read_csv(str(source_file), encoding="utf-8", sep=r"\s+")
 
-    # steps in the pipeline
-    logging.info(f"Transforming.. {source_file}")
+    logging.info(f"Transforming {source_file} ...")
 
-    logging.info(f"Transform: Rename columns.. {source_file}")
-
+    logging.info(f"Transform: Rename columns {source_file} ...")
     rename_headers(df, rename_mappings)
 
-    logging.info(f"Transform: filtering null values.. {source_file}")
-
+    logging.info(f"Transform: filtering null values {source_file} ...")
     filter_null_rows(df)
 
-    # logging.info("Transform: Converting to integr.. ")
-
-    # df["totsupp509"] = df["totsupp509"].apply(convert_to_int)
-
-    logging.info(f"Transform: converting to integer.. {source_file}")
+    logging.info(f"Transform: converting to integer {source_file} ...")
 
     if re.search("pf", pipeline_name):
         df.invstexcisetx = df.invstexcisetx.replace("N", 0)
@@ -90,19 +79,17 @@ def main(
         df["totsupp509"] = df["totsupp509"].apply(convert_to_int)
 
     logging.info(
-        f"Transform: Reordering headers for.. {os.path.basename(urlparse(source_url).path)}"
+        f"Transform: Reordering headers for {os.path.basename(urlparse(source_url).path)} ..."
     )
 
     df = df[headers]
 
-    # save to output file
-    logging.info(f"Saving to output file.. {target_file}")
+    logging.info(f"Saving to output file {target_file} ...")
     try:
         save_to_new_file(df, file_path=str(target_file))
     except Exception as e:
         logging.error(f"Error saving output file: {e}.")
 
-    # upload to GCS
     logging.info(
         f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
     )
@@ -114,20 +101,20 @@ def main(
     )
 
 
-def rename_headers(df, rename_mappings):
+def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
     df = df.rename(columns=rename_mappings, inplace=True)
 
 
-def filter_null_rows(df):
+def filter_null_rows(df: pd.DataFrame) -> None:
     df = df[df.ein != ""]
 
 
-def save_to_new_file(df, file_path):
+def save_to_new_file(df: pd.DataFrame, file_path: pathlib.Path) -> None:
     # df.export_csv(file_path)
     df.to_csv(file_path, index=False)
 
 
-def download_file(source_url: str, source_file: pathlib.Path):
+def download_file(source_url: str, source_file: pathlib.Path) -> None:
     logging.info(f"Downloading {source_url} into {source_file}")
     r = requests.get(source_url, stream=True)
     if r.status_code == 200:

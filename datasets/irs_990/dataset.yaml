@@ -23,7 +23,7 @@ dataset:
   friendly_name: irs_990
 
   # A short, descriptive summary of the dataset.
-  description: irs_990 based 2015 datasets
+  description: IRS 990 dataset
 
   # A list of sources the dataset is derived from, using the YAML list syntax.
   dataset_sources: ~
@@ -55,4 +55,4 @@ resources:
     #   description   (A user-friendly description of the dataset)
     #   location      (The geographic location where the dataset should reside)
     dataset_id: irs_990
-    description: irs_990 
+    description: irs_990
