@@ -12,33 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# CSV transform for: chicago_crime.crime
-#
-#       Column Name                         Type            Length / Format                 Description
-#
-#       ID                                  integer         255                             ""
-#       Case Number                         string          255                             ""
-#       Date                                date          255                             ""
-#       Block                               string          512                             ""
-#       IUCR                                string          255                             ""
-#       Primary Type                        integer         255                             ""
-#       Description                         string          11/23/2020 01:41:21 PM          ""
-#       Location Description                integer         11/23/2020 01:41:21 PM          ""
-#       Arrest                              string          11/23/2020 01:41:21 PM          ""
-#       Domestic                            integer         11/23/2020 01:41:21 PM          ""
-#       Beat                                float           255                             ""
-#       District                            string          255                             ""
-#       Ward                                integer         255                             ""
-#       Community Area                      datetime        255                             ""
-#       FBI Code                            datetime        255                             ""
-#       X Coordinate                        datetime        255                             ""
-#       Y Coordinate                        datetime        255                             ""
-#       Year                                datetime        255                             ""
-#       Updated On                          datetime        255                             ""
-#       Latitude                            datetime        255                             ""
-#       Longitude                           datetime        255                             ""
-#       Location                            datetime        255                             ""
-
 
 import datetime
 import logging
@@ -57,7 +30,7 @@ def main(
     target_file: pathlib.Path,
     target_gcs_bucket: str,
     target_gcs_path: str,
-):
+) -> None :
 
     logging.info(
         "chicago crime process started at "
@@ -70,19 +43,20 @@ def main(
     logging.info(f"Downloading file {source_url}")
     download_file(source_url, source_file)
 
-    # open the input file
+
     logging.info(f"Opening file {source_file}")
     df = pd.read_csv(source_file)
 
-    # steps in the pipeline
-    logging.info(f"Transforming.. {source_file}")
 
-    logging.info(f"Transform: Rename columns.. {source_file}")
+    logging.info(f"Transforming {source_file} ...")
+
+    logging.info(f"Transform: Rename columns {source_file} ...")
     rename_headers(df)
 
-    logging.info(f"Transform: Converting date values.. {source_file}")
+    logging.info("Transform: Converting date format.. ")
     convert_values(df)
 
+    logging.info("Transform: Removing null values.. ")
     filter_null_rows(df)
 
     logging.info("Transform: Reordering headers..")
@@ -113,9 +87,9 @@ def main(
         ]
     ]
 
-    # df.fillna("")
 
-    # convert data type format to integer
+    logging.info("Transform: converting to integers..")
+
     df["unique_key"] = df["unique_key"].apply(convert_to_int)
     df["beat"] = df["beat"].apply(convert_to_int)
     df["district"] = df["district"].apply(convert_to_int)
@@ -123,22 +97,21 @@ def main(
     df["community_area"] = df["community_area"].apply(convert_to_int)
     df["year"] = df["year"].apply(convert_to_int)
 
-    # convert data type format to float
+    logging.info("Transform: converting to float..")
+
     df["x_coordinate"] = df["x_coordinate"].apply(resolve_nan)
     df["y_coordinate"] = df["y_coordinate"].apply(resolve_nan)
     df["latitude"] = df["latitude"].apply(resolve_nan)
     df["longitude"] = df["longitude"].apply(resolve_nan)
 
-    # pdb.set_trace()
 
-    # save to output file
     logging.info(f"Saving to output file.. {target_file}")
     try:
         save_to_new_file(df, file_path=str(target_file))
     except Exception as e:
         logging.error(f"Error saving output file: {e}.")
 
-    # upload to GCS
+
     logging.info(
         f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
     )
@@ -168,7 +141,7 @@ def convert_to_int(input: str) -> str:
     return str_val
 
 
-def rename_headers(df):
+def rename_headers(df: pd.DataFrame) -> None:
     header_names = {
         "ID": "unique_key",
         "Case Number": "case_number",
@@ -197,7 +170,7 @@ def rename_headers(df):
     df.rename(columns=header_names, inplace=True)
 
 
-def convert_dt_format(dt_str):
+def convert_dt_format(dt_str: str) -> str:
     # Old format: MM/dd/yyyy hh:mm:ss aa
     # New format: yyyy-MM-dd HH:mm:ss
     if dt_str is None or len(dt_str) == 0:
@@ -208,22 +181,18 @@ def convert_dt_format(dt_str):
         )
 
 
-def convert_values(df):
+def convert_values(df: pd.DataFrame) -> None:
     dt_cols = ["date", "updated_on"]
 
     for dt_col in dt_cols:
         df[dt_col] = df[dt_col].apply(convert_dt_format)
 
-    # int_cols = ["city_asset_number"]
-    # for int_col in int_cols:
-    #     df[int_col] = df[int_col].astype('Int64')
 
-
-def filter_null_rows(df):
+def filter_null_rows(df: pd.DataFrame) -> None:
     df = df[df.unique_key != ""]
 
 
-def save_to_new_file(df, file_path):
+def save_to_new_file(df: pd.DataFrame, file_path: pathlib.Path) -> None:
     df.to_csv(file_path, index=False)
 
 
