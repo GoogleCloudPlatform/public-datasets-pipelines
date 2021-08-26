@@ -16,8 +16,9 @@
 
 
 resource "google_bigquery_dataset" "google_cfe" {
-  dataset_id = "google_cfe"
-  project    = var.project_id
+  dataset_id  = "google_cfe"
+  project     = var.project_id
+  description = "Carbon-free energy (CFE) scores for Google Cloud regions and other Google data center regions"
 }
 
 output "bigquery_dataset-google_cfe-dataset_id" {

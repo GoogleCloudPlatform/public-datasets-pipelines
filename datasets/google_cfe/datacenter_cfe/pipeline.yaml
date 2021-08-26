@@ -28,6 +28,7 @@ resources:
     # to be specified in the config (i.e. `dataset.yaml) for the dataset that
     # this pipeline belongs in.
     table_id: datacenter_cfe
+    description: "Carbon-free energy (CFE) scores for Google Cloud regions and other Google data center regions"
 
 dag:
   # [Required] Specify the Airflow version of the operators used by the DAG.

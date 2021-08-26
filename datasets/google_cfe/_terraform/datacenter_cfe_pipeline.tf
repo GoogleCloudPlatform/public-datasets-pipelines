@@ -20,7 +20,7 @@ resource "google_bigquery_table" "datacenter_cfe" {
   dataset_id = "google_cfe"
   table_id   = "datacenter_cfe"
 
-
+  description = "Carbon-free energy (CFE) scores for Google Cloud regions and other Google data center regions"
 
 
 
