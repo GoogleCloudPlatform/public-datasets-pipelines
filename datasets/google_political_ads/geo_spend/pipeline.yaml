@@ -174,3 +174,4 @@ dag:
 
   graph_paths:
     - "geo_spend_transform_csv >> load_geo_spend_to_bq"
+

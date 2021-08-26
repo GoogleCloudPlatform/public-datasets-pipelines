@@ -28,9 +28,9 @@ dataset:
 
     Update frequency: Weekly
 
-    Dataset source: Transparency Report: Political Advertising on Google  
+    Dataset source: Transparency Report: Political Advertising on Google
 
-    Terms of use: 
+    Terms of use:
 
     See the GCP Marketplace listing for more details and sample queries: https://console.cloud.google.com/marketplace/details/transparency-report/google-political-ads
 
@@ -76,9 +76,9 @@ resources:
 
         Update frequency: Weekly
 
-        Dataset source: Transparency Report: Political Advertising on Google  
+        Dataset source: Transparency Report: Political Advertising on Google
 
-        Terms of use: 
+        Terms of use:
 
         See the GCP Marketplace listing for more details and sample queries: https://console.cloud.google.com/marketplace/details/transparency-report/google-political-ads
 
@@ -87,4 +87,4 @@ resources:
         https://transparencyreport.google.com/political-ads/home
 
         The supporting Frequently Asked Questions at
-        https://support.google.com/transparencyreport/answer/9575640?hl=en&ref_topic=7295796 
+        https://support.google.com/transparencyreport/answer/9575640?hl=en&ref_topic=7295796
