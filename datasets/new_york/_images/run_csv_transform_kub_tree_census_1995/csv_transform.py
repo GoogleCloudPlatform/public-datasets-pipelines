@@ -36,6 +36,9 @@ def main(
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
 
+    logging.info("creating 'files' folder")
+    pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
+
     logging.info(f"Downloading {source_url} into {source_file}")
     download_file(source_url, source_file)
 

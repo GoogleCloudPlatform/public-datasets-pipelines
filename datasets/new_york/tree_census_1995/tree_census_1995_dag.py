@@ -36,10 +36,9 @@ with DAG(
     new_york_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
         task_id="new_york_transform_csv",
         name="tree_census_1995",
-        startup_timeout_seconds=600,
         namespace="default",
         image_pull_policy="Always",
-        image="{{ var.json.new_york.container_registry.run_csv_transform_kub }}",
+        image="{{ var.json.new_york.container_registry.run_csv_transform_kub_tree_census_1995 }}",
         env_vars={
             "SOURCE_URL": "https://data.cityofnewyork.us/api/views/kyad-zm4j/rows.csv",
             "SOURCE_FILE": "files/data.csv",
@@ -54,7 +53,6 @@ with DAG(
     load_new_york_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
         task_id="load_new_york_to_bq",
         bucket="{{ var.json.shared.composer_bucket }}",
-        startup_timeout_seconds=600,
         source_objects=["data/new_york/tree_census_1995/data_output.csv"],
         source_format="CSV",
         destination_project_dataset_table="new_york.tree_census_1995",

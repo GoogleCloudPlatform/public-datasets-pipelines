@@ -1,27 +1,15 @@
 {
     "shared": {
-        "composer_bucket": "us-central1-datasets-pipeli-64f97116-bucket",
+        "composer_bucket": "us-central1-pipelines-dev-fc245d58-bucket",
         "airflow_data_folder": "/home/airflow/gcs/data",
         "airflow_home": "/home/airflow/gcs"
     },
     "new_york": {
-        "tree_census_1995": {
-            "destination_bucket": "public-datasets-dev-new-york-project",
-            "container_registry": {
-                "run_csv_transform_kub": "gcr.io/bigquery-public-data-dev/tree_census_1995__run_csv_transform_kub:latest"
-            }
-        },
-        "citibike_stations": {
-            "destination_bucket": "public-datasets-dev-new-york-project",
-            "container_registry": {
-                "run_csv_transform_kub": "gcr.io/bigquery-public-data-dev/citibike_stations__run_csv_transform_kub:latest"
-            }
-        },
-        "311_service_requests": {
-            "destination_bucket": "public-datasets-dev-new-york-project",
-            "container_registry": {
-                "run_csv_transform_kub": "gcr.io/bigquery-public-data-dev/311_service_requests__run_csv_transform_kub:latest"
-            }
+        "destination_bucket": "public-datasets-dev-new-york-project",
+        "container_registry": {
+            "run_csv_transform_kub_citibike_stations": "gcr.io/bigquery-public-data-dev/new_york__run_csv_transform_kub_citibike_stations:latest",
+            "run_csv_transform_kub_311_service_requests": "gcr.io/bigquery-public-data-dev/new_york__run_csv_transform_kub_311_service_requests:latest",
+            "run_csv_transform_kub_tree_census_1995": "gcr.io/bigquery-public-data-dev/new_york__run_csv_transform_kub_tree_census_1995:latest"
         }
     }
 }

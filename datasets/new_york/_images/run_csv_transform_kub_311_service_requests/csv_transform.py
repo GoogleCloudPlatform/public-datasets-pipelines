@@ -17,6 +17,7 @@ import logging
 import os
 import pathlib
 
+import numpy as np
 import pandas as pd
 import requests
 from google.cloud import storage
@@ -35,11 +36,59 @@ def main(
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
 
-    logging.info(f"Downloading {source_url} into {source_file}")
-    download_file(source_url, source_file)
+    logging.info("creating 'files' folder")
+    pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
+
+    # logging.info(f"Downloading {source_url} into {source_file}")
+    # download_file(source_url, source_file)
 
     logging.info(f"Opening file {source_file}")
-    df = pd.read_csv(source_file)
+    chunksize = 100000000 #100MB chunks.  Typical input file size 15GB = 30 blocks
+    dtypes = {  'Unique Key': np.int64,
+                'Created Date': np.str_, # converted to datetime type later. Resolves constraint that pandas cannot import numpy datatype datetime or datetime64
+                'Closed Date': np.str_, # converted to datetime type later. Resolves constraint that pandas cannot import numpy datatype datetime or datetime64
+                'Agency': np.str_,
+                'Agency Name': np.str_,
+                'Complaint Type': np.str_,
+                'Descriptor': np.str_,
+                'Location Type': np.str_,
+                'Incident Zip': np.str_,
+                'Incident Address': np.str_,
+                'Street Name': np.str_,
+                'Cross Street 1': np.str_,
+                'Cross Street 2': np.str_,
+                'Intersection Street 1': np.str_,
+                'Intersection Street 2': np.str_,
+                'Address Type': np.str_,
+                'City': np.str_,
+                'Landmark': np.str_,
+                'Facility Type': np.str_,
+                'Status': np.str_,
+                'Due Date': np.str_, # converted to datetime type later. Resolves constraint that pandas cannot import numpy datatype datetime or datetime64
+                'Resolution Description': np.str_,
+                'Resolution Action Updated Date': np.str_, # converted to datetime type later. Resolves constraint that pandas cannot import numpy datatype datetime or datetime64
+                'Community Board': np.str_,
+                'BBL': np.str_, # converted to int later due to NA appearing in input file on some rows
+                'Borough': np.str_,
+                'X Coordinate (State Plane)': np.str_,  # converted to int later due to NA appearing in input file on some rows
+                'Y Coordinate (State Plane)': np.str_,  # converted to int later due to NA appearing in input file on some rows
+                'Open Data Channel Type': np.str_,
+                'Park Facility Name': np.str_,
+                'Park Borough': np.str_,
+                'Vehicle Type': np.str_,
+                'Taxi Company Borough': np.str_,
+                'Taxi Pick Up Location': np.str_,
+                'Bridge Highway Name': np.str_,
+                'Bridge Highway Direction': np.str_,
+                'Road Ramp': np.str_,
+                'Bridge Highway Segment': np.str_,
+                'Latitude': np.float64,
+                'Longitude': np.float64,
+                'Location': np.str_
+        }
+    parse_dates = ['Created Date', 'Closed Date', 'Due Date', 'Resolution Action Updated Date']
+    dfx = pd.read_csv(source_file, dtype=dtypes, parse_dates=parse_dates, chunksize=chunksize, iterator=False)
+    df = pd.concat(dfx, ignore_index=True)
 
     logging.info(f"Transformation Process Starting.. {source_file}")
 
@@ -181,7 +230,7 @@ def rename_headers(df: pd.DataFrame) -> None:
 
 
 def save_to_new_file(df: pd.DataFrame, file_path: str) -> None:
-    df.to_csv(file_path)
+    df.to_csv(file_path, index=False)
 
 
 def download_file(source_url: str, source_file: pathlib.Path) -> None:

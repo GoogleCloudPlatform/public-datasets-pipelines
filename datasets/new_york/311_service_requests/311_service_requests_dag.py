@@ -36,9 +36,10 @@ with DAG(
     new_york_311_service_requests_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
         task_id="new_york_311_service_requests_transform_csv",
         name="311_service_requests",
+        startup_timeout_seconds=600,
         namespace="default",
         image_pull_policy="Always",
-        image="{{ var.json.new_york.container_registry.run_csv_transform_kub }}",
+        image="{{ var.json.new_york.container_registry.run_csv_transform_kub_311_service_requests }}",
         env_vars={
             "SOURCE_URL": "https://data.cityofnewyork.us/api/views/erm2-nwe9/rows.csv",
             "SOURCE_FILE": "files/data.csv",

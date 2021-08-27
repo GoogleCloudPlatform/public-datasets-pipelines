@@ -27,7 +27,7 @@ with DAG(
     dag_id="new_york.citibike_stations",
     default_args=default_args,
     max_active_runs=1,
-    schedule_interval="@hourly",
+    schedule_interval="@daily",
     catchup=False,
     default_view="graph",
 ) as dag:
@@ -36,33 +36,140 @@ with DAG(
     new_york_citibike_stations_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
         task_id="new_york_citibike_stations_transform_csv",
         name="citibike_stations",
+        startup_timeout_seconds=600,
         namespace="default",
         image_pull_policy="Always",
-        image="{{ var.json.new_york_citibike_stations.container_registry.run_csv_transform_kub }}",
+        image="{{ var.json.new_york.container_registry.run_csv_transform_kub_citibike_stations }}",
         env_vars={
-            "SOURCE_URL": "https://gbfs.citibikenyc.com/gbfs/en/station_information.json|https://gbfs.citibikenyc.com/gbfs/en/station_status.json",
+            "SOURCE_URL_STATIONS": "https://gbfs.citibikenyc.com/gbfs/en/station_information.json",
+            "SOURCE_URL_STATUS": "https://gbfs.citibikenyc.com/gbfs/en/station_status.json",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
             "TARGET_GCS_BUCKET": "{{ var.json.shared.composer_bucket }}",
-            "TARGET_GCS_PATH": "data/new_york_citibike_stations/citibike_stations/data_output.csv",
+            "TARGET_GCS_PATH": "data/new_york/citibike_stations/data_output.csv",
         },
         resources={"limit_memory": "4G", "limit_cpu": "2"},
     )
 
     # Task to load CSV data to a BigQuery table
-    load_new_york_citibike_stations_to_bq = (
-        gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
-            task_id="load_new_york_citibike_stations_to_bq",
-            bucket="{{ var.json.shared.composer_bucket }}",
-            source_objects=[
-                "data/new_york_citibike_stations/citibike_stations/data_output.csv"
-            ],
-            source_format="CSV",
-            destination_project_dataset_table="new_york_citibike.citibike_stations",
-            skip_leading_rows=1,
-            write_disposition="WRITE_TRUNCATE",
-            schema_fields=None,
-        )
+    load_new_york_citibike_stations_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+        task_id="load_new_york_citibike_stations_to_bq",
+        bucket="{{ var.json.shared.composer_bucket }}",
+        source_objects=["data/new_york/citibike_stations/data_output.csv"],
+        source_format="CSV",
+        destination_project_dataset_table="new_york.citibike_stations",
+        skip_leading_rows=1,
+        write_disposition="WRITE_TRUNCATE",
+        schema_fields=[
+            {
+                "name": "station_id",
+                "type": "INTEGER",
+                "description": "Unique identifier of a station.",
+                "mode": "REQUIRED",
+            },
+            {
+                "name": "name",
+                "type": "STRING",
+                "description": "Public name of the station.",
+                "mode": "NULLABLE",
+            },
+            {
+                "name": "short_name",
+                "type": "STRING",
+                "description": "Short name or other type of identifier, as used by the data publisher.",
+                "mode": "NULLABLE",
+            },
+            {
+                "name": "latitude",
+                "type": "FLOAT",
+                "description": "The latitude of station. The field value must be a valid WGS 84 latitude in decimal degrees format.",
+                "mode": "NULLABLE",
+            },
+            {
+                "name": "longitude",
+                "type": "",
+                "description": "The longitude of station. The field value must be a valid WGS 84 latitude in decimal degrees format.",
+                "mode": "NULLABLE",
+            },
+            {
+                "name": "region_id",
+                "type": "INTEGER",
+                "description": "ID of the region where station is located.",
+                "mode": "NULLABLE",
+            },
+            {
+                "name": "rental_methods",
+                "type": "STRING",
+                "description": "Array of enumerables containing the payment methods accepted at this station.",
+                "mode": "NULLABLE",
+            },
+            {
+                "name": "capacity",
+                "type": "INTEGER",
+                "description": "ANumber of total docking points installed at this station, both available and unavailable.",
+                "mode": "NULLABLE",
+            },
+            {
+                "name": "eightd_has_key_dispenser",
+                "type": "BOOLEAN",
+                "description": "",
+                "mode": "NULLABLE",
+            },
+            {
+                "name": "num_bikes_available",
+                "type": "INTEGER",
+                "description": "Number of bikes available for rental.",
+                "mode": "NULLABLE",
+            },
+            {
+                "name": "num_bikes_disabled",
+                "type": "INTEGER",
+                "description": "Number of disabled bikes at the station.",
+                "mode": "NULLABLE",
+            },
+            {
+                "name": "num_docks_available",
+                "type": "INTEGER",
+                "description": "Number of docks accepting bike returns.",
+                "mode": "NULLABLE",
+            },
+            {
+                "name": "num_docks_disabled",
+                "type": "INTEGER",
+                "description": "Number of empty but disabled dock points at the station.",
+                "mode": "NULLABLE",
+            },
+            {
+                "name": "is_installed",
+                "type": "INTEGER",
+                "description": "Is the station currently on the street?",
+                "mode": "NULLABLE",
+            },
+            {
+                "name": "is_renting",
+                "type": "INTEGER",
+                "description": "Is the station currently renting bikes?",
+                "mode": "NULLABLE",
+            },
+            {
+                "name": "is_returning",
+                "type": "INTEGER",
+                "description": "Is the station accepting bike returns?",
+                "mode": "NULLABLE",
+            },
+            {
+                "name": "eightd_has_available_keys",
+                "type": "BOOLEAN",
+                "description": "",
+                "mode": "NULLABLE",
+            },
+            {
+                "name": "last_reported",
+                "type": "TIMESTAMP",
+                "description": "Timestamp indicating the last time this station reported its status to the backend, in NYC local time.",
+                "mode": "NULLABLE",
+            },
+        ],
     )
 
     new_york_citibike_stations_transform_csv >> load_new_york_citibike_stations_to_bq
