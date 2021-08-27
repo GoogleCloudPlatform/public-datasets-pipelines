@@ -20,7 +20,7 @@ resource "google_bigquery_table" "last_updated" {
   dataset_id = "google_political_ads"
   table_id   = "last_updated"
 
-  description = "last_updated dataset"
+  description = "This table contains the information of the latest updated date for the Political Ads report. All dates provided are per UTC time zone."
 
 
 

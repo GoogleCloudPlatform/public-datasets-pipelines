@@ -20,7 +20,7 @@ resource "google_bigquery_table" "top_keywords_history" {
   dataset_id = "google_political_ads"
   table_id   = "top_keywords_history"
 
-  description = "top_keywords_history dataset"
+  description = "The \u201cTop Keywords\u201d section of the US report was removed and updates to this table were terminated in December 2019. The table reflects historical data. This table contains the information for the top six keywords on which political advertisers have spent money during an election cycle. This data is only provided for US elections. The primary key is election_cycle, report_date."
 
 
 

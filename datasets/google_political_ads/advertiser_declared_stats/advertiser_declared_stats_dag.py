@@ -65,6 +65,11 @@ with DAG(
         destination_project_dataset_table="google_political_ads.advertiser_declared_stats",
         skip_leading_rows=1,
         write_disposition="WRITE_TRUNCATE",
+        ingestion_time_partitioning={
+            "type": "DAY",
+            "field": "_PARTITIONTIME",
+            "require_partition_filter": False,
+        },
         schema_fields=[
             {
                 "name": "advertiser_id",
