@@ -20,7 +20,7 @@ resource "google_bigquery_table" "irs_990_2017" {
   dataset_id = "irs_990"
   table_id   = "irs_990_2017"
 
-  description = "irs_990_2017 dataset"
+  description = "IRS 990 2017 dataset"
 
 
 
