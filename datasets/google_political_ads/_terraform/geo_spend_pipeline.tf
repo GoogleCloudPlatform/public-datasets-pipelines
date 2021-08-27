@@ -20,7 +20,7 @@ resource "google_bigquery_table" "geo_spend" {
   dataset_id = "google_political_ads"
   table_id   = "geo_spend"
 
-  description = "geo_spend dataset"
+  description = "This table contains the information for how much is spent buying election ads on Google Ads Services. The data is aggregated by Congressional district. The primary key is state, congressional_district."
 
 
 

@@ -20,7 +20,7 @@ resource "google_bigquery_table" "advertiser_weekly_spend" {
   dataset_id = "google_political_ads"
   table_id   = "advertiser_weekly_spend"
 
-  description = "advertiser_weekly_spend dataset"
+  description = "This table contains the information for how much an advertiser spent on political ads during a given week. The table\u0027s primary key is advertiser_id, election_cycle, week_start_date"
 
 
 

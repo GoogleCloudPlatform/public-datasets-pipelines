@@ -20,7 +20,7 @@ resource "google_bigquery_table" "campaign_targeting" {
   dataset_id = "google_political_ads"
   table_id   = "campaign_targeting"
 
-  description = "campaign_targeting dataset"
+  description = "This table was deprecated and ad-level targeting information was made available in the `google_political_ads.creative_stats` BigQuery table, effective April 2020. This table contains the information related to ad campaigns run by advertisers."
 
 
 
