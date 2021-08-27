@@ -20,7 +20,7 @@ resource "google_bigquery_table" "advertiser_stats" {
   dataset_id = "google_political_ads"
   table_id   = "advertiser_stats"
 
-  description = "advertiser_stats dataset"
+  description = "This table contains the information about advertisers who have run an election ad on Google Ads Services with at least one impression. The table\u0027s primary key is advertiser_id. This table relates to the others in this dataset, with the following connections between columns: advertiser_id is referenced from: advertiser_weekly_spend.advertiser_id campaign_targeting.advertiser_id creative_stats.advertiser_id advertiser_name is referenced from: advertiser_weekly_spend.advertiser_name campaign_targeting.advertiser_name advertiser_id.advertiser_name"
 
 
 
