@@ -1,5 +1,22 @@
 # Changelog
 
+## [2.2.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v2.1.0...v2.2.0) (2021-08-27)
+
+
+### Datasets
+
+* Onboard COVID19-Italy dataset ([#148](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/148)) ([f56b5f2](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/f56b5f22ab5ecf350e20684a7ebabc01a0340340))
+* Onboard GEOS-FP dataset ([#130](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/130)) ([d32f46b](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/d32f46ba70b38c06d1cbe4d9448f65a4daf65671))
+* Onboard Google CFE dataset ([#146](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/146)) ([9bca8ef](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/9bca8ef4562d81a3f8bf1353db91276be10c72d6))
+* Onboard Google Political Ads dataset ([#149](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/149)) ([5903253](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/590325353878e740c3b86c4e83a6501d8caf1635))
+* Onboard IRS 990 dataset ([#150](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/150)) ([1105eed](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/1105eed502abfed9615f3bc1a599a4f17bdb86fc))
+
+
+### Bug Fixes
+
+* Regenerate Terraform files for Google Political Ads ([#152](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/152)) ([102f8e5](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/102f8e5ef5aa64375eb2a193f2e593454bb96828))
+* shared_variables.json should not be reset when deploying ([#147](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/147)) ([a6754df](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/a6754df4abfbfef0ba37e14a997c75b950bf5781))
+
 ## [2.1.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v2.0.0...v2.1.0) (2021-08-13)
 
 
