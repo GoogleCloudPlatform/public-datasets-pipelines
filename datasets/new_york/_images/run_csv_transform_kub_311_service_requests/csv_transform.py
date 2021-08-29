@@ -16,7 +16,9 @@ import datetime
 import logging
 import os
 import pathlib
+import subprocess
 
+import pdb
 import numpy as np
 import pandas as pd
 import requests
@@ -27,6 +29,7 @@ def main(
     source_url: str,
     source_file: pathlib.Path,
     target_file: pathlib.Path,
+    number_of_batches: int,
     target_gcs_bucket: str,
     target_gcs_path: str,
 ) -> None:
@@ -42,9 +45,80 @@ def main(
     # logging.info(f"Downloading {source_url} into {source_file}")
     # download_file(source_url, source_file)
 
-    logging.info(f"Opening file {source_file}")
-    chunksize = 100000000 #100MB chunks.  Typical input file size 15GB = 30 blocks
-    dtypes = {  'Unique Key': np.int64,
+    # get a count of the number of lines in the input file
+    number_lines_source_file = subprocess.run(['wc', '-l', source_file], stdout=subprocess.PIPE)
+
+    # number of lines minus header
+    number_lines_input_file = int(str(str(number_lines_source_file.stdout).split(" ")[0][2:]).strip()) - 1
+
+    # 500000 #100MB chunks.  Typical input file size 5.1GB
+    chunksize = int((number_lines_input_file - 1) / int(number_of_batches))
+
+    # whole number value (quotient) of dividing size into batches
+    number_batches = int(number_lines_input_file / chunksize)
+
+    # add one for any remaining batch data
+    if float(number_lines_input_file % chunksize) > 0:
+        number_batches = number_batches + 1
+
+    start_line = 2
+
+    for i in range(1, (number_batches+1)):
+
+        batch_line_count = (chunksize - 1)
+
+        if (i == 1):
+            start_line = 2
+            end_line = start_line + (batch_line_count - 1)
+        elif (i > 1):
+            start_line = ((i - 1) * chunksize) + 1
+            end_line = start_line + batch_line_count
+
+
+        # batch slice extracted from the source file
+        source_file_batch = str(source_file).replace('.csv', '_batch.csv')
+        # output generated from processing the source (batch) file
+        target_file_batch = str(source_file).replace('.csv', '_batch_targ.csv')
+
+        logging.info("batch #" + str(i) + " start_line: " + str(start_line) + " batch_line_count: " + str(batch_line_count) + 'end: ' + str(end_line))
+        logging.info("source_file = " + str(source_file))
+        logging.info("source_file_batch = " + str(source_file_batch))
+
+        # extract the header from the source file and use it in the new batch
+        logging.info(f"creating data file for batch #{i} of {number_batches} batches")
+        os.system(f'head -n 1 {source_file} > {source_file_batch}')
+
+        logging.info(f"populating data file for batch #{i} of {number_batches} batches")
+        os.system(f"sed -n '{start_line},{end_line}p;" + str(end_line + 1) + f"q' {source_file} >> {source_file_batch}")
+
+        logging.info(f"processing batch data file #{i} of {number_batches} batches")
+        processBatch(source_file_batch, target_file_batch) # process the batch of data
+
+        logging.info(f"writing batch data to target file for batch #{i} of {number_batches} batches")
+        if (i == 1):
+            # write the first batch target file to the actual target file
+            os.system(f'cp {target_file_batch} {target_file}')
+        else:
+            os.system(f'tail -n +2 {target_file_batch} >> {target_file}')
+
+    logging.info(
+        f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
+    )
+    upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
+
+    # log completion
+    logging.info(
+        "New York 311 Service Requests process completed at "
+        + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    )
+
+
+    # pdb.set_trace()
+
+def processBatch(batch_file_path: str, target_batch_file: str) -> None:
+
+    logging.info(f"Opening file {batch_file_path}")
+    dtypes = {  'Unique Key': np.int_,
                 'Created Date': np.str_, # converted to datetime type later. Resolves constraint that pandas cannot import numpy datatype datetime or datetime64
                 'Closed Date': np.str_, # converted to datetime type later. Resolves constraint that pandas cannot import numpy datatype datetime or datetime64
                 'Agency': np.str_,
@@ -87,12 +161,11 @@ def main(
                 'Location': np.str_
         }
     parse_dates = ['Created Date', 'Closed Date', 'Due Date', 'Resolution Action Updated Date']
-    dfx = pd.read_csv(source_file, dtype=dtypes, parse_dates=parse_dates, chunksize=chunksize, iterator=False)
-    df = pd.concat(dfx, ignore_index=True)
+    df = pd.read_csv(batch_file_path, dtype=dtypes, parse_dates=parse_dates)
 
-    logging.info(f"Transformation Process Starting.. {source_file}")
+    logging.info(f"Transformation Process Starting.. {batch_file_path}")
 
-    logging.info(f"Transform: Renaming Headers.. {source_file}")
+    logging.info(f"Transform: Renaming Headers.. {batch_file_path}")
     rename_headers(df)
 
     df = df[df["unique_key"] != ""]
@@ -151,34 +224,26 @@ def main(
         ]
     ]
 
-    logging.info(f"Transformation Process complete .. {source_file}")
+    logging.info(f"Transformation Process complete .. {batch_file_path}")
 
-    logging.info(f"Saving to output file.. {target_file}")
+    logging.info(f"Saving transformed batch data to output file.. {target_batch_file}")
 
     try:
-        save_to_new_file(df, file_path=str(target_file))
+        save_to_new_file(df, file_path=str(target_batch_file))
     except Exception as e:
         logging.error(f"Error saving output file: {e}.")
 
-    logging.info(
-        f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
-    )
-    upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
-
-    # log completion
-    logging.info(
-        "New York 311 Service Requests process completed at "
-        + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    )
-
 
 def convert_dt_format(dt_str: str) -> str:
-    if dt_str is None or len(str(dt_str)) == 0 or str(dt_str) == "nan":
+    if dt_str is None or len(str(dt_str)) == 0 or str(dt_str).lower() == "nan" or str(dt_str).lower() == "nat":
         return str(dt_str)
     else:
-        return datetime.datetime.strptime(str(dt_str), "%m/%d/%Y %H:%M:%S %p").strftime(
+        return datetime.datetime.strptime(str(dt_str), "%Y-%m-%d %H:%M:%S").strftime(
             "%Y-%m-%d %H:%M:%S"
         )
+        # return datetime.datetime.strptime(str(dt_str), "%m/%d/%Y %H:%M:%S %p").strftime(
+        #     "%Y-%m-%d %H:%M:%S"
+        # )
 
 
 def rename_headers(df: pd.DataFrame) -> None:
@@ -257,6 +322,7 @@ if __name__ == "__main__":
         source_url=os.environ["SOURCE_URL"],
         source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
+        number_of_batches=os.environ["NUMBER_OF_BATCHES"],
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
     )
