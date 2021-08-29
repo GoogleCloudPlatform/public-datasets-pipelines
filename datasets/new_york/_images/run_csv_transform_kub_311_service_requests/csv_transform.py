@@ -42,8 +42,8 @@ def main(
     logging.info("creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
 
-    # logging.info(f"Downloading {source_url} into {source_file}")
-    # download_file(source_url, source_file)
+    logging.info(f"Downloading {source_url} into {source_file}")
+    download_file(source_url, source_file)
 
     # get a count of the number of lines in the input file
     number_lines_source_file = subprocess.run(['wc', '-l', source_file], stdout=subprocess.PIPE)
