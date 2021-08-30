@@ -43,9 +43,9 @@ def main(
     logging.info(f"creating 'files' folder at {curr_dtm}")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
 
-    # curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
-    # logging.info(f"Downloading {source_url} into {source_file} at {curr_dtm}")
-    # download_file(source_url, source_file)
+    curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
+    logging.info(f"Downloading {source_url} into {source_file} at {curr_dtm}")
+    download_file(source_url, source_file)
 
     curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
     logging.info(f"Counting lines in input file {source_file} at {curr_dtm}")
@@ -81,10 +81,6 @@ def main(
         source_file_batch = str(source_file).replace('.csv', '_batch.csv')
         # output generated from processing the source (batch) file
         target_file_batch = str(source_file).replace('.csv', '_batch_targ.csv')
-
-        # logging.info("batch #" + str(i) + " start_line: " + str(start_line) + " batch_line_count: " + str(batch_line_count) + 'end: ' + str(end_line))
-        # logging.info("source_file = " + str(source_file))
-        # logging.info("source_file_batch = " + str(source_file_batch))
 
         # extract the header from the source file and use it in the new batch
         curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
@@ -261,10 +257,6 @@ def convert_dt_format(dt_str: str) -> str:
 	    return ""
     else:
         return str(dt_str)
-
-        # return datetime.datetime.strptime(str(dt_str), "%m/%d/%Y %H:%M:%S %p").strftime(
-        #     "%Y-%m-%d %H:%M:%S"
-        # )
 
 
 def rename_headers(df: pd.DataFrame) -> None:

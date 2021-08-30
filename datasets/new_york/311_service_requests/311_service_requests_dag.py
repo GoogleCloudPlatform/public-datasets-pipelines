@@ -14,8 +14,8 @@
 
 
 from airflow.contrib.operators import kubernetes_pod_operator
-from airflow.contrib.operators import gcs_to_bq
 from airflow import DAG
+from airflow.contrib.operators import gcs_to_bq
 
 
 default_args = {
@@ -46,11 +46,11 @@ with DAG(
             "SOURCE_URL": "https://data.cityofnewyork.us/api/views/erm2-nwe9/rows.csv",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
-            "NUMBER_OF_BATCHES": 60,
+            "NUMBER_OF_BATCHES": 30,
             "TARGET_GCS_BUCKET": "{{ var.json.shared.composer_bucket }}",
             "TARGET_GCS_PATH": "data/new_york/311_service_requests/data_output.csv",
         },
-        resources={"limit_memory": "4G", "limit_cpu": "2"},
+        resources={"limit_memory": "8G", "limit_cpu": "8"},
     )
 
     # Task to load CSV data to a BigQuery table
