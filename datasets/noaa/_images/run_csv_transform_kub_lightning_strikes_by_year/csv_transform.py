@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# CSV transform for: austin_311.311_service_request
-
 import datetime
 import gzip
 import logging
@@ -34,50 +32,46 @@ def main(
     target_gcs_path: str,
 ):
 
-    # log that process has started
+    curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     logging.info(
-        "NOAA Lightning Strikes By Year process started at "
-        + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        f"NOAA Lightning Strikes By Year process started at {curr_dtm}"
     )
-
-    logging.info(f"starting processing {source_url}")
 
     if url_is_reachable(source_url):
 
-        # paths to files
         source_file_zipped = str(source_file) + ".gz"
         source_file_unzipped = str(source_file) + ".1"
 
-        # download the file
+        curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        logging.info(f"Downloading source file {source_url} at {curr_dtm}")
         download_file(source_url, source_file_zipped)
 
-        # decompress the file
-        logging.info(f"Decompressing {source_file_unzipped}")
+        curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        logging.info(f"Decompressing {source_file_unzipped} at {curr_dtm}")
         gz_decompress(source_file_zipped, source_file_unzipped)
 
-        # append to source_file (exclude first 3 lines of header)
-        logging.info(f"Removing unnecessary header in {source_file_unzipped}")
+        curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        logging.info(f"Removing unnecessary header in {source_file_unzipped} at {curr_dtm}")
         os.system(f"echo 'DATE,LONGITUDE,LATITUDE,TOTAL_COUNT' > {source_file}")
         os.system(f"tail -n +4 {source_file_unzipped} >> {source_file}")
         os.unlink(source_file_unzipped)
         os.unlink(source_file_zipped)
 
-        # open file as dataframe
-        logging.info(f"Opening source file {source_file}")
+        curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        logging.info(f"Opening source file {source_file} at {curr_dtm}")
         df = pd.read_csv(str(source_file))
 
-        # rename the headers
-        logging.info(f"Transform: Renaming Headers.. {source_file}")
+        curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        logging.info(f"Transform: Renaming Headers.. {source_file} at {curr_dtm}")
         df.columns = ["day_int", "centerlon", "centerlat", "number_of_strikes"]
 
-        # change format of date column to YYYY-MM-DD
-        logging.info(f"Converting datetime format in {source_file}")
+        curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        logging.info(f"Converting datetime format in {source_file} at {curr_dtm}")
         df["day"] = pd.to_datetime(
             (df["day_int"][:].astype("string")), "raise", False, True
         )
 
-        # add coordinate column
-        logging.info(f"Adding geography column in {source_file}")
+        logging.info(f"Adding geography column in {source_file} at {curr_dtm}")
         df["center_point"] = (
             "POINT("
             + df["centerlon"][:].astype("string")
@@ -86,34 +80,35 @@ def main(
             + ")"
         )
 
-        # re-ordering headers
-        logging.info(f"Reordering columns in {source_file}")
+        curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        logging.info(f"Reordering columns in {source_file} at {curr_dtm}")
         df = df[["day", "number_of_strikes", "center_point"]]
 
-        logging.info(f"Transform: Saving to output file.. {target_file}")
+        curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        logging.info(f"Transform: Saving to output file.. {target_file} at {curr_dtm}")
         df.to_csv(target_file, index=False)
 
-        logging.info(f"completed processing {source_url}")
+        curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        logging.info(f"completed processing {source_url} at {curr_dtm}")
 
         logging.info(
-            f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
+            f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path} at {curr_dtm}"
         )
         upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
-        # log completion
+        curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
         logging.info(
-            "NOAA Lightning Strikes By Year process completed at "
-            + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+            f"NOAA Lightning Strikes By Year process completed at {curr_dtm}"
         )
 
     else:
 
-        # we were unable to reach the url
-        logging.info(f"Error: Unable to reach url: {source_url}")
+        curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        logging.info(f"Error: Unable to reach url: {source_url} at {curr_dtm}")
         logging.info("Process failed!")
 
 
-def gz_decompress(infile, tofile):
+def gz_decompress(infile: str, tofile: str) -> None:
     # open infile (gzip file) for read and opfile for write (decompressed)
     with open(infile, "rb") as inf, open(tofile, "w", encoding="utf8") as tof:
         # decompress the file
@@ -122,7 +117,7 @@ def gz_decompress(infile, tofile):
         tof.write(decom_str)
 
 
-def url_is_reachable(url):
+def url_is_reachable(url: str) -> str:
     # Is the URL reachable?
 
     request = urllib.request.Request(url)
@@ -135,8 +130,7 @@ def url_is_reachable(url):
         return False
 
 
-def download_file(source_url: str, source_file: pathlib.Path):
-    logging.info(f"Downloading {source_url} into {source_file}")
+def download_file(source_url: str, source_file: pathlib.Path) -> None:
     r = requests.get(source_url, stream=True)
     if r.status_code == 200:
         with open(source_file, "wb") as f:

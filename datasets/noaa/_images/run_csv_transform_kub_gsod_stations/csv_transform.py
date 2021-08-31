@@ -49,32 +49,31 @@ def main(
     # target_gcs_bucket     STRING          -> The target GCS bucket to place the output (transformed) file
     # target_gcs_path       STRING          -> The target GCS path ( within the GCS bucket ) to place the output (transformed) file
 
-    # log that process has started
-    logging.info(
-        "NOAA GSOD Stations By Year process started at "
-        + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    )
+    curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    logging.info(f"NOAA GSOD Stations By Year process started at {curr_dtm}")
 
-    logging.info(f"starting processing {source_url}")
+    curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    logging.info(f"starting processing {source_url} at {curr_dtm}")
 
     if url_is_reachable(source_url):
 
+        curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
         logging.info("creating 'files' folder")
         pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
 
+        curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
         logging.info(f"Downloading FTP file {source_url} from {ftp_host}")
         download_file_ftp(ftp_host, ftp_dir, ftp_filename, source_file, source_url)
 
-        # append to source_file (exclude first 3 lines of header)
-        logging.info(f"Removing unnecessary header in {source_file}")
+        curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        logging.info(f"Removing unnecessary header in {source_file} at {curr_dtm}")
         os.system(f"tail -n +21 {source_file}.bak > {source_file}.1")
-        # os.system(f"cat {source_file}.1 > {source_file}")
         os.system(f"sed '2d' {source_file}.1 > {source_file}")
         os.unlink(str(source_file) + ".bak")
         os.unlink(str(source_file) + ".1")
 
-        # open file as dataframe
-        logging.info(f"Opening source file {source_file}")
+        curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        logging.info(f"Opening source file {source_file} at {curr_dtm}")
         colspecs = [
             (0, 6),
             (7, 12),
@@ -90,7 +89,7 @@ def main(
         ]
         df = pd.read_fwf(str(source_file), colspecs=colspecs)
 
-        # rename the headers
+        curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
         logging.info(f"Transform: Renaming Headers.. {source_file}")
         df.columns = [
             "usaf",
@@ -110,8 +109,9 @@ def main(
         df = df[df.usaf != ""]
 
         # execute reg-ex replacements
-        logging.info(f"Transform: Executing Reg Ex.. {source_file}")
-        logging.info(f"           Executing Reg Ex.. (lat) {source_file}")
+        curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        logging.info(f"Transform: Executing Reg Ex.. {source_file} at {curr_dtm}")
+        logging.info(f"           Executing Reg Ex.. (lat) {source_file} at {curr_dtm}")
         df["lat"] = df["lat"].astype(str)
         df["lat"][:].replace("^(-[0]+)(.*)", "-$2", regex=True, inplace=True)
         df["lat"][:].replace("^(\\s+)$", "", regex=True, inplace=True)
@@ -121,7 +121,8 @@ def main(
         df["lat"][:].replace("^(-\\d+\\.\\d+[0-9])\\s+", "$1", regex=True, inplace=True)
         df["lat"][:].replace("nan", "", regex=False, inplace=True)
 
-        logging.info(f"           Executing Reg Ex.. (lon) {source_file}")
+        curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        logging.info(f"           Executing Reg Ex.. (lon) {source_file} at {curr_dtm}")
         df["lon"] = df["lon"].astype(str)
         df["lon"][:].replace("^(-[0]+)(.*)", "-$2", regex=True, inplace=True)
         df["lon"][:].replace("^(\\s+)$", "", regex=True, inplace=True)
@@ -131,53 +132,70 @@ def main(
         df["lon"][:].replace("^(-\\d+\\.\\d+[0-9])\\s+", "$1", regex=True, inplace=True)
         df["lon"][:].replace("nan", "", regex=False, inplace=True)
 
-        logging.info(f"           Executing Reg Ex.. (usaf) {source_file}")
+        curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        logging.info(
+            f"           Executing Reg Ex.. (usaf) {source_file} at {curr_dtm}"
+        )
         df["usaf"][:].replace("(\\d{1,})(\\s{1,})$", "$1", regex=True, inplace=True)
 
-        logging.info(f"           Executing Reg Ex.. (name) {source_file}")
+        curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        logging.info(
+            f"           Executing Reg Ex.. (name) {source_file} at {curr_dtm}"
+        )
         df["name"][:].replace("^\\s{1,}([a-zA-Z]\\D+)", "$1", regex=True, inplace=True)
         df["name"][:].replace("^(\\D+[a-zA-Z])\\s{1,}$", "$1", regex=True, inplace=True)
         df["name"][:].replace("^(\\s+)$", "", regex=True, inplace=True)
 
-        logging.info(f"           Executing Reg Ex.. (call) {source_file}")
+        curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        logging.info(
+            f"           Executing Reg Ex.. (call) {source_file} at {curr_dtm}"
+        )
         df["call"][:].replace("^(\\s+)$", "", regex=True, inplace=True)
         df["call"][:].replace("^([a-zA-Z]+)\\s+", "$1", regex=True, inplace=True)
 
-        logging.info(f"           Executing Reg Ex.. (elev) {source_file}")
+        curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        logging.info(
+            f"           Executing Reg Ex.. (elev) {source_file} at {curr_dtm}"
+        )
         df["elev"][:].replace("^(\\s+)$", "", regex=True, inplace=True)
 
-        logging.info(f"           Executing Reg Ex.. (state) {source_file}")
+        curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        logging.info(
+            f"           Executing Reg Ex.. (state) {source_file} at {curr_dtm}"
+        )
         df["state"][:].replace("^(\\s+)$", "", regex=True, inplace=True)
 
-        logging.info(f"           Executing Reg Ex.. (country) {source_file}")
+        curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        logging.info(
+            f"           Executing Reg Ex.. (country) {source_file} at {curr_dtm}"
+        )
         df["country"][:].replace("^(\\s+)$", "", regex=True, inplace=True)
 
-        logging.info(f"Transform: Saving to output file.. {target_file}")
+        curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        logging.info(f"Transform: Saving to output file.. {target_file} at {curr_dtm}")
         df.to_csv(target_file, index=False)
 
-        logging.info(f"completed processing {source_url}")
+        curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        logging.info(f"completed processing {source_url} at {curr_dtm}")
 
-        # pdb.set_trace()
-
+        curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
         logging.info(
-            f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
+            f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path} at {curr_dtm}"
         )
         upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
-        # log completion
-        logging.info(
-            "NOAA GSOD Stations process completed at "
-            + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-        )
+        curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        logging.info(f"NOAA GSOD Stations process completed at {curr_dtm}")
 
     else:
 
         # we were unable to reach the url
-        logging.info(f"Error: Unable to reach url: {source_url}")
+        curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        logging.info(f"Error: Unable to reach url: {source_url} at {curr_dtm}")
         logging.info("Process failed!")
 
 
-def replace_value(val):
+def replace_value(val: str) -> str:
     if val is None or len(val) == 0:
         return val
     else:
@@ -188,7 +206,7 @@ def replace_value(val):
             return val
 
 
-def replace_values_regex(df):
+def replace_values_regex(df: pd.DataFrame) -> None:
     header_names = {"checkout_time"}
 
     for dt_col in header_names:
@@ -203,7 +221,7 @@ def download_file_ftp(
     ftp_filename: str,
     local_file: pathlib.Path,
     source_url: str,
-):
+) -> None:
 
     # ftp_host      -> host ip (eg. 123.123.0.1)
     # ftp_dir       -> working directory in ftp host where file is located
@@ -214,7 +232,6 @@ def download_file_ftp(
     ftp_conn = FTP(ftp_host)
     ftp_conn.login("", "")
     ftp_conn.cwd(ftp_dir)
-    # ftp_conn.encoding = 'utf-8'
 
     try:
         bak_local_file = str(local_file) + ".bak"
@@ -232,7 +249,7 @@ def download_file_ftp(
         logging.error(f"Error saving output file: {e}.")
 
 
-def gz_decompress(infile, tofile):
+def gz_decompress(infile: str, tofile: str) -> None:
     # open infile (gzip file) for read and opfile for write (decompressed)
     with open(infile, "rb") as inf, open(tofile, "w", encoding="utf8") as tof:
         # decompress the file
@@ -241,7 +258,7 @@ def gz_decompress(infile, tofile):
         tof.write(decom_str)
 
 
-def url_is_reachable(url):
+def url_is_reachable(url: str) -> None:
     # Is the URL reachable?
 
     request = urllib.request.Request(url)
@@ -254,8 +271,7 @@ def url_is_reachable(url):
         return False
 
 
-def download_file(source_url: str, source_file: pathlib.Path):
-    logging.info(f"Downloading {source_url} into {source_file}")
+def download_file(source_url: str, source_file: pathlib.Path) -> None:
     r = requests.get(source_url, stream=True)
     if r.status_code == 200:
         with open(source_file, "wb") as f:
