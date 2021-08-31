@@ -17,7 +17,6 @@ import gzip
 import logging
 import os
 import pathlib
-import pdb
 import urllib.request
 
 import pandas as pd
@@ -72,11 +71,12 @@ def main(
 
         curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
         logging.info(f"Converting datetime format in {source_file} at {curr_dtm}")
-        df["day"] = pd.to_datetime(
-                        (df["day_int"][:].astype("string") + '000000'), "raise", False, True
-                    ).astype(str) + ' 00:00:00'
-
-        # pdb.set_trace()
+        df["day"] = (
+            pd.to_datetime(
+                (df["day_int"][:].astype("string") + "000000"), "raise", False, True
+            ).astype(str)
+            + " 00:00:00"
+        )
 
         logging.info(f"Adding geography column in {source_file} at {curr_dtm}")
         df["center_point"] = (
