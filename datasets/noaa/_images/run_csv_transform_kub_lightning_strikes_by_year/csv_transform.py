@@ -19,6 +19,7 @@ import os
 import pathlib
 import urllib.request
 
+import pdb
 import pandas as pd
 import requests
 from google.cloud import storage
@@ -36,6 +37,10 @@ def main(
     logging.info(f"NOAA Lightning Strikes By Year process started at {curr_dtm}")
 
     if url_is_reachable(source_url):
+
+        curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        logging.info("creating 'files' folder")
+        pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
 
         source_file_zipped = str(source_file) + ".gz"
         source_file_unzipped = str(source_file) + ".1"
@@ -68,8 +73,10 @@ def main(
         curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
         logging.info(f"Converting datetime format in {source_file} at {curr_dtm}")
         df["day"] = pd.to_datetime(
-            (df["day_int"][:].astype("string")), "raise", False, True
-        )
+                        (df["day_int"][:].astype("string") + '000000'), "raise", False, True
+                    ).astype(str) + ' 00:00:00'
+
+        # pdb.set_trace()
 
         logging.info(f"Adding geography column in {source_file} at {curr_dtm}")
         df["center_point"] = (
