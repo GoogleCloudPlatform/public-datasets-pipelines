@@ -13,8 +13,10 @@
 # limitations under the License.
 
 
+from airflow.contrib.operators import kubernetes_pod_operator
 from airflow import DAG
-from airflow.contrib.operators import gcs_to_bq, kubernetes_pod_operator
+from airflow.contrib.operators import gcs_to_bq
+
 
 default_args = {
     "owner": "Google",

@@ -33,9 +33,7 @@ def main(
 ):
 
     curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    logging.info(
-        f"NOAA Lightning Strikes By Year process started at {curr_dtm}"
-    )
+    logging.info(f"NOAA Lightning Strikes By Year process started at {curr_dtm}")
 
     if url_is_reachable(source_url):
 
@@ -51,7 +49,9 @@ def main(
         gz_decompress(source_file_zipped, source_file_unzipped)
 
         curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-        logging.info(f"Removing unnecessary header in {source_file_unzipped} at {curr_dtm}")
+        logging.info(
+            f"Removing unnecessary header in {source_file_unzipped} at {curr_dtm}"
+        )
         os.system(f"echo 'DATE,LONGITUDE,LATITUDE,TOTAL_COUNT' > {source_file}")
         os.system(f"tail -n +4 {source_file_unzipped} >> {source_file}")
         os.unlink(source_file_unzipped)
@@ -97,9 +97,7 @@ def main(
         upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
         curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-        logging.info(
-            f"NOAA Lightning Strikes By Year process completed at {curr_dtm}"
-        )
+        logging.info(f"NOAA Lightning Strikes By Year process completed at {curr_dtm}")
 
     else:
 
