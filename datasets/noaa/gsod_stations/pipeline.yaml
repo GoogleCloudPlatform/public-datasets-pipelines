@@ -138,4 +138,4 @@ dag:
             mode: "NULLABLE"
 
   graph_paths:
-    - noaa_gsod_stations_transform_csv >> load_noaa_gsod_stations_to_bq
+    - transform_csv >> load_to_bq

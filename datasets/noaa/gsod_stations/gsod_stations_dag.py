@@ -33,8 +33,8 @@ with DAG(
 ) as dag:
 
     # Run CSV transform within kubernetes pod
-    noaa_gsod_stations_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
-        task_id="noaa_gsod_stations_transform_csv",
+    transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+        task_id="transform_csv",
         name="gsod_stations",
         namespace="default",
         image_pull_policy="Always",
@@ -53,8 +53,8 @@ with DAG(
     )
 
     # Task to load CSV data to a BigQuery table
-    load_noaa_gsod_stations_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
-        task_id="load_noaa_gsod_stations_to_bq",
+    load_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+        task_id="load_to_bq",
         bucket="{{ var.json.shared.composer_bucket }}",
         source_objects=["data/noaa/gsod_stations/data_output.csv"],
         source_format="CSV",
@@ -76,4 +76,4 @@ with DAG(
         ],
     )
 
-    noaa_gsod_stations_transform_csv >> load_noaa_gsod_stations_to_bq
+    transform_csv >> load_to_bq
