@@ -23,7 +23,7 @@ dataset:
   friendly_name: austin_bikeshare
 
   # A short, descriptive summary of the dataset.
-  description: austin-bikeshare based datasets
+  description: Austin Bikeshare dataset
 
   # A list of sources the dataset is derived from, using the YAML list syntax.
   dataset_sources: ~
@@ -55,4 +55,4 @@ resources:
     #   description   (A user-friendly description of the dataset)
     #   location      (The geographic location where the dataset should reside)
     dataset_id: austin_bikeshare
-    description: austin bikeshare stations
+    description: Austin Bikeshare dataset

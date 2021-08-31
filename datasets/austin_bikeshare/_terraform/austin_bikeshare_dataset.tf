@@ -18,7 +18,7 @@
 resource "google_bigquery_dataset" "austin_bikeshare" {
   dataset_id  = "austin_bikeshare"
   project     = var.project_id
-  description = "austin bikeshare stations"
+  description = "Austin Bikeshare dataset"
 }
 
 output "bigquery_dataset-austin_bikeshare-dataset_id" {

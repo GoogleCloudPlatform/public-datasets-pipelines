@@ -45,8 +45,11 @@ with DAG(
             "TARGET_FILE": "files/data_output.csv",
             "TARGET_GCS_BUCKET": "{{ var.json.shared.composer_bucket }}",
             "TARGET_GCS_PATH": "data/austin_bikeshare/bikeshare_stations/data_output.csv",
+            "PIPELINE_NAME": "bikeshare_stations",
+            "CSV_HEADERS": '["station_id","name","status","address","alternate_name","city_asset_number","property_type","number_of_docks","power_type","footprint_length","footprint_width","notes","council_district","modified_date"]',
+            "RENAME_MAPPINGS": '{"Kiosk ID": "station_id","Kiosk Name": "name","Kiosk Status": "status","Address": "address","Alternate Name": "alternate_name","City Asset Number": "city_asset_number","Property Type": "property_type","Number of Docks": "number_of_docks","Power Type": "power_type","Footprint Length": "footprint_length","Footprint Width": "footprint_width","Notes": "notes","Council District": "council_district","Modified Date": "modified_date"}',
         },
-        resources={"request_memory": "4G", "request_cpu": "2"},
+        resources={"request_memory": "4G", "request_cpu": "1"},
     )
 
     # Task to load CSV data to a BigQuery table
