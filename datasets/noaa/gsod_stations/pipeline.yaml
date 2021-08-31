@@ -46,7 +46,7 @@ dag:
 
       args:
 
-        task_id: "noaa_gsod_stations_transform_csv"
+        task_id: "transform_csv"
 
         # The name of the pod in which the task will run. This will be used (plus a random suffix) to generate a pod id
         name: "gsod_stations"
@@ -80,7 +80,7 @@ dag:
       description: "Task to load CSV data to a BigQuery table"
 
       args:
-        task_id: "load_noaa_gsod_stations_to_bq"
+        task_id: "load_to_bq"
 
         # The GCS bucket where the CSV file is located in.
         bucket: "{{ var.json.shared.composer_bucket }}"
