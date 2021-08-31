@@ -272,7 +272,7 @@ def copy_custom_callables_to_airflow_dags_folder(
             f"  Source:\n  {cwd / 'custom'}\n\n"
             f"  Destination:\n  {target}\n"
         )
-        run_gsutil_cmd(["cp", "-r", "custom", target], cwd=cwd)
+        run_gsutil_cmd(["-m", "cp", "-r", "custom", target], cwd=cwd)
 
 
 def check_existence_of_variables_file(file_path: pathlib.Path):
