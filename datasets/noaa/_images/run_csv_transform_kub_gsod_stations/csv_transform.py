@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import datetime
 import gzip
 import logging
 import os
@@ -46,7 +45,7 @@ def main(
     # target_gcs_bucket     STRING          -> The target GCS bucket to place the output (transformed) file
     # target_gcs_path       STRING          -> The target GCS path ( within the GCS bucket ) to place the output (transformed) file
 
-    logging.info(f"NOAA GSOD Stations By Year process started")
+    logging.info("NOAA GSOD Stations By Year process started")
 
     logging.info(f"starting processing {source_url}")
 
@@ -66,17 +65,17 @@ def main(
 
         logging.info(f"Opening source file {source_file}")
         colspecs = [
-            (0, 6),     # usaf
-            (7, 12),    # wban
-            (13, 42),   # name
-            (43, 45),   # country
-            (48, 50),   # state
-            (51, 56),   # call
-            (57, 64),   # lat
-            (65, 74),   # lon
-            (75, 81),   # elev
-            (82, 90),   # begin
-            (91, 99),   # end
+            (0, 6),  # usaf
+            (7, 12),  # wban
+            (13, 42),  # name
+            (43, 45),  # country
+            (48, 50),  # state
+            (51, 56),  # call
+            (57, 64),  # lat
+            (65, 74),  # lon
+            (75, 81),  # elev
+            (82, 90),  # begin
+            (91, 99),  # end
         ]
         df = pd.read_fwf(str(source_file), colspecs=colspecs)
 
@@ -120,37 +119,25 @@ def main(
         df["lon"][:].replace("^(-\\d+\\.\\d+[0-9])\\s+", "$1", regex=True, inplace=True)
         df["lon"][:].replace("nan", "", regex=False, inplace=True)
 
-        logging.info(
-            f"           Executing Reg Ex.. (usaf) {source_file}"
-        )
+        logging.info(f"           Executing Reg Ex.. (usaf) {source_file}")
         df["usaf"][:].replace("(\\d{1,})(\\s{1,})$", "$1", regex=True, inplace=True)
 
-        logging.info(
-            f"           Executing Reg Ex.. (name) {source_file}"
-        )
+        logging.info(f"           Executing Reg Ex.. (name) {source_file}")
         df["name"][:].replace("^\\s{1,}([a-zA-Z]\\D+)", "$1", regex=True, inplace=True)
         df["name"][:].replace("^(\\D+[a-zA-Z])\\s{1,}$", "$1", regex=True, inplace=True)
         df["name"][:].replace("^(\\s+)$", "", regex=True, inplace=True)
 
-        logging.info(
-            f"           Executing Reg Ex.. (call) {source_file}"
-        )
+        logging.info(f"           Executing Reg Ex.. (call) {source_file}")
         df["call"][:].replace("^(\\s+)$", "", regex=True, inplace=True)
         df["call"][:].replace("^([a-zA-Z]+)\\s+", "$1", regex=True, inplace=True)
 
-        logging.info(
-            f"           Executing Reg Ex.. (elev) {source_file}"
-        )
+        logging.info(f"           Executing Reg Ex.. (elev) {source_file}")
         df["elev"][:].replace("^(\\s+)$", "", regex=True, inplace=True)
 
-        logging.info(
-            f"           Executing Reg Ex.. (state) {source_file}"
-        )
+        logging.info(f"           Executing Reg Ex.. (state) {source_file}")
         df["state"][:].replace("^(\\s+)$", "", regex=True, inplace=True)
 
-        logging.info(
-            f"           Executing Reg Ex.. (country) {source_file}"
-        )
+        logging.info(f"           Executing Reg Ex.. (country) {source_file}")
         df["country"][:].replace("^(\\s+)$", "", regex=True, inplace=True)
 
         logging.info(f"Transform: Saving to output file.. {target_file}")
@@ -163,7 +150,7 @@ def main(
         )
         upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
-        logging.info(f"NOAA GSOD Stations process completed")
+        logging.info("NOAA GSOD Stations process completed")
 
     else:
 
@@ -185,7 +172,7 @@ def replace_values_regex(df: pd.DataFrame) -> None:
     header_names = {"checkout_time"}
 
     for dt_col in header_names:
-        if (df[dt_col] is not None) & (df[dt_col].str.len() > 0) :
+        if (df[dt_col] is not None) & (df[dt_col].str.len() > 0):
             df[dt_col] = df[dt_col].apply(replace_value)
 
 

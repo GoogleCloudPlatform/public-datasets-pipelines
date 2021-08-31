@@ -31,7 +31,7 @@ def main(
     target_gcs_path: str,
 ):
 
-    logging.info(f"NOAA Lightning Strikes By Year process started")
+    logging.info("NOAA Lightning Strikes By Year process started")
 
     if url_is_reachable(source_url):
 
@@ -82,10 +82,12 @@ def main(
         df.to_csv(target_file, index=False)
 
         logging.info(f"completed processing {source_url}")
-        logging.info(f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path} at {curr_dtm}")
+        logging.info(
+            f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
+        )
         upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
-        logging.info(f"NOAA Lightning Strikes By Year process completed")
+        logging.info("NOAA Lightning Strikes By Year process completed")
 
     else:
 
