@@ -20,7 +20,7 @@ resource "google_bigquery_table" "inpatient_charges_2011" {
   dataset_id = "cms_medicare"
   table_id   = "inpatient_charges_2011"
 
-  description = ":CMS-Medicare Inpatient Charges 2011"
+  description = "CMS Medicare Inpatient Charges 2011"
 
 
 

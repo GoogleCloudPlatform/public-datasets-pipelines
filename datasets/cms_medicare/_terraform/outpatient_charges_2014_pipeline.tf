@@ -15,12 +15,12 @@
  */
 
 
-resource "google_bigquery_table" "hospital_general_info" {
+resource "google_bigquery_table" "outpatient_charges_2014" {
   project    = var.project_id
   dataset_id = "cms_medicare"
-  table_id   = "hospital_general_info"
+  table_id   = "outpatient_charges_2014"
 
-  description = "CMS Medicare Hospital General Info"
+  description = "CMS Medicare Outpatient Charges 2014"
 
 
 
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "hospital_general_info" {
   ]
 }
 
-output "bigquery_table-hospital_general_info-table_id" {
-  value = google_bigquery_table.hospital_general_info.table_id
+output "bigquery_table-outpatient_charges_2014-table_id" {
+  value = google_bigquery_table.outpatient_charges_2014.table_id
 }
 
-output "bigquery_table-hospital_general_info-id" {
-  value = google_bigquery_table.hospital_general_info.id
+output "bigquery_table-outpatient_charges_2014-id" {
+  value = google_bigquery_table.outpatient_charges_2014.id
 }

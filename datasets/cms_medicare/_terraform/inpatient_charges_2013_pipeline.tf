@@ -15,12 +15,12 @@
  */
 
 
-resource "google_bigquery_table" "hospital_general_info" {
+resource "google_bigquery_table" "inpatient_charges_2013" {
   project    = var.project_id
   dataset_id = "cms_medicare"
-  table_id   = "hospital_general_info"
+  table_id   = "inpatient_charges_2013"
 
-  description = "CMS Medicare Hospital General Info"
+  description = "CMS Medicare Inpatient Charges 2013"
 
 
 
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "hospital_general_info" {
   ]
 }
 
-output "bigquery_table-hospital_general_info-table_id" {
-  value = google_bigquery_table.hospital_general_info.table_id
+output "bigquery_table-inpatient_charges_2013-table_id" {
+  value = google_bigquery_table.inpatient_charges_2013.table_id
 }
 
-output "bigquery_table-hospital_general_info-id" {
-  value = google_bigquery_table.hospital_general_info.id
+output "bigquery_table-inpatient_charges_2013-id" {
+  value = google_bigquery_table.inpatient_charges_2013.id
 }

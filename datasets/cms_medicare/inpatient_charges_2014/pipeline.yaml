@@ -17,17 +17,18 @@ resources:
 
   - type: bigquery_table
     # Required Properties:
-    table_id: inpatient_charges_2011
+    table_id: inpatient_charges_2014
 
     # Description of the table
-    description: "CMS Medicare Inpatient Charges 2011"
+    description: "CMS Medicare Inpatient Charges 2014"
 
 dag:
 
+  # [Required] Specify the Airflow version of the operators used by the DAG.
   airflow_version: 1
 
   initialize:
-    dag_id: inpatient_charges_2011
+    dag_id: inpatient_charges_2014
     default_args:
       owner: "Google"
 
@@ -35,7 +36,7 @@ dag:
       depends_on_past: False
       start_date: '2021-03-01'
     max_active_runs: 1
-    schedule_interval: "@daily"  # run once a week at Sunday 12am
+    schedule_interval: "@daily"
     catchup: False
     default_view: graph
 
@@ -48,11 +49,11 @@ dag:
 
       args:
 
-        task_id: "inpatient_2011_transform_csv"
+        task_id: "inpatient_2014_transform_csv"
         startup_timeout_seconds: 600
 
         # The name of the pod in which the task will run. This will be used (plus a random suffix) to generate a pod id
-        name: "cms_medicare_inpatient_charges_2011"
+        name: "cms_medicare_inpatient_charges_2014"
 
         # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
         namespace: "default"
@@ -64,16 +65,16 @@ dag:
 
         # Set the environment variables you need initialized in the container. Use these as input variables for the script your container is expected to perform.
         env_vars:
-          SOURCE_URL: "https://www.cms.gov/Research-Statistics-Data-and-Systems/Statistics-Trends-and-Reports/Medicare-Provider-Charge-Data/Downloads/Inpatient_Data_2011_CSV.zip"
+          SOURCE_URL: "https://www.cms.gov/Research-Statistics-Data-and-Systems/Statistics-Trends-and-Reports/Medicare-Provider-Charge-Data/Downloads/Inpatient_Data_2014_CSV.zip"
           SOURCE_FILE: "files/data.zip"
           TARGET_FILE: "files/data_output.csv"
           TARGET_GCS_BUCKET: "{{ var.json.shared.composer_bucket }}"
-          TARGET_GCS_PATH: "data/cms_medicare/inpatient_charges_2011/data_output.csv"
+          TARGET_GCS_PATH: "data/cms_medicare/inpatient_charges_2014/data_output.csv"
           CSV_HEADERS: >-
            ["provider_id","provider_name","provider_street_address","provider_city","provider_state","provider_zipcode","drg_definition","hospital_referral_region_description","total_discharges","average_covered_charges","average_total_payments","average_medicare_payments"]
           RENAME_MAPPINGS: >-
            {"Provider Id": "provider_id","Provider Name": "provider_name","Provider Street Address": "provider_street_address","Provider City": "provider_city","Provider State": "provider_state","Provider Zip Code": "provider_zipcode","DRG Definition": "drg_definition","Hospital Referral Region (HRR) Description": "hospital_referral_region_description","Total Discharges": "total_discharges","Average Covered Charges": "average_covered_charges","Average Total Payments": "average_total_payments","Average Medicare Payments": "average_medicare_payments"}
-          PIPELINE_NAME: "inpatient_charges_2011"
+          PIPELINE_NAME: "inpatient_charges_2014"
 
         # Set resource limits for the pod here. For resource units in Kubernetes, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes
         resources:
@@ -84,15 +85,15 @@ dag:
       description: "Task to load CSV data to a BigQuery table"
 
       args:
-        task_id: "load_inpatient_2011_to_bq"
+        task_id: "load_inpatient_2014_to_bq"
 
         # The GCS bucket where the CSV file is located in.
         bucket: "{{ var.json.shared.composer_bucket }}"
 
         # The GCS object path for the CSV file
-        source_objects: ["data/cms_medicare/inpatient_charges_2011/data_output.csv"]
+        source_objects: ["data/cms_medicare/inpatient_charges_2014/data_output.csv"]
         source_format: "CSV"
-        destination_project_dataset_table: "cms_medicare.inpatient_charges_2011"
+        destination_project_dataset_table: "cms_medicare.inpatient_charges_2014"
 
         # Use this if your CSV file contains a header row
         skip_leading_rows: 1
@@ -157,4 +158,4 @@ dag:
             mode: "NULLABLE"
 
   graph_paths:
-    - "inpatient_2011_transform_csv >> load_inpatient_2011_to_bq"
+    - "inpatient_2014_transform_csv >> load_inpatient_2014_to_bq"
