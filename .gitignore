@@ -25,3 +25,6 @@ tmp
 .test
 .staging
 .prod
+
+# ignore nested Pipfiles 
+/datasets/**/Pipfile
