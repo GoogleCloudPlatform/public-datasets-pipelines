@@ -1,0 +1,137 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+resources:
+
+  - type: bigquery_table
+    # Required Properties:
+    table_id: advertiser_declared_stats
+
+    # Description of the table
+    description: "Certain California and New Zealand advertisers are required to submit additional data about themselves. The advertiser is responsible for the accuracy of this information, which Google has not confirmed. For California, this information is provided from our express notification process required for certain California advertisers, which is separate from our verification process. For New Zealand, this information is provided during our verification process."
+
+dag:
+  airflow_version: 1
+  initialize:
+    dag_id: advertiser_declared_stats
+    default_args:
+      owner: "Google"
+
+      # When set to True, keeps a task from getting triggered if the previous schedule for the task hasn’t succeeded
+      depends_on_past: False
+      start_date: "2021-03-01"
+    max_active_runs: 1
+    schedule_interval: "@daily"
+    catchup: False
+    default_view: graph
+
+  tasks:
+    - operator: "KubernetesPodOperator"
+
+      # Task description
+      description: "Run CSV transform within kubernetes pod"
+
+      args:
+
+        task_id: "advertiser_declared_stats_transform_csv"
+
+        startup_timeout_seconds: 600
+
+        # The name of the pod in which the task will run. This will be used (plus a random suffix) to generate a pod id
+        name: "advertiser_declared_stats"
+
+        # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment"s resources without starving other pipelines.
+        namespace: "default"
+
+        image_pull_policy: "Always"
+
+        # Docker images will be built and pushed to GCR by default whenever the `scripts/generate_dag.py` is run. To skip building and pushing images, use the optional `--skip-builds` flag.
+        image: "{{ var.json.google_political_ads.container_registry.run_csv_transform_kub }}"
+
+        # Set the environment variables you need initialized in the container. Use these as input variables for the script your container is expected to perform.
+        env_vars:
+          SOURCE_URL: "https://storage.googleapis.com/transparencyreport/google-political-ads-transparency-bundle.zip"
+          SOURCE_FILE: "files/data.zip"
+          FILE_NAME: "google-political-ads-transparency-bundle/*advertiser-declared-stats*"
+          TARGET_FILE: "files/data_output.csv"
+          TARGET_GCS_BUCKET: "{{ var.json.shared.composer_bucket }}"
+          TARGET_GCS_PATH: "data/google_political_ads/advertiser_declared_stats/data_output.csv"
+          PIPELINE_NAME: "advertiser_declared_stats"
+          CSV_HEADERS: >-
+            ["advertiser_id","advertiser_declared_name","advertiser_declared_regulatory_id","advertiser_declared_scope","advertiser_declared_promoter_name","advertiser_declared_promoter_address"]
+          RENAME_MAPPINGS: >-
+            {"Advertiser_ID" : "advertiser_id","Advertiser_Declared_Name" : "advertiser_declared_name","Advertiser_Declared_Regulatory_ID" : "advertiser_declared_regulatory_id","Advertiser_Declared_Scope" : "advertiser_declared_scope","Advertiser_Declared_Promoter_Name" : "advertiser_declared_promoter_name","Advertiser_Declared_Promoter_Address" : "advertiser_declared_promoter_address"}
+
+
+        # Set resource limits for the pod here. For resource units in Kubernetes, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes
+        resources:
+          request_memory: "2G"
+          request_cpu: "1"
+
+    - operator: "GoogleCloudStorageToBigQueryOperator"
+      description: "Task to load CSV data to a BigQuery table"
+
+      args:
+        task_id: "load_advertiser_declared_stats_to_bq"
+
+        # The GCS bucket where the CSV file is located in.
+        bucket: "{{ var.json.shared.composer_bucket }}"
+
+        # The GCS object path for the CSV file
+        source_objects: ["data/google_political_ads/advertiser_declared_stats/data_output.csv"]
+        source_format: "CSV"
+        destination_project_dataset_table: "google_political_ads.advertiser_declared_stats"
+
+        # Use this if your CSV file contains a header row
+        skip_leading_rows: 1
+
+        # How to write data to the table: overwrite, append, or write if empty
+        # See https://cloud.google.com/bigquery/docs/reference/auditlogs/rest/Shared.Types/WriteDisposition
+        write_disposition: "WRITE_TRUNCATE"
+
+        # The BigQuery table schema based on the CSV file. For more info, see
+        # https://cloud.google.com/bigquery/docs/schemas.
+        # Always use snake_case and lowercase for column names, and be explicit,
+        # i.e. specify modes for all columns.
+
+        schema_fields:
+          - name: "advertiser_id"
+            type: "string"
+            description: "ID of the advertiser who purchased the ad."
+            mode: "nullable"
+          - name: "advertiser_declared_name"
+            type: "string"
+            description: "The advertiser’s committee declared name."
+            mode: "nullable"
+          - name: "advertiser_declared_regulatory_id"
+            type: "string"
+            description: "Committee declared identification number."
+            mode: "nullable"
+          - name: "advertiser_declared_scope"
+            type: "string"
+            description: "Committee-provided information about the candidate and office or ballot proposition and jurisdiction to which the advertisement refers which is separate from our verification process."
+            mode: "nullable"
+          - name: "advertiser_declared_promoter_name"
+            type: "string"
+            description: "The New Zealand advertiser’s declared Promoter Statement name."
+            mode: "nullable"
+          - name: "advertiser_declared_promoter_address"
+            type: "string"
+            description: "The New Zealand advertiser’s declared Promoter Statement address."
+            mode: "nullable"
+
+
+  graph_paths:
+    - "advertiser_declared_stats_transform_csv >> load_advertiser_declared_stats_to_bq"

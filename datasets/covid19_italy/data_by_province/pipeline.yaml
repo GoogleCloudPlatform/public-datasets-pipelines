@@ -1,0 +1,149 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+resources:
+
+  - type: bigquery_table
+    # Required Properties:
+    table_id: data_by_province
+
+    # Description of the table
+    description: "COVID-19 Italy Data By Province"
+
+dag:
+
+  airflow_version: 1
+
+  initialize:
+    dag_id: data_by_province
+    default_args:
+      owner: "Google"
+
+      # When set to True, keeps a task from getting triggered if the previous schedule for the task hasn’t succeeded
+      depends_on_past: False
+      start_date: '2021-04-01'
+    max_active_runs: 1
+    schedule_interval: "@daily"
+    catchup: False
+    default_view: graph
+
+  tasks:
+
+    - operator: "KubernetesPodOperator"
+
+      # Task description
+      description: "Run CSV transform within kubernetes pod"
+
+      args:
+
+        task_id: "data_by_province_transform_csv"
+        startup_timeout_seconds: 600
+
+
+        # The name of the pod in which the task will run. This will be used (plus a random suffix) to generate a pod id
+        name: "covid19_italy_data_by_province"
+
+        # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
+        namespace: "default"
+
+        image_pull_policy: "Always"
+
+        # Docker images will be built and pushed to GCR by default whenever the `scripts/generate_dag.py` is run. To skip building and pushing images, use the optional `--skip-builds` flag.
+        image: "{{ var.json.covid19_italy.container_registry.run_csv_transform_kub }}"
+
+        # Set the environment variables you need initialized in the container. Use these as input variables for the script your container is expected to perform.
+        env_vars:
+          SOURCE_URL: "https://raw.githubusercontent.com/pcm-dpc/COVID-19/master/dati-province/dpc-covid19-ita-province.csv"
+          SOURCE_FILE: "files/data.csv"
+          TARGET_FILE: "files/data_output.csv"
+          TARGET_GCS_BUCKET: "{{ var.json.shared.composer_bucket }}"
+          TARGET_GCS_PATH: "data/covid19_italy/data_by_province/data_output.csv"
+          CSV_HEADERS: >-
+           ["date","country","region_code","region_name","province_code","province_name","province_abbreviation","latitude","longitude","location_geom","confirmed_cases","note"]
+          RENAME_MAPPINGS: >-
+           {"data": "date","stato": "country","codice_regione": "region_code","denominazione_regione": "region_name","lat": "latitude","long": "longitude","codice_provincia": "province_code","denominazione_provincia": "province_name","sigla_provincia": "province_abbreviation","totale_casi": "confirmed_cases","note": "note"}
+          PIPELINE_NAME: "data_by_province"
+
+        # Set resource limits for the pod here. For resource units in Kubernetes, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes
+        resources:
+          request_memory: "4G"
+          request_cpu: "1"
+
+    - operator: "GoogleCloudStorageToBigQueryOperator"
+      description: "Task to load CSV data to a BigQuery table"
+
+      args:
+        task_id: "load_data_by_province_to_bq"
+
+        # The GCS bucket where the CSV file is located in.
+        bucket: "{{ var.json.shared.composer_bucket }}"
+
+        # The GCS object path for the CSV file
+        source_objects: ["data/covid19_italy/data_by_province/data_output.csv"]
+        source_format: "CSV"
+        destination_project_dataset_table: "covid19_italy.data_by_province"
+
+        # Use this if your CSV file contains a header row
+        skip_leading_rows: 1
+
+        # How to write data to the table: overwrite, append, or write if empty
+        # See https://cloud.google.com/bigquery/docs/reference/auditlogs/rest/Shared.Types/WriteDisposition
+        write_disposition: "WRITE_TRUNCATE"
+
+        # The BigQuery table schema based on the CSV file. For more info, see
+        # https://cloud.google.com/bigquery/docs/schemas.
+        # Always use snake_case and lowercase for column names, and be explicit,
+        # i.e. specify modes for all columns.
+        # types: "INTEGER", "TIMESTAMP", "STRING"
+        schema_fields:
+          - name: "date"
+            type: "TIMESTAMP"
+            mode: "NULLABLE"
+          - name: "country"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "region_code"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "name"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "province_code"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "province_name"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "province_abbreviation"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "latitude"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "longitude"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "location_geom"
+            type: "GEOGRAPHY"
+            mode: "NULLABLE"
+          - name: "confirmed_cases"
+            type: "INTEGER"
+            mode: "NULLABLE"
+          - name: "note"
+            type: "STRING"
+            mode: "NULLABLE"
+
+  graph_paths:
+    - "data_by_province_transform_csv >> load_data_by_province_to_bq"

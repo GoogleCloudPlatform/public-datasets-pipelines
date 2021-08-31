@@ -138,8 +138,9 @@ def generate_shared_variables_file(env: str) -> None:
     shared_variables_file = pathlib.Path(
         PROJECT_ROOT / f".{env}" / "datasets" / "shared_variables.json"
     )
-    shared_variables_file.touch()
-    shared_variables_file.write_text("{}", encoding="utf-8")
+    if not shared_variables_file.exists():
+        shared_variables_file.touch()
+        shared_variables_file.write_text("{}", encoding="utf-8")
 
 
 def dag_init(config: dict) -> dict:

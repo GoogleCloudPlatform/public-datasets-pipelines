@@ -1,0 +1,189 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+resources:
+
+  - type: bigquery_table
+    # Required Properties:
+    table_id: advertiser_stats
+
+    # Description of the table
+    description: "This table contains the information about advertisers who have run an election ad on Google Ads Services with at least one impression. The table's primary key is advertiser_id. This table relates to the others in this dataset, with the following connections between columns: advertiser_id is referenced from: advertiser_weekly_spend.advertiser_id campaign_targeting.advertiser_id creative_stats.advertiser_id advertiser_name is referenced from: advertiser_weekly_spend.advertiser_name campaign_targeting.advertiser_name advertiser_id.advertiser_name"
+
+dag:
+  airflow_version: 1
+  initialize:
+    dag_id: advertiser_stats
+    default_args:
+      owner: "Google"
+
+      # When set to True, keeps a task from getting triggered if the previous schedule for the task hasn’t succeeded
+      depends_on_past: False
+      start_date: '2021-03-01'
+    max_active_runs: 1
+    schedule_interval: "@daily"
+    catchup: False
+    default_view: graph
+
+  tasks:
+    - operator: "KubernetesPodOperator"
+
+      # Task description
+      description: "Run CSV transform within kubernetes pod"
+
+      args:
+
+        task_id: "advertiser_stats_transform_csv"
+
+        startup_timeout_seconds: 600
+
+        # The name of the pod in which the task will run. This will be used (plus a random suffix) to generate a pod id
+        name: "advertiser_stats"
+
+        # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
+        namespace: "default"
+
+        image_pull_policy: "Always"
+
+        # Docker images will be built and pushed to GCR by default whenever the `scripts/generate_dag.py` is run. To skip building and pushing images, use the optional `--skip-builds` flag.
+        image: "{{ var.json.google_political_ads.container_registry.run_csv_transform_kub }}"
+
+        # Set the environment variables you need initialized in the container. Use these as input variables for the script your container is expected to perform.
+        env_vars:
+          SOURCE_URL: "https://storage.googleapis.com/transparencyreport/google-political-ads-transparency-bundle.zip"
+          SOURCE_FILE: "files/data.zip"
+          FILE_NAME: "google-political-ads-transparency-bundle/google-political-ads-advertiser-stats.csv"
+          TARGET_FILE: "files/data_output.csv"
+          TARGET_GCS_BUCKET: "{{ var.json.shared.composer_bucket }}"
+          TARGET_GCS_PATH: "data/google_political_ads/advertiser_stats/data_output.csv"
+          PIPELINE_NAME: "advertiser_stats"
+          CSV_HEADERS: >-
+            ["advertiser_id","advertiser_name","public_ids_list","regions","elections","total_creatives","spend_usd","spend_eur","spend_inr","spend_bgn","spend_hrk","spend_czk","spend_dkk","spend_huf","spend_pln","spend_ron","spend_sek","spend_gbp","spend_nzd"]
+          RENAME_MAPPINGS: >-
+            {"Advertiser_ID": "advertiser_id","Advertiser_Name": "advertiser_name","Public_IDs_List": "public_ids_list","Regions": "regions","Elections": "elections","Total_Creatives": "total_creatives","Spend_USD": "spend_usd","Spend_EUR": "spend_eur","Spend_INR": "spend_inr","Spend_BGN": "spend_bgn","Spend_HRK": "spend_hrk","Spend_CZK": "spend_czk","Spend_DKK": "spend_dkk","Spend_HUF": "spend_huf","Spend_PLN": "spend_pln","Spend_RON": "spend_ron","Spend_SEK": "spend_sek","Spend_GBP": "spend_gbp","Spend_NZD": "spend_nzd"}
+
+
+        # Set resource limits for the pod here. For resource units in Kubernetes, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes
+        resources:
+          request_memory: "2G"
+          request_cpu: "1"
+
+    - operator: "GoogleCloudStorageToBigQueryOperator"
+      description: "Task to load CSV data to a BigQuery table"
+
+      args:
+        task_id: "load_advertiser_stats_to_bq"
+
+        # The GCS bucket where the CSV file is located in.
+        bucket: "{{ var.json.shared.composer_bucket }}"
+
+        # The GCS object path for the CSV file
+        source_objects: ["data/google_political_ads/advertiser_stats/data_output.csv"]
+        source_format: "CSV"
+        destination_project_dataset_table: "google_political_ads.advertiser_stats"
+
+        # Use this if your CSV file contains a header row
+        skip_leading_rows: 1
+
+        # How to write data to the table: overwrite, append, or write if empty
+        # See https://cloud.google.com/bigquery/docs/reference/auditlogs/rest/Shared.Types/WriteDisposition
+        write_disposition: "WRITE_TRUNCATE"
+
+        # The BigQuery table schema based on the CSV file. For more info, see
+        # https://cloud.google.com/bigquery/docs/schemas.
+        # Always use snake_case and lowercase for column names, and be explicit,
+        # i.e. specify modes for all columns.
+
+        schema_fields:
+          - name: "advertiser_id"
+            type: "string"
+            description: "Unique ID for an advertiser verified to run election ads on Google Ads Services."
+            mode: "nullable"
+          - name: "advertiser_name"
+            type: "string"
+            description: "Name of advertiser."
+            mode: "nullable"
+          - name: "public_ids_list"
+            type: "string"
+            description: "List of public IDs used to identify the advertiser if available."
+            mode: "nullable"
+          - name: "regions"
+            type: "string"
+            description: "The list of regions where the ads of this advertiser were served"
+            mode: "nullable"
+          - name: "elections"
+            type: "string"
+            description: "The list of elections that this advertiser participated in based on the regions."
+            mode: "nullable"
+          - name: "total_creatives"
+            type: "integer"
+            description: "Total number of election ads the advertiser ran with at least one impression."
+            mode: "nullable"
+          - name: "spend_usd"
+            type: "integer"
+            description: "Total amount in USD spent on election ads by the advertiser."
+            mode: "nullable"
+          - name: "spend_eur"
+            type: "integer"
+            description: "Total amount in EUR spent on election ads by the advertiser."
+            mode: "nullable"
+          - name: "spend_inr"
+            type: "integer"
+            description: "Total amount in INR spent on election ads by the advertiser."
+            mode: "nullable"
+          - name: "spend_bgn"
+            type: "integer"
+            description: "Total amount in BGN spent on election ads by the advertiser."
+            mode: "nullable"
+          - name: "spend_hrk"
+            type: "integer"
+            description: "Total amount in HRK spent on election ads by the advertiser."
+            mode: "nullable"
+          - name: "spend_czk"
+            type: "integer"
+            description: "Total amount in CZK spent on election ads by the advertiser."
+            mode: "nullable"
+          - name: "spend_dkk"
+            type: "integer"
+            description: "Total amount in DKK spent on election ads by the advertiser."
+            mode: "nullable"
+          - name: "spend_huf"
+            type: "integer"
+            description: "Total amount in HUF spent on election ads by the advertiser."
+            mode: "nullable"
+          - name: "spend_pln"
+            type: "integer"
+            description: "Total amount in PLN spent on election ads by the advertiser."
+            mode: "nullable"
+          - name: "spend_ron"
+            type: "integer"
+            description: "Total amount in RON spent on election ads by the advertiser."
+            mode: "nullable"
+          - name: "spend_sek"
+            type: "integer"
+            description: "Total amount in SEK spent on election ads by the advertiser."
+            mode: "nullable"
+          - name: "spend_gbp"
+            type: "integer"
+            description: "Total amount in GBP spent on election ads by the advertiser."
+            mode: "nullable"
+          - name: "spend_nzd"
+            type: "integer"
+            description: "Total amount in NZD spent on election ads by the advertiser."
+            mode: "nullable"
+
+
+  graph_paths:
+    - "advertiser_stats_transform_csv >> load_advertiser_stats_to_bq"

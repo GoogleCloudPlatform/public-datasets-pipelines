@@ -1,0 +1,155 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+resources:
+
+  - type: bigquery_table
+    # Required Properties:
+    table_id: national_trends
+
+    # Description of the table
+    description: "COVID-19 Italy National Trends"
+
+dag:
+
+  airflow_version: 1
+
+  initialize:
+    dag_id: national_trends
+    default_args:
+      owner: "Google"
+
+      # When set to True, keeps a task from getting triggered if the previous schedule for the task hasn’t succeeded
+      depends_on_past: False
+      start_date: '2021-04-01'
+    max_active_runs: 1
+    schedule_interval: "@daily"
+    catchup: False
+    default_view: graph
+
+  tasks:
+
+    - operator: "KubernetesPodOperator"
+
+      # Task description
+      description: "Run CSV transform within kubernetes pod"
+
+      args:
+
+        task_id: "national_trends_transform_csv"
+        startup_timeout_seconds: 600
+
+
+        # The name of the pod in which the task will run. This will be used (plus a random suffix) to generate a pod id
+        name: "covid19_italy_national_trends"
+
+        # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
+        namespace: "default"
+
+        image_pull_policy: "Always"
+
+        # Docker images will be built and pushed to GCR by default whenever the `scripts/generate_dag.py` is run. To skip building and pushing images, use the optional `--skip-builds` flag.
+        image: "{{ var.json.covid19_italy.container_registry.run_csv_transform_kub }}"
+
+        # Set the environment variables you need initialized in the container. Use these as input variables for the script your container is expected to perform.
+        env_vars:
+          SOURCE_URL: "https://raw.githubusercontent.com/pcm-dpc/COVID-19/master/dati-andamento-nazionale/dpc-covid19-ita-andamento-nazionale.csv"
+          SOURCE_FILE: "files/data.csv"
+          TARGET_FILE: "files/data_output.csv"
+          TARGET_GCS_BUCKET: "{{ var.json.shared.composer_bucket }}"
+          TARGET_GCS_PATH: "data/covid19_italy/national_trends/data_output.csv"
+          CSV_HEADERS: >-
+           ["date","country","hospitalized_patients_symptoms","hospitalized_patients_intensive_care","total_hospitalized_patients","home_confinement_cases","total_current_confirmed_cases","new_current_confirmed_cases","new_total_confirmed_cases","recovered","deaths","total_confirmed_cases","tests_performed","note"]
+          RENAME_MAPPINGS: >-
+           {"data": "date","stato": "country","ricoverati_con_sintomi": "hospitalized_patients_symptoms","terapia_intensiva": "hospitalized_patients_intensive_care","totale_ospedalizzati": "total_hospitalized_patients","isolamento_domiciliare": "home_confinement_cases","totale_positivi": "total_current_confirmed_cases","variazione_totale_positivi": "new_current_confirmed_cases","nuovi_positivi": "new_total_confirmed_cases","dimessi_guariti": "recovered","deceduti": "deaths","totale_casi": "total_confirmed_cases","tamponi": "tests_performed","note": "note"}
+          PIPELINE_NAME: "national_trends"
+
+        # Set resource limits for the pod here. For resource units in Kubernetes, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes
+        resources:
+          request_memory: "4G"
+          request_cpu: "1"
+
+    - operator: "GoogleCloudStorageToBigQueryOperator"
+      description: "Task to load CSV data to a BigQuery table"
+
+      args:
+        task_id: "load_national_trends_to_bq"
+
+        # The GCS bucket where the CSV file is located in.
+        bucket: "{{ var.json.shared.composer_bucket }}"
+
+        # The GCS object path for the CSV file
+        source_objects: ["data/covid19_italy/national_trends/data_output.csv"]
+        source_format: "CSV"
+        destination_project_dataset_table: "covid19_italy.national_trends"
+
+        # Use this if your CSV file contains a header row
+        skip_leading_rows: 1
+
+        # How to write data to the table: overwrite, append, or write if empty
+        # See https://cloud.google.com/bigquery/docs/reference/auditlogs/rest/Shared.Types/WriteDisposition
+        write_disposition: "WRITE_TRUNCATE"
+
+        # The BigQuery table schema based on the CSV file. For more info, see
+        # https://cloud.google.com/bigquery/docs/schemas.
+        # Always use snake_case and lowercase for column names, and be explicit,
+        # i.e. specify modes for all columns.
+        # types: "INTEGER", "TIMESTAMP", "STRING"
+        schema_fields:
+          - name: "date"
+            type: "TIMESTAMP"
+            mode: "NULLABLE"
+          - name: "country"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "hospitalized_patients_symptoms"
+            type: "INTEGER"
+            mode: "NULLABLE"
+          - name: "hospitalized_patients_intensive_care"
+            type: "INTEGER"
+            mode: "NULLABLE"
+          - name: "total_hospitalized_patients"
+            type: "INTEGER"
+            mode: "NULLABLE"
+          - name: "home_confinement_cases"
+            type: "INTEGER"
+            mode: "NULLABLE"
+          - name: "total_current_confirmed_cases"
+            type: "INTEGER"
+            mode: "NULLABLE"
+          - name: "new_current_confirmed_cases"
+            type: "INTEGER"
+            mode: "NULLABLE"
+          - name: "new_total_confirmed_cases"
+            type: "INTEGER"
+            mode: "NULLABLE"
+          - name: "recovered"
+            type: "INTEGER"
+            mode: "NULLABLE"
+          - name: "deaths"
+            type: "INTEGER"
+            mode: "NULLABLE"
+          - name: "total_confirmed_cases"
+            type: "INTEGER"
+            mode: "NULLABLE"
+          - name: "tests_performed"
+            type: "INTEGER"
+            mode: "NULLABLE"
+          - name: "note"
+            type: "STRING"
+            mode: "NULLABLE"
+
+  graph_paths:
+    - "national_trends_transform_csv >> load_national_trends_to_bq"
