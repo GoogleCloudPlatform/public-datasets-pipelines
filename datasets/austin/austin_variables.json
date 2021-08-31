@@ -1,0 +1,14 @@
+{
+    "shared": {
+        "composer_bucket": "us-central1-pipelines-dev-fc245d58-bucket",
+        "airflow_data_folder": "/home/airflow/gcs/data",
+        "airflow_home": "/home/airflow/gcs"
+    },
+    "austin": {
+        "destination_bucket": "public-datasets-dev-austin-project",
+        "container_registry": {
+            "run_csv_transform_kub_311_service_requests": "gcr.io/bigquery-public-data-dev/austin__run_csv_transform_kub_311_service_requests:latest",
+            "run_csv_transform_kub_bikeshare_trips": "gcr.io/bigquery-public-data-dev/austin__run_csv_transform_kub_bikeshare_trips:latest"
+        }
+    }
+}
