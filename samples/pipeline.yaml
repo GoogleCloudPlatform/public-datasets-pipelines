@@ -405,43 +405,61 @@ dag:
         # Optional service account to impersonate using short-term credentials
         impersonation_chain: "{{ var.json.DATASET_FOLDER_NAME.PIPELINE_FOLDER_NAME.service_account }}"
 
+
+    # Launch Cloud Dataflow jobs written in Python
+    # https://airflow.apache.org/docs/apache-airflow-providers-google/stable/_api/airflow/providers/google/cloud/operators/dataflow/index.html#airflow.providers.google.cloud.operators.dataflow.DataflowCreatePythonJobOperator
+    #
+    # You must organize your files as follows:
+    #
+    #   datasets/DATASET_NAME/PIPELINE_NAME/custom/
+    #       DATAFLOW_JOB_NAME/
+    #           main.py          (contains the Beam Pipeline definition)
+    #           setup.py         (this file is required)
+    #           my_package/      (optional folder containing custom dependencies)
+    #               __init__.py  (this file is required inside every package subfolder)
+    #               my_file.py
+    #               ...
+    #           ...
     - operator: "DataflowCreatePythonJobOperator"
-      # Launch Cloud Dataflow jobs written in Python
-      # https://airflow.apache.org/docs/apache-airflow-providers-google/stable/_api/airflow/providers/google/cloud/operators/dataflow/index.html#airflow.providers.google.cloud.operators.dataflow.DataflowCreatePythonJobOperator
       description: "Task to run a Dataflow job"
 
       args:
         task_id: "sample_dataflow_task"
 
         # Path to the Python script containing the Apache Beam Pipeline definition.
-        # You must place the script in your pipeline's `custom` folder, along with
-        # other dependencies (e.g. referencing packages from other files) for those
-        # to be present in the Airflow file system (i.e. uploaded to the Composer bucket)
-        py_file: "{{ var.json.shared.airflow_dags_folder }}/DATASET_FOLDER_NAME/PIPELINE_NAME/custom/my_dataflow_job/main.py"
+        # Place the script in your pipeline's `custom` folder, preferrably namespaced
+        # under a folder named after the job name (templated as `DATAFLOW_JOB_NAME`).
+        py_file: "{{ var.json.shared.airflow_dags_folder }}/DATASET_NAME/PIPELINE_NAME/custom/DATAFLOW_JOB_NAME/main.py"
 
         # Python version of the Beam pipeline. If None, this defaults to python3.
         py_interpreter: "python3"
 
-        # List of Python package(s) required by your Dataflow job.
-        # The 3 packages below must always be specified, otherwise the operator will fail.
+        # List of Python package(s) required by your Dataflow job. 
+        # The three packages listed below are often needed.
         py_requirements:
           - "apache-beam"
           - "google-apitools"
           - "google-cloud-storage"
 
         dataflow_default_options:
+
           # Your Google Cloud project ID
           project: "{{ var.json.shared.gcp_project }}"
 
           # [Required] Path for temporary files.
           # You can use the Composer bucket (preferred) or your own bucket.
           # When using the Cloud Composer bucket, use the templated path below to prevent collisions.
-          temp_location: "{{ var.json.shared.composer_bucket }}/data/DATASET_FOLDER_NAME/PIPELINE_NAME/dataflow/tmp/my_dataflow_job/"
+          temp_location: "{{ var.json.shared.composer_bucket }}/data/DATASET_NAME/PIPELINE_NAME/dataflow/tmp/DATAFLOW_JOB_NAME/"
 
           # The GCS bucket path to store staging binary files used by Apache Beam
           # You can use the Composer bucket (preferred) or your own bucket.
           # When using the Cloud Composer bucket, use the templated path below to prevent collisions.
-          staging_location: "{{ var.json.shared.composer_bucket }}/data/DATASET_FOLDER_NAME/PIPELINE_NAME/dataflow/staging/"
+          staging_location: "{{ var.json.shared.composer_bucket }}/data/DATASET_NAME/PIPELINE_NAME/dataflow/staging/"
+
+          # [Optional] If your pipeline uses public packages from the PyPI, make
+          # these packages available via a requirements.txt file. Create the file
+          # in the `custom` folder, in the same subfolder as your `main.py`.
+          requirements_file: "{{ var.json.shared.airflow_dags_folder }}/DATASET_NAME/PIPELINE_NAME/custom/DATAFLOW_JOB_NAME/requirements.txt"
 
           # [Required] The pipeline runner to use. Must be set to "DataflowRunner" to run on
           # Google Cloud Dataflow. Keep this unchanged.
@@ -474,11 +492,12 @@ dag:
           # you must organize your files as follows:
           #
           #   datasets/DATASET_NAME/PIPELINE_NAME/custom/
-          #       my_dataflow_job/
-          #           main.py          (contains the Beam Pipeline definition)
-          #           setup.py         (this file is required)
-          #           my_package/      (folder containing custom dependencies)
-          #               __init__.py  (this file is required inside every package subfolder)
+          #       DATAFLOW_JOB_NAME/
+          #           main.py               
+          #           setup.py              (this file is required when using custom packages)
+          #           requirements.txt      
+          #           my_package/           (folder containing a custom package)
+          #               __init__.py       (this file is required inside every package subfolder)
           #               my_file.py
           #               ...
           #           ...
@@ -489,7 +508,7 @@ dag:
           #   import setuptools
           #
           #   setuptools.setup(
-          #       name='my_dataflow_job',
+          #       name='DATAFLOW_JOB_NAME',
           #       version='1.0.0',
           #       install_requires=[],
           #       packages=setuptools.find_packages(),
@@ -498,7 +517,7 @@ dag:
           # (For more info, see https://beam.apache.org/documentation/sdks/python-pipeline-dependencies/#multiple-file-dependencies)
           #
           # Now, use this parameter to declare the path to the setup.py file under /home/airflow/gcs/dags
-          setup_file: "/home/airflow/gcs/dags/DATASET_NAME/PIPELINE_NAME/custom/subfolder/setup.py"
+          setup_file: "/home/airflow/gcs/dags/DATASET_NAME/PIPELINE_NAME/custom/DATAFLOW_JOB_NAME/setup.py"
 
           # [Optional] The Google Compute Engine machine type, must be n1-standard-2 or higher.
           # GCE machine types: https://cloud.google.com/compute/docs/machine-types.
@@ -509,10 +528,16 @@ dag:
           # Set to 0 to use the default size defined in your Cloud Platform project.
           disk_size_gb: 64
 
+          # [Optional] The maximum number of workers to be made available to your 
+          # pipeline during execution. If unspecified, Dataflow determines an 
+          # appropriate number of workers, usually set to 12 or 18.
+          max_num_workers: 18
+
           # [Optional] Number of workers to use when executing the Dataflow job.
-          # If not set, the Dataflow service will use a reasonable default.
-          # Important note: The value has to be a string, not int.
-          num_workers: "1"
+          # If not set, the Dataflow service will use a reasonable default. 
+          # Prefer using `max_num_workers` instead of this one to control resource 
+          # limits and let autoscaling adjust the workers up to that number.
+          num_workers: 1
 
   graph_paths:
     # This is where you specify the relationships (i.e. directed paths/edges)
