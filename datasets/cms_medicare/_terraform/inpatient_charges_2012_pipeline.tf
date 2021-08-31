@@ -15,12 +15,25 @@
  */
 
 
-resource "google_bigquery_dataset" "cms_medicare" {
-  dataset_id  = "cms_medicare"
-  project     = var.project_id
-  description = "CMS Medicare"
+resource "google_bigquery_table" "inpatient_charges_2012" {
+  project    = var.project_id
+  dataset_id = "cms_medicare"
+  table_id   = "inpatient_charges_2012"
+
+  description = "CMS Medicare Inpatient Charges 2012"
+
+
+
+
+  depends_on = [
+    google_bigquery_dataset.cms_medicare
+  ]
 }
 
-output "bigquery_dataset-cms_medicare-dataset_id" {
-  value = google_bigquery_dataset.cms_medicare.dataset_id
+output "bigquery_table-inpatient_charges_2012-table_id" {
+  value = google_bigquery_table.inpatient_charges_2012.table_id
+}
+
+output "bigquery_table-inpatient_charges_2012-id" {
+  value = google_bigquery_table.inpatient_charges_2012.id
 }
