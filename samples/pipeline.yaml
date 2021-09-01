@@ -434,7 +434,7 @@ dag:
         # Python version of the Beam pipeline. If None, this defaults to python3.
         py_interpreter: "python3"
 
-        # List of Python package(s) required by your Dataflow job. 
+        # List of Python package(s) required by your Dataflow job.
         # The three packages listed below are often needed.
         py_requirements:
           - "apache-beam"
@@ -493,9 +493,9 @@ dag:
           #
           #   datasets/DATASET_NAME/PIPELINE_NAME/custom/
           #       DATAFLOW_JOB_NAME/
-          #           main.py               
+          #           main.py
           #           setup.py              (this file is required when using custom packages)
-          #           requirements.txt      
+          #           requirements.txt
           #           my_package/           (folder containing a custom package)
           #               __init__.py       (this file is required inside every package subfolder)
           #               my_file.py
@@ -528,14 +528,14 @@ dag:
           # Set to 0 to use the default size defined in your Cloud Platform project.
           disk_size_gb: 64
 
-          # [Optional] The maximum number of workers to be made available to your 
-          # pipeline during execution. If unspecified, Dataflow determines an 
+          # [Optional] The maximum number of workers to be made available to your
+          # pipeline during execution. If unspecified, Dataflow determines an
           # appropriate number of workers, usually set to 12 or 18.
           max_num_workers: 18
 
           # [Optional] Number of workers to use when executing the Dataflow job.
-          # If not set, the Dataflow service will use a reasonable default. 
-          # Prefer using `max_num_workers` instead of this one to control resource 
+          # If not set, the Dataflow service will use a reasonable default.
+          # Prefer using `max_num_workers` instead of this one to control resource
           # limits and let autoscaling adjust the workers up to that number.
           num_workers: 1
 
