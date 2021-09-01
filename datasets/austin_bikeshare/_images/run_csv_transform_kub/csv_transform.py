@@ -117,7 +117,7 @@ def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
 def convert_dt_format(dt_str: str) -> str:
     # Old format: MM/dd/yyyy hh:mm:ss aa
     # New format: yyyy-MM-dd HH:mm:ss
-    if dt_str is None or len(dt_str) == 0:
+    if not dt_str:
         return dt_str
     else:
         return datetime.datetime.strptime(dt_str, "%m/%d/%Y %H:%M:%S %p").strftime(
