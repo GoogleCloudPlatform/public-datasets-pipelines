@@ -27,7 +27,7 @@ with DAG(
     dag_id="austin_bikeshare.bikeshare_stations",
     default_args=default_args,
     max_active_runs=1,
-    schedule_interval="@hourly",
+    schedule_interval="@daily",
     catchup=False,
     default_view="graph",
 ) as dag:

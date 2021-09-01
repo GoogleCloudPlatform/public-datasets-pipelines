@@ -48,11 +48,9 @@ def main(
     logging.info(f"Downloading file from {source_url}...")
     download_file(source_url, source_file)
 
-    # open the input file
     logging.info(f"Opening file {source_file}...")
     df = pd.read_csv(str(source_file))
 
-    # steps in the pipeline
     logging.info(f"Transforming {source_file}... ")
 
     logging.info(f"Transform: Rename columns.. {source_file}")
@@ -65,12 +63,12 @@ def main(
     filter_null_rows(df)
 
     logging.info(f"Transform: converting to integer {source_file}... ")
-    df["city_asset_number"] = df["city_asset_number"].apply(convert_to_int)
-    df["number_of_docks"] = df["number_of_docks"].apply(convert_to_int)
-    df["footprint_length"] = df["footprint_length"].apply(convert_to_int)
-    df["council_district"] = df["council_district"].apply(convert_to_int)
+    df["city_asset_number"] = df["city_asset_number"].apply(convert_to_integer_string)
+    df["number_of_docks"] = df["number_of_docks"].apply(convert_to_integer_string)
+    df["footprint_length"] = df["footprint_length"].apply(convert_to_integer_string)
+    df["council_district"] = df["council_district"].apply(convert_to_integer_string)
 
-    logging.info(f"Transform: cremoving NaN values {source_file}... ")
+    logging.info(f"Transform: removing NaN values {source_file}... ")
     df["footprint_width"] = df["footprint_width"].apply(resolve_nan)
 
     logging.info("Transform: Reordering headers..")
@@ -93,18 +91,19 @@ def main(
     )
 
 
-def resolve_nan(input: str) -> str:
+def resolve_nan(input: typing.Union[str, float]) -> str:
     str_val = ""
-    if input == "" or (math.isnan(input)):
+    # if input == "" or (math.isnan(input)):
+    if not input or (math.isnan(input)):
         str_val = ""
     else:
         str_val = str(input)
     return str_val.replace("None", "")
 
 
-def convert_to_int(input: str) -> str:
+def convert_to_integer_string(input: typing.Union[str, float]) -> str:
     str_val = ""
-    if input == "" or (math.isnan(input)):
+    if not input or (math.isnan(input)):
         str_val = ""
     else:
         str_val = str(int(round(input, 0)))
