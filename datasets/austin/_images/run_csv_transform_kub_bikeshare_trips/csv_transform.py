@@ -16,7 +16,6 @@ import datetime
 import logging
 import os
 import pathlib
-import pdb
 import re
 
 import pandas as pd
@@ -34,8 +33,11 @@ def main(
 
     logging.info("Austin Bikeshare - Bikeshare Trips process started")
 
-    #logging.info(f"Downloading file {source_url}")
-    #download_file(source_url, source_file)
+    logging.info("creating 'files' folder")
+    pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
+
+    logging.info(f"Downloading file {source_url}")
+    download_file(source_url, source_file)
 
     logging.info(f"Opening file {source_file}")
     df = pd.read_csv(str(source_file))
@@ -85,11 +87,15 @@ def main(
 
 
 def convert_dt_format(dt_str: str) -> str:
-    a= ""
+    a = ""
     if dt_str is None or len(str(dt_str)) == 0 or str(dt_str) == "nan":
         return str(a)
     else:
-        return str(datetime.datetime.strptime(str(dt_str), "%m/%d/%Y %H:%M:%S").strftime( "%Y-%m-%d %H:%M:%S" ))
+        return str(
+            datetime.datetime.strptime(str(dt_str), "%m/%d/%Y %H:%M:%S").strftime(
+                "%Y-%m-%d %H:%M:%S"
+            )
+        )
 
 
 def rename_headers(df):
