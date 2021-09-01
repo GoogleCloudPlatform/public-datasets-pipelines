@@ -69,6 +69,10 @@
       "GKEDeleteClusterOperator": {
           "import": "from airflow.providers.google.cloud.operators import kubernetes_engine",
           "class": "kubernetes_engine.GKEDeleteClusterOperator"
+      },
+      "DataflowCreatePythonJobOperator": {
+          "import": "from airflow.providers.google.cloud.operators import dataflow",
+          "class": "dataflow.DataflowCreatePythonJobOperator"
       }
    }
 }

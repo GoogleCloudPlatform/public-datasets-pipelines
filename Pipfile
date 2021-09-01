@@ -8,8 +8,10 @@ beautifulsoup4 = "==4.9.3"
 
 [dev-packages]
 apache-airflow = "==2.1.1"
-apache-airflow-providers-google = "*"
-apache-airflow-providers-cncf-kubernetes = "*"
+apache-airflow-providers-apache-beam = "3.0.0"
+apache-airflow-providers-google = "5.0.0"
+apache-airflow-providers-cncf-kubernetes = "2.0.2"
+apache-beam = "2.32.0"
 black = "==20.8b1"
 flake8 = "==3.9.2"
 isort = "*"
