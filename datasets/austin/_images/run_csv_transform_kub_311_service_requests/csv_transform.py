@@ -42,16 +42,14 @@
 #       Map Tile                            String          255                             "SR location corresponding map page."
 
 
+import datetime
 import logging
 import os
 import pathlib
-import datetime
 
-import requests
 import pandas as pd
+import requests
 from google.cloud import storage
-
-# import typing
 
 
 def main(
@@ -62,44 +60,37 @@ def main(
     target_gcs_path: str,
 ) -> None:
 
-    curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    logging.info(f"Austin 311 Service Requests By Year process started at {curr_dtm}")
+    logging.info("Austin 311 Service Requests By Year process started")
 
-    curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     logging.info("creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
 
-    curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    logging.info(f"Downloading file {source_url} at {curr_dtm}")
+    logging.info(f"Downloading file {source_url}")
     download_file(source_url, source_file)
 
-    curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    logging.info(f"Opening file {source_file} at {curr_dtm}")
+    logging.info(f"Opening file {source_file}")
     df = pd.read_csv(str(source_file))
 
-    curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    logging.info(f"Transforming.. {source_file} at {curr_dtm}")
+    logging.info(f"Transforming.. {source_file}")
     rename_headers(df)
     convert_values(df)
     delete_newlines_from_column(df, col_name="location")
     filter_null_rows(df)
 
-    curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    logging.info(f"Saving to output file.. {target_file} at {curr_dtm}")
+    logging.info(f"Saving to output file.. {target_file}")
     try:
         save_to_new_file(df, file_path=str(target_file))
     except Exception as e:
         logging.error(f"Error saving output file: {e}.")
     logging.info("..Done!")
 
-    curr_dtm = str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     logging.info(
-        f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path} at {curr_dtm}"
+        f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
     )
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
 
-def rename_headers(df: pd.DataFrame):
+def rename_headers(df: pd.DataFrame) -> None:
     header_names = {
         "Service Request (SR) Number": "unique_key",
         "SR Type Code": "complaint_type",
@@ -132,12 +123,17 @@ def rename_headers(df: pd.DataFrame):
 
 
 def convert_dt_format(dt_str: str) -> str:
-    if (str(dt_str).strip()[3:3] == '/'):
+    if str(dt_str).strip()[3:3] == "/":
         return datetime.datetime.strptime(str(dt_str), "%m/%d/%Y %H:%M:%S %p").strftime(
             "%Y-%m-%d %H:%M:%S"
         )
-    elif (dt_str is None or len(str(dt_str)) == 0 or str(dt_str).lower() == "nan" or str(dt_str).lower() == "nat"):
-	    return ""
+    elif (
+        dt_str is None
+        or len(str(dt_str)) == 0
+        or str(dt_str).lower() == "nan"
+        or str(dt_str).lower() == "nat"
+    ):
+        return ""
     else:
         return str(dt_str)
 
@@ -169,9 +165,8 @@ def delete_newlines(val: str) -> str:
 
 
 def delete_newlines_from_column(df: pd.DataFrame, col_name: str) -> None:
-    if df[col_name] is not None:
-        if df[col_name].str.len() > 0:
-            df[col_name] = df[col_name].apply(delete_newlines)
+    if df[col_name] is not None & df[col_name].str.len() > 0:
+        df[col_name] = df[col_name].apply(delete_newlines)
 
 
 def filter_null_rows(df: pd.DataFrame) -> None:

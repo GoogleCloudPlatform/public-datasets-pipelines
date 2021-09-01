@@ -12,21 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# CSV transform for: austin_311.311_service_request
-
-# import modules
 import datetime
 import logging
 import os
 import pathlib
 import re
 
+import pdb
+import pandas as pd
 import requests
-
-# import pandas as pd
-# import numpy as np
-# import pdb          #trace stack dev
-import vaex
 from google.cloud import storage
 
 
@@ -36,42 +30,28 @@ def main(
     target_file: pathlib.Path,
     target_gcs_bucket: str,
     target_gcs_path: str,
-):
+) -> None:
 
-    logging.info(
-        "Austin Bikeshare - Bikeshare Trips process started at "
-        + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    )
+    logging.info("Austin Bikeshare - Bikeshare Trips process started")
 
-    logging.info(f"Downloading file {source_url}")
-    download_file(source_url, source_file)
+    #logging.info(f"Downloading file {source_url}")
+    #download_file(source_url, source_file)
 
-    # open the input file
     logging.info(f"Opening file {source_file}")
-    df = vaex.open(str(source_file), convert=False)
+    df = pd.read_csv(str(source_file))
 
-    # steps in the pipeline
     logging.info(f"Transformation Process Starting.. {source_file}")
 
-    # rename the headers
     logging.info(f"Transform: Renaming Headers.. {source_file}")
     rename_headers(df)
 
-    # remove empty trip id rows
     logging.info(f"Transform: Filtering null identity records.. {source_file}")
     filter_null_rows(df)
 
-    # add column start_time
-    # start_date = 'time' (mm/dd/yyyy) + " " + 'checkout_time' HH:MM:SS
-    #   convert to yyyy-mm-dd HH:MM:SS
     logging.info(f"Transform: Acquiring start_time.. {source_file}")
-    df["start_time"] = df.apply(convert_dt_format, [df["time"], df["checkout_time"]])
+    df["start_time"] = df["time"] + " " + df["checkout_time"]
+    df["start_time"] = df["start_time"].apply(convert_dt_format)
 
-    # do regex conversion
-    logging.info(f"Transform: Replace Regex.. {source_file}")
-    replace_values_regex(df)
-
-    # reorder headers in output
     logging.info("Transform: Reordering headers..")
     df = df[
         [
@@ -87,14 +67,11 @@ def main(
         ]
     ]
 
-    # steps in the pipeline
     logging.info(f"Transformation Process complete .. {source_file}")
 
-    # save to output file
     logging.info(f"Saving to output file.. {target_file}")
 
     try:
-        # save_to_new_file(df, file_path=str(target_file))
         save_to_new_file(df, file_path=str(target_file))
     except Exception as e:
         logging.error(f"Error saving output file: {e}.")
@@ -104,17 +81,15 @@ def main(
     )
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
-    # log completion
-    logging.info(
-        "Austin Bikeshare - Bikeshare Trips process completed at "
-        + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    )
+    logging.info("Austin Bikeshare - Bikeshare Trips process completed")
 
 
-def convert_dt_format(date_str, time_str):
-    #  date_str, time_str
-    # 10/26/2014,13:12:00
-    return str(datetime.datetime.strptime(date_str, "%m/%d/%Y").date()) + " " + time_str
+def convert_dt_format(dt_str: str) -> str:
+    a= ""
+    if dt_str is None or len(str(dt_str)) == 0 or str(dt_str) == "nan":
+        return str(a)
+    else:
+        return str(datetime.datetime.strptime(str(dt_str), "%m/%d/%Y %H:%M:%S").strftime( "%Y-%m-%d %H:%M:%S" ))
 
 
 def rename_headers(df):
@@ -133,8 +108,7 @@ def rename_headers(df):
         "Year": "year",
     }
 
-    for old_name, new_name in header_names.items():
-        df.rename(old_name, new_name)
+    df.rename(columns=header_names, inplace=True)
 
 
 def replace_value(val):
@@ -142,19 +116,9 @@ def replace_value(val):
         return val
     else:
         if val.find("\n") > 0:
-            # return val.replace("\n", "")
             return re.sub(r"(^\d):(\d{2}:\d{2})", "0$1:$2", val)
         else:
             return val
-
-
-def replace_values_regex(df):
-    header_names = {"checkout_time"}
-
-    for dt_col in header_names:
-        if df[dt_col] is not None:
-            if df[dt_col].str.len() > 0:
-                df[dt_col] = df[dt_col].apply(replace_value)
 
 
 def filter_null_rows(df):
@@ -162,7 +126,7 @@ def filter_null_rows(df):
 
 
 def save_to_new_file(df, file_path):
-    df.export_csv(file_path, float_format="%.0f")
+    df.to_csv(file_path, float_format="%.0f", index=False)
 
 
 def download_file(source_url: str, source_file: pathlib.Path):

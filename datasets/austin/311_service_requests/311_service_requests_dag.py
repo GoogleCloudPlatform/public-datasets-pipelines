@@ -13,9 +13,10 @@
 # limitations under the License.
 
 
+from airflow.contrib.operators import kubernetes_pod_operator
 from airflow import DAG
-from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
-from airflow.providers.google.cloud.transfers import gcs_to_bigquery
+from airflow.contrib.operators import gcs_to_bq
+
 
 default_args = {
     "owner": "Google",
@@ -34,29 +35,29 @@ with DAG(
 ) as dag:
 
     # Run CSV transform within kubernetes pod
-    austin_311_service_requests_transform_csv = kubernetes_pod.KubernetesPodOperator(
-        task_id="austin_311_service_requests_transform_csv",
+    transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+        task_id="transform_csv",
         image_pull_policy="Always",
         name="austin",
         namespace="default",
-        image="{{ var.json.austin_311.container_registry.run_csv_transform_kub }}",
+        image="{{ var.json.austin.container_registry.run_csv_transform_kub_311_service_requests }}",
         env_vars={
             "SOURCE_URL": "https://data.austintexas.gov/api/views/i26j-ai4z/rows.csv",
             "SOURCE_FILE": "/custom/data.csv",
             "TARGET_FILE": "/custom/data_output.csv",
             "TARGET_GCS_BUCKET": "{{ var.json.shared.composer_bucket }}",
-            "TARGET_GCS_PATH": "data/austin_311/311_service_requests/data_output.csv",
+            "TARGET_GCS_PATH": "data/austin/311_service_requests/data_output.csv",
         },
         resources={"request_memory": "4G", "request_cpu": "2"},
     )
 
     # Task to load CSV data to a BigQuery table
-    load_austin_311_service_requests_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
-        task_id="load_austin_311_service_requests_to_bq",
+    load_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+        task_id="load_to_bq",
         bucket="{{ var.json.shared.composer_bucket }}",
         source_objects=["data/austin_311/311_service_requests/data_output.csv"],
         source_format="CSV",
-        destination_project_dataset_table="austin_311.311_service_requests",
+        destination_project_dataset_table="austin.311_service_requests",
         skip_leading_rows=1,
         write_disposition="WRITE_TRUNCATE",
         schema_fields=[
@@ -87,4 +88,4 @@ with DAG(
         ],
     )
 
-    austin_311_service_requests_transform_csv >> load_austin_311_service_requests_to_bq
+    transform_csv >> load_to_bq

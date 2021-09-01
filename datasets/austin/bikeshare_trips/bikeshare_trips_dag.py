@@ -33,29 +33,29 @@ with DAG(
 ) as dag:
 
     # Run CSV transform within kubernetes pod
-    austin_bikeshare_trips_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
-        task_id="austin_bikeshare_trips_transform_csv",
+    transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+        task_id="transform_csv",
         name="bikeshare_trips",
         namespace="default",
         image_pull_policy="Always",
-        image="{{ var.json.austin_bikeshare_trips.container_registry.run_csv_transform_kub }}",
+        image="{{ var.json.austin.container_registry.run_csv_transform_kub_bikeshare_trips }}",
         env_vars={
             "SOURCE_URL": "https://data.austintexas.gov/api/views/tyfh-5r8s/rows.csv",
             "SOURCE_FILE": "/custom/data.csv",
             "TARGET_FILE": "/custom/data_output.csv",
             "TARGET_GCS_BUCKET": "{{ var.json.shared.composer_bucket }}",
-            "TARGET_GCS_PATH": "data/austin_bikeshare_trips/bikeshare_trips/data_output.csv",
+            "TARGET_GCS_PATH": "data/austin/bikeshare_trips/data_output.csv",
         },
         resources={"limit_memory": "8G", "limit_cpu": "2"},
     )
 
     # Task to load CSV data to a BigQuery table
-    load_austin_bikeshare_trips_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
-        task_id="load_austin_bikeshare_trips_to_bq",
+    load_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+        task_id="load_to_bq",
         bucket="{{ var.json.shared.composer_bucket }}",
         source_objects=["data/austin_bikeshare_trips/bikeshare_trips/data_output.csv"],
         source_format="CSV",
-        destination_project_dataset_table="austin_bikeshare_trips.bikeshare_trips",
+        destination_project_dataset_table="austin.bikeshare_trips",
         skip_leading_rows=1,
         write_disposition="WRITE_TRUNCATE",
         schema_fields=[
@@ -71,4 +71,4 @@ with DAG(
         ],
     )
 
-    austin_bikeshare_trips_transform_csv >> load_austin_bikeshare_trips_to_bq
+    transform_csv >> load_to_bq

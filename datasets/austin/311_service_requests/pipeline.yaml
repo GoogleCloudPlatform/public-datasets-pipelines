@@ -45,7 +45,7 @@ dag:
 
       args:
 
-        task_id: "austin_311_service_requests_transform_csv"
+        task_id: "transform_csv"
 
         image_pull_policy: "Always"
 
@@ -56,7 +56,7 @@ dag:
         namespace: "default"
 
         # Docker images will be built and pushed to GCR by default whenever the `scripts/generate_dag.py` is run. To skip building and pushing images, use the optional `--skip-builds` flag.
-        image: "{{ var.json.austin_311.container_registry.run_csv_transform_kub }}"
+        image: "{{ var.json.austin.container_registry.run_csv_transform_kub_311_service_requests }}"
 
         # Set the environment variables you need initialized in the container. Use these as input variables for the script your container is expected to perform.
         env_vars:
@@ -64,7 +64,7 @@ dag:
           SOURCE_FILE: "/custom/data.csv"
           TARGET_FILE: "/custom/data_output.csv"
           TARGET_GCS_BUCKET: "{{ var.json.shared.composer_bucket }}"
-          TARGET_GCS_PATH: "data/austin_311/311_service_requests/data_output.csv"
+          TARGET_GCS_PATH: "data/austin/311_service_requests/data_output.csv"
 
         # Set resource limits for the pod here. For resource units in Kubernetes, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes
         resources:
@@ -75,7 +75,7 @@ dag:
       description: "Task to load CSV data to a BigQuery table"
 
       args:
-        task_id: "load_austin_311_service_requests_to_bq"
+        task_id: "load_to_bq"
 
         # The GCS bucket where the CSV file is located in.
         bucket: "{{ var.json.shared.composer_bucket }}"
@@ -83,7 +83,7 @@ dag:
         # The GCS object path for the CSV file
         source_objects: ["data/austin_311/311_service_requests/data_output.csv"]
         source_format: "CSV"
-        destination_project_dataset_table: "austin_311.311_service_requests"
+        destination_project_dataset_table: "austin.311_service_requests"
 
         # Use this if your CSV file contains a header row
         skip_leading_rows: 1
@@ -171,4 +171,4 @@ dag:
             mode: "NULLABLE"
 
   graph_paths:
-    - "austin_311_service_requests_transform_csv >> load_austin_311_service_requests_to_bq"
+    - "transform_csv >> load_to_bq"
