@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "56d2e39b0609f5b5e87fe0d5dbc506aeb5dfd8d63e7144d9958b4f3ca0811fbc"
+            "sha256": "c15a67db6145f722c66d80d412a1b1cf68b21d450bf4f3f4dd2f740842f18fb9"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -571,11 +571,11 @@
         },
         "google-auth-oauthlib": {
             "hashes": [
-                "sha256:4ab58e6c3dc6ccf112f921fcced40e5426fba266768986ea502228488276eaba",
-                "sha256:b5a1ce7c617d247ccb2dfbba9d4bfc734b41096803d854a2c52592ae80150a67"
+                "sha256:3f2a6e802eebbb6fb736a370fbf3b055edcb6b52878bf2f26330b5e041316c73",
+                "sha256:a90a072f6993f2c327067bf65270046384cda5a8ecb20b94ea9a687f1f233a7a"
             ],
             "markers": "python_version >= '3.6'",
-            "version": "==0.4.5"
+            "version": "==0.4.6"
         },
         "google-cloud-appengine-logging": {
             "hashes": [
@@ -587,11 +587,11 @@
         },
         "google-cloud-audit-log": {
             "hashes": [
-                "sha256:5bf5a53c641b13828154ab21fb209669be69d71cd462f5d6456bf87722fc0eeb",
-                "sha256:a17064203b985ffa9219937d339cab3583548f07d38e96d67a498aba69c1387d"
+                "sha256:33a8e5fdc9d98c1c0b4b0502d723941215a586c04ccc44558ec63c16e9194152",
+                "sha256:a87fdf3c393b830b35c8f7db09094790d0d7babb35068736bea64e1618d286fe"
             ],
             "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'",
-            "version": "==0.1.0"
+            "version": "==0.1.1"
         },
         "google-cloud-automl": {
             "hashes": [
@@ -607,11 +607,11 @@
                 "pandas"
             ],
             "hashes": [
-                "sha256:5ecf7c802cc6cf9cd79e79924616d8b7d35ba026f3313a4d90b8b4a28c72d93d",
-                "sha256:f7b9bcd94cabe66523475993c2442aa5b9ed709ffcf5e734bbbb6a604ae120df"
+                "sha256:15ca1f9c8165b584c2d593620354cd3b17c007e87cfd1abd1eebd2c08eb5d109",
+                "sha256:8431da4c3f9b6a5aca1b811ef64e452d53536160b26252e4d132969ef3e4f173"
             ],
             "markers": "python_version < '3.10' and python_version >= '3.6'",
-            "version": "==2.25.1"
+            "version": "==2.26.0"
         },
         "google-cloud-bigquery-datatransfer": {
             "hashes": [
@@ -654,10 +654,10 @@
         },
         "google-cloud-datacatalog": {
             "hashes": [
-                "sha256:2faca51e974c46203c09fd4cb2c03fd6e82cd572cc06a2bbc3b401aa419cb09f",
-                "sha256:c70d7ad720ba7d23d316b7468b6fc0c52e4a1824b7f1b946b8855f6964953562"
+                "sha256:24c3476d3af68b878d306baa81b326934d57e99935ac19cd845f153dc6524528",
+                "sha256:ad1bf9991bdee2a2fee44d19e54790a6eb900652841a5d7a32aa1c468a196f49"
             ],
-            "version": "==3.4.0"
+            "version": "==3.4.1"
         },
         "google-cloud-dataproc": {
             "hashes": [
@@ -855,11 +855,11 @@
         },
         "google-resumable-media": {
             "hashes": [
-                "sha256:094c0381734649ac939083ea3833bd239b7fba904d246342d1268984029f2167",
-                "sha256:c65f9e08a4fe1df532138c8f00eeafcd7fe0d4db35dff70d7428b6ea659b2888"
+                "sha256:5dff19b008e08f307b4ae9f3f1fdb8e072698b27111710ca3867c9e63540bdf9",
+                "sha256:cac55be7802e3424b8f022d8a572a8349327e7ce8494eee5e0f4df02458b1813"
             ],
             "markers": "python_version >= '3.6'",
-            "version": "==2.0.0"
+            "version": "==2.0.1"
         },
         "googleapis-common-protos": {
             "extras": [
