@@ -15,22 +15,25 @@
  */
 
 
-resource "google_bigquery_table" "cpsaat18" {
+resource "google_bigquery_table" "sentinel_2_index" {
   project    = var.project_id
-  dataset_id = "bls"
-  table_id   = "cpsaat18"
+  dataset_id = "cloud_storage_geo_index"
+  table_id   = "sentinel_2_index"
 
-  description = "Current population survey 18: Employed persons by detailed industry, sex, race, and Hispanic or Latino ethnicity"
+  description = "Sentinel 2 Index table"
+
+
+
 
   depends_on = [
-    google_bigquery_dataset.bls
+    google_bigquery_dataset.cloud_storage_geo_index
   ]
 }
 
-output "bigquery_table-cpsaat18-table_id" {
-  value = google_bigquery_table.cpsaat18.table_id
+output "bigquery_table-sentinel_2_index-table_id" {
+  value = google_bigquery_table.sentinel_2_index.table_id
 }
 
-output "bigquery_table-cpsaat18-id" {
-  value = google_bigquery_table.cpsaat18.id
+output "bigquery_table-sentinel_2_index-id" {
+  value = google_bigquery_table.sentinel_2_index.id
 }
