@@ -8,7 +8,11 @@
         "destination_bucket": "public-datasets-dev-noaa-project",
         "container_registry": {
             "run_csv_transform_kub_lightning_strikes_by_year": "gcr.io/bigquery-public-data-dev/noaa__run_csv_transform_kub_lightning_strikes_by_year:latest",
-            "run_csv_transform_kub_gsod_stations": "gcr.io/bigquery-public-data-dev/noaa__run_csv_transform_kub_gsod_stations:latest"
+            "run_csv_transform_kub_gsod_stations": "gcr.io/bigquery-public-data-dev/noaa__run_csv_transform_kub_gsod_stations:latest",
+            "run_csv_transform_kub_ghcnd_countries": "gcr.io/bigquery-public-data-dev/noaa__run_csv_transform_kub_ghcnd_countries:latest",
+            "run_csv_transform_kub_ghcnd_inventory": "gcr.io/bigquery-public-data-dev/noaa__run_csv_transform_kub_ghcnd_inventory:latest",
+            "run_csv_transform_kub_ghcnd_states": "gcr.io/bigquery-public-data-dev/noaa__run_csv_transform_kub_ghcnd_states:latest",
+            "run_csv_transform_kub_ghcnd_stations": "gcr.io/bigquery-public-data-dev/noaa__run_csv_transform_kub_ghcnd_stations:latest"
         }
     }
 }
