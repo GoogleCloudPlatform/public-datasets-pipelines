@@ -13,11 +13,9 @@
 # limitations under the License.
 
 # import modules
-import datetime
 import logging
 import os
 import pathlib
-import pdb
 from subprocess import PIPE, Popen
 
 import pandas as pd
@@ -32,7 +30,7 @@ def main(
     target_gcs_path: str,
 ) -> None:
 
-    logging.info(f"Sunroof Solar Potential By Census Tract process started")
+    logging.info("Sunroof Solar Potential By Census Tract process started")
 
     logging.info("creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
@@ -52,7 +50,9 @@ def main(
     remove_nan_cols(df)
 
     logging.info("Transform: Adding geography field")
-    df["center_point"] = "POINT( " + df["lng_avg"].map(str) + " " + df["lat_avg"].map(str) + " )"
+    df["center_point"] = (
+        "POINT( " + df["lng_avg"].map(str) + " " + df["lat_avg"].map(str) + " )"
+    )
 
     logging.info("Transform: Reordering headers..")
     df = df[
@@ -87,7 +87,7 @@ def main(
             "yearly_sunlight_kwh_total",
             "install_size_kw_buckets",
             "carbon_offset_metric_tons",
-            "existing_installs_count"
+            "existing_installs_count",
         ]
     ]
 
@@ -105,7 +105,8 @@ def main(
     )
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
-    logging.info(f"Sunroof Solar Potential By Census Tract process completed")
+    logging.info("Sunroof Solar Potential By Census Tract process completed")
+
 
 def remove_nan(dt_str: str) -> int:
     if dt_str is None or len(str(dt_str)) == 0 or str(dt_str) == "nan":
@@ -113,27 +114,26 @@ def remove_nan(dt_str: str) -> int:
     else:
         return int(dt_str)
 
+
 def remove_nan_cols(df: pd.DataFrame) -> None:
     cols = {
-            "count_qualified",
-            "existing_installs_count",
-            "number_of_panels_n",
-            "number_of_panels_s",
-            "number_of_panels_e",
-            "number_of_panels_w",
-            "number_of_panels_f",
-            "number_of_panels_median",
-            "number_of_panels_total"
-        }
+        "count_qualified",
+        "existing_installs_count",
+        "number_of_panels_n",
+        "number_of_panels_s",
+        "number_of_panels_e",
+        "number_of_panels_w",
+        "number_of_panels_f",
+        "number_of_panels_median",
+        "number_of_panels_total",
+    }
 
     for col in cols:
         df[col] = df[col].apply(remove_nan)
 
 
 def rename_headers(df: pd.DataFrame) -> None:
-    header_names = {
-        "install_size_kw_buckets_json": "install_size_kw_buckets"
-    }
+    header_names = {"install_size_kw_buckets_json": "install_size_kw_buckets"}
 
     df = df.rename(columns=header_names, inplace=True)
 
@@ -144,7 +144,9 @@ def save_to_new_file(df: pd.DataFrame, file_path) -> None:
 
 def download_file_gs(source_url: str, source_file: pathlib.Path) -> None:
     try:
-        process = Popen(['gsutil', 'cp', source_url, source_file], stdout=PIPE, stderr=PIPE)
+        process = Popen(
+            ["gsutil", "cp", source_url, source_file], stdout=PIPE, stderr=PIPE
+        )
         process.communicate()
     except ValueError:
         logging.error(f"Couldn't download {source_url}: {ValueError}")
