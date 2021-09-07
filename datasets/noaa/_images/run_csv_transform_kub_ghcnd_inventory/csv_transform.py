@@ -147,7 +147,7 @@ def download_file_ftp(
     ftp_conn = FTP(ftp_host)
     ftp_conn.login("", "")
     ftp_conn.cwd(ftp_dir)
-    ftp_conn.encoding = 'utf-8'
+    ftp_conn.encoding = "utf-8"
 
     try:
         bak_local_file = str(local_file) + ".bak"

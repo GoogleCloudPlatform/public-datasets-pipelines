@@ -13,10 +13,10 @@
 # limitations under the License.
 
 import datetime
+import gzip
 import logging
 import os
 import pathlib
-import gzip
 from ftplib import FTP
 
 import pandas as pd
@@ -90,6 +90,7 @@ def main(
 
     logging.info("NOAA - GHCND By Year process completed")
 
+
 def gz_decompress(infile: str, tofile: str) -> None:
     with open(infile, "rb") as inf, open(tofile, "w", encoding="utf8") as tof:
         decom_str = gzip.decompress(inf.read()).decode("utf-8")
@@ -104,7 +105,11 @@ def convert_dt_format(dt_str: str) -> str:
     if dt_str is None or len(str(dt_str)) == 0 or str(dt_str) == "nan":
         return str(dt_str)
     else:
-        return str(datetime.datetime.strptime(str(dt_str), "%Y%m%d").date().strftime("%Y-%m-%d"))
+        return str(
+            datetime.datetime.strptime(str(dt_str), "%Y%m%d")
+            .date()
+            .strftime("%Y-%m-%d")
+        )
 
 
 def save_to_new_file(df, file_path) -> None:
@@ -128,7 +133,7 @@ def download_file_ftp(
     ftp_conn = FTP(ftp_host)
     ftp_conn.login("", "")
     ftp_conn.cwd(ftp_dir)
-    ftp_conn.encoding = 'utf-8'
+    ftp_conn.encoding = "utf-8"
 
     try:
         dest_file = open(local_file, "wb")

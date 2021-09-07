@@ -108,6 +108,7 @@ def get_column_country_name(col_val: str) -> str:
 
     return str.strip((strmain1[::-1])[0:(len_out)][::-1])
 
+
 def save_to_new_file(df: pd.DataFrame, file_path: str) -> str:
     df.to_csv(file_path, float_format="%.0f", index=False)
 

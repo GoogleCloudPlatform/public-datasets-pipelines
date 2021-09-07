@@ -13,7 +13,8 @@
             "run_csv_transform_kub_ghcnd_inventory": "gcr.io/bigquery-public-data-dev/noaa__run_csv_transform_kub_ghcnd_inventory:latest",
             "run_csv_transform_kub_ghcnd_states": "gcr.io/bigquery-public-data-dev/noaa__run_csv_transform_kub_ghcnd_states:latest",
             "run_csv_transform_kub_ghcnd_stations": "gcr.io/bigquery-public-data-dev/noaa__run_csv_transform_kub_ghcnd_stations:latest",
-            "run_csv_transform_kub_hurricanes": "gcr.io/bigquery-public-data-dev/noaa__run_csv_transform_kub_hurricanes:latest"
+            "run_csv_transform_kub_hurricanes": "gcr.io/bigquery-public-data-dev/noaa__run_csv_transform_kub_hurricanes:latest",
+            "run_csv_transform_kub_ghcnd_by_year": "gcr.io/bigquery-public-data-dev/noaa__run_csv_transform_kub_ghcnd_by_year:latest"
         }
     }
 }
