@@ -16,7 +16,6 @@ import datetime
 import logging
 import os
 import pathlib
-import pdb
 import subprocess
 
 import numpy as np
@@ -35,9 +34,7 @@ def main(
 ) -> None:
 
     curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
-    logging.info(
-        f"New York 311 Service Requests process started at {curr_dtm}"
-    )
+    logging.info(f"New York 311 Service Requests process started at {curr_dtm}")
 
     curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
     logging.info(f"creating 'files' folder at {curr_dtm}")
@@ -49,11 +46,17 @@ def main(
 
     curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
     logging.info(f"Counting lines in input file {source_file} at {curr_dtm}")
-    number_lines_source_file = subprocess.run(['wc', '-l', source_file], stdout=subprocess.PIPE)
-    number_lines_input_file = int(str(str(number_lines_source_file.stdout).split(" ")[0][2:]).strip()) - 1
+    number_lines_source_file = subprocess.run(
+        ["wc", "-l", source_file], stdout=subprocess.PIPE
+    )
+    number_lines_input_file = (
+        int(str(str(number_lines_source_file.stdout).split(" ")[0][2:]).strip()) - 1
+    )
 
     curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
-    logging.info(f"Calculating chunksize metadata in input file {source_file} at {curr_dtm}")
+    logging.info(
+        f"Calculating chunksize metadata in input file {source_file} at {curr_dtm}"
+    )
     chunksize = int((number_lines_input_file - 1) / int(number_of_batches))
 
     # whole number value (quotient) of dividing size into batches
@@ -65,118 +68,138 @@ def main(
 
     start_line = 2
 
-    for i in range(1, (number_batches+1)):
+    for i in range(1, (number_batches + 1)):
 
-        batch_line_count = (chunksize - 1)
+        batch_line_count = chunksize - 1
 
-        if (i == 1):
+        if i == 1:
             start_line = 2
             end_line = start_line + (batch_line_count - 1)
-        elif (i > 1):
+        elif i > 1:
             start_line = ((i - 1) * chunksize) + 1
             end_line = start_line + batch_line_count
 
-
-        # batch slice extracted from the source file
-        source_file_batch = str(source_file).replace('.csv', '_batch.csv')
-        # output generated from processing the source (batch) file
-        target_file_batch = str(source_file).replace('.csv', '_batch_targ.csv')
-
-        # extract the header from the source file and use it in the new batch
-        curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
-        logging.info(f"creating data file for batch #{i} of {number_batches} batches at {curr_dtm}")
-        os.system(f'head -n 1 {source_file} > {source_file_batch}')
+        source_file_batch = str(source_file).replace(".csv", "_batch.csv")
+        target_file_batch = str(source_file).replace(".csv", "_batch_targ.csv")
 
         curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
-        logging.info(f"populating data file for batch #{i} of {number_batches} batches at {curr_dtm}")
-        os.system(f"sed -n '{start_line},{end_line}p;" + str(end_line + 1) + f"q' {source_file} >> {source_file_batch}")
+        logging.info(
+            f"creating data file for batch #{i} of {number_batches} batches at {curr_dtm}"
+        )
+        os.system(f"head -n 1 {source_file} > {source_file_batch}")
 
         curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
-        logging.info(f"processing batch data file #{i} of {number_batches} batches at {curr_dtm}")
-        processBatch(source_file_batch, target_file_batch) # process the batch of data
+        logging.info(
+            f"populating data file for batch #{i} of {number_batches} batches at {curr_dtm}"
+        )
+        os.system(
+            f"sed -n '{start_line},{end_line}p;"
+            + str(end_line + 1)
+            + f"q' {source_file} >> {source_file_batch}"
+        )
 
         curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
-        logging.info(f"writing batch data to target file for batch #{i} of {number_batches} batches at {curr_dtm}")
-        if (i == 1):
+        logging.info(
+            f"processing batch data file #{i} of {number_batches} batches at {curr_dtm}"
+        )
+        processBatch(source_file_batch, target_file_batch)  # process the batch of data
+
+        curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
+        logging.info(
+            f"writing batch data to target file for batch #{i} of {number_batches} batches at {curr_dtm}"
+        )
+        if i == 1:
             # write the first batch target file to the actual target file
-            os.system(f'cp {target_file_batch} {target_file}')
+            os.system(f"cp {target_file_batch} {target_file}")
         else:
-            os.system(f'tail -n +2 {target_file_batch} >> {target_file}')
+            os.system(f"tail -n +2 {target_file_batch} >> {target_file}")
 
     curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
-    logging.info(f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path} at {curr_dtm}")
+    logging.info(
+        f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path} at {curr_dtm}"
+    )
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
-    # log completion
     curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
     logging.info(f"New York 311 Service Requests process completed at {curr_dtm}")
-
-
-    # pdb.set_trace()
 
 
 def processBatch(batch_file_path: str, target_batch_file: str) -> None:
 
     curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
     logging.info(f"->  Opening batch file at {curr_dtm} .. {batch_file_path}")
-    dtypes = {  'Unique Key': np.int_,
-                'Created Date': np.str_, # converted to datetime type later. Resolves constraint that pandas cannot import numpy datatype datetime or datetime64
-                'Closed Date': np.str_, # converted to datetime type later. Resolves constraint that pandas cannot import numpy datatype datetime or datetime64
-                'Agency': np.str_,
-                'Agency Name': np.str_,
-                'Complaint Type': np.str_,
-                'Descriptor': np.str_,
-                'Location Type': np.str_,
-                'Incident Zip': np.str_,
-                'Incident Address': np.str_,
-                'Street Name': np.str_,
-                'Cross Street 1': np.str_,
-                'Cross Street 2': np.str_,
-                'Intersection Street 1': np.str_,
-                'Intersection Street 2': np.str_,
-                'Address Type': np.str_,
-                'City': np.str_,
-                'Landmark': np.str_,
-                'Facility Type': np.str_,
-                'Status': np.str_,
-                'Due Date': np.str_, # converted to datetime type later. Resolves constraint that pandas cannot import numpy datatype datetime or datetime64
-                'Resolution Description': np.str_,
-                'Resolution Action Updated Date': np.str_, # converted to datetime type later. Resolves constraint that pandas cannot import numpy datatype datetime or datetime64
-                'Community Board': np.str_,
-                'BBL': np.str_, # converted to int later due to NA appearing in input file on some rows
-                'Borough': np.str_,
-                'X Coordinate (State Plane)': np.str_,  # converted to int later due to NA appearing in input file on some rows
-                'Y Coordinate (State Plane)': np.str_,  # converted to int later due to NA appearing in input file on some rows
-                'Open Data Channel Type': np.str_,
-                'Park Facility Name': np.str_,
-                'Park Borough': np.str_,
-                'Vehicle Type': np.str_,
-                'Taxi Company Borough': np.str_,
-                'Taxi Pick Up Location': np.str_,
-                'Bridge Highway Name': np.str_,
-                'Bridge Highway Direction': np.str_,
-                'Road Ramp': np.str_,
-                'Bridge Highway Segment': np.str_,
-                'Latitude': np.float64,
-                'Longitude': np.float64,
-                'Location': np.str_
-        }
-    parse_dates = ['Created Date', 'Closed Date', 'Due Date', 'Resolution Action Updated Date']
+    dtypes = {
+        "Unique Key": np.int_,
+        "Created Date": np.str_,
+        "Closed Date": np.str_,
+        "Agency": np.str_,
+        "Agency Name": np.str_,
+        "Complaint Type": np.str_,
+        "Descriptor": np.str_,
+        "Location Type": np.str_,
+        "Incident Zip": np.str_,
+        "Incident Address": np.str_,
+        "Street Name": np.str_,
+        "Cross Street 1": np.str_,
+        "Cross Street 2": np.str_,
+        "Intersection Street 1": np.str_,
+        "Intersection Street 2": np.str_,
+        "Address Type": np.str_,
+        "City": np.str_,
+        "Landmark": np.str_,
+        "Facility Type": np.str_,
+        "Status": np.str_,
+        "Due Date": np.str_,
+        "Resolution Description": np.str_,
+        "Resolution Action Updated Date": np.str_,
+        "Community Board": np.str_,
+        "BBL": np.str_,
+        "Borough": np.str_,
+        "X Coordinate (State Plane)": np.str_,
+        "Y Coordinate (State Plane)": np.str_,
+        "Open Data Channel Type": np.str_,
+        "Park Facility Name": np.str_,
+        "Park Borough": np.str_,
+        "Vehicle Type": np.str_,
+        "Taxi Company Borough": np.str_,
+        "Taxi Pick Up Location": np.str_,
+        "Bridge Highway Name": np.str_,
+        "Bridge Highway Direction": np.str_,
+        "Road Ramp": np.str_,
+        "Bridge Highway Segment": np.str_,
+        "Latitude": np.float64,
+        "Longitude": np.float64,
+        "Location": np.str_,
+    }
+    parse_dates = [
+        "Created Date",
+        "Closed Date",
+        "Due Date",
+        "Resolution Action Updated Date",
+    ]
     df = pd.read_csv(batch_file_path, dtype=dtypes, parse_dates=parse_dates)
 
     curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
-    logging.info(f"->  Transformation Process Starting at {curr_dtm} .. {batch_file_path}")
+    logging.info(
+        f"->  Transformation Process Starting at {curr_dtm} .. {batch_file_path}"
+    )
 
     curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
-    logging.info(f"->       Transform: Renaming Headers at {curr_dtm} .. {batch_file_path}")
+    logging.info(
+        f"->       Transform: Renaming Headers at {curr_dtm} .. {batch_file_path}"
+    )
     rename_headers(df)
 
     curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
-    logging.info(f"->       Transform: Removing rows with empty Ids at {curr_dtm} .. {batch_file_path}")
+    logging.info(
+        f"->       Transform: Removing rows with empty Ids at {curr_dtm} .. {batch_file_path}"
+    )
     df = df[df["unique_key"] != ""]
 
     curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
-    logging.info(f"->       Transform: Converting datetime format at {curr_dtm} .. {batch_file_path}")
+    logging.info(
+        f"->       Transform: Converting datetime format at {curr_dtm} .. {batch_file_path}"
+    )
     df["created_date"] = df["created_date"].apply(convert_dt_format)
     df["closed_date"] = df["closed_date"].apply(convert_dt_format)
     df["due_date"] = df["due_date"].apply(convert_dt_format)
@@ -233,10 +256,14 @@ def processBatch(batch_file_path: str, target_batch_file: str) -> None:
     ]
 
     curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
-    logging.info(f"->  Transformation Process complete at {curr_dtm} .. {batch_file_path}")
+    logging.info(
+        f"->  Transformation Process complete at {curr_dtm} .. {batch_file_path}"
+    )
 
     curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
-    logging.info(f"Saving transformed batch data to output file at {curr_dtm} .. {target_batch_file}")
+    logging.info(
+        f"Saving transformed batch data to output file at {curr_dtm} .. {target_batch_file}"
+    )
 
     try:
         save_to_new_file(df, file_path=str(target_batch_file))
@@ -244,17 +271,23 @@ def processBatch(batch_file_path: str, target_batch_file: str) -> None:
         logging.error(f"Error saving output file: {e}.")
 
     curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
-    logging.info(f"Saved transformed batch data to output file at {curr_dtm} .. {target_batch_file}")
-
+    logging.info(
+        f"Saved transformed batch data to output file at {curr_dtm} .. {target_batch_file}"
+    )
 
 
 def convert_dt_format(dt_str: str) -> str:
-    if (str(dt_str).strip()[3:3] == '/'):
+    if str(dt_str).strip()[3:3] == "/":
         return datetime.datetime.strptime(str(dt_str), "%m/%d/%Y %H:%M:%S %p").strftime(
             "%Y-%m-%d %H:%M:%S"
         )
-    elif (dt_str is None or len(str(dt_str)) == 0 or str(dt_str).lower() == "nan" or str(dt_str).lower() == "nat"):
-	    return ""
+    elif (
+        dt_str is None
+        or len(str(dt_str)) == 0
+        or str(dt_str).lower() == "nan"
+        or str(dt_str).lower() == "nat"
+    ):
+        return ""
     else:
         return str(dt_str)
 

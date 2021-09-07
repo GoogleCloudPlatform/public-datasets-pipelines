@@ -53,11 +53,15 @@ def main(
     source_file_status_json = str(source_file).replace(".csv", "") + "_status.json"
 
     logging.info(f"Downloading stations json file {source_url_stations}")
-    download_file_json(source_url_stations, source_file_stations_json, source_file_stations_csv)
+    download_file_json(
+        source_url_stations, source_file_stations_json, source_file_stations_csv
+    )
     copyfile(source_file_stations_json, "./templates/citibike_stations.json")
 
     logging.info(f"Downloading status json file {source_url_status}")
-    download_file_json(source_url_status, source_file_status_json, source_file_status_csv)
+    download_file_json(
+        source_url_status, source_file_status_json, source_file_status_csv
+    )
     copyfile(source_file_status_json, "./templates/citibike_status.json")
 
     logging.info(f"Opening stations file {source_file_stations_csv}")
@@ -169,7 +173,9 @@ def save_to_new_file(df, file_path) -> None:
     df.to_csv(file_path, float_format="%.0f", index=False)
 
 
-def download_file_json(source_url: str, source_file_json: pathlib.Path, source_file_csv: pathlib.Path) -> None:
+def download_file_json(
+    source_url: str, source_file_json: pathlib.Path, source_file_csv: pathlib.Path
+) -> None:
 
     # this function extracts the json from a source url and creates
     # a csv file from that data to be used as an input file
