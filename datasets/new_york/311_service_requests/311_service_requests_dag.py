@@ -36,7 +36,6 @@ with DAG(
     new_york_311_service_requests_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
         task_id="new_york_311_service_requests_transform_csv",
         name="311_service_requests",
-        startup_timeout_seconds=600,
         namespace="default",
         image_pull_policy="Always",
         image="{{ var.json.new_york.container_registry.run_csv_transform_kub_311_service_requests }}",
@@ -48,7 +47,7 @@ with DAG(
             "TARGET_GCS_BUCKET": "{{ var.json.shared.composer_bucket }}",
             "TARGET_GCS_PATH": "data/new_york/311_service_requests/data_output.csv",
         },
-        resources={"limit_memory": "8G", "limit_cpu": "8"},
+        resources={"limit_memory": "32G", "limit_cpu": "8"},
     )
 
     # Task to load CSV data to a BigQuery table
@@ -313,4 +312,4 @@ with DAG(
         )
     )
 
-    new_york_311_service_requests_transform_csv >> load_new_york_311_service_requests_to_bq
+    transform_csv >> load_to_bq
