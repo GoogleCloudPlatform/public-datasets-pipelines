@@ -13,8 +13,10 @@
 # limitations under the License.
 
 
+from airflow.contrib.operators import gcs_to_bq
+from airflow.contrib.operators import kubernetes_pod_operator
 from airflow import DAG
-from airflow.contrib.operators import gcs_to_bq, kubernetes_pod_operator
+
 
 default_args = {
     "owner": "Google",
@@ -35,6 +37,7 @@ with DAG(
     # Run CSV transform within kubernetes pod
     transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
         task_id="transform_csv",
+        startup_timeout_seconds=300,
         name="311_service_requests",
         namespace="default",
         image_pull_policy="Always",

@@ -37,6 +37,7 @@ dag:
       description: "Run CSV transform within kubernetes pod"
       args:
         task_id: "transform_csv"
+        startup_timeout_seconds: 300
         name: "311_service_requests"
         namespace: "default"
         image_pull_policy: "Always"
