@@ -56,6 +56,10 @@ def main(
         or pipeline_name == "inpatient_charges_2013"
         or pipeline_name == "inpatient_charges_2014"
         or pipeline_name == "inpatient_charges_2015"
+        or pipeline_name == "outpatient_charges_2012"
+        or pipeline_name == "outpatient_charges_2013"
+        or pipeline_name == "outpatient_charges_2014"
+        or pipeline_name == "outpatient_charges_2011"
     ):
 
         with ZipFile(source_file) as zipped_files:
@@ -100,11 +104,11 @@ def main(
     )
 
 
-def convert_dt_format(date_str: str, time_str: str):
+def convert_dt_format(date_str: str, time_str: str) -> None:
     return str(datetime.datetime.strptime(date_str, "%m/%d/%Y").date()) + " " + time_str
 
 
-def rename_headers(df: pd.DataFrame, rename_mappings: dict):
+def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
     df.rename(columns=rename_mappings, inplace=True)
 
 
@@ -119,12 +123,21 @@ def filter_null_rows(df: pd.DataFrame, pipeline_name: str):
 
         return df.dropna(subset=["drg_definition", "provider_id"], inplace=True)
 
+    elif (
+        pipeline_name == "outpatient_charges_2012"
+        or pipeline_name == "outpatient_charges_2013"
+        or pipeline_name == "outpatient_charges_2014"
+        or pipeline_name == "outpatient_charges_2011"
+    ):
+
+        return df.dropna(subset=["apc", "provider_id"], inplace=True)
+
     else:
 
         df = df
 
 
-def save_to_new_file(df: pd.DataFrame, file_path: str):
+def save_to_new_file(df: pd.DataFrame, file_path: str) -> None:
     df.to_csv(file_path, float_format="%.0f", index=False)
 
 

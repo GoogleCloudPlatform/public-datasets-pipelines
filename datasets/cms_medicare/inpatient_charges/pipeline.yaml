@@ -63,7 +63,7 @@ dag:
       depends_on_past: False
       start_date: '2021-03-01'
     max_active_runs: 1
-    schedule_interval: "@daily"  # run once a week at Sunday 12am
+    schedule_interval: "@daily"
     catchup: False
     default_view: graph
 
