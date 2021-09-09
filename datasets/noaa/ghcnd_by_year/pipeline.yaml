@@ -46,6 +46,9 @@ dag:
         image: "{{ var.json.noaa.container_registry.run_csv_transform_kub_ghcnd_by_year }}"
         env_vars:
           SOURCE_URL: "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/by_year/{{ macros.ds_format(macros.ds_add(ds, 0), '%Y-%m-%d', '%Y') }}.csv.gz"
+          FTP_HOST: "ftp.ncdc.noaa.gov"
+          FTP_DIR: "pub/data/ghcn/daily/by_year"
+          FTP_FILENAME: "{{ macros.ds_format(macros.ds_add(ds, 0), '%Y-%m-%d', '%Y') }}.csv.gz"
           SOURCE_FILE: "files/data.csv"
           TARGET_FILE: "files/data_output.csv"
           TARGET_GCS_BUCKET: "{{ var.json.shared.composer_bucket }}"

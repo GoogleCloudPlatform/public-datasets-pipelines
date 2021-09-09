@@ -19,7 +19,7 @@ from airflow.contrib.operators import gcs_to_bq, kubernetes_pod_operator
 default_args = {
     "owner": "Google",
     "depends_on_past": False,
-    "start_date": "2021-03-01",
+    "start_date": "2021-12-30",
 }
 
 
@@ -27,7 +27,7 @@ with DAG(
     dag_id="noaa.lightning_strikes_by_year",
     default_args=default_args,
     max_active_runs=1,
-    schedule_interval="@daily",
+    schedule_interval="@yearly",
     catchup=False,
     default_view="graph",
 ) as dag:
