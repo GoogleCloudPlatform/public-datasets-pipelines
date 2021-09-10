@@ -38,19 +38,36 @@ with DAG(
         startup_timeout_seconds=600,
         name="cms_medicare_inpatient_charges_2011",
         namespace="default",
+        affinity={
+            "nodeAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                    "nodeSelectorTerms": [
+                        {
+                            "matchExpressions": [
+                                {
+                                    "key": "cloud.google.com/gke-nodepool",
+                                    "operator": "In",
+                                    "values": ["pool-e2-standard-4"],
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
         image_pull_policy="Always",
         image="{{ var.json.cms_medicare.container_registry.run_csv_transform_kub }}",
         env_vars={
             "SOURCE_URL": "https://www.cms.gov/Research-Statistics-Data-and-Systems/Statistics-Trends-and-Reports/Medicare-Provider-Charge-Data/Downloads/Inpatient_Data_2011_CSV.zip",
             "SOURCE_FILE": "files/data.zip",
             "TARGET_FILE": "files/data_output.csv",
-            "TARGET_GCS_BUCKET": "{{ var.json.shared.composer_bucket }}",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/cms_medicare/inpatient_charges_2011/data_output.csv",
             "CSV_HEADERS": '["provider_id","provider_name","provider_street_address","provider_city","provider_state","provider_zipcode","drg_definition","hospital_referral_region_description","total_discharges","average_covered_charges","average_total_payments","average_medicare_payments"]',
             "RENAME_MAPPINGS": '{"Provider Id": "provider_id","Provider Name": "provider_name","Provider Street Address": "provider_street_address","Provider City": "provider_city","Provider State": "provider_state","Provider Zip Code": "provider_zipcode","DRG Definition": "drg_definition","Hospital Referral Region (HRR) Description": "hospital_referral_region_description","Total Discharges": "total_discharges","Average Covered Charges": "average_covered_charges","Average Total Payments": "average_total_payments","Average Medicare Payments": "average_medicare_payments"}',
             "PIPELINE_NAME": "inpatient_charges_2011",
         },
-        resources={"limit_memory": "4G", "limit_cpu": "1"},
+        resources={"limit_memory": "2G", "limit_cpu": "1"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -59,19 +76,36 @@ with DAG(
         startup_timeout_seconds=600,
         name="cms_medicare_inpatient_charges_2012",
         namespace="default",
+        affinity={
+            "nodeAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                    "nodeSelectorTerms": [
+                        {
+                            "matchExpressions": [
+                                {
+                                    "key": "cloud.google.com/gke-nodepool",
+                                    "operator": "In",
+                                    "values": ["pool-e2-standard-4"],
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
         image_pull_policy="Always",
         image="{{ var.json.cms_medicare.container_registry.run_csv_transform_kub }}",
         env_vars={
             "SOURCE_URL": "https://www.cms.gov/Research-Statistics-Data-and-Systems/Statistics-Trends-and-Reports/Medicare-Provider-Charge-Data/Downloads/Inpatient_Data_2012_CSV.zip",
             "SOURCE_FILE": "files/data.zip",
             "TARGET_FILE": "files/data_output.csv",
-            "TARGET_GCS_BUCKET": "{{ var.json.shared.composer_bucket }}",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/cms_medicare/inpatient_charges_2012/data_output.csv",
             "CSV_HEADERS": '["provider_id","provider_name","provider_street_address","provider_city","provider_state","provider_zipcode","drg_definition","hospital_referral_region_description","total_discharges","average_covered_charges","average_total_payments","average_medicare_payments"]',
             "RENAME_MAPPINGS": '{"Provider Id": "provider_id","Provider Name": "provider_name","Provider Street Address": "provider_street_address","Provider City": "provider_city","Provider State": "provider_state","Provider Zip Code": "provider_zipcode","DRG Definition": "drg_definition","Hospital Referral Region (HRR) Description": "hospital_referral_region_description","Total Discharges": "total_discharges","Average Covered Charges": "average_covered_charges","Average Total Payments": "average_total_payments","Average Medicare Payments": "average_medicare_payments"}',
             "PIPELINE_NAME": "inpatient_charges_2012",
         },
-        resources={"limit_memory": "4G", "limit_cpu": "1"},
+        resources={"limit_memory": "2G", "limit_cpu": "1"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -80,19 +114,36 @@ with DAG(
         startup_timeout_seconds=600,
         name="cms_medicare_inpatient_charges_2013",
         namespace="default",
+        affinity={
+            "nodeAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                    "nodeSelectorTerms": [
+                        {
+                            "matchExpressions": [
+                                {
+                                    "key": "cloud.google.com/gke-nodepool",
+                                    "operator": "In",
+                                    "values": ["pool-e2-standard-4"],
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
         image_pull_policy="Always",
         image="{{ var.json.cms_medicare.container_registry.run_csv_transform_kub }}",
         env_vars={
             "SOURCE_URL": "https://www.cms.gov/Research-Statistics-Data-and-Systems/Statistics-Trends-and-Reports/Medicare-Provider-Charge-Data/Downloads/Inpatient_Data_2013_CSV.zip",
             "SOURCE_FILE": "files/data.zip",
             "TARGET_FILE": "files/data_output.csv",
-            "TARGET_GCS_BUCKET": "{{ var.json.shared.composer_bucket }}",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/cms_medicare/inpatient_charges_2013/data_output.csv",
             "CSV_HEADERS": '["provider_id","provider_name","provider_street_address","provider_city","provider_state","provider_zipcode","drg_definition","hospital_referral_region_description","total_discharges","average_covered_charges","average_total_payments","average_medicare_payments"]',
             "RENAME_MAPPINGS": '{"Provider Id": "provider_id","Provider Name": "provider_name","Provider Street Address": "provider_street_address","Provider City": "provider_city","Provider State": "provider_state","Provider Zip Code": "provider_zipcode","DRG Definition": "drg_definition","Hospital Referral Region (HRR) Description": "hospital_referral_region_description","Total Discharges": "total_discharges","Average Covered Charges": "average_covered_charges","Average Total Payments": "average_total_payments","Average Medicare Payments": "average_medicare_payments"}',
             "PIPELINE_NAME": "inpatient_charges_2013",
         },
-        resources={"limit_memory": "4G", "limit_cpu": "1"},
+        resources={"limit_memory": "2G", "limit_cpu": "1"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -101,19 +152,36 @@ with DAG(
         startup_timeout_seconds=600,
         name="cms_medicare_inpatient_charges_2014",
         namespace="default",
+        affinity={
+            "nodeAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                    "nodeSelectorTerms": [
+                        {
+                            "matchExpressions": [
+                                {
+                                    "key": "cloud.google.com/gke-nodepool",
+                                    "operator": "In",
+                                    "values": ["pool-e2-standard-4"],
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
         image_pull_policy="Always",
         image="{{ var.json.cms_medicare.container_registry.run_csv_transform_kub }}",
         env_vars={
             "SOURCE_URL": "https://www.cms.gov/Research-Statistics-Data-and-Systems/Statistics-Trends-and-Reports/Medicare-Provider-Charge-Data/Downloads/Inpatient_Data_2014_CSV.zip",
             "SOURCE_FILE": "files/data.zip",
             "TARGET_FILE": "files/data_output.csv",
-            "TARGET_GCS_BUCKET": "{{ var.json.shared.composer_bucket }}",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/cms_medicare/inpatient_charges_2014/data_output.csv",
             "CSV_HEADERS": '["provider_id","provider_name","provider_street_address","provider_city","provider_state","provider_zipcode","drg_definition","hospital_referral_region_description","total_discharges","average_covered_charges","average_total_payments","average_medicare_payments"]',
             "RENAME_MAPPINGS": '{"Provider Id": "provider_id","Provider Name": "provider_name","Provider Street Address": "provider_street_address","Provider City": "provider_city","Provider State": "provider_state","Provider Zip Code": "provider_zipcode","DRG Definition": "drg_definition","Hospital Referral Region (HRR) Description": "hospital_referral_region_description","Total Discharges": "total_discharges","Average Covered Charges": "average_covered_charges","Average Total Payments": "average_total_payments","Average Medicare Payments": "average_medicare_payments"}',
             "PIPELINE_NAME": "inpatient_charges_2014",
         },
-        resources={"limit_memory": "4G", "limit_cpu": "1"},
+        resources={"limit_memory": "2G", "limit_cpu": "1"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -122,25 +190,42 @@ with DAG(
         startup_timeout_seconds=600,
         name="cms_medicare_inpatient_charges_2015",
         namespace="default",
+        affinity={
+            "nodeAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                    "nodeSelectorTerms": [
+                        {
+                            "matchExpressions": [
+                                {
+                                    "key": "cloud.google.com/gke-nodepool",
+                                    "operator": "In",
+                                    "values": ["pool-e2-standard-4"],
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
         image_pull_policy="Always",
         image="{{ var.json.cms_medicare.container_registry.run_csv_transform_kub }}",
         env_vars={
             "SOURCE_URL": "https://www.cms.gov/Research-Statistics-Data-and-Systems/Statistics-Trends-and-Reports/Medicare-Provider-Charge-Data/Downloads/Inpatient_Data_2015_CSV.zip",
             "SOURCE_FILE": "files/data.zip",
             "TARGET_FILE": "files/data_output.csv",
-            "TARGET_GCS_BUCKET": "{{ var.json.shared.composer_bucket }}",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/cms_medicare/inpatient_charges_2015/data_output.csv",
             "CSV_HEADERS": '["provider_id","provider_name","provider_street_address","provider_city","provider_state","provider_zipcode","drg_definition","hospital_referral_region_description","total_discharges","average_covered_charges","average_total_payments","average_medicare_payments"]',
             "RENAME_MAPPINGS": '{"Provider Id": "provider_id","Provider Name": "provider_name","Provider Street Address": "provider_street_address","Provider City": "provider_city","Provider State": "provider_state","Provider Zip Code": "provider_zipcode","DRG Definition": "drg_definition","Hospital Referral Region (HRR) Description": "hospital_referral_region_description","Total Discharges": "total_discharges","Average Covered Charges": "average_covered_charges","Average Total Payments": "average_total_payments","Average Medicare Payments": "average_medicare_payments"}',
             "PIPELINE_NAME": "inpatient_charges_2015",
         },
-        resources={"limit_memory": "4G", "limit_cpu": "1"},
+        resources={"limit_memory": "2G", "limit_cpu": "1"},
     )
 
     # Task to load CSV data to a BigQuery table
     load_inpatient_2011_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
         task_id="load_inpatient_2011_to_bq",
-        bucket="{{ var.json.shared.composer_bucket }}",
+        bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/cms_medicare/inpatient_charges_2011/data_output.csv"],
         source_format="CSV",
         destination_project_dataset_table="cms_medicare.inpatient_charges_2011",
@@ -225,7 +310,7 @@ with DAG(
     # Task to load CSV data to a BigQuery table
     load_inpatient_2012_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
         task_id="load_inpatient_2012_to_bq",
-        bucket="{{ var.json.shared.composer_bucket }}",
+        bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/cms_medicare/inpatient_charges_2012/data_output.csv"],
         source_format="CSV",
         destination_project_dataset_table="cms_medicare.inpatient_charges_2012",
@@ -310,7 +395,7 @@ with DAG(
     # Task to load CSV data to a BigQuery table
     load_inpatient_2013_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
         task_id="load_inpatient_2013_to_bq",
-        bucket="{{ var.json.shared.composer_bucket }}",
+        bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/cms_medicare/inpatient_charges_2013/data_output.csv"],
         source_format="CSV",
         destination_project_dataset_table="cms_medicare.inpatient_charges_2013",
@@ -395,7 +480,7 @@ with DAG(
     # Task to load CSV data to a BigQuery table
     load_inpatient_2014_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
         task_id="load_inpatient_2014_to_bq",
-        bucket="{{ var.json.shared.composer_bucket }}",
+        bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/cms_medicare/inpatient_charges_2014/data_output.csv"],
         source_format="CSV",
         destination_project_dataset_table="cms_medicare.inpatient_charges_2014",
@@ -480,7 +565,7 @@ with DAG(
     # Task to load CSV data to a BigQuery table
     load_inpatient_2015_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
         task_id="load_inpatient_2015_to_bq",
-        bucket="{{ var.json.shared.composer_bucket }}",
+        bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/cms_medicare/inpatient_charges_2015/data_output.csv"],
         source_format="CSV",
         destination_project_dataset_table="cms_medicare.inpatient_charges_2015",

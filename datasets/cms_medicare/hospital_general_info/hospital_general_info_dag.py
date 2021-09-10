@@ -38,25 +38,42 @@ with DAG(
         startup_timeout_seconds=600,
         name="cms_medicare_hospital_general_info",
         namespace="default",
+        affinity={
+            "nodeAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                    "nodeSelectorTerms": [
+                        {
+                            "matchExpressions": [
+                                {
+                                    "key": "cloud.google.com/gke-nodepool",
+                                    "operator": "In",
+                                    "values": ["pool-e2-standard-4"],
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
         image_pull_policy="Always",
         image="{{ var.json.cms_medicare.container_registry.run_csv_transform_kub }}",
         env_vars={
             "SOURCE_URL": "https://data.cms.gov/provider-data/sites/default/files/resources/092256becd267d9eeccf73bf7d16c46b_1623902717/Hospital_General_Information.csv",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
-            "TARGET_GCS_BUCKET": "{{ var.json.shared.composer_bucket }}",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/cms_medicare/hospital_general_info/data_output.csv",
             "CSV_HEADERS": '["provider_id","hospital_name","address","city","state","zip_code","county_name","phone_number","hospital_type","hospital_ownership","emergency_services","meets_criteria_for_promoting_interoperability_of_ehrs","hospital_overall_rating","hospital_overall_rating_footnote","mortality_group_measure_count","facility_mortaility_measures_count","mortality_measures_better_count","mortality_measures_no_different_count","mortality_measures_worse_count","mortaility_group_footnote","safety_measures_count","facility_care_safety_measures_count","safety_measures_better_count","safety_measures_no_different_count","safety_measures_worse_count","safety_group_footnote","readmission_measures_count","facility_readmission_measures_count","readmission_measures_better_count","readmission_measures_no_different_count","readmission_measures_worse_count","readmission_measures_footnote","patient_experience_measures_count","facility_patient_experience_measures_count","patient_experience_measures_footnote","timely_and_effective_care_measures_count","facility_timely_and_effective_care_measures_count","timely_and_effective_care_measures_footnote"]',
             "RENAME_MAPPINGS": '{"Facility ID": "provider_id","Facility Name": "hospital_name","Address": "address","City": "city","State": "state","ZIP Code": "zip_code","County Name": "county_name","Phone Number": "phone_number","Hospital Type": "hospital_type","Hospital Ownership": "hospital_ownership","Emergency Services": "emergency_services","Meets criteria for promoting interoperability of EHRs": "meets_criteria_for_promoting_interoperability_of_ehrs","Hospital overall rating": "hospital_overall_rating","Hospital overall rating footnote": "hospital_overall_rating_footnote","MORT Group Measure Count": "mortality_group_measure_count","Count of Facility MORT Measures": "facility_mortaility_measures_count","Count of MORT Measures Better": "mortality_measures_better_count","Count of MORT Measures No Different": "mortality_measures_no_different_count","Count of MORT Measures Worse": "mortality_measures_worse_count","MORT Group Footnote": "mortaility_group_footnote","Safety Group Measure Count": "safety_measures_count","Count of Facility Safety Measures": "facility_care_safety_measures_count","Count of Safety Measures Better": "safety_measures_better_count","Count of Safety Measures No Different": "safety_measures_no_different_count","Count of Safety Measures Worse": "safety_measures_worse_count","Safety Group Footnote": "safety_group_footnote","READM Group Measure Count": "readmission_measures_count","Count of Facility READM Measures": "facility_readmission_measures_count","Count of READM Measures Better": "readmission_measures_better_count","Count of READM Measures No Different": "readmission_measures_no_different_count","Count of READM Measures Worse": "readmission_measures_worse_count","READM Group Footnote": "readmission_measures_footnote","Pt Exp Group Measure Count": "patient_experience_measures_count","Count of Facility Pt Exp Measures": "facility_patient_experience_measures_count","Pt Exp Group Footnote": "patient_experience_measures_footnote","TE Group Measure Count": "timely_and_effective_care_measures_count","Count of Facility TE Measures": "facility_timely_and_effective_care_measures_count","TE Group Footnote": "timely_and_effective_care_measures_footnote"}',
             "PIPELINE_NAME": "hospital_general_info",
         },
-        resources={"limit_memory": "4G", "limit_cpu": "1"},
+        resources={"limit_memory": "2G", "limit_cpu": "1"},
     )
 
     # Task to load CSV data to a BigQuery table
     load_hospital_info_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
         task_id="load_hospital_info_to_bq",
-        bucket="{{ var.json.shared.composer_bucket }}",
+        bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/cms_medicare/hospital_general_info/data_output.csv"],
         source_format="CSV",
         destination_project_dataset_table="cms_medicare.hospital_general_info",

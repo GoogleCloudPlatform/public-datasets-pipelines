@@ -57,6 +57,16 @@ dag:
         # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
         namespace: "default"
 
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: cloud.google.com/gke-nodepool
+                      operator: In
+                      values:
+                        - "pool-e2-standard-4"
+
         image_pull_policy: "Always"
 
         # Docker images will be built and pushed to GCR by default whenever the `scripts/generate_dag.py` is run. To skip building and pushing images, use the optional `--skip-builds` flag.
@@ -67,7 +77,7 @@ dag:
           SOURCE_URL: "https://data.cms.gov/provider-data/sites/default/files/resources/092256becd267d9eeccf73bf7d16c46b_1623902717/Hospital_General_Information.csv"
           SOURCE_FILE: "files/data.csv"
           TARGET_FILE: "files/data_output.csv"
-          TARGET_GCS_BUCKET: "{{ var.json.shared.composer_bucket }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/cms_medicare/hospital_general_info/data_output.csv"
           CSV_HEADERS: >-
            ["provider_id","hospital_name","address","city","state","zip_code","county_name","phone_number","hospital_type","hospital_ownership","emergency_services","meets_criteria_for_promoting_interoperability_of_ehrs","hospital_overall_rating","hospital_overall_rating_footnote","mortality_group_measure_count","facility_mortaility_measures_count","mortality_measures_better_count","mortality_measures_no_different_count","mortality_measures_worse_count","mortaility_group_footnote","safety_measures_count","facility_care_safety_measures_count","safety_measures_better_count","safety_measures_no_different_count","safety_measures_worse_count","safety_group_footnote","readmission_measures_count","facility_readmission_measures_count","readmission_measures_better_count","readmission_measures_no_different_count","readmission_measures_worse_count","readmission_measures_footnote","patient_experience_measures_count","facility_patient_experience_measures_count","patient_experience_measures_footnote","timely_and_effective_care_measures_count","facility_timely_and_effective_care_measures_count","timely_and_effective_care_measures_footnote"]
@@ -77,7 +87,7 @@ dag:
 
         # Set resource limits for the pod here. For resource units in Kubernetes, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes
         resources:
-          limit_memory: "4G"
+          limit_memory: "2G"
           limit_cpu: "1"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
@@ -87,7 +97,7 @@ dag:
         task_id: "load_hospital_info_to_bq"
 
         # The GCS bucket where the CSV file is located in.
-        bucket: "{{ var.json.shared.composer_bucket }}"
+        bucket: "{{ var.value.composer_bucket }}"
 
         # The GCS object path for the CSV file
         source_objects: ["data/cms_medicare/hospital_general_info/data_output.csv"]
