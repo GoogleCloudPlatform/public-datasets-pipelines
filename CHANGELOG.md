@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.3.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v2.2.0...v2.3.0) (2021-09-10)
+
+
+### Features
+
+* Onboard advertiser_geo_spend table under Google political Ads dataset ([#154](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/154)) ([2201ebe](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/2201ebe017ed1419bee3cd1403622c92d832ef78))
+* Onboard Austin Bikeshare dataset ([#156](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/156)) ([0bd5659](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/0bd5659b2c6467eb28244b14eb73cddfdabd9f86))
+* Onboard NOAA dataset ([#158](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/158)) ([8371856](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/83718569b7094bdf48fa9e8c9504368f17ceda94))
+* Support Dataflow operator and job requirements ([#153](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/153)) ([119f8fb](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/119f8fb9bcc747b3f544150864f3a22164da708e))
+
 ## [2.2.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v2.1.0...v2.2.0) (2021-08-27)
 
 
