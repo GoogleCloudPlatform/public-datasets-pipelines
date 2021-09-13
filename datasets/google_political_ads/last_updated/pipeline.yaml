@@ -66,7 +66,7 @@ dag:
           SOURCE_FILE: "files/data.zip"
           FILE_NAME: "google-political-ads-transparency-bundle/google-political-ads-updated*"
           TARGET_FILE: "files/data_output.csv"
-          TARGET_GCS_BUCKET: "{{ var.json.shared.composer_bucket }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/google_political_ads/last_updated/data_output.csv"
           PIPELINE_NAME: "last_updated"
           CSV_HEADERS: >-
@@ -86,7 +86,7 @@ dag:
         task_id: "load_last_updated_to_bq"
 
         # The GCS bucket where the CSV file is located in.
-        bucket: "{{ var.json.shared.composer_bucket }}"
+        bucket: "{{ var.value.composer_bucket }}"
 
         # The GCS object path for the CSV file
         source_objects: ["data/google_political_ads/last_updated/data_output.csv"]

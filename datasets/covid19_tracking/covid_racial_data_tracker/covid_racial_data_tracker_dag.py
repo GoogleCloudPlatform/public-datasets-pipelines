@@ -39,7 +39,7 @@ with DAG(
         bash_command="mkdir -p $airflow_home/data/covid19_tracking/covid_racial_data_tracker\ncurl -o $airflow_home/data/covid19_tracking/covid_racial_data_tracker/raw-crdt-data-{{ ds }}.csv -L $csv_source_url\n",
         env={
             "csv_source_url": "https://docs.google.com/spreadsheets/d/e/2PACX-1vS8SzaERcKJOD_EzrtCDK1dX1zkoMochlA9iHoHg_RSw3V8bkpfk1mpw4pfL5RdtSOyx_oScsUtyXyk/pub?gid=43720681&single=true&output=csv",
-            "airflow_home": "{{ var.json.shared.airflow_home }}",
+            "airflow_home": "{{ var.value.airflow_home }}",
         },
     )
 
@@ -48,7 +48,7 @@ with DAG(
         task_id="process_raw_csv_file",
         bash_command="SOURCE_CSV=$airflow_home/data/$dataset/$pipeline/raw-crdt-data-{{ ds }}.csv TARGET_CSV=$airflow_home/data/$dataset/$pipeline/crdt-data-{{ ds }}.csv python $airflow_home/dags/$dataset/$pipeline/custom/transform_dates.py\n",
         env={
-            "airflow_home": "{{ var.json.shared.airflow_home }}",
+            "airflow_home": "{{ var.value.airflow_home }}",
             "dataset": "covid19_tracking",
             "pipeline": "covid_racial_data_tracker",
         },
@@ -57,7 +57,7 @@ with DAG(
     # Task to load the data from Airflow data folder to BigQuery
     load_csv_file_to_bq_table = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
         task_id="load_csv_file_to_bq_table",
-        bucket="{{ var.json.shared.composer_bucket }}",
+        bucket="{{ var.value.composer_bucket }}",
         source_objects=[
             "data/covid19_tracking/covid_racial_data_tracker/crdt-data-{{ ds }}.csv"
         ],
@@ -161,7 +161,7 @@ with DAG(
     # Task to archive the CSV file in the destination bucket
     archive_csv_file_to_destination_bucket = gcs_to_gcs.GoogleCloudStorageToGoogleCloudStorageOperator(
         task_id="archive_csv_file_to_destination_bucket",
-        source_bucket="{{ var.json.shared.composer_bucket }}",
+        source_bucket="{{ var.value.composer_bucket }}",
         source_object="data/covid19_tracking/covid_racial_data_tracker/crdt-data-{{ ds }}.csv",
         destination_bucket="{{ var.json.covid19_tracking.destination_bucket }}",
         destination_object="datasets/covid19_tracking/covid_racial_data_tracker/crdt-data-{{ ds }}.csv",

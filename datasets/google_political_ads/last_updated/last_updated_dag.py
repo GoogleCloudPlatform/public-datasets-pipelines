@@ -45,7 +45,7 @@ with DAG(
             "SOURCE_FILE": "files/data.zip",
             "FILE_NAME": "google-political-ads-transparency-bundle/google-political-ads-updated*",
             "TARGET_FILE": "files/data_output.csv",
-            "TARGET_GCS_BUCKET": "{{ var.json.shared.composer_bucket }}",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/google_political_ads/last_updated/data_output.csv",
             "PIPELINE_NAME": "last_updated",
             "CSV_HEADERS": '["report_data_updated_date"]',
@@ -57,7 +57,7 @@ with DAG(
     # Task to load CSV data to a BigQuery table
     load_last_updated_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
         task_id="load_last_updated_to_bq",
-        bucket="{{ var.json.shared.composer_bucket }}",
+        bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/google_political_ads/last_updated/data_output.csv"],
         source_format="CSV",
         destination_project_dataset_table="google_political_ads.last_updated",

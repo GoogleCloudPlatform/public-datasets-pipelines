@@ -43,7 +43,7 @@ with DAG(
             "SOURCE_URL": "https://www1.ncdc.noaa.gov/pub/data/swdi/database-csv/v2/nldn-tiles-{{ macros.ds_format(macros.ds_add(ds, -365), '%Y-%m-%d', '%Y') }}.csv.gz",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
-            "TARGET_GCS_BUCKET": "{{ var.json.shared.composer_bucket }}",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/noaa/lightning_strikes_by_year/data_output.csv",
         },
         resources={"limit_memory": "2G", "limit_cpu": "1"},
@@ -52,7 +52,7 @@ with DAG(
     # Task to load CSV data to a BigQuery table
     load_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
         task_id="load_to_bq",
-        bucket="{{ var.json.shared.composer_bucket }}",
+        bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/noaa/lightning_strikes_by_year/data_output.csv"],
         source_format="CSV",
         destination_project_dataset_table="noaa.lightning_strikes_{{ macros.ds_format(macros.ds_add(ds, -365), \u0027%Y-%m-%d\u0027, \u0027%Y\u0027) }}",
