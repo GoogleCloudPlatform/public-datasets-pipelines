@@ -300,6 +300,17 @@ dag:
         # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
         namespace: "default"
 
+        # Use this attribute to constrain which node pools your pod must run in.
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: cloud.google.com/gke-nodepool
+                      operator: In
+                      values:  # Specify your node pools here
+                        - "pool-e2-standard-4"
+
         # The Google Container Registry image URL. To prepare a Docker image to be used by this operator:
         #
         # 1. Create an `_images` folder under your dataset folder if it doesn't exist.
