@@ -38,6 +38,23 @@ with DAG(
         startup_timeout_seconds=600,
         name="crime",
         namespace="default",
+        affinity={
+            "nodeAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                    "nodeSelectorTerms": [
+                        {
+                            "matchExpressions": [
+                                {
+                                    "key": "cloud.google.com/gke-nodepool",
+                                    "operator": "In",
+                                    "values": ["pool-e2-standard-4"],
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
         image_pull_policy="Always",
         image="{{ var.json.chicago_crime.container_registry.run_csv_transform_kub }}",
         env_vars={
