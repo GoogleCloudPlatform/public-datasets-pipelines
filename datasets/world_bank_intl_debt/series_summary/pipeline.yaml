@@ -181,3 +181,4 @@ dag:
 
   graph_paths:
     - "series_summary_transform_csv >> load_series_summary_to_bq"
+
