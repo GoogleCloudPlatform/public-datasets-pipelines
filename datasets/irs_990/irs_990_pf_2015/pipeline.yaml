@@ -52,6 +52,16 @@ dag:
         # The name of the pod in which the task will run. This will be used (plus a random suffix) to generate a pod id
         name: "irs_990_pf_2015"
 
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: cloud.google.com/gke-nodepool
+                      operator: In
+                      values:
+                        - "pool-e2-standard-4"
+
         # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
         namespace: "default"
 

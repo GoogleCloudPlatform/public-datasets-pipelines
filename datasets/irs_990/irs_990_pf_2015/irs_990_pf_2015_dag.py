@@ -37,6 +37,23 @@ with DAG(
         task_id="irs_990_pf_2015_transform_csv",
         startup_timeout_seconds=600,
         name="irs_990_pf_2015",
+        affinity={
+            "nodeAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                    "nodeSelectorTerms": [
+                        {
+                            "matchExpressions": [
+                                {
+                                    "key": "cloud.google.com/gke-nodepool",
+                                    "operator": "In",
+                                    "values": ["pool-e2-standard-4"],
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
         namespace="default",
         image_pull_policy="Always",
         image="{{ var.json.irs_990.container_registry.run_csv_transform_kub }}",
