@@ -61,7 +61,7 @@ with DAG(
             "SOURCE_URL": "https://data.sfgov.org/api/views/vw6y-z8j6/rows.csv",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
-            "TARGET_GCS_BUCKET": "{{ var.values.composer_bucket }}",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/san_francisco_311_service_requests/311_service_requests/data_output.csv",
         },
         resources={"limit_memory": "4G", "limit_cpu": "1"},
@@ -70,7 +70,7 @@ with DAG(
     # Task to load CSV data to a BigQuery table
     load_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_to_bq",
-        bucket="{{ var.values.composer_bucket }}",
+        bucket="{{ var.value.composer_bucket }}",
         source_objects=[
             "data/san_francisco_311_service_requests/311_service_requests/data_output.csv"
         ],
