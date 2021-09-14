@@ -52,7 +52,7 @@ dag:
                       values:
                         - "pool-e2-standard-4"
         image_pull_policy: "Always"
-        image: "{{ var.json.san_francisco_311_service_requests.container_registry.run_csv_transform_kub_311_service_requests }}"
+        image: "{{ var.json.san_francisco_311_service_requests.container_registry.run_csv_transform_kub }}"
         env_vars:
           SOURCE_URL: "https://data.sfgov.org/api/views/vw6y-z8j6/rows.csv"
           SOURCE_FILE: "files/data.csv"
