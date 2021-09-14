@@ -60,7 +60,7 @@ dag:
           TARGET_GCS_BUCKET: "{{ var.values.composer_bucket }}"
           TARGET_GCS_PATH: "data/san_francisco_311_service_requests/311_service_requests/data_output.csv"
         resources:
-          limit_memory: "2G"
+          limit_memory: "4G"
           limit_cpu: "1"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"

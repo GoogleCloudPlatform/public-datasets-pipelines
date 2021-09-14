@@ -12,13 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# import modules
 import datetime
 import logging
 import os
 import pathlib
 
-import pdb
 import pandas as pd
 import requests
 from google.cloud import storage
@@ -48,22 +46,51 @@ def main(
     logging.info(f"Transform: Renaming Headers.. {source_file}")
     rename_headers(df)
 
+    logging.info(f"Transform: Remove rows with empty keys.. {source_file}")
     df = df[ df["unique_key"] != ""]
 
-    df["incident_address"] = df["incident_address"].strip()
+    logging.info(f"Transform: Strip whitespace from incident address.. {source_file}")
+    df['incident_address'] = df['incident_address'].apply(lambda x: str(x).strip())
 
-    pdb.set_trace()
+    logging.info(f"Transform: Remove parenthesis from latitude and longitude.. {source_file}")
+    df["latitude"].replace("(", "", regex=False, inplace=True)
+    df["latitude"].replace(")", "", regex=False, inplace=True)
+    df["longitude"].replace("(", "", regex=False, inplace=True)
+    df["longitude"].replace(")", "", regex=False, inplace=True)
 
-    df["latitude"].str.replace("(", "").replace(")", "")
-    df["longitude"].str.replace("(", "").replace(")", "")
-
+    logging.info(f"Transform: Convert Date Format.. {source_file}")
     df["created_date"] = df["created_date"].apply(convert_dt_format)
+    df["closed_date"] = df["closed_date"].apply(convert_dt_format)
+    df["resolution_action_updated_date"] = df["resolution_action_updated_date"].apply(convert_dt_format)
+
+    logging.info(f"Transform: Remove newlines.. {source_file}")
+    df["incident_address"].replace({ r'\A\s+|\s+\Z': '', '\n' : ' '}, regex=True, inplace=True)
+    df["status_notes"].replace({ r'\A\s+|\s+\Z': '', '\n' : ' '}, regex=True, inplace=True)
+    df["descriptor"].replace({ r'\A\s+|\s+\Z': '', '\n' : ' '}, regex=True, inplace=True)
 
     logging.info("Transform: Reordering headers..")
     df = df[
         [
-            "field1",
-            "field2",
+            "unique_key",
+            "created_date",
+            "closed_date",
+            "resolution_action_updated_date",
+            "status",
+            "status_notes",
+            "agency_name",
+            "category",
+            "complaint_type",
+            "descriptor",
+            "incident_address",
+            "supervisor_district",
+            "neighborhood",
+            "location",
+            "source",
+            "media_url",
+            "latitude",
+            "longitude",
+            "police_district",
+
         ]
     ]
 
@@ -72,7 +99,7 @@ def main(
     logging.info(f"Saving to output file.. {target_file}")
 
     try:
-        save_to_new_file(df, file_path=str(target_file), index=False)
+        save_to_new_file(df, file_path=str(target_file))
     except Exception as e:
         logging.error(f"Error saving output file: {e}.")
 
@@ -85,8 +112,8 @@ def main(
 
 
 def convert_dt_format(dt_str: str) -> str:
-    if dt_str is None or len(str(dt_str)) == 0 or str(dt_str) == "nan":
-        return str(dt_str)
+    if dt_str is None or len(str(dt_str)) == 0 or str(dt_str).lower() == "nan" or str(dt_str) == "":
+        return str("")
     else:
         return str(datetime.datetime.strptime(str(dt_str), "%m/%d/%Y %H:%M:%S %p").strftime("%Y-%m-%d %H:%M:%S"))
 
@@ -96,7 +123,7 @@ def rename_headers(df: pd.DataFrame) -> None:
         "CaseID": "unique_key",
         "Opened": "created_date",
         "Closed": "closed_date",
-        "Updated": "solution_action_updated_date",
+        "Updated": "resolution_action_updated_date",
         "Status": "status",
         "Status Notes": "status_notes",
         "Responsible Agency": "agency_name",
@@ -118,7 +145,7 @@ def rename_headers(df: pd.DataFrame) -> None:
 
 
 def save_to_new_file(df: pd.DataFrame, file_path) -> None:
-    df.to_csv(file_path)
+    df.to_csv(file_path, index=False)
 
 
 def download_file(source_url: str, source_file: pathlib.Path) -> None:
