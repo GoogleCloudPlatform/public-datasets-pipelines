@@ -77,7 +77,7 @@ dag:
         schema_fields:
           - name: "unique_key"
             type: "INTEGER"
-            description:  "Unique case id"
+            description: "Unique case id"
             mode: "REQUIRED"
           - name: "created_date"
             type: "TIMESTAMP"
