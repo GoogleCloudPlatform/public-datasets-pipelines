@@ -58,7 +58,7 @@ Use only underscores and alpha-numeric characters for the names.
 
 If you created a new dataset directory above, you need to create a `datasets/DATASET/dataset.yaml` config file. See this [section](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/README.md#yaml-config-reference) for the `dataset.yaml` reference.
 
-Create a `datasets/DATASET/PIPELINE/pipeline.yaml` config file for your pipeline. See [here](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/samples/) for the `pipeline.yaml` references. 
+Create a `datasets/DATASET/PIPELINE/pipeline.yaml` config file for your pipeline. See [here](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/samples/) for the `pipeline.yaml` references.
 
 For a YAML config template using Airflow 1.10 operators, see [`samples/pipeline.airflow1.yaml`](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/samples/pipeline.airflow1.yaml).
 
@@ -151,9 +151,12 @@ Docker images will be built and pushed to GCR by default whenever the command ab
 
 Running the command in the previous step will parse your pipeline config and inform you about the Airflow variables that your pipeline expects to use and must be defined.
 
-If your pipeline doesn't use any Airflow variables, you can skip this step. 
+If your pipeline doesn't use any Airflow variables, you can skip this step.
 
-There are two types of variables that pipelines can use: **shared** and **dataset-specific**. Shared variables are those that can be reused by other pipelines in the same Airflow or Cloud Composer environment. These are variables that stay constant from pipeline to pipeline. Examples of shared variables include your Cloud Composer environment name and bucket, your GCP project ID, and paths to the Airflow DAG and data folders. To prevent duplication, specify your shared variables in one place:
+There are two types of variables that pipelines can use: **shared** and **dataset-specific**. Shared variables are those that can be reused by other pipelines in the same Airflow or Cloud Composer environment. These variables will have the same values for any pipeline. Examples of shared variables include your Cloud Composer environment name and bucket, your GCP project ID, and paths to the Airflow DAG and data folders (e.g. `/home/airflow/gcs/data`). To specify your shared variables, you can either
+
+* Store the variables as Cloud Composer environment variables [using Airflow's built-in `AIRFLOW_VAR_*` behavior](https://airflow.apache.org/docs/apache-airflow/stable/howto/variable.html#storing-variables-in-environment-variables). (Preferred)
+* or, use a single `shared_variables.json` file by creating it under
 
 ```
   [.dev|.test]/datasets/shared_variables.json
@@ -171,25 +174,26 @@ and inside the file, nest the variables under a common parent key. For example:
 }
 ```
 
-For dataset-specific variables, create the following file
+Another type of variable is dataset-specific variables. To make use of dataset-specific variables, create the following file
 
 ```
   [.dev|.test]/datasets/{DATASET}/{DATASET}_variables.json
 ```
 
-In general, pipelines use the JSON dot notation to access Airflow variables. Make sure to define and nest your variables under some parent key when writing to the JSON files above. We recommend using your dataset's name as the parent key, to mimic the same structure as the folder hierarchy. Airflow variables are globally accessed by any pipeline, which means nesting your variables helps avoid collisions. For example, if you're using the following variables in your pipeline config:
+In general, pipelines use the JSON dot notation to access Airflow variables. Make sure to define and nest your variables under some parent key when writing to the JSON files above. We recommend using your dataset's name as the parent key, to mimic the same structure as the folder hierarchy in the Composer's GCS bucket. Airflow variables are globally accessed by any pipeline, which means nesting your variables helps avoid collisions. For example, if you're using the following variables in your pipeline config:
 
-- `{{ var.json.shared.composer_bucket }}`
-- `{{ var.json.parent.nested }}`
-- `{{ var.json.parent.another_nested }}`
+- `{{ var.json.namespace.nested }}`
+- `{{ var.json.namespace.some_key.nested_twice }}`
 
 then your variables JSON file should look like this
 
 ```json
 {
-  "parent": {
+  "namespace": {
     "nested": "some value",
-    "another_nested": "another value"
+    "some_key": {
+      "nested_twice": "another value"
+    }
   }
 }
 
@@ -234,7 +238,7 @@ The `samples` folder contains references for the YAML config files, complete wit
 # Best Practices
 
 - When your tabular data contains percentage values, represent them as floats between 0 to 1.
-- To represent hierarchical data in BigQuery, use either: 
+- To represent hierarchical data in BigQuery, use either:
   - (Recommended) Nested columns in BigQuery. For more info, see [the documentation on nested and repeated columns](https://cloud.google.com/bigquery/docs/nested-repeated).
   - Or, represent each level as a separate column. For example, if you have the following hierarchy: `chapter > section > subsection`, then represent them as
 
