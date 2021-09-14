@@ -30,7 +30,7 @@ def main(
     target_gcs_path: str,
 ) -> None:
 
-    logging.info(f"San Francisco - 311 Service Requests process started")
+    logging.info("San Francisco - 311 Service Requests process started")
 
     logging.info("creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
@@ -47,12 +47,14 @@ def main(
     rename_headers(df)
 
     logging.info(f"Transform: Remove rows with empty keys.. {source_file}")
-    df = df[ df["unique_key"] != ""]
+    df = df[df["unique_key"] != ""]
 
     logging.info(f"Transform: Strip whitespace from incident address.. {source_file}")
-    df['incident_address'] = df['incident_address'].apply(lambda x: str(x).strip())
+    df["incident_address"] = df["incident_address"].apply(lambda x: str(x).strip())
 
-    logging.info(f"Transform: Remove parenthesis from latitude and longitude.. {source_file}")
+    logging.info(
+        f"Transform: Remove parenthesis from latitude and longitude.. {source_file}"
+    )
     df["latitude"].replace("(", "", regex=False, inplace=True)
     df["latitude"].replace(")", "", regex=False, inplace=True)
     df["longitude"].replace("(", "", regex=False, inplace=True)
@@ -61,12 +63,18 @@ def main(
     logging.info(f"Transform: Convert Date Format.. {source_file}")
     df["created_date"] = df["created_date"].apply(convert_dt_format)
     df["closed_date"] = df["closed_date"].apply(convert_dt_format)
-    df["resolution_action_updated_date"] = df["resolution_action_updated_date"].apply(convert_dt_format)
+    df["resolution_action_updated_date"] = df["resolution_action_updated_date"].apply(
+        convert_dt_format
+    )
 
     logging.info(f"Transform: Remove newlines.. {source_file}")
-    df["incident_address"].replace({ r'\A\s+|\s+\Z': '', '\n' : ' '}, regex=True, inplace=True)
-    df["status_notes"].replace({ r'\A\s+|\s+\Z': '', '\n' : ' '}, regex=True, inplace=True)
-    df["descriptor"].replace({ r'\A\s+|\s+\Z': '', '\n' : ' '}, regex=True, inplace=True)
+    df["incident_address"].replace(
+        {r"\A\s+|\s+\Z": "", "\n": " "}, regex=True, inplace=True
+    )
+    df["status_notes"].replace(
+        {r"\A\s+|\s+\Z": "", "\n": " "}, regex=True, inplace=True
+    )
+    df["descriptor"].replace({r"\A\s+|\s+\Z": "", "\n": " "}, regex=True, inplace=True)
 
     logging.info("Transform: Reordering headers..")
     df = df[
@@ -90,7 +98,6 @@ def main(
             "latitude",
             "longitude",
             "police_district",
-
         ]
     ]
 
@@ -108,14 +115,23 @@ def main(
     )
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
-    logging.info(f"San Francisco - 311 Service Requests process completed")
+    logging.info("San Francisco - 311 Service Requests process completed")
 
 
 def convert_dt_format(dt_str: str) -> str:
-    if dt_str is None or len(str(dt_str)) == 0 or str(dt_str).lower() == "nan" or str(dt_str) == "":
+    if (
+        dt_str is None
+        or len(str(dt_str)) == 0
+        or str(dt_str).lower() == "nan"
+        or str(dt_str) == ""
+    ):
         return str("")
     else:
-        return str(datetime.datetime.strptime(str(dt_str), "%m/%d/%Y %H:%M:%S %p").strftime("%Y-%m-%d %H:%M:%S"))
+        return str(
+            datetime.datetime.strptime(str(dt_str), "%m/%d/%Y %H:%M:%S %p").strftime(
+                "%Y-%m-%d %H:%M:%S"
+            )
+        )
 
 
 def rename_headers(df: pd.DataFrame) -> None:
