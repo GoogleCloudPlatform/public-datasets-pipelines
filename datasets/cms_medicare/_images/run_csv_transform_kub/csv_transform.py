@@ -37,12 +37,7 @@ def main(
     pipeline_name: str,
 ) -> None:
 
-    logging.info(
-        "CMS Medicare process started at "
-        + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    )
-
-    logging.info("creating 'files' folder")
+    logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
 
     logging.info(f"Downloading file {source_url}")
@@ -50,36 +45,34 @@ def main(
 
     logging.info(f"Opening file {source_file}")
 
-    if (
-        pipeline_name == "inpatient_charges_2011"
-        or pipeline_name == "inpatient_charges_2012"
-        or pipeline_name == "inpatient_charges_2013"
-        or pipeline_name == "inpatient_charges_2014"
-        or pipeline_name == "inpatient_charges_2015"
-        or pipeline_name == "outpatient_charges_2012"
-        or pipeline_name == "outpatient_charges_2013"
-        or pipeline_name == "outpatient_charges_2014"
-        or pipeline_name == "outpatient_charges_2011"
-    ):
+    PIPELINES_NAME_INPATIENT = [
+        "inpatient_charges_2011",
+        "inpatient_charges_2012",
+        "inpatient_charges_2013",
+        "inpatient_charges_2014",
+        "inpatient_charges_2015",
+    ]
+    PIPELINES_NAME_OUTPATIENT = [
+        "outpatient_charges_2011",
+        "outpatient_charges_2012",
+        "outpatient_charges_2013",
+        "outpatient_charges_2014",
+    ]
 
+    if pipeline_name in (PIPELINES_NAME_INPATIENT + PIPELINES_NAME_OUTPATIENT):
         with ZipFile(source_file) as zipped_files:
-
             file_list = zipped_files.namelist()
             csv_file = fnmatch.filter(file_list, "*.csv")
             data = zipped_files.open(*csv_file)
             df = pd.read_csv(data)
-
     else:
-
         df = pd.read_csv(str(source_file))
 
-    logging.info(f"Transformation Process Starting.. {source_file}")
-
-    logging.info(f"Transform: Renaming Headers.. {source_file}")
     rename_headers(df, rename_mappings)
 
-    logging.info(f"Transform: Filtering null identity records.. {source_file}")
-    filter_null_rows(df, pipeline_name)
+    filter_null_rows(
+        df, PIPELINES_NAME_INPATIENT, PIPELINES_NAME_OUTPATIENT, pipeline_name
+    )
 
     logging.info("Transform: Reordering headers..")
     df = df[headers]
@@ -104,37 +97,22 @@ def main(
     )
 
 
-def convert_dt_format(date_str: str, time_str: str) -> None:
-    return str(datetime.datetime.strptime(date_str, "%m/%d/%Y").date()) + " " + time_str
-
-
 def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
     df.rename(columns=rename_mappings, inplace=True)
 
 
-def filter_null_rows(df: pd.DataFrame, pipeline_name: str):
-    if (
-        pipeline_name == "inpatient_charges_2011"
-        or pipeline_name == "inpatient_charges_2012"
-        or pipeline_name == "inpatient_charges_2013"
-        or pipeline_name == "inpatient_charges_2014"
-        or pipeline_name == "inpatient_charges_2015"
-    ):
-
+def filter_null_rows(
+    df: pd.DataFrame,
+    PIPELINES_NAME_INPATIENT: typing.List[str],
+    PIPELINES_NAME_OUTPATIENT: typing.List[str],
+    pipeline_name: str,
+) -> str:
+    if pipeline_name in PIPELINES_NAME_INPATIENT:
         return df.dropna(subset=["drg_definition", "provider_id"], inplace=True)
-
-    elif (
-        pipeline_name == "outpatient_charges_2012"
-        or pipeline_name == "outpatient_charges_2013"
-        or pipeline_name == "outpatient_charges_2014"
-        or pipeline_name == "outpatient_charges_2011"
-    ):
-
+    elif pipeline_name in PIPELINES_NAME_OUTPATIENT:
         return df.dropna(subset=["apc", "provider_id"], inplace=True)
-
     else:
-
-        df = df
+        return df
 
 
 def save_to_new_file(df: pd.DataFrame, file_path: str) -> None:
