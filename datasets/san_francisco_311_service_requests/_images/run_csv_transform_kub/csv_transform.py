@@ -16,6 +16,7 @@ import datetime
 import logging
 import os
 import pathlib
+import subprocess
 
 import pandas as pd
 import requests
@@ -26,6 +27,7 @@ def main(
     source_url: str,
     source_file: pathlib.Path,
     target_file: pathlib.Path,
+    chunksize: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
 ) -> None:
@@ -38,45 +40,73 @@ def main(
     logging.info(f"downloading file {source_url}")
     download_file(source_url, source_file)
 
-    logging.info(f"Opening file {source_file}")
-    df = pd.read_csv(source_file)
+    chunksz = int(chunksize)
 
-    logging.info(f"Transformation Process Starting.. {source_file}")
-
-    logging.info(f"Transform: Renaming Headers.. {source_file}")
-    rename_headers(df)
-
-    logging.info(f"Transform: Remove rows with empty keys.. {source_file}")
-    df = df[df["unique_key"] != ""]
-
-    logging.info(f"Transform: Strip whitespace from incident address.. {source_file}")
-    df["incident_address"] = df["incident_address"].apply(lambda x: str(x).strip())
+    logging.info(f"Opening batch file {source_file}")
+    with pd.read_csv(
+        source_file, engine="python", encoding="utf-8", quotechar='"', chunksize=chunksz
+    ) as reader:
+        for chunk_number, chunk in enumerate(reader):
+            logging.info(f"Processing batch {chunk_number}")
+            target_file_batch = str(target_file).replace(
+                ".csv", "-" + str(chunk_number) + ".csv"
+            )
+            df = pd.DataFrame()
+            df = pd.concat([df, chunk])
+            processChunk(df, target_file_batch)
+            logging.info(f"Appending batch {chunk_number} to {target_file}")
+            if chunk_number == 0:
+                subprocess.run(["cp", target_file_batch, target_file])
+            else:
+                subprocess.check_call(f"sed -i '1d' {target_file_batch}", shell=True)
+                subprocess.check_call(
+                    f"cat {target_file_batch} >> {target_file}", shell=True
+                )
+            subprocess.run(["rm", target_file_batch])
 
     logging.info(
-        f"Transform: Remove parenthesis from latitude and longitude.. {source_file}"
+        f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
     )
+    upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
+
+    logging.info("San Francisco - 311 Service Requests process completed")
+
+
+def download_file(source_url: str, source_file: pathlib.Path) -> None:
+    r = requests.get(source_url, stream=True)
+    if r.status_code == 200:
+        with open(source_file, "wb") as f:
+            for chunk in r:
+                f.write(chunk)
+    else:
+        logging.error(f"Couldn't download {source_url}: {r.text}")
+
+
+def processChunk(df: pd.DataFrame, target_file_batch: str) -> None:
+
+    logging.info("Renaming Headers")
+    rename_headers(df)
+
+    logging.info("Remove rows with empty keys")
+    df = df[df["unique_key"] != ""]
+
+    logging.info("Strip whitespace from incident address")
+    df["incident_address"] = df["incident_address"].apply(lambda x: str(x).strip())
+
+    logging.info("Remove parenthesis from latitude and longitude")
     df["latitude"].replace("(", "", regex=False, inplace=True)
     df["latitude"].replace(")", "", regex=False, inplace=True)
     df["longitude"].replace("(", "", regex=False, inplace=True)
     df["longitude"].replace(")", "", regex=False, inplace=True)
 
-    logging.info(f"Transform: Convert Date Format.. {source_file}")
+    logging.info("Convert Date Format")
     df["created_date"] = df["created_date"].apply(convert_dt_format)
     df["closed_date"] = df["closed_date"].apply(convert_dt_format)
     df["resolution_action_updated_date"] = df["resolution_action_updated_date"].apply(
         convert_dt_format
     )
 
-    logging.info(f"Transform: Remove newlines.. {source_file}")
-    df["incident_address"].replace(
-        {r"\A\s+|\s+\Z": "", "\n": " "}, regex=True, inplace=True
-    )
-    df["status_notes"].replace(
-        {r"\A\s+|\s+\Z": "", "\n": " "}, regex=True, inplace=True
-    )
-    df["descriptor"].replace({r"\A\s+|\s+\Z": "", "\n": " "}, regex=True, inplace=True)
-
-    logging.info("Transform: Reordering headers..")
+    logging.info("    Transform: Reordering headers..")
     df = df[
         [
             "unique_key",
@@ -101,21 +131,14 @@ def main(
         ]
     ]
 
-    logging.info(f"Transformation Process complete .. {source_file}")
-
-    logging.info(f"Saving to output file.. {target_file}")
+    logging.info(f"    Saving to target file.. {target_file_batch}")
 
     try:
-        save_to_new_file(df, file_path=str(target_file))
+        save_to_new_file(df, file_path=str(target_file_batch))
     except Exception as e:
-        logging.error(f"Error saving output file: {e}.")
+        logging.error(f"Error saving to target file: {e}.")
 
-    logging.info(
-        f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
-    )
-    upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
-
-    logging.info("San Francisco - 311 Service Requests process completed")
+    logging.info(f"Saved transformed source data to target file .. {target_file_batch}")
 
 
 def convert_dt_format(dt_str: str) -> str:
@@ -164,16 +187,6 @@ def save_to_new_file(df: pd.DataFrame, file_path) -> None:
     df.to_csv(file_path, index=False)
 
 
-def download_file(source_url: str, source_file: pathlib.Path) -> None:
-    r = requests.get(source_url, stream=True)
-    if r.status_code == 200:
-        with open(source_file, "wb") as f:
-            for chunk in r:
-                f.write(chunk)
-    else:
-        logging.error(f"Couldn't download {source_url}: {r.text}")
-
-
 def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:
     storage_client = storage.Client()
     bucket = storage_client.bucket(gcs_bucket)
@@ -188,6 +201,7 @@ if __name__ == "__main__":
         source_url=os.environ["SOURCE_URL"],
         source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
+        chunksize=os.environ["CHUNKSIZE"],
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
     )
