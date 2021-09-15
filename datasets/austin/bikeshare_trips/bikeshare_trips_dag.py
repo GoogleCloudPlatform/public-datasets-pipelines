@@ -41,18 +41,19 @@ with DAG(
         image="{{ var.json.austin.container_registry.run_csv_transform_kub_bikeshare_trips }}",
         env_vars={
             "SOURCE_URL": "https://data.austintexas.gov/api/views/tyfh-5r8s/rows.csv",
-            "SOURCE_FILE": "/custom/data.csv",
-            "TARGET_FILE": "/custom/data_output.csv",
-            "TARGET_GCS_BUCKET": "{{ var.json.shared.composer_bucket }}",
+            "SOURCE_FILE": "files/data.csv",
+            "TARGET_FILE": "files/data_output.csv",
+            "CHUNKSIZE": "500000",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/austin/bikeshare_trips/data_output.csv",
         },
-        resources={"limit_memory": "8G", "limit_cpu": "2"},
+        resources={"limit_memory": "4G", "limit_cpu": "2"},
     )
 
     # Task to load CSV data to a BigQuery table
     load_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
         task_id="load_to_bq",
-        bucket="{{ var.json.shared.composer_bucket }}",
+        bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/austin_bikeshare_trips/bikeshare_trips/data_output.csv"],
         source_format="CSV",
         destination_project_dataset_table="austin.bikeshare_trips",

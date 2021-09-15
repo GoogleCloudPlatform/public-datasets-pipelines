@@ -13,8 +13,10 @@
 # limitations under the License.
 
 
+from airflow.contrib.operators import kubernetes_pod_operator
 from airflow import DAG
-from airflow.contrib.operators import gcs_to_bq, kubernetes_pod_operator
+from airflow.contrib.operators import gcs_to_bq
+
 
 default_args = {
     "owner": "Google",
@@ -27,7 +29,7 @@ with DAG(
     dag_id="austin.311_service_requests",
     default_args=default_args,
     max_active_runs=1,
-    schedule_interval="@hourly",
+    schedule_interval="@daily",
     catchup=False,
     default_view="graph",
 ) as dag:
@@ -41,9 +43,10 @@ with DAG(
         image="{{ var.json.austin.container_registry.run_csv_transform_kub_311_service_requests }}",
         env_vars={
             "SOURCE_URL": "https://data.austintexas.gov/api/views/i26j-ai4z/rows.csv",
-            "SOURCE_FILE": "/custom/data.csv",
-            "TARGET_FILE": "/custom/data_output.csv",
-            "TARGET_GCS_BUCKET": "{{ var.json.shared.composer_bucket }}",
+            "SOURCE_FILE": "files/data.csv",
+            "TARGET_FILE": "files/data_output.csv",
+            "CHUNKSIZE": "500000",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/austin/311_service_requests/data_output.csv",
         },
         resources={"request_memory": "4G", "request_cpu": "2"},
@@ -52,7 +55,7 @@ with DAG(
     # Task to load CSV data to a BigQuery table
     load_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
         task_id="load_to_bq",
-        bucket="{{ var.json.shared.composer_bucket }}",
+        bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/austin_311/311_service_requests/data_output.csv"],
         source_format="CSV",
         destination_project_dataset_table="austin.311_service_requests",

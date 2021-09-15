@@ -11,41 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-# CSV transform for: austin_311.311_service_request
-#
-#       Column Name                         Type            Length / Format                 Description
-#
-#       Service Request (SR) Number         String          255                             "The service request tracking number."
-#       SR Type Code                        String          255
-#       SR Description                      String          255
-#       Owning Department                   String          512                             "Owning department of SR type."
-#       Method Received                     String          255                             "Contact method SR was received from.  \n\nMass entry requests are submitted by dept. in groups after work is completed."
-#       SR Status                           String          255                             "SR status.  Duplicate statuses indicate that issue had previously been reported recently."
-#       Status Change Date                  Date            11/23/2020 01:41:21 PM          "Date of last SR status change.  Status changes occur when SR moves from one status to another.  I.E. new to open, open to closed."
-#       Created Date                        Date            11/23/2020 01:41:21 PM          "Date SR was created."
-#       Last Update Date                    Date            11/23/2020 01:41:21 PM          "Date SR was updated.  Last date SR received updates.  Updates may include creation, status changes, or changes to data in SR."
-#       Close Date                          Date            11/23/2020 01:41:21 PM          "Date SR was closed."
-#       SR Location                         String          255                             "Service location of SR."
-#       Street Number                       String          255                             "Parsed location information.  Street number."
-#       Street Name                         String          255                             "Parsed location information.  Street name."
-#       City                                String          255                             "Parsed location information.  City."
-#       Zip Code                            String          255                             "Parsed location information.  Zip code."
-#       County                              String          255                             "Parsed location information.  County."
-#       State Plane X Coordinate            String          255                             "State plane X coordinate."
-#       State Plane Y Coordinate            String          255                             "State plane Y coordinate."
-#       Latitude Coordinate                 Number                                          "SR location latitude coordinate."
-#       Longitude Coordinate                Number                                          "SR location latitude coordinate."
-#       (Latitude.Longitude)                Location                                        "SR location latitude and longitude coordinates."
-#       Council District                    Number                                          "Council district corresponding to SR location.  Locations outside of the City of Austin jurisdiction will not have a council district."
-#       Map Page                            String          255                             "SR location corresponding map page."
-#       Map Tile                            String          255                             "SR location corresponding map page."
-
-
 import datetime
 import logging
 import os
 import pathlib
+import subprocess
 
 import pandas as pd
 import requests
@@ -56,6 +26,7 @@ def main(
     source_url: str,
     source_file: pathlib.Path,
     target_file: pathlib.Path,
+    chunksize: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
 ) -> None:
@@ -68,26 +39,54 @@ def main(
     logging.info(f"Downloading file {source_url}")
     download_file(source_url, source_file)
 
-    logging.info(f"Opening file {source_file}")
-    df = pd.read_csv(str(source_file))
+    chunksz = int(chunksize)
 
-    logging.info(f"Transforming.. {source_file}")
-    rename_headers(df)
-    convert_values(df)
-    delete_newlines_from_column(df, col_name="location")
-    filter_null_rows(df)
-
-    logging.info(f"Saving to output file.. {target_file}")
-    try:
-        save_to_new_file(df, file_path=str(target_file))
-    except Exception as e:
-        logging.error(f"Error saving output file: {e}.")
-    logging.info("..Done!")
+    logging.info(f"Opening batch file {source_file}")
+    with pd.read_csv(
+        source_file, engine="python", encoding="utf-8", quotechar='"', chunksize=chunksz
+    ) as reader:
+        for chunk_number, chunk in enumerate(reader):
+            logging.info(f"Processing batch {chunk_number}")
+            target_file_batch = str(target_file).replace(
+                ".csv", "-" + str(chunk_number) + ".csv"
+            )
+            df = pd.DataFrame()
+            df = pd.concat([df, chunk])
+            processChunk(df, target_file_batch)
+            logging.info(f"Appending batch {chunk_number} to {target_file}")
+            if chunk_number == 0:
+                subprocess.run(["cp", target_file_batch, target_file])
+            else:
+                subprocess.check_call(f"sed -i '1d' {target_file_batch}", shell=True)
+                subprocess.check_call(
+                    f"cat {target_file_batch} >> {target_file}", shell=True
+                )
+            subprocess.run(["rm", target_file_batch])
 
     logging.info(
         f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
     )
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
+
+    logging.info("Austin 311 Service Requests By Year process completed")
+
+
+def processChunk(df: pd.DataFrame, target_file_batch: str) -> None:
+
+    logging.info("Transforming.")
+    rename_headers(df)
+    convert_values(df)
+    delete_newlines_from_column(df, col_name="location")
+    filter_null_rows(df)
+
+    logging.info("Saving to target file.. {target_file_batch}")
+
+    try:
+        save_to_new_file(df, file_path=str(target_file_batch))
+    except Exception as e:
+        logging.error(f"Error saving to target file: {e}.")
+
+    logging.info(f"Saved transformed source data to target file .. {target_file_batch}")
 
 
 def rename_headers(df: pd.DataFrame) -> None:
@@ -123,16 +122,12 @@ def rename_headers(df: pd.DataFrame) -> None:
 
 
 def convert_dt_format(dt_str: str) -> str:
-    if str(dt_str).strip()[3:3] == "/":
+    # if the format is %m/%d/%Y then...
+    if str(dt_str).strip()[3] == "/":
         return datetime.datetime.strptime(str(dt_str), "%m/%d/%Y %H:%M:%S %p").strftime(
             "%Y-%m-%d %H:%M:%S"
         )
-    elif (
-        dt_str is None
-        or len(str(dt_str)) == 0
-        or str(dt_str).lower() == "nan"
-        or str(dt_str).lower() == "nat"
-    ):
+    elif not dt_str or str(dt_str).lower() == "nan" or str(dt_str).lower() == "nat":
         return ""
     else:
         return str(dt_str)
@@ -155,13 +150,7 @@ def convert_values(df: pd.DataFrame) -> None:
 
 
 def delete_newlines(val: str) -> str:
-    if val is None or len(val) == 0:
-        return val
-    else:
-        if val.find("\n") > 0:
-            return val.replace("\n", "")
-        else:
-            return val
+    return val.replace("\n", "")
 
 
 def delete_newlines_from_column(df: pd.DataFrame, col_name: str) -> None:
@@ -201,6 +190,7 @@ if __name__ == "__main__":
         source_url=os.environ["SOURCE_URL"],
         source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
+        chunksize=os.environ["CHUNKSIZE"],
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
     )
