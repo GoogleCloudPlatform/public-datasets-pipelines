@@ -120,7 +120,7 @@ dag:
           mkdir -p $airflow_home/data/$dataset/$pipeline/run_date={{ ds }}
           CUSTOM_ENV_VAR=$custom_env_var python $airflow_home/dags/$dataset/$pipeline/custom/some_script.py
         env:
-          airflow_home: "{{ var.json.shared.airflow_home }}"
+          airflow_home: "{{ var.value.airflow_home }}"
           dataset: DATASET_FOLDER_NAME
           pipeline: PIPELINE_FOLDER_NAME
           custom_env_var: "some value that your custom script needs"
@@ -139,7 +139,7 @@ dag:
         task_id: "sample_gcs_to_bq_task"
 
         # The GCS bucket where the CSV file is located in.
-        bucket: "{{ var.json.shared.composer_bucket }}"
+        bucket: "{{ var.value.composer_bucket }}"
 
         # The GCS object path for the CSV file
         source_objects: ["data/DATASET_FOLDER_NAME/PIPELINE_FOLDER_NAME/run_date={{ ds }}/data.csv"]
@@ -185,7 +185,7 @@ dag:
         task_id: "sample_gcs_to_gcs_task"
 
         # The GCS bucket to copy the object/s from
-        source_bucket: "{{ var.json.shared.composer_bucket }}"
+        source_bucket: "{{ var.value.composer_bucket }}"
 
         # Use a trailing "/*" if you want to copy all objects under that path.
         source_object: "data/DATASET_FOLDER_NAME/PIPELINE_FOLDER_NAME/run_date={{ ds }}/*"

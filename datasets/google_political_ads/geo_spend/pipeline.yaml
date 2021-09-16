@@ -76,7 +76,7 @@ dag:
           SOURCE_FILE: "files/data.zip"
           FILE_NAME: "google-political-ads-transparency-bundle/google-political-ads-geo-spend.csv"
           TARGET_FILE: "files/data_output.csv"
-          TARGET_GCS_BUCKET: "{{ var.json.shared.composer_bucket }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/google_political_ads/geo_spend/data_output.csv"
           PIPELINE_NAME: "geo_spend"
           CSV_HEADERS: >-
@@ -96,7 +96,7 @@ dag:
         task_id: "load_geo_spend_to_bq"
 
         # The GCS bucket where the CSV file is located in.
-        bucket: "{{ var.json.shared.composer_bucket }}"
+        bucket: "{{ var.value.composer_bucket }}"
 
         # The GCS object path for the CSV file
         source_objects: ["data/google_political_ads/geo_spend/data_output.csv"]

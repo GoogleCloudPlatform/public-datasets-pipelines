@@ -62,7 +62,7 @@ with DAG(
             "SOURCE_FILE": "files/data.zip",
             "FILE_NAME": "google-political-ads-transparency-bundle/*advertiser-declared-stats*",
             "TARGET_FILE": "files/data_output.csv",
-            "TARGET_GCS_BUCKET": "{{ var.json.shared.composer_bucket }}",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/google_political_ads/advertiser_declared_stats/data_output.csv",
             "PIPELINE_NAME": "advertiser_declared_stats",
             "CSV_HEADERS": '["advertiser_id","advertiser_declared_name","advertiser_declared_regulatory_id","advertiser_declared_scope","advertiser_declared_promoter_name","advertiser_declared_promoter_address"]',
@@ -74,7 +74,7 @@ with DAG(
     # Task to load CSV data to a BigQuery table
     load_advertiser_declared_stats_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
         task_id="load_advertiser_declared_stats_to_bq",
-        bucket="{{ var.json.shared.composer_bucket }}",
+        bucket="{{ var.value.composer_bucket }}",
         source_objects=[
             "data/google_political_ads/advertiser_declared_stats/data_output.csv"
         ],

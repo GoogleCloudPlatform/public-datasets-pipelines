@@ -63,7 +63,7 @@ with DAG(
             "FTP_FILENAME": "isd-history.txt",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
-            "TARGET_GCS_BUCKET": "{{ var.json.shared.composer_bucket }}",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/noaa/gsod_stations/data_output.csv",
         },
         resources={"limit_memory": "2G", "limit_cpu": "1"},
@@ -72,7 +72,7 @@ with DAG(
     # Task to load CSV data to a BigQuery table
     load_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
         task_id="load_to_bq",
-        bucket="{{ var.json.shared.composer_bucket }}",
+        bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/noaa/gsod_stations/data_output.csv"],
         source_format="CSV",
         destination_project_dataset_table="noaa.gsod_stations",
