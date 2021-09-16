@@ -37,6 +37,23 @@ with DAG(
         task_id="transform_csv",
         name="ghcnd_inventory",
         namespace="default",
+        affinity={
+            "nodeAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                    "nodeSelectorTerms": [
+                        {
+                            "matchExpressions": [
+                                {
+                                    "key": "cloud.google.com/gke-nodepool",
+                                    "operator": "In",
+                                    "values": ["pool-e2-standard-4"],
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
         image_pull_policy="Always",
         startup_timeout_seconds=600,
         image="{{ var.json.noaa.container_registry.run_csv_transform_kub_ghcnd_inventory }}",
