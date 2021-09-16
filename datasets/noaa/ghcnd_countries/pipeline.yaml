@@ -36,21 +36,13 @@ dag:
   tasks:
 
     - operator: "KubernetesPodOperator"
-
       description: "Run CSV transform within kubernetes pod"
-
       args:
-
         task_id: "transform_csv"
-
         name: "ghcnd_countries"
-
         namespace: "default"
-
         image_pull_policy: "Always"
-
         image: "{{ var.json.noaa.container_registry.run_csv_transform_kub_ghcnd_countries }}"
-
         env_vars:
           SOURCE_URL: "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/ghcnd-countries.txt"
           FTP_HOST: "ftp.ncdc.noaa.gov"
@@ -58,30 +50,22 @@ dag:
           FTP_FILENAME: "ghcnd-countries.txt"
           SOURCE_FILE: "files/data.csv"
           TARGET_FILE: "files/data_output.csv"
-          TARGET_GCS_BUCKET: "{{ var.json.shared.composer_bucket }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/ghcn_d_countries/ghcnd_countries/data_output.csv"
-
-
         resources:
           limit_memory: "4G"
           limit_cpu: "2"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
-
       args:
         task_id: "load_to_bq"
-
-        bucket: "{{ var.json.shared.composer_bucket }}"
-
+        bucket: "{{ var.value.composer_bucket }}"
         source_objects: ["data/ghcn_d_states/ghcnd_countries/data_output.csv"]
         source_format: "CSV"
         destination_project_dataset_table: "noaa.ghcnd_countries"
-
         skip_leading_rows: 1
-
         write_disposition: "WRITE_TRUNCATE"
-
         schema_fields:
           - name: "code"
             type: "STRING"
