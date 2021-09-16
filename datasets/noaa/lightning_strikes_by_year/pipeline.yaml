@@ -26,7 +26,7 @@ dag:
     default_args:
       owner: "Google"
       depends_on_past: False
-      start_date: '2021-12-30'
+      start_date: "2021-03-01"
     max_active_runs: 1
     schedule_interval: "@yearly"
     catchup: False
