@@ -37,6 +37,23 @@ with DAG(
         task_id="austin_bikeshare_stations_transform_csv",
         name="bikeshare_stations",
         namespace="default",
+        affinity={
+            "nodeAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                    "nodeSelectorTerms": [
+                        {
+                            "matchExpressions": [
+                                {
+                                    "key": "cloud.google.com/gke-nodepool",
+                                    "operator": "In",
+                                    "values": ["pool-e2-standard-4"],
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
         image_pull_policy="Always",
         image="{{ var.json.austin_bikeshare.container_registry.run_csv_transform_kub }}",
         env_vars={
