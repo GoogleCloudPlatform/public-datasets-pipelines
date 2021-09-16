@@ -28,106 +28,21 @@ def main(
     source_url: str,
     source_file: pathlib.Path,
     target_file: pathlib.Path,
-    number_of_batches: int,
+    chunksize: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
 ) -> None:
 
-    curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
-    logging.info(f"New York 311 Service Requests process started at {curr_dtm}")
+    logging.info("New York 311 Service Requests process started")
 
-    curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
-    logging.info(f"creating 'files' folder at {curr_dtm}")
+    logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
 
-    curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
-    logging.info(f"Downloading {source_url} into {source_file} at {curr_dtm}")
+    logging.info(f"downloading file {source_url}")
     download_file(source_url, source_file)
 
-    curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
-    logging.info(f"Counting lines in input file {source_file} at {curr_dtm}")
-    number_lines_source_file = subprocess.run(
-        ["wc", "-l", source_file], stdout=subprocess.PIPE
-    )
-    number_lines_input_file = (
-        int(str(str(number_lines_source_file.stdout).split(" ")[0][2:]).strip()) - 1
-    )
+    chunksz = int(chunksize)
 
-    curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
-    logging.info(
-        f"Calculating chunksize metadata in input file {source_file} at {curr_dtm}"
-    )
-    chunksize = int((number_lines_input_file - 1) / int(number_of_batches))
-
-    # whole number value (quotient) of dividing size into batches
-    number_batches = int(number_lines_input_file / chunksize)
-
-    # add one for any remaining batch data
-    if float(number_lines_input_file % chunksize) > 0:
-        number_batches = number_batches + 1
-
-    start_line = 2
-
-    for i in range(1, (number_batches + 1)):
-
-        batch_line_count = chunksize - 1
-
-        if i == 1:
-            start_line = 2
-            end_line = start_line + (batch_line_count - 1)
-        elif i > 1:
-            start_line = ((i - 1) * chunksize) + 1
-            end_line = start_line + batch_line_count
-
-        source_file_batch = str(source_file).replace(".csv", "_batch.csv")
-        target_file_batch = str(source_file).replace(".csv", "_batch_targ.csv")
-
-        curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
-        logging.info(
-            f"creating data file for batch #{i} of {number_batches} batches at {curr_dtm}"
-        )
-        os.system(f"head -n 1 {source_file} > {source_file_batch}")
-
-        curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
-        logging.info(
-            f"populating data file for batch #{i} of {number_batches} batches at {curr_dtm}"
-        )
-        os.system(
-            f"sed -n '{start_line},{end_line}p;"
-            + str(end_line + 1)
-            + f"q' {source_file} >> {source_file_batch}"
-        )
-
-        curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
-        logging.info(
-            f"processing batch data file #{i} of {number_batches} batches at {curr_dtm}"
-        )
-        processBatch(source_file_batch, target_file_batch)  # process the batch of data
-
-        curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
-        logging.info(
-            f"writing batch data to target file for batch #{i} of {number_batches} batches at {curr_dtm}"
-        )
-        if i == 1:
-            # write the first batch target file to the actual target file
-            os.system(f"cp {target_file_batch} {target_file}")
-        else:
-            os.system(f"tail -n +2 {target_file_batch} >> {target_file}")
-
-    curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
-    logging.info(
-        f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path} at {curr_dtm}"
-    )
-    upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
-
-    curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
-    logging.info(f"New York 311 Service Requests process completed at {curr_dtm}")
-
-
-def processBatch(batch_file_path: str, target_batch_file: str) -> None:
-
-    curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
-    logging.info(f"->  Opening batch file at {curr_dtm} .. {batch_file_path}")
     dtypes = {
         "Unique Key": np.int_,
         "Created Date": np.str_,
@@ -177,29 +92,52 @@ def processBatch(batch_file_path: str, target_batch_file: str) -> None:
         "Due Date",
         "Resolution Action Updated Date",
     ]
-    df = pd.read_csv(batch_file_path, dtype=dtypes, parse_dates=parse_dates)
 
-    curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
-    logging.info(
-        f"->  Transformation Process Starting at {curr_dtm} .. {batch_file_path}"
-    )
+    logging.info(f"Opening batch file {source_file}")
+    with pd.read_csv(
+        source_file,
+        engine="python",
+        encoding="utf-8",
+        quotechar='"',
+        chunksize=chunksz,
+        dtype=dtypes,
+        parse_dates=parse_dates,
+    ) as reader:
+        for chunk_number, chunk in enumerate(reader):
+            logging.info(f"Processing batch {chunk_number}")
+            target_file_batch = str(target_file).replace(
+                ".csv", "-" + str(chunk_number) + ".csv"
+            )
+            df = pd.DataFrame()
+            df = pd.concat([df, chunk])
+            processChunk(df, target_file_batch)
+            logging.info(f"Appending batch {chunk_number} to {target_file}")
+            if chunk_number == 0:
+                subprocess.run(["cp", target_file_batch, target_file])
+            else:
+                subprocess.check_call(f"sed -i '1d' {target_file_batch}", shell=True)
+                subprocess.check_call(
+                    f"cat {target_file_batch} >> {target_file}", shell=True
+                )
+            subprocess.run(["rm", target_file_batch])
 
-    curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
     logging.info(
-        f"->       Transform: Renaming Headers at {curr_dtm} .. {batch_file_path}"
+        f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
     )
+    upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
+
+    logging.info("New York - 311 Service Requests process completed")
+
+
+def processChunk(df: pd.DataFrame, target_file_batch: str) -> None:
+
+    logging.info("Renaming Headers")
     rename_headers(df)
 
-    curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
-    logging.info(
-        f"->       Transform: Removing rows with empty Ids at {curr_dtm} .. {batch_file_path}"
-    )
+    logging.info("Remove rows with empty keys")
     df = df[df["unique_key"] != ""]
 
-    curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
-    logging.info(
-        f"->       Transform: Converting datetime format at {curr_dtm} .. {batch_file_path}"
-    )
+    logging.info("Convert Date Format")
     df["created_date"] = df["created_date"].apply(convert_dt_format)
     df["closed_date"] = df["closed_date"].apply(convert_dt_format)
     df["due_date"] = df["due_date"].apply(convert_dt_format)
@@ -207,8 +145,7 @@ def processBatch(batch_file_path: str, target_batch_file: str) -> None:
         convert_dt_format
     )
 
-    curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
-    logging.info("->       Transform: Reordering columns at {curr_dtm} ..")
+    logging.info("Reordering headers..")
     df = df[
         [
             "unique_key",
@@ -255,39 +192,23 @@ def processBatch(batch_file_path: str, target_batch_file: str) -> None:
         ]
     ]
 
-    curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
-    logging.info(
-        f"->  Transformation Process complete at {curr_dtm} .. {batch_file_path}"
-    )
-
-    curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
-    logging.info(
-        f"Saving transformed batch data to output file at {curr_dtm} .. {target_batch_file}"
-    )
+    logging.info(f"    Saving to target file.. {target_file_batch}")
 
     try:
-        save_to_new_file(df, file_path=str(target_batch_file))
+        save_to_new_file(df, file_path=str(target_file_batch))
     except Exception as e:
-        logging.error(f"Error saving output file: {e}.")
+        logging.error(f"Error saving to target file: {e}.")
 
-    curr_dtm = datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S %p")
-    logging.info(
-        f"Saved transformed batch data to output file at {curr_dtm} .. {target_batch_file}"
-    )
+    logging.info(f"Saved transformed source data to target file .. {target_file_batch}")
 
 
 def convert_dt_format(dt_str: str) -> str:
-    if str(dt_str).strip()[3:3] == "/":
+    if not dt_str or str(dt_str).lower() == "nan" or str(dt_str).lower() == "nat":
+        return ""
+    elif dt_str.strip()[3] == "/":
         return datetime.datetime.strptime(str(dt_str), "%m/%d/%Y %H:%M:%S %p").strftime(
             "%Y-%m-%d %H:%M:%S"
         )
-    elif (
-        dt_str is None
-        or len(str(dt_str)) == 0
-        or str(dt_str).lower() == "nan"
-        or str(dt_str).lower() == "nat"
-    ):
-        return ""
     else:
         return str(dt_str)
 
@@ -368,7 +289,7 @@ if __name__ == "__main__":
         source_url=os.environ["SOURCE_URL"],
         source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
-        number_of_batches=os.environ["NUMBER_OF_BATCHES"],
+        chunksize=os.environ["CHUNKSIZE"],
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
     )

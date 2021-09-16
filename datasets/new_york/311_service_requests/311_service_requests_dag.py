@@ -14,8 +14,8 @@
 
 
 from airflow.contrib.operators import gcs_to_bq
-from airflow.contrib.operators import kubernetes_pod_operator
 from airflow import DAG
+from airflow.contrib.operators import kubernetes_pod_operator
 
 
 default_args = {
@@ -37,7 +37,6 @@ with DAG(
     # Run CSV transform within kubernetes pod
     transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
         task_id="transform_csv",
-        startup_timeout_seconds=300,
         name="311_service_requests",
         namespace="default",
         image_pull_policy="Always",
@@ -46,17 +45,17 @@ with DAG(
             "SOURCE_URL": "https://data.cityofnewyork.us/api/views/erm2-nwe9/rows.csv",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
-            "NUMBER_OF_BATCHES": "30",
-            "TARGET_GCS_BUCKET": "{{ var.json.shared.composer_bucket }}",
+            "CHUNKSIZE": "2000000",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/new_york/311_service_requests/data_output.csv",
         },
-        resources={"limit_memory": "32G", "limit_cpu": "8"},
+        resources={"limit_memory": "8G", "limit_cpu": "2"},
     )
 
     # Task to load CSV data to a BigQuery table
     load_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
         task_id="load_to_bq",
-        bucket="{{ var.json.shared.composer_bucket }}",
+        bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/new_york/311_service_requests/data_output.csv"],
         source_format="CSV",
         destination_project_dataset_table="new_york.311_service_requests",

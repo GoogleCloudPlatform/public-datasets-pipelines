@@ -20,6 +20,7 @@ resources:
     description: ""
 
 dag:
+  airflow-version: 2
   initialize:
     dag_id: tree_census_1995
     default_args:
@@ -45,7 +46,7 @@ dag:
           SOURCE_URL: "https://data.cityofnewyork.us/api/views/kyad-zm4j/rows.csv"
           SOURCE_FILE: "files/data.csv"
           TARGET_FILE: "files/data_output.csv"
-          TARGET_GCS_BUCKET: "{{ var.json.shared.composer_bucket }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/new_york/tree_census_1995/data_output.csv"
         resources:
           limit_memory: "2G"
@@ -56,7 +57,7 @@ dag:
 
       args:
         task_id: "load_to_bq"
-        bucket: "{{ var.json.shared.composer_bucket }}"
+        bucket: "{{ var.value.composer_bucket }}"
         source_objects: ["data/new_york/tree_census_1995/data_output.csv"]
         source_format: "CSV"
         destination_project_dataset_table: "new_york.tree_census_1995"

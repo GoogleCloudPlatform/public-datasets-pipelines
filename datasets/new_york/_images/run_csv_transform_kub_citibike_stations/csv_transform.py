@@ -34,14 +34,12 @@ def main(
     target_gcs_path: str,
 ) -> None:
 
-    logging.info(
-        "New York Citibike - Citibike Stations process started at "
-        + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    )
+    logging.info("New York Citibike - Citibike Stations process started")
 
-    logging.info("creating 'files' folder")
+    logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
-    logging.info("creating 'templates' folder")
+
+    logging.info("Creating 'templates' folder")
     pathlib.Path("./templates").mkdir(parents=True, exist_ok=True)
 
     logging.info(f"Extracting URL for stations: {source_url_stations}")
@@ -145,10 +143,7 @@ def main(
     )
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
-    logging.info(
-        "New York Citibike - Citibike Stations process completed at "
-        + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    )
+    logging.info("New York Citibike - Citibike Stations process completed")
 
 
 def datetime_from_int(dt_int: int) -> str:

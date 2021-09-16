@@ -20,7 +20,7 @@ resources:
     description: "NYC 311 service requests logs"
 
 dag:
-  airflow-version: 2.1.3
+  airflow-version: 2
   initialize:
     dag_id: 311_service_requests
     default_args:
@@ -37,7 +37,6 @@ dag:
       description: "Run CSV transform within kubernetes pod"
       args:
         task_id: "transform_csv"
-        startup_timeout_seconds: 300
         name: "311_service_requests"
         namespace: "default"
         image_pull_policy: "Always"
@@ -46,19 +45,19 @@ dag:
           SOURCE_URL: "https://data.cityofnewyork.us/api/views/erm2-nwe9/rows.csv"
           SOURCE_FILE: "files/data.csv"
           TARGET_FILE: "files/data_output.csv"
-          NUMBER_OF_BATCHES: "30"
-          TARGET_GCS_BUCKET: "{{ var.json.shared.composer_bucket }}"
+          CHUNKSIZE: "2000000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/new_york/311_service_requests/data_output.csv"
         resources:
-          limit_memory: "32G"
-          limit_cpu: "8"
+          limit_memory: "8G"
+          limit_cpu: "2"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
 
       args:
         task_id: "load_to_bq"
-        bucket: "{{ var.json.shared.composer_bucket }}"
+        bucket: "{{ var.value.composer_bucket }}"
         source_objects: ["data/new_york/311_service_requests/data_output.csv"]
         source_format: "CSV"
         destination_project_dataset_table: "new_york.311_service_requests"

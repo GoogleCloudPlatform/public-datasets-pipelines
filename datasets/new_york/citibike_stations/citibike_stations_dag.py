@@ -44,7 +44,7 @@ with DAG(
             "SOURCE_URL_STATUS": "https://gbfs.citibikenyc.com/gbfs/en/station_status.json",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
-            "TARGET_GCS_BUCKET": "{{ var.json.shared.composer_bucket }}",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/new_york/citibike_stations/data_output.csv",
         },
         resources={"limit_memory": "4G", "limit_cpu": "2"},
@@ -53,7 +53,7 @@ with DAG(
     # Task to load CSV data to a BigQuery table
     load_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
         task_id="load_to_bq",
-        bucket="{{ var.json.shared.composer_bucket }}",
+        bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/new_york/citibike_stations/data_output.csv"],
         source_format="CSV",
         destination_project_dataset_table="new_york.citibike_stations",
