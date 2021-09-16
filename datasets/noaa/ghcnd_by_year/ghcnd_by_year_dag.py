@@ -46,7 +46,7 @@ with DAG(
             "FTP_FILENAME": "{{ macros.ds_format(macros.ds_add(ds, 0), '%Y-%m-%d', '%Y') }}.csv.gz",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
-            "TARGET_GCS_BUCKET": "{{ var.json.shared.composer_bucket }}",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/noaa/ghcnd_by_year/data_output.csv",
         },
         resources={"limit_memory": "4G", "limit_cpu": "2"},
@@ -55,13 +55,27 @@ with DAG(
     # Task to load CSV data to a BigQuery table
     load_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
         task_id="load_to_bq",
-        bucket="{{ var.json.shared.composer_bucket }}",
+        bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/noaa/ghcnd_by_year/data_output.csv"],
         source_format="CSV",
         destination_project_dataset_table="noaa.ghcnd_by_year",
         skip_leading_rows=1,
         write_disposition="WRITE_TRUNCATE",
-        schema_fields=None,
+        schema_fields=[
+            {"name": "id", "type": "STRING", "description": "", "mode": "REQUIRED"},
+            {"name": "date", "type": "DATE", "description": "", "mode": "NULLABLE"},
+            {
+                "name": "element",
+                "type": "STRING",
+                "description": "",
+                "mode": "NULLABLE",
+            },
+            {"name": "value", "type": "FLOAT", "description": "", "mode": "NULLABLE"},
+            {"name": "mflag", "type": "STRING", "description": "", "mode": "NULLABLE"},
+            {"name": "qflag", "type": "STRING", "description": "", "mode": "NULLABLE"},
+            {"name": "sflag", "type": "STRING", "description": "", "mode": "NULLABLE"},
+            {"name": "time", "type": "STRING", "description": "", "mode": "NULLABLE"},
+        ],
     )
 
     transform_csv >> load_to_bq
