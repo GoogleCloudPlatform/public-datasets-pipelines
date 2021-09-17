@@ -16,10 +16,9 @@
 resources:
 
   - type: bigquery_table
-    # Required Properties:
     table_id: crime
 
-    # Description of the table
+
     description: "Chicago Crime dataset"
 
 dag:
@@ -29,18 +28,18 @@ dag:
     default_args:
       owner: "Google"
 
-      # When set to True, keeps a task from getting triggered if the previous schedule for the task hasn’t succeeded
+
       depends_on_past: False
       start_date: '2021-03-01'
     max_active_runs: 1
-    schedule_interval: "@daily"  # runs everyday at 7am EST
+    schedule_interval: "@daily"
     catchup: False
     default_view: graph
 
   tasks:
     - operator: "KubernetesPodOperator"
 
-      # Task description
+
       description: "Run CSV transform within kubernetes pod"
 
       args:
@@ -49,10 +48,9 @@ dag:
 
         startup_timeout_seconds: 600
 
-        # The name of the pod in which the task will run. This will be used (plus a random suffix) to generate a pod id
+
         name: "crime"
 
-        # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
         namespace: "default"
 
         affinity:
@@ -68,10 +66,9 @@ dag:
 
         image_pull_policy: "Always"
 
-        # Docker images will be built and pushed to GCR by default whenever the `scripts/generate_dag.py` is run. To skip building and pushing images, use the optional `--skip-builds` flag.
+
         image: "{{ var.json.chicago_crime.container_registry.run_csv_transform_kub }}"
 
-        # Set the environment variables you need initialized in the container. Use these as input variables for the script your container is expected to perform.
         env_vars:
           SOURCE_URL: "https://data.cityofchicago.org/api/views/ijzp-q8t2/rows.csv"
           SOURCE_FILE: "files/data.csv"
@@ -79,7 +76,6 @@ dag:
           TARGET_GCS_BUCKET: "{{ var.json.shared.composer_bucket }}"
           TARGET_GCS_PATH: "data/chicago_crime/crime/data_output.csv"
 
-        # Set resource limits for the pod here. For resource units in Kubernetes, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes
         resources:
           request_memory: "8G"
           request_cpu: "2"
@@ -90,25 +86,19 @@ dag:
       args:
         task_id: "load_chicago_crime_to_bq"
 
-        # The GCS bucket where the CSV file is located in.
+
         bucket: "{{ var.json.shared.composer_bucket }}"
 
-        # The GCS object path for the CSV file
+
         source_objects: ["data/chicago_crime/crime/data_output.csv"]
         source_format: "CSV"
         destination_project_dataset_table: "chicago_crime.crime"
 
-        # Use this if your CSV file contains a header row
+
         skip_leading_rows: 1
 
-        # How to write data to the table: overwrite, append, or write if empty
-        # See https://cloud.google.com/bigquery/docs/reference/auditlogs/rest/Shared.Types/WriteDisposition
         write_disposition: "WRITE_TRUNCATE"
 
-        # The BigQuery table schema based on the CSV file. For more info, see
-        # https://cloud.google.com/bigquery/docs/schemas.
-        # Always use snake_case and lowercase for column names, and be explicit,
-        # i.e. specify modes for all columns.
         schema_fields:
           - name: "unique_key"
             type: "integer"
