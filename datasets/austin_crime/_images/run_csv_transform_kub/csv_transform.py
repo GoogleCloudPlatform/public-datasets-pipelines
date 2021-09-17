@@ -44,7 +44,7 @@ def main(
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
 
-    logging.info("creating 'files' folder")
+    logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
 
     logging.info("Downloading file ...")
@@ -57,6 +57,8 @@ def main(
     rename_headers(df, rename_mappings)
 
     logging.info("Transform: Cleaning up column location_description...")
+
+    # Removing two consecutive white soaces from location_description column
     df["location_description"] = (
         df["location_description"]
         .astype("|S")
@@ -73,7 +75,7 @@ def main(
     df["y_coordinate"] = df["y_coordinate"].apply(convert_to_integer_string)
 
     logging.info("Transform: Creating a new column - address...")
-    df["address"] = df["address1"]
+    df["address"] = df["temp_address"]
     df["address"] = (
         df["address"]
         .fillna(
@@ -113,6 +115,8 @@ def main(
     )
 
     logging.info("Transform: Creating a new column - latitude...")
+    # If address is 'Austin, TX (30.264979, -97.746598)' below code will extract
+    # value 30.264979 from the address and assign it to latitude column
     df["latitude"] = (
         df["address"]
         .apply(search_string)
@@ -120,17 +124,20 @@ def main(
     )
 
     logging.info("Transform: Creating a new column - longitude...")
+    # If address is 'Austin, TX (30.264979, -97.746598)' below code will extract
+    # value -97.746598 from the address and assign it to longitude column
     df["longitude"] = (
         df["address"]
         .apply(search_string)
         .apply(extract_lat_long, args=[r".*(\-\d+\.\d+)\)"])
     )
 
-    logging.info("Transform: Creating a new column - year...")
+    logging.info("Transform: Creating a new column - location...")
     df["location"] = "(" + df["latitude"] + "," + df["longitude"] + ")"
+    df["location"] = df["location"].replace("(,)", "")
 
-    logging.info("Transform: Dropping column - address1...")
-    delete_column(df, "address1")
+    logging.info("Transform: Dropping column - temp_address...")
+    delete_column(df, "temp_address")
 
     logging.info("Transform: Reordering headers...")
     df = df[headers]
@@ -162,11 +169,11 @@ def download_file(
 
 def read_files(path: pathlib.Path) -> pd.DataFrame:
     all_files = glob.glob(path + "/*.csv")
-    li = []
+    df_temp = []
     for filename in all_files:
         frame = pd.read_csv(filename, index_col=None, header=0)
-        li.append(frame)
-    df = pd.concat(li, axis=0, ignore_index=True)
+        df_temp.append(frame)
+    df = pd.concat(df_temp, axis=0, ignore_index=True)
     return df
 
 
@@ -190,7 +197,7 @@ def convert_to_integer_string(input: typing.Union[str, float]) -> str:
 
 def convert_dt_format(dt_str: str) -> str:
     a = ""
-    if dt_str is None or len(str(dt_str)) == 0 or str(dt_str) == "nan":
+    if not dt_str or str(dt_str) == "nan":
         return str(a)
     else:
         return datetime.datetime.strptime(str(dt_str), "%m/%d/%Y %H:%M:%S %p").strftime(
@@ -209,17 +216,18 @@ def convert_exp_to_float(exp_val: str) -> str:
 
 
 def search_string(str_value: str) -> str:
-    a = ""
     if re.search(r".*\(.*\)", str_value):
         return str(str_value)
     else:
-        return str(a)
+        return str("")
 
 
 def extract_lat_long(str_val: str, patter: str) -> str:
     m = re.match(patter, str_val)
     if m:
         return m.group(1)
+    else:
+        return ""
 
 
 def delete_column(df: pd.DataFrame, column_name: str) -> None:
