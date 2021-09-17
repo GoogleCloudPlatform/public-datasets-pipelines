@@ -16,7 +16,6 @@
 resources:
 
   - type: bigquery_table
-    # Required Properties:
     table_id: crime
 
     # Description of the table
