@@ -34,11 +34,11 @@ def main(
 ) -> None:
 
     logging.info(
-        "chicago crime process started at "
+        "Chicago Crime process started at "
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
 
-    logging.info("creating 'files' folder")
+    logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
 
     logging.info(f"Downloading file {source_url}")
@@ -57,6 +57,12 @@ def main(
 
     logging.info("Transform: Removing null values.. ")
     filter_null_rows(df)
+
+    logging.info("Transform: Converting to integers..")
+    convert_values_to_integer_string(df)
+
+    logging.info("Transform: Converting to float..")
+    removing_nan_values(df)
 
     logging.info("Transform: Reordering headers..")
     df = df[
@@ -85,26 +91,6 @@ def main(
             "location",
         ]
     ]
-
-    logging.info("Transform: converting to integers..")
-
-    # df["unique_key"] = df["unique_key"].apply(convert_to_integer_string)
-    # df["beat"] = df["beat"].apply(convert_to_integer_string)
-    # df["district"] = df["district"].apply(convert_to_integer_string)
-    # df["ward"] = df["ward"].apply(convert_to_integer_string)
-    # df["community_area"] = df["community_area"].apply(convert_to_integer_string)
-    # df["year"] = df["year"].apply(convert_to_integer_string)
-
-    convert_values_to_integer_string(df)
-
-    logging.info("Transform: converting to float..")
-
-    # df["x_coordinate"] = df["x_coordinate"].apply(resolve_nan)
-    # df["y_coordinate"] = df["y_coordinate"].apply(resolve_nan)
-    # df["latitude"] = df["latitude"].apply(resolve_nan)
-    # df["longitude"] = df["longitude"].apply(resolve_nan)
-
-    removing_nan_values(df)
 
     logging.info(f"Saving to output file.. {target_file}")
     try:
@@ -136,7 +122,7 @@ def removing_nan_values(df: pd.DataFrame) -> None:
     cols = ["x_coordinate", "y_coordinate", "latitude", "longitude"]
 
     for cols in cols:
-        df[cols] = df[cols].apply(convert_dt_format)
+        df[cols] = df[cols].apply(resolve_nan)
 
 
 def convert_to_integer_string(input: typing.Union[str, float]) -> str:
@@ -152,7 +138,7 @@ def convert_values_to_integer_string(df: pd.DataFrame) -> None:
     cols = ["unique_key", "beat", "district", "ward", "community_area", "year"]
 
     for cols in cols:
-        df[cols] = df[cols].apply(convert_dt_format)
+        df[cols] = df[cols].apply(convert_to_integer_string)
 
 
 def rename_headers(df: pd.DataFrame) -> None:
