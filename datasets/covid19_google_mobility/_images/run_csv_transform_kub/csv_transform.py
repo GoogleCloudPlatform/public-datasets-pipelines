@@ -42,7 +42,7 @@ def main(
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
 
-    logging.info("creating 'files' folder")
+    logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
 
     logging.info(f"Downloading file from {source_url}...")
@@ -57,24 +57,7 @@ def main(
     rename_headers(df, rename_mappings)
 
     logging.info(f"Transform: converting to integer {source_file}... ")
-    df["retail_and_recreation_percent_change_from_baseline"] = df[
-        "retail_and_recreation_percent_change_from_baseline"
-    ].apply(convert_to_integer_string)
-    df["grocery_and_pharmacy_percent_change_from_baseline"] = df[
-        "grocery_and_pharmacy_percent_change_from_baseline"
-    ].apply(convert_to_integer_string)
-    df["parks_percent_change_from_baseline"] = df[
-        "parks_percent_change_from_baseline"
-    ].apply(convert_to_integer_string)
-    df["transit_stations_percent_change_from_baseline"] = df[
-        "transit_stations_percent_change_from_baseline"
-    ].apply(convert_to_integer_string)
-    df["workplaces_percent_change_from_baseline"] = df[
-        "workplaces_percent_change_from_baseline"
-    ].apply(convert_to_integer_string)
-    df["residential_percent_change_from_baseline"] = df[
-        "residential_percent_change_from_baseline"
-    ].apply(convert_to_integer_string)
+    convert_values_to_integer_string(df)
 
     logging.info("Transform: Reordering headers..")
     df = df[headers]
@@ -103,6 +86,20 @@ def convert_to_integer_string(input: typing.Union[str, float]) -> str:
     else:
         str_val = str(int(round(input, 0)))
     return str_val
+
+
+def convert_values_to_integer_string(df: pd.DataFrame) -> None:
+    cols = [
+        "retail_and_recreation_percent_change_from_baseline",
+        "grocery_and_pharmacy_percent_change_from_baseline",
+        "parks_percent_change_from_baseline",
+        "transit_stations_percent_change_from_baseline",
+        "workplaces_percent_change_from_baseline",
+        "residential_percent_change_from_baseline",
+    ]
+
+    for cols in cols:
+        df[cols] = df[cols].apply(convert_to_integer_string)
 
 
 def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
