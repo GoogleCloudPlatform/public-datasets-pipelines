@@ -68,13 +68,14 @@ def main(
     else:
         df = pd.read_csv(str(source_file))
 
+    logging.info(f"Transformation Process Starting.. {source_file}")
+
     rename_headers(df, rename_mappings)
 
     filter_null_rows(
         df, PIPELINES_NAME_INPATIENT, PIPELINES_NAME_OUTPATIENT, pipeline_name
     )
 
-    logging.info("Transform: Reordering headers..")
     df = df[headers]
 
     logging.info(f"Transformation Process complete .. {source_file}")
