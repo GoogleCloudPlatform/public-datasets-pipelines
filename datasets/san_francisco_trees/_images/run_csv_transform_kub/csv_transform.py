@@ -42,7 +42,7 @@ def main(
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
 
-    logging.info("creating 'files' folder")
+    logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
 
     logging.info(f"Downloading file {source_url}")
@@ -56,13 +56,13 @@ def main(
     logging.info(f"Transform: Rename columns for {pipeline_name}..")
     rename_headers(df, rename_mappings)
 
-    logging.info(f"Transform: converting to integer for {pipeline_name}..")
-    df["site_order"] = df["site_order"].apply(convert_to_int)
+    logging.info(f"Transform: Converting to integer for {pipeline_name}..")
+    df["site_order"] = df["site_order"].apply(convert_to_integer_string)
 
-    logging.info(f"Transform: converting date format for {pipeline_name}.. ")
+    logging.info(f"Transform: Converting date format for {pipeline_name}.. ")
     df["plant_date"] = df["plant_date"].apply(convert_dt_format)
 
-    logging.info(f"Transform: filtering Null values for {pipeline_name}.. ")
+    logging.info(f"Transform: Filtering Null values for {pipeline_name}.. ")
     filter_null_rows(df)
 
     logging.info(f"Transform: Reordering headers for {pipeline_name}.. ")
@@ -87,7 +87,7 @@ def main(
 
 def convert_dt_format(dt_str: str) -> str:
     a = ""
-    if dt_str is None or len(str(dt_str)) == 0 or str(dt_str) == "nan":
+    if not dt_str or str(dt_str) == "nan":
         return str(a)
     else:
         return datetime.datetime.strptime(str(dt_str), "%m/%d/%Y %H:%M:%S %p").strftime(
@@ -125,9 +125,9 @@ def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
     df.rename(columns=rename_mappings, inplace=True)
 
 
-def convert_to_int(input: str) -> str:
+def convert_to_integer_string(input: typing.Union[str, float]) -> str:
     str_val = ""
-    if input == "" or (math.isnan(input)):
+    if not input or (math.isnan(input)):
         str_val = ""
     else:
         str_val = str(int(round(input, 0)))
