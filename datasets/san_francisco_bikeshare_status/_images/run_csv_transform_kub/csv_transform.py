@@ -33,9 +33,9 @@ def main(
 
     logging.info(f"San Francisco - Bikeshare Status process started")
 
-    logging.info("creating 'files' folder")
+    logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
-    logging.info("creating 'templates' folder")
+    logging.info("Creating 'templates' folder")
     pathlib.Path("./templates").mkdir(parents=True, exist_ok=True)
 
     logging.info(f"Extracting URL for status: {source_url}")
