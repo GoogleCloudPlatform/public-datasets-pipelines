@@ -68,7 +68,7 @@ def main(
     else:
         df = pd.read_csv(str(source_file))
 
-    logging.info(f"Transformation Process Starting.. {source_file}")
+    # logging.info(f"Transformation Process Starting.. {source_file}")
 
     rename_headers(df, rename_mappings)
 
