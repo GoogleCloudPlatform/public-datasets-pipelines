@@ -85,9 +85,9 @@ def download_file(source_url: str, source_file: pathlib.Path) -> None:
 
 def processChunk(df: pd.DataFrame, target_file_batch: str) -> None:
 
-    logging.info(f"Transformation Process Starting")
+    logging.info("Transformation Process Starting")
 
-    logging.info(f"Renaming Headers")
+    logging.info("Renaming Headers")
     rename_headers(df)
 
     logging.info("Trimming Whitespace")
@@ -108,7 +108,7 @@ def processChunk(df: pd.DataFrame, target_file_batch: str) -> None:
             "writer",
             "actor_1",
             "actor_2",
-            "actor_3"
+            "actor_3",
         ]
     ]
 
@@ -126,7 +126,11 @@ def convert_dt_format(dt_str: str) -> str:
     if not dt_str or dt_str == "nan":
         return str("")
     else:
-        return str(datetime.datetime.strptime(str(dt_str), "%m/%d/%Y %H:%M:%S %p").strftime("%Y-%m-%d %H:%M:%S"))
+        return str(
+            datetime.datetime.strptime(str(dt_str), "%m/%d/%Y %H:%M:%S %p").strftime(
+                "%Y-%m-%d %H:%M:%S"
+            )
+        )
 
 
 def rename_headers(df: pd.DataFrame) -> None:
@@ -141,7 +145,7 @@ def rename_headers(df: pd.DataFrame) -> None:
         "Writer": "writer",
         "Actor 1": "actor_1",
         "Actor 2": "actor_2",
-        "Actor 3": "actor_3"
+        "Actor 3": "actor_3",
     }
 
     df = df.rename(columns=header_names, inplace=True)
