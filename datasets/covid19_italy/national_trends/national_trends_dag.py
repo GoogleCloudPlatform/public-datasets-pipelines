@@ -38,13 +38,30 @@ with DAG(
         startup_timeout_seconds=600,
         name="covid19_italy_national_trends",
         namespace="default",
+        affinity={
+            "nodeAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                    "nodeSelectorTerms": [
+                        {
+                            "matchExpressions": [
+                                {
+                                    "key": "cloud.google.com/gke-nodepool",
+                                    "operator": "In",
+                                    "values": ["pool-e2-standard-4"],
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
         image_pull_policy="Always",
         image="{{ var.json.covid19_italy.container_registry.run_csv_transform_kub }}",
         env_vars={
             "SOURCE_URL": "https://raw.githubusercontent.com/pcm-dpc/COVID-19/master/dati-andamento-nazionale/dpc-covid19-ita-andamento-nazionale.csv",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
-            "TARGET_GCS_BUCKET": "{{ var.json.shared.composer_bucket }}",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/covid19_italy/national_trends/data_output.csv",
             "CSV_HEADERS": '["date","country","hospitalized_patients_symptoms","hospitalized_patients_intensive_care","total_hospitalized_patients","home_confinement_cases","total_current_confirmed_cases","new_current_confirmed_cases","new_total_confirmed_cases","recovered","deaths","total_confirmed_cases","tests_performed","note"]',
             "RENAME_MAPPINGS": '{"data": "date","stato": "country","ricoverati_con_sintomi": "hospitalized_patients_symptoms","terapia_intensiva": "hospitalized_patients_intensive_care","totale_ospedalizzati": "total_hospitalized_patients","isolamento_domiciliare": "home_confinement_cases","totale_positivi": "total_current_confirmed_cases","variazione_totale_positivi": "new_current_confirmed_cases","nuovi_positivi": "new_total_confirmed_cases","dimessi_guariti": "recovered","deceduti": "deaths","totale_casi": "total_confirmed_cases","tamponi": "tests_performed","note": "note"}',
@@ -56,7 +73,7 @@ with DAG(
     # Task to load CSV data to a BigQuery table
     load_national_trends_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
         task_id="load_national_trends_to_bq",
-        bucket="{{ var.json.shared.composer_bucket }}",
+        bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/covid19_italy/national_trends/data_output.csv"],
         source_format="CSV",
         destination_project_dataset_table="covid19_italy.national_trends",
