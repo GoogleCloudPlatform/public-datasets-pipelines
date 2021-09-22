@@ -61,7 +61,7 @@ with DAG(
             "SOURCE_URL": "https://www.gstatic.com/covid19/mobility/Global_Mobility_Report.csv",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
-            "TARGET_GCS_BUCKET": "{{ var.json.shared.composer_bucket }}",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/covid19_google_mobility/mobility_report/data_output.csv",
             "PIPELINE_NAME": "mobility_report",
             "CSV_HEADERS": '["country_region_code" ,"country_region" ,"sub_region_1" ,"sub_region_2" ,"metro_area" ,"iso_3166_2_code" ,"census_fips_code" ,"place_id" ,"date" ,"retail_and_recreation_percent_change_from_baseline" ,"grocery_and_pharmacy_percent_change_from_baseline" ,"parks_percent_change_from_baseline" ,"transit_stations_percent_change_from_baseline" ,"workplaces_percent_change_from_baseline" ,"residential_percent_change_from_baseline"]',
@@ -73,7 +73,7 @@ with DAG(
     # Task to load CSV data to a BigQuery table
     load_mobility_report_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
         task_id="load_mobility_report_to_bq",
-        bucket="{{ var.json.shared.composer_bucket }}",
+        bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/covid19_google_mobility/mobility_report/data_output.csv"],
         source_format="CSV",
         destination_project_dataset_table="covid19_google_mobility.mobility_report",
