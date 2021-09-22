@@ -61,7 +61,7 @@ with DAG(
             "SOURCE_URL": "https://data.sfgov.org/api/views/tkzw-k3nq/rows.csv",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
-            "TARGET_GCS_BUCKET": "{{ var.json.shared.composer_bucket }}",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/san_francisco_trees/street_trees/data_output.csv",
             "PIPELINE_NAME": "street_trees",
             "CSV_HEADERS": '["tree_id","legal_status","species","address","site_order","site_info","plant_type","care_taker","care_assistant","plant_date","dbh","plot_size","permit_notes","x_coordinate","y_coordinate","latitude","longitude","location"]',
@@ -73,7 +73,7 @@ with DAG(
     # Task to load CSV data to a BigQuery table
     load_street_trees_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
         task_id="load_street_trees_to_bq",
-        bucket="{{ var.json.shared.composer_bucket }}",
+        bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/san_francisco_trees/street_trees/data_output.csv"],
         source_format="CSV",
         destination_project_dataset_table="san_francisco_trees.street_trees",
