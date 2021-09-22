@@ -18,7 +18,6 @@ resources:
   - type: bigquery_table
     table_id: crime
 
-    # Description of the table
     description: "Austin Crime table"
 
 dag:
@@ -28,28 +27,24 @@ dag:
     default_args:
       owner: "Google"
 
-      # When set to True, keeps a task from getting triggered if the previous schedule for the task hasn’t succeeded
       depends_on_past: False
       start_date: '2021-03-01'
     max_active_runs: 1
-    schedule_interval: "@daily"  # runs everyday at 6am EST
+    schedule_interval: "@daily"
     catchup: False
     default_view: graph
 
   tasks:
     - operator: "KubernetesPodOperator"
 
-      # Task description
       description: "Run CSV transform within kubernetes pod"
 
       args:
 
         task_id: "austin_crime_transform_csv"
 
-        # The name of the pod in which the task will run. This will be used (plus a random suffix) to generate a pod id
         name: "crime"
 
-        # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
         namespace: "default"
 
         affinity:
@@ -65,17 +60,15 @@ dag:
 
         image_pull_policy: "Always"
 
-        # Docker images will be built and pushed to GCR by default whenever the `scripts/generate_dag.py` is run. To skip building and pushing images, use the optional `--skip-builds` flag.
         image: "{{ var.json.austin_crime.container_registry.run_csv_transform_kub }}"
 
-        # Set the environment variables you need initialized in the container. Use these as input variables for the script your container is expected to perform.
         env_vars:
           SOURCE_URL: >-
             ["gs://pdp-feeds-staging/Austin_Crime/Annual_Crime_2014.csv","gs://pdp-feeds-staging/Austin_Crime/Annual_Crime_Dataset_2015.csv","gs://pdp-feeds-staging/Austin_Crime/2016_Annual_Crime_Data.csv"]
           SOURCE_FILE: >-
             ["files/data1.csv","files/data2.csv","files/data3.csv"]
           TARGET_FILE: "files/data_output.csv"
-          TARGET_GCS_BUCKET: "{{ var.json.shared.composer_bucket }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/austin_crime/crime/data_output.csv"
           FILE_PATH: "files/"
           CSV_HEADERS: >-
@@ -83,7 +76,6 @@ dag:
           RENAME_MAPPINGS: >-
             {"GO Primary Key" : "unique_key","Council District" : "council_district_code","GO Highest Offense Desc" : "description","Highest NIBRS/UCR Offense Description" : "primary_type","GO Report Date" : "timestamp","GO Location" : "location_description","Clearance Status" : "clearance_status","Clearance Date" : "clearance_date","GO District" : "district","GO Location Zip" : "zipcode","GO Census Tract" : "census_tract","GO X Coordinate" : "x_coordinate","GO Y Coordinate" : "y_coordinate","Location_1" : "temp_address"}
 
-        # Set resource limits for the pod here. For resource units in Kubernetes, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes
         resources:
           request_memory: "4G"
           request_cpu: "1"
@@ -94,26 +86,17 @@ dag:
       args:
         task_id: "load_austin_crime_to_bq"
 
-        # The GCS bucket where the CSV file is located in.
-        bucket: "{{ var.json.shared.composer_bucket }}"
+        bucket: "{{ var.value.composer_bucket }}"
 
-        # The GCS object path for the CSV file
         source_objects: ["data/austin_crime/crime/data_output.csv"]
         source_format: "CSV"
         destination_project_dataset_table: "austin_crime.crime"
 
-        # Use this if your CSV file contains a header row
         skip_leading_rows: 1
         allow_quoted_newlines: True
 
-        # How to write data to the table: overwrite, append, or write if empty
-        # See https://cloud.google.com/bigquery/docs/reference/auditlogs/rest/Shared.Types/WriteDisposition
         write_disposition: "WRITE_TRUNCATE"
 
-        # The BigQuery table schema based on the CSV file. For more info, see
-        # https://cloud.google.com/bigquery/docs/schemas.
-        # Always use snake_case and lowercase for column names, and be explicit,
-        # i.e. specify modes for all columns.
         schema_fields:
           - name: "unique_key"
             type: "integer"

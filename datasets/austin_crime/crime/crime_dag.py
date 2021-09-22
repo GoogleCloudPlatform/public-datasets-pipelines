@@ -60,7 +60,7 @@ with DAG(
             "SOURCE_URL": '["gs://pdp-feeds-staging/Austin_Crime/Annual_Crime_2014.csv","gs://pdp-feeds-staging/Austin_Crime/Annual_Crime_Dataset_2015.csv","gs://pdp-feeds-staging/Austin_Crime/2016_Annual_Crime_Data.csv"]',
             "SOURCE_FILE": '["files/data1.csv","files/data2.csv","files/data3.csv"]',
             "TARGET_FILE": "files/data_output.csv",
-            "TARGET_GCS_BUCKET": "{{ var.json.shared.composer_bucket }}",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/austin_crime/crime/data_output.csv",
             "FILE_PATH": "files/",
             "CSV_HEADERS": '["unique_key","address","census_tract","clearance_date","clearance_status","council_district_code","description","district","latitude","longitude","location","location_description","primary_type","timestamp","x_coordinate","y_coordinate","year","zipcode"]',
@@ -72,7 +72,7 @@ with DAG(
     # Task to load CSV data to a BigQuery table
     load_austin_crime_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
         task_id="load_austin_crime_to_bq",
-        bucket="{{ var.json.shared.composer_bucket }}",
+        bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/austin_crime/crime/data_output.csv"],
         source_format="CSV",
         destination_project_dataset_table="austin_crime.crime",
