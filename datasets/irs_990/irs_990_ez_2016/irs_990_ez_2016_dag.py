@@ -38,13 +38,30 @@ with DAG(
         startup_timeout_seconds=600,
         name="irs_990_ez_2016",
         namespace="default",
+        affinity={
+            "nodeAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                    "nodeSelectorTerms": [
+                        {
+                            "matchExpressions": [
+                                {
+                                    "key": "cloud.google.com/gke-nodepool",
+                                    "operator": "In",
+                                    "values": ["pool-e2-standard-4"],
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
         image_pull_policy="Always",
         image="{{ var.json.irs_990.container_registry.run_csv_transform_kub }}",
         env_vars={
             "SOURCE_URL": "https://www.irs.gov/pub/irs-soi/16eofinextractez.dat",
             "SOURCE_FILE": "files/data.dat",
             "TARGET_FILE": "files/data_output.csv",
-            "TARGET_GCS_BUCKET": "{{ var.json.shared.composer_bucket }}",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/irs_990/irs_990_ez_2016/data_output.csv",
             "PIPELINE_NAME": "irs_990_ez_2016",
             "CSV_HEADERS": '["ein","elf","tax_pd","subseccd","totcntrbs","prgmservrev","duesassesmnts","othrinvstinc","grsamtsalesastothr","basisalesexpnsothr","gnsaleofastothr","grsincgaming","grsrevnuefndrsng","direxpns","netincfndrsng","grsalesminusret","costgoodsold","grsprft","othrevnue","totrevnue","totexpns","totexcessyr","othrchgsnetassetfnd","networthend","totassetsend","totliabend","totnetassetsend","actvtynotprevrptcd","chngsinorgcd","unrelbusincd","filedf990tcd","contractioncd","politicalexpend","filedf1120polcd","loanstoofficerscd","loanstoofficers","initiationfee","grspublicrcpts","s4958excessbenefcd","prohibtdtxshltrcd","nonpfrea","totnooforgscnt","totsupport","gftgrntsrcvd170","txrevnuelevied170","srvcsval170","pubsuppsubtot170","exceeds2pct170","pubsupplesspct170","samepubsuppsubtot170","grsinc170","netincunreltd170","othrinc170","totsupp170","grsrcptsrelated170","totgftgrntrcvd509","grsrcptsadmissn509","grsrcptsactivities509","txrevnuelevied509","srvcsval509","pubsuppsubtot509","rcvdfrmdisqualsub509","exceeds1pct509","subtotpub509","pubsupplesub509","samepubsuppsubtot509","grsinc509","unreltxincls511tx509","subtotsuppinc509","netincunrelatd509","othrinc509","totsupp509"]',
@@ -56,7 +73,7 @@ with DAG(
     # Task to load CSV data to a BigQuery table
     load_irs_990_ez_2016_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
         task_id="load_irs_990_ez_2016_to_bq",
-        bucket="{{ var.json.shared.composer_bucket }}",
+        bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/irs_990/irs_990_ez_2016/data_output.csv"],
         source_format="CSV",
         destination_project_dataset_table="irs_990.irs_990_ez_2016",

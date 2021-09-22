@@ -46,7 +46,7 @@ with DAG(
     # Task to load the data from Airflow data folder to BigQuery
     load_csv_file_to_bq_table = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_csv_file_to_bq_table",
-        bucket="{{ var.json.shared.composer_bucket }}",
+        bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/usa_names/usa_1910_current/{{ ds }}/data.csv"],
         source_format="CSV",
         destination_project_dataset_table="usa_names.usa_1910_current",

@@ -112,7 +112,7 @@ dag:
           mkdir -p $airflow_home/data/$dataset/$pipeline/run_date={{ ds }}
           CUSTOM_ENV_VAR=$custom_env_var python $airflow_home/dags/$dataset/$pipeline/custom/some_script.py
         env:
-          airflow_home: "{{ var.json.shared.airflow_home }}"
+          airflow_home: "{{ var.value.airflow_home }}"
           dataset: DATASET_FOLDER_NAME
           pipeline: PIPELINE_FOLDER_NAME
           custom_env_var: "some value that your custom script needs"
@@ -130,7 +130,7 @@ dag:
         task_id: "sample_gcs_to_bq_task"
 
         # The GCS bucket where the CSV file is located in.
-        bucket: "{{ var.json.shared.composer_bucket }}"
+        bucket: "{{ var.value.composer_bucket }}"
 
         # The GCS object path for the CSV file
         source_objects: ["data/DATASET_FOLDER_NAME/PIPELINE_FOLDER_NAME/run_date={{ ds }}/data.csv"]
@@ -176,7 +176,7 @@ dag:
         task_id: "sample_gcs_to_gcs_task"
 
         # The GCS bucket to copy the object/s from
-        source_bucket: "{{ var.json.shared.composer_bucket }}"
+        source_bucket: "{{ var.value.composer_bucket }}"
 
         # Use a trailing "/*" if you want to copy all objects under that path.
         source_object: "data/DATASET_FOLDER_NAME/PIPELINE_FOLDER_NAME/run_date={{ ds }}/*"
@@ -300,6 +300,17 @@ dag:
         # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
         namespace: "default"
 
+        # Use this attribute to constrain which node pools your pod must run in.
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: cloud.google.com/gke-nodepool
+                      operator: In
+                      values:  # Specify your node pools here
+                        - "pool-e2-standard-4"
+
         # The Google Container Registry image URL. To prepare a Docker image to be used by this operator:
         #
         # 1. Create an `_images` folder under your dataset folder if it doesn't exist.
@@ -349,8 +360,8 @@ dag:
 
       args:
         task_id: "gke_start_pod_task"
-        project_id: "{{ var.json.shared.gcp_project_id }}"
-        location: "{{ var.json.shared.gcp_location }}"
+        project_id: "{{ var.value.gcp_project_id }}"
+        location: "{{ var.value.gcp_location }}"
 
         # The name of the Google Kubernetes Engine cluster the pod should be spawned in
         cluster_name: "GKE_CLUSTER_NAME"
@@ -379,8 +390,8 @@ dag:
 
       args:
         task_id: "gke_delete_cluster_task"
-        project_id: "{{ var.json.shared.gcp_project_id }}"
-        location: "{{ var.json.shared.gcp_location }}"
+        project_id: "{{ var.value.gcp_project_id }}"
+        location: "{{ var.value.gcp_location }}"
 
         # The GKE cluster name
         name: "sample-gke-cluster"
@@ -393,8 +404,8 @@ dag:
 
       args:
         task_id: "gke_create_cluster_task"
-        project_id: "{{ var.json.shared.gcp_project_id }}"
-        location: "{{ var.json.shared.gcp_location }}"
+        project_id: "{{ var.value.gcp_project_id }}"
+        location: "{{ var.value.gcp_location }}"
 
         # The cluster definition to create,
         # see https://googleapis.dev/python/container/latest/container_v1/types.html#google.cloud.container_v1.types.Cluster
@@ -429,7 +440,7 @@ dag:
         # Path to the Python script containing the Apache Beam Pipeline definition.
         # Place the script in your pipeline's `custom` folder, preferrably namespaced
         # under a folder named after the job name (templated as `DATAFLOW_JOB_NAME`).
-        py_file: "{{ var.json.shared.airflow_dags_folder }}/DATASET_NAME/PIPELINE_NAME/custom/DATAFLOW_JOB_NAME/main.py"
+        py_file: "{{ var.value.airflow_dags_folder }}/DATASET_NAME/PIPELINE_NAME/custom/DATAFLOW_JOB_NAME/main.py"
 
         # Python version of the Beam pipeline. If None, this defaults to python3.
         py_interpreter: "python3"
@@ -444,22 +455,22 @@ dag:
         dataflow_default_options:
 
           # Your Google Cloud project ID
-          project: "{{ var.json.shared.gcp_project }}"
+          project: "{{ var.value.gcp_project }}"
 
           # [Required] Path for temporary files.
           # You can use the Composer bucket (preferred) or your own bucket.
           # When using the Cloud Composer bucket, use the templated path below to prevent collisions.
-          temp_location: "{{ var.json.shared.composer_bucket }}/data/DATASET_NAME/PIPELINE_NAME/dataflow/tmp/DATAFLOW_JOB_NAME/"
+          temp_location: "{{ var.value.composer_bucket }}/data/DATASET_NAME/PIPELINE_NAME/dataflow/tmp/DATAFLOW_JOB_NAME/"
 
           # The GCS bucket path to store staging binary files used by Apache Beam
           # You can use the Composer bucket (preferred) or your own bucket.
           # When using the Cloud Composer bucket, use the templated path below to prevent collisions.
-          staging_location: "{{ var.json.shared.composer_bucket }}/data/DATASET_NAME/PIPELINE_NAME/dataflow/staging/"
+          staging_location: "{{ var.value.composer_bucket }}/data/DATASET_NAME/PIPELINE_NAME/dataflow/staging/"
 
           # [Optional] If your pipeline uses public packages from the PyPI, make
           # these packages available via a requirements.txt file. Create the file
           # in the `custom` folder, in the same subfolder as your `main.py`.
-          requirements_file: "{{ var.json.shared.airflow_dags_folder }}/DATASET_NAME/PIPELINE_NAME/custom/DATAFLOW_JOB_NAME/requirements.txt"
+          requirements_file: "{{ var.value.airflow_dags_folder }}/DATASET_NAME/PIPELINE_NAME/custom/DATAFLOW_JOB_NAME/requirements.txt"
 
           # [Required] The pipeline runner to use. Must be set to "DataflowRunner" to run on
           # Google Cloud Dataflow. Keep this unchanged.
