@@ -43,7 +43,7 @@ def main(
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
 
-    logging.info("creating 'files' folder")
+    logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
 
     logging.info(f"Downloading file {source_url}")
@@ -53,8 +53,6 @@ def main(
     df = pd.read_csv(source_file, skip_blank_lines=True)
 
     logging.info(f"Transforming {source_file} ... ")
-
-    # print(df.columns)
 
     logging.info(f"Transform: Dropping column {column_name} ...")
     delete_column(df, column_name)

@@ -62,7 +62,7 @@ with DAG(
             "SOURCE_FILE": "files/data.csv",
             "COLUMN_TO_REMOVE": "Unnamed: 20",
             "TARGET_FILE": "files/data_output.csv",
-            "TARGET_GCS_BUCKET": "{{ var.json.shared.composer_bucket }}",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/world_bank_intl_debt/series_summary/data_output.csv",
             "PIPELINE_NAME": "series_summary",
             "CSV_HEADERS": '["series_code" ,"topic" ,"indicator_name" ,"short_definition" ,"long_definition" ,"unit_of_measure" ,"periodicity" ,"base_period" ,"other_notes" ,"aggregation_method" ,"limitations_and_exceptions" ,"notes_from_original_source" ,"general_comments" ,"source" ,"statistical_concept_and_methodology" ,"development_relevance" ,"related_source_links" ,"other_web_links" ,"related_indicators" ,"license_type"]',
@@ -74,7 +74,7 @@ with DAG(
     # Task to load CSV data to a BigQuery table
     load_series_summary_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
         task_id="load_series_summary_to_bq",
-        bucket="{{ var.json.shared.composer_bucket }}",
+        bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/world_bank_intl_debt/series_summary/data_output.csv"],
         source_format="CSV",
         destination_project_dataset_table="world_bank_intl_debt.series_summary",
