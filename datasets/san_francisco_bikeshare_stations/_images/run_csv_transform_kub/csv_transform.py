@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import datetime
+import json
 import logging
 import os
 import pathlib
@@ -24,27 +25,27 @@ from google.cloud import storage
 
 
 def main(
-    source_url: str,
+    source_url_json: str,
     source_file: pathlib.Path,
     target_file: pathlib.Path,
     target_gcs_bucket: str,
     target_gcs_path: str,
 ) -> None:
 
-    logging.info(f"San Francisco Bikeshare Stations process started")
+    logging.info("San Francisco Bikeshare Stations process started")
 
     logging.info("creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
     logging.info("creating 'templates' folder")
     pathlib.Path("./templates").mkdir(parents=True, exist_ok=True)
 
-    logging.info(f"Extracting URL for stations: {source_url}")
+    logging.info(f"Extracting URL for stations: {source_url_json}")
     source_file_stations_csv = str(source_file).replace(".csv", "") + "_stations.csv"
     source_file_stations_json = str(source_file).replace(".csv", "") + "_stations.json"
 
-    logging.info(f"Downloading stations json file {source_url}")
+    logging.info(f"Downloading stations json file {source_url_json}")
     download_file_json(
-        source_url, source_file_stations_json, source_file_stations_csv
+        source_url_json, source_file_stations_json, source_file_stations_csv
     )
     copyfile(source_file_stations_json, "./templates/bikeshare_stations.json")
 
@@ -56,10 +57,10 @@ def main(
     logging.info(f"Renaming Columns {source_file_stations_csv}")
     rename_headers(df)
 
-    df = df[ df["station_id"] != "" ]
-    df = df[ df["name"] != "" ]
-    df = df[ df["lat"] != "" ]
-    df = df[ df["lon"] != "" ]
+    df = df[df["station_id"] != ""]
+    df = df[df["name"] != ""]
+    df = df[df["lat"] != ""]
+    df = df[df["lon"] != ""]
 
     df["station_geom"] = (
         "POINT("
@@ -68,6 +69,8 @@ def main(
         + df["lat"][:].astype("string")
         + ")"
     )
+
+    df["region_id"] = df["region_id"].astype("Int64")
 
     logging.info("Re-ordering Headers")
     df = df[
@@ -83,7 +86,7 @@ def main(
             "external_id",
             "eightd_has_key_dispenser",
             "has_kiosk",
-            "station_geom"
+            "station_geom",
         ]
     ]
 
@@ -101,7 +104,7 @@ def main(
     )
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
-    logging.info(f"San Francisco Bikeshare Stations process completed")
+    logging.info("San Francisco Bikeshare Stations process completed")
 
 
 def datetime_from_int(dt_int: int) -> str:
@@ -129,24 +132,20 @@ def rename_headers(df: pd.DataFrame) -> None:
 
     df.rename(columns=header_names, inplace=True)
 
+
 def save_to_new_file(df, file_path) -> None:
     df.to_csv(file_path, index=False)
 
 
 def download_file_json(
-    source_url: str, source_file_json: pathlib.Path, source_file_csv: pathlib.Path
+    source_url_json: str, source_file_json: str, source_file_csv: str
 ) -> None:
 
     # this function extracts the json from a source url and creates
     # a csv file from that data to be used as an input file
 
     # download json url into object r
-    try:
-        r = requests.get(source_url, stream=True)
-        if r.status_code != 200:
-            logging.error(f"Couldn't download {source_url}: {r.text}")
-    except ValueError:  # includes simplejson.decoder.JSONDecodeError
-        print(f"Downloading JSON file {source_url} has failed {r.text}")
+    r = requests.get(source_url_json + ".json", stream=True)
 
     # push object r (json) into json file
     try:
@@ -156,9 +155,11 @@ def download_file_json(
     except ValueError:
         print(f"Writing JSON to {source_file_json} has failed")
 
-    # read json file into object and write out to csv
-    df = pd.read_json(source_file_json)["data"]["stations"]
-    df = pd.DataFrame(df)
+    f = open(
+        source_file_json.strip(),
+    )
+    json_data = json.load(f)
+    df = pd.DataFrame(json_data["data"]["stations"])
     df.to_csv(source_file_csv, index=False)
 
 
@@ -173,7 +174,7 @@ if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
 
     main(
-        source_url=os.environ["SOURCE_URL"],
+        source_url_json=os.environ["SOURCE_URL_JSON"],
         source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],

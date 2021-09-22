@@ -56,12 +56,12 @@ with DAG(
             }
         },
         image_pull_policy="Always",
-        image="{{ var.json.san_francisco_bikeshare_stations.container_registry.run_csv_transform_kub_bikeshare_stations }}",
+        image="{{ var.json.san_francisco_bikeshare_stations.container_registry.run_csv_transform_kub }}",
         env_vars={
-            "SOURCE_URL": "https://gbfs.baywheels.com/gbfs/fr/station_information.json",
+            "SOURCE_URL_JSON": "https://gbfs.baywheels.com/gbfs/fr/station_information",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
-            "TARGET_GCS_BUCKET": "{{ var.values.composer_bucket }}",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/san_francisco_bikeshare_stations/bikeshare_stations/data_output.csv",
         },
         resources={"limit_memory": "2G", "limit_cpu": "1"},
@@ -70,13 +70,14 @@ with DAG(
     # Task to load CSV data to a BigQuery table
     load_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_to_bq",
-        bucket="{{ var.values.composer_bucket }}",
+        bucket="{{ var.value.composer_bucket }}",
         source_objects=[
             "data/san_francisco_bikeshare_stations/bikeshare_stations/data_output.csv"
         ],
         source_format="CSV",
-        destination_project_dataset_table="san_francisco_bikeshare_stations.bikeshare_stations",
+        destination_project_dataset_table="san_francisco.bikeshare_station_info",
         skip_leading_rows=1,
+        allow_quoted_newlines=True,
         write_disposition="WRITE_TRUNCATE",
         schema_fields=[
             {
