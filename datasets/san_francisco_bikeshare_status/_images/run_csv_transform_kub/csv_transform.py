@@ -13,10 +13,10 @@
 # limitations under the License.
 
 import datetime
+import json
 import logging
 import os
 import pathlib
-from shutil import copyfile
 
 import pandas as pd
 import requests
@@ -24,29 +24,24 @@ from google.cloud import storage
 
 
 def main(
-    source_url: str,
+    source_url_json: str,
     source_file: pathlib.Path,
     target_file: pathlib.Path,
     target_gcs_bucket: str,
     target_gcs_path: str,
 ) -> None:
 
-    logging.info(f"San Francisco - Bikeshare Status process started")
+    logging.info("San Francisco - Bikeshare Status process started")
 
     logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
-    logging.info("Creating 'templates' folder")
-    pathlib.Path("./templates").mkdir(parents=True, exist_ok=True)
 
-    logging.info(f"Extracting URL for status: {source_url}")
+    logging.info(f"Extracting URL for status: {source_url_json}")
     source_file_status_csv = str(source_file).replace(".csv", "") + "_status.csv"
     source_file_status_json = str(source_file).replace(".csv", "") + "_status.json"
 
-    logging.info(f"Downloading states json file {source_url}")
-    download_file_json(
-        source_url, source_file_status_json, source_file_status_csv
-    )
-    copyfile(source_file_status_json, "./templates/bikeshare_status.json")
+    logging.info(f"Downloading states json file {source_url_json}")
+    download_file_json(source_url_json, source_file_status_json, source_file_status_csv)
 
     logging.info(f"Opening status file {source_file_status_csv}")
     df = pd.read_csv(source_file_status_csv)
@@ -56,13 +51,13 @@ def main(
     logging.info(f"Renaming Columns {source_file_status_csv}")
     rename_headers(df)
 
-    df = df[ df["station_id"] != "" ]
-    df = df[ df["num_bikes_available"] != "" ]
-    df = df[ df["num_docks_available"] != "" ]
-    df = df[ df["is_installed"] != "" ]
-    df = df[ df["is_renting"] != "" ]
-    df = df[ df["is_returning"] != "" ]
-    df = df[ df["last_reported"] != "" ]
+    df = df[df["station_id"] != ""]
+    df = df[df["num_bikes_available"] != ""]
+    df = df[df["num_docks_available"] != ""]
+    df = df[df["is_installed"] != ""]
+    df = df[df["is_renting"] != ""]
+    df = df[df["is_returning"] != ""]
+    df = df[df["last_reported"] != ""]
 
     logging.info("Re-ordering Headers")
     df = df[
@@ -95,7 +90,7 @@ def main(
     )
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
-    logging.info(f"San Francisco - Bikeshare Status process completed")
+    logging.info("San Francisco - Bikeshare Status process completed")
 
 
 def datetime_from_int(dt_int: int) -> str:
@@ -123,26 +118,22 @@ def rename_headers(df: pd.DataFrame) -> None:
 
     df.rename(columns=header_names, inplace=True)
 
+
 def save_to_new_file(df, file_path) -> None:
     df.to_csv(file_path, index=False)
 
 
 def download_file_json(
-    source_url: str, source_file_json: pathlib.Path, source_file_csv: pathlib.Path
+    source_url_json: str, source_file_json: str, source_file_csv: str
 ) -> None:
 
-    # this function extracts the json from a source url and creates
+    # This function extracts the json from a source url and creates
     # a csv file from that data to be used as an input file
 
-    # download json url into object r
-    try:
-        r = requests.get(source_url, stream=True)
-        if r.status_code != 200:
-            logging.error(f"Couldn't download {source_url}: {r.text}")
-    except ValueError:  # includes simplejson.decoder.JSONDecodeError
-        print(f"Downloading JSON file {source_url} has failed {r.text}")
+    # Download json url into object r
+    r = requests.get(source_url_json + ".json", stream=True)
 
-    # push object r (json) into json file
+    # Push object r (json) into json file
     try:
         with open(source_file_json, "wb") as f:
             for chunk in r:
@@ -150,9 +141,11 @@ def download_file_json(
     except ValueError:
         print(f"Writing JSON to {source_file_json} has failed")
 
-    # read json file into object and write out to csv
-    df = pd.read_json(source_file_json)["data"]["stations"]
-    df = pd.DataFrame(df)
+    f = open(
+        source_file_json.strip(),
+    )
+    json_data = json.load(f)
+    df = pd.DataFrame(json_data["data"]["stations"])
     df.to_csv(source_file_csv, index=False)
 
 
@@ -167,7 +160,7 @@ if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
 
     main(
-        source_url=os.environ["SOURCE_URL"],
+        source_url_json=os.environ["SOURCE_URL_JSON"],
         source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
