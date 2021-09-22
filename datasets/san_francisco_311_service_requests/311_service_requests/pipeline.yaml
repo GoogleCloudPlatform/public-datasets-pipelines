@@ -74,6 +74,7 @@ dag:
         source_format: "CSV"
         destination_project_dataset_table: "san_francisco_311_service_requests.311_service_requests"
         skip_leading_rows: 1
+        allow_quoted_newlines: True
         write_disposition: "WRITE_TRUNCATE"
         schema_fields:
           - name: "unique_key"
