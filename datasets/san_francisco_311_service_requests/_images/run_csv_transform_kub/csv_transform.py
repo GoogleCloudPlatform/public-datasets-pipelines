@@ -90,6 +90,8 @@ def processChunk(df: pd.DataFrame, target_file_batch: str) -> None:
     logging.info("Remove rows with empty keys")
     df = df[df["unique_key"] != ""]
 
+    df['supervisor_district'] = df['supervisor_district'].astype('Int64')
+
     logging.info("Strip whitespace from incident address")
     df["incident_address"] = df["incident_address"].apply(lambda x: str(x).strip())
 
