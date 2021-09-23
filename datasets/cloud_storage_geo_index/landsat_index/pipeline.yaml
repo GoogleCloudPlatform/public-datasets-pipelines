@@ -16,19 +16,16 @@
 resources:
 
   - type: bigquery_table
-    # Required Properties:
+
     table_id: landsat_index
 
-    # Description of the table
-    description: "Landsat Index table"
+    description: "Landsat_Index Dataset"
 dag:
   airflow_version: 1
   initialize:
     dag_id: landsat_index
     default_args:
       owner: "Google"
-
-      # When set to True, keeps a task from getting triggered if the previous schedule for the task hasn’t succeeded
       depends_on_past: False
       start_date: '2021-03-01'
     max_active_runs: 1
@@ -40,7 +37,6 @@ dag:
 
     - operator: "KubernetesPodOperator"
 
-      # Task description
       description: "Run CSV transform within kubernetes pod"
 
       args:
@@ -49,33 +45,40 @@ dag:
 
         startup_timeout_seconds: 600
 
-        # The name of the pod in which the task will run. This will be used (plus a random suffix) to generate a pod id
         name: "landsat_index"
 
-        # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
         namespace: "default"
+
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: cloud.google.com/gke-nodepool
+                      operator: In
+                      values:
+                        - "pool-e2-standard-4"
 
         image_pull_policy: "Always"
 
-        # Docker images will be built and pushed to GCR by default whenever the `scripts/generate_dag.py` is run. To skip building and pushing images, use the optional `--skip-builds` flag.
         image: "{{ var.json.cloud_storage_geo_index.container_registry.run_csv_transform_kub }}"
 
-        # Set the environment variables you need initialized in the container. Use these as input variables for the script your container is expected to perform.
         env_vars:
           SOURCE_URL: "https://storage.googleapis.com/gcp-public-data-landsat/index.csv.gz"
           SOURCE_FILE: "files/data.csv.gz"
           TARGET_FILE: "files/data_output.csv"
-          TARGET_GCS_BUCKET: "{{ var.json.shared.composer_bucket }}"
+          CHUNKSIZE: "1000000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/cloud_storage_geo_index/landsat_index/data_output.csv"
+          PIPELINE_NAME: "landsat_index"
           CSV_HEADERS: >-
-            ["scene_id","product_id","spacecraft_id","sensor_id","date_acquired","sensing_time","collection_number","collection_category","data_type","wrs_path","wrs_row","cloud_cover""north_lat","south_lat","west_lon","east_lon","total_size","base_url"]
+            ["scene_id","product_id","spacecraft_id","sensor_id","date_acquired","sensing_time","collection_number","collection_category","data_type","wrs_path","wrs_row","cloud_cover","north_lat","south_lat","west_lon","east_lon","total_size","base_url"]
           RENAME_MAPPINGS: >-
             {"SCENE_ID" : "scene_id","SPACECRAFT_ID" : "spacecraft_id","SENSOR_ID" : "sensor_id","DATE_ACQUIRED" : "date_acquired","COLLECTION_NUMBER" : "collection_number","COLLECTION_CATEGORY" : "collection_category","DATA_TYPE" : "data_type","WRS_PATH" : "wrs_path","WRS_ROW" : "wrs_row","CLOUD_COVER" : "cloud_cover","NORTH_LAT" : "north_lat","SOUTH_LAT" : "south_lat","WEST_LON" : "west_lon","EAST_LON" : "east_lon","TOTAL_SIZE" : "total_size","BASE_URL" : "base_url","PRODUCT_ID" : "product_id","SENSING_TIME" : "sensing_time"}
 
-        # Set resource limits for the pod here. For resource units in Kubernetes, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes
         resources:
-          limit_memory: "4G"
-          limit_cpu: "2"
+          limit_memory: "8G"
+          limit_cpu: "3"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
@@ -83,25 +86,15 @@ dag:
       args:
         task_id: "load_landsat_index_to_bq"
 
-      # The GCS bucket where the CSV file is located in.
-        bucket: "{{ var.json.shared.composer_bucket }}"
+        bucket: "{{ var.value.composer_bucket }}"
 
-      # The GCS object path for the CSV file
         source_objects: ["data/cloud_storage_geo_index/landsat_index/data_output.csv"]
         source_format: "CSV"
         destination_project_dataset_table: "cloud_storage_geo_index.landsat_index"
 
-      # Use this if your CSV file contains a header row
         skip_leading_rows: 1
 
-      # How to write data to the table: overwrite, append, or write if empty
-      # See https://cloud.google.com/bigquery/docs/reference/auditlogs/rest/Shared.Types/WriteDisposition
         write_disposition: "WRITE_TRUNCATE"
-
-      # The BigQuery table schema based on the CSV file. For more info, see
-      # https://cloud.google.com/bigquery/docs/schemas.
-      # Always use snake_case and lowercase for column names, and be explicit,
-      # i.e. specify modes for all columns.
 
         schema_fields:
           - name: "scene_id"

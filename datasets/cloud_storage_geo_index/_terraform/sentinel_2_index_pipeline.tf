@@ -20,7 +20,7 @@ resource "google_bigquery_table" "sentinel_2_index" {
   dataset_id = "cloud_storage_geo_index"
   table_id   = "sentinel_2_index"
 
-  description = "Sentinel 2 Index table"
+  description = "sentinel_2_index dataset"
 
 
 

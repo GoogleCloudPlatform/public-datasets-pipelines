@@ -38,24 +38,43 @@ with DAG(
         startup_timeout_seconds=600,
         name="sentinel_2_index",
         namespace="default",
+        affinity={
+            "nodeAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                    "nodeSelectorTerms": [
+                        {
+                            "matchExpressions": [
+                                {
+                                    "key": "cloud.google.com/gke-nodepool",
+                                    "operator": "In",
+                                    "values": ["pool-e2-standard-4"],
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
         image_pull_policy="Always",
         image="{{ var.json.cloud_storage_geo_index.container_registry.run_csv_transform_kub }}",
         env_vars={
             "SOURCE_URL": "https://storage.googleapis.com/gcp-public-data-sentinel-2/index.csv.gz",
-            "SOURCE_FILE": "files/data.csv",
+            "SOURCE_FILE": "files/data.csv.gz",
             "TARGET_FILE": "files/data_output.csv",
-            "TARGET_GCS_BUCKET": "{{ var.json.shared.composer_bucket }}",
+            "CHUNKSIZE": "1000000",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/cloud_storage_geo_index/sentinel_2_index/data_output.csv",
-            "CSV_HEADERS": '["invoice_and_item_number","date","store_number","store_name","address","city","zip_code","store_location","county_number","county","category","category_name","vendor_number","vendor_name","item_number","item_description","pack","bottle_volume_ml","state_bottle_cost","state_bottle_retail","bottles_sold","sale_dollars","volume_sold_liters","volume_sold_gallons"]',
-            "RENAME_MAPPINGS": '{"Invoice/Item Number" : "invoice_and_item_number","Date" : "date","Store Number" : "store_number","Store Name" : "store_name","Address" : "address","City" : "city","Zip Code" : "zip_code","Store Location" : "store_location","County Number" : "county_number","County" : "county","Category" : "category","Category Name" : "category_name","Vendor Number" : "vendor_number","Vendor Name" : "vendor_name","Item Number" : "item_number","Item Description" : "item_description","Pack" : "pack","Bottle Volume (ml)" : "bottle_volume_ml","State Bottle Cost" : "state_bottle_cost","State Bottle Retail" : "state_bottle_retail","Bottles Sold" : "bottles_sold","Sale (Dollars)" : "sale_dollars","Volume Sold (Liters)" : "volume_sold_liters","Volume Sold (Gallons)" : "volume_sold_gallons"}',
+            "PIPELINE_NAME": "sentinel_2_index",
+            "CSV_HEADERS": '["granule_id","product_id","datatake_identifier","mgrs_tile","sensing_time","geometric_quality_flag","generation_time","north_lat","south_lat","west_lon","east_lon","base_url","total_size","cloud_cover"]',
+            "RENAME_MAPPINGS": '{"GRANULE_ID": "granule_id","PRODUCT_ID": "product_id","DATATAKE_IDENTIFIER": "datatake_identifier","MGRS_TILE": "mgrs_tile","SENSING_TIME": "sensing_time","TOTAL_SIZE": "total_size","CLOUD_COVER": "cloud_cover","GEOMETRIC_QUALITY_FLAG": "geometric_quality_flag","GENERATION_TIME": "generation_time", "NORTH_LAT": "north_lat","SOUTH_LAT": "south_lat","WEST_LON": "west_lon","EAST_LON": "east_lon","BASE_URL": "base_url"}',
         },
-        resources={"limit_memory": "4G", "limit_cpu": "2"},
+        resources={"limit_memory": "8G", "limit_cpu": "3"},
     )
 
     # Task to load CSV data to a BigQuery table
     load_sentinel_2_index_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
         task_id="load_sentinel_2_index_to_bq",
-        bucket="{{ var.json.shared.composer_bucket }}",
+        bucket="{{ var.value.composer_bucket }}",
         source_objects=[
             "data/cloud_storage_geo_index/sentinel_2_index/data_output.csv"
         ],
@@ -70,7 +89,7 @@ with DAG(
             {"name": "mgrs_tile", "type": "STRING", "mode": "NULLABLE"},
             {"name": "sensing_time", "type": "TIMESTAMP", "mode": "NULLABLE"},
             {"name": "geometric_quality_flag", "type": "STRING", "mode": "NULLABLE"},
-            {"name": "generation_time", "type": "TIMSTAMP", "mode": "NULLABLE"},
+            {"name": "generation_time", "type": "TIMESTAMP", "mode": "NULLABLE"},
             {"name": "north_lat", "type": "FLOAT", "mode": "NULLABLE"},
             {"name": "south_lat", "type": "FLOAT", "mode": "NULLABLE"},
             {"name": "west_lon", "type": "FLOAT", "mode": "NULLABLE"},

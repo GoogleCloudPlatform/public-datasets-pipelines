@@ -38,24 +38,43 @@ with DAG(
         startup_timeout_seconds=600,
         name="landsat_index",
         namespace="default",
+        affinity={
+            "nodeAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                    "nodeSelectorTerms": [
+                        {
+                            "matchExpressions": [
+                                {
+                                    "key": "cloud.google.com/gke-nodepool",
+                                    "operator": "In",
+                                    "values": ["pool-e2-standard-4"],
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
         image_pull_policy="Always",
         image="{{ var.json.cloud_storage_geo_index.container_registry.run_csv_transform_kub }}",
         env_vars={
             "SOURCE_URL": "https://storage.googleapis.com/gcp-public-data-landsat/index.csv.gz",
             "SOURCE_FILE": "files/data.csv.gz",
             "TARGET_FILE": "files/data_output.csv",
-            "TARGET_GCS_BUCKET": "{{ var.json.shared.composer_bucket }}",
+            "CHUNKSIZE": "1000000",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/cloud_storage_geo_index/landsat_index/data_output.csv",
-            "CSV_HEADERS": '["scene_id","product_id","spacecraft_id","sensor_id","date_acquired","sensing_time","collection_number","collection_category","data_type","wrs_path","wrs_row","cloud_cover""north_lat","south_lat","west_lon","east_lon","total_size","base_url"]',
+            "PIPELINE_NAME": "landsat_index",
+            "CSV_HEADERS": '["scene_id","product_id","spacecraft_id","sensor_id","date_acquired","sensing_time","collection_number","collection_category","data_type","wrs_path","wrs_row","cloud_cover","north_lat","south_lat","west_lon","east_lon","total_size","base_url"]',
             "RENAME_MAPPINGS": '{"SCENE_ID" : "scene_id","SPACECRAFT_ID" : "spacecraft_id","SENSOR_ID" : "sensor_id","DATE_ACQUIRED" : "date_acquired","COLLECTION_NUMBER" : "collection_number","COLLECTION_CATEGORY" : "collection_category","DATA_TYPE" : "data_type","WRS_PATH" : "wrs_path","WRS_ROW" : "wrs_row","CLOUD_COVER" : "cloud_cover","NORTH_LAT" : "north_lat","SOUTH_LAT" : "south_lat","WEST_LON" : "west_lon","EAST_LON" : "east_lon","TOTAL_SIZE" : "total_size","BASE_URL" : "base_url","PRODUCT_ID" : "product_id","SENSING_TIME" : "sensing_time"}',
         },
-        resources={"limit_memory": "4G", "limit_cpu": "2"},
+        resources={"limit_memory": "8G", "limit_cpu": "3"},
     )
 
     # Task to load CSV data to a BigQuery table
     load_landsat_index_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
         task_id="load_landsat_index_to_bq",
-        bucket="{{ var.json.shared.composer_bucket }}",
+        bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/cloud_storage_geo_index/landsat_index/data_output.csv"],
         source_format="CSV",
         destination_project_dataset_table="cloud_storage_geo_index.landsat_index",

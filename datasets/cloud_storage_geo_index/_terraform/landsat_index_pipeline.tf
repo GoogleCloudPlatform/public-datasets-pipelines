@@ -20,7 +20,7 @@ resource "google_bigquery_table" "landsat_index" {
   dataset_id = "cloud_storage_geo_index"
   table_id   = "landsat_index"
 
-  description = "Landsat Index table"
+  description = "landsat_index dataset"
 
 
 
