@@ -52,7 +52,7 @@ def main(
     )
 
 
-def _date_prefix(dt: date) -> typing.List[str]:
+def _date_prefix(dt: date) -> str:
     # Generates URL paths to folders containing the .nc4 files, for example
     # https://portal.nccs.nasa.gov/datashare/gmao/geos-fp/das/Y2021/M01/D01/
     # => Y2021/M01/D01
@@ -185,7 +185,7 @@ def delete_temp_pcu_objects(target_bucket: str) -> None:
 
 
 def update_manifest_file(
-    paths: typing.Set[str],
+    paths: typing.List[str],
     download_dir: pathlib.Path,
     target_bucket: str,
     date_prefix: str,
