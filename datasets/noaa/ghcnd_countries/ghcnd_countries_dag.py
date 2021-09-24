@@ -74,10 +74,11 @@ with DAG(
     load_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_to_bq",
         bucket="{{ var.value.composer_bucket }}",
-        source_objects=["data/ghcn_d_states/ghcnd_countries/data_output.csv"],
+        source_objects=["data/ghcn_d_countries/ghcnd_countries/data_output.csv"],
         source_format="CSV",
         destination_project_dataset_table="noaa.ghcnd_countries",
         skip_leading_rows=1,
+        allow_quoted_newlines=True,
         write_disposition="WRITE_TRUNCATE",
         schema_fields=[
             {"name": "code", "type": "STRING", "mode": "NULLABLE"},

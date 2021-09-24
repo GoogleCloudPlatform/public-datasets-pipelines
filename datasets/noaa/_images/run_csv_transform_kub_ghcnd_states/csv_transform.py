@@ -134,8 +134,7 @@ def download_file_ftp(
     ftp_conn.cwd(ftp_dir)
     ftp_conn.encoding = "utf-8"
 
-    bak_local_file = str(local_file) + ".bak"
-    dest_file = open(bak_local_file, "wb")
+    dest_file = open(local_file, "wb")
     ftp_conn.encoding = "utf-8"
     ftp_conn.retrbinary(
         cmd=f"RETR {ftp_filename}",

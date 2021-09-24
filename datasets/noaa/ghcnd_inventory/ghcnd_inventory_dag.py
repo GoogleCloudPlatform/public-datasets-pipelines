@@ -66,7 +66,7 @@ with DAG(
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
-            "TARGET_GCS_PATH": "data/ghcn_inventory/ghcnd_inventory/data_output.csv",
+            "TARGET_GCS_PATH": "data/ghcn_d_inventory/ghcnd_inventory/data_output.csv",
         },
         resources={"limit_memory": "4G", "limit_cpu": "2"},
     )
@@ -75,10 +75,11 @@ with DAG(
     load_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_to_bq",
         bucket="{{ var.value.composer_bucket }}",
-        source_objects=["data/ghcn_d_inventory/ghcn_d_inventory/data_output.csv"],
+        source_objects=["data/ghcn_d_inventory/ghcnd_inventory/data_output.csv"],
         source_format="CSV",
         destination_project_dataset_table="noaa.ghcnd_inventory",
         skip_leading_rows=1,
+        allow_quoted_newlines=True,
         write_disposition="WRITE_TRUNCATE",
         schema_fields=[
             {"name": "id", "type": "STRING", "mode": "NULLABLE"},

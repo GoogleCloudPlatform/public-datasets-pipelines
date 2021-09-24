@@ -50,7 +50,7 @@ dag:
                       values:
                         - "pool-e2-standard-4"
         image_pull_policy: "Always"
-        image: "{{ var.json.noaa_lightning_strikes_by_year.container_registry.run_csv_transform_kub_lightning_strikes_by_year }}"
+        image: "{{ var.json.noaa.container_registry.run_csv_transform_kub_lightning_strikes_by_year }}"
         env_vars:
           SOURCE_URL: "https://www1.ncdc.noaa.gov/pub/data/swdi/database-csv/v2/nldn-tiles-{{ macros.ds_format(macros.ds_add(ds, -365), '%Y-%m-%d', '%Y') }}.csv.gz"
           SOURCE_FILE: "files/data.csv"
