@@ -138,7 +138,7 @@ def filter_null_rows(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def convert_dt_format(dt_str: str) -> str:
-    if dt_str is None or len(str(dt_str)) == 0 or str(dt_str) == "nan":
+    if not dt_str or dt_str == "nan":
         return str(dt_str)
     else:
         return str(
@@ -178,19 +178,16 @@ def download_file_ftp(
     ftp_conn.cwd(ftp_dir)
     ftp_conn.encoding = "utf-8"
 
-    try:
-        dest_file = open(local_file, "wb")
-        ftp_conn.encoding = "utf-8"
-        ftp_conn.retrbinary(
-            cmd="RETR " + ftp_filename,
-            callback=dest_file.write,
-            blocksize=1024,
-            rest=None,
-        )
-        ftp_conn.quit()
-        dest_file.close()
-    except Exception as e:
-        logging.error(f"Error saving output file: {e}.")
+    dest_file = open(local_file, "wb")
+    ftp_conn.encoding = "utf-8"
+    ftp_conn.retrbinary(
+        cmd="RETR " + ftp_filename,
+        callback=dest_file.write,
+        blocksize=1024,
+        rest=None,
+    )
+    ftp_conn.quit()
+    dest_file.close()
 
 
 def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:
