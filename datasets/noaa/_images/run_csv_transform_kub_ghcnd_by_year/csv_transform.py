@@ -17,6 +17,7 @@ import gzip
 import logging
 import os
 import pathlib
+import subprocess
 from ftplib import FTP
 
 import pandas as pd
@@ -30,6 +31,7 @@ def main(
     ftp_filename: str,
     source_file: pathlib.Path,
     target_file: pathlib.Path,
+    chunksize: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
 ) -> None:
@@ -45,43 +47,32 @@ def main(
 
     logging.info("NOAA - GHCND By Year process started")
 
-    logging.info("creating 'files' folder")
-    pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
+    download_source_file(source_url, source_file, ftp_host, ftp_dir, ftp_filename)
 
-    source_file_zipped = str(source_file) + ".gz"
-    source_file_unzipped = str(source_file) + ".unzip"
+    chunksz = int(chunksize)
 
-    logging.info(f"Downloading FTP file {source_url} from {ftp_host}")
-    download_file_ftp(ftp_host, ftp_dir, ftp_filename, source_file_zipped, source_url)
-
-    logging.info(f"Decompressing {source_file_unzipped}")
-    gz_decompress(source_file_zipped, source_file_unzipped)
-
-    logging.info(f"Adding header in {source_file}")
-    os.system(f"echo 'id,date,element,value,mflag,qflag,sflag,time' > {source_file}")
-    os.system(f"cat {source_file_unzipped} >> {source_file}")
-    os.unlink(source_file_unzipped)
-    os.unlink(source_file_zipped)
-
-    logging.info(f"Opening file {source_file}")
-    df = pd.read_csv(source_file)
-
-    logging.info(f"Transformation Process Starting.. {source_file}")
-
-    logging.info("Transform: Removing rows with blank id's..")
-    filter_null_rows(df)
-
-    logging.info("Transform: Converting Date Format..")
-    df["date"] = df["date"].apply(convert_dt_format)
-
-    logging.info(f"Transformation Process complete .. {source_file}")
-
-    logging.info(f"Saving to output file.. {target_file}")
-
-    try:
-        save_to_new_file(df, file_path=str(target_file))
-    except Exception as e:
-        logging.error(f"Error saving output file: {e}.")
+    logging.info(f"Opening batch file {source_file}")
+    with pd.read_csv(
+        source_file, engine="python", encoding="utf-8", quotechar='"', chunksize=chunksz, header=None,
+        names=["id", "date", "element", "value", "mflag", "qflag", "sflag", "time"]
+    ) as reader:
+        for chunk_number, chunk in enumerate(reader):
+            logging.info(f"Processing batch {chunk_number}")
+            target_file_batch = str(target_file).replace(
+                ".csv", "-" + str(chunk_number) + ".csv"
+            )
+            df = pd.DataFrame()
+            df = pd.concat([df, chunk])
+            processChunk(df, target_file_batch)
+            logging.info(f"Appending batch {chunk_number} to {target_file}")
+            if chunk_number == 0:
+                subprocess.run(["cp", target_file_batch, target_file])
+            else:
+                subprocess.check_call(f"sed -i '1d' {target_file_batch}", shell=True)
+                subprocess.check_call(
+                    f"cat {target_file_batch} >> {target_file}", shell=True
+                )
+            subprocess.run(["rm", target_file_batch])
 
     logging.info(
         f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
@@ -91,14 +82,59 @@ def main(
     logging.info("NOAA - GHCND By Year process completed")
 
 
+def processChunk(df: pd.DataFrame, target_file_batch: str) -> None:
+    df = reorder_headers(df)
+    df = filter_null_rows(df)
+    df = source_convert_date_formats(df)
+    save_to_new_file(df, file_path=str(target_file_batch))
+
+
+def download_source_file(source_url: str, source_file: str, ftp_host: str, ftp_dir: str, ftp_filename) -> None:
+    pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
+    source_file_zipped = str(source_file) + ".gz"
+    download_file_ftp(ftp_host, ftp_dir, ftp_filename, source_file_zipped, source_url)
+    gz_decompress(source_file_zipped, source_file)
+
+
+def reorder_headers(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Reordering headers..")
+    df = df[
+        [
+            "id",
+            "date",
+            "element",
+            "value",
+            "mflag",
+            "qflag",
+            "sflag",
+            "time"
+        ]
+    ]
+    return df
+
+
+
+def open_source_file(source_file: str) -> pd.DataFrame:
+    logging.info(f"Opening file {source_file}")
+    df = pd.read_csv(
+        source_file,
+        header=None,
+        names=["id", "date", "element", "value", "mflag", "qflag", "sflag", "time"]
+    )
+    return df
+
+
 def gz_decompress(infile: str, tofile: str) -> None:
+    logging.info(f"Decompressing {infile}")
     with open(infile, "rb") as inf, open(tofile, "w", encoding="utf8") as tof:
         decom_str = gzip.decompress(inf.read()).decode("utf-8")
         tof.write(decom_str)
 
 
-def filter_null_rows(df: pd.DataFrame) -> None:
+def filter_null_rows(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Transform: Removing rows with blank id's..")
     df = df[df.id != ""]
+    return df
 
 
 def convert_dt_format(dt_str: str) -> str:
@@ -112,7 +148,14 @@ def convert_dt_format(dt_str: str) -> str:
         )
 
 
+def source_convert_date_formats(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Transform: Converting Date Format..")
+    df["date"] = df["date"].apply(convert_dt_format)
+    return df
+
+
 def save_to_new_file(df, file_path) -> None:
+    logging.info(f"Saving to target file.. {file_path}")
     df.to_csv(file_path, float_format="%.0f", index=False)
 
 
@@ -167,6 +210,7 @@ if __name__ == "__main__":
         ftp_filename=os.environ["FTP_FILENAME"],
         source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
+        chunksize=os.environ["CHUNKSIZE"],
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
     )

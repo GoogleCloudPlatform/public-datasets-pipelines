@@ -63,6 +63,7 @@ with DAG(
             "FTP_FILENAME": "{{ macros.ds_format(macros.ds_add(ds, 0), '%Y-%m-%d', '%Y') }}.csv.gz",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
+            "CHUNKSIZE": "3000000",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/noaa/ghcnd_by_year/data_output.csv",
         },
@@ -77,6 +78,7 @@ with DAG(
         source_format="CSV",
         destination_project_dataset_table="noaa.ghcnd_by_year",
         skip_leading_rows=1,
+        allow_quoted_newlines=True,
         write_disposition="WRITE_TRUNCATE",
         schema_fields=[
             {"name": "id", "type": "STRING", "description": "", "mode": "REQUIRED"},
