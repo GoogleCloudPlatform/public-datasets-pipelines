@@ -43,31 +43,19 @@ def main(
 
     logging.info("GCHND Countries process started")
 
-    logging.info("creating 'files' folder")
+    logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
 
     logging.info(f"Downloading FTP file {source_url} from {ftp_host}")
     download_file_ftp(ftp_host, ftp_dir, ftp_filename, source_file, source_url)
 
-    source_file_bak = str(source_file) + ".bak"
-    logging.info(f"Adding column header to file {source_file}")
-    os.system(
-        'echo "code name" > '
-        + str(source_file)
-        + " && cat "
-        + str(source_file_bak)
-        + " >> "
-        + str(source_file)
-    )
-
     logging.info(f"Opening file {source_file}")
-    df = pd.read_csv(source_file, sep="|")
+    df = pd.read_csv(source_file, sep="|", header=None, names=["textdata"])
 
     logging.info(f"Transformation Process Starting.. {source_file}")
 
-    df["code"] = df["code name"].apply(get_column_country_code)
-
-    df["name"] = df["code name"].apply(get_column_country_name)
+    df["code"] = df["textdata"].apply(get_column_country_code)
+    df["name"] = df["textdata"].apply(get_column_country_name)
 
     logging.info("Transform: Reordering headers..")
     df = df[
@@ -81,18 +69,13 @@ def main(
 
     logging.info(f"Saving to output file.. {target_file}")
 
-    try:
-        # save_to_new_file(df, file_path=str(target_file))
-        save_to_new_file(df, file_path=str(target_file))
-    except Exception as e:
-        logging.error(f"Error saving output file: {e}.")
+    save_to_new_file(df, file_path=str(target_file))
 
     logging.info(
         f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
     )
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
-    # log completion
     logging.info("GCHND Countries process completed")
 
 
@@ -130,22 +113,18 @@ def download_file_ftp(
     ftp_conn = FTP(ftp_host)
     ftp_conn.login("", "")
     ftp_conn.cwd(ftp_dir)
-    # ftp_conn.encoding = 'utf-8'
 
-    try:
-        bak_local_file = str(local_file) + ".bak"
-        dest_file = open(bak_local_file, "wb")
-        ftp_conn.encoding = "utf-8"
-        ftp_conn.retrbinary(
-            cmd="RETR " + ftp_filename,
-            callback=dest_file.write,
-            blocksize=1024,
-            rest=None,
-        )
-        ftp_conn.quit()
-        dest_file.close()
-    except Exception as e:
-        logging.error(f"Error saving output file: {e}.")
+    bak_local_file = str(local_file) + ".bak"
+    dest_file = open(bak_local_file, "wb")
+    ftp_conn.encoding = "utf-8"
+    ftp_conn.retrbinary(
+        cmd="RETR " + ftp_filename,
+        callback=dest_file.write,
+        blocksize=1024,
+        rest=None,
+    )
+    ftp_conn.quit()
+    dest_file.close()
 
 
 def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:

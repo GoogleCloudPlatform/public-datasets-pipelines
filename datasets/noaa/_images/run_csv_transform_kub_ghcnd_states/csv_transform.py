@@ -43,47 +43,22 @@ def main(
 
     logging.info("GCHND States process started")
 
-    logging.info("creating 'files' folder")
+    logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
 
     logging.info(f"Downloading FTP file {source_url} from {ftp_host}")
     download_file_ftp(ftp_host, ftp_dir, ftp_filename, source_file, source_url)
 
-    source_file_bak = str(source_file) + ".bak"
-    logging.info(f"Adding column header to file {source_file}")
-    os.system(
-        'echo "textdata" > '
-        + str(source_file)
-        + " && cat "
-        + str(source_file_bak)
-        + " >> "
-        + str(source_file)
-    )
-
-    logging.info(f"Opening file {source_file}")
-    df = pd.read_csv(source_file, sep="|")
+    df_filedata = load_source_file(source_file)
 
     logging.info(f"Transformation Process Starting.. {source_file}")
 
-    df["code"] = df["textdata"].apply(get_code_column)
-    df["name"] = df["textdata"].apply(get_name_column)
-
-    logging.info("Transform: Reordering headers..")
-    df = df[
-        [
-            "code",
-            "name",
-        ]
-    ]
+    df = extract_columns(df_filedata)
+    df = reorder_headers(df)
 
     logging.info(f"Transformation Process complete .. {source_file}")
 
-    logging.info(f"Saving to output file.. {target_file}")
-
-    try:
-        save_to_new_file(df, file_path=str(target_file))
-    except Exception as e:
-        logging.error(f"Error saving output file: {e}.")
+    save_to_new_file(df, file_path=str(target_file))
 
     logging.info(
         f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
@@ -93,20 +68,51 @@ def main(
     logging.info("GCHND States process completed")
 
 
-def get_code_column(col_val: str) -> str:
-    return col_val.strip()[0:2]
+def load_source_file(source_file: str) -> pd.DataFrame:
+    logging.info(f"Opening file {source_file}")
+    df_filedata = pd.read_csv(source_file, sep="|", header=None, names=["textdata"])
+    return df_filedata
 
 
-def get_name_column(col_val: str) -> str:
-    if col_val.strip()[0:2][0:1] == "AL":
-        name = "ALABAMA"
-    else:
-        name = col_val.strip()[3:33]
-    return name
+def reorder_headers(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Transform: Reordering headers..")
+    df = df[
+        [
+            "code",
+            "name",
+        ]
+    ]
+    return df
+
+
+def extract_columns(df_filedata: pd.DataFrame) -> pd.DataFrame:
+    # Example:
+    # AK ALASKA
+    col_ranges = {
+        "code": slice(0, 2),  # LENGTH:   3  EXAMPLE CODE: AK
+        "name": slice(3, 33),  # LENGTH:  31  EXAMPLE NAME: ALASKA
+    }
+
+    # remove the incidental header
+    df_filedata = df_filedata[df_filedata["textdata"] != "textdata"]
+
+    df = pd.DataFrame()
+
+    def get_column(col_val: str, col_name: str) -> str:
+        if (col_name == "name") and (col_val[0:1] == "AL"):
+            return "ALABAMA"
+        else:
+            return col_val.strip()[col_ranges[col_name]]
+
+    for col_name in col_ranges.keys():
+        df[col_name] = df_filedata["textdata"].apply(get_column, args=(col_name,))
+
+    return df
 
 
 def save_to_new_file(df: pd.DataFrame, file_path: str) -> None:
-    df.to_csv(file_path, float_format="%.0f", index=False)
+    logging.info(f"Saving to output file.. {file_path}")
+    df.to_csv(file_path, index=False)
 
 
 def download_file_ftp(
@@ -128,20 +134,17 @@ def download_file_ftp(
     ftp_conn.cwd(ftp_dir)
     ftp_conn.encoding = "utf-8"
 
-    try:
-        bak_local_file = str(local_file) + ".bak"
-        dest_file = open(bak_local_file, "wb")
-        ftp_conn.encoding = "utf-8"
-        ftp_conn.retrbinary(
-            cmd="RETR " + ftp_filename,
-            callback=dest_file.write,
-            blocksize=1024,
-            rest=None,
-        )
-        ftp_conn.quit()
-        dest_file.close()
-    except Exception as e:
-        logging.error(f"Error saving output file: {e}.")
+    bak_local_file = str(local_file) + ".bak"
+    dest_file = open(bak_local_file, "wb")
+    ftp_conn.encoding = "utf-8"
+    ftp_conn.retrbinary(
+        cmd=f"RETR {ftp_filename}",
+        callback=dest_file.write,
+        blocksize=1024,
+        rest=None,
+    )
+    ftp_conn.quit()
+    dest_file.close()
 
 
 def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:

@@ -43,37 +43,39 @@ def main(
 
     logging.info("GCHND Inventory process started")
 
-    logging.info("creating 'files' folder")
+    logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
 
-    logging.info(f"Downloading FTP file {source_url} from {ftp_host}")
     download_file_ftp(ftp_host, ftp_dir, ftp_filename, source_file, source_url)
 
-    source_file_bak = str(source_file) + ".bak"
-    logging.info(f"Adding column header to file {source_file}")
-    os.system(
-        'echo "textdata" > '
-        + str(source_file)
-        + " && cat "
-        + str(source_file_bak)
-        + " >> "
-        + str(source_file)
-    )
-
-    logging.info(f"Opening file {source_file}")
-    df = pd.read_csv(source_file, sep="|")
+    df_filedata = load_source_file(source_file)
 
     logging.info(f"Transformation Process Starting.. {source_file}")
 
-    df["id"] = df["textdata"].apply(get_id_column)
-    df["latitude"] = df["textdata"].apply(get_latitude_column)
-    df["longitude"] = df["textdata"].apply(get_longitude_column)
-    df["element"] = df["textdata"].apply(get_element_column)
-    df["firstyear"] = df["textdata"].apply(get_firstyear_column)
-    df["lastyear"] = df["textdata"].apply(get_lastyear_column)
+    df = extract_columns(df_filedata)
+    df = reorder_headers(df)
 
-    # reorder headers in output
+    logging.info(f"Transformation Process complete .. {source_file}")
+
+    save_to_new_file(df, file_path=str(target_file))
+
+    logging.info(
+        f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
+    )
+    upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
+
+    logging.info("GCHND Inventory process completed")
+
+
+def load_source_file(source_file: str) -> pd.DataFrame:
+    logging.info(f"Opening file {source_file}")
+    df_filedata = pd.read_csv(source_file, sep="|", header=None, names=["textdata"])
+    return df_filedata
+
+
+def reorder_headers(df: pd.DataFrame) -> pd.DataFrame:
     logging.info("Transform: Reordering headers..")
+
     df = df[
         [
             "id",
@@ -85,48 +87,37 @@ def main(
         ]
     ]
 
-    logging.info(f"Transformation Process complete .. {source_file}")
-
-    logging.info(f"Saving to output file.. {target_file}")
-
-    try:
-        save_to_new_file(df, file_path=str(target_file))
-    except Exception as e:
-        logging.error(f"Error saving output file: {e}.")
-
-    logging.info(
-        f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
-    )
-    upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
-
-    logging.info("GCHND Inventory process completed")
+    return df
 
 
-def get_id_column(col_val: str) -> str:
-    return col_val.strip()[0:11]
+def extract_columns(df_filedata: pd.DataFrame) -> pd.DataFrame:
+    # Example:
+    # ZZZ99999999  17.1167  -61.7833 TMAX 1949 1949
+    col_ranges = {
+        "id": slice(0, 11),  # LENGTH: 12  EXAMPLE ID:  123456789999
+        "latitude": slice(12, 20),  # LENGTH:  9  EXAMPLE LAT: -31.0123
+        "longitude": slice(21, 30),  # LENGTH: 10  EXAMPLE LON: -31.0123
+        "element": slice(31, 35),  # LENGTH:  5  EXAMPLE ELE: ZZZZ
+        "firstyear": slice(36, 40),  # LENGTH:  5  EXAMPLE FIRSTYEAR: 1901
+        "lastyear": slice(41, 45),  # LENGTH:  5  EXAMPLE LASTYEAR: 1902
+    }
 
+    df = pd.DataFrame()
 
-def get_latitude_column(col_val: str) -> str:
-    return col_val.strip()[12:20]
+    def get_column(col_val: str, col_name: str) -> str:
+        return col_val.strip()[col_ranges[col_name]]
 
+    for col_name in col_ranges.keys():
+        df[col_name] = df_filedata["textdata"].apply(get_column, args=(col_name,))
 
-def get_longitude_column(col_val: str) -> str:
-    return col_val.strip()[21:30]
+    # remove the incidental header
+    df = df[df["id"] != "textdata"]
 
-
-def get_element_column(col_val: str) -> str:
-    return col_val.strip()[31:35]
-
-
-def get_firstyear_column(col_val: str) -> str:
-    return col_val.strip()[36:40]
-
-
-def get_lastyear_column(col_val: str) -> str:
-    return col_val.strip()[41:45]
+    return df
 
 
 def save_to_new_file(df: pd.DataFrame, file_path: str) -> None:
+    logging.info(f"Saving to output file.. {file_path}")
     df.to_csv(file_path, float_format="%.0f", index=False)
 
 
@@ -149,20 +140,17 @@ def download_file_ftp(
     ftp_conn.cwd(ftp_dir)
     ftp_conn.encoding = "utf-8"
 
-    try:
-        bak_local_file = str(local_file) + ".bak"
-        dest_file = open(bak_local_file, "wb")
-        ftp_conn.encoding = "utf-8"
-        ftp_conn.retrbinary(
-            cmd="RETR " + ftp_filename,
-            callback=dest_file.write,
-            blocksize=1024,
-            rest=None,
-        )
-        ftp_conn.quit()
-        dest_file.close()
-    except Exception as e:
-        logging.error(f"Error saving output file: {e}.")
+    bak_local_file = str(local_file) + ".bak"
+    dest_file = open(bak_local_file, "wb")
+    ftp_conn.encoding = "utf-8"
+    ftp_conn.retrbinary(
+        cmd=f"RETR {ftp_filename}",
+        callback=dest_file.write,
+        blocksize=1024,
+        rest=None,
+    )
+    ftp_conn.quit()
+    dest_file.close()
 
 
 def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:

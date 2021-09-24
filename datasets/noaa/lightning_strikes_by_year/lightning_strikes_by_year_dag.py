@@ -14,7 +14,8 @@
 
 
 from airflow import DAG
-from airflow.contrib.operators import gcs_to_bq, kubernetes_pod_operator
+from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
     "owner": "Google",
@@ -33,7 +34,7 @@ with DAG(
 ) as dag:
 
     # Run CSV transform within kubernetes pod
-    transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+    transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="transform_csv",
         name="lightning_strikes_by_year",
         namespace="default",
@@ -67,7 +68,7 @@ with DAG(
     )
 
     # Task to load CSV data to a BigQuery table
-    load_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    load_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_to_bq",
         bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/noaa/lightning_strikes_by_year/data_output.csv"],
