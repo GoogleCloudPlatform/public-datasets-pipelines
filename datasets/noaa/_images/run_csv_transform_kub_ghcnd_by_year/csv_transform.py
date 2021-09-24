@@ -53,8 +53,13 @@ def main(
 
     logging.info(f"Opening batch file {source_file}")
     with pd.read_csv(
-        source_file, engine="python", encoding="utf-8", quotechar='"', chunksize=chunksz, header=None,
-        names=["id", "date", "element", "value", "mflag", "qflag", "sflag", "time"]
+        source_file,
+        engine="python",
+        encoding="utf-8",
+        quotechar='"',
+        chunksize=chunksz,
+        header=None,
+        names=["id", "date", "element", "value", "mflag", "qflag", "sflag", "time"],
     ) as reader:
         for chunk_number, chunk in enumerate(reader):
             logging.info(f"Processing batch {chunk_number}")
@@ -89,7 +94,9 @@ def processChunk(df: pd.DataFrame, target_file_batch: str) -> None:
     save_to_new_file(df, file_path=str(target_file_batch))
 
 
-def download_source_file(source_url: str, source_file: str, ftp_host: str, ftp_dir: str, ftp_filename) -> None:
+def download_source_file(
+    source_url: str, source_file: str, ftp_host: str, ftp_dir: str, ftp_filename
+) -> None:
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
     source_file_zipped = str(source_file) + ".gz"
     download_file_ftp(ftp_host, ftp_dir, ftp_filename, source_file_zipped, source_url)
@@ -98,20 +105,8 @@ def download_source_file(source_url: str, source_file: str, ftp_host: str, ftp_d
 
 def reorder_headers(df: pd.DataFrame) -> pd.DataFrame:
     logging.info("Reordering headers..")
-    df = df[
-        [
-            "id",
-            "date",
-            "element",
-            "value",
-            "mflag",
-            "qflag",
-            "sflag",
-            "time"
-        ]
-    ]
+    df = df[["id", "date", "element", "value", "mflag", "qflag", "sflag", "time"]]
     return df
-
 
 
 def open_source_file(source_file: str) -> pd.DataFrame:
@@ -119,7 +114,7 @@ def open_source_file(source_file: str) -> pd.DataFrame:
     df = pd.read_csv(
         source_file,
         header=None,
-        names=["id", "date", "element", "value", "mflag", "qflag", "sflag", "time"]
+        names=["id", "date", "element", "value", "mflag", "qflag", "sflag", "time"],
     )
     return df
 
