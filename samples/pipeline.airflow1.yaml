@@ -1,0 +1,337 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+# ===== NOTE =====
+# This YAML config template is used to write DAGs that use Airflow 1.10 operators.
+# You can keep using this template when deploying to an environment that uses Airflow 2,
+# they will keep working due to backport compatibility.
+#
+# For tracking progress on the YAML config templates that use Airflow 2 operators, see
+# https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/137.
+
+---
+resources:
+  # A list of GCP resources that are unique and specific to your pipeline.
+  #
+  # The currently supported resources are shown below. Use only the resources
+  # needed by your pipeline, and delete the rest of the examples.
+  #
+  # We will keep adding to the list below to support more Google Cloud resources
+  # over time. If a resource you need isn't supported, please file an issue on
+  # the repository.
+
+  - type: bigquery_table
+    # A Google BigQuery table to store your data. Requires a `bigquery_dataset`
+    # to be specified in the config (i.e. `dataset.yaml) for the dataset that
+    # this pipeline belongs in.
+    #
+    # Required Properties:
+    #   table_id
+    table_id: PIPELINE_FOLDER_NAME
+
+    # Optional Properties:
+    # Description of the table
+    description: "This is a table description."
+
+    # Time-based partitioning configuration. There is no need for this property
+    # if you have a relatively small dataset to host on a BigQuery table.
+    time_partitioning:
+
+      # The supported types are DAY, HOUR, MONTH, and YEAR, which will generate one partition per day, hour, month, and year, respectively.
+      type: "DAY"
+
+      # If set to true, queries over this table require a partition filter that can be used for partition elimination to be specified.
+      require_partition_filter: false
+
+    # Specifies column names to use for data clustering. Up to four top-level columns are allowed, and should be specified in descending priority order.
+    clustering:
+      - "column_1"
+      - "column_2"
+      - "column_3"
+
+    # The table cannot be deleted without first disabling this property.
+    # Unless this field is set to false in Terraform state, a `terraform destroy`
+    # or `terraform apply` that would delete the table will fail.
+    deletion_protection: true
+
+dag:
+  # [Required] Specify the Airflow version of the operators used by the DAG.
+  airflow_version: 1
+
+  # The DAG acronym stands for directed acyclic graph. This block represents
+  # your data pipeline along with every property and configuration it needs to
+  # onboard your data.
+  initialize:
+    dag_id: PIPELINE_FOLDER_NAME
+    default_args:
+      owner: "Google"
+
+      # When set to True, keeps a task from getting triggered if the previous schedule for the task hasn’t succeeded
+      depends_on_past: False
+      start_date: '2021-03-01'
+    max_active_runs: 1
+    schedule_interval: "@once"  # run once a week at Sunday 12am
+    catchup: False
+    default_view: graph
+
+  tasks:
+    # This is where you specify the tasks (a.k.a. processes) that your data
+    # pipeline will run to onboard the data.
+    #
+    # As the examples below will show, every task must be represented by an
+    # Airflow operator. The list of suported operators are listed in
+    #
+    #   scripts/dag_imports.json
+    #
+    # If an operator you need isn't supported, please file an issue on the
+    # repository.
+    #
+    # Use the YAML list syntax in this block to specify every task for your
+    # pipeline.
+
+    - operator: "BashOperator"
+      # Initializes an Airflow BashOperator for the DAG. This operator can be
+      # used to
+      # - Download from HTTP sources
+      # - Run custom Python scripts
+      # - Run processes using specific packages that support CLI commands
+
+      # Task description
+      description: "Run a custom Python script"
+
+      args:
+        # Arguments supported by this operator:
+        # https://airflow.apache.org/docs/apache-airflow/1.10.15/howto/operator/bash.html
+
+        task_id: "sample_bash_task"
+        bash_command: |
+          mkdir -p $airflow_home/data/$dataset/$pipeline/run_date={{ ds }}
+          CUSTOM_ENV_VAR=$custom_env_var python $airflow_home/dags/$dataset/$pipeline/custom/some_script.py
+        env:
+          airflow_home: "{{ var.value.airflow_home }}"
+          dataset: DATASET_FOLDER_NAME
+          pipeline: PIPELINE_FOLDER_NAME
+          custom_env_var: "some value that your custom script needs"
+
+    - operator: "GoogleCloudStorageToBigQueryOperator"
+      # Initializes GCS to BQ task for the DAG. This operator is used to load a
+      # CSV file from GCS into a BigQuery table.
+
+      # Task description
+      description: "Task to load CSV data to a BigQuery table"
+
+      args:
+        # Arguments supported by this operator:
+        # http://airflow.apache.org/docs/apache-airflow/1.10.15/howto/operator/gcp/gcs.html#googlecloudstoragetobigqueryoperator
+
+        task_id: "sample_gcs_to_bq_task"
+
+        # The GCS bucket where the CSV file is located in.
+        bucket: "{{ var.value.composer_bucket }}"
+
+        # The GCS object path for the CSV file
+        source_objects: ["data/DATASET_FOLDER_NAME/PIPELINE_FOLDER_NAME/run_date={{ ds }}/data.csv"]
+        source_format: "CSV"
+        destination_project_dataset_table: "DATASET_FOLDER_NAME.PIPELINE_FOLDER_NAME"
+
+        # Use this if your CSV file contains a header row
+        skip_leading_rows: 1
+
+        # How to write data to the table: overwrite, append, or write if empty
+        # See https://cloud.google.com/bigquery/docs/reference/auditlogs/rest/Shared.Types/WriteDisposition
+        write_disposition: "WRITE_TRUNCATE"
+
+        # The BigQuery table schema based on the CSV file. For more info, see
+        # https://cloud.google.com/bigquery/docs/schemas.
+        # Always use snake_case and lowercase for column names, and be explicit,
+        # i.e. specify modes for all columns.
+        schema_fields:
+          - name: "name"
+            type: "STRING"
+            mode: "REQUIRED"
+          - name: "string_col"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "date"
+            type: "DATE"
+            mode: "REQUIRED"
+          - name: "num_col"
+            type: "INTEGER"
+            mode: "NULLABLE"
+
+    - operator: "GoogleCloudStorageToGoogleCloudStorageOperator"
+      # Initializes a GCS-to-GCS task for the DAG. This operator is used to copy
+      # GCS objects from one location to another.
+
+      # Task description
+      description: "Task to run a GoogleCloudStorageToGoogleCloudStorageOperator"
+
+      args:
+        # Arguments supported by this operator:
+        # https://airflow.apache.org/docs/apache-airflow/1.10.15/_api/airflow/contrib/operators/gcs_to_gcs/index.html#airflow.contrib.operators.gcs_to_gcs.GoogleCloudStorageToGoogleCloudStorageOperator
+
+        task_id: "sample_gcs_to_gcs_task"
+
+        # The GCS bucket to copy the object/s from
+        source_bucket: "{{ var.value.composer_bucket }}"
+
+        # Use a trailing "/*" if you want to copy all objects under that path.
+        source_object: "data/DATASET_FOLDER_NAME/PIPELINE_FOLDER_NAME/run_date={{ ds }}/*"
+
+        # The GCS bucket to copy the object/s to
+        destination_bucket: "{{ var.json.DATASET_FOLDER_NAME.destination_bucket }}"
+
+        # The GCS prefix to copy the object/s to
+        destination_object: "datasets/DATASET_FOLDER_NAME/PIPELINE_FOLDER_NAME/run_date={{ ds }}/"
+
+        # Use this argument if you don't want to keep the source object/s.
+        move_object: True
+
+    - operator: "BigQueryOperator"
+      # Initializes a BigQuery operator that executes SQL queries in a specific
+      # BigQuery table.
+
+      # Task description
+      description: "Task to run a BigQueryOperator"
+
+      args:
+        # Arguments supported by this operator:
+        # https://airflow.apache.org/docs/apache-airflow/1.10.15/_api/airflow/contrib/operators/bigquery_operator/index.html#airflow.contrib.operators.bigquery_operator.BigQueryOperator
+
+        task_id: "sample_bq_sql_task"
+
+        # The SQL query to execute, along with query parameters. For more info,
+        # see https://cloud.google.com/bigquery/docs/parameterized-queries.
+        sql: "SELECT * FROM DATASET_FOLDER_NAME.PIPELINE_FOLDER_NAME LIMIT @max_rows"
+        query_params:
+          - name: "max_rows"
+            parameterType:
+              type: "INTEGER"
+            parameterValue:
+              value: 100
+
+        # The BigQuery destination table
+        destination_dataset_table: "destination_dataset.destination_table"
+
+        # How to write to the destination: overwrite, append, or write if empty
+        # See https://cloud.google.com/bigquery/docs/reference/auditlogs/rest/Shared.Types/WriteDisposition
+        write_disposition: "WRITE_TRUNCATE"
+
+    - operator: "GoogleCloudStorageDeleteOperator"
+      # Initializes a GCS operator that deletes all specified objects
+
+      # Task description
+      description: "Task to run a GoogleCloudStorageDeleteOperator"
+
+      args:
+        # Arguments supported by this operator:
+        # https://airflow.apache.org/docs/apache-airflow/1.10.15/_api/airflow/contrib/operators/gcs_delete_operator/index.html#airflow.contrib.operators.gcs_delete_operator.GoogleCloudStorageDeleteOperator
+        task_id: "sample_gcs_delete_task"
+
+        # The GCS bucket where the objects to delete are located.
+        bucket_name: "sample_bucket"
+
+        # List of objects to delete. These should be the names of objects in the bucket, not including gs://bucket/.
+        objects: ["path/to/some_object"]
+
+        # Alternatively, you can specify a prefix of objects to delete.
+        # All objects matching this prefix in the bucket will be deleted.
+        prefix: "prefix/to/delete"
+
+    - operator: "KubernetesPodOperator"
+      # Executes a task in a Kubernetes pod that uses the Cloud Composer environment's own CPU and memory resources.
+      #
+      # Note: Do NOT use this for very heavy workloads. This can potentially starve resources from Cloud Composer
+      # and affect data pipeline orchestration overall. Instead, use a different GKE cluster using Kubernetes
+      # Engine operators: https://github.com/apache/airflow/blob/master/airflow/providers/google/cloud/operators/kubernetes_engine.py
+
+      # Task description
+      description: "Task to run a KubernetesPodOperator"
+
+      args:
+        # Arguments supported by this operator:
+        # https://airflow.readthedocs.io/en/1.10.15/_api/airflow/contrib/operators/kubernetes_pod_operator/index.html#airflow.contrib.operators.kubernetes_pod_operator.KubernetesPodOperator
+
+        task_id: "sample_kube_pod_operator"
+
+        # The name of the pod in which the task will run. This will be used (plus a random suffix) to generate a pod id
+        name: "sample-kube-operator"
+
+        # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
+        namespace: "default"
+
+        # The Google Container Registry image URL. To prepare a Docker image to be used by this operator:
+        #
+        # 1. Create an `_images` folder under your dataset folder if it doesn't exist.
+        #
+        # 2. Inside the `_images` folder, create another folder and name it after what the image is expected to do, e.g. process_shapefiles, get_cdf_metadata.
+        #
+        # 3. In that subfolder, create a Dockerfile (https://docs.docker.com/engine/reference/builder/) and any scripts you need to process the data. Use the `COPY` command (https://docs.docker.com/engine/reference/builder/#copy) in your `Dockerfile` to include your scripts in the image.
+        #
+        # The resulting file tree for a dataset that uses two container images may look like
+        #
+        #   datasets
+        #   └── DATASET
+        #       ├── _images
+        #       │   ├── container_a
+        #       │   │   ├── Dockerfile
+        #       │   │   ├── requirements.txt
+        #       │   │   └── script.py
+        #       │   └── container_b
+        #       │       ├── Dockerfile
+        #       │       ├── requirements.txt
+        #       │       └── script.py
+        #       ├── _terraform/
+        #       ├── PIPELINE_A
+        #       ├── PIPELINE_B
+        #       ├── ...
+        #       └── dataset.yaml
+        #
+        # Docker images will be built and pushed to GCR by default whenever the `scripts/generate_dag.py` is run. To skip building and pushing images, use the optional `--skip-builds` flag.
+        image: "{{ var.json.DATASET_FOLDER_NAME.container_registry.IMAGE_REPOSITORY }}"
+
+        # Always pull the latest image. We recommend to keep this as "Always".
+        image_pull_policy: "Always"
+
+        # Set the environment variables you need initialized in the container. Use these as input variables for the script your container is expected to perform.
+        env_vars:
+          TEST_ENV_VAR: "test-value"
+          ANOTHER_ENV_VAR: 12345
+
+        # Set resource limits for the pod here. For resource units in Kubernetes, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes
+        resources:
+          limit_memory: "250M"
+          limit_cpu: "1"
+
+    - operator: "BigQueryToBigQueryOperator"
+      description: "Task to run a BQ to BQ operator"
+
+      args:
+        task_id: "sample_bq_to_bq_task"
+        source_project_dataset_tables: ["{{ var.json.DATASET_FOLDER_NAME.PIPELINE_NAME.source_project_dataset_table }}"]
+        destination_project_dataset_table: "{{ var.json.DATASET_FOLDER_NAME.PIPELINE_NAME.destination_project_dataset_table }}"
+        impersonation_chain: "{{ var.json.DATASET_FOLDER_NAME.service_account }}"
+        write_disposition: "WRITE_TRUNCATE"
+
+  graph_paths:
+    # This is where you specify the relationships (i.e. directed paths/edges)
+    # among the tasks specified above. Use the bitshift operator to define the
+    # relationships and the `task_id` value above to represent tasks.
+    #
+    # For more info, see
+    # https://airflow.apache.org/docs/apache-airflow/stable/tutorial.html#setting-up-dependencies
+    - "sample_bash_task >> [sample_gcs_to_bq_task, sample_gcs_to_gcs_task]"
+    - "sample_gcs_to_bq_task >> [sample_bq_sql_task, sample_bq_to_bq_task]"
+    - "sample_bq_sql_task >> sample_gcs_delete_task"

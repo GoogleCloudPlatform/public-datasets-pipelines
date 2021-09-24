@@ -39,14 +39,14 @@ with DAG(
         bash_command="echo $airflow_data_folder\necho $csv_source_url\nmkdir -p $airflow_data_folder/covid19_tracking/national_testing_and_outcomes\ncurl -o $airflow_data_folder/covid19_tracking/national_testing_and_outcomes/national-history-{{ ds }}.csv -L $csv_source_url\n",
         env={
             "csv_source_url": "https://covidtracking.com/data/download/national-history.csv",
-            "airflow_data_folder": "{{ var.json.shared.airflow_data_folder }}",
+            "airflow_data_folder": "{{ var.value.airflow_data_folder }}",
         },
     )
 
     # Task to load the data from Airflow data folder to BigQuery
     load_csv_file_to_bq_table = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
         task_id="load_csv_file_to_bq_table",
-        bucket="{{ var.json.shared.composer_bucket }}",
+        bucket="{{ var.value.composer_bucket }}",
         source_objects=[
             "data/covid19_tracking/national_testing_and_outcomes/national-history-{{ ds }}.csv"
         ],
@@ -163,7 +163,7 @@ with DAG(
     # Task to archive the CSV file in the destination bucket
     archive_csv_file_to_destination_bucket = gcs_to_gcs.GoogleCloudStorageToGoogleCloudStorageOperator(
         task_id="archive_csv_file_to_destination_bucket",
-        source_bucket="{{ var.json.shared.composer_bucket }}",
+        source_bucket="{{ var.value.composer_bucket }}",
         source_object="data/covid19_tracking/national_testing_and_outcomes/national-history-{{ ds }}.csv",
         destination_bucket="{{ var.json.covid19_tracking.destination_bucket }}",
         destination_object="datasets/covid19_tracking/national_testing_and_outcomes/national-history-{{ ds }}.csv",

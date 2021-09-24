@@ -1,5 +1,61 @@
 # Changelog
 
+## [2.3.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v2.2.0...v2.3.0) (2021-09-10)
+
+
+### Datasets
+
+* Onboard `google_political_ads.advertiser_geo_spend` dataset ([#154](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/154)) ([2201ebe](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/2201ebe017ed1419bee3cd1403622c92d832ef78))
+* Onboard Austin Bikeshare dataset ([#156](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/156)) ([0bd5659](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/0bd5659b2c6467eb28244b14eb73cddfdabd9f86))
+* Onboard NOAA's GSOD Stations and Lightning Strikes datasets ([#158](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/158)) ([8371856](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/83718569b7094bdf48fa9e8c9504368f17ceda94))
+
+
+### Features
+
+* Support Dataflow operator and job requirements ([#153](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/153)) ([119f8fb](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/119f8fb9bcc747b3f544150864f3a22164da708e))
+
+## [2.2.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v2.1.0...v2.2.0) (2021-08-27)
+
+
+### Datasets
+
+* Onboard COVID19-Italy dataset ([#148](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/148)) ([f56b5f2](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/f56b5f22ab5ecf350e20684a7ebabc01a0340340))
+* Onboard GEOS-FP dataset ([#130](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/130)) ([d32f46b](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/d32f46ba70b38c06d1cbe4d9448f65a4daf65671))
+* Onboard Google CFE dataset ([#146](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/146)) ([9bca8ef](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/9bca8ef4562d81a3f8bf1353db91276be10c72d6))
+* Onboard Google Political Ads dataset ([#149](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/149)) ([5903253](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/590325353878e740c3b86c4e83a6501d8caf1635))
+* Onboard IRS 990 dataset ([#150](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/150)) ([1105eed](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/1105eed502abfed9615f3bc1a599a4f17bdb86fc))
+
+
+### Bug Fixes
+
+* Regenerate Terraform files for Google Political Ads ([#152](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/152)) ([102f8e5](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/102f8e5ef5aa64375eb2a193f2e593454bb96828))
+* shared_variables.json should not be reset when deploying ([#147](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/147)) ([a6754df](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/a6754df4abfbfef0ba37e14a997c75b950bf5781))
+
+## [2.1.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v2.0.0...v2.1.0) (2021-08-13)
+
+
+### Datasets
+
+* Onboard Google Cloud Release Notes dataset ([#133](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/133)) ([5c98c05](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/5c98c052ea74b7cb474a6bc86ea25e1cffe8cb9a))
+
+
+### Bug Fixes
+
+* Revised Airflow DB initialization command ([#141](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/141)) ([47b4717](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/47b47172f331b9096a98083dfefe31d81dc79696))
+
+## [2.0.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.11.0...v2.0.0) (2021-08-11)
+
+
+### ⚠ BREAKING CHANGES
+
+* Pipeline YAML template using Airflow 2 operators (#138)
+* Adds support for Airflow 2 Cloud Composer environment and operators (#134)
+
+### Features
+
+* Adds support for Airflow 2 Cloud Composer environment and operators ([#134](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/134)) ([b2749c6](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/b2749c61fc62cfc97b81831f664022c354bc8de9))
+* Pipeline YAML template using Airflow 2 operators ([#138](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/138)) ([90ae7cd](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/90ae7cd5a3eec5da2d790233425c4e98530b25ac))
+
 ## [1.11.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v1.10.0...v1.11.0) (2021-07-22)
 
 
