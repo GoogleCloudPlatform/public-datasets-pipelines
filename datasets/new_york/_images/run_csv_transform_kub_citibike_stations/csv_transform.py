@@ -69,10 +69,16 @@ def clean_data_points(df: pd.DataFrame) -> pd.DataFrame:
     df["region_id"] = df["region_id"].astype("Int64")
 
     logging.info("Resolving boolean datapoints")
-    df["eightd_has_key_dispenser"] = df["eightd_has_key_dispenser"].apply(lambda x: 'True' if x=='0' else 'False')
-    df["is_installed"] = df["is_installed"].apply(lambda x: 'True' if x=='0' else 'False')
-    df["is_renting"] = df["is_renting"].apply(lambda x: 'True' if x=='0' else 'False')
-    df["is_returning"] = df["is_returning"].apply(lambda x: 'True' if x=='0' else 'False')
+    df["eightd_has_key_dispenser"] = df["eightd_has_key_dispenser"].apply(
+        lambda x: "True" if x == "0" else "False"
+    )
+    df["is_installed"] = df["is_installed"].apply(
+        lambda x: "True" if x == "0" else "False"
+    )
+    df["is_renting"] = df["is_renting"].apply(lambda x: "True" if x == "0" else "False")
+    df["is_returning"] = df["is_returning"].apply(
+        lambda x: "True" if x == "0" else "False"
+    )
 
     return df
 
