@@ -13,8 +13,10 @@
 # limitations under the License.
 
 
+from airflow.contrib.operators import gcs_to_bq
 from airflow import DAG
-from airflow.contrib.operators import gcs_to_bq, kubernetes_pod_operator
+from airflow.contrib.operators import kubernetes_pod_operator
+
 
 default_args = {
     "owner": "Google",
@@ -40,8 +42,8 @@ with DAG(
         image_pull_policy="Always",
         image="{{ var.json.new_york.container_registry.run_csv_transform_kub_citibike_stations }}",
         env_vars={
-            "SOURCE_URL_STATIONS": "https://gbfs.citibikenyc.com/gbfs/en/station_information.json",
-            "SOURCE_URL_STATUS": "https://gbfs.citibikenyc.com/gbfs/en/station_status.json",
+            "SOURCE_URL_STATIONS_JSON": "https://gbfs.citibikenyc.com/gbfs/en/station_information",
+            "SOURCE_URL_STATUS_JSON": "https://gbfs.citibikenyc.com/gbfs/en/station_status",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
@@ -86,7 +88,7 @@ with DAG(
             },
             {
                 "name": "longitude",
-                "type": "",
+                "type": "FLOAT",
                 "description": "The longitude of station. The field value must be a valid WGS 84 latitude in decimal degrees format.",
                 "mode": "NULLABLE",
             },
@@ -140,19 +142,19 @@ with DAG(
             },
             {
                 "name": "is_installed",
-                "type": "INTEGER",
+                "type": "BOOLEAN",
                 "description": "Is the station currently on the street?",
                 "mode": "NULLABLE",
             },
             {
                 "name": "is_renting",
-                "type": "INTEGER",
+                "type": "BOOLEAN",
                 "description": "Is the station currently renting bikes?",
                 "mode": "NULLABLE",
             },
             {
                 "name": "is_returning",
-                "type": "INTEGER",
+                "type": "BOOLEAN",
                 "description": "Is the station accepting bike returns?",
                 "mode": "NULLABLE",
             },
