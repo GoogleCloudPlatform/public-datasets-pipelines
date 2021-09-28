@@ -78,6 +78,7 @@ with DAG(
         source_format="CSV",
         destination_project_dataset_table="noaa.ghcnd_states",
         skip_leading_rows=1,
+        allow_quoted_newlines=True,
         write_disposition="WRITE_TRUNCATE",
         schema_fields=[
             {"name": "code", "type": "STRING", "mode": "NULLABLE"},

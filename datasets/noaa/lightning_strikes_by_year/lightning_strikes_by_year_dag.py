@@ -73,7 +73,7 @@ with DAG(
         bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/noaa/lightning_strikes_by_year/data_output.csv"],
         source_format="CSV",
-        destination_project_dataset_table="noaa.lightning_strikes_{{ macros.ds_format(macros.ds_add(ds, -365), \u0027%Y-%m-%d\u0027, \u0027%Y\u0027) }}",
+        destination_project_dataset_table="noaa.lightning_strikes",
         skip_leading_rows=1,
         write_disposition="WRITE_TRUNCATE",
         schema_fields=[

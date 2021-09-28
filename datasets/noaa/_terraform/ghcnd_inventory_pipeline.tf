@@ -15,12 +15,12 @@
  */
 
 
-resource "google_bigquery_table" "lightning_strikes_by_year" {
+resource "google_bigquery_table" "ghcnd_inventory" {
   project    = var.project_id
   dataset_id = "noaa"
-  table_id   = "lightning_strikes_by_year"
+  table_id   = "ghcnd_inventory"
 
-  description = "NOAA GCHN Daily Lightning Strikes By Year"
+  description = "NOAA GHCN_D Inventory"
 
 
 
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "lightning_strikes_by_year" {
   ]
 }
 
-output "bigquery_table-lightning_strikes_by_year-table_id" {
-  value = google_bigquery_table.lightning_strikes_by_year.table_id
+output "bigquery_table-ghcnd_inventory-table_id" {
+  value = google_bigquery_table.ghcnd_inventory.table_id
 }
 
-output "bigquery_table-lightning_strikes_by_year-id" {
-  value = google_bigquery_table.lightning_strikes_by_year.id
+output "bigquery_table-ghcnd_inventory-id" {
+  value = google_bigquery_table.ghcnd_inventory.id
 }

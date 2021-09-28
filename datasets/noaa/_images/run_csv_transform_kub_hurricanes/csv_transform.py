@@ -53,6 +53,26 @@ def main(
     df.columns = df.columns.str.lower()
     rename_headers(df)
 
+    df = reorder_headers(df)
+
+    logging.info(f"Transformation Process complete .. {source_file}")
+
+    logging.info(f"Saving to output file.. {target_file}")
+
+    try:
+        save_to_new_file(df, file_path=str(target_file))
+    except Exception as e:
+        logging.error(f"Error saving output file: {e}.")
+
+    logging.info(
+        f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
+    )
+    upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
+
+    logging.info("NOAA - Hurricanes process completed")
+
+
+def reorder_headers(df: pd.DataFrame) -> pd.DataFrame:
     logging.info("Transform: Reordering headers..")
     df = df[
         [
@@ -209,22 +229,7 @@ def main(
             "usa_atcf_id",
         ]
     ]
-
-    logging.info(f"Transformation Process complete .. {source_file}")
-
-    logging.info(f"Saving to output file.. {target_file}")
-
-    try:
-        save_to_new_file(df, file_path=str(target_file))
-    except Exception as e:
-        logging.error(f"Error saving output file: {e}.")
-
-    logging.info(
-        f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
-    )
-    upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
-
-    logging.info("NOAA - Hurricanes process completed")
+    return df
 
 
 def convert_dt_format(date_str: str, time_str: str) -> str:
@@ -295,12 +300,9 @@ def save_to_new_file(df: pd.DataFrame, file_path: str) -> None:
 
 def download_file(source_url: str, source_file: pathlib.Path) -> None:
     r = requests.get(source_url, stream=True)
-    if r.status_code == 200:
-        with open(source_file, "wb") as f:
-            for chunk in r:
-                f.write(chunk)
-    else:
-        logging.error(f"Couldn't download {source_url}: {r.text}")
+    with open(source_file, "wb") as f:
+        for chunk in r:
+            f.write(chunk)
 
 
 def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:

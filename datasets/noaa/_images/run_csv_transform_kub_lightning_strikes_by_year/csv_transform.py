@@ -115,12 +115,9 @@ def url_is_reachable(url: str) -> bool:
 
 def download_file(source_url: str, source_file: pathlib.Path) -> None:
     r = requests.get(source_url, stream=True)
-    if r.status_code == 200:
-        with open(source_file, "wb") as f:
-            for chunk in r:
-                f.write(chunk)
-    else:
-        logging.error(f"Couldn't download {source_url}: {r.text}")
+    with open(source_file, "wb") as f:
+        for chunk in r:
+            f.write(chunk)
 
 
 def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:

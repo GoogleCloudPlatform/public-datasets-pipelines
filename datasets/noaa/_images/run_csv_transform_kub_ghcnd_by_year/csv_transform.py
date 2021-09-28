@@ -176,7 +176,7 @@ def download_file_ftp(
     dest_file = open(local_file, "wb")
     ftp_conn.encoding = "utf-8"
     ftp_conn.retrbinary(
-        cmd="RETR " + ftp_filename,
+        cmd=f"RETR {ftp_filename}",
         callback=dest_file.write,
         blocksize=1024,
         rest=None,
