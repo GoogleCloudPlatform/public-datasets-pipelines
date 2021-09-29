@@ -17,8 +17,6 @@ resources:
 
   - type: bigquery_table
     table_id: crime
-
-
     description: "Chicago Crime dataset"
 
 dag:
@@ -27,8 +25,6 @@ dag:
     dag_id: crime
     default_args:
       owner: "Google"
-
-
       depends_on_past: False
       start_date: '2021-03-01'
     max_active_runs: 1
@@ -38,21 +34,12 @@ dag:
 
   tasks:
     - operator: "KubernetesPodOperator"
-
-
       description: "Run CSV transform within kubernetes pod"
-
       args:
-
         task_id: "chicago_crime_transform_csv"
-
         startup_timeout_seconds: 600
-
-
         name: "crime"
-
         namespace: "default"
-
         affinity:
           nodeAffinity:
             requiredDuringSchedulingIgnoredDuringExecution:
@@ -62,41 +49,27 @@ dag:
                       operator: In
                       values:
                         - "pool-e2-standard-4"
-
-
         image_pull_policy: "Always"
-
-
         image: "{{ var.json.chicago_crime.container_registry.run_csv_transform_kub }}"
-
         env_vars:
           SOURCE_URL: "https://data.cityofchicago.org/api/views/ijzp-q8t2/rows.csv"
           SOURCE_FILE: "files/data.csv"
           TARGET_FILE: "files/data_output.csv"
-          TARGET_GCS_BUCKET: "{{ var.json.shared.composer_bucket }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/chicago_crime/crime/data_output.csv"
-
         resources:
           request_memory: "8G"
           request_cpu: "2"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
-
       args:
         task_id: "load_chicago_crime_to_bq"
-
-
-        bucket: "{{ var.json.shared.composer_bucket }}"
-
-
+        bucket: "{{ var.value.composer_bucket }}"
         source_objects: ["data/chicago_crime/crime/data_output.csv"]
         source_format: "CSV"
         destination_project_dataset_table: "chicago_crime.crime"
-
-
         skip_leading_rows: 1
-
         write_disposition: "WRITE_TRUNCATE"
 
         schema_fields:
