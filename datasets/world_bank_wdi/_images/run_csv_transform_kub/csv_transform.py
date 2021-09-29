@@ -148,7 +148,7 @@ if __name__ == "__main__":
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
-        headers=json.loads(os.environ["CSV_HEADERS"]),
-        rename_mappings=json.loads(os.environ["RENAME_MAPPINGS"]),
+        headers=json.loads(os.environ["CSV_HEADERS"].replace(r"\n", "")),
+        rename_mappings=json.loads(os.environ["RENAME_MAPPINGS"].replace(r"\n", "")),
         pipeline_name=os.environ["PIPELINE_NAME"],
     )

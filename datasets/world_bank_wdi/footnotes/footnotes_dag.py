@@ -65,8 +65,8 @@ with DAG(
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/world_bank_wdi/footnotes/data_output.csv",
             "PIPELINE_NAME": "footnotes",
-            "CSV_HEADERS": '["country_code","series_code","year","description"]',
-            "RENAME_MAPPINGS": '{"CountryCode":"country_code","SeriesCode":"series_code","Year":"year","DESCRIPTION":"description"}',
+            "CSV_HEADERS": '[\n  "country_code",\n  "series_code",\n  "year",\n  "description"\n]',
+            "RENAME_MAPPINGS": '{\n  "CountryCode":"country_code",\n  "SeriesCode":"series_code",\n  "Year":"year",\n  "DESCRIPTION":"description"\n}',
         },
         resources={"request_memory": "2G", "request_cpu": "1"},
     )

@@ -61,9 +61,51 @@ dag:
           TARGET_GCS_PATH: "data/world_bank_wdi/series_summary/data_output.csv"
           PIPELINE_NAME: "series_summary"
           CSV_HEADERS: >-
-            ["series_code" ,"topic" ,"indicator_name" ,"short_definition" ,"long_definition" ,"unit_of_measure" ,"periodicity" ,"base_period" ,"other_notes" ,"aggregation_method" ,"limitations_and_exceptions" ,"notes_from_original_source" ,"general_comments" ,"source" ,"statistical_concept_and_methodology" ,"development_relevance" ,"related_source_links" ,"other_web_links" ,"related_indicators" ,"license_type"]
+            [
+              "series_code",
+              "topic",
+              "indicator_name",
+              "short_definition",
+              "long_definition",
+              "unit_of_measure",
+              "periodicity",
+              "base_period",
+              "other_notes",
+              "aggregation_method",
+              "limitations_and_exceptions",
+              "notes_from_original_source",
+              "general_comments",
+              "source",
+              "statistical_concept_and_methodology",
+              "development_relevance",
+              "related_source_links",
+              "other_web_links",
+              "related_indicators",
+              "license_type"
+            ]
           RENAME_MAPPINGS: >-
-            {"Series Code":"series_code" ,"Topic":"topic" ,"Indicator Name":"indicator_name" ,"Short definition":"short_definition" ,"Long definition":"long_definition" ,"Unit of measure":"unit_of_measure" ,"Periodicity":"periodicity" ,"Base Period":"base_period" ,"Other notes":"other_notes" ,"Aggregation method":"aggregation_method" ,"Limitations and exceptions":"limitations_and_exceptions" ,"Notes from original source":"notes_from_original_source" ,"General comments":"general_comments" ,"Source":"source" ,"Statistical concept and methodology":"statistical_concept_and_methodology" ,"Development relevance":"development_relevance" ,"Related source links":"related_source_links" ,"Other web links":"other_web_links" ,"Related indicators":"related_indicators" ,"License Type":"license_type"}
+            {
+              "Series Code":"series_code",
+              "Topic":"topic",
+              "Indicator Name":"indicator_name",
+              "Short definition":"short_definition",
+              "Long definition":"long_definition",
+              "Unit of measure":"unit_of_measure",
+              "Periodicity":"periodicity",
+              "Base Period":"base_period",
+              "Other notes":"other_notes",
+              "Aggregation method":"aggregation_method",
+              "Limitations and exceptions":"limitations_and_exceptions",
+              "Notes from original source":"notes_from_original_source",
+              "General comments":"general_comments",
+              "Source":"source",
+              "Statistical concept and methodology":"statistical_concept_and_methodology",
+              "Development relevance":"development_relevance",
+              "Related source links":"related_source_links",
+              "Other web links":"other_web_links",
+              "Related indicators":"related_indicators",
+              "License Type":"license_type"
+            }
         resources:
           request_memory: "2G"
           request_cpu: "1"
