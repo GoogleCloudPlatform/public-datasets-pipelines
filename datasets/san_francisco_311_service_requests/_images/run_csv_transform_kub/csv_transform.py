@@ -73,7 +73,7 @@ def process_chunk(
 ) -> None:
     logging.info(f"Processing batch file {target_file_batch}")
     df = rename_headers(df)
-    df = remove_empty_key_rows(df, 'unique_key')
+    df = remove_empty_key_rows(df, "unique_key")
     df = resolve_datatypes(df)
     df = remove_parenthesis_long_lat(df)
     df = strip_whitespace(df)
@@ -114,7 +114,7 @@ def rename_headers(df: pd.DataFrame) -> pd.DataFrame:
 
 def remove_empty_key_rows(df: pd.DataFrame, key_field: str) -> pd.DataFrame:
     logging.info("Removing rows with empty keys")
-    df = df[df[key_field] != '']
+    df = df[df[key_field] != ""]
 
     return df
 
