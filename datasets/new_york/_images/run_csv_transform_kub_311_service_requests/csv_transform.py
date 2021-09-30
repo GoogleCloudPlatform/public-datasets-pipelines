@@ -16,7 +16,6 @@ import datetime
 import logging
 import os
 import pathlib
-import subprocess
 
 import numpy as np
 import pandas as pd
@@ -107,29 +106,45 @@ def main(
             )
             df = pd.DataFrame()
             df = pd.concat([df, chunk])
-            processChunk(df, target_file_batch)
-            logging.info(f"Appending batch {chunk_number} to {target_file}")
-            if chunk_number == 0:
-                subprocess.run(["cp", target_file_batch, target_file])
-            else:
-                subprocess.check_call(f"sed -i '1d' {target_file_batch}", shell=True)
-                subprocess.check_call(
-                    f"cat {target_file_batch} >> {target_file}", shell=True
-                )
-            subprocess.run(["rm", target_file_batch])
+            process_chunk(df, target_file_batch, target_file, (not chunk_number == 0))
 
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
     logging.info("New York - 311 Service Requests process completed")
 
 
-def processChunk(df: pd.DataFrame, target_file_batch: str) -> None:
+def append_batch_file(
+    batch_file_path: str, target_file_path: str, skip_header: bool
+) -> None:
+    data_file = open(batch_file_path, "r")
+    if os.path.exists(target_file_path):
+        target_file = open(target_file_path, "a+")
+    else:
+        target_file = open(target_file_path, "w")
+    if skip_header:
+        logging.info(
+            f"Appending batch file {batch_file_path} to {target_file_path} with skip header"
+        )
+        next(data_file)
+    else:
+        logging.info(f"Appending batch file {batch_file_path} to {target_file_path}")
+    target_file.write(data_file.read())
+    data_file.close()
+    target_file.close()
+    if os.path.exists(batch_file_path):
+        os.remove(batch_file_path)
+
+
+def process_chunk(
+    df: pd.DataFrame, target_file_batch: str, target_file: str, skip_header: bool
+) -> None:
     df = rename_headers(df)
     logging.info("Remove rows with empty keys")
     df = df[df["unique_key"] != ""]
     df = resolve_date_format(df)
     df = reorder_headers(df)
     save_to_new_file(df, file_path=str(target_file_batch))
+    append_batch_file(target_file_batch, target_file, skip_header)
 
 
 def reorder_headers(df: pd.DataFrame) -> pd.DataFrame:
@@ -201,9 +216,9 @@ def convert_dt_format(dt_str: str) -> str:
     if not dt_str or str(dt_str).lower() == "nan" or str(dt_str).lower() == "nat":
         return ""
     elif (
-        dt_str.strip()[3] == "/"
+        dt_str.strip()[2] == "/"
     ):  # if there is a '/' in 3rd position, then we have a date format mm/dd/yyyy
-        return datetime.datetime.strptime(str(dt_str), "%m/%d/%Y %H:%M:%S %p").strftime(
+        return datetime.datetime.strptime(dt_str, "%m/%d/%Y %H:%M:%S %p").strftime(
             "%Y-%m-%d %H:%M:%S"
         )
     else:
@@ -264,7 +279,6 @@ def rename_headers(df: pd.DataFrame) -> pd.DataFrame:
 def save_to_new_file(df: pd.DataFrame, file_path: str) -> None:
     logging.info(f"Saving data to target file.. {file_path} ...")
     df.to_csv(file_path, index=False)
-    logging.info(f"Saved data to target file .. {file_path}")
 
 
 def download_file(source_url: str, source_file: pathlib.Path) -> None:

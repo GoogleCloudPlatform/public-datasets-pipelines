@@ -58,6 +58,7 @@ with DAG(
         source_format="CSV",
         destination_project_dataset_table="new_york.citibike_stations",
         skip_leading_rows=1,
+        allow_quoted_newlines=True,
         write_disposition="WRITE_TRUNCATE",
         schema_fields=[
             {

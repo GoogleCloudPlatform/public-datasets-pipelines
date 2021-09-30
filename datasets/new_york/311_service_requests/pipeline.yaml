@@ -62,11 +62,9 @@ dag:
         source_format: "CSV"
         destination_project_dataset_table: "new_york.311_service_requests"
         skip_leading_rows: 1
+        allow_quoted_newlines: True
         write_disposition: "WRITE_TRUNCATE"
         schema_fields:
-          - name: "trip_id"
-            type: "INTEGER"
-            mode: "NULLABLE"
           - name: "unique_key"
             type: "INTEGER"
             description: ""

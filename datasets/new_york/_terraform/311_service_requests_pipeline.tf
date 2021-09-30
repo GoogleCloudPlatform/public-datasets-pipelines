@@ -15,12 +15,12 @@
  */
 
 
-resource "google_bigquery_table" "tree_census_1995" {
+resource "google_bigquery_table" "bqt_311_service_requests" {
   project    = var.project_id
   dataset_id = "new_york"
-  table_id   = "tree_census_1995"
+  table_id   = "311_service_requests"
 
-
+  description = "NYC 311 service requests logs"
 
 
 
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "tree_census_1995" {
   ]
 }
 
-output "bigquery_table-tree_census_1995-table_id" {
-  value = google_bigquery_table.tree_census_1995.table_id
+output "bigquery_table-311_service_requests-table_id" {
+  value = google_bigquery_table.bqt_311_service_requests.table_id
 }
 
-output "bigquery_table-tree_census_1995-id" {
-  value = google_bigquery_table.tree_census_1995.id
+output "bigquery_table-311_service_requests-id" {
+  value = google_bigquery_table.bqt_311_service_requests.id
 }

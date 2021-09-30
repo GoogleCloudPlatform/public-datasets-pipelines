@@ -13,8 +13,10 @@
 # limitations under the License.
 
 
+from airflow.contrib.operators import gcs_to_bq
 from airflow import DAG
-from airflow.contrib.operators import gcs_to_bq, kubernetes_pod_operator
+from airflow.contrib.operators import kubernetes_pod_operator
+
 
 default_args = {
     "owner": "Google",
@@ -58,9 +60,9 @@ with DAG(
         source_format="CSV",
         destination_project_dataset_table="new_york.311_service_requests",
         skip_leading_rows=1,
+        allow_quoted_newlines=True,
         write_disposition="WRITE_TRUNCATE",
         schema_fields=[
-            {"name": "trip_id", "type": "INTEGER", "mode": "NULLABLE"},
             {
                 "name": "unique_key",
                 "type": "INTEGER",
