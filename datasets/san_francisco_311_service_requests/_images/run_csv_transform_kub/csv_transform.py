@@ -16,7 +16,6 @@ import datetime
 import logging
 import os
 import pathlib
-import subprocess
 
 import pandas as pd
 import requests
@@ -34,81 +33,148 @@ def main(
 
     logging.info("San Francisco - 311 Service Requests process started")
 
-    logging.info("creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
-
-    logging.info(f"downloading file {source_url}")
     download_file(source_url, source_file)
 
     chunksz = int(chunksize)
 
-    logging.info(f"Opening batch file {source_file}")
+    logging.info(f"Opening source file {source_file}")
     with pd.read_csv(
-        source_file, engine="python", encoding="utf-8", quotechar='"', chunksize=chunksz
+        source_file,
+        engine="python",
+        encoding="utf-8",
+        quotechar='"',
+        sep=",",
+        chunksize=chunksz,
     ) as reader:
         for chunk_number, chunk in enumerate(reader):
-            logging.info(f"Processing batch {chunk_number}")
             target_file_batch = str(target_file).replace(
                 ".csv", "-" + str(chunk_number) + ".csv"
             )
             df = pd.DataFrame()
             df = pd.concat([df, chunk])
-            processChunk(df, target_file_batch)
-            logging.info(f"Appending batch {chunk_number} to {target_file}")
-            if chunk_number == 0:
-                subprocess.run(["cp", target_file_batch, target_file])
-            else:
-                subprocess.check_call(f"sed -i '1d' {target_file_batch}", shell=True)
-                subprocess.check_call(
-                    f"cat {target_file_batch} >> {target_file}", shell=True
-                )
-            subprocess.run(["rm", target_file_batch])
+            process_chunk(df, target_file_batch, target_file, (not chunk_number == 0))
 
-    logging.info(
-        f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
-    )
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
     logging.info("San Francisco - 311 Service Requests process completed")
 
 
 def download_file(source_url: str, source_file: pathlib.Path) -> None:
+    logging.info(f"downloading file {source_file} from {source_url}")
     r = requests.get(source_url, stream=True)
-    if r.status_code == 200:
-        with open(source_file, "wb") as f:
-            for chunk in r:
-                f.write(chunk)
-    else:
-        logging.error(f"Couldn't download {source_url}: {r.text}")
+    with open(source_file, "wb") as f:
+        for chunk in r:
+            f.write(chunk)
 
 
-def processChunk(df: pd.DataFrame, target_file_batch: str) -> None:
+def process_chunk(
+    df: pd.DataFrame, target_file_batch: str, target_file: str, skip_header: bool
+) -> None:
+    logging.info(f"Processing batch file {target_file_batch}")
+    df = rename_headers(df)
+    df = remove_empty_key_rows(df, 'unique_key')
+    df = resolve_datatypes(df)
+    df = remove_parenthesis_long_lat(df)
+    df = strip_whitespace(df)
+    df = resolve_date_format(df)
+    df = reorder_headers(df)
+    save_to_new_file(df, file_path=str(target_file_batch))
+    append_batch_file(target_file_batch, target_file, skip_header)
+    logging.info(f"Processing batch file {target_file_batch} completed")
 
-    logging.info("Renaming Headers")
-    rename_headers(df)
 
-    logging.info("Remove rows with empty keys")
-    df = df[df["unique_key"] != ""]
+def rename_headers(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Renaming headers")
+    header_names = {
+        "CaseID": "unique_key",
+        "Opened": "created_date",
+        "Closed": "closed_date",
+        "Updated": "resolution_action_updated_date",
+        "Status": "status",
+        "Status Notes": "status_notes",
+        "Responsible Agency": "agency_name",
+        "Category": "category",
+        "Request Type": "complaint_type",
+        "Request Details": "descriptor",
+        "Address": "incident_address",
+        "Supervisor District": "supervisor_district",
+        "Neighborhood": "neighborhood",
+        "Point": "location",
+        "Source": "source",
+        "Media URL": "media_url",
+        "Latitude": "latitude",
+        "Longitude": "longitude",
+        "Police District": "police_district",
+    }
+    df = df.rename(columns=header_names)
 
+    return df
+
+
+def remove_empty_key_rows(df: pd.DataFrame, key_field: str) -> pd.DataFrame:
+    logging.info("Removing rows with empty keys")
+    df = df[df[key_field] != '']
+
+    return df
+
+
+def resolve_datatypes(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Resolving datatypes")
     df["supervisor_district"] = df["supervisor_district"].astype("Int64")
 
-    logging.info("Strip whitespace from incident address")
-    df["incident_address"] = df["incident_address"].apply(lambda x: str(x).strip())
+    return df
 
-    logging.info("Remove parenthesis from latitude and longitude")
+
+def remove_parenthesis_long_lat(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Removing parenthesis from latitude and longitude")
     df["latitude"].replace("(", "", regex=False, inplace=True)
     df["latitude"].replace(")", "", regex=False, inplace=True)
     df["longitude"].replace("(", "", regex=False, inplace=True)
     df["longitude"].replace(")", "", regex=False, inplace=True)
 
-    logging.info("Convert Date Format")
-    df["created_date"] = df["created_date"].apply(convert_dt_format)
-    df["closed_date"] = df["closed_date"].apply(convert_dt_format)
-    df["resolution_action_updated_date"] = df["resolution_action_updated_date"].apply(
-        convert_dt_format
-    )
+    return df
 
-    logging.info("    Transform: Reordering headers..")
+
+def strip_whitespace(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Stripping whitespace")
+    ws_fields = ["incident_address"]
+
+    for ws_fld in ws_fields:
+        df[ws_fld] = df[ws_fld].apply(lambda x: str(x).strip())
+
+    return df
+
+
+def resolve_date_format(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Resolving date formats")
+    date_fields = [
+        "created_date",
+        "closed_date",
+        "resolution_action_updated_date",
+    ]
+
+    for dt_fld in date_fields:
+        df[dt_fld] = df[dt_fld].apply(convert_dt_format)
+
+    return df
+
+
+def convert_dt_format(dt_str: str) -> str:
+    if not dt_str or str(dt_str).lower() == "nan" or str(dt_str).lower() == "nat":
+        return ""
+    elif (
+        dt_str.strip()[2] == "/"
+    ):  # if there is a '/' in 3rd position, then we have a date format mm/dd/yyyy
+        return datetime.datetime.strptime(dt_str, "%m/%d/%Y %H:%M:%S %p").strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
+    else:
+        return str(dt_str)
+
+
+def reorder_headers(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Reordering headers")
     df = df[
         [
             "unique_key",
@@ -133,60 +199,33 @@ def processChunk(df: pd.DataFrame, target_file_batch: str) -> None:
         ]
     ]
 
-    logging.info(f"    Saving to target file.. {target_file_batch}")
-
-    try:
-        save_to_new_file(df, file_path=str(target_file_batch))
-    except Exception as e:
-        logging.error(f"Error saving to target file: {e}.")
-
-    logging.info(f"Saved transformed source data to target file .. {target_file_batch}")
-
-
-def convert_dt_format(dt_str: str) -> str:
-    if (
-        dt_str is None
-        or len(str(dt_str)) == 0
-        or str(dt_str).lower() == "nan"
-        or str(dt_str) == ""
-    ):
-        return str("")
-    else:
-        return str(
-            datetime.datetime.strptime(str(dt_str), "%m/%d/%Y %H:%M:%S %p").strftime(
-                "%Y-%m-%d %H:%M:%S"
-            )
-        )
-
-
-def rename_headers(df: pd.DataFrame) -> None:
-    header_names = {
-        "CaseID": "unique_key",
-        "Opened": "created_date",
-        "Closed": "closed_date",
-        "Updated": "resolution_action_updated_date",
-        "Status": "status",
-        "Status Notes": "status_notes",
-        "Responsible Agency": "agency_name",
-        "Category": "category",
-        "Request Type": "complaint_type",
-        "Request Details": "descriptor",
-        "Address": "incident_address",
-        "Supervisor District": "supervisor_district",
-        "Neighborhood": "neighborhood",
-        "Point": "location",
-        "Source": "source",
-        "Media URL": "media_url",
-        "Latitude": "latitude",
-        "Longitude": "longitude",
-        "Police District": "police_district",
-    }
-
-    df = df.rename(columns=header_names, inplace=True)
+    return df
 
 
 def save_to_new_file(df: pd.DataFrame, file_path) -> None:
     df.to_csv(file_path, index=False)
+
+
+def append_batch_file(
+    batch_file_path: str, target_file_path: str, skip_header: bool
+) -> None:
+    data_file = open(batch_file_path, "r")
+    if os.path.exists(target_file_path):
+        target_file = open(target_file_path, "a+")
+    else:
+        target_file = open(target_file_path, "w")
+    if skip_header:
+        logging.info(
+            f"Appending batch file {batch_file_path} to {target_file_path} with skip header"
+        )
+        next(data_file)
+    else:
+        logging.info(f"Appending batch file {batch_file_path} to {target_file_path}")
+    target_file.write(data_file.read())
+    data_file.close()
+    target_file.close()
+    if os.path.exists(batch_file_path):
+        os.remove(batch_file_path)
 
 
 def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:
