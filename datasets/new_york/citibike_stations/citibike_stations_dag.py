@@ -44,6 +44,7 @@ with DAG(
             "SOURCE_URL_STATUS_JSON": "https://gbfs.citibikenyc.com/gbfs/en/station_status",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
+            "CHUNKSIZE": "750000",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/new_york/citibike_stations/data_output.csv",
         },

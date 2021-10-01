@@ -114,13 +114,13 @@ def main(
 
 
 def append_batch_file(
-    batch_file_path: str, target_file_path: str, skip_header: bool
+    batch_file_path: str, target_file_path: str, skip_header: bool, truncate_file: bool
 ) -> None:
     data_file = open(batch_file_path, "r")
-    if os.path.exists(target_file_path):
-        target_file = open(target_file_path, "a+")
-    else:
-        target_file = open(target_file_path, "w")
+    if truncate_file:
+        target_file = open(target_file_path, "w+").close()
+        logging.info("file truncated")
+    target_file = open(target_file_path, "a+")
     if skip_header:
         logging.info(
             f"Appending batch file {batch_file_path} to {target_file_path} with skip header"
@@ -144,7 +144,7 @@ def process_chunk(
     df = resolve_date_format(df)
     df = reorder_headers(df)
     save_to_new_file(df, file_path=str(target_file_batch))
-    append_batch_file(target_file_batch, target_file, skip_header)
+    append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
 
 
 def reorder_headers(df: pd.DataFrame) -> pd.DataFrame:

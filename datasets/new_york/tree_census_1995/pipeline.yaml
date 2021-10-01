@@ -46,6 +46,7 @@ dag:
           SOURCE_URL: "https://data.cityofnewyork.us/api/views/kyad-zm4j/rows.csv"
           SOURCE_FILE: "files/data.csv"
           TARGET_FILE: "files/data_output.csv"
+          CHUNKSIZE: "750000"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/new_york/tree_census_1995/data_output.csv"
         resources:

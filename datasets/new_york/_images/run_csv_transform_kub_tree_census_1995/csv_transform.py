@@ -12,11 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import datetime
 import logging
 import os
 import pathlib
-import re
 
 import pandas as pd
 import requests
@@ -27,89 +25,53 @@ def main(
     source_url: str,
     source_file: pathlib.Path,
     target_file: pathlib.Path,
+    chunksize: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
 ) -> None:
 
-    logging.info(
-        "New York Tree Census 1995 process started at "
-        + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    )
+    logging.info("New York Tree Census 1995 process started")
 
-    logging.info("creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
-
-    logging.info(f"Downloading {source_url} into {source_file}")
     download_file(source_url, source_file)
 
-    logging.info(f"Opening file {source_file}")
-    df = pd.read_csv(source_file)
+    chunksz = int(chunksize)
 
-    logging.info(f"Transformation Process Starting.. {source_file}")
+    logging.info(f"Opening source file {source_file}")
+    with pd.read_csv(
+        source_file,
+        engine="python",
+        encoding="utf-8",
+        quotechar='"',
+        sep=",",
+        chunksize=chunksz,
+    ) as reader:
+        for chunk_number, chunk in enumerate(reader):
+            target_file_batch = str(target_file).replace(
+                ".csv", "-" + str(chunk_number) + ".csv"
+            )
+            df = pd.DataFrame()
+            df = pd.concat([df, chunk])
+            process_chunk(df, target_file_batch, target_file, (not chunk_number == 0))
 
-    logging.info(f"Transform: Renaming Headers.. {source_file}")
-    rename_headers(df)
-
-    df["spc_latin"] = df["spc_latin"].str.strip()
-
-    logging.info("Transform: Reordering headers..")
-    df = df[
-        [
-            "recordid",
-            "address",
-            "house_number",
-            "street",
-            "zip_original",
-            "cb_original",
-            "site",
-            "species",
-            "diameter",
-            "status",
-            "wires",
-            "sidewalk_condition",
-            "support_structure",
-            "borough",
-            "x",
-            "y",
-            "longitude",
-            "latitude",
-            "cb_new",
-            "zip_new",
-            "censustract_2010",
-            "censusblock_2010",
-            "nta_2010",
-            "segmentid",
-            "spc_common",
-            "spc_latin",
-            "location",
-        ]
-    ]
-
-    logging.info(f"Transformation Process complete .. {source_file}")
-
-    logging.info(f"Saving to output file.. {target_file}")
-
-    try:
-        save_to_new_file(df, file_path=str(target_file))
-    except Exception as e:
-        logging.error(f"Error saving output file: {e}.")
-
-    logging.info(
-        f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
-    )
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
-    logging.info(
-        "New York Tree Census 1995 process completed at "
-        + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    )
+    logging.info("New York Tree Census 1995 process completed")
 
 
-def convert_dt_format(date_str: str, time_str: str) -> str:
-    return str(datetime.datetime.strptime(date_str, "%m/%d/%Y").date()) + " " + time_str
+def process_chunk(
+    df: pd.DataFrame, target_file_batch: str, target_file: str, skip_header: bool
+) -> None:
+    logging.info(f"Processing batch file {target_file_batch}")
+    df = rename_headers(df)
+    df = remove_whitespace(df)
+    df = reorder_headers(df)
+    save_to_new_file(df, file_path=str(target_file_batch))
+    append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
+    logging.info(f"Processing batch file {target_file_batch} completed")
 
 
-def rename_headers(df: pd.DataFrame) -> None:
+def rename_headers(df: pd.DataFrame) -> pd.DataFrame:
     header_names = {
         "RecordId": "recordid",
         "Address": "address",
@@ -142,32 +104,75 @@ def rename_headers(df: pd.DataFrame) -> None:
 
     df.rename(columns=header_names, inplace=True)
 
-
-def replace_value(val: str) -> str:
-    if val is None or len(val) == 0:
-        return val
-    else:
-        if val.find("\n") > 0:
-            return re.sub(r"(^\\d):(\\d{2}:\\d{2})", "0$1:$2", val)
-        else:
-            return val
+    return df
 
 
-def replace_values_regex(df: pd.DataFrame) -> None:
-    header_names = {"checkout_time"}
+def remove_whitespace(df: pd.DataFrame) -> pd.DataFrame:
+    df["spc_latin"] = df["spc_latin"].apply(lambda x: str(x).strip())
 
-    for dt_col in header_names:
-        if df[dt_col] is not None:
-            if df[dt_col].str.len() > 0:
-                df[dt_col] = df[dt_col].apply(replace_value)
+    return df
 
 
-def filter_null_rows(df: pd.DataFrame) -> None:
-    df = df[df.trip_id != ""]
+def reorder_headers(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Reordering headers..")
+    df = df[
+        [
+            "recordid",
+            "address",
+            "house_number",
+            "street",
+            "zip_original",
+            "cb_original",
+            "site",
+            "species",
+            "diameter",
+            "status",
+            "wires",
+            "sidewalk_condition",
+            "support_structure",
+            "borough",
+            "x",
+            "y",
+            "longitude",
+            "latitude",
+            "cb_new",
+            "zip_new",
+            "censustract_2010",
+            "censusblock_2010",
+            "nta_2010",
+            "segmentid",
+            "spc_common",
+            "spc_latin",
+            "location",
+        ]
+    ]
+
+    return df
 
 
 def save_to_new_file(df: pd.DataFrame, file_path: str) -> None:
     df.to_csv(file_path, index=False)
+
+
+def append_batch_file(
+    batch_file_path: str, target_file_path: str, skip_header: bool, truncate_file: bool
+) -> None:
+    data_file = open(batch_file_path, "r")
+    if truncate_file:
+        target_file = open(target_file_path, "w+").close()
+    target_file = open(target_file_path, "a+")
+    if skip_header:
+        logging.info(
+            f"Appending batch file {batch_file_path} to {target_file_path} with skip header"
+        )
+        next(data_file)
+    else:
+        logging.info(f"Appending batch file {batch_file_path} to {target_file_path}")
+    target_file.write(data_file.read())
+    data_file.close()
+    target_file.close()
+    if os.path.exists(batch_file_path):
+        os.remove(batch_file_path)
 
 
 def download_file(source_url: str, source_file: pathlib.Path) -> None:
@@ -194,6 +199,7 @@ if __name__ == "__main__":
         source_url=os.environ["SOURCE_URL"],
         source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
+        chunksize=os.environ["CHUNKSIZE"],
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
     )

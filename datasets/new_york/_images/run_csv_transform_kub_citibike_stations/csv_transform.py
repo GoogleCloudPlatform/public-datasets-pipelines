@@ -29,93 +29,63 @@ def main(
     source_url_status_json: str,
     source_file: pathlib.Path,
     target_file: pathlib.Path,
+    chunksize: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
 ) -> None:
 
     logging.info("New York Citibike - Citibike Stations process started")
 
-    logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
-
-    df = download_and_merge_source_files(
+    download_and_merge_source_files(
         source_url_stations_json, source_url_status_json, source_file
     )
-    df = clean_data_points(df)
-    rename_headers(df)
-    df = reorder_headers(df)
 
-    logging.info(f"Transformation Process Starting.. {source_file}")
-    df = convert_datetime_from_int(df)
-    logging.info(f"Transformation Process complete .. {source_file}")
+    chunksz = int(chunksize)
 
-    save_to_new_file(df, file_path=str(target_file))
+    logging.info(f"Opening source file {source_file}")
+    with pd.read_csv(
+        source_file,
+        engine="python",
+        encoding="utf-8",
+        quotechar='"',
+        sep=",",
+        chunksize=chunksz,
+    ) as reader:
+        for chunk_number, chunk in enumerate(reader):
+            target_file_batch = str(target_file).replace(
+                ".csv", "-" + str(chunk_number) + ".csv"
+            )
+            df = pd.DataFrame()
+            df = pd.concat([df, chunk])
+            process_chunk(df, target_file_batch, target_file, (not chunk_number == 0))
+
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
     logging.info("New York Citibike - Citibike Stations process completed")
 
 
-def clean_data_points(df: pd.DataFrame) -> pd.DataFrame:
-    logging.info("Cleaning data points - Rental Methods")
-    df["rental_methods"] = df["rental_methods"].astype("string")
-    df["rental_methods"] = (
-        str(pd.Series(df["rental_methods"])[0])
-        .replace("[", "")
-        .replace("'", "")
-        .replace("]", "")
-    )
-    logging.info("Cleaning data points - Station ID")
-    df["station_id"] = df["station_id"].astype("Int64")
-    df["region_id"] = df["region_id"].astype("Int64")
-
-    logging.info("Resolving boolean datapoints")
-    df["eightd_has_key_dispenser"] = df["eightd_has_key_dispenser"].apply(
-        lambda x: "True" if x == "0" else "False"
-    )
-    df["is_installed"] = df["is_installed"].apply(
-        lambda x: "True" if x == "0" else "False"
-    )
-    df["is_renting"] = df["is_renting"].apply(lambda x: "True" if x == "0" else "False")
-    df["is_returning"] = df["is_returning"].apply(
-        lambda x: "True" if x == "0" else "False"
-    )
-
-    return df
-
-
-def convert_datetime_from_int(df: pd.DataFrame) -> pd.DataFrame:
-    logging.info("Converting Datetime columns")
-    df["last_reported"] = (
-        df["last_reported"].astype(str).astype(int).apply(datetime_from_int)
-    )
-    return df
-
-
 def download_and_merge_source_files(
     source_url_stations_json: str, source_url_status_json: str, source_file: str
-) -> pd.DataFrame:
+) -> None:
 
     source_file_stations_csv = str(source_file).replace(".csv", "") + "_stations.csv"
     source_file_stations_json = str(source_file).replace(".csv", "") + "_stations"
     source_file_status_csv = str(source_file).replace(".csv", "") + "_status.csv"
     source_file_status_json = str(source_file).replace(".csv", "") + "_status"
 
-    logging.info(f"Downloading stations file {source_url_stations_json}")
     download_file_json(
         source_url_stations_json, source_file_stations_json, source_file_stations_csv
     )
 
-    logging.info(f"Downloading status file {source_url_status_json}")
     download_file_json(
         source_url_status_json, source_file_status_json, source_file_status_csv
     )
 
-    logging.info(f"Opening stations file {source_file_stations_csv}")
     df_stations = pd.read_csv(
         source_file_stations_csv, engine="python", encoding="utf-8", quotechar='"'
     )
 
-    logging.info(f"Opening status file {source_file_status_csv}")
     df_status = pd.read_csv(
         source_file_status_csv, engine="python", encoding="utf-8", quotechar='"'
     )
@@ -123,6 +93,46 @@ def download_and_merge_source_files(
     logging.info("Merging files")
     df = df_stations.merge(df_status, left_on="station_id", right_on="station_id")
 
+    save_to_new_file(df, source_file)
+
+
+def download_file_json(
+    source_url: str, source_file_json: pathlib.Path, source_file_csv: pathlib.Path
+) -> None:
+    logging.info(f"Downloading file {source_url}.json.")
+    r = requests.get(source_url + ".json", stream=True)
+    with open(source_file_json + ".json", "wb") as f:
+        for chunk in r:
+            f.write(chunk)
+    df = pd.read_json(source_file_json + ".json")["data"]["stations"]
+    df = pd.DataFrame(df)
+    df.to_csv(source_file_csv, index=False)
+
+
+def save_to_new_file(df, file_path) -> None:
+    logging.info(f"Saving to output file.. {file_path}")
+    df.to_csv(file_path, index=False)
+
+
+def process_chunk(
+    df: pd.DataFrame, target_file_batch: str, target_file: str, skip_header: bool
+) -> None:
+    logging.info(f"Processing batch file {target_file_batch}")
+    df = convert_datetime_from_int(df)
+    df = clean_data_points(df)
+    df = rename_headers(df)
+    df = reorder_headers(df)
+    save_to_new_file(df, file_path=str(target_file_batch))
+    append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
+    logging.info(f"Processing batch file {target_file_batch} completed")
+
+
+def convert_datetime_from_int(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Converting Datetime columns")
+    columns = ["last_reported"]
+
+    for column in columns:
+        df[column] = df[column].astype(str).astype(int).apply(datetime_from_int)
     return df
 
 
@@ -130,8 +140,47 @@ def datetime_from_int(dt_int: int) -> str:
     return datetime.datetime.fromtimestamp(dt_int).strftime("%Y-%m-%d %H:%M:%S")
 
 
-def convert_dt_format(date_str: str, time_str: str) -> str:
-    return str(datetime.datetime.strptime(date_str, "%m/%d/%Y").date()) + " " + time_str
+def clean_data_points(df: pd.DataFrame) -> pd.DataFrame:
+    df = resolve_datatypes(df)
+    df = normalize_data_list(df)
+    df = resolve_boolean_datapoints(df)
+
+    return df
+
+
+def resolve_datatypes(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Resolving datatypes")
+    columns = {"station_id": "Int64", "region_id": "Int64", "rental_methods": "string"}
+
+    for column, datatype in columns.items():
+        df[column] = df[column].astype(datatype)
+
+    return df
+
+
+def normalize_data_list(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Normalizing data lists")
+    columns = ["rental_methods"]
+
+    for column in columns:
+        df[column] = (
+            str(pd.Series(df[column])[0])
+            .replace("[", "")
+            .replace("'", "")
+            .replace("]", "")
+        )
+
+    return df
+
+
+def resolve_boolean_datapoints(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Resolving boolean datapoints")
+    columns = ["eightd_has_key_dispenser", "is_installed", "is_renting", "is_returning"]
+
+    for column in columns:
+        df[column] = df[column].apply(lambda x: "True" if x == "0" else "False")
+
+    return df
 
 
 def rename_headers(df: pd.DataFrame) -> pd.DataFrame:
@@ -140,6 +189,8 @@ def rename_headers(df: pd.DataFrame) -> pd.DataFrame:
         "lon": "longitude",
     }
     df.rename(columns=header_names, inplace=True)
+
+    return df
 
 
 def reorder_headers(df: pd.DataFrame) -> pd.DataFrame:
@@ -166,25 +217,29 @@ def reorder_headers(df: pd.DataFrame) -> pd.DataFrame:
             "last_reported",
         ]
     ]
+
     return df
 
 
-def save_to_new_file(df, file_path) -> None:
-    logging.info(f"Saving to output file.. {file_path}")
-    df.to_csv(file_path, index=False)
-
-
-def download_file_json(
-    source_url: str, source_file_json: pathlib.Path, source_file_csv: pathlib.Path
+def append_batch_file(
+    batch_file_path: str, target_file_path: str, skip_header: bool, truncate_file: bool
 ) -> None:
-    logging.info(f"Downloading file {source_url}.json.")
-    r = requests.get(source_url + ".json", stream=True)
-    with open(source_file_json + ".json", "wb") as f:
-        for chunk in r:
-            f.write(chunk)
-    df = pd.read_json(source_file_json + ".json")["data"]["stations"]
-    df = pd.DataFrame(df)
-    df.to_csv(source_file_csv, index=False)
+    data_file = open(batch_file_path, "r")
+    if truncate_file:
+        target_file = open(target_file_path, "w+").close()
+    target_file = open(target_file_path, "a+")
+    if skip_header:
+        logging.info(
+            f"Appending batch file {batch_file_path} to {target_file_path} with skip header"
+        )
+        next(data_file)
+    else:
+        logging.info(f"Appending batch file {batch_file_path} to {target_file_path}")
+    target_file.write(data_file.read())
+    data_file.close()
+    target_file.close()
+    if os.path.exists(batch_file_path):
+        os.remove(batch_file_path)
 
 
 def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:
@@ -203,6 +258,7 @@ if __name__ == "__main__":
         source_url_status_json=os.environ["SOURCE_URL_STATUS_JSON"],
         source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
+        chunksize=os.environ["CHUNKSIZE"],
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
     )
