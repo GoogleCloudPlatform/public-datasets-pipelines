@@ -18,7 +18,7 @@ resources:
   - type: bigquery_table
     table_id: wm
 
-    description: "WM Dataset"
+    description: "WM  Dataset"
 
 dag:
   airflow_version: 1
