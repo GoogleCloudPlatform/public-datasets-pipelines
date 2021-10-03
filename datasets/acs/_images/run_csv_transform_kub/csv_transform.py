@@ -380,7 +380,8 @@ def main(
     rename_headers(df, rename_mappings)
 
     logging.info(f"Transform: converting to integer... ")
-    df["KPI_Value"] = df["KPI_Value"].apply(convert_to_integer_string)
+    # df["KPI_Value"] = df["KPI_Value"].apply(convert_to_integer_string)
+    df["KPI_Value"] = df["KPI_Value"].astype(int)
 
     logging.info(f"Saving to output file.. {target_file}")
     try:
@@ -417,13 +418,21 @@ def extract_data_and_convert_to_df(geography: dict,state_code: dict) -> pd.DataF
     df = pd.concat(list_temp)
     return df
 
-def convert_to_integer_string(input: typing.Union[str, float]) -> str:
-    str_val = ""
-    if not input or (math.isnan(input)):
-        str_val = ""
-    else:
-        str_val = str(int(round(input, 0)))
-    return str_val
+# def convert_to_integer_string(input: typing.Union[str, float]) -> str:
+#     str_val = ""
+#     if not input or (math.isnan(input)):
+#         str_val = ""
+#     else:
+#         str_val = str(int(round(input, 0)))
+#     return str_val
+
+# def convert_to_integer_string(input: typing.Union[str, float]) -> str:
+#     str_val = ""
+#     if not input or (math.isnan(input)):
+#         str_val = ""
+#     else:
+#         str_val = str(int(round(input, 0)))
+#     return str_val
 
 
 def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
