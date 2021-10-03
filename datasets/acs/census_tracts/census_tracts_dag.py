@@ -77,7 +77,7 @@ with DAG(
         write_disposition="WRITE_TRUNCATE",
         schema_fields=[
             {"name": "name", "type": "string", "mode": "nullable"},
-            {"name": "KPI_Value", "type": "integer", "mode": "nullable"},
+            {"name": "KPI_Value", "type": "float", "mode": "nullable"},
             {"name": "state", "type": "string", "mode": "nullable"},
             {"name": "county", "type": "integer", "mode": "nullable"},
             {"name": "tract", "type": "integer", "mode": "nullable"},

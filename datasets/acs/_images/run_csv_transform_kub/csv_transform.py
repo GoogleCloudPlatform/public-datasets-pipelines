@@ -379,9 +379,9 @@ def main(
     logging.info("Renaming headers...")
     rename_headers(df, rename_mappings)
 
-    logging.info(f"Transform: converting to integer... ")
-    # df["KPI_Value"] = df["KPI_Value"].apply(convert_to_integer_string)
-    df["KPI_Value"] = df["KPI_Value"].astype(int)
+    # logging.info(f"Transform: converting to integer... ")
+    # # df["KPI_Value"] = df["KPI_Value"].apply(convert_to_integer_string)
+    # df["KPI_Value"] = df["KPI_Value"].astype(int)
 
     logging.info(f"Saving to output file.. {target_file}")
     try:

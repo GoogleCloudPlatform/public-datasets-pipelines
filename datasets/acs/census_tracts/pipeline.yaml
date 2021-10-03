@@ -95,7 +95,7 @@ dag:
             type: "string"
             mode: "nullable"
           - name: "KPI_Value"
-            type: "integer"
+            type: "float"
             mode: "nullable"
           - name: "state"
             type: "string"
