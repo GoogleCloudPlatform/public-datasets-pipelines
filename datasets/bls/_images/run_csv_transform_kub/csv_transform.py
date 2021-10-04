@@ -12,14 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import datetime
 import glob
 import json
 import logging
 import os
 import pathlib
+import re
 import subprocess
 import typing
-import datetime
+
 import pandas as pd
 from google.cloud import storage
 from pandas.io.parsers import read_csv
@@ -34,7 +36,7 @@ def main(
     headers: typing.List[str],
     pipeline_name: str,
     joining_key: str,
-    columns: typing.list[str],
+    columns: typing.List[str],
     # filter_headers: typing.List[str],
     # trim_space: typing.List[str],
 ) -> None:
@@ -63,19 +65,24 @@ def main(
     # logging.info("Filter Headers ...")
     # df = df[filter_headers]
 
-    logging.info("Trim Whitespaces...")
-    # trim_spaces(df, trim_space)
-    # df['series_id']= df['series_id'].str.strip()
-    # df['footnote_codes']= df['footnote_codes'].astype(str).str.strip()
-    # df['series_title']= df['series_title'].str.strip()
 
+    logging.info("Renaming headers...")
+    # rename_pipeline_name=["employment_hours_earnings_series","unemployment_cps","unemployment_cps_series"]
+
+    # rename_mappings={"series_id                     ":"series_id"}
+
+    # for pipeline_name in rename_pipeline_name :
+    #     df.rename(columns=rename_mappings, inplace=True)
+
+    df.columns = df.columns.str.strip()
+
+    logging.info("Trim Whitespaces...")
     tream_white_spaces(df,columns)
 
-    # logging.info("Search and Replacing the values..")
-    # if pipeline_name == "midyear_population_age_sex":
-    #     df["sex"] = df["sex"].apply({2: "Male", 3: "Female"}.get)
-    # else:
-    #     df = df
+
+    if pipeline_name == 'unemployment_cps' :
+        logging.info("Replacing values...")
+        df["value"] = df["value"].apply(reg_exp_tranformation, args=(r"^(\-)$", ""))
 
     logging.info("Transform: Reordering headers..")
     df = df[headers]
@@ -97,8 +104,6 @@ def main(
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
 
-# def trim_spaces(df: pd.DataFrame, trim_space: typing.List[str]) -> None:
-#     df[trim_space]=df[trim_space].apply(lambda x: x.str.strip())
 
 def save_to_new_file(df, file_path):
     df.to_csv(file_path, index=False)
@@ -110,14 +115,6 @@ def download_file(
         logging.info(f"Downloading file from {url} ...")
         subprocess.check_call(["gsutil", "cp", f"{url}", f"{file}"])
 
-# def read_files(path: pathlib.Path) -> pd.DataFrame:
-#     all_files = glob.glob(path + "/*.csv")
-#     df_temp = []
-#     for filename in all_files:
-#         frame = pd.read_csv(filename, index_col=None, header=0)
-#         df_temp.append(frame)
-#     df = pd.concat(df_temp, axis=0, ignore_index=True)
-#     return df
 
 def read_files(source_file,joining_key) :
     if len(source_file) >1 :
@@ -141,6 +138,9 @@ def tream_white_spaces(df,columns) :
     for col in columns :
         df[col]= df[col].astype(str).str.strip()
 
+def reg_exp_tranformation(str_value: str, search_pattern: str, replace_val: str) -> str:
+    str_value = re.sub(search_pattern, replace_val, str_value)
+    return str_value
 
 def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:
     storage_client = storage.Client()
@@ -160,7 +160,5 @@ if __name__ == "__main__":
         headers=json.loads(os.environ["CSV_HEADERS"]),
         pipeline_name=os.environ["PIPELINE_NAME"],
         joining_key=os.environ["JOINING_KEY"],
-        columns=json.loads(os.environ["TRIM_COL"])
-        # filter_headers=json.loads(os.environ["FILTER_HEADERS"]),
-        # trim_space=json.loads(os.environ["TRIM_SPACE"]),
+        columns=json.loads(os.environ["TRIM_SPACE"])
     )

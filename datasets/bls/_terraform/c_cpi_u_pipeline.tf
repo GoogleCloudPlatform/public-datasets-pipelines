@@ -15,12 +15,12 @@
  */
 
 
-resource "google_bigquery_table" "cpsaat18" {
+resource "google_bigquery_table" "c_cpi_u" {
   project    = var.project_id
   dataset_id = "bls"
-  table_id   = "cpsaat18"
+  table_id   = "c_cpi_u"
 
-  description = "Current population survey 18: Employed persons by detailed industry, sex, race, and Hispanic or Latino ethnicity"
+  description = "C_CPI_U Dataset"
 
 
 
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "cpsaat18" {
   ]
 }
 
-output "bigquery_table-cpsaat18-table_id" {
-  value = google_bigquery_table.cpsaat18.table_id
+output "bigquery_table-c_cpi_u-table_id" {
+  value = google_bigquery_table.c_cpi_u.table_id
 }
 
-output "bigquery_table-cpsaat18-id" {
-  value = google_bigquery_table.cpsaat18.id
+output "bigquery_table-c_cpi_u-id" {
+  value = google_bigquery_table.c_cpi_u.id
 }

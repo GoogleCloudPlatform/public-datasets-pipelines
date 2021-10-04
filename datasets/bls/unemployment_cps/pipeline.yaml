@@ -62,7 +62,7 @@ dag:
 
         image_pull_policy: "Always"
 
-        image: "{{ var.json.census_bureau_international.container_registry.run_csv_transform_kub }}"
+        image: "{{ var.json.bls.container_registry.run_csv_transform_kub }}"
 
         env_vars:
           SOURCE_URL: >-

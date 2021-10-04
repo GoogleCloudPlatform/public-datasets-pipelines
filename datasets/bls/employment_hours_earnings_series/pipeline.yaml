@@ -62,22 +62,23 @@ dag:
 
         image_pull_policy: "Always"
 
-        image: "{{ var.json.census_bureau_international.container_registry.run_csv_transform_kub }}"
+        image: "{{ var.json.bls.container_registry.run_csv_transform_kub }}"
 
         env_vars:
           SOURCE_URL: >-
             ["gs://pdp-feeds-staging/Bureau/ce.series.tsv"]
           SOURCE_FILE: >-
-            ["files/data1.csv"]
+            ["files/data1.tsv"]
           TARGET_FILE: "files/data_output.csv"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/bls/employment_hours_earnings_series/data_output.csv"
           PIPELINE_NAME: "employment_hours_earnings_series"
-          FILE_PATH: "files/"
-          FILTER_HEADERS: >-
-            ["series_id","supersector_code","industry_code","data_type_code","seasonal","series_title","footnote_codes","begin_year","begin_period","end_year","end_period"]
+          JOINING_KEY: ""
+          # FILE_PATH: "files/"
+          # FILTER_HEADERS: >-
+          #   ["series_id","supersector_code","industry_code","data_type_code","seasonal","series_title","footnote_codes","begin_year","begin_period","end_year","end_period"]
           TRIM_SPACE: >-
-            ["series_id","footnote_codes","series_title"]
+            ["series_id","footnote_codes"]
           CSV_HEADERS: >-
             ["series_id","supersector_code","industry_code","data_type_code","seasonal","series_title","footnote_codes","begin_year","begin_period","end_year","end_period"]
         resources:

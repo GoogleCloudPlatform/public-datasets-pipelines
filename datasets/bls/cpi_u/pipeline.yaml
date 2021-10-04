@@ -61,22 +61,22 @@ dag:
 
         image_pull_policy: "Always"
 
-        image: "{{ var.json.census_bureau_international.container_registry.run_csv_transform_kub }}"
+        image: "{{ var.json.bls.container_registry.run_csv_transform_kub }}"
 
         env_vars:
           SOURCE_URL: >-
-            ["gs://pdp-feeds-staging/Bureau/inflat_listarea_area_join.csv","gs://pdp-feeds-staging/Bureau/cu.item.tsv"]
+            ["gs://pdp-feeds-staging/Bureau/inflat-prices_listarea_area_join.csv","gs://pdp-feeds-staging/Bureau/cu.item.tsv"]
           SOURCE_FILE: >-
-            ["files/data1.csv","files/data2.csv"]
+            ["files/data1.csv","files/data2.tsv"]
           TARGET_FILE: "files/data_output.csv"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/bls/cpi_u/data_output.csv"
           PIPELINE_NAME: "cpi_u"
-          FILE_PATH: "files/"
+          JOINING_KEY: "item_code"
           FILTER_HEADERS: >-
             ["series_id","year","period","value","footnote_codes","survey_abbreviation","seasonal_code","periodicity_code","area_code","area_name","item_code","item_name","date"]
           TRIM_SPACE: >-
-            ["series_id","footnote_codes","series_title"]
+            ["series_id","value","footnote_codes"]
           CSV_HEADERS: >-
             ["series_id","year","period","value","footnote_codes","survey_abbreviation","seasonal_code","periodicity_code","area_code","area_name","item_code","item_name","date"]
         resources:

@@ -15,12 +15,12 @@
  */
 
 
-resource "google_bigquery_table" "cpsaat18" {
+resource "google_bigquery_table" "employment_hours_earnings_series" {
   project    = var.project_id
   dataset_id = "bls"
-  table_id   = "cpsaat18"
+  table_id   = "employment_hours_earnings_series"
 
-  description = "Current population survey 18: Employed persons by detailed industry, sex, race, and Hispanic or Latino ethnicity"
+  description = "Employment_Hours_Earnings_Series Dataset"
 
 
 
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "cpsaat18" {
   ]
 }
 
-output "bigquery_table-cpsaat18-table_id" {
-  value = google_bigquery_table.cpsaat18.table_id
+output "bigquery_table-employment_hours_earnings_series-table_id" {
+  value = google_bigquery_table.employment_hours_earnings_series.table_id
 }
 
-output "bigquery_table-cpsaat18-id" {
-  value = google_bigquery_table.cpsaat18.id
+output "bigquery_table-employment_hours_earnings_series-id" {
+  value = google_bigquery_table.employment_hours_earnings_series.id
 }
