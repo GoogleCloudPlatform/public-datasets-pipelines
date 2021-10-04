@@ -73,11 +73,12 @@ dag:
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/bls/unemployment_cps/data_output.csv"
           PIPELINE_NAME: "unemployment_cps"
-          FILE_PATH: "files/"
-          FILTER_HEADERS: >-
-            ["date","footnote_codes","period","series_id","series_title","value","year"]
-          # TRIM_SPACE: >-
-          #   ["series_id","footnote_codes","series_title"]
+          # FILE_PATH: "files/"
+          JOINING_KEY: "series_id"
+          # FILTER_HEADERS: >-
+          #   ["date","footnote_codes","period","series_id","series_title","value","year"]
+          TRIM_SPACE: >-
+            ["series_id","value","footnote_codes","series_title"]
           CSV_HEADERS: >-
             ["series_id","year","period","value","footnote_codes","date","series_title"]
         resources:
