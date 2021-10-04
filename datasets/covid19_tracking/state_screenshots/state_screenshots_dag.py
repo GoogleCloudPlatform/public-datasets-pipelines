@@ -38,7 +38,7 @@ with DAG(
         task_id="generate_csv_data_from_web_scraping",
         bash_command='mkdir -p $airflow_home/data/$dataset/$pipeline/run_date={{ ds }}\nSOURCE_URL=$source_url CSV_OUTPUT_PATH=$airflow_home/data/$dataset/$pipeline/run_date={{ ds }}/data.csv GCS_PATH_PREFIX="gs://$destination_bucket/datasets/$dataset/$pipeline/run_date={{ ds }}/screenshots" python $airflow_home/dags/$dataset/$pipeline/custom/web_scrape_and_generate_csv.py\n',
         env={
-            "airflow_home": "{{ var.json.shared.airflow_home }}",
+            "airflow_home": "{{ var.value.airflow_home }}",
             "destination_bucket": "{{ var.json.covid19_tracking.destination_bucket }}",
             "source_url": "https://screenshots.covidtracking.com",
             "dataset": "covid19_tracking",
@@ -51,7 +51,7 @@ with DAG(
         task_id="download_screenshots",
         bash_command='CSV_PATH=$airflow_home/data/$dataset/$pipeline/run_date={{ ds }}/data.csv \\\nSOURCE_COLUMN="source_url" \\\nDOWNLOAD_PREFIX=$airflow_home/data/$dataset/$pipeline/run_date={{ ds }} \\\npython $airflow_home/dags/$dataset/$pipeline/custom/download_screenshots.py\n',
         env={
-            "airflow_home": "{{ var.json.shared.airflow_home }}",
+            "airflow_home": "{{ var.value.airflow_home }}",
             "dataset": "covid19_tracking",
             "pipeline": "state_screenshots",
         },
@@ -60,7 +60,7 @@ with DAG(
     # Upload all downloaded screenshots to the destination bucket
     upload_screenshots_to_destination_bucket = gcs_to_gcs.GoogleCloudStorageToGoogleCloudStorageOperator(
         task_id="upload_screenshots_to_destination_bucket",
-        source_bucket="{{ var.json.shared.composer_bucket }}",
+        source_bucket="{{ var.value.composer_bucket }}",
         source_object="data/covid19_tracking/state_screenshots/run_date={{ ds }}/*",
         destination_bucket="{{ var.json.covid19_tracking.destination_bucket }}",
         destination_object="datasets/covid19_tracking/state_screenshots/run_date={{ ds }}/",
@@ -70,7 +70,7 @@ with DAG(
     # Task to load the data from Airflow data folder to BigQuery
     load_screenshots_to_bq_table = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
         task_id="load_screenshots_to_bq_table",
-        bucket="{{ var.json.shared.composer_bucket }}",
+        bucket="{{ var.value.composer_bucket }}",
         source_objects=[
             "data/covid19_tracking/state_screenshots/run_date={{ ds }}/data.csv"
         ],
@@ -128,7 +128,7 @@ with DAG(
     delete_screenshots_from_composer_bucket = (
         gcs_delete_operator.GoogleCloudStorageDeleteOperator(
             task_id="delete_screenshots_from_composer_bucket",
-            bucket_name="{{ var.json.shared.composer_bucket }}",
+            bucket_name="{{ var.value.composer_bucket }}",
             prefix="data/covid19_tracking/state_screenshots/run_date={{ ds }}",
         )
     )

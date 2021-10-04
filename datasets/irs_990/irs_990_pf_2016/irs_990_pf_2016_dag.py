@@ -37,6 +37,23 @@ with DAG(
         task_id="irs_990_pf_2016_transform_csv",
         startup_timeout_seconds=600,
         name="irs_990_pf_2016",
+        affinity={
+            "nodeAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                    "nodeSelectorTerms": [
+                        {
+                            "matchExpressions": [
+                                {
+                                    "key": "cloud.google.com/gke-nodepool",
+                                    "operator": "In",
+                                    "values": ["pool-e2-standard-4"],
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
         namespace="default",
         image_pull_policy="Always",
         image="{{ var.json.irs_990.container_registry.run_csv_transform_kub }}",
@@ -44,7 +61,7 @@ with DAG(
             "SOURCE_URL": "https://www.irs.gov/pub/irs-soi/16eofinextract990pf.dat",
             "SOURCE_FILE": "files/data.dat",
             "TARGET_FILE": "files/data_output.csv",
-            "TARGET_GCS_BUCKET": "{{ var.json.shared.composer_bucket }}",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/irs_990/irs_990_pf_2016/data_output.csv",
             "PIPELINE_NAME": "irs_990_pf_2016",
             "CSV_HEADERS": '["ein","elf","tax_prd","eostatus","tax_yr","operatingcd","subcd","fairmrktvalamt","grscontrgifts","schedbind","intrstrvnue","dividndsamt","grsrents","grsslspramt","costsold","grsprofitbus","otherincamt","totrcptperbks","compofficers","pensplemplbenf","legalfeesamt","accountingfees","interestamt","depreciationamt","occupancyamt","travlconfmtngs","printingpubl","topradmnexpnsa","contrpdpbks","totexpnspbks","excessrcpts","totrcptnetinc","topradmnexpnsb","totexpnsnetinc","netinvstinc","trcptadjnetinc","totexpnsadjnet","adjnetinc","topradmnexpnsd","totexpnsexempt","othrcashamt","invstgovtoblig","invstcorpstk","invstcorpbnd","totinvstsec","mrtgloans","othrinvstend","othrassetseoy","totassetsend","mrtgnotespay","othrliabltseoy","totliabend","tfundnworth","fairmrktvaleoy","totexcapgnls","totexcapgn","totexcapls","invstexcisetx","sec4940notxcd","sec4940redtxcd","sect511tx","subtitleatx","totaxpyr","esttaxcr","txwithldsrc","txpaidf2758","erronbkupwthld","estpnlty","taxdue","overpay","crelamt","infleg","actnotpr","chgnprvrptcd","filedf990tcd","contractncd","furnishcpycd","claimstatcd","cntrbtrstxyrcd","distribdafcd","orgcmplypubcd","filedlf1041ind","propexchcd","brwlndmnycd","furngoodscd","paidcmpncd","transfercd","agremkpaycd","exceptactsind","prioractvcd","undistrinccd","applyprovind","dirindirintcd","excesshldcd","invstjexmptcd","prevjexmptcd","propgndacd","ipubelectcd","grntindivcd","nchrtygrntcd","nreligiouscd","excptransind","rfprsnlbnftind","pyprsnlbnftind","tfairmrktunuse","valncharitassets","cmpmininvstret","distribamt","undistribincyr","adjnetinccola","adjnetinccolb","adjnetinccolc","adjnetinccold","adjnetinctot","qlfydistriba","qlfydistribb","qlfydistribc","qlfydistribd","qlfydistribtot","valassetscola","valassetscolb","valassetscolc","valassetscold","valassetstot","qlfyasseta","qlfyassetb","qlfyassetc","qlfyassetd","qlfyassettot","endwmntscola","endwmntscolb","endwmntscolc","endwmntscold","endwmntstot","totsuprtcola","totsuprtcolb","totsuprtcolc","totsuprtcold","totsuprttot","pubsuprtcola","pubsuprtcolb","pubsuprtcolc","pubsuprtcold","pubsuprttot","grsinvstinca","grsinvstincb","grsinvstincc","grsinvstincd","grsinvstinctot","grntapprvfut","progsrvcacold","progsrvcacole","progsrvcbcold","progsrvcbcole","progsrvcccold","progsrvcccole","progsrvcdcold","progsrvcdcole","progsrvcecold","progsrvcecole","progsrvcfcold","progsrvcfcole","progsrvcgcold","progsrvcgcole","membershpduesd","membershpduese","intonsvngsd","intonsvngse","dvdndsintd","dvdndsinte","trnsfrcashcd","trnsothasstscd","salesasstscd","prchsasstscd","rentlsfacltscd","reimbrsmntscd","loansguarcd","perfservicescd","sharngasstscd"]',
@@ -56,7 +73,7 @@ with DAG(
     # Task to load CSV data to a BigQuery table
     load_irs_990_pf_2016_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
         task_id="load_irs_990_pf_2016_to_bq",
-        bucket="{{ var.json.shared.composer_bucket }}",
+        bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/irs_990/irs_990_pf_2016/data_output.csv"],
         source_format="CSV",
         destination_project_dataset_table="irs_990.irs_990_pf_2016",

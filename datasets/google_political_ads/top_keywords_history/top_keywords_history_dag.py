@@ -38,6 +38,23 @@ with DAG(
         startup_timeout_seconds=600,
         name="top_keywords_history",
         namespace="default",
+        affinity={
+            "nodeAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                    "nodeSelectorTerms": [
+                        {
+                            "matchExpressions": [
+                                {
+                                    "key": "cloud.google.com/gke-nodepool",
+                                    "operator": "In",
+                                    "values": ["pool-e2-standard-4"],
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
         image_pull_policy="Always",
         image="{{ var.json.google_political_ads.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -45,7 +62,7 @@ with DAG(
             "SOURCE_FILE": "files/data.zip",
             "FILE_NAME": "google-political-ads-transparency-bundle/google-political-ads-top-keywords-history.csv",
             "TARGET_FILE": "files/data_output.csv",
-            "TARGET_GCS_BUCKET": "{{ var.json.shared.composer_bucket }}",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/google_political_ads/top_keywords_history/data_output.csv",
             "PIPELINE_NAME": "top_keywords_history",
             "CSV_HEADERS": '["election_cycle","report_date","keyword_1","spend_usd_1","keyword_2","spend_usd_2","keyword_3","spend_usd_3","keyword_4","spend_usd_4","keyword_5","spend_usd_5","keyword_6","spend_usd_6","region","elections"]',
@@ -57,7 +74,7 @@ with DAG(
     # Task to load CSV data to a BigQuery table
     load_top_keywords_history_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
         task_id="load_top_keywords_history_to_bq",
-        bucket="{{ var.json.shared.composer_bucket }}",
+        bucket="{{ var.value.composer_bucket }}",
         source_objects=[
             "data/google_political_ads/top_keywords_history/data_output.csv"
         ],

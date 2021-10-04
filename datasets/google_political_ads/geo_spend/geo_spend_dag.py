@@ -38,6 +38,23 @@ with DAG(
         startup_timeout_seconds=600,
         name="geo_spend",
         namespace="default",
+        affinity={
+            "nodeAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                    "nodeSelectorTerms": [
+                        {
+                            "matchExpressions": [
+                                {
+                                    "key": "cloud.google.com/gke-nodepool",
+                                    "operator": "In",
+                                    "values": ["pool-e2-standard-4"],
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
         image_pull_policy="Always",
         image="{{ var.json.google_political_ads.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -45,7 +62,7 @@ with DAG(
             "SOURCE_FILE": "files/data.zip",
             "FILE_NAME": "google-political-ads-transparency-bundle/google-political-ads-geo-spend.csv",
             "TARGET_FILE": "files/data_output.csv",
-            "TARGET_GCS_BUCKET": "{{ var.json.shared.composer_bucket }}",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/google_political_ads/geo_spend/data_output.csv",
             "PIPELINE_NAME": "geo_spend",
             "CSV_HEADERS": '["country","country_subdivision_primary","country_subdivision_secondary","spend_usd","spend_eur","spend_inr","spend_bgn","spend_hrk","spend_czk","spend_dkk","spend_huf","spend_pln","spend_ron","spend_sek","spend_gbp","spend_nzd"]',
@@ -57,7 +74,7 @@ with DAG(
     # Task to load CSV data to a BigQuery table
     load_geo_spend_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
         task_id="load_geo_spend_to_bq",
-        bucket="{{ var.json.shared.composer_bucket }}",
+        bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/google_political_ads/geo_spend/data_output.csv"],
         source_format="CSV",
         destination_project_dataset_table="google_political_ads.geo_spend",
