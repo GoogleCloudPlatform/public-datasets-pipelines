@@ -52,7 +52,7 @@ def main(
     )
 
 
-def _date_prefix(dt: date) -> typing.List[str]:
+def _date_prefix(dt: date) -> str:
     # Generates URL paths to folders containing the .nc4 files, for example
     # https://portal.nccs.nasa.gov/datashare/gmao/geos-fp/das/Y2021/M01/D01/
     # => Y2021/M01/D01
@@ -154,6 +154,7 @@ def move_dir_contents_to_gcs(
             f"gs://{target_bucket}/{date_prefix}",
         ]
     )
+    delete_temp_pcu_objects(target_bucket)
     delete_dir_contents(dir_ / date_prefix)
 
 
@@ -164,8 +165,27 @@ def delete_dir_contents(dir_to_delete: pathlib.Path) -> None:
     [f.unlink() for f in dir_to_delete.glob("*") if f.is_file()]
 
 
+def delete_temp_pcu_objects(target_bucket: str) -> None:
+    """Delete temp GCS objects created by gsutil's parallel composite uploads.
+    See https://cloud.google.com/storage/docs/uploads-downloads#gsutil-pcu
+    """
+    res = subprocess.run(
+        ["gsutil", "ls", f"gs://{target_bucket}"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True,
+    )
+    uris = res.stdout.split()
+    for uri in uris:
+        object_name = uri.split(target_bucket + "/")[-1]
+        if not object_name.startswith("Y"):
+            subprocess.check_call(
+                ["gsutil", "rm", "-r", f"gs://{target_bucket}/{object_name}"],
+            )
+
+
 def update_manifest_file(
-    paths: typing.Set[str],
+    paths: typing.List[str],
     download_dir: pathlib.Path,
     target_bucket: str,
     date_prefix: str,
