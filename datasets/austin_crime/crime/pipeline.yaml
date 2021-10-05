@@ -17,7 +17,6 @@ resources:
 
   - type: bigquery_table
     table_id: crime
-
     description: "Austin Crime table"
 
 dag:
@@ -26,7 +25,6 @@ dag:
     dag_id: crime
     default_args:
       owner: "Google"
-
       depends_on_past: False
       start_date: '2021-03-01'
     max_active_runs: 1
@@ -36,17 +34,11 @@ dag:
 
   tasks:
     - operator: "KubernetesPodOperator"
-
       description: "Run CSV transform within kubernetes pod"
-
       args:
-
         task_id: "austin_crime_transform_csv"
-
         name: "crime"
-
         namespace: "default"
-
         affinity:
           nodeAffinity:
             requiredDuringSchedulingIgnoredDuringExecution:
@@ -56,12 +48,8 @@ dag:
                       operator: In
                       values:
                         - "pool-e2-standard-4"
-
-
         image_pull_policy: "Always"
-
         image: "{{ var.json.austin_crime.container_registry.run_csv_transform_kub }}"
-
         env_vars:
           SOURCE_URL: >-
             ["gs://pdp-feeds-staging/Austin_Crime/Annual_Crime_2014.csv","gs://pdp-feeds-staging/Austin_Crime/Annual_Crime_Dataset_2015.csv","gs://pdp-feeds-staging/Austin_Crime/2016_Annual_Crime_Data.csv"]
@@ -75,7 +63,6 @@ dag:
             ["unique_key","address","census_tract","clearance_date","clearance_status","council_district_code","description","district","latitude","longitude","location","location_description","primary_type","timestamp","x_coordinate","y_coordinate","year","zipcode"]
           RENAME_MAPPINGS: >-
             {"GO Primary Key" : "unique_key","Council District" : "council_district_code","GO Highest Offense Desc" : "description","Highest NIBRS/UCR Offense Description" : "primary_type","GO Report Date" : "timestamp","GO Location" : "location_description","Clearance Status" : "clearance_status","Clearance Date" : "clearance_date","GO District" : "district","GO Location Zip" : "zipcode","GO Census Tract" : "census_tract","GO X Coordinate" : "x_coordinate","GO Y Coordinate" : "y_coordinate","Location_1" : "temp_address"}
-
         resources:
           request_memory: "4G"
           request_cpu: "1"
@@ -85,16 +72,12 @@ dag:
 
       args:
         task_id: "load_austin_crime_to_bq"
-
         bucket: "{{ var.value.composer_bucket }}"
-
         source_objects: ["data/austin_crime/crime/data_output.csv"]
         source_format: "CSV"
         destination_project_dataset_table: "austin_crime.crime"
-
         skip_leading_rows: 1
         allow_quoted_newlines: True
-
         write_disposition: "WRITE_TRUNCATE"
 
         schema_fields:

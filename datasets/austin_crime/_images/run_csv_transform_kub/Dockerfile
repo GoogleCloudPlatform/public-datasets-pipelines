@@ -13,8 +13,6 @@
 # limitations under the License.
 
 # The base image for this build
-# FROM gcr.io/google.com/cloudsdktool/cloud-sdk:352.0.0-slim
-# FROM python:3.8
 FROM python:3.8
 
 # Allow statements and log messages to appear in Cloud logs
