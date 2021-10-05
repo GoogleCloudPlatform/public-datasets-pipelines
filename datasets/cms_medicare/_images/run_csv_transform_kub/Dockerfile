@@ -10,10 +10,6 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
-# limitations under the License.
-
-# The base image for this build
-# FROM gcr.io/google.com/cloudsdktool/cloud-sdk:slim
 FROM python:3.8
 
 # Allow statements and log messages to appear in Cloud logs

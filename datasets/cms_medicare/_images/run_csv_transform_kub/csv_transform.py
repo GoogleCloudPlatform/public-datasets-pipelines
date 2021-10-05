@@ -25,6 +25,20 @@ import pandas as pd
 import requests
 from google.cloud import storage
 
+PIPELINES_NAME_INPATIENT = [
+    "inpatient_charges_2011",
+    "inpatient_charges_2012",
+    "inpatient_charges_2013",
+    "inpatient_charges_2014",
+    "inpatient_charges_2015",
+]
+PIPELINES_NAME_OUTPATIENT = [
+    "outpatient_charges_2011",
+    "outpatient_charges_2012",
+    "outpatient_charges_2013",
+    "outpatient_charges_2014",
+]
+
 
 def main(
     source_url: str,
@@ -44,20 +58,6 @@ def main(
     download_file(source_url, source_file)
 
     logging.info(f"Opening file {source_file}")
-
-    PIPELINES_NAME_INPATIENT = [
-        "inpatient_charges_2011",
-        "inpatient_charges_2012",
-        "inpatient_charges_2013",
-        "inpatient_charges_2014",
-        "inpatient_charges_2015",
-    ]
-    PIPELINES_NAME_OUTPATIENT = [
-        "outpatient_charges_2011",
-        "outpatient_charges_2012",
-        "outpatient_charges_2013",
-        "outpatient_charges_2014",
-    ]
 
     if pipeline_name in (PIPELINES_NAME_INPATIENT + PIPELINES_NAME_OUTPATIENT):
         with ZipFile(source_file) as zipped_files:
@@ -107,7 +107,7 @@ def filter_null_rows(
     PIPELINES_NAME_INPATIENT: typing.List[str],
     PIPELINES_NAME_OUTPATIENT: typing.List[str],
     pipeline_name: str,
-) -> str:
+) -> pd.DataFrame:
     if pipeline_name in PIPELINES_NAME_INPATIENT:
         return df.dropna(subset=["drg_definition", "provider_id"], inplace=True)
     elif pipeline_name in PIPELINES_NAME_OUTPATIENT:
