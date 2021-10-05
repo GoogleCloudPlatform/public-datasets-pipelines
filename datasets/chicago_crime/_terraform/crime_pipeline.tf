@@ -20,7 +20,7 @@ resource "google_bigquery_table" "crime" {
   dataset_id = "chicago_crime"
   table_id   = "crime"
 
-  description = "chicago crime dataset"
+  description = "Chicago Crime dataset"
 
 
 
