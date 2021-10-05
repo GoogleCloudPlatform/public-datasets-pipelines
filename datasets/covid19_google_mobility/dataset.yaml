@@ -13,15 +13,8 @@
 # limitations under the License.
 
 dataset:
-  # The `dataset` block includes properties for your dataset that will be shown
-  # to users of your data on the Google Cloud website.
-
   name: covid19_google_mobility
-
-  # A friendly, human-readable name of the dataset
   friendly_name: covid19_google_mobility
-
-  # A short, descriptive summary of the dataset.
   description: |-
     Terms of use
     In order to download or use the data or reports, you must agree to the Google Terms of Service: https://policies.google.com/terms
@@ -36,20 +29,12 @@ dataset:
     • Visit the help center: https://support.google.com/covid19-mobility.
 
     • Or, read the dataset documentation: https://www.google.com/covid19/mobility/data_documentation.html.
-
-
   dataset_sources: ~
-
   terms_of_use: ~
 
 
 resources:
-  # A list of Google Cloud resources needed by your dataset. In principle, all
-  # pipelines under a dataset should be able to share these resources.
-
   - type: bigquery_dataset
-    # Google BigQuery dataset to namespace all tables managed by this folder
-
     dataset_id: covid19_google_mobility
     description: |-
         Terms of use

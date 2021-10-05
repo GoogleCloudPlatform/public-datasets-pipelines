@@ -56,7 +56,7 @@ def main(
     logging.info(f"Transform: Rename columns.. {source_file}")
     rename_headers(df, rename_mappings)
 
-    logging.info(f"Transform: converting to integer {source_file}... ")
+    logging.info(f"Transform: Converting to integer {source_file}... ")
     convert_values_to_integer_string(df)
 
     logging.info("Transform: Reordering headers..")
