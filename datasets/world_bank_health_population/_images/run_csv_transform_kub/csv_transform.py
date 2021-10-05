@@ -43,7 +43,7 @@ def main(
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
 
-    logging.info("creating 'files' folder")
+    logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
 
     logging.info(f"Downloading file {source_url}")
@@ -70,14 +70,13 @@ def main(
         logging.info("Transform: Creating a new column ...")
         df["latest_water_withdrawal_data"] = ""
 
-        logging.info("Transform: converting to integer ... ")
+        logging.info("Transform: Converting to integer ... ")
         df["latest_industrial_data"] = df["latest_industrial_data"].apply(
             convert_to_integer_string
         )
         df["latest_trade_data"] = df["latest_trade_data"].apply(
             convert_to_integer_string
         )
-
     else:
         df = df
 
@@ -114,8 +113,8 @@ def delete_column(df: pd.DataFrame, column_name: str) -> None:
 
 
 def extract_year(string_val: str) -> str:
-    string_val = string_val[2:]
-    return string_val
+    # string_val example: YR2021
+    return string_val[2:]
 
 
 def save_to_new_file(df: pd.DataFrame, file_path: str) -> None:
