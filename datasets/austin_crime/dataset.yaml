@@ -15,20 +15,13 @@
 dataset:
 
   name: austin_crime
-
   friendly_name: austin_crime
-
-
   description: Austin Crime dataset
-
   dataset_sources: ~
-
   terms_of_use: ~
 
 
 resources:
-
   - type: bigquery_dataset
-
     dataset_id: austin_crime
     description: Austin Crime dataset
