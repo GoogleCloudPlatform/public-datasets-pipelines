@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import datetime
-import glob
 import json
 import logging
 import os
@@ -24,7 +23,6 @@ import typing
 
 import pandas as pd
 from google.cloud import storage
-from pandas.io.parsers import read_csv
 
 
 def main(
@@ -37,8 +35,6 @@ def main(
     pipeline_name: str,
     joining_key: str,
     columns: typing.List[str],
-    # filter_headers: typing.List[str],
-    # trim_space: typing.List[str],
 ) -> None:
 
     logging.info(
@@ -49,39 +45,20 @@ def main(
     logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
 
-    logging.info(f"Downloading file...")
+    logging.info("Downloading file...")
     download_file(source_url, source_file)
 
-    logging.info(f"Reading the file(s)....")
-    # if pipeline_name == "employment_hours_earnings_series" or pipeline_name == "unemployment_cps_series" or pipeline_name == "unemployment_cps_series" :
-    #     df = pd.read_csv(source_file[0],sep="\t")
-    # else:
-    #     df1 = pd.read_csv(source_file[0])
-    #     df2 = pd.read_csv(source_file[1])
-    #     df = pd.merge(df1, df2, how="left", on=["series_id"])
+    logging.info("Reading the file(s)....")
+    df = read_files(source_file, joining_key)
 
-    df=read_files(source_file,joining_key)
-
-    # logging.info("Filter Headers ...")
-    # df = df[filter_headers]
-
-
-    logging.info("Renaming headers...")
-    # rename_pipeline_name=["employment_hours_earnings_series","unemployment_cps","unemployment_cps_series"]
-
-    # rename_mappings={"series_id                     ":"series_id"}
-
-    # for pipeline_name in rename_pipeline_name :
-    #     df.rename(columns=rename_mappings, inplace=True)
-
+    logging.info("Transform: Removing white spaces from headers names...")
     df.columns = df.columns.str.strip()
 
-    logging.info("Trim Whitespaces...")
-    tream_white_spaces(df,columns)
+    logging.info("Transform: Trim Whitespaces...")
+    tream_white_spaces(df, columns)
 
-
-    if pipeline_name == 'unemployment_cps' :
-        logging.info("Replacing values...")
+    if pipeline_name == "unemployment_cps":
+        logging.info("Transform: Replacing values...")
         df["value"] = df["value"].apply(reg_exp_tranformation, args=(r"^(\-)$", ""))
 
     logging.info("Transform: Reordering headers..")
@@ -105,8 +82,9 @@ def main(
     )
 
 
-def save_to_new_file(df, file_path):
+def save_to_new_file(df: pd.DataFrame, file_path: pathlib.Path) -> None:
     df.to_csv(file_path, index=False)
+
 
 def download_file(
     source_url: typing.List[str], source_file: typing.List[pathlib.Path]
@@ -116,37 +94,43 @@ def download_file(
         subprocess.check_call(["gsutil", "cp", f"{url}", f"{file}"])
 
 
-def read_files(source_file,joining_key) :
-    if len(source_file) >1 :
-        if source_file[0][-3:] == 'csv' :
-                df1 = pd.read_csv(source_file[0])
-        else :
-            df1 = pd.read_csv(source_file[0], sep='\t')
-        if source_file[1][-3:] == 'csv':
+def read_files(
+    source_file: typing.List[pathlib.Path], joining_key: str
+) -> pd.DataFrame:
+    if len(source_file) > 1:
+        if source_file[0][-3:] == "csv":
+            df1 = pd.read_csv(source_file[0])
+        else:
+            df1 = pd.read_csv(source_file[0], sep="\t")
+        if source_file[1][-3:] == "csv":
             df2 = pd.read_csv(source_file[1])
-        else :
-            df2 = pd.read_csv(source_file[1], sep='\t')
-        df = pd.merge(df1,df2,how="left", on=joining_key)
-    else :
-        if source_file[0][-3:] == 'csv' :
-                df = pd.read_csv(source_file[0])
-        else :
-            df = pd.read_csv(source_file[0], sep='\t')
+        else:
+            df2 = pd.read_csv(source_file[1], sep="\t")
+        df = pd.merge(df1, df2, how="left", on=joining_key)
+    else:
+        if source_file[0][-3:] == "csv":
+            df = pd.read_csv(source_file[0])
+        else:
+            df = pd.read_csv(source_file[0], sep="\t")
     return df
 
-def tream_white_spaces(df,columns) :
-    for col in columns :
-        df[col]= df[col].astype(str).str.strip()
+
+def tream_white_spaces(df: pd.DataFrame, columns: typing.List[str]) -> None:
+    for col in columns:
+        df[col] = df[col].astype(str).str.strip()
+
 
 def reg_exp_tranformation(str_value: str, search_pattern: str, replace_val: str) -> str:
     str_value = re.sub(search_pattern, replace_val, str_value)
     return str_value
+
 
 def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:
     storage_client = storage.Client()
     bucket = storage_client.bucket(gcs_bucket)
     blob = bucket.blob(gcs_path)
     blob.upload_from_filename(file_path)
+
 
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
@@ -160,5 +144,5 @@ if __name__ == "__main__":
         headers=json.loads(os.environ["CSV_HEADERS"]),
         pipeline_name=os.environ["PIPELINE_NAME"],
         joining_key=os.environ["JOINING_KEY"],
-        columns=json.loads(os.environ["TRIM_SPACE"])
+        columns=json.loads(os.environ["TRIM_SPACE"]),
     )

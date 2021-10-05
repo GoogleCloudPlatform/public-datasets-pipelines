@@ -24,7 +24,7 @@ default_args = {
 
 
 with DAG(
-    dag_id="bls.employment_hours_earnings",
+    dag_id="bls.unemployment_cps",
     default_args=default_args,
     max_active_runs=1,
     schedule_interval="@daily",
