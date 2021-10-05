@@ -14,17 +14,13 @@
 
 dataset:
   name: san_francisco_trees
-
   friendly_name: san_francisco_trees
-
   description: "San Francisco Trees dataset"
-
   dataset_sources: ~
   terms_of_use: ~
 
 
 resources:
   - type: bigquery_dataset
-
     dataset_id: san_francisco_trees
     description: "San Francisco Trees dataset"

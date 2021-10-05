@@ -17,7 +17,6 @@ resources:
 
   - type: bigquery_table
     table_id: street_trees
-
     description: "San Francisco street trees table"
 
 dag:
@@ -26,7 +25,6 @@ dag:
     dag_id: street_trees
     default_args:
       owner: "Google"
-
       depends_on_past: False
       start_date: '2021-03-01'
     max_active_runs: 1
@@ -36,19 +34,12 @@ dag:
 
   tasks:
     - operator: "KubernetesPodOperator"
-
       description: "Run CSV transform within kubernetes pod"
-
       args:
-
         task_id: "street_trees_transform_csv"
-
         startup_timeout_seconds: 600
-
         name: "street_trees"
-
         namespace: "default"
-
         affinity:
           nodeAffinity:
             requiredDuringSchedulingIgnoredDuringExecution:
@@ -58,10 +49,7 @@ dag:
                       operator: In
                       values:
                         - "pool-e2-standard-4"
-
-
         image_pull_policy: "Always"
-
         image: "{{ var.json.san_francisco_trees.container_registry.run_csv_transform_kub }}"
 
         env_vars:
@@ -75,26 +63,19 @@ dag:
             ["tree_id","legal_status","species","address","site_order","site_info","plant_type","care_taker","care_assistant","plant_date","dbh","plot_size","permit_notes","x_coordinate","y_coordinate","latitude","longitude","location"]
           RENAME_MAPPINGS: >-
             {"TreeID" : "tree_id" ,"qLegalStatus" : "legal_status" ,"qSpecies" : "species" ,"qAddress" : "address" ,"SiteOrder" : "site_order" ,"qSiteInfo" : "site_info" ,"PlantType" : "plant_type" ,"qCaretaker" : "care_taker" ,"qCareAssistant" : "care_assistant" ,"PlantDate" : "plant_date" ,"DBH" : "dbh" ,"PlotSize" : "plot_size" ,"PermitNotes" : "permit_notes" ,"XCoord" : "x_coordinate" ,"YCoord" : "y_coordinate" ,"Latitude" : "latitude" ,"Longitude" : "longitude" ,"Location" : "location"}
-
         resources:
           request_memory: "2G"
           request_cpu: "1"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
-
       args:
         task_id: "load_street_trees_to_bq"
-
-
         bucket: "{{ var.value.composer_bucket }}"
-
         source_objects: ["data/san_francisco_trees/street_trees/data_output.csv"]
         source_format: "CSV"
         destination_project_dataset_table: "san_francisco_trees.street_trees"
-
         skip_leading_rows: 1
-
         write_disposition: "WRITE_TRUNCATE"
 
         schema_fields:
