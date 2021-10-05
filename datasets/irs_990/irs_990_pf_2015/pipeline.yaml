@@ -52,6 +52,16 @@ dag:
         # The name of the pod in which the task will run. This will be used (plus a random suffix) to generate a pod id
         name: "irs_990_pf_2015"
 
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: cloud.google.com/gke-nodepool
+                      operator: In
+                      values:
+                        - "pool-e2-standard-4"
+
         # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
         namespace: "default"
 
@@ -65,7 +75,7 @@ dag:
           SOURCE_URL: "https://www.irs.gov/pub/irs-soi/15eofinextract990pf.dat"
           SOURCE_FILE: "files/data.dat"
           TARGET_FILE: "files/data_output.csv"
-          TARGET_GCS_BUCKET: "{{ var.json.shared.composer_bucket }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/irs_990/irs_990_pf_2015/data_output.csv"
           PIPELINE_NAME: "irs_990_pf_2015"
           CSV_HEADERS: >-
@@ -85,7 +95,7 @@ dag:
         task_id: "load_irs_990_pf_2015_to_bq"
 
         # The GCS bucket where the CSV file is located in.
-        bucket: "{{ var.json.shared.composer_bucket }}"
+        bucket: "{{ var.value.composer_bucket }}"
 
         # The GCS object path for the CSV file
         source_objects: ["data/irs_990/irs_990_pf_2015/data_output.csv"]
