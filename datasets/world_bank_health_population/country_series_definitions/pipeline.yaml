@@ -32,7 +32,7 @@ dag:
     catchup: False
     default_view: graph
 
-    tasks:
+  tasks:
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
