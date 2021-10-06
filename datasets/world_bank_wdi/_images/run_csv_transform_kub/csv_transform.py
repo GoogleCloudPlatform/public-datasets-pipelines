@@ -114,8 +114,8 @@ def delete_column(df: pd.DataFrame, column_name: str) -> None:
 
 
 def extract_year(string_val: str) -> str:
-    string_val = string_val[-4:]
-    return string_val
+    # example : YR2021
+    return string_val[-4:]
 
 
 def save_to_new_file(df: pd.DataFrame, file_path: str) -> None:
