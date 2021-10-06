@@ -51,7 +51,7 @@ def main(
     logging.info("Reading the file(s)....")
     df = read_files(source_file, joining_key)
 
-    logging.info("Transform: Removing white spaces from headers names...")
+    logging.info("Transform: Removing whitespace from headers names...")
     df.columns = df.columns.str.strip()
 
     logging.info("Transform: Trim Whitespaces...")
