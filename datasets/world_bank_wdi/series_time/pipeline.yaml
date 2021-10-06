@@ -31,17 +31,14 @@ dag:
     schedule_interval: "@daily"
     catchup: False
     default_view: graph
-
   tasks:
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod"
-
       args:
         task_id: "series_time_transform_csv"
         startup_timeout_seconds: 600
         name: "series_time"
         namespace: "default"
-
         affinity:
           nodeAffinity:
             requiredDuringSchedulingIgnoredDuringExecution:
@@ -51,8 +48,6 @@ dag:
                       operator: In
                       values:
                         - "pool-e2-standard-4"
-
-
         image_pull_policy: "Always"
         image: "{{ var.json.world_bank_wdi.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -64,24 +59,15 @@ dag:
           TARGET_GCS_PATH: "data/world_bank_wdi/series_time/data_output.csv"
           PIPELINE_NAME: "series_time"
           CSV_HEADERS: >-
-            [
-              "series_code",
-              "year",
-              "description"
-            ]
+            ["series_code","year","description"]
           RENAME_MAPPINGS: >-
-            {
-              "SeriesCode" : "series_code",
-              "Year" : "year",
-              "DESCRIPTION" : "description"
-            }
+            {"SeriesCode" : "series_code","Year" : "year","DESCRIPTION" : "description"}
         resources:
           request_memory: "2G"
           request_cpu: "1"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
-
       args:
         task_id: "load_series_time_to_bq"
         bucket: "{{ var.value.composer_bucket }}"
