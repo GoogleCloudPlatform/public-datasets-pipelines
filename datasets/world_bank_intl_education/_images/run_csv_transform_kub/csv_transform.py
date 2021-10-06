@@ -43,7 +43,7 @@ def main(
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
 
-    logging.info("creating 'files' folder")
+    logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
 
     logging.info(f"Downloading file {source_url}")
@@ -62,16 +62,12 @@ def main(
 
     if pipeline_name == "country_summary":
         logging.info("Transform: converting to integer ... ")
-        df["latest_industrial_data"] = df["latest_industrial_data"].apply(
-            convert_to_integer_string
-        )
-        df["latest_trade_data"] = df["latest_trade_data"].apply(
-            convert_to_integer_string
-        )
-        df["national_accounts_reference_year"] = df[
-            "national_accounts_reference_year"
-        ].apply(convert_to_integer_string)
-
+        columns = [
+            "latest_industrial_data",
+            "latest_trade_data",
+            "national_accounts_reference_year",
+        ]
+        convert_to_integer_string(df, columns)
     else:
         df = df
 
@@ -111,13 +107,18 @@ def save_to_new_file(df: pd.DataFrame, file_path: str) -> None:
     df.to_csv(file_path, index=False)
 
 
-def convert_to_integer_string(input: typing.Union[str, float]) -> str:
+def change_to_integer_string(input: typing.Union[str, float]) -> str:
     str_val = ""
     if not input or (math.isnan(input)):
         str_val = ""
     else:
         str_val = str(int(round(input, 0)))
     return str_val
+
+
+def convert_to_integer_string(df: pd.DataFrame, columns: typing.List[str]):
+    for col in columns:
+        df[col] = df[col].apply(change_to_integer_string)
 
 
 def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:
