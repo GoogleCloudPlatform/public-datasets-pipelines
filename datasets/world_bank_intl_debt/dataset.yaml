@@ -13,31 +13,14 @@
 # limitations under the License.
 
 dataset:
-  # The `dataset` block includes properties for your dataset that will be shown
-  # to users of your data on the Google Cloud website.
-
-  # Must be exactly the same name as the folder name your dataset.yaml is in.
   name: world_bank_intl_debt
-
-  # A friendly, human-readable name of the dataset
   friendly_name: world_bank_intl_debt
-
-  # A short, descriptive summary of the dataset.
   description: "World Bank Intl Debt"
-
-  # A list of sources the dataset is derived from, using the YAML list syntax.
   dataset_sources: ~
-
-  # A list of terms and conditions that users of the dataset should agree on,
-  # using the YAML list syntax.
   terms_of_use: ~
 
 
 resources:
-  # A list of Google Cloud resources needed by your dataset. In principle, all
-  # pipelines under a dataset should be able to share these resources.
-
   - type: bigquery_dataset
-
     dataset_id: world_bank_intl_debt
     description: "World Bank Intl Debt"

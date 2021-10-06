@@ -116,8 +116,8 @@ def delete_column(df: pd.DataFrame, column_name: str) -> None:
 
 
 def extract_year(string_val: str) -> str:
-    string_val = string_val[2:]
-    return string_val
+    # emaple : YR2018
+    return string_val[2:]
 
 
 def save_to_new_file(df: pd.DataFrame, file_path: str) -> None:
