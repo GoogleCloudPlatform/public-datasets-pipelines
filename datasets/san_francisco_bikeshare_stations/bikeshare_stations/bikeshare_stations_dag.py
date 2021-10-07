@@ -61,10 +61,11 @@ with DAG(
             "SOURCE_URL_JSON": "https://gbfs.baywheels.com/gbfs/fr/station_information",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
+            "CHUNKSIZE": "750000",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/san_francisco_bikeshare_stations/bikeshare_stations/data_output.csv",
         },
-        resources={"limit_memory": "2G", "limit_cpu": "1"},
+        resources={"limit_memory": "8G", "limit_cpu": "3"},
     )
 
     # Task to load CSV data to a BigQuery table
