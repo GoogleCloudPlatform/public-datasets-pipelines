@@ -61,16 +61,17 @@ with DAG(
             "SOURCE_URL": "https://data.cityofchicago.org/api/views/ijzp-q8t2/rows.csv",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
-            "TARGET_GCS_BUCKET": "{{ var.json.shared.composer_bucket }}",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/chicago_crime/crime/data_output.csv",
+            "CHUNK_SIZE": "1000000",
         },
-        resources={"request_memory": "8G", "request_cpu": "2"},
+        resources={"request_memory": "2G", "request_cpu": "1"},
     )
 
     # Task to load CSV data to a BigQuery table
     load_chicago_crime_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
         task_id="load_chicago_crime_to_bq",
-        bucket="{{ var.json.shared.composer_bucket }}",
+        bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/chicago_crime/crime/data_output.csv"],
         source_format="CSV",
         destination_project_dataset_table="chicago_crime.crime",

@@ -18,6 +18,7 @@ import logging
 import math
 import os
 import pathlib
+import subprocess
 import typing
 
 import pandas as pd
@@ -31,6 +32,7 @@ def main(
     target_file: pathlib.Path,
     target_gcs_bucket: str,
     target_gcs_path: str,
+    chunk_size: str,
 ) -> None:
 
     logging.info(
@@ -44,59 +46,74 @@ def main(
     logging.info(f"Downloading file {source_url}")
     download_file(source_url, source_file)
 
-    logging.info(f"Opening file {source_file}")
-    df = pd.read_csv(source_file)
+    with pd.read_csv(
+        source_file,
+        chunksize=int(chunk_size),
+    ) as reader:
+        for chunk_number, chunk in enumerate(reader):
+            logging.info(f"Processing batch {chunk_number}")
+            target_file_batch = str(target_file).replace(
+                ".csv", "-" + str(chunk_number) + ".csv"
+            )
+            df = pd.DataFrame()
+            df = pd.concat([df, chunk])
 
-    logging.info(f"Transforming {source_file} ...")
+            logging.info(f"Transforming {source_file} ...")
 
-    logging.info(f"Transform: Rename columns {source_file} ...")
-    rename_headers(df)
+            logging.info(f"Transform: Rename columns {source_file} ...")
+            rename_headers(df)
 
-    logging.info("Transform: Converting date format.. ")
-    convert_values(df)
+            logging.info("Transform: Converting date format.. ")
+            convert_values(df)
 
-    logging.info("Transform: Removing null values.. ")
-    filter_null_rows(df)
+            logging.info("Transform: Removing null values.. ")
+            filter_null_rows(df)
 
-    logging.info("Transform: Converting to integers..")
-    convert_values_to_integer_string(df)
+            logging.info("Transform: Converting to integers..")
+            convert_values_to_integer_string(df)
 
-    logging.info("Transform: Converting to float..")
-    removing_nan_values(df)
+            logging.info("Transform: Converting to float..")
+            removing_nan_values(df)
 
-    logging.info("Transform: Reordering headers..")
-    df = df[
-        [
-            "unique_key",
-            "case_number",
-            "date",
-            "block",
-            "iucr",
-            "primary_type",
-            "description",
-            "location_description",
-            "arrest",
-            "domestic",
-            "beat",
-            "district",
-            "ward",
-            "community_area",
-            "fbi_code",
-            "x_coordinate",
-            "y_coordinate",
-            "year",
-            "updated_on",
-            "latitude",
-            "longitude",
-            "location",
-        ]
-    ]
+            logging.info("Transform: Reordering headers..")
+            df = df[
+                [
+                    "unique_key",
+                    "case_number",
+                    "date",
+                    "block",
+                    "iucr",
+                    "primary_type",
+                    "description",
+                    "location_description",
+                    "arrest",
+                    "domestic",
+                    "beat",
+                    "district",
+                    "ward",
+                    "community_area",
+                    "fbi_code",
+                    "x_coordinate",
+                    "y_coordinate",
+                    "year",
+                    "updated_on",
+                    "latitude",
+                    "longitude",
+                    "location",
+                ]
+            ]
 
-    logging.info(f"Saving to output file.. {target_file}")
-    try:
-        save_to_new_file(df, file_path=str(target_file))
-    except Exception as e:
-        logging.error(f"Error saving output file: {e}.")
+            process_chunk(df, target_file_batch)
+
+            logging.info(f"Appending batch {chunk_number} to {target_file}")
+            if chunk_number == 0:
+                subprocess.run(["cp", target_file_batch, target_file])
+            else:
+                subprocess.check_call(f"sed -i '1d' {target_file_batch}", shell=True)
+                subprocess.check_call(
+                    f"cat {target_file_batch} >> {target_file}", shell=True
+                )
+            subprocess.run(["rm", target_file_batch])
 
     logging.info(
         f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
@@ -107,6 +124,16 @@ def main(
         "Chicago crime process completed at "
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
+
+
+def process_chunk(df: pd.DataFrame, target_file_batch: str) -> None:
+
+    logging.info(f"Saving to output file.. {target_file_batch}")
+    try:
+        save_to_new_file(df, file_path=str(target_file_batch))
+    except Exception as e:
+        logging.error(f"Error saving output file: {e}.")
+    logging.info("..Done!")
 
 
 def resolve_nan(input: typing.Union[str, float]) -> str:
@@ -173,7 +200,7 @@ def rename_headers(df: pd.DataFrame) -> None:
 def convert_dt_format(dt_str: str) -> str:
     # Old format: MM/dd/yyyy hh:mm:ss aa
     # New format: yyyy-MM-dd HH:mm:ss
-    if dt_str is None or len(dt_str) == 0:
+    if not dt_str:
         return dt_str
     else:
         return datetime.datetime.strptime(dt_str, "%m/%d/%Y %H:%M:%S %p").strftime(
@@ -223,4 +250,5 @@ if __name__ == "__main__":
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
+        chunk_size=os.environ["CHUNK_SIZE"],
     )
