@@ -63,8 +63,6 @@ def main(
     if pipeline_name == "series_time" or pipeline_name == "footnotes":
         logging.info(f"Transform: Extracting year for {pipeline_name} ...")
         df["year"] = df["year"].apply(extract_year)
-    else:
-        df = df
 
     if pipeline_name == "country_summary":
         logging.info("Transform: Creating a new column ...")
@@ -77,9 +75,6 @@ def main(
         df["latest_trade_data"] = df["latest_trade_data"].apply(
             convert_to_integer_string
         )
-
-    else:
-        df = df
 
     logging.info(f"Transform: Reordering headers for {pipeline_name} ...")
     df = df[headers]
