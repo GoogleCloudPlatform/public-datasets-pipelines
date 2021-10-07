@@ -58,8 +58,8 @@ with DAG(
         image_pull_policy="Always",
         image="{{ var.json.bls.container_registry.run_csv_transform_kub }}",
         env_vars={
-            "SOURCE_URL": '["gs://pdp-feeds-staging/Bureau/wages_list_join.csv","gs://pdp-feeds-staging/Bureau_new/wm.csv"]',
-            "SOURCE_FILE": '["files/data1.csv","files/data2.csv"]',
+            "SOURCE_URLS": '["gs://pdp-feeds-staging/Bureau/wages_list_join.csv","gs://pdp-feeds-staging/Bureau_new/wm.csv"]',
+            "SOURCE_FILES": '["files/data1.csv","files/data2.csv"]',
             "TARGET_FILE": "files/data_output.csv",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/bls/wm/data_output.csv",

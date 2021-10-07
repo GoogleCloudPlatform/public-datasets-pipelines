@@ -51,9 +51,9 @@ dag:
         image_pull_policy: "Always"
         image: "{{ var.json.bls.container_registry.run_csv_transform_kub }}"
         env_vars:
-          SOURCE_URL: >-
+          SOURCE_URLS: >-
             ["gs://pdp-feeds-staging/Bureau/ln.series.tsv"]
-          SOURCE_FILE: >-
+          SOURCE_FILES: >-
             ["files/data1.tsv"]
           TARGET_FILE: "files/data_output.tsv"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"

@@ -26,8 +26,8 @@ from google.cloud import storage
 
 
 def main(
-    source_url: typing.List[str],
-    source_file: typing.List[pathlib.Path],
+    source_urls: typing.List[str],
+    source_files: typing.List[pathlib.Path],
     target_file: pathlib.Path,
     target_gcs_bucket: str,
     target_gcs_path: str,
@@ -46,16 +46,16 @@ def main(
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
 
     logging.info("Downloading file...")
-    download_file(source_url, source_file)
+    download_file(source_urls, source_files)
 
     logging.info("Reading the file(s)....")
-    df = read_files(source_file, joining_key)
+    df = read_files(source_files, joining_key)
 
     logging.info("Transform: Removing whitespace from headers names...")
     df.columns = df.columns.str.strip()
 
     logging.info("Transform: Trim Whitespaces...")
-    tream_white_spaces(df, columns)
+    trim_white_spaces(df, columns)
 
     if pipeline_name == "unemployment_cps":
         logging.info("Transform: Replacing values...")
@@ -87,42 +87,34 @@ def save_to_new_file(df: pd.DataFrame, file_path: pathlib.Path) -> None:
 
 
 def download_file(
-    source_url: typing.List[str], source_file: typing.List[pathlib.Path]
+    source_urls: typing.List[str], source_files: typing.List[pathlib.Path]
 ) -> None:
-    for url, file in zip(source_url, source_file):
+    for url, file in zip(source_urls, source_files):
         logging.info(f"Downloading file from {url} ...")
         subprocess.check_call(["gsutil", "cp", f"{url}", f"{file}"])
 
 
-def read_files(
-    source_file: typing.List[pathlib.Path], joining_key: str
-) -> pd.DataFrame:
-    if len(source_file) > 1:
-        if source_file[0][-3:] == "csv":
-            df1 = pd.read_csv(source_file[0])
+def read_files(source_files, joining_key):
+    df = pd.DataFrame()
+    for source_file in source_files:
+        if os.path.splitext(source_file)[1] == ".csv":
+            _df = pd.read_csv(source_file)
         else:
-            df1 = pd.read_csv(source_file[0], sep="\t")
-        if source_file[1][-3:] == "csv":
-            df2 = pd.read_csv(source_file[1])
+            _df = pd.read_csv(source_file, sep="\t")
+        if source_files.index(source_file) == 0:
+            df = _df
         else:
-            df2 = pd.read_csv(source_file[1], sep="\t")
-        df = pd.merge(df1, df2, how="left", on=joining_key)
-    else:
-        if source_file[0][-3:] == "csv":
-            df = pd.read_csv(source_file[0])
-        else:
-            df = pd.read_csv(source_file[0], sep="\t")
+            df = pd.merge(df, _df, how="left", on=joining_key)
     return df
 
 
-def tream_white_spaces(df: pd.DataFrame, columns: typing.List[str]) -> None:
+def trim_white_spaces(df: pd.DataFrame, columns: typing.List[str]) -> None:
     for col in columns:
         df[col] = df[col].astype(str).str.strip()
 
 
 def reg_exp_tranformation(str_value: str, search_pattern: str, replace_val: str) -> str:
-    str_value = re.sub(search_pattern, replace_val, str_value)
-    return str_value
+    return re.sub(search_pattern, replace_val, str_value)
 
 
 def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:
@@ -136,8 +128,8 @@ if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
 
     main(
-        source_url=json.loads(os.environ["SOURCE_URL"]),
-        source_file=json.loads(os.environ["SOURCE_FILE"]),
+        source_urls=json.loads(os.environ["SOURCE_URLS"]),
+        source_files=json.loads(os.environ["SOURCE_FILES"]),
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
         target_gcs_path=os.environ["TARGET_GCS_PATH"],

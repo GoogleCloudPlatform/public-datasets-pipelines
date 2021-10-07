@@ -58,8 +58,8 @@ with DAG(
         image_pull_policy="Always",
         image="{{ var.json.bls.container_registry.run_csv_transform_kub }}",
         env_vars={
-            "SOURCE_URL": '["gs://pdp-feeds-staging/Bureau/wm.series.tsv"]',
-            "SOURCE_FILE": '["files/data1.tsv"]',
+            "SOURCE_URLS": '["gs://pdp-feeds-staging/Bureau/wm.series.tsv"]',
+            "SOURCE_FILES": '["files/data1.tsv"]',
             "TARGET_FILE": "files/data_output.csv",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/bls/wm_series/data_output.csv",
