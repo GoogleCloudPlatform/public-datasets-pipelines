@@ -43,6 +43,8 @@ def main(
     df = pd.read_csv(str(source_file))
 
     logging.info(f"Transforming.. {source_file}")
+
+    logging.info("Transform: Renaming headers..")
     rename_headers(df, rename_mappings)
     date_convert(df)
 
@@ -67,7 +69,9 @@ def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
 
 
 def convert_dt_format(dt_str: str) -> str:
-    if dt_str is None or len(dt_str) == 0:
+    # Old format: MM/dd/yyyy hh:mm:ss aa
+    # New format: yyyy-MM-dd HH:mm:ss
+    if not dt_str:
         return dt_str
     else:
         if len(dt_str) == 10:

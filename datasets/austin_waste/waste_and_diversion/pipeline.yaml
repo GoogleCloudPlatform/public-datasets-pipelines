@@ -16,10 +16,7 @@
 resources:
 
   - type: bigquery_table
-    # Required Properties:
     table_id: waste_and_diversion
-
-    # Description of the table
     description: "Austin waste and diversion"
 
 dag:
@@ -28,71 +25,45 @@ dag:
     dag_id: waste_and_diversion
     default_args:
       owner: "Google"
-
-      # When set to True, keeps a task from getting triggered if the previous schedule for the task hasn’t succeeded
       depends_on_past: False
       start_date: '2021-03-01'
     max_active_runs: 1
-    schedule_interval: "@daily"  # run once a week at Sunday 12am
+    schedule_interval: "@daily"
     catchup: False
     default_view: graph
-
   tasks:
-
     - operator: "KubernetesPodOperator"
-
-      # Task description
       description: "Run CSV transform within kubernetes pod"
-
       args:
-
         task_id: "austin_waste_transform_csv"
-
         startup_timeout_seconds: 600
-
-        # The name of the pod in which the task will run. This will be used (plus a random suffix) to generate a pod id
         name: "austin_waste"
-
-        # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
         namespace: "default"
-
         image_pull_policy: "Always"
-
-        # Docker images will be built and pushed to GCR by default whenever the `scripts/generate_dag.py` is run. To skip building and pushing images, use the optional `--skip-builds` flag.
         image: "{{ var.json.austin_waste.container_registry.run_csv_transform_kub }}"
-
-        # Set the environment variables you need initialized in the container. Use these as input variables for the script your container is expected to perform.
         env_vars:
           SOURCE_URL: "https://data.austintexas.gov/api/views/mbnu-4wq9/rows.csv"
           SOURCE_FILE: "files/data.csv"
           TARGET_FILE: "files/data_output.csv"
-          TARGET_GCS_BUCKET: "{{ var.json.shared.composer_bucket }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/austin_waste/waste_and_diversion/data_output.csv"
           CSV_HEADERS: >-
             [ "load_id", "report_date", "load_type", "load_time", "load_weight", "dropoff_site", "route_type", "route_number"]
           RENAME_MAPPINGS: >-
             {"Load ID": "load_id","Report Date": "report_date","Load Type": "load_type","Load Time": "load_time","Load Weight": "load_weight","Dropoff Site": "dropoff_site","Route Type": "route_type","Route Number": "route_number"}
-        # Set resource limits for the pod here. For resource units in Kubernetes, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes
         resources:
-          limit_memory: "4G"
-          limit_cpu: "2"
+          limit_memory: "2G"
+          limit_cpu: "1"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
-
       args:
         task_id: "load_austin_waste_and_diversion_to_bq"
-
-
-        bucket: "{{ var.json.shared.composer_bucket }}"
-
-
+        bucket: "{{ var.value.composer_bucket }}"
         source_objects: ["data/austin_waste/waste_and_diversion/data_output.csv"]
         source_format: "CSV"
         destination_project_dataset_table: "austin_waste.waste_and_diversion"
-
         skip_leading_rows: 1
-
         write_disposition: "WRITE_TRUNCATE"
 
         schema_fields:

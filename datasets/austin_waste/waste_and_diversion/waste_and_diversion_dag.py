@@ -44,19 +44,19 @@ with DAG(
             "SOURCE_URL": "https://data.austintexas.gov/api/views/mbnu-4wq9/rows.csv",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
-            "TARGET_GCS_BUCKET": "{{ var.json.shared.composer_bucket }}",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/austin_waste/waste_and_diversion/data_output.csv",
             "CSV_HEADERS": '[ "load_id", "report_date", "load_type", "load_time", "load_weight", "dropoff_site", "route_type", "route_number"]',
             "RENAME_MAPPINGS": '{"Load ID": "load_id","Report Date": "report_date","Load Type": "load_type","Load Time": "load_time","Load Weight": "load_weight","Dropoff Site": "dropoff_site","Route Type": "route_type","Route Number": "route_number"}',
         },
-        resources={"limit_memory": "4G", "limit_cpu": "2"},
+        resources={"limit_memory": "2G", "limit_cpu": "1"},
     )
 
     # Task to load CSV data to a BigQuery table
     load_austin_waste_and_diversion_to_bq = (
         gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
             task_id="load_austin_waste_and_diversion_to_bq",
-            bucket="{{ var.json.shared.composer_bucket }}",
+            bucket="{{ var.value.composer_bucket }}",
             source_objects=["data/austin_waste/waste_and_diversion/data_output.csv"],
             source_format="CSV",
             destination_project_dataset_table="austin_waste.waste_and_diversion",
