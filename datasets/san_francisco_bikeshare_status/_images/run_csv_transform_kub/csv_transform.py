@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import datetime
 import json
 import logging
 import os
@@ -27,78 +26,53 @@ def main(
     source_url_json: str,
     source_file: pathlib.Path,
     target_file: pathlib.Path,
+    chunksize: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
 ) -> None:
 
     logging.info("San Francisco - Bikeshare Status process started")
 
-    logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
 
     logging.info(f"Extracting URL for status: {source_url_json}")
-    source_file_status_csv = str(source_file).replace(".csv", "") + "_status.csv"
     source_file_status_json = str(source_file).replace(".csv", "") + "_status.json"
 
     logging.info(f"Downloading states json file {source_url_json}")
-    download_file_json(source_url_json, source_file_status_json, source_file_status_csv)
+    download_file_json(source_url_json, source_file_status_json, source_file)
 
-    logging.info(f"Opening status file {source_file_status_csv}")
-    df = pd.read_csv(source_file_status_csv)
+    chunksz = int(chunksize)
 
-    logging.info(f"Transformation Process Starting.. {source_file}")
+    logging.info(f"Opening batch file {source_file}")
+    with pd.read_csv(
+        source_file,  # path to main source file to load in batches
+        engine="python",
+        encoding="utf-8",
+        quotechar='"',  # string separator, typically double-quotes
+        chunksize=chunksz,  # size of batch data, in no. of records
+        sep=",",  # data column separator, typically ","
+    ) as reader:
+        for chunk_number, chunk in enumerate(reader):
+            target_file_batch = str(target_file).replace(
+                ".csv", "-" + str(chunk_number) + ".csv"
+            )
+            df = pd.DataFrame()
+            df = pd.concat([df, chunk])
+            process_chunk(df, target_file_batch, target_file, (not chunk_number == 0))
 
-    logging.info(f"Renaming Columns {source_file_status_csv}")
-    rename_headers(df)
-
-    df = df[df["station_id"] != ""]
-    df = df[df["num_bikes_available"] != ""]
-    df = df[df["num_docks_available"] != ""]
-    df = df[df["is_installed"] != ""]
-    df = df[df["is_renting"] != ""]
-    df = df[df["is_returning"] != ""]
-    df = df[df["last_reported"] != ""]
-
-    logging.info("Re-ordering Headers")
-    df = df[
-        [
-            "station_id",
-            "num_bikes_available",
-            "num_bikes_disabled",
-            "num_docks_available",
-            "num_docks_disabled",
-            "is_installed",
-            "is_renting",
-            "is_returning",
-            "last_reported",
-            "num_ebikes_available",
-            "eightd_has_available_keys",
-        ]
-    ]
-
-    logging.info(f"Transformation Process complete .. {source_file}")
-
-    logging.info(f"Saving to output file.. {target_file}")
-
-    try:
-        save_to_new_file(df, file_path=str(target_file))
-    except Exception as e:
-        logging.error(f"Error saving output file: {e}.")
-
-    logging.info(
-        f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
-    )
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
     logging.info("San Francisco - Bikeshare Status process completed")
 
 
-def datetime_from_int(dt_int: int) -> str:
-    return datetime.datetime.fromtimestamp(dt_int).strftime("%Y-%m-%d %H:%M:%S")
-
-
-def convert_dt_format(date_str: str, time_str: str) -> str:
-    return str(datetime.datetime.strptime(date_str, "%m/%d/%Y").date()) + " " + time_str
+def process_chunk(
+    df: pd.DataFrame, target_file_batch: str, target_file: str, skip_header: bool
+) -> None:
+    df = rename_headers(df)
+    df = filter_empty_data(df)
+    df = reorder_headers(df)
+    save_to_new_file(df, file_path=str(target_file_batch))
+    append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
 
 
 def rename_headers(df: pd.DataFrame) -> None:
@@ -118,9 +92,66 @@ def rename_headers(df: pd.DataFrame) -> None:
 
     df.rename(columns=header_names, inplace=True)
 
+    return df
+
+
+def filter_empty_data(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Filter rows with empty key data")
+    df = df[df["station_id"] != ""]
+    df = df[df["num_bikes_available"] != ""]
+    df = df[df["num_docks_available"] != ""]
+    df = df[df["is_installed"] != ""]
+    df = df[df["is_renting"] != ""]
+    df = df[df["is_returning"] != ""]
+    df = df[df["last_reported"] != ""]
+
+    return df
+
+
+def reorder_headers(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Re-ordering Headers")
+    df = df[
+        [
+            "station_id",
+            "num_bikes_available",
+            "num_bikes_disabled",
+            "num_docks_available",
+            "num_docks_disabled",
+            "is_installed",
+            "is_renting",
+            "is_returning",
+            "last_reported",
+            "num_ebikes_available",
+            "eightd_has_available_keys",
+        ]
+    ]
+
+    return df
+
 
 def save_to_new_file(df, file_path) -> None:
     df.to_csv(file_path, index=False)
+
+
+def append_batch_file(
+    batch_file_path: str, target_file_path: str, skip_header: bool, truncate_file: bool
+) -> None:
+    data_file = open(batch_file_path, "r")
+    if truncate_file:
+        target_file = open(target_file_path, "w+").close()
+    target_file = open(target_file_path, "a+")
+    if skip_header:
+        logging.info(
+            f"Appending batch file {batch_file_path} to {target_file_path} with skip header"
+        )
+        next(data_file)
+    else:
+        logging.info(f"Appending batch file {batch_file_path} to {target_file_path}")
+    target_file.write(data_file.read())
+    data_file.close()
+    target_file.close()
+    if os.path.exists(batch_file_path):
+        os.remove(batch_file_path)
 
 
 def download_file_json(
@@ -163,6 +194,7 @@ if __name__ == "__main__":
         source_url_json=os.environ["SOURCE_URL_JSON"],
         source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
+        chunksize=os.environ["CHUNKSIZE"],
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
     )
