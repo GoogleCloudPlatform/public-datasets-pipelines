@@ -137,28 +137,22 @@ def process_chunk(df: pd.DataFrame, target_file_batch: str) -> None:
 
 
 def resolve_nan(input: typing.Union[str, float]) -> str:
-    str_val = ""
     if not input or (math.isnan(input)):
-        str_val = ""
-    else:
-        str_val = str(input)
-    return str_val.replace("None", "")
+        return ""
+    return str(input).replace("None", "")
 
 
 def removing_nan_values(df: pd.DataFrame) -> None:
     cols = ["x_coordinate", "y_coordinate", "latitude", "longitude"]
-
     for cols in cols:
         df[cols] = df[cols].apply(resolve_nan)
 
 
 def convert_to_integer_string(input: typing.Union[str, float]) -> str:
-    str_val = ""
+
     if not input or (math.isnan(input)):
-        str_val = ""
-    else:
-        str_val = str(int(round(input, 0)))
-    return str_val
+        return ""
+    return str(int(round(input, 0)))
 
 
 def convert_values_to_integer_string(df: pd.DataFrame) -> None:
