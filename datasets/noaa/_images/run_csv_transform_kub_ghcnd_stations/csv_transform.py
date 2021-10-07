@@ -17,6 +17,7 @@ import os
 import pathlib
 from ftplib import FTP
 
+import numpy as np
 import pandas as pd
 from google.cloud import storage
 
@@ -28,6 +29,7 @@ def main(
     ftp_filename: str,
     source_file: pathlib.Path,
     target_file: pathlib.Path,
+    chunksize: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
 ) -> None:
@@ -38,44 +40,78 @@ def main(
     # ftp_filename          STRING          -> The name of the file to pull from the FTP site
     # source_file           PATHLIB.PATH    -> The (local) path pertaining to the downloaded source file
     # target_file           PATHLIB.PATH    -> The (local) target transformed file + filename
+    # chunksize             INT (STRING)    -> The number of records to import per each batch, reduces memory consumption
     # target_gcs_bucket     STRING          -> The target GCS bucket to place the output (transformed) file
     # target_gcs_path       STRING          -> The target GCS path ( within the GCS bucket ) to place the output (transformed) file
 
     logging.info("GCHND Stations process started ")
 
-    logging.info("creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
-
-    logging.info(f"Downloading FTP file {source_url} from {ftp_host}")
     download_file_ftp(ftp_host, ftp_dir, ftp_filename, source_file, source_url)
 
-    source_file_bak = str(source_file) + ".bak"
-    logging.info(f"Adding column header to file {source_file}")
-    os.system(
-        'echo "textdata" > '
-        + str(source_file)
-        + " && cat "
-        + str(source_file_bak)
-        + " >> "
-        + str(source_file)
-    )
+    names = ["textdata"]
 
-    logging.info(f"Opening file {source_file}")
-    df = pd.read_csv(source_file, sep="|")
+    dtypes = {"textdata": np.str_}
 
-    logging.info(f"Transformation Process Starting.. {source_file}")
+    chunksz = int(chunksize)
 
-    df["id"] = df["textdata"].apply(get_id_column)
-    df["latitude"] = df["textdata"].apply(get_latitude_column)
-    df["longitude"] = df["textdata"].apply(get_longitude_column)
-    df["elevation"] = df["textdata"].apply(get_elevation_column)
-    df["state"] = df["textdata"].apply(get_state_column)
-    df["name"] = df["textdata"].apply(get_name_column)
-    df["gsn_flag"] = df["textdata"].apply(get_gsn_flag_column)
-    df["hcn_cm_flag"] = df["textdata"].apply(get_hcn_cm_flag_column)
-    df["wmoid"] = df["textdata"].apply(get_wmoid_column)
+    logging.info(f"Opening batch file {source_file}")
+    with pd.read_csv(
+        source_file,  # path to main source file to load in batches
+        engine="python",
+        encoding="utf-8",
+        quotechar='"',  # string separator, typically double-quotes
+        chunksize=chunksz,  # size of batch data, in no. of records
+        sep="|",  # data column separator, typically ","
+        header=None,  # use when the data file does not contain a header
+        names=names,  # column names
+        dtype=dtypes,  # use this when defining column and datatypes as per numpy
+    ) as reader:
+        for chunk_number, chunk in enumerate(reader):
+            target_file_batch = str(target_file).replace(
+                ".csv", "-" + str(chunk_number) + ".csv"
+            )
+            df = pd.DataFrame()
+            df = pd.concat([df, chunk])
+            process_chunk(df, target_file_batch, target_file, (not chunk_number == 0))
 
-    logging.info("Transform: Reordering headers..")
+    upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
+
+    logging.info("GCHND Stations process completed")
+
+
+def process_chunk(
+    df: pd.DataFrame, target_file_batch: str, target_file: str, skip_header: bool
+) -> None:
+    df = extract_columns(df)
+    df = reorder_headers(df)
+    save_to_new_file(df, file_path=str(target_file_batch))
+    append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
+
+
+def append_batch_file(
+    batch_file_path: str, target_file_path: str, skip_header: bool, truncate_file: bool
+) -> None:
+    data_file = open(batch_file_path, "r")
+    if truncate_file:
+        target_file = open(target_file_path, "w+").close()
+    target_file = open(target_file_path, "a+")
+    if skip_header:
+        logging.info(
+            f"Appending batch file {batch_file_path} to {target_file_path} with skip header"
+        )
+        next(data_file)
+    else:
+        logging.info(f"Appending batch file {batch_file_path} to {target_file_path}")
+    target_file.write(data_file.read())
+    data_file.close()
+    target_file.close()
+    if os.path.exists(batch_file_path):
+        os.remove(batch_file_path)
+
+
+def reorder_headers(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Reordering headers..")
     df = df[
         [
             "id",
@@ -90,61 +126,40 @@ def main(
         ]
     ]
 
-    logging.info(f"Transformation Process complete .. {source_file}")
-
-    logging.info(f"Saving to output file.. {target_file}")
-
-    try:
-        save_to_new_file(df, file_path=str(target_file))
-    except Exception as e:
-        logging.error(f"Error saving output file: {e}.")
-
-    logging.info(
-        f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
-    )
-    upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
-
-    logging.info("GCHND Stations process completed")
+    return df
 
 
-def get_id_column(col_val: str) -> str:
-    return col_val.strip()[0:11]
+def extract_columns(df_filedata: pd.DataFrame) -> pd.DataFrame:
+    # Example:
+    # ACW00099999 30.123   31.123    260.12 NY ST MARYS CHURCH                ABCDEFGH123456
+    col_ranges = {
+        "id": slice(0, 11),  # LENGTH:  12  EXAMPLE CODE: ACW00099999
+        "latitude": slice(12, 20),  # LENGTH:   9  EXAMPLE NAME: 30.123
+        "longitude": slice(21, 30),  # LENGTH:  10  EXAMPLE NAME: 31.123
+        "elevation": slice(31, 37),  # LENGTH:   7  EXAMPLE CODE: 260.12
+        "state": slice(38, 40),  # LENGTH:   3  EXAMPLE NAME: NY
+        "name": slice(41, 71),  # LENGTH:  30  EXAMPLE NAME: ST MARYS CHURCH
+        "gsn_flag": slice(72, 75),  # LENGTH:   4  EXAMPLE CODE: ABCD
+        "hcn_cm_flag": slice(76, 79),  # LENGTH:   4  EXAMPLE NAME: EFGH
+        "wmoid": slice(80, 85),  # LENGTH:   6  EXAMPLE NAME: 123456
+    }
 
+    # remove the incidental header
+    df_filedata = df_filedata[df_filedata["textdata"] != "textdata"]
 
-def get_latitude_column(col_val: str) -> str:
-    return col_val.strip()[12:20]
+    df = pd.DataFrame()
 
+    def get_column(col_val: str, col_name: str) -> str:
+        return col_val.strip()[col_ranges[col_name]].strip()
 
-def get_longitude_column(col_val: str) -> str:
-    return col_val.strip()[21:30]
+    for col_name in col_ranges.keys():
+        df[col_name] = df_filedata["textdata"].apply(get_column, args=(col_name,))
 
-
-def get_elevation_column(col_val: str) -> str:
-    return col_val.strip()[31:37]
-
-
-def get_state_column(col_val: str) -> str:
-    return col_val.strip()[38:40]
-
-
-def get_name_column(col_val: str) -> str:
-    return col_val.strip()[41:71]
-
-
-def get_gsn_flag_column(col_val: str) -> str:
-    return col_val.strip()[72:75]
-
-
-def get_hcn_cm_flag_column(col_val: str) -> str:
-    return col_val.strip()[76:79]
-
-
-def get_wmoid_column(col_val: str) -> str:
-    return col_val.strip()[80:85]
+    return df
 
 
 def save_to_new_file(df: pd.DataFrame, file_path: str) -> str:
-    df.to_csv(file_path, float_format="%.0f", index=False)
+    df.to_csv(file_path, index=False)
 
 
 def download_file_ftp(
@@ -166,20 +181,16 @@ def download_file_ftp(
     ftp_conn.cwd(ftp_dir)
     ftp_conn.encoding = "utf-8"
 
-    try:
-        bak_local_file = str(local_file) + ".bak"
-        dest_file = open(bak_local_file, "wb")
-        ftp_conn.encoding = "utf-8"
-        ftp_conn.retrbinary(
-            cmd=f"RETR {ftp_filename}",
-            callback=dest_file.write,
-            blocksize=1024,
-            rest=None,
-        )
-        ftp_conn.quit()
-        dest_file.close()
-    except Exception as e:
-        logging.error(f"Error saving output file: {e}.")
+    dest_file = open(local_file, "wb")
+    ftp_conn.encoding = "utf-8"
+    ftp_conn.retrbinary(
+        cmd=f"RETR {ftp_filename}",
+        callback=dest_file.write,
+        blocksize=1024,
+        rest=None,
+    )
+    ftp_conn.quit()
+    dest_file.close()
 
 
 def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:
@@ -199,6 +210,7 @@ if __name__ == "__main__":
         ftp_filename=os.environ["FTP_FILENAME"],
         source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
+        chunksize=os.environ["CHUNKSIZE"],
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
     )

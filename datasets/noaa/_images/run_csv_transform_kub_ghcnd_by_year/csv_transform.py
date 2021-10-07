@@ -17,7 +17,6 @@ import gzip
 import logging
 import os
 import pathlib
-import subprocess
 from ftplib import FTP
 
 import pandas as pd
@@ -47,7 +46,10 @@ def main(
 
     logging.info("NOAA - GHCND By Year process started")
 
+    pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
     download_source_file(source_url, source_file, ftp_host, ftp_dir, ftp_filename)
+
+    names = ["id", "date", "element", "value", "mflag", "qflag", "sflag", "time"]
 
     chunksz = int(chunksize)
 
@@ -59,7 +61,7 @@ def main(
         quotechar='"',
         chunksize=chunksz,
         header=None,
-        names=["id", "date", "element", "value", "mflag", "qflag", "sflag", "time"],
+        names=names,
     ) as reader:
         for chunk_number, chunk in enumerate(reader):
             logging.info(f"Processing batch {chunk_number}")
@@ -68,30 +70,42 @@ def main(
             )
             df = pd.DataFrame()
             df = pd.concat([df, chunk])
-            processChunk(df, target_file_batch)
-            logging.info(f"Appending batch {chunk_number} to {target_file}")
-            if chunk_number == 0:
-                subprocess.run(["cp", target_file_batch, target_file])
-            else:
-                subprocess.check_call(f"sed -i '1d' {target_file_batch}", shell=True)
-                subprocess.check_call(
-                    f"cat {target_file_batch} >> {target_file}", shell=True
-                )
-            subprocess.run(["rm", target_file_batch])
+            process_chunk(df, target_file_batch, target_file, (not chunk_number == 0))
 
-    logging.info(
-        f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
-    )
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
     logging.info("NOAA - GHCND By Year process completed")
 
 
-def processChunk(df: pd.DataFrame, target_file_batch: str) -> None:
+def process_chunk(
+    df: pd.DataFrame, target_file_batch: str, target_file: str, skip_header: bool
+) -> None:
     df = reorder_headers(df)
     df = filter_null_rows(df)
     df = source_convert_date_formats(df)
     save_to_new_file(df, file_path=str(target_file_batch))
+    append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
+
+
+def append_batch_file(
+    batch_file_path: str, target_file_path: str, skip_header: bool, truncate_file: bool
+) -> None:
+    data_file = open(batch_file_path, "r")
+    if truncate_file:
+        target_file = open(target_file_path, "w+").close()
+    target_file = open(target_file_path, "a+")
+    if skip_header:
+        logging.info(
+            f"Appending batch file {batch_file_path} to {target_file_path} with skip header"
+        )
+        next(data_file)
+    else:
+        logging.info(f"Appending batch file {batch_file_path} to {target_file_path}")
+    target_file.write(data_file.read())
+    data_file.close()
+    target_file.close()
+    if os.path.exists(batch_file_path):
+        os.remove(batch_file_path)
 
 
 def download_source_file(
@@ -109,16 +123,6 @@ def reorder_headers(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def open_source_file(source_file: str) -> pd.DataFrame:
-    logging.info(f"Opening file {source_file}")
-    df = pd.read_csv(
-        source_file,
-        header=None,
-        names=["id", "date", "element", "value", "mflag", "qflag", "sflag", "time"],
-    )
-    return df
-
-
 def gz_decompress(infile: str, tofile: str) -> None:
     logging.info(f"Decompressing {infile}")
     with open(infile, "rb") as inf, open(tofile, "w", encoding="utf8") as tof:
@@ -127,7 +131,7 @@ def gz_decompress(infile: str, tofile: str) -> None:
 
 
 def filter_null_rows(df: pd.DataFrame) -> pd.DataFrame:
-    logging.info("Transform: Removing rows with blank id's..")
+    logging.info("Removing rows with blank id's..")
     df = df[df.id != ""]
     return df
 
@@ -144,7 +148,7 @@ def convert_dt_format(dt_str: str) -> str:
 
 
 def source_convert_date_formats(df: pd.DataFrame) -> pd.DataFrame:
-    logging.info("Transform: Converting Date Format..")
+    logging.info("Converting Date Format..")
     df["date"] = df["date"].apply(convert_dt_format)
     return df
 

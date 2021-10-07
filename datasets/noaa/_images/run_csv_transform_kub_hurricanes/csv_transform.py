@@ -12,12 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import datetime
 import logging
 import os
 import pathlib
-import subprocess
 
+import numpy as np
 import pandas as pd
 import requests
 from google.cloud import storage
@@ -27,53 +26,251 @@ def main(
     source_url: str,
     source_file: pathlib.Path,
     target_file: pathlib.Path,
+    chunksize: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
 ) -> None:
 
+    # source_url            STRING          -> The full url of the source file to transform
+    # source_file           PATHLIB.PATH    -> The (local) path pertaining to the downloaded source file
+    # target_file           PATHLIB.PATH    -> The (local) target transformed file + filename
+    # chunksize             INT (STRING)    -> The number of records to import per each batch, reduces memory consumption
+    # target_gcs_bucket     STRING          -> The target GCS bucket to place the output (transformed) file
+    # target_gcs_path       STRING          -> The target GCS path ( within the GCS bucket ) to place the output (transformed) file
+
     logging.info("NOAA - Hurricanes process started")
 
-    logging.info("creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
-
-    logging.info(f"Downloading {source_url} into {source_file}")
     download_file(source_url, source_file)
 
-    logging.info(f"Remove second header from {source_file}")
-    subprocess.call([f"sed -i '2d' {source_file}"], shell=True)
+    names = [
+        "sid",
+        "season",
+        "number",
+        "basin",
+        "subbasin",
+        "name",
+        "iso_time",
+        "nature",
+        "lat",
+        "lon",
+        "wmo_wind",
+        "wmo_pres",
+        "wmo_agency",
+        "track_type",
+        "dist2land",
+        "landfall",
+        "iflag",
+        "usa_agency",
+        "usa_atcf_id",
+        "usa_lat",
+        "usa_lon",
+        "usa_record",
+        "usa_status",
+        "usa_wind",
+        "usa_pres",
+        "usa_sshs",
+        "usa_r34_ne",
+        "usa_r34_se",
+        "usa_r34_sw",
+        "usa_r34_nw",
+        "usa_r50_ne",
+        "usa_r50_se",
+        "usa_r50_sw",
+        "usa_r50_nw",
+        "usa_r64_ne",
+        "usa_r64_se",
+        "usa_r64_sw",
+        "usa_r64_nw",
+        "usa_poci",
+        "usa_roci",
+        "usa_rmw",
+        "usa_eye",
+        "tokyo_lat",
+        "tokyo_lon",
+        "tokyo_grade",
+        "tokyo_wind",
+        "tokyo_pres",
+        "tokyo_r50_dir",
+        "tokyo_r50_long",
+        "tokyo_r50_short",
+        "tokyo_r30_dir",
+        "tokyo_r30_long",
+        "tokyo_r30_short",
+        "tokyo_land",
+        "cma_lat",
+        "cma_lon",
+        "cma_cat",
+        "cma_wind",
+        "cma_pres",
+        "hko_lat",
+        "hko_lon",
+        "hko_cat",
+        "hko_wind",
+        "hko_pres",
+        "newdelhi_lat",
+        "newdelhi_lon",
+        "newdelhi_grade",
+        "newdelhi_wind",
+        "newdelhi_pres",
+        "newdelhi_ci",
+        "newdelhi_dp",
+        "newdelhi_poci",
+        "reunion_lat",
+        "reunion_lon",
+        "reunion_type",
+        "reunion_wind",
+        "reunion_pres",
+        "reunion_tnum",
+        "reunion_ci",
+        "reunion_rmw",
+        "reunion_r34_ne",
+        "reunion_r34_se",
+        "reunion_r34_sw",
+        "reunion_r34_nw",
+        "reunion_r50_ne",
+        "reunion_r50_se",
+        "reunion_r50_sw",
+        "reunion_r50_nw",
+        "reunion_r64_ne",
+        "reunion_r64_se",
+        "reunion_r64_sw",
+        "reunion_r64_nw",
+        "bom_lat",
+        "bom_lon",
+        "bom_type",
+        "bom_wind",
+        "bom_pres",
+        "bom_tnum",
+        "bom_ci",
+        "bom_rmw",
+        "bom_r34_ne",
+        "bom_r34_se",
+        "bom_r34_sw",
+        "bom_r34_nw",
+        "bom_r50_ne",
+        "bom_r50_se",
+        "bom_r50_sw",
+        "bom_r50_nw",
+        "bom_r64_ne",
+        "bom_r64_se",
+        "bom_r64_sw",
+        "bom_r64_nw",
+        "bom_roci",
+        "bom_poci",
+        "bom_eye",
+        "bom_pos_method",
+        "bom_pres_method",
+        "nadi_lat",
+        "nadi_lon",
+        "nadi_cat",
+        "nadi_wind",
+        "nadi_pres",
+        "wellington_lat",
+        "wellington_lon",
+        "wellington_wind",
+        "wellington_pres",
+        "ds824_lat",
+        "ds824_lon",
+        "ds824_stage",
+        "ds824_wind",
+        "ds824_pres",
+        "td9636_lat",
+        "td9636_lon",
+        "td9636_stage",
+        "td9636_wind",
+        "td9636_pres",
+        "td9635_lat",
+        "td9635_lon",
+        "td9635_wind",
+        "td9635_pres",
+        "td9635_roci",
+        "neumann_lat",
+        "neumann_lon",
+        "neumann_class",
+        "neumann_wind",
+        "neumann_pres",
+        "mlc_lat",
+        "mlc_lon",
+        "mlc_class",
+        "mlc_wind",
+        "mlc_pres",
+        "usa_gust",
+        "bom_gust",
+        "bom_gust_per",
+        "reunion_gust",
+        "reunion_gust_per",
+        "usa_seahgt",
+        "usa_searad_ne",
+        "usa_searad_se",
+        "usa_searad_sw",
+        "usa_searad_nw",
+        "storm_speed",
+        "storm_dir",
+    ]
 
-    logging.info(f"Opening file {source_file}")
-    df = pd.read_csv(
-        source_file,
-    )
+    dtypes = {"textdata": np.str_}
 
-    logging.info(f"Transformation Process Starting.. {source_file}")
+    chunksz = int(chunksize)
 
-    logging.info(f"Transform: Renaming Headers.. {source_file}")
-    df.columns = df.columns.str.lower()
-    rename_headers(df)
+    logging.info(f"Opening batch file {source_file}")
+    with pd.read_csv(
+        source_file,  # path to main source file to load in batches
+        engine="python",
+        encoding="utf-8",
+        quotechar='"',  # string separator, typically double-quotes
+        chunksize=chunksz,  # size of batch data, in no. of records
+        sep=",",  # data column separator, typically ","
+        skiprows=2,  # skip the informational text
+        header=None,  # use when the data file does not contain a header
+        names=names,
+        dtype=dtypes,
+    ) as reader:
+        for chunk_number, chunk in enumerate(reader):
+            target_file_batch = str(target_file).replace(
+                ".csv", "-" + str(chunk_number) + ".csv"
+            )
+            df = pd.DataFrame()
+            df = pd.concat([df, chunk])
+            process_chunk(df, target_file_batch, target_file, (not chunk_number == 0))
 
-    df = reorder_headers(df)
-
-    logging.info(f"Transformation Process complete .. {source_file}")
-
-    logging.info(f"Saving to output file.. {target_file}")
-
-    try:
-        save_to_new_file(df, file_path=str(target_file))
-    except Exception as e:
-        logging.error(f"Error saving output file: {e}.")
-
-    logging.info(
-        f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
-    )
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
     logging.info("NOAA - Hurricanes process completed")
 
 
+def process_chunk(
+    df: pd.DataFrame, target_file_batch: str, target_file: str, skip_header: bool
+) -> None:
+    df = rename_headers(df)
+    df = reorder_headers(df)
+    save_to_new_file(df, file_path=str(target_file_batch))
+    append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
+
+
+def append_batch_file(
+    batch_file_path: str, target_file_path: str, skip_header: bool, truncate_file: bool
+) -> None:
+    data_file = open(batch_file_path, "r")
+    if truncate_file:
+        target_file = open(target_file_path, "w+").close()
+    target_file = open(target_file_path, "a+")
+    if skip_header:
+        logging.info(
+            f"Appending batch file {batch_file_path} to {target_file_path} with skip header"
+        )
+        next(data_file)
+    else:
+        logging.info(f"Appending batch file {batch_file_path} to {target_file_path}")
+    target_file.write(data_file.read())
+    data_file.close()
+    target_file.close()
+    if os.path.exists(batch_file_path):
+        os.remove(batch_file_path)
+
+
 def reorder_headers(df: pd.DataFrame) -> pd.DataFrame:
-    logging.info("Transform: Reordering headers..")
+    logging.info("Reordering headers..")
     df = df[
         [
             "sid",
@@ -229,11 +426,8 @@ def reorder_headers(df: pd.DataFrame) -> pd.DataFrame:
             "usa_atcf_id",
         ]
     ]
+
     return df
-
-
-def convert_dt_format(date_str: str, time_str: str) -> str:
-    return str(datetime.datetime.strptime(date_str, "%m/%d/%Y").date()) + " " + time_str
 
 
 def rename_headers(df: pd.DataFrame) -> None:
@@ -287,11 +481,10 @@ def rename_headers(df: pd.DataFrame) -> None:
         "mlc_pres": "mlc_pressure",
     }
 
+    df.columns = df.columns.str.lower()
     df.rename(columns=header_names, inplace=True)
 
-
-def filter_null_rows(df: pd.DataFrame) -> None:
-    df = df[df.season != "Year"]
+    return df
 
 
 def save_to_new_file(df: pd.DataFrame, file_path: str) -> None:
@@ -320,5 +513,6 @@ if __name__ == "__main__":
         source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
+        chunksize=os.environ["CHUNKSIZE"],
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
     )

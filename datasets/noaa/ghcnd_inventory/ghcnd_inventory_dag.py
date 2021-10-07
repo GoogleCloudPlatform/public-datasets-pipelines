@@ -65,6 +65,7 @@ with DAG(
             "FTP_FILENAME": "ghcnd-inventory.txt",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
+            "CHUNKSIZE": "750000",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/ghcn_d_inventory/ghcnd_inventory/data_output.csv",
         },

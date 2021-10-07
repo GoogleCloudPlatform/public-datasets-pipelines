@@ -12,16 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import gzip
 import logging
 import os
 import pathlib
-import re
-import urllib.request
 from ftplib import FTP
 
+import numpy as np
 import pandas as pd
-import requests
 from google.cloud import storage
 
 
@@ -32,6 +29,7 @@ def main(
     ftp_filename: str,
     source_file: pathlib.Path,
     target_file: pathlib.Path,
+    chunksize: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
 ):
@@ -42,138 +40,139 @@ def main(
     # ftp_filename          STRING          -> The name of the file to pull from the FTP site
     # source_file           PATHLIB.PATH    -> The (local) path pertaining to the downloaded source file
     # target_file           PATHLIB.PATH    -> The (local) target transformed file + filename
+    # chunksize             INT (STRING)    -> The number of records to import per each batch, reduces memory consumption
     # target_gcs_bucket     STRING          -> The target GCS bucket to place the output (transformed) file
     # target_gcs_path       STRING          -> The target GCS path ( within the GCS bucket ) to place the output (transformed) file
 
     logging.info("NOAA GSOD Stations By Year process started")
 
-    logging.info(f"starting processing {source_url}")
+    pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
+    download_file_ftp(ftp_host, ftp_dir, ftp_filename, source_file, source_url)
 
-    if url_is_reachable(source_url):
+    names = ["textdata"]
 
-        logging.info("creating 'files' folder")
-        pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
+    dtypes = {"textdata": np.str_}
 
-        logging.info(f"Downloading FTP file {source_url} from {ftp_host}")
-        download_file_ftp(ftp_host, ftp_dir, ftp_filename, source_file, source_url)
+    chunksz = int(chunksize)
 
-        logging.info(f"Removing unnecessary header in {source_file}")
-        os.system(f"tail -n +21 {source_file}.bak > {source_file}.1")
-        os.system(f"sed '2d' {source_file}.1 > {source_file}")
-        os.unlink(str(source_file) + ".bak")
-        os.unlink(str(source_file) + ".1")
+    logging.info(f"Opening batch file {source_file}")
+    with pd.read_csv(
+        source_file,  # path to main source file to load in batches
+        engine="python",
+        encoding="utf-8",
+        quotechar='"',  # string separator, typically double-quotes
+        chunksize=chunksz,  # size of batch data, in no. of records
+        sep=",",  # data column separator, typically ","
+        skiprows=21,  # skip the informational text
+        header=None,  # use when the data file does not contain a header
+        names=names,
+        dtype=dtypes,
+    ) as reader:
+        for chunk_number, chunk in enumerate(reader):
+            target_file_batch = str(target_file).replace(
+                ".csv", "-" + str(chunk_number) + ".csv"
+            )
+            df = pd.DataFrame()
+            df = pd.concat([df, chunk])
+            process_chunk(df, target_file_batch, target_file, (not chunk_number == 0))
 
-        logging.info(f"Opening source file {source_file}")
-        colspecs = [
-            (0, 6),  # usaf
-            (7, 12),  # wban
-            (13, 42),  # name
-            (43, 45),  # country
-            (48, 50),  # state
-            (51, 56),  # call
-            (57, 64),  # lat
-            (65, 74),  # lon
-            (75, 81),  # elev
-            (82, 90),  # begin
-            (91, 99),  # end
-        ]
-        df = pd.read_fwf(str(source_file), colspecs=colspecs)
+    upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
-        logging.info(f"Transform: Renaming Headers.. {source_file}")
-        df.columns = [
-            "usaf",
-            "wban",
-            "name",
-            "country",
-            "state",
-            "call",
-            "lat",
-            "lon",
-            "elev",
-            "begin",
-            "end",
-        ]
+    logging.info("NOAA GSOD Stations process completed")
 
-        # remove rows with empty (usaf) data
-        df = df[df.usaf != ""]
 
-        # execute reg-ex replacements
-        logging.info(f"Transform: Executing Reg Ex.. {source_file}")
-        logging.info(f"           Executing Reg Ex.. (lat) {source_file}")
-        df["lat"] = df["lat"].astype(str)
-        df["lat"][:].replace("^(-[0]+)(.*)", "-$2", regex=True, inplace=True)
-        df["lat"][:].replace("^(\\s+)$", "", regex=True, inplace=True)
-        df["lat"][:].replace(
-            "^(\\+\\d+\\.\\d+[0-9])\\s+", "$1", regex=True, inplace=True
-        )
-        df["lat"][:].replace("^(-\\d+\\.\\d+[0-9])\\s+", "$1", regex=True, inplace=True)
-        df["lat"][:].replace("nan", "", regex=False, inplace=True)
+def process_chunk(
+    df: pd.DataFrame, target_file_batch: str, target_file: str, skip_header: bool
+) -> None:
+    df = extract_columns(df)
+    df = remove_empty_key_rows(df)
+    df = apply_regex(df)
+    save_to_new_file(df, file_path=str(target_file_batch))
+    append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
 
-        logging.info(f"           Executing Reg Ex.. (lon) {source_file}")
-        df["lon"] = df["lon"].astype(str)
-        df["lon"][:].replace("^(-[0]+)(.*)", "-$2", regex=True, inplace=True)
-        df["lon"][:].replace("^(\\s+)$", "", regex=True, inplace=True)
-        df["lon"][:].replace(
-            "^(\\+\\d+\\.\\d+[0-9])\\s+", "$1", regex=True, inplace=True
-        )
-        df["lon"][:].replace("^(-\\d+\\.\\d+[0-9])\\s+", "$1", regex=True, inplace=True)
-        df["lon"][:].replace("nan", "", regex=False, inplace=True)
 
-        logging.info(f"           Executing Reg Ex.. (usaf) {source_file}")
-        df["usaf"][:].replace("(\\d{1,})(\\s{1,})$", "$1", regex=True, inplace=True)
-
-        logging.info(f"           Executing Reg Ex.. (name) {source_file}")
-        df["name"][:].replace("^\\s{1,}([a-zA-Z]\\D+)", "$1", regex=True, inplace=True)
-        df["name"][:].replace("^(\\D+[a-zA-Z])\\s{1,}$", "$1", regex=True, inplace=True)
-        df["name"][:].replace("^(\\s+)$", "", regex=True, inplace=True)
-
-        logging.info(f"           Executing Reg Ex.. (call) {source_file}")
-        df["call"][:].replace("^(\\s+)$", "", regex=True, inplace=True)
-        df["call"][:].replace("^([a-zA-Z]+)\\s+", "$1", regex=True, inplace=True)
-
-        logging.info(f"           Executing Reg Ex.. (elev) {source_file}")
-        df["elev"][:].replace("^(\\s+)$", "", regex=True, inplace=True)
-
-        logging.info(f"           Executing Reg Ex.. (state) {source_file}")
-        df["state"][:].replace("^(\\s+)$", "", regex=True, inplace=True)
-
-        logging.info(f"           Executing Reg Ex.. (country) {source_file}")
-        df["country"][:].replace("^(\\s+)$", "", regex=True, inplace=True)
-
-        logging.info(f"Transform: Saving to output file.. {target_file}")
-        df.to_csv(target_file, index=False)
-
-        logging.info(f"completed processing {source_url}")
-
+def append_batch_file(
+    batch_file_path: str, target_file_path: str, skip_header: bool, truncate_file: bool
+) -> None:
+    data_file = open(batch_file_path, "r")
+    if truncate_file:
+        target_file = open(target_file_path, "w+").close()
+    target_file = open(target_file_path, "a+")
+    if skip_header:
         logging.info(
-            f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
+            f"Appending batch file {batch_file_path} to {target_file_path} with skip header"
         )
-        upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
-
-        logging.info("NOAA GSOD Stations process completed")
-
+        next(data_file)
     else:
-
-        logging.info(f"Error: Unable to reach url: {source_url}")
-        logging.info("Process failed!")
-
-
-def replace_value(val: str) -> str:
-    if val is None or len(val) == 0:
-        return val
-    else:
-        if val.find("\n") > 0:
-            return re.sub(r"(^\d):(\d{2}:\d{2})", "0$1:$2", val)
-        else:
-            return val
+        logging.info(f"Appending batch file {batch_file_path} to {target_file_path}")
+    target_file.write(data_file.read())
+    data_file.close()
+    target_file.close()
+    if os.path.exists(batch_file_path):
+        os.remove(batch_file_path)
 
 
-def replace_values_regex(df: pd.DataFrame) -> None:
-    header_names = {"checkout_time"}
+def remove_empty_key_rows(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Remove Empty Rows")
+    df = df[df.usaf != ""]
 
-    for dt_col in header_names:
-        if (df[dt_col] is not None) & (df[dt_col].str.len() > 0):
-            df[dt_col] = df[dt_col].apply(replace_value)
+    return df
+
+
+def apply_regex(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Applying RegEx")
+    df["lat"] = df["lat"].astype(str)
+    df["lat"][:].replace("^(-[0]+)(.*)", "-$2", regex=True, inplace=True)
+    df["lat"][:].replace("^(\\s+)$", "", regex=True, inplace=True)
+    df["lat"][:].replace("^(\\+\\d+\\.\\d+[0-9])\\s+", "$1", regex=True, inplace=True)
+    df["lat"][:].replace("^(-\\d+\\.\\d+[0-9])\\s+", "$1", regex=True, inplace=True)
+    df["lat"][:].replace("nan", "", regex=False, inplace=True)
+    df["lon"] = df["lon"].astype(str)
+    df["lon"][:].replace("^(-[0]+)(.*)", "-$2", regex=True, inplace=True)
+    df["lon"][:].replace("^(\\s+)$", "", regex=True, inplace=True)
+    df["lon"][:].replace("^(\\+\\d+\\.\\d+[0-9])\\s+", "$1", regex=True, inplace=True)
+    df["lon"][:].replace("^(-\\d+\\.\\d+[0-9])\\s+", "$1", regex=True, inplace=True)
+    df["lon"][:].replace("nan", "", regex=False, inplace=True)
+    df["usaf"][:].replace("(\\d{1,})(\\s{1,})$", "$1", regex=True, inplace=True)
+    df["name"][:].replace("^\\s{1,}([a-zA-Z]\\D+)", "$1", regex=True, inplace=True)
+    df["name"][:].replace("^(\\D+[a-zA-Z])\\s{1,}$", "$1", regex=True, inplace=True)
+    df["name"][:].replace("^(\\s+)$", "", regex=True, inplace=True)
+    df["call"][:].replace("^(\\s+)$", "", regex=True, inplace=True)
+    df["call"][:].replace("^([a-zA-Z]+)\\s+", "$1", regex=True, inplace=True)
+    df["elev"][:].replace("^(\\s+)$", "", regex=True, inplace=True)
+    df["state"][:].replace("^(\\s+)$", "", regex=True, inplace=True)
+    df["country"][:].replace("^(\\s+)$", "", regex=True, inplace=True)
+
+    return df
+
+
+def extract_columns(df_filedata: pd.DataFrame) -> pd.DataFrame:
+    # Example:
+    # 007018 99999 WXPOD 7018                                  +00.000 +000.000 +7018.0 20110309 20130730
+    logging.info("Extracting columns")
+    col_ranges = {
+        "usaf": slice(0, 6),  # LENGTH:  7 EXAMPLE: 007018
+        "wban": slice(7, 12),  # LENGTH:  6 EXAMPLE: 999999
+        "name": slice(13, 42),  # LENGTH: 30 EXAMPLE: WXPOD 7018
+        "country": slice(43, 45),  # LENGTH:  3 EXAMPLE: AF
+        "state": slice(48, 50),  # LENGTH:  3 EXAMPLE: AK
+        "call": slice(51, 56),  # LENGTH:  6 EXAMPLE: ENRS
+        "lat": slice(57, 64),  # LENGTH:  8 EXAMPLE: +30.123
+        "lon": slice(65, 74),  # LENGTH: 10 EXAMPLE: +34.123
+        "elev": slice(75, 81),  # LENGTH:  7 EXAMPLE: +128.01
+        "begin": slice(82, 90),  # LENGTH:  9 EXAMPLE: 20211005
+        "end": slice(91, 99),  # LENGTH:  9 EXAMPLE: 20211030
+    }
+
+    df = pd.DataFrame()
+
+    def get_column(col_val: str, col_name: str) -> str:
+        return col_val.strip()[col_ranges[col_name]].strip()
+
+    for col_name in col_ranges.keys():
+        df[col_name] = df_filedata["textdata"].apply(get_column, args=(col_name,))
+
+    return df
 
 
 def download_file_ftp(
@@ -194,48 +193,20 @@ def download_file_ftp(
     ftp_conn.login("", "")
     ftp_conn.cwd(ftp_dir)
 
-    try:
-        bak_local_file = str(local_file) + ".bak"
-        dest_file = open(bak_local_file, "wb")
-        ftp_conn.encoding = "utf-8"
-        ftp_conn.retrbinary(
-            cmd=f"RETR {ftp_filename}",
-            callback=dest_file.write,
-            blocksize=1024,
-            rest=None,
-        )
-        ftp_conn.quit()
-        dest_file.close()
-    except Exception as e:
-        logging.error(f"Error saving output file: {e}.")
+    dest_file = open(local_file, "wb")
+    ftp_conn.encoding = "utf-8"
+    ftp_conn.retrbinary(
+        cmd=f"RETR {ftp_filename}",
+        callback=dest_file.write,
+        blocksize=1024,
+        rest=None,
+    )
+    ftp_conn.quit()
+    dest_file.close()
 
 
-def gz_decompress(infile: str, tofile: str) -> None:
-    with open(infile, "rb") as inf, open(tofile, "w", encoding="utf8") as tof:
-        decom_str = gzip.decompress(inf.read()).decode("utf-8")
-        tof.write(decom_str)
-
-
-def url_is_reachable(url: str) -> bool:
-
-    request = urllib.request.Request(url)
-    request.get_method = lambda: "HEAD"
-
-    try:
-        urllib.request.urlopen(request)
-        return True
-    except urllib.request.HTTPError:
-        return False
-
-
-def download_file(source_url: str, source_file: pathlib.Path) -> None:
-    r = requests.get(source_url, stream=True)
-    if r.status_code == 200:
-        with open(source_file, "wb") as f:
-            for chunk in r:
-                f.write(chunk)
-    else:
-        logging.error(f"Couldn't download {source_url}: {r.text}")
+def save_to_new_file(df, file_path) -> None:
+    df.to_csv(file_path, index=False)
 
 
 def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:
@@ -254,6 +225,7 @@ if __name__ == "__main__":
         ftp_filename=os.environ["FTP_FILENAME"],
         source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
+        chunksize=os.environ["CHUNKSIZE"],
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
     )

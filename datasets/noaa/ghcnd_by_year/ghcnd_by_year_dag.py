@@ -64,11 +64,11 @@ with DAG(
             "FTP_FILENAME": "{{ macros.ds_format(macros.ds_add(ds, 0), '%Y-%m-%d', '%Y') }}.csv.gz",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
-            "CHUNKSIZE": "3000000",
+            "CHUNKSIZE": "750000",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/noaa/ghcnd_by_year/data_output.csv",
         },
-        resources={"limit_memory": "4G", "limit_cpu": "2"},
+        resources={"limit_memory": "8G", "limit_cpu": "3"},
     )
 
     # Task to load CSV data to a BigQuery table

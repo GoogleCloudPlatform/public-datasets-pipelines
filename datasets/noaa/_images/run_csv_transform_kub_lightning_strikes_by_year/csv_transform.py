@@ -16,8 +16,8 @@ import gzip
 import logging
 import os
 import pathlib
-import urllib.request
 
+import numpy as np
 import pandas as pd
 import requests
 from google.cloud import storage
@@ -27,90 +27,134 @@ def main(
     source_url: str,
     source_file: pathlib.Path,
     target_file: pathlib.Path,
+    chunksize: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
 ):
 
     logging.info("NOAA Lightning Strikes By Year process started")
 
-    if url_is_reachable(source_url):
+    pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
 
-        logging.info("creating 'files' folder")
-        pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
+    source_file_zipped = str(source_file) + ".gz"
+    download_file(source_url, source_file_zipped)
+    gz_decompress(source_file_zipped, source_file)
+    os.unlink(source_file_zipped)
 
-        source_file_zipped = str(source_file) + ".gz"
-        source_file_unzipped = str(source_file) + ".1"
+    dtypes = {
+        "DATE": np.str_,
+        "LONGITUDE": np.float_,
+        "LATITUDE": np.float_,
+        "TOTAL_COUNT": np.int_,
+    }
 
-        logging.info(f"Downloading source file {source_url}")
-        download_file(source_url, source_file_zipped)
+    chunksz = int(chunksize)
 
-        logging.info(f"Decompressing {source_file_unzipped}")
-        gz_decompress(source_file_zipped, source_file_unzipped)
+    logging.info(f"Opening batch file {source_file}")
+    with pd.read_csv(
+        source_file,  # path to main source file to load in batches
+        engine="python",
+        encoding="utf-8",
+        quotechar='"',  # string separator, typically double-quotes
+        chunksize=chunksz,  # size of batch data, in no. of records
+        skiprows=3,
+        sep=",",  # data column separator, typically ","
+        header=None,  # use when the data file does not contain a header
+        dtype=dtypes,  # use this when defining column and datatypes as per numpy
+    ) as reader:
+        for chunk_number, chunk in enumerate(reader):
+            target_file_batch = str(target_file).replace(
+                ".csv", "-" + str(chunk_number) + ".csv"
+            )
+            df = pd.DataFrame()
+            df = pd.concat([df, chunk])
+            process_chunk(df, target_file_batch, target_file, (not chunk_number == 0))
 
-        logging.info(f"Removing unnecessary header in {source_file_unzipped}")
-        os.system(f"echo 'DATE,LONGITUDE,LATITUDE,TOTAL_COUNT' > {source_file}")
-        os.system(f"tail -n +4 {source_file_unzipped} >> {source_file}")
-        os.unlink(source_file_unzipped)
-        os.unlink(source_file_zipped)
+    upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
-        logging.info(f"Opening source file {source_file}")
-        df = pd.read_csv(str(source_file))
+    logging.info("NOAA Lightning Strikes By Year process completed")
 
-        logging.info(f"Transform: Renaming Headers.. {source_file}")
-        df.columns = ["day_int", "centerlon", "centerlat", "number_of_strikes"]
 
-        logging.info(f"Converting datetime format in {source_file}")
-        df["day"] = (
-            pd.to_datetime(
-                (df["day_int"][:].astype("string") + "000000"), "raise", False, True
-            ).astype(str)
-            + " 00:00:00"
-        )
+def process_chunk(
+    df: pd.DataFrame, target_file_batch: str, target_file: str, skip_header: bool
+) -> None:
+    df = rename_headers(df)
+    df = convert_date_from_int(df)
+    df = generating_location(df)
+    df = reorder_header(df)
+    save_to_new_file(df, file_path=str(target_file_batch))
+    append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
 
-        df["center_point"] = (
-            "POINT("
-            + df["centerlon"][:].astype("string")
-            + " "
-            + df["centerlat"][:].astype("string")
-            + ")"
-        )
 
-        logging.info(f"Reordering columns in {source_file}")
-        df = df[["day", "number_of_strikes", "center_point"]]
-
-        logging.info(f"Transform: Saving to output file.. {target_file}")
-        df.to_csv(target_file, index=False)
-
-        logging.info(f"completed processing {source_url}")
+def append_batch_file(
+    batch_file_path: str, target_file_path: str, skip_header: bool, truncate_file: bool
+) -> None:
+    data_file = open(batch_file_path, "r")
+    if truncate_file:
+        target_file = open(target_file_path, "w+").close()
+    target_file = open(target_file_path, "a+")
+    if skip_header:
         logging.info(
-            f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
+            f"Appending batch file {batch_file_path} to {target_file_path} with skip header"
         )
-        upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
-
-        logging.info("NOAA Lightning Strikes By Year process completed")
-
+        next(data_file)
     else:
+        logging.info(f"Appending batch file {batch_file_path} to {target_file_path}")
+    target_file.write(data_file.read())
+    data_file.close()
+    target_file.close()
+    if os.path.exists(batch_file_path):
+        os.remove(batch_file_path)
 
-        logging.info(f"Error: Unable to reach url: {source_url}")
-        logging.info("Process failed!")
+
+def save_to_new_file(df, file_path) -> None:
+    df.to_csv(file_path, index=False)
+
+
+def rename_headers(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Renaming Headers")
+    df.columns = ["day_int", "centerlon", "centerlat", "number_of_strikes"]
+
+    return df
+
+
+def convert_date_from_int(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Converting dates from integers")
+    df["day"] = (
+        pd.to_datetime(
+            (df["day_int"][:].astype("string") + "000000"), "raise", False, True
+        ).astype("string")
+        + " 00:00:00"
+    )
+
+    return df
+
+
+def generating_location(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Generating location data")
+    df["center_point"] = (
+        "POINT("
+        + df["centerlon"][:].astype("string")
+        + " "
+        + df["centerlat"][:].astype("string")
+        + ")"
+    )
+
+    return df
+
+
+def reorder_header(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Reordering columns")
+    df = df[["day", "number_of_strikes", "center_point"]]
+
+    return df
 
 
 def gz_decompress(infile: str, tofile: str) -> None:
+    logging.info(f"Decompressing {infile}")
     with open(infile, "rb") as inf, open(tofile, "w", encoding="utf8") as tof:
         decom_str = gzip.decompress(inf.read()).decode("utf-8")
         tof.write(decom_str)
-
-
-def url_is_reachable(url: str) -> bool:
-
-    request = urllib.request.Request(url)
-    request.get_method = lambda: "HEAD"
-
-    try:
-        urllib.request.urlopen(request)
-        return True
-    except urllib.request.HTTPError:
-        return False
 
 
 def download_file(source_url: str, source_file: pathlib.Path) -> None:
@@ -134,6 +178,7 @@ if __name__ == "__main__":
         source_url=os.environ["SOURCE_URL"],
         source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
+        chunksize=os.environ["CHUNKSIZE"],
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
     )

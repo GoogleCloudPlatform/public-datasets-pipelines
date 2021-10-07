@@ -17,6 +17,7 @@ import os
 import pathlib
 from ftplib import FTP
 
+import numpy as np
 import pandas as pd
 from google.cloud import storage
 
@@ -28,6 +29,7 @@ def main(
     ftp_filename: str,
     source_file: pathlib.Path,
     target_file: pathlib.Path,
+    chunksize: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
 ) -> None:
@@ -43,46 +45,47 @@ def main(
 
     logging.info("GCHND States process started")
 
-    logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
-
-    logging.info(f"Downloading FTP file {source_url} from {ftp_host}")
     download_file_ftp(ftp_host, ftp_dir, ftp_filename, source_file, source_url)
 
-    df_filedata = load_source_file(source_file)
+    names = ["textdata"]
 
-    logging.info(f"Transformation Process Starting.. {source_file}")
+    dtypes = {"textdata": np.str_}
 
-    df = extract_columns(df_filedata)
-    df = reorder_headers(df)
+    chunksz = int(chunksize)
 
-    logging.info(f"Transformation Process complete .. {source_file}")
+    logging.info(f"Opening batch file {source_file}")
+    with pd.read_csv(
+        source_file,  # path to main source file to load in batches
+        engine="python",
+        encoding="utf-8",
+        quotechar='"',  # string separator, typically double-quotes
+        chunksize=chunksz,  # size of batch data, in no. of records
+        sep="|",  # data column separator, typically ","
+        header=None,  # use when the data file does not contain a header
+        names=names,  # column names
+        dtype=dtypes,  # use this when defining column and datatypes as per numpy
+    ) as reader:
+        for chunk_number, chunk in enumerate(reader):
+            target_file_batch = str(target_file).replace(
+                ".csv", "-" + str(chunk_number) + ".csv"
+            )
+            df = pd.DataFrame()
+            df = pd.concat([df, chunk])
+            process_chunk(df, target_file_batch, target_file, (not chunk_number == 0))
 
-    save_to_new_file(df, file_path=str(target_file))
-
-    logging.info(
-        f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
-    )
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
     logging.info("GCHND States process completed")
 
 
-def load_source_file(source_file: str) -> pd.DataFrame:
-    logging.info(f"Opening file {source_file}")
-    df_filedata = pd.read_csv(source_file, sep="|", header=None, names=["textdata"])
-    return df_filedata
-
-
-def reorder_headers(df: pd.DataFrame) -> pd.DataFrame:
-    logging.info("Transform: Reordering headers..")
-    df = df[
-        [
-            "code",
-            "name",
-        ]
-    ]
-    return df
+def process_chunk(
+    df: pd.DataFrame, target_file_batch: str, target_file: str, skip_header: bool
+) -> None:
+    df = extract_columns(df)
+    df = reorder_headers(df)
+    save_to_new_file(df, file_path=str(target_file_batch))
+    append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
 
 
 def extract_columns(df_filedata: pd.DataFrame) -> pd.DataFrame:
@@ -102,7 +105,7 @@ def extract_columns(df_filedata: pd.DataFrame) -> pd.DataFrame:
         if (col_name == "name") and (col_val[0:1] == "AL"):
             return "ALABAMA"
         else:
-            return col_val.strip()[col_ranges[col_name]]
+            return col_val.strip()[col_ranges[col_name]].strip()
 
     for col_name in col_ranges.keys():
         df[col_name] = df_filedata["textdata"].apply(get_column, args=(col_name,))
@@ -110,9 +113,41 @@ def extract_columns(df_filedata: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def reorder_headers(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Reordering headers..")
+    df = df[
+        [
+            "code",
+            "name",
+        ]
+    ]
+    return df
+
+
 def save_to_new_file(df: pd.DataFrame, file_path: str) -> None:
     logging.info(f"Saving to output file.. {file_path}")
     df.to_csv(file_path, index=False)
+
+
+def append_batch_file(
+    batch_file_path: str, target_file_path: str, skip_header: bool, truncate_file: bool
+) -> None:
+    data_file = open(batch_file_path, "r")
+    if truncate_file:
+        target_file = open(target_file_path, "w+").close()
+    target_file = open(target_file_path, "a+")
+    if skip_header:
+        logging.info(
+            f"Appending batch file {batch_file_path} to {target_file_path} with skip header"
+        )
+        next(data_file)
+    else:
+        logging.info(f"Appending batch file {batch_file_path} to {target_file_path}")
+    target_file.write(data_file.read())
+    data_file.close()
+    target_file.close()
+    if os.path.exists(batch_file_path):
+        os.remove(batch_file_path)
 
 
 def download_file_ftp(
@@ -163,6 +198,7 @@ if __name__ == "__main__":
         ftp_filename=os.environ["FTP_FILENAME"],
         source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
+        chunksize=os.environ["CHUNKSIZE"],
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
     )

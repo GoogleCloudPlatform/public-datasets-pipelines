@@ -64,10 +64,11 @@ with DAG(
             "FTP_FILENAME": "isd-history.txt",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
+            "CHUNKSIZE": "750000",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/noaa/gsod_stations/data_output.csv",
         },
-        resources={"limit_memory": "2G", "limit_cpu": "1"},
+        resources={"limit_memory": "8G", "limit_cpu": "3"},
     )
 
     # Task to load CSV data to a BigQuery table
@@ -78,6 +79,7 @@ with DAG(
         source_format="CSV",
         destination_project_dataset_table="noaa.gsod_stations",
         skip_leading_rows=1,
+        allow_quoted_newlines=True,
         write_disposition="WRITE_TRUNCATE",
         schema_fields=[
             {"name": "usaf", "type": "STRING", "mode": "NULLABLE"},
