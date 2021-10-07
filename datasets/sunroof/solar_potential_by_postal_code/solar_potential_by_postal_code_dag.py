@@ -39,15 +39,16 @@ with DAG(
         name="solar_potential_by_postal_code",
         namespace="default",
         image_pull_policy="Always",
-        image="{{ var.json.sunroof.container_registry.run_csv_transform_kub_solar_potential_by_postal_code }}",
+        image="{{ var.json.sunroof.container_registry.run_csv_transform_kub }}",
         env_vars={
             "SOURCE_URL": "gs://project-sunroof/csv/latest/project-sunroof-postal_code.csv",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
+            "CHUNKSIZE": "750000",
             "TARGET_GCS_BUCKET": "{{ var.json.shared.composer_bucket }}",
             "TARGET_GCS_PATH": "data/sunroof/solar_potential_by_postal_code/data_output.csv",
         },
-        resources={"limit_memory": "4G", "limit_cpu": "2"},
+        resources={"limit_memory": "8G", "limit_cpu": "3"},
     )
 
     # Task to load CSV data to a BigQuery table
@@ -58,6 +59,7 @@ with DAG(
         source_format="CSV",
         destination_project_dataset_table="sunroof.solar_potential_by_postal_code",
         skip_leading_rows=1,
+        allow_quoted_newlines=True,
         write_disposition="WRITE_TRUNCATE",
         schema_fields=[
             {
@@ -229,7 +231,7 @@ with DAG(
                 "mode": "NULLABLE",
             },
             {
-                "name": "install_size_kw_buckets",
+                "name": "install_size_kw_buckets_json",
                 "type": "STRING",
                 "description": "# of buildings with potential for various installation size buckets. Format is a JSON array, where each element is a tuple containing (1) lower bound of bucket, in kW, and (2) number of buildings in that bucket.",
                 "mode": "NULLABLE",

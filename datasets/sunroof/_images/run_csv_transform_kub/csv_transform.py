@@ -26,35 +26,83 @@ def main(
     source_url: str,
     source_file: pathlib.Path,
     target_file: pathlib.Path,
+    chunksize: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
 ) -> None:
 
-    logging.info("Sunroof Solar Potential By Census Tract process started")
+    logging.info("Sunroof solar potential started")
 
-    logging.info("creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
-
-    logging.info(f"Downloading file from {source_url} to {source_file}")
     download_file_gs(source_url, source_file)
 
-    logging.info(f"Opening file {source_file}")
-    df = pd.read_csv(source_file)
+    chunksz = int(chunksize)
 
-    logging.info(f"Transformation Process Starting.. {source_file}")
+    logging.info(f"Opening batch file {source_file}")
+    with pd.read_csv(
+        source_file,  # path to main source file to load in batches
+        engine="python",
+        encoding="utf-8",
+        quotechar='"',  # string separator, typically double-quotes
+        chunksize=chunksz,  # size of batch data, in no. of records
+        sep=",",  # data column separator, typically ","
+    ) as reader:
+        for chunk_number, chunk in enumerate(reader):
+            target_file_batch = str(target_file).replace(
+                ".csv", "-" + str(chunk_number) + ".csv"
+            )
+            df = pd.DataFrame()
+            df = pd.concat([df, chunk])
+            process_chunk(df, target_file_batch, target_file, (not chunk_number == 0))
 
-    logging.info(f"Transform: Renaming Headers.. {source_file}")
-    rename_headers(df)
+    upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
-    logging.info("Transform: Removing NULL text")
-    remove_nan_cols(df)
+    logging.info("Sunroof solar potential process completed")
 
-    logging.info("Transform: Adding geography field")
+
+def process_chunk(
+    df: pd.DataFrame, target_file_batch: str, target_file: str, skip_header: bool
+) -> None:
+    df = rename_headers(df)
+    df = remove_nan_cols(df)
+    df = generate_location(df)
+    df = reorder_headers(df)
+    save_to_new_file(df, file_path=str(target_file_batch))
+    append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
+
+
+def append_batch_file(
+    batch_file_path: str, target_file_path: str, skip_header: bool, truncate_file: bool
+) -> None:
+    data_file = open(batch_file_path, "r")
+    if truncate_file:
+        target_file = open(target_file_path, "w+").close()
+    target_file = open(target_file_path, "a+")
+    if skip_header:
+        logging.info(
+            f"Appending batch file {batch_file_path} to {target_file_path} with skip header"
+        )
+        next(data_file)
+    else:
+        logging.info(f"Appending batch file {batch_file_path} to {target_file_path}")
+    target_file.write(data_file.read())
+    data_file.close()
+    target_file.close()
+    if os.path.exists(batch_file_path):
+        os.remove(batch_file_path)
+
+
+def generate_location(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Generating location data")
     df["center_point"] = (
         "POINT( " + df["lng_avg"].map(str) + " " + df["lat_avg"].map(str) + " )"
     )
 
-    logging.info("Transform: Reordering headers..")
+    return df
+
+
+def reorder_headers(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Reordering headers..")
     df = df[
         [
             "region_name",
@@ -88,34 +136,22 @@ def main(
             "install_size_kw_buckets",
             "carbon_offset_metric_tons",
             "existing_installs_count",
+            "center_point",
         ]
     ]
 
-    logging.info(f"Transformation Process complete .. {source_file}")
-
-    logging.info(f"Saving to output file.. {target_file}")
-
-    try:
-        save_to_new_file(df, file_path=str(target_file))
-    except Exception as e:
-        logging.error(f"Error saving output file: {e}.")
-
-    logging.info(
-        f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
-    )
-    upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
-
-    logging.info("Sunroof Solar Potential By Census Tract process completed")
+    return df
 
 
 def remove_nan(dt_str: str) -> int:
-    if dt_str is None or len(str(dt_str)) == 0 or str(dt_str) == "nan":
+    if not dt_str or str(dt_str) == "nan":
         return int()
     else:
         return int(dt_str)
 
 
-def remove_nan_cols(df: pd.DataFrame) -> None:
+def remove_nan_cols(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Resolve NaN data")
     cols = {
         "count_qualified",
         "existing_installs_count",
@@ -131,11 +167,15 @@ def remove_nan_cols(df: pd.DataFrame) -> None:
     for col in cols:
         df[col] = df[col].apply(remove_nan)
 
+    return df
 
-def rename_headers(df: pd.DataFrame) -> None:
+
+def rename_headers(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Renaming columns")
     header_names = {"install_size_kw_buckets_json": "install_size_kw_buckets"}
+    df = df.rename(columns=header_names)
 
-    df = df.rename(columns=header_names, inplace=True)
+    return df
 
 
 def save_to_new_file(df: pd.DataFrame, file_path) -> None:
@@ -143,13 +183,8 @@ def save_to_new_file(df: pd.DataFrame, file_path) -> None:
 
 
 def download_file_gs(source_url: str, source_file: pathlib.Path) -> None:
-    try:
-        process = Popen(
-            ["gsutil", "cp", source_url, source_file], stdout=PIPE, stderr=PIPE
-        )
-        process.communicate()
-    except ValueError:
-        logging.error(f"Couldn't download {source_url}: {ValueError}")
+    process = Popen(["gsutil", "cp", source_url, source_file], stdout=PIPE, stderr=PIPE)
+    process.communicate()
 
 
 def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:
@@ -166,6 +201,7 @@ if __name__ == "__main__":
         source_url=os.environ["SOURCE_URL"],
         source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
+        chunksize=os.environ["CHUNKSIZE"],
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
     )
