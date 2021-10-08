@@ -12,12 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# import modules
-import datetime
 import logging
 import os
 import pathlib
-import subprocess
 
 import pandas as pd
 import requests
@@ -35,17 +32,17 @@ def main(
 
     logging.info("San Francisco - Film Locations process started")
 
-    logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
-
-    logging.info(f"Downloading file {source_url}")
     download_file(source_url, source_file)
 
     chunksz = int(chunksize)
 
-    logging.info(f"Opening batch file {source_file}")
     with pd.read_csv(
-        source_file, engine="python", encoding="utf-8", quotechar='"', chunksize=chunksz
+        source_file,
+        engine="python",
+        encoding="utf-8",
+        quotechar='"',
+        chunksize=chunksz
     ) as reader:
         for chunk_number, chunk in enumerate(reader):
             logging.info(f"Processing batch {chunk_number}")
@@ -54,20 +51,8 @@ def main(
             )
             df = pd.DataFrame()
             df = pd.concat([df, chunk])
-            processChunk(df, target_file_batch)
-            logging.info(f"Appending batch {chunk_number} to {target_file}")
-            if chunk_number == 0:
-                subprocess.run(["cp", target_file_batch, target_file])
-            else:
-                subprocess.check_call(f"sed -i '1d' {target_file_batch}", shell=True)
-                subprocess.check_call(
-                    f"cat {target_file_batch} >> {target_file}", shell=True
-                )
-            subprocess.run(["rm", target_file_batch])
+            process_chunk(df, target_file_batch, target_file, (not chunk_number == 0))
 
-    logging.info(
-        f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
-    )
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
     logging.info("San Francisco - Film Locations process completed")
@@ -75,26 +60,52 @@ def main(
 
 def download_file(source_url: str, source_file: pathlib.Path) -> None:
     r = requests.get(source_url, stream=True)
-    if r.status_code == 200:
-        with open(source_file, "wb") as f:
-            for chunk in r:
-                f.write(chunk)
-    else:
-        logging.error(f"Couldn't download {source_url}: {r.text}")
+    with open(source_file, "wb") as f:
+        for chunk in r:
+            f.write(chunk)
 
 
-def processChunk(df: pd.DataFrame, target_file_batch: str) -> None:
+def process_chunk(
+    df: pd.DataFrame, target_file_batch: str, target_file: str, skip_header: bool
+) -> None:
+    df = rename_headers(df)
+    df = trim_whitespace(df)
+    df = reorder_headers(df)
+    save_to_new_file(df, file_path=str(target_file_batch))
+    append_batch_file(target_file_batch, target_file, skip_header, not(skip_header))
 
-    logging.info("Transformation Process Starting")
 
+def rename_headers(df: pd.DataFrame) -> None:
     logging.info("Renaming Headers")
-    rename_headers(df)
+    header_names = {
+        "Title": "title",
+        "Release Year": "release_year",
+        "Locations": "locations",
+        "Fun Facts": "fun_facts",
+        "Production Company": "production_company",
+        "Distributor": "distributor",
+        "Director": "director",
+        "Writer": "writer",
+        "Actor 1": "actor_1",
+        "Actor 2": "actor_2",
+        "Actor 3": "actor_3",
+    }
 
+    df = df.rename(columns=header_names)
+
+    return df
+
+
+def trim_whitespace(df: pd.DataFrame) -> None:
     logging.info("Trimming Whitespace")
     df["distributor"] = df["distributor"].apply(lambda x: str(x).strip())
     df["director"] = df["director"].apply(lambda x: str(x).strip())
     df["actor_2"] = df["actor_2"].apply(lambda x: str(x).strip())
 
+    return df
+
+
+def reorder_headers(df: pd.DataFrame) -> None:
     logging.info("Reordering headers..")
     df = df[
         [
@@ -112,47 +123,32 @@ def processChunk(df: pd.DataFrame, target_file_batch: str) -> None:
         ]
     ]
 
-    logging.info(f"Saving to target file.. {target_file_batch}")
-
-    try:
-        save_to_new_file(df, file_path=str(target_file_batch))
-    except Exception as e:
-        logging.error(f"Error saving to target file: {e}.")
-
-    logging.info(f"Saved transformed source data to target file .. {target_file_batch}")
-
-
-def convert_dt_format(dt_str: str) -> str:
-    if not dt_str or dt_str == "nan":
-        return str("")
-    else:
-        return str(
-            datetime.datetime.strptime(str(dt_str), "%m/%d/%Y %H:%M:%S %p").strftime(
-                "%Y-%m-%d %H:%M:%S"
-            )
-        )
-
-
-def rename_headers(df: pd.DataFrame) -> None:
-    header_names = {
-        "Title": "title",
-        "Release Year": "release_year",
-        "Locations": "locations",
-        "Fun Facts": "fun_facts",
-        "Production Company": "production_company",
-        "Distributor": "distributor",
-        "Director": "director",
-        "Writer": "writer",
-        "Actor 1": "actor_1",
-        "Actor 2": "actor_2",
-        "Actor 3": "actor_3",
-    }
-
-    df = df.rename(columns=header_names, inplace=True)
+    return df
 
 
 def save_to_new_file(df: pd.DataFrame, file_path) -> None:
     df.to_csv(file_path, index=False)
+
+
+def append_batch_file(
+    batch_file_path: str, target_file_path: str, skip_header: bool, truncate_file: bool
+) -> None:
+    data_file = open(batch_file_path, "r")
+    if truncate_file:
+        target_file = open(target_file_path, "w+").close()
+    target_file = open(target_file_path, "a+")
+    if skip_header:
+        logging.info(
+            f"Appending batch file {batch_file_path} to {target_file_path} with skip header"
+        )
+        next(data_file)
+    else:
+        logging.info(f"Appending batch file {batch_file_path} to {target_file_path}")
+    target_file.write(data_file.read())
+    data_file.close()
+    target_file.close()
+    if os.path.exists(batch_file_path):
+        os.remove(batch_file_path)
 
 
 def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:
