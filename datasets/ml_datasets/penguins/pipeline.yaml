@@ -75,6 +75,29 @@ dag:
     # Use the YAML list syntax in this block to specify every task for your
     # pipeline.
 
+    - operator: "GoogleCloudStorageToGoogleCloudStorageOperator"
+      # Initializes a GCS-to-GCS task for the DAG. This operator is used to copy
+      # GCS objects from one location to another.
+
+      # Task description
+      description: "Task to run a GoogleCloudStorageToGoogleCloudStorageOperator"
+
+      args:
+        task_id: "copy_csv_files_to_composer_bucket"
+
+        # The GCS bucket to copy the object/s from
+        source_bucket: "cloud-samples-data"
+
+        # Use a trailing "/*" if you want to copy all objects under that path.
+        source_object: "ai-platform/penguins/*.csv"
+
+        # The GCS bucket to copy the object/s to
+        destination_bucket: "{{ var.value.composer_bucket }}"
+
+        # The GCS prefix to copy the object/s to
+        destination_object: "data/ml_datasets/penguins/"
+
+
     - operator: "GoogleCloudStorageToBigQueryOperator"
       # Initializes GCS to BQ task for the DAG. This operator is used to load a
       # CSV file from GCS into a BigQuery table.
@@ -86,19 +109,78 @@ dag:
         # Arguments supported by this operator:
         # http://airflow.apache.org/docs/apache-airflow/1.10.14/howto/operator/gcp/gcs.html#googlecloudstoragetobigqueryoperator
 
-        task_id: "penguins_gcs_to_bq_task"
+        task_id: "penguins_gcs_to_bq"
 
         # The GCS bucket where the CSV file is located in.
-        bucket: "cloud-samples-data"
+        bucket: "{{ var.value.composer_bucket }}"
 
         # The GCS object path for the CSV file
         source_objects:
           [
-            "ai-platform/penguins/penguins.data.csv",
-            "ai-platform/penguins/penguins.test.csv",
+            "data/ml_datasets/penguins/penguins.data.csv",
+            "data/ml_datasets/penguins/penguins.test.csv",
           ]
         source_format: "CSV"
         destination_project_dataset_table: "ml_datasets.penguins"
+
+        # Use this if your CSV file contains a header row
+        skip_leading_rows: 1
+
+        # How to write data to the table: overwrite, append, or write if empty
+        # See https://cloud.google.com/bigquery/docs/reference/auditlogs/rest/Shared.Types/WriteDisposition
+        write_disposition: "WRITE_TRUNCATE"
+
+        # The BigQuery table schema based on the CSV file. For more info, see
+        # https://cloud.google.com/bigquery/docs/schemas.
+        # Always use snake_case and lowercase for column names, and be explicit,
+        # i.e. specify modes for all columns.
+        schema_fields:
+          - name: "species"
+            type: "STRING"
+            mode: "REQUIRED"
+          - name: "island"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "culmen_length_mm"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "culmen_depth_mm"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "flipper_length_mm"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "body_mass_g"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "sex"
+            type: "STRING"
+            mode: "NULLABLE"
+
+    - operator: "GoogleCloudStorageToBigQueryOperator"
+      # Initializes GCS to BQ task for the DAG. This operator is used to load a
+      # CSV file from GCS into a BigQuery table.
+
+      # Task description
+      description: "Task to load CSV data to a BigQuery table"
+
+      args:
+        # Arguments supported by this operator:
+        # http://airflow.apache.org/docs/apache-airflow/1.10.14/howto/operator/gcp/gcs.html#googlecloudstoragetobigqueryoperator
+
+        task_id: "penguins_gcs_to_bq_uscentral1"
+
+        # The GCS bucket where the CSV file is located in.
+        bucket: "{{ var.value.composer_bucket }}"
+
+        # The GCS object path for the CSV file
+        source_objects:
+          [
+            "data/ml_datasets/penguins/penguins.data.csv",
+            "data/ml_datasets/penguins/penguins.test.csv",
+          ]
+        source_format: "CSV"
+        destination_project_dataset_table: "ml_datasets_uscentral1.penguins"
 
         # Use this if your CSV file contains a header row
         skip_leading_rows: 1
@@ -141,4 +223,4 @@ dag:
     #
     # For more info, see
     # https://airflow.apache.org/docs/apache-airflow/stable/tutorial.html#setting-up-dependencies
-    - "penguins_gcs_to_bq_task"
+    - "copy_csv_files_to_composer_bucket >> [penguins_gcs_to_bq, penguins_gcs_to_bq_uscentral1]"
