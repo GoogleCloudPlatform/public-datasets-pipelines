@@ -46,10 +46,10 @@ resource "google_bigquery_table" "{{ tf_resource_name }}" {
   ]
 }
 
-output "bigquery_table-{{ table_id }}-table_id" {
+output "bigquery_table-{{ tf_resource_name }}-table_id" {
   value = google_bigquery_table.{{ tf_resource_name }}.table_id
 }
 
-output "bigquery_table-{{ table_id }}-id" {
+output "bigquery_table-{{ tf_resource_name }}-id" {
   value = google_bigquery_table.{{ tf_resource_name }}.id
 }

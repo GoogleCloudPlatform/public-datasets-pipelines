@@ -26,9 +26,10 @@ from ruamel import yaml
 from scripts import generate_terraform
 
 PROJECT_ROOT = generate_terraform.PROJECT_ROOT
-SAMPLE_YAML_PATHS = {
+FILE_PATHS = {
     "dataset": PROJECT_ROOT / "samples" / "dataset.yaml",
     "pipeline": PROJECT_ROOT / "samples" / "pipeline.yaml",
+    "license": PROJECT_ROOT / "templates" / "airflow" / "license_header.py.jinja2",
 }
 
 ENV_PATH = PROJECT_ROOT / ".test"
@@ -42,13 +43,19 @@ def dataset_path():
     with tempfile.TemporaryDirectory(
         dir=generate_terraform.DATASETS_PATH, suffix="_dataset"
     ) as dir_path:
-        yield pathlib.Path(dir_path)
+        try:
+            yield pathlib.Path(dir_path)
+        finally:
+            shutil.rmtree(dir_path)
 
 
 @pytest.fixture
 def pipeline_path(dataset_path, suffix="_pipeline"):
     with tempfile.TemporaryDirectory(dir=dataset_path, suffix=suffix) as dir_path:
-        yield pathlib.Path(dir_path)
+        try:
+            yield pathlib.Path(dir_path)
+        finally:
+            shutil.rmtree(dir_path)
 
 
 @pytest.fixture
@@ -109,6 +116,29 @@ def env() -> str:
     return "test"
 
 
+def set_dataset_ids_in_config_files(
+    dataset_path: pathlib.Path, pipeline_path: pathlib.Path
+):
+    shutil.copyfile(FILE_PATHS["dataset"], dataset_path / "dataset.yaml")
+    shutil.copyfile(FILE_PATHS["pipeline"], pipeline_path / "pipeline.yaml")
+
+    dataset_config = yaml.load(dataset_path / "dataset.yaml")
+    dataset_config["dataset"]["name"] = dataset_path.name
+
+    for resource in dataset_config["resources"]:
+        if resource["type"] == "bigquery_dataset":
+            resource["dataset_id"] = dataset_path.name
+
+    yaml.dump(dataset_config, dataset_path / "dataset.yaml")
+
+    pipeline_config = yaml.load(pipeline_path / "pipeline.yaml")
+    for resource in pipeline_config["resources"]:
+        if resource["type"] == "bigquery_table":
+            resource["dataset_id"] = dataset_path.name
+
+    yaml.dump(pipeline_config, pipeline_path / "pipeline.yaml")
+
+
 def test_tf_templates_exist():
     for _, filepath in generate_terraform.TEMPLATE_PATHS.items():
         assert filepath.exists()
@@ -125,8 +155,7 @@ def test_main_generates_tf_files(
     tf_state_bucket,
     tf_state_prefix,
 ):
-    shutil.copyfile(SAMPLE_YAML_PATHS["dataset"], dataset_path / "dataset.yaml")
-    shutil.copyfile(SAMPLE_YAML_PATHS["pipeline"], pipeline_path / "pipeline.yaml")
+    set_dataset_ids_in_config_files(dataset_path, pipeline_path)
 
     generate_terraform.main(
         dataset_path.name,
@@ -180,8 +209,7 @@ def test_main_without_tf_remote_state_generates_tf_files_except_backend_tf(
     impersonating_acct,
     env,
 ):
-    shutil.copyfile(SAMPLE_YAML_PATHS["dataset"], dataset_path / "dataset.yaml")
-    shutil.copyfile(SAMPLE_YAML_PATHS["pipeline"], pipeline_path / "pipeline.yaml")
+    set_dataset_ids_in_config_files(dataset_path, pipeline_path)
 
     generate_terraform.main(
         dataset_path.name,
@@ -233,9 +261,9 @@ def test_main_with_multiple_pipelines(
 ):
     assert pipeline_path.name != pipeline_path_2.name
 
-    shutil.copyfile(SAMPLE_YAML_PATHS["dataset"], dataset_path / "dataset.yaml")
-    shutil.copyfile(SAMPLE_YAML_PATHS["pipeline"], pipeline_path / "pipeline.yaml")
-    shutil.copyfile(SAMPLE_YAML_PATHS["pipeline"], pipeline_path_2 / "pipeline.yaml")
+    shutil.copyfile(FILE_PATHS["dataset"], dataset_path / "dataset.yaml")
+    shutil.copyfile(FILE_PATHS["pipeline"], pipeline_path / "pipeline.yaml")
+    shutil.copyfile(FILE_PATHS["pipeline"], pipeline_path_2 / "pipeline.yaml")
 
     generate_terraform.main(
         dataset_path.name,
@@ -281,6 +309,82 @@ def test_main_with_multiple_pipelines(
     ).exists()
 
 
+def test_main_with_multiple_bq_dataset_ids(
+    dataset_path,
+    pipeline_path,
+    project_id,
+    bucket_name_prefix,
+    region,
+    impersonating_acct,
+    env,
+):
+    set_dataset_ids_in_config_files(dataset_path, pipeline_path)
+
+    # First, declare an additional custom BQ dataset in dataset.yaml
+    another_dataset_id = "another_dataset"
+    assert another_dataset_id != dataset_path.name
+
+    dataset_config = yaml.load(dataset_path / "dataset.yaml")
+    dataset_config["resources"].append(
+        {"type": "bigquery_dataset", "dataset_id": another_dataset_id}
+    )
+    yaml.dump(dataset_config, dataset_path / "dataset.yaml")
+
+    # Then, add a BQ table under the additional BQ dataset
+    pipeline_config = yaml.load(pipeline_path / "pipeline.yaml")
+    pipeline_config["resources"].append(
+        {
+            "type": "bigquery_table",
+            "table_id": "another_table",
+            "dataset_id": another_dataset_id,
+        }
+    )
+    yaml.dump(pipeline_config, pipeline_path / "pipeline.yaml")
+
+    generate_terraform.main(
+        dataset_path.name,
+        project_id,
+        bucket_name_prefix,
+        region,
+        impersonating_acct,
+        env,
+        None,
+        None,
+    )
+
+    for path_prefix in (
+        ENV_DATASETS_PATH / dataset_path.name / "_terraform",
+        generate_terraform.DATASETS_PATH / dataset_path.name / "_terraform",
+    ):
+        assert (path_prefix / f"{dataset_path.name}_dataset.tf").exists()
+        assert (path_prefix / f"{pipeline_path.name}_pipeline.tf").exists()
+
+    # Match the "google_bigquery_dataset" properties, i.e. any lines between the
+    # curly braces, in the *_dataset.tf file
+    regexp = r"\"google_bigquery_dataset\" \"" + r"[A-Za-z0-9_]+" + r"\" \{(.*?)\}"
+    bq_dataset_tf_string = re.compile(regexp, flags=re.MULTILINE | re.DOTALL)
+
+    for path_prefix in (
+        ENV_DATASETS_PATH / dataset_path.name / "_terraform",
+        generate_terraform.DATASETS_PATH / dataset_path.name / "_terraform",
+    ):
+        matches = bq_dataset_tf_string.findall(
+            (path_prefix / f"{dataset_path.name}_dataset.tf").read_text()
+        )
+
+        dataset_ids = set()
+        for match in matches:
+            result = re.search(r"dataset_id\s+\=\s+\"([A-Za-z0-9_]+)\"", match)
+            assert result.group(1)
+            dataset_ids.add(result.group(1))
+
+        # Assert that the dataset_ids are unique
+        assert len(dataset_ids) == len(matches)
+
+        assert another_dataset_id in dataset_ids
+        assert dataset_path.name in dataset_ids
+
+
 def test_dataset_without_any_pipelines(
     dataset_path,
     project_id,
@@ -291,7 +395,7 @@ def test_dataset_without_any_pipelines(
     tf_state_bucket,
     tf_state_prefix,
 ):
-    shutil.copyfile(SAMPLE_YAML_PATHS["dataset"], dataset_path / "dataset.yaml")
+    shutil.copyfile(FILE_PATHS["dataset"], dataset_path / "dataset.yaml")
 
     generate_terraform.main(
         dataset_path.name,
@@ -367,8 +471,7 @@ def test_generated_tf_files_contain_license_headers(
     tf_state_bucket,
     tf_state_prefix,
 ):
-    shutil.copyfile(SAMPLE_YAML_PATHS["dataset"], dataset_path / "dataset.yaml")
-    shutil.copyfile(SAMPLE_YAML_PATHS["pipeline"], pipeline_path / "pipeline.yaml")
+    set_dataset_ids_in_config_files(dataset_path, pipeline_path)
 
     generate_terraform.main(
         dataset_path.name,
@@ -416,8 +519,7 @@ def test_dataset_tf_file_contains_description_when_specified(
     impersonating_acct,
     env,
 ):
-    shutil.copyfile(SAMPLE_YAML_PATHS["dataset"], dataset_path / "dataset.yaml")
-    shutil.copyfile(SAMPLE_YAML_PATHS["pipeline"], pipeline_path / "pipeline.yaml")
+    set_dataset_ids_in_config_files(dataset_path, pipeline_path)
 
     generate_terraform.main(
         dataset_path.name,
@@ -463,8 +565,8 @@ def test_bq_dataset_can_have_a_description_with_newlines_and_quotes(
     impersonating_acct,
     env,
 ):
-    shutil.copyfile(SAMPLE_YAML_PATHS["dataset"], dataset_path / "dataset.yaml")
-    shutil.copyfile(SAMPLE_YAML_PATHS["pipeline"], pipeline_path / "pipeline.yaml")
+    shutil.copyfile(FILE_PATHS["dataset"], dataset_path / "dataset.yaml")
+    shutil.copyfile(FILE_PATHS["pipeline"], pipeline_path / "pipeline.yaml")
 
     config = yaml.load(open(dataset_path / "dataset.yaml"))
 
@@ -501,8 +603,7 @@ def test_dataset_tf_has_no_bq_dataset_description_when_unspecified(
     impersonating_acct,
     env,
 ):
-    shutil.copyfile(SAMPLE_YAML_PATHS["dataset"], dataset_path / "dataset.yaml")
-    shutil.copyfile(SAMPLE_YAML_PATHS["pipeline"], pipeline_path / "pipeline.yaml")
+    set_dataset_ids_in_config_files(dataset_path, pipeline_path)
 
     config = yaml.load(open(dataset_path / "dataset.yaml"))
 
@@ -551,8 +652,7 @@ def test_pipeline_tf_contains_optional_properties_when_specified(
     impersonating_acct,
     env,
 ):
-    shutil.copyfile(SAMPLE_YAML_PATHS["dataset"], dataset_path / "dataset.yaml")
-    shutil.copyfile(SAMPLE_YAML_PATHS["pipeline"], pipeline_path / "pipeline.yaml")
+    set_dataset_ids_in_config_files(dataset_path, pipeline_path)
 
     generate_terraform.main(
         dataset_path.name,
@@ -577,7 +677,13 @@ def test_pipeline_tf_contains_optional_properties_when_specified(
 
     # Match the "google_bigquery_table" properties, i.e. any lines between the
     # curly braces, in the *_pipeline.tf file
-    regexp = r"\"google_bigquery_table\" \"" + bq_table["table_id"] + r"\" \{(.*?)^\}"
+    regexp = (
+        r"\"google_bigquery_table\" \""
+        + bq_table["dataset_id"]
+        + "_"
+        + bq_table["table_id"]
+        + r"\" \{(.*?)^\}"
+    )
     bq_table_tf_string = re.compile(regexp, flags=re.MULTILINE | re.DOTALL)
 
     for path_prefix in (
@@ -604,15 +710,12 @@ def test_pipeline_tf_has_no_optional_properties_when_unspecified(
     impersonating_acct,
     env,
 ):
-    shutil.copyfile(SAMPLE_YAML_PATHS["dataset"], dataset_path / "dataset.yaml")
-    shutil.copyfile(SAMPLE_YAML_PATHS["pipeline"], pipeline_path / "pipeline.yaml")
+    set_dataset_ids_in_config_files(dataset_path, pipeline_path)
 
     config = yaml.load(open(pipeline_path / "pipeline.yaml"))
 
     # Get the first bigquery_table resource and delete the `description` field
-    bq_table = next(
-        (r for r in config["resources"] if r["type"] == "bigquery_table"), None
-    )
+    bq_table = next((r for r in config["resources"] if r["type"] == "bigquery_table"))
     del bq_table["description"]
     del bq_table["time_partitioning"]
     del bq_table["clustering"]
@@ -633,7 +736,13 @@ def test_pipeline_tf_has_no_optional_properties_when_unspecified(
 
     # Match the "google_bigquery_table" properties, i.e. any lines between the
     # curly braces, in the *_pipeline.tf file
-    regexp = r"\"google_bigquery_table\" \"" + bq_table["table_id"] + r"\" \{(.*?)^\}"
+    regexp = (
+        r"\"google_bigquery_table\" \""
+        + bq_table["dataset_id"]
+        + "_"
+        + bq_table["table_id"]
+        + r"\" \{(.*?)^\}"
+    )
     bq_table_tf_string = re.compile(regexp, flags=re.MULTILINE | re.DOTALL)
 
     for path_prefix in (
@@ -660,8 +769,7 @@ def test_bq_table_can_have_a_description_with_newlines_and_quotes(
     impersonating_acct,
     env,
 ):
-    shutil.copyfile(SAMPLE_YAML_PATHS["dataset"], dataset_path / "dataset.yaml")
-    shutil.copyfile(SAMPLE_YAML_PATHS["pipeline"], pipeline_path / "pipeline.yaml")
+    set_dataset_ids_in_config_files(dataset_path, pipeline_path)
 
     config = yaml.load(open(pipeline_path / "pipeline.yaml"))
 
@@ -697,8 +805,7 @@ def test_bq_table_name_starts_with_digits_but_tf_resource_name_does_not(
     impersonating_acct,
     env,
 ):
-    shutil.copyfile(SAMPLE_YAML_PATHS["dataset"], dataset_path / "dataset.yaml")
-    shutil.copyfile(SAMPLE_YAML_PATHS["pipeline"], pipeline_path / "pipeline.yaml")
+    set_dataset_ids_in_config_files(dataset_path, pipeline_path)
 
     config = yaml.load(open(pipeline_path / "pipeline.yaml"))
     table_name_starting_with_digit = f"{str(random.randint(0, 9))}_table"
@@ -810,8 +917,7 @@ def test_validation_on_generated_tf_files_in_dot_env_dir(
     impersonating_acct,
     env,
 ):
-    shutil.copyfile(SAMPLE_YAML_PATHS["dataset"], dataset_path / "dataset.yaml")
-    shutil.copyfile(SAMPLE_YAML_PATHS["pipeline"], pipeline_path / "pipeline.yaml")
+    set_dataset_ids_in_config_files(dataset_path, pipeline_path)
 
     generate_terraform.main(
         dataset_path.name,
@@ -840,8 +946,7 @@ def test_validation_on_generated_tf_files_in_project_dir(
     impersonating_acct,
     env,
 ):
-    shutil.copyfile(SAMPLE_YAML_PATHS["dataset"], dataset_path / "dataset.yaml")
-    shutil.copyfile(SAMPLE_YAML_PATHS["pipeline"], pipeline_path / "pipeline.yaml")
+    set_dataset_ids_in_config_files(dataset_path, pipeline_path)
 
     generate_terraform.main(
         dataset_path.name,
