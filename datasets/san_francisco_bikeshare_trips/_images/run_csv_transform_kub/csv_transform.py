@@ -28,6 +28,7 @@ from google.cloud import storage
 
 def main(
     source_url_http: str,
+    source_url_gs: str,
     source_file: pathlib.Path,
     target_file: pathlib.Path,
     chunksize: str,
@@ -39,16 +40,52 @@ def main(
 
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
 
-    for src_url_http in source_url_http.splitlines():
-        src_url_http = src_url_http.replace('"', '').strip()
-        src_file_http = os.path.split(source_file)[0] + '/' + os.path.split(src_url_http)[1]
-        download_file_http(src_url_http, src_file_http)
-        if src_file_http.find(".zip") > -1 \
-            or src_file_http.find(".gz") > -1 \
-            or src_file_http.find(".tar") > -1:
-            unpack_file(src_file_http, os.path.split(source_file)[0])
+    dest_path = os.path.split(source_file)[0]
+    download_url_files_from_list(source_url_http, dest_path)
+    download_url_files_from_list(source_url_gs, dest_path)
+
+
+def download_url_files_from_list(url_list: str, dest_path: str):
+    for url in url_list.splitlines():
+        url = url.replace('"', '').strip()
+        dest_file = dest_path + '/' + os.path.split(url)[1]
+        if url.find("http") == 0:
+            download_file_http(url, dest_file)
+        elif url.find("gs:") == 0:
+            download_file_gs(url, dest_file)
         else:
-            logging.info(f"Parsing {src_file_http}")
+            logging.info(f"invalid URL")
+        if (url.find(".zip") > -1 \
+            or url.find(".gz") > -1 \
+            or url.find(".tar") > -1) \
+            and (url.find("http") == 0 \
+                or url.find("gs:") == 0):
+            unpack_file(dest_file, dest_path)
+        else:
+            logging.info(f"Parsing {dest_file} for decompression")
+
+
+    # for src_url_http in source_url_http.splitlines():
+    #     src_url_http = src_url_http.replace('"', '').strip()
+    #     src_file_http = os.path.split(source_file)[0] + '/' + os.path.split(src_url_http)[1]
+    #     download_file_http(src_url_http, src_file_http)
+    #     if src_file_http.find(".zip") > -1 \
+    #         or src_file_http.find(".gz") > -1 \
+    #         or src_file_http.find(".tar") > -1:
+    #         unpack_file(src_file_http, os.path.split(source_file)[0])
+    #     else:
+    #         logging.info(f"Parsing {src_file_http}")
+
+    # for src_url_gs in source_url_gs.splitlines():
+    #     src_url_gs = src_url_gs.replace('"', '').strip()
+    #     src_file_gs = os.path.split(source_file)[0] + '/' + os.path.split(src_url_http)[1]
+    #     download_file_http(src_url_http, src_file_http)
+    #     if src_file_http.find(".zip") > -1 \
+    #         or src_file_http.find(".gz") > -1 \
+    #         or src_file_http.find(".tar") > -1:
+    #         unpack_file(src_file_http, os.path.split(source_file)[0])
+    #     else:
+    #         logging.info(f"Parsing {src_file_http}")
 
 
     # import pdb;pdb.set_trace()
@@ -330,6 +367,7 @@ if __name__ == "__main__":
 
     main(
         source_url_http=os.environ["SOURCE_URL_HTTP"],
+        source_url_gs=os.environ["SOURCE_URL_GS"],
         source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
         chunksize=os.environ["CHUNKSIZE"],

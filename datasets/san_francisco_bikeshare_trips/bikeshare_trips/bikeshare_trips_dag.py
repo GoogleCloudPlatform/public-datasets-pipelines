@@ -58,7 +58,7 @@ with DAG(
         image_pull_policy="Always",
         image="{{ var.json.san_francisco_bikeshare_trips.container_registry.run_csv_transform_kub }}",
         env_vars={
-            "SOURCE_URL_GS": '"gs://pdp-feeds-staging/Cloud/babs_open_data_year_1/201402_babs_open_data/201402_trip_data.csv",\n"gs://pdp-feeds-staging/Cloud/babs_open_data_year_1/201408_babs_open_data/201408_trip_data.csv",\n"gs://pdp-feeds-staging/Cloud/babs_open_data_year_2/201508_trip_data.csv",\n"gs://pdp-feeds-staging/Cloud/babs_open_data_year_3/201608_trip_data.csv"',
+            "SOURCE_URL_GS": '"gs://pdp-feeds-staging/Cloud/babs_open_data_year_1/201402_babs_open_data/201402_trip_data.csv"\n"gs://pdp-feeds-staging/Cloud/babs_open_data_year_1/201408_babs_open_data/201408_trip_data.csv"\n"gs://pdp-feeds-staging/Cloud/babs_open_data_year_2/201508_trip_data.csv"\n"gs://pdp-feeds-staging/Cloud/babs_open_data_year_3/201608_trip_data.csv"\n',
             "SOURCE_URL_HTTP": '"https://s3.amazonaws.com/fordgobike-data/201803-fordgobike-tripdata.csv.zip"\n"https://s3.amazonaws.com/fordgobike-data/201804-fordgobike-tripdata.csv.zip"\n"https://s3.amazonaws.com/fordgobike-data/201802-fordgobike-tripdata.csv.zip"\n"https://s3.amazonaws.com/fordgobike-data/201801-fordgobike-tripdata.csv.zip"\n"https://s3.amazonaws.com/fordgobike-data/2017-fordgobike-tripdata.csv"\n"https://s3.amazonaws.com/babs-open-data/babs_open_data_year_1.zip"\n"https://s3.amazonaws.com/babs-open-data/babs_open_data_year_2.zip"\n"https://s3.amazonaws.com/babs-open-data/babs_open_data_year_3.zip"\n',
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
