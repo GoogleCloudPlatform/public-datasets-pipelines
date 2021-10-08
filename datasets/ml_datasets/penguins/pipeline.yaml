@@ -32,6 +32,16 @@ resources:
     #   table_id
     table_id: penguins
 
+  - type: bigquery_table
+    # A Google BigQuery table to store your data. Requires a `bigquery_dataset`
+    # to be specified in the config (i.e. `dataset.yaml) for the dataset that
+    # this pipeline belongs in.
+    #
+    # Required Properties:
+    #   table_id
+    dataset_id: ml_datasets_uscentral1
+    table_id: penguins
+
 dag:
   # The DAG acronym stands for directed acyclic graph. This block represents
   # your data pipeline along with every property and configuration it needs to
