@@ -204,13 +204,15 @@ def customize_template_subs(resource: dict, subs: dict) -> dict:
             "uniform_bucket_level_access"
         )
     elif resource["type"] == "bigquery_table":
+        dataset_table = f"{subs['dataset_id']}_{resource['table_id']}"
+
         # Terraform resource names cannot start with digits, but BigQuery allows
         # table names that start with digits. We prepend `bqt_` to table names
         # that doesn't comply with Terraform's naming rule.
         if resource["table_id"][0].isdigit():
-            subs["tf_resource_name"] = "bqt_" + resource["table_id"]
+            subs["tf_resource_name"] = f"bqt_{dataset_table}"
         else:
-            subs["tf_resource_name"] = resource["table_id"]
+            subs["tf_resource_name"] = dataset_table
     return subs
 
 
