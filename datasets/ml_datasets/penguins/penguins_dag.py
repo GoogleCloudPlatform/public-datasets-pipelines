@@ -14,7 +14,7 @@
 
 
 from airflow import DAG
-from airflow.contrib.operators import gcs_to_bq
+from airflow.contrib.operators import gcs_to_bq, gcs_to_gcs
 
 default_args = {
     "owner": "Google",
@@ -32,13 +32,24 @@ with DAG(
     default_view="graph",
 ) as dag:
 
+    # Task to run a GoogleCloudStorageToGoogleCloudStorageOperator
+    copy_csv_files_to_composer_bucket = (
+        gcs_to_gcs.GoogleCloudStorageToGoogleCloudStorageOperator(
+            task_id="copy_csv_files_to_composer_bucket",
+            source_bucket="cloud-samples-data",
+            source_object="ai-platform/penguins/*.csv",
+            destination_bucket="{{ var.value.composer_bucket }}",
+            destination_object="data/ml_datasets/penguins/",
+        )
+    )
+
     # Task to load CSV data to a BigQuery table
-    penguins_gcs_to_bq_task = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
-        task_id="penguins_gcs_to_bq_task",
-        bucket="cloud-samples-data",
+    penguins_gcs_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+        task_id="penguins_gcs_to_bq",
+        bucket="{{ var.value.composer_bucket }}",
         source_objects=[
-            "ai-platform/penguins/penguins.data.csv",
-            "ai-platform/penguins/penguins.test.csv",
+            "data/ml_datasets/penguins/penguins.data.csv",
+            "data/ml_datasets/penguins/penguins.test.csv",
         ],
         source_format="CSV",
         destination_project_dataset_table="ml_datasets.penguins",
@@ -55,4 +66,30 @@ with DAG(
         ],
     )
 
-    penguins_gcs_to_bq_task
+    # Task to load CSV data to a BigQuery table
+    penguins_gcs_to_bq_uscentral1 = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+        task_id="penguins_gcs_to_bq_uscentral1",
+        bucket="{{ var.value.composer_bucket }}",
+        source_objects=[
+            "data/ml_datasets/penguins/penguins.data.csv",
+            "data/ml_datasets/penguins/penguins.test.csv",
+        ],
+        source_format="CSV",
+        destination_project_dataset_table="ml_datasets_uscentral1.penguins",
+        skip_leading_rows=1,
+        write_disposition="WRITE_TRUNCATE",
+        schema_fields=[
+            {"name": "species", "type": "STRING", "mode": "REQUIRED"},
+            {"name": "island", "type": "STRING", "mode": "NULLABLE"},
+            {"name": "culmen_length_mm", "type": "FLOAT", "mode": "NULLABLE"},
+            {"name": "culmen_depth_mm", "type": "FLOAT", "mode": "NULLABLE"},
+            {"name": "flipper_length_mm", "type": "FLOAT", "mode": "NULLABLE"},
+            {"name": "body_mass_g", "type": "FLOAT", "mode": "NULLABLE"},
+            {"name": "sex", "type": "STRING", "mode": "NULLABLE"},
+        ],
+    )
+
+    copy_csv_files_to_composer_bucket >> [
+        penguins_gcs_to_bq,
+        penguins_gcs_to_bq_uscentral1,
+    ]
