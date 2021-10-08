@@ -38,11 +38,7 @@ def main(
     chunksz = int(chunksize)
 
     with pd.read_csv(
-        source_file,
-        engine="python",
-        encoding="utf-8",
-        quotechar='"',
-        chunksize=chunksz
+        source_file, engine="python", encoding="utf-8", quotechar='"', chunksize=chunksz
     ) as reader:
         for chunk_number, chunk in enumerate(reader):
             logging.info(f"Processing batch {chunk_number}")
@@ -72,7 +68,7 @@ def process_chunk(
     df = trim_whitespace(df)
     df = reorder_headers(df)
     save_to_new_file(df, file_path=str(target_file_batch))
-    append_batch_file(target_file_batch, target_file, skip_header, not(skip_header))
+    append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
 
 
 def rename_headers(df: pd.DataFrame) -> None:
