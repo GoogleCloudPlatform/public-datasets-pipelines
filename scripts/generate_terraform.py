@@ -119,7 +119,11 @@ def generate_dataset_tf(dataset_id: str, project_id: str, config: dict, env: str
 
     contents = ""
     for resource in config["resources"]:
-        contents += tf_resource_contents(resource, {**resource, **subs})
+        if resource.get("dataset_id"):
+            _subs = {**subs, **{"dataset_id": resource["dataset_id"]}}
+        else:
+            _subs = subs
+        contents += tf_resource_contents(resource, {**resource, **_subs})
 
     create_file_in_dir_tree(
         dataset_id, contents, f"{dataset_id}_dataset.tf", PROJECT_ROOT / f".{env}"
