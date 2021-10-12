@@ -20,7 +20,7 @@ resources:
     description: ""
 
 dag:
-  airflow-version: 2
+  airflow_version: 2
   initialize:
     dag_id: citibike_stations
     default_args:
