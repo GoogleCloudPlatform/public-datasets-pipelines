@@ -3,7 +3,7 @@
 ## [2.4.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v2.3.1...v2.4.0) (2021-10-08)
 
 
-### Features
+### Datasets
 
 * Onboard Austin Crime dataset ([#174](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/174)) ([b4fbaad](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/b4fbaad99e94a052d039c99bc8ca9ad842461e4a))
 * Onboard CMS Medicare ([#185](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/185)) ([d0425cd](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/d0425cd95a7c56cd788ff5330a791f3677767862))
@@ -13,6 +13,10 @@
 * Onboard San Francisco Street Trees dataset ([#176](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/176)) ([7da5061](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/7da5061cd86c11e6bf8ac87c0ba9b7ab6b48c811))
 * Onboard World Bank Health Population dataset ([#178](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/178)) ([4aba767](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/4aba767c13257a078311d53391ac982303546632))
 * Onboard World Bank International Debt dataset ([#179](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/179)) ([5ebbabb](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/5ebbabb159f8fd776d92d43c7e0983a9da4c55d2))
+
+
+### Features
+
 * Support specifying an alternate BQ dataset_id for BQ tables ([#203](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/203)) ([9115e82](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/9115e82502fb1664023870cb332454900f41d008))
 
 ### [2.3.1](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v2.3.0...v2.3.1) (2021-09-28)
