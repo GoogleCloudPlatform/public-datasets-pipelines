@@ -66,7 +66,7 @@ def main(
         for chunk_number, chunk in enumerate(reader):
             logging.info(f"Processing batch {chunk_number}")
             target_file_batch = str(target_file).replace(
-                ".csv", "-" + str(chunk_number) + ".csv"
+                ".csv", f"-{chunk_number}.csv"
             )
             df = pd.DataFrame()
             df = pd.concat([df, chunk])
