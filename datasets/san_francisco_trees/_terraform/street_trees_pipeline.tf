@@ -15,7 +15,7 @@
  */
 
 
-resource "google_bigquery_table" "street_trees" {
+resource "google_bigquery_table" "san_francisco_trees_street_trees" {
   project    = var.project_id
   dataset_id = "san_francisco_trees"
   table_id   = "street_trees"
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "street_trees" {
   ]
 }
 
-output "bigquery_table-street_trees-table_id" {
-  value = google_bigquery_table.street_trees.table_id
+output "bigquery_table-san_francisco_trees_street_trees-table_id" {
+  value = google_bigquery_table.san_francisco_trees_street_trees.table_id
 }
 
-output "bigquery_table-street_trees-id" {
-  value = google_bigquery_table.street_trees.id
+output "bigquery_table-san_francisco_trees_street_trees-id" {
+  value = google_bigquery_table.san_francisco_trees_street_trees.id
 }

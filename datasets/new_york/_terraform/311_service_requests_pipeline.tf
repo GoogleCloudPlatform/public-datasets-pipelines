@@ -15,7 +15,7 @@
  */
 
 
-resource "google_bigquery_table" "bqt_311_service_requests" {
+resource "google_bigquery_table" "bqt_new_york_311_service_requests" {
   project    = var.project_id
   dataset_id = "new_york"
   table_id   = "311_service_requests"
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "bqt_311_service_requests" {
   ]
 }
 
-output "bigquery_table-311_service_requests-table_id" {
-  value = google_bigquery_table.bqt_311_service_requests.table_id
+output "bigquery_table-bqt_new_york_311_service_requests-table_id" {
+  value = google_bigquery_table.bqt_new_york_311_service_requests.table_id
 }
 
-output "bigquery_table-311_service_requests-id" {
-  value = google_bigquery_table.bqt_311_service_requests.id
+output "bigquery_table-bqt_new_york_311_service_requests-id" {
+  value = google_bigquery_table.bqt_new_york_311_service_requests.id
 }

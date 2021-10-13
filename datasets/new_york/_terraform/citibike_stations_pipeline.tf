@@ -15,7 +15,7 @@
  */
 
 
-resource "google_bigquery_table" "citibike_stations" {
+resource "google_bigquery_table" "new_york_citibike_stations" {
   project    = var.project_id
   dataset_id = "new_york"
   table_id   = "citibike_stations"
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "citibike_stations" {
   ]
 }
 
-output "bigquery_table-citibike_stations-table_id" {
-  value = google_bigquery_table.citibike_stations.table_id
+output "bigquery_table-new_york_citibike_stations-table_id" {
+  value = google_bigquery_table.new_york_citibike_stations.table_id
 }
 
-output "bigquery_table-citibike_stations-id" {
-  value = google_bigquery_table.citibike_stations.id
+output "bigquery_table-new_york_citibike_stations-id" {
+  value = google_bigquery_table.new_york_citibike_stations.id
 }

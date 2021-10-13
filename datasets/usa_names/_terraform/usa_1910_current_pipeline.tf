@@ -15,7 +15,7 @@
  */
 
 
-resource "google_bigquery_table" "usa_1910_current" {
+resource "google_bigquery_table" "usa_names_usa_1910_current" {
   project    = var.project_id
   dataset_id = "usa_names"
   table_id   = "usa_1910_current"
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "usa_1910_current" {
   ]
 }
 
-output "bigquery_table-usa_1910_current-table_id" {
-  value = google_bigquery_table.usa_1910_current.table_id
+output "bigquery_table-usa_names_usa_1910_current-table_id" {
+  value = google_bigquery_table.usa_names_usa_1910_current.table_id
 }
 
-output "bigquery_table-usa_1910_current-id" {
-  value = google_bigquery_table.usa_1910_current.id
+output "bigquery_table-usa_names_usa_1910_current-id" {
+  value = google_bigquery_table.usa_names_usa_1910_current.id
 }

@@ -15,7 +15,7 @@
  */
 
 
-resource "google_bigquery_table" "mobility_report" {
+resource "google_bigquery_table" "covid19_google_mobility_mobility_report" {
   project    = var.project_id
   dataset_id = "covid19_google_mobility"
   table_id   = "mobility_report"
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "mobility_report" {
   ]
 }
 
-output "bigquery_table-mobility_report-table_id" {
-  value = google_bigquery_table.mobility_report.table_id
+output "bigquery_table-covid19_google_mobility_mobility_report-table_id" {
+  value = google_bigquery_table.covid19_google_mobility_mobility_report.table_id
 }
 
-output "bigquery_table-mobility_report-id" {
-  value = google_bigquery_table.mobility_report.id
+output "bigquery_table-covid19_google_mobility_mobility_report-id" {
+  value = google_bigquery_table.covid19_google_mobility_mobility_report.id
 }
