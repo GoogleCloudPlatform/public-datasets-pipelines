@@ -62,7 +62,7 @@ with DAG(
             "SOURCE_FILE": "files/data.csv",
             "COLUMN_TO_REMOVE": "Unnamed: 30",
             "TARGET_FILE": "files/data_output.csv",
-            "TARGET_GCS_BUCKET": "{{ var.json.shared.composer_bucket }}",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/world_bank_health_population/country_summary/data_output.csv",
             "PIPELINE_NAME": "country_summary",
             "CSV_HEADERS": '["country_code","short_name","table_name","long_name","two_alpha_code","currency_unit","special_notes","region","income_group","wb_2_code","national_accounts_base_year","national_accounts_reference_year","sna_price_valuation","lending_category","other_groups","system_of_national_accounts","alternative_conversion_factor","ppp_survey_year","balance_of_payments_manual_in_use","external_debt_reporting_status","system_of_trade","government_accounting_concept","imf_data_dissemination_standard","latest_population_census","latest_household_survey","source_of_most_recent_income_and_expenditure_data","vital_registration_complete","latest_agricultural_census","latest_industrial_data","latest_trade_data","latest_water_withdrawal_data"]',
@@ -74,7 +74,7 @@ with DAG(
     # Task to load CSV data to a BigQuery table
     load_country_summary_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
         task_id="load_country_summary_to_bq",
-        bucket="{{ var.json.shared.composer_bucket }}",
+        bucket="{{ var.value.composer_bucket }}",
         source_objects=[
             "data/world_bank_health_population/country_summary/data_output.csv"
         ],

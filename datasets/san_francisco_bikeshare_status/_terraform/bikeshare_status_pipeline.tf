@@ -15,7 +15,7 @@
  */
 
 
-resource "google_bigquery_table" "bikeshare_status" {
+resource "google_bigquery_table" "san_francisco_bikeshare_status_bikeshare_status" {
   project    = var.project_id
   dataset_id = "san_francisco_bikeshare_status"
   table_id   = "bikeshare_status"
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "bikeshare_status" {
   ]
 }
 
-output "bigquery_table-bikeshare_status-table_id" {
-  value = google_bigquery_table.bikeshare_status.table_id
+output "bigquery_table-san_francisco_bikeshare_status_bikeshare_status-table_id" {
+  value = google_bigquery_table.san_francisco_bikeshare_status_bikeshare_status.table_id
 }
 
-output "bigquery_table-bikeshare_status-id" {
-  value = google_bigquery_table.bikeshare_status.id
+output "bigquery_table-san_francisco_bikeshare_status_bikeshare_status-id" {
+  value = google_bigquery_table.san_francisco_bikeshare_status_bikeshare_status.id
 }

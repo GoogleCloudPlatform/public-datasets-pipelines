@@ -15,12 +15,12 @@
  */
 
 
-resource "google_bigquery_table" "film_locations" {
+resource "google_bigquery_table" "san_francisco_film_locations_film_locations" {
   project    = var.project_id
   dataset_id = "san_francisco_film_locations"
   table_id   = "film_locations"
 
-  description = "san_francisco_film_locationsspc"
+  description = "If you love movies, and you love San Francisco, you\u0027re bound to love this -- a listing of filming locations of movies shot in San Francisco starting from 1924. You\u0027ll find the titles, locations, fun facts, names of the director, writer, actors, and studio for most of these films."
 
 
 
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "film_locations" {
   ]
 }
 
-output "bigquery_table-film_locations-table_id" {
-  value = google_bigquery_table.film_locations.table_id
+output "bigquery_table-san_francisco_film_locations_film_locations-table_id" {
+  value = google_bigquery_table.san_francisco_film_locations_film_locations.table_id
 }
 
-output "bigquery_table-film_locations-id" {
-  value = google_bigquery_table.film_locations.id
+output "bigquery_table-san_francisco_film_locations_film_locations-id" {
+  value = google_bigquery_table.san_francisco_film_locations_film_locations.id
 }

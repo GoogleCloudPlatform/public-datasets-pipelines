@@ -15,7 +15,7 @@
  */
 
 
-resource "google_bigquery_table" "series_times" {
+resource "google_bigquery_table" "world_bank_health_population_series_times" {
   project    = var.project_id
   dataset_id = "world_bank_health_population"
   table_id   = "series_times"
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "series_times" {
   ]
 }
 
-output "bigquery_table-series_times-table_id" {
-  value = google_bigquery_table.series_times.table_id
+output "bigquery_table-world_bank_health_population_series_times-table_id" {
+  value = google_bigquery_table.world_bank_health_population_series_times.table_id
 }
 
-output "bigquery_table-series_times-id" {
-  value = google_bigquery_table.series_times.id
+output "bigquery_table-world_bank_health_population_series_times-id" {
+  value = google_bigquery_table.world_bank_health_population_series_times.id
 }

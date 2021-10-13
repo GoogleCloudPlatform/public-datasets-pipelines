@@ -15,7 +15,7 @@
  */
 
 
-resource "google_bigquery_table" "top_keywords_history" {
+resource "google_bigquery_table" "google_political_ads_top_keywords_history" {
   project    = var.project_id
   dataset_id = "google_political_ads"
   table_id   = "top_keywords_history"
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "top_keywords_history" {
   ]
 }
 
-output "bigquery_table-top_keywords_history-table_id" {
-  value = google_bigquery_table.top_keywords_history.table_id
+output "bigquery_table-google_political_ads_top_keywords_history-table_id" {
+  value = google_bigquery_table.google_political_ads_top_keywords_history.table_id
 }
 
-output "bigquery_table-top_keywords_history-id" {
-  value = google_bigquery_table.top_keywords_history.id
+output "bigquery_table-google_political_ads_top_keywords_history-id" {
+  value = google_bigquery_table.google_political_ads_top_keywords_history.id
 }

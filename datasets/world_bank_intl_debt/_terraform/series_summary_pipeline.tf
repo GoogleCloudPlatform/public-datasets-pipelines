@@ -15,7 +15,7 @@
  */
 
 
-resource "google_bigquery_table" "series_summary" {
+resource "google_bigquery_table" "world_bank_intl_debt_series_summary" {
   project    = var.project_id
   dataset_id = "world_bank_intl_debt"
   table_id   = "series_summary"
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "series_summary" {
   ]
 }
 
-output "bigquery_table-series_summary-table_id" {
-  value = google_bigquery_table.series_summary.table_id
+output "bigquery_table-world_bank_intl_debt_series_summary-table_id" {
+  value = google_bigquery_table.world_bank_intl_debt_series_summary.table_id
 }
 
-output "bigquery_table-series_summary-id" {
-  value = google_bigquery_table.series_summary.id
+output "bigquery_table-world_bank_intl_debt_series_summary-id" {
+  value = google_bigquery_table.world_bank_intl_debt_series_summary.id
 }

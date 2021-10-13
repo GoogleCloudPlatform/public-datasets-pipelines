@@ -20,7 +20,7 @@ resources:
     description: ""
 
 dag:
-  airflow-version: 2
+  airflow_version: 2
   initialize:
     dag_id: tree_census_1995
     default_args:

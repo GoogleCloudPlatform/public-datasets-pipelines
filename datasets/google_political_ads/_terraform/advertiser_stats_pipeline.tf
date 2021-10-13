@@ -15,7 +15,7 @@
  */
 
 
-resource "google_bigquery_table" "advertiser_stats" {
+resource "google_bigquery_table" "google_political_ads_advertiser_stats" {
   project    = var.project_id
   dataset_id = "google_political_ads"
   table_id   = "advertiser_stats"
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "advertiser_stats" {
   ]
 }
 
-output "bigquery_table-advertiser_stats-table_id" {
-  value = google_bigquery_table.advertiser_stats.table_id
+output "bigquery_table-google_political_ads_advertiser_stats-table_id" {
+  value = google_bigquery_table.google_political_ads_advertiser_stats.table_id
 }
 
-output "bigquery_table-advertiser_stats-id" {
-  value = google_bigquery_table.advertiser_stats.id
+output "bigquery_table-google_political_ads_advertiser_stats-id" {
+  value = google_bigquery_table.google_political_ads_advertiser_stats.id
 }

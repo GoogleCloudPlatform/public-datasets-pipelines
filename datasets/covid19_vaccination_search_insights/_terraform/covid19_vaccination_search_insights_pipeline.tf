@@ -15,7 +15,7 @@
  */
 
 
-resource "google_bigquery_table" "covid19_vaccination_search_insights" {
+resource "google_bigquery_table" "covid19_vaccination_search_insights_covid19_vaccination_search_insights" {
   project    = var.project_id
   dataset_id = "covid19_vaccination_search_insights"
   table_id   = "covid19_vaccination_search_insights"
@@ -27,7 +27,8 @@ resource "google_bigquery_table" "covid19_vaccination_search_insights" {
     require_partition_filter = false
   }
   clustering = ["sub_region_1_code", "sub_region_2_code", "sub_region_3_code", "place_id"]
-  schema     = <<EOF
+
+  schema = <<EOF
     [
   {
       "name": "date",
@@ -114,10 +115,10 @@ resource "google_bigquery_table" "covid19_vaccination_search_insights" {
   ]
 }
 
-output "bigquery_table-covid19_vaccination_search_insights-table_id" {
-  value = google_bigquery_table.covid19_vaccination_search_insights.table_id
+output "bigquery_table-covid19_vaccination_search_insights_covid19_vaccination_search_insights-table_id" {
+  value = google_bigquery_table.covid19_vaccination_search_insights_covid19_vaccination_search_insights.table_id
 }
 
-output "bigquery_table-covid19_vaccination_search_insights-id" {
-  value = google_bigquery_table.covid19_vaccination_search_insights.id
+output "bigquery_table-covid19_vaccination_search_insights_covid19_vaccination_search_insights-id" {
+  value = google_bigquery_table.covid19_vaccination_search_insights_covid19_vaccination_search_insights.id
 }

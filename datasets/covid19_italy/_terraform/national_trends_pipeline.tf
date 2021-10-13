@@ -15,7 +15,7 @@
  */
 
 
-resource "google_bigquery_table" "national_trends" {
+resource "google_bigquery_table" "covid19_italy_national_trends" {
   project    = var.project_id
   dataset_id = "covid19_italy"
   table_id   = "national_trends"
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "national_trends" {
   ]
 }
 
-output "bigquery_table-national_trends-table_id" {
-  value = google_bigquery_table.national_trends.table_id
+output "bigquery_table-covid19_italy_national_trends-table_id" {
+  value = google_bigquery_table.covid19_italy_national_trends.table_id
 }
 
-output "bigquery_table-national_trends-id" {
-  value = google_bigquery_table.national_trends.id
+output "bigquery_table-covid19_italy_national_trends-id" {
+  value = google_bigquery_table.covid19_italy_national_trends.id
 }

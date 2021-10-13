@@ -15,7 +15,7 @@
  */
 
 
-resource "google_bigquery_table" "campaign_targeting" {
+resource "google_bigquery_table" "google_political_ads_campaign_targeting" {
   project    = var.project_id
   dataset_id = "google_political_ads"
   table_id   = "campaign_targeting"
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "campaign_targeting" {
   ]
 }
 
-output "bigquery_table-campaign_targeting-table_id" {
-  value = google_bigquery_table.campaign_targeting.table_id
+output "bigquery_table-google_political_ads_campaign_targeting-table_id" {
+  value = google_bigquery_table.google_political_ads_campaign_targeting.table_id
 }
 
-output "bigquery_table-campaign_targeting-id" {
-  value = google_bigquery_table.campaign_targeting.id
+output "bigquery_table-google_political_ads_campaign_targeting-id" {
+  value = google_bigquery_table.google_political_ads_campaign_targeting.id
 }

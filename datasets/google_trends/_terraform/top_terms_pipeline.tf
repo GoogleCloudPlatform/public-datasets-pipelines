@@ -15,7 +15,7 @@
  */
 
 
-resource "google_bigquery_table" "top_terms" {
+resource "google_bigquery_table" "google_trends_top_terms" {
   project    = var.project_id
   dataset_id = "google_trends"
   table_id   = "top_terms"
@@ -33,10 +33,6 @@ resource "google_bigquery_table" "top_terms" {
   schema = <<EOF
     [
   {
-    "name": "rank",
-    "type": "INTEGER"
-  },
-  {
     "name": "refresh_date",
     "type": "DATE"
   },
@@ -59,6 +55,10 @@ resource "google_bigquery_table" "top_terms" {
   {
     "name": "score",
     "type": "INTEGER"
+  },
+  {
+    "name": "rank",
+    "type": "INTEGER"
   }
 ]
     EOF
@@ -67,15 +67,15 @@ resource "google_bigquery_table" "top_terms" {
   ]
 }
 
-output "bigquery_table-top_terms-table_id" {
-  value = google_bigquery_table.top_terms.table_id
+output "bigquery_table-google_trends_top_terms-table_id" {
+  value = google_bigquery_table.google_trends_top_terms.table_id
 }
 
-output "bigquery_table-top_terms-id" {
-  value = google_bigquery_table.top_terms.id
+output "bigquery_table-google_trends_top_terms-id" {
+  value = google_bigquery_table.google_trends_top_terms.id
 }
 
-resource "google_bigquery_table" "top_rising_terms" {
+resource "google_bigquery_table" "google_trends_top_rising_terms" {
   project    = var.project_id
   dataset_id = "google_trends"
   table_id   = "top_rising_terms"
@@ -93,14 +93,6 @@ resource "google_bigquery_table" "top_rising_terms" {
   schema = <<EOF
     [
   {
-    "name": "rank",
-    "type": "INTEGER"
-  },
-  {
-    "name": "refresh_date",
-    "type": "DATE"
-  },
-  {
     "name": "dma_name",
     "type": "STRING"
   },
@@ -119,6 +111,18 @@ resource "google_bigquery_table" "top_rising_terms" {
   {
     "name": "score",
     "type": "INTEGER"
+  },
+  {
+    "name": "rank",
+    "type": "INTEGER"
+  },
+  {
+    "name": "percent_gain",
+    "type": "INTEGER"
+  },
+  {
+    "name": "refresh_date",
+    "type": "DATE"
   }
 ]
     EOF
@@ -127,10 +131,10 @@ resource "google_bigquery_table" "top_rising_terms" {
   ]
 }
 
-output "bigquery_table-top_rising_terms-table_id" {
-  value = google_bigquery_table.top_rising_terms.table_id
+output "bigquery_table-google_trends_top_rising_terms-table_id" {
+  value = google_bigquery_table.google_trends_top_rising_terms.table_id
 }
 
-output "bigquery_table-top_rising_terms-id" {
-  value = google_bigquery_table.top_rising_terms.id
+output "bigquery_table-google_trends_top_rising_terms-id" {
+  value = google_bigquery_table.google_trends_top_rising_terms.id
 }

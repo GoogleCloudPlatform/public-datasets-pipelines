@@ -15,7 +15,7 @@
  */
 
 
-resource "google_bigquery_table" "sales" {
+resource "google_bigquery_table" "iowa_liquor_sales_sales" {
   project    = var.project_id
   dataset_id = "iowa_liquor_sales"
   table_id   = "sales"
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "sales" {
   ]
 }
 
-output "bigquery_table-sales-table_id" {
-  value = google_bigquery_table.sales.table_id
+output "bigquery_table-iowa_liquor_sales_sales-table_id" {
+  value = google_bigquery_table.iowa_liquor_sales_sales.table_id
 }
 
-output "bigquery_table-sales-id" {
-  value = google_bigquery_table.sales.id
+output "bigquery_table-iowa_liquor_sales_sales-id" {
+  value = google_bigquery_table.iowa_liquor_sales_sales.id
 }
