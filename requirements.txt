@@ -6,5 +6,5 @@
 #
 
 -i https://pypi.org/simple
-beautifulsoup4==4.9.3
+beautifulsoup4==4.10.0
 soupsieve==2.2.1; python_version >= '3.0'
