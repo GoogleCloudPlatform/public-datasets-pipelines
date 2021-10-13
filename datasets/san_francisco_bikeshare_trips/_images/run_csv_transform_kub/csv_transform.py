@@ -60,29 +60,30 @@ def main(
 
     tripdata_names = [
         "duration_sec",
-        "start_time",
-        "end_time",
-        "start_station_id",
+        "start_date",
+        "end_date",
+        "start_station_terminal",
         "start_station_name",
         "start_station_latitude",
         "start_station_longitude",
-        "end_station_id",
+        "end_station_terminal",
         "end_station_name",
         "end_station_latitude",
         "end_station_longitude",
-        "bike_id",
+        "bike_number",
         "user_type",
         "member_birth_year",
         "member_gender",
         "bike_share_for_all_trip",
     ]
 
-    process_source_file(
-        str(source_file).replace(".csv", "_trip_data.csv"),
-        str(target_file).replace(".csv", "_trip_data.csv"),
-        trip_data_names,
-        int(chunksize),
-    )
+    # process_source_file(
+    #     str(source_file).replace(".csv", "_trip_data.csv"),
+    #     str(target_file).replace(".csv", "_trip_data.csv"),
+    #     trip_data_names,
+    #     int(chunksize),
+    # )
+
     process_source_file(
         str(source_file).replace(".csv", "_tripdata.csv"),
         str(target_file).replace(".csv", "_tripdata.csv"),
@@ -90,7 +91,30 @@ def main(
         int(chunksize),
     )
 
+    df_trip_data = pd.read_csv(
+                        str(target_file).replace(".csv", "_trip_data.csv"),
+                        engine="python",
+                        encoding="utf-8",
+                        quotechar='"',  # string separator, typically double-quotes
+                        sep=",",  # data column separator, typically ","
+                    )
+
+    df_tripdata = pd.read_csv(
+                        str(target_file).replace(".csv", "_tripdata.csv"),
+                        engine="python",
+                        encoding="utf-8",
+                        quotechar='"',  # string separator, typically double-quotes
+                        sep=",",  # data column separator, typically ","
+                    )
+
+    # merge the two datasets
+    df = pd.concat([df_trip_data, df_tripdata], axis=1)
+
+    import pdb;pdb.set_trace()
+
     logging.info("San Francisco - Bikeshare Trips process completed")
+
+# def generate_merge_file():
 
 
 def process_source_file(
@@ -125,17 +149,15 @@ def process_chunk(
             "start_date",
             "end_date",
             ]
-        # import pdb;pdb.set_trace()
         df = resolve_date_format(df, "%m/%d/%Y %H:%M", date_fields)
-
     if str(target_file).find("_tripdata.csv") > -1:
-        df = rename_headers_tripdata(df)
+        # df = rename_headers_tripdata(df)
         date_fields = [
             "start_date",
             "end_date",
             ]
         df = resolve_date_format(df, "%Y/%m/%d %H:%M:%S.%f", date_fields)
-
+        df = generate_location(df, "start_station_geom", "start_station_longitude", "start_station_latitude")
     save_to_new_file(df, file_path=str(target_file_batch))
     append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
 
@@ -252,23 +274,17 @@ def remove_empty_key_rows(df: pd.DataFrame, keylist: list) -> pd.DataFrame:
 def resolve_date_format(df: pd.DataFrame, from_format: str, date_fields: list=[]) -> pd.DataFrame:
     logging.info("Resolving Date Format")
     for dt_fld in date_fields:
-        # df[dt_fld] = df[dt_fld].apply(convert_dt_format, df[dt_fld], from_format)
-        # df[dt_fld] = map(convert_dt_format, df[dt_fld], from_format)
         df[dt_fld] = df[dt_fld].apply(lambda x: convert_dt_format(x, from_format))
 
     return df
 
 
 def convert_dt_format(dt_str: str, from_format: str) -> str:
-    # import pdb;pdb.set_trace()
-
     if not dt_str or str(dt_str).lower() == "nan" or str(dt_str).lower() == "nat":
         dt_str = ""
-
     if (len(dt_str.strip().split(" ")[1]) == 8):
         # if format of time portion is 00:00:00 then use 00:00 format
         dt_str = dt_str[:-3]
-
     if (len(dt_str.strip().split("-")[0]) == 4) and (len(from_format.strip().split("/")[0]) == 2):
         # if the format of the date portion of the data is in YYYY-MM-DD format
         # and from_format is in MM-DD-YYYY then resolve this by modifying the from_format
@@ -280,11 +296,16 @@ def convert_dt_format(dt_str: str, from_format: str) -> str:
         )
 
 
-def generate_location(df: pd.DataFrame) -> pd.DataFrame:
+def location(longitude: str, latitude: str) -> str:
+    if not longitude or not latitude:
+        return ""
+    else:
+        return "POINT( " + longitude + " " + latitude + " )"
+
+
+def generate_location(df: pd.DataFrame, geom_col: str, long_col: str, lat_col: str) -> pd.DataFrame:
     logging.info("Generating location data")
-    df["center_point"] = (
-        "POINT( " + df["lng_avg"].map(str) + " " + df["lat_avg"].map(str) + " )"
-    )
+    df[geom_col]=df[[long_col,lat_col]].apply(lambda x,lat_col,long_col:location(str(x[long_col]),str(x[lat_col])), args=(lat_col,long_col), axis=1)
 
     return df
 
