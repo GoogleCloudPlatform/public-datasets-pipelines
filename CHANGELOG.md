@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.5.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v2.4.0...v2.5.0) (2021-10-14)
+
+
+### Datasets
+
+* Onboard Iowa Liquor Sales dataset ([#193](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/193)) ([06848c8](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/06848c899f1efc32f548a5de534ab1f758b6ca2b))
+* Onboard San Francisco Bikeshare Station dataset ([#191](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/191)) ([0707012](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/0707012832fdb6995e99563b12815c7de4d88fb7))
+* Onboard San Francisco Bikeshare Status dataset ([#192](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/192)) ([e4e1f26](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/e4e1f26f7a2339d5ae5692bdb4608a6958120a36))
+* Onboard San Francisco Film Locations dataset ([#190](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/190)) ([2284e09](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/2284e09d7c775d3d9826037f0c8cebd572090f8d))
+
+
+### Bug Fixes
+
+* Combine `san_francisco_bikeshare_*` folders into `san_francisco_bikeshare` ([#211](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/211)) ([50e4e6d](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/50e4e6d9204dc4c8fa3a427799501687550f9cce))
+* Rename `san_francisco_311_service_requests` folder to `san_francisco_311` ([#209](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/209)) ([697f7be](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/697f7be18a4b9376f989b1c8682efdd2c5d239ad))
+
 ## [2.4.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v2.3.1...v2.4.0) (2021-10-08)
 
 
