@@ -13,7 +13,7 @@
 # limitations under the License.
 
 dataset:
-  name: san_francisco_bikeshare_stations
+  name: san_francisco_bikeshare
   friendly_name: ~
   description: ~
   dataset_sources: ~
@@ -23,5 +23,5 @@ dataset:
 resources:
 
   - type: bigquery_dataset
-    dataset_id: san_francisco_bikeshare_stations
-    description: san_francisco_bikeshare_stations
+    dataset_id: san_francisco_bikeshare
+    description: san_francisco_bikeshare
