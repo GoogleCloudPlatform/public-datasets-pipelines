@@ -15,6 +15,7 @@
 import datetime
 import fnmatch
 import logging
+import re
 import os
 import pathlib
 import shutil
@@ -41,24 +42,26 @@ def main(
 
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
     dest_path = os.path.split(source_file)[0]
-    # download_url_files_from_list(source_url_http, dest_path)
-    # stage_input_files(dest_path, source_file)
+    download_url_files_from_list(source_url_http, dest_path)
+    stage_input_files(dest_path, source_file)
 
     trip_data_names = [
+        "source_file",
         "trip_id",
-        "duration",
+        "duration_sec",
         "start_date",
-        "start_station",
-        "start_terminal",
+        "start_station_name",
+        "start_station_terminal",
         "end_date",
-        "end_station",
-        "end_terminal",
+        "end_station_name",
+        "end_station_terminal",
         "bike_number",
         "subscription_type",
         "zip_code",
     ]
 
     tripdata_names = [
+        "source_file",
         "duration_sec",
         "start_date",
         "end_date",
@@ -71,18 +74,18 @@ def main(
         "end_station_latitude",
         "end_station_longitude",
         "bike_number",
-        "user_type",
+        "subscriber_type",
         "member_birth_year",
         "member_gender",
         "bike_share_for_all_trip",
     ]
 
-    # process_source_file(
-    #     str(source_file).replace(".csv", "_trip_data.csv"),
-    #     str(target_file).replace(".csv", "_trip_data.csv"),
-    #     trip_data_names,
-    #     int(chunksize),
-    # )
+    process_source_file(
+        str(source_file).replace(".csv", "_trip_data.csv"),
+        str(target_file).replace(".csv", "_trip_data.csv"),
+        trip_data_names,
+        int(chunksize),
+    )
 
     process_source_file(
         str(source_file).replace(".csv", "_tripdata.csv"),
@@ -91,30 +94,54 @@ def main(
         int(chunksize),
     )
 
+    trip_data_filepath = str(target_file).replace(".csv", "_trip_data.csv")
+    logging.info(f"Opening {trip_data_filepath}")
     df_trip_data = pd.read_csv(
-                        str(target_file).replace(".csv", "_trip_data.csv"),
+                        trip_data_filepath,
                         engine="python",
                         encoding="utf-8",
                         quotechar='"',  # string separator, typically double-quotes
-                        sep=",",  # data column separator, typically ","
+                        sep="|"  # data column separator, typically ","
                     )
 
+    tripdata_filepath = str(target_file).replace(".csv", "_tripdata.csv")
+    logging.info(f"Opening {tripdata_filepath}")
     df_tripdata = pd.read_csv(
-                        str(target_file).replace(".csv", "_tripdata.csv"),
+                        tripdata_filepath,
                         engine="python",
                         encoding="utf-8",
                         quotechar='"',  # string separator, typically double-quotes
-                        sep=",",  # data column separator, typically ","
+                        sep="|"  # data column separator, typically ","
                     )
 
-    # merge the two datasets
-    df = pd.concat([df_trip_data, df_tripdata], axis=1)
+    logging.info("dropping duplicate rows")
+    df = df_trip_data
+    df.drop_duplicates(subset=['key'], keep='last', inplace=True, ignore_index=False)
+    df_tripdata.drop_duplicates(subset=['key'], keep='last', inplace=True, ignore_index=False)
+
+    remove_empty_key_rows(df, ['trip_id'])
+
+    logging.info("creating indexes")
+    df.set_index('key', inplace=True)
+    df_tripdata.set_index('key', inplace=True)
+
+    logging.info("merging data")
+    df = df.append(df_tripdata, sort=True)
+
+    logging.info("creating subscriber_type_new")
+    df['subscriber_type_new'] = df.apply(lambda x: str(x.subscription_type) if not str(x.subscriber_type) else str(x.subscriber_type), axis=1)
+
+    df = rename_headers_output_file(df)
+    df = reorder_headers(df)
+
+    save_to_new_file(df, target_file, ",")
+    upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
+
 
     import pdb;pdb.set_trace()
 
-    logging.info("San Francisco - Bikeshare Trips process completed")
 
-# def generate_merge_file():
+    logging.info("San Francisco - Bikeshare Trips process completed")
 
 
 def process_source_file(
@@ -122,13 +149,13 @@ def process_source_file(
 ) -> None:
     logging.info(f"Opening batch file {source_file}")
     with pd.read_csv(
-        source_file,  # path to main source file to load in batches
+        source_file,            # path to main source file to load in batches
         engine="python",
         encoding="utf-8",
-        quotechar='"',  # string separator, typically double-quotes
-        chunksize=chunksize,  # size of batch data, in no. of records
-        sep=",",  # data column separator, typically ","
-        header=None,  # use when the data file does not contain a header
+        quotechar='"',          # string separator, typically double-quotes
+        chunksize=chunksize,    # size of batch data, in no. of records
+        sep=",",                # data column separator, typically ","
+        header=None,            # use when the data file does not contain a header
         names=names,
     ) as reader:
         for chunk_number, chunk in enumerate(reader):
@@ -158,8 +185,18 @@ def process_chunk(
             ]
         df = resolve_date_format(df, "%Y/%m/%d %H:%M:%S.%f", date_fields)
         df = generate_location(df, "start_station_geom", "start_station_longitude", "start_station_latitude")
+        df = generate_location(df, "end_station_geom", "end_station_longitude", "end_station_latitude")
+    df = add_key(df)
     save_to_new_file(df, file_path=str(target_file_batch))
     append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
+
+def add_key(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Adding key column")
+    df["start_date_str"] = df["start_date"].apply(lambda x: re.sub("[^0-9.]", "", str(x)))
+    df['key'] = df.apply(lambda x: str(x.start_date_str) + '-' + str(x.bike_number), axis=1)
+    # df['trip_id'] = df['key']
+
+    return df
 
 
 def rename_headers_tripdata(df: pd.DataFrame) -> pd.DataFrame:
@@ -186,6 +223,66 @@ def rename_headers_tripdata(df: pd.DataFrame) -> pd.DataFrame:
 
     return df
 
+
+def rename_headers_output_file(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Renaming headers output file")
+    header_names = {
+        "trip_id": "trip_id",
+        "duration_sec": "duration_sec",
+        "start_date": "start_date",
+        "start_station_name": "start_station_name",
+        "start_station_terminal": "start_station_id",
+        "end_date": "end_date",
+        "end_station_name": "end_station_name",
+        "end_station_terminal": "end_station_id",
+        "bike_number": "bike_number",
+        "zip_code": "zip_code",
+        "subscriber_type_new": "subscriber_type",
+        "subscription_type": "c_subscription_type",
+        "start_station_latitude": "start_station_latitude",
+        "start_station_longitude": "start_station_longitude",
+        "end_station_latitude": "end_station_latitude",
+        "end_station_longitude": "end_station_longitude",
+        "member_birth_year": "member_birth_year",
+        "member_gender": "member_gender",
+        "bike_share_for_all_trip": "bike_share_for_all_trip",
+        "start_station_geom": "start_station_geom",
+        "end_station_geom": "end_station_geom"
+    }
+    df = df.rename(columns=header_names)
+
+    return df
+
+def reorder_headers(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Reordering headers output file")
+    df = df[
+        [
+            "trip_id",
+            "duration_sec",
+            "start_date",
+            "start_station_name",
+            "start_station_id",
+            "end_date",
+            "end_station_name",
+            "end_station_id",
+            "bike_number",
+            "zip_code",
+            "subscriber_type",
+            "c_subscription_type",
+            "start_station_latitude",
+            "start_station_longitude",
+            "end_station_latitude",
+            "end_station_longitude",
+            "member_birth_year",
+            "member_gender",
+            "bike_share_for_all_trip",
+            "start_station_geom",
+            "end_station_geom"
+
+        ]
+    ]
+
+    return df
 
 def stage_input_files(dest_dir: str, target_file_path: str) -> None:
     logging.info("Staging input files")
@@ -225,6 +322,7 @@ def concatenate_files(
                     f"reading from file {src_file_path}, writing to file {target_file_path}"
                 )
                 for line in src_file:
+                    line = os.path.split(src_file_path)[1] + "," + line  #include the file source
                     target_file.write(line)
 
 
@@ -256,19 +354,6 @@ def remove_empty_key_rows(df: pd.DataFrame, keylist: list) -> pd.DataFrame:
     logging.info("Remove rows with empty keys")
     for key in keylist:
         df = df[df[key] != ""]
-
-
-# def strip_whitespace(df: pd.DataFrame) -> pd.DataFrame:
-#     logging.info("Strip Whitespace")
-#     ws_fields = [
-#         "field1",
-#         "field2",
-#     ]
-
-#     for ws_fld in ws_fields:
-#         df[ws_fld] = df[ws_fld].apply(lambda x: str(x).strip())
-
-#     return df
 
 
 def resolve_date_format(df: pd.DataFrame, from_format: str, date_fields: list=[]) -> pd.DataFrame:
@@ -304,7 +389,7 @@ def location(longitude: str, latitude: str) -> str:
 
 
 def generate_location(df: pd.DataFrame, geom_col: str, long_col: str, lat_col: str) -> pd.DataFrame:
-    logging.info("Generating location data")
+    logging.info(f"Generating location data column {geom_col}")
     df[geom_col]=df[[long_col,lat_col]].apply(lambda x,lat_col,long_col:location(str(x[long_col]),str(x[lat_col])), args=(lat_col,long_col), axis=1)
 
     return df
@@ -314,8 +399,28 @@ def reorder_headers(df: pd.DataFrame) -> pd.DataFrame:
     logging.info("Reordering headers..")
     df = df[
         [
-            "field1",
-            "field2",
+            "trip_id",
+            "duration_sec",
+            "start_date",
+            "start_station_name",
+            "start_station_id",
+            "end_date",
+            "end_station_name",
+            "end_station_id",
+            "bike_number",
+            "zip_code",
+            "subscriber_type",
+            "c_subscription_type",
+            "start_station_latitude",
+            "start_station_longitude",
+            "end_station_latitude",
+            "end_station_longitude",
+            "member_birth_year",
+            "member_gender",
+            "bike_share_for_all_trip",
+            "start_station_geom",
+            "end_station_geom"
+
         ]
     ]
 
@@ -343,8 +448,8 @@ def append_batch_file(
         os.remove(batch_file_path)
 
 
-def save_to_new_file(df, file_path) -> None:
-    df.to_csv(file_path, index=False)
+def save_to_new_file(df, file_path, sep="|") -> None:
+    df.to_csv(file_path, sep=sep, index=False)
 
 
 def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:
