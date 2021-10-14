@@ -16,13 +16,13 @@
 resources:
 
   - type: bigquery_table
-    table_id: "bikeshare_status"
-    description: "san_francisco_bikeshare_statusspc"
+    table_id: "bikeshare_station_status"
+    description: "san_francisco_bikeshare_station_statusspc"
 
 dag:
   airflow_version: 2
   initialize:
-    dag_id: bikeshare_status
+    dag_id: bikeshare_station_status
     default_args:
       owner: "Google"
       depends_on_past: False
@@ -40,7 +40,7 @@ dag:
       args:
 
         task_id: "transform_csv"
-        name: "bikeshare_status"
+        name: "bikeshare_station_status"
         namespace: "default"
         affinity:
           nodeAffinity:
@@ -52,14 +52,14 @@ dag:
                       values:
                         - "pool-e2-standard-4"
         image_pull_policy: "Always"
-        image: "{{ var.json.san_francisco_bikeshare_status.container_registry.run_csv_transform_kub }}"
+        image: "{{ var.json.san_francisco_bikeshare.container_registry.bikeshare_station_status }}"
         env_vars:
           SOURCE_URL_JSON: "https://gbfs.baywheels.com/gbfs/en/station_status"
           SOURCE_FILE: "files/data.csv"
           TARGET_FILE: "files/data_output.csv"
           CHUNKSIZE: "750000"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
-          TARGET_GCS_PATH: "data/san_francisco_bikeshare_status/bikeshare_status/data_output.csv"
+          TARGET_GCS_PATH: "data/san_francisco_bikeshare/bikeshare_station_status/data_output.csv"
         resources:
           limit_memory: "8G"
           limit_cpu: "3"
@@ -70,9 +70,9 @@ dag:
       args:
         task_id: "load_to_bq"
         bucket: "{{ var.value.composer_bucket }}"
-        source_objects: ["data/san_francisco_bikeshare_status/bikeshare_status/data_output.csv"]
+        source_objects: ["data/san_francisco_bikeshare/bikeshare_station_status/data_output.csv"]
         source_format: "CSV"
-        destination_project_dataset_table: "san_francisco_bikeshare_status.bikeshare_status"
+        destination_project_dataset_table: "san_francisco_bikeshare.bikeshare_station_status"
         skip_leading_rows: 1
         allow_quoted_newlines: True
         write_disposition: "WRITE_TRUNCATE"

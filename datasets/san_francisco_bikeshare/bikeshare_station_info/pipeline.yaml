@@ -16,13 +16,13 @@
 resources:
 
   - type: bigquery_table
-    table_id: "bikeshare_stations"
-    description: "san francisco bikeshare stations"
+    table_id: "bikeshare_station_info"
+    description: ""
 
 dag:
   airflow_version: 2
   initialize:
-    dag_id: bikeshare_stations
+    dag_id: bikeshare_station_info
     default_args:
       owner: "Google"
       depends_on_past: False
@@ -40,7 +40,7 @@ dag:
       args:
 
         task_id: "transform_csv"
-        name: "bikeshare_stations"
+        name: "bikeshare_station_info"
         namespace: "default"
         affinity:
           nodeAffinity:
@@ -52,14 +52,14 @@ dag:
                       values:
                         - "pool-e2-standard-4"
         image_pull_policy: "Always"
-        image: "{{ var.json.san_francisco_bikeshare_stations.container_registry.run_csv_transform_kub }}"
+        image: "{{ var.json.san_francisco_bikeshare.container_registry.bikeshare_station_info }}"
         env_vars:
           SOURCE_URL_JSON: "https://gbfs.baywheels.com/gbfs/fr/station_information"
           SOURCE_FILE: "files/data.csv"
           TARGET_FILE: "files/data_output.csv"
           CHUNKSIZE: "750000"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
-          TARGET_GCS_PATH: "data/san_francisco_bikeshare_stations/bikeshare_stations/data_output.csv"
+          TARGET_GCS_PATH: "data/san_francisco_bikeshare/bikeshare_station_info/data_output.csv"
         resources:
           limit_memory: "8G"
           limit_cpu: "3"
@@ -70,9 +70,9 @@ dag:
       args:
         task_id: "load_to_bq"
         bucket: "{{ var.value.composer_bucket }}"
-        source_objects: ["data/san_francisco_bikeshare_stations/bikeshare_stations/data_output.csv"]
+        source_objects: ["data/san_francisco_bikeshare/bikeshare_station_info/data_output.csv"]
         source_format: "CSV"
-        destination_project_dataset_table: "san_francisco.bikeshare_station_info"
+        destination_project_dataset_table: "san_francisco_bikeshare.bikeshare_station_info"
         skip_leading_rows: 1
         allow_quoted_newlines: True
         write_disposition: "WRITE_TRUNCATE"
