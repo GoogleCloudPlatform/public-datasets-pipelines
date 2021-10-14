@@ -25,7 +25,7 @@ default_args = {
 
 
 with DAG(
-    dag_id="san_francisco_311_service_requests.311_service_requests",
+    dag_id="san_francisco_311.311_service_requests",
     default_args=default_args,
     max_active_runs=1,
     schedule_interval="@daily",
@@ -56,14 +56,14 @@ with DAG(
             }
         },
         image_pull_policy="Always",
-        image="{{ var.json.san_francisco_311_service_requests.container_registry.run_csv_transform_kub }}",
+        image="{{ var.json.san_francisco_311.container_registry.run_csv_transform_kub }}",
         env_vars={
             "SOURCE_URL": "https://data.sfgov.org/api/views/vw6y-z8j6/rows.csv",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
             "CHUNKSIZE": "750000",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
-            "TARGET_GCS_PATH": "data/san_francisco_311_service_requests/311_service_requests/data_output.csv",
+            "TARGET_GCS_PATH": "data/san_francisco_311/311_service_requests/data_output.csv",
         },
         resources={"limit_memory": "8G", "limit_cpu": "3"},
     )
@@ -72,11 +72,9 @@ with DAG(
     load_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_to_bq",
         bucket="{{ var.value.composer_bucket }}",
-        source_objects=[
-            "data/san_francisco_311_service_requests/311_service_requests/data_output.csv"
-        ],
+        source_objects=["data/san_francisco_311/311_service_requests/data_output.csv"],
         source_format="CSV",
-        destination_project_dataset_table="san_francisco_311_service_requests.311_service_requests",
+        destination_project_dataset_table="san_francisco_311.311_service_requests",
         skip_leading_rows=1,
         allow_quoted_newlines=True,
         write_disposition="WRITE_TRUNCATE",

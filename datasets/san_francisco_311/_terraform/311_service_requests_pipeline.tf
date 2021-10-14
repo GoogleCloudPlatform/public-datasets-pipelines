@@ -15,25 +15,25 @@
  */
 
 
-resource "google_bigquery_table" "bqt_311_service_requests" {
+resource "google_bigquery_table" "bqt_san_francisco_311_311_service_requests" {
   project    = var.project_id
-  dataset_id = "san_francisco_311_service_requests"
+  dataset_id = "san_francisco_311"
   table_id   = "311_service_requests"
 
-  description = "san_francisco_311_service_requestsspc"
+  description = "san_francisco_311"
 
 
 
 
   depends_on = [
-    google_bigquery_dataset.san_francisco_311_service_requests
+    google_bigquery_dataset.san_francisco_311
   ]
 }
 
-output "bigquery_table-311_service_requests-table_id" {
-  value = google_bigquery_table.bqt_311_service_requests.table_id
+output "bigquery_table-bqt_san_francisco_311_311_service_requests-table_id" {
+  value = google_bigquery_table.bqt_san_francisco_311_311_service_requests.table_id
 }
 
-output "bigquery_table-311_service_requests-id" {
-  value = google_bigquery_table.bqt_311_service_requests.id
+output "bigquery_table-bqt_san_francisco_311_311_service_requests-id" {
+  value = google_bigquery_table.bqt_san_francisco_311_311_service_requests.id
 }
