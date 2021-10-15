@@ -43,13 +43,13 @@ dag:
         name: "solar_potential_by_census_tract"
         namespace: "default"
         image_pull_policy: "Always"
-        image: "{{ var.json.sunroof.container_registry.run_csv_transform_kub }}"
+        image: "{{ var.value.container_registry.run_csv_transform_kub }}"
         env_vars:
           SOURCE_URL: "gs://project-sunroof/csv/latest/project-sunroof-census_tract.csv"
           SOURCE_FILE: "files/data.csv"
           TARGET_FILE: "files/data_output.csv"
           CHUNKSIZE: "750000"
-          TARGET_GCS_BUCKET: "{{ var.json.shared.composer_bucket }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/sunroof/solar_potential_by_census_tract/data_output.csv"
         resources:
           limit_memory: "8G"
@@ -60,7 +60,7 @@ dag:
 
       args:
         task_id: "load_to_bq"
-        bucket: "{{ var.json.shared.composer_bucket }}"
+        bucket: "{{ var.value.composer_bucket }}"
         source_objects: ["data/sunroof/solar_potential_by_census_tract/data_output.csv"]
         source_format: "CSV"
         destination_project_dataset_table: "sunroof.solar_potential_by_census_tract"

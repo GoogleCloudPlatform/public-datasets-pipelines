@@ -39,13 +39,13 @@ with DAG(
         name="solar_potential_by_postal_code",
         namespace="default",
         image_pull_policy="Always",
-        image="{{ var.json.sunroof.container_registry.run_csv_transform_kub }}",
+        image="{{ var.value.container_registry.run_csv_transform_kub }}",
         env_vars={
             "SOURCE_URL": "gs://project-sunroof/csv/latest/project-sunroof-postal_code.csv",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
             "CHUNKSIZE": "750000",
-            "TARGET_GCS_BUCKET": "{{ var.json.shared.composer_bucket }}",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/sunroof/solar_potential_by_postal_code/data_output.csv",
         },
         resources={"limit_memory": "8G", "limit_cpu": "3"},
@@ -54,7 +54,7 @@ with DAG(
     # Task to load CSV data to a BigQuery table
     load_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_to_bq",
-        bucket="{{ var.json.shared.composer_bucket }}",
+        bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/sunroof/solar_potential_by_postal_code/data_output.csv"],
         source_format="CSV",
         destination_project_dataset_table="sunroof.solar_potential_by_postal_code",

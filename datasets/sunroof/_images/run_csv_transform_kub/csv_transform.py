@@ -12,11 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# import modules
 import logging
 import os
 import pathlib
-from subprocess import PIPE, Popen
 
 import pandas as pd
 from google.cloud import storage
@@ -183,8 +181,8 @@ def save_to_new_file(df: pd.DataFrame, file_path) -> None:
 
 
 def download_file_gs(source_url: str, source_file: pathlib.Path) -> None:
-    process = Popen(["gsutil", "cp", source_url, source_file], stdout=PIPE, stderr=PIPE)
-    process.communicate()
+    with open(source_file, "wb+") as file_obj:
+        storage.Client().download_blob_to_file(source_url, file_obj)
 
 
 def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:
