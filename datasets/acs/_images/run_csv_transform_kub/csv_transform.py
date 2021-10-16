@@ -224,11 +224,19 @@ def main(
     "B01001016":"male_50_to_54",
     "B01001017":"male_55_to_59",
     "B01001018":"male_60_to_61",
-    # "B01001B012":"black_male_45_54",
-    # "B01001B013":"black_male_55_64",
-    # "B01001I012":"hispanic_male_45_54",
-    # "B01001I013":"hispanic_male_55_64",
-    # "B01001H012":"white_male_45_54",
+    "B01001019":"male_62_to_64",
+    "B01001B012":"black_male_45_54",
+    "B01001B013":"black_male_55_64",
+    "B01001I012":"hispanic_male_45_54",
+    "B01001I013":"hispanic_male_55_64",
+    "B01001H012":"white_male_45_54",
+    "B01001H013":"white_male_55_64",
+    "B01001D012":"asian_male_45_54",
+    "B01001D013":"asian_male_55_64",
+    # "":"",
+    # "":"",
+    # "":"",
+    # "":"",
     "B15001028":"male_45_64_less_than_9_grade",
     "B15001029":"male_45_64_grade_9_12",
     "B15001030":"male_45_64_high_school",
@@ -292,14 +300,6 @@ def main(
     "B11001007":"nonfamily_households",
     "B11001002":"family_households",
     "B25035001":"median_year_structure_built",
-    # "":"",
-    # "":"",
-    # "":"",
-    # "":"",
-    # "":"",
-    # "":"",
-    # "":"",
-
 }
 
     state_code = {
@@ -406,7 +406,7 @@ def extract_data_and_convert_to_df(geography: dict,state_code: dict) -> pd.DataF
         for sc in state_code :
             logging.info(f'reading data from API for KPI {key}...')
             logging.info(f'reading the content of the API for state {sc}...')
-            source_url = 'https://api.census.gov/data/2019/acs/acs5?get=NAME,'+key[0:6]+'_'+key[6:]+'E&for=tract:*&in=state:'+sc+'&key=550e53635053be51754b09b5e9f5009c94aa0586'
+            source_url = 'https://api.census.gov/data/2019/acs/acs5?get=NAME,'+key[0:-3]+'_'+key[-3:]+'E&for=tract:*&in=state:'+sc+'&key=550e53635053be51754b09b5e9f5009c94aa0586'
             r = requests.get(source_url, stream=True)
             if r.status_code == 200:
                 text= r.json()
