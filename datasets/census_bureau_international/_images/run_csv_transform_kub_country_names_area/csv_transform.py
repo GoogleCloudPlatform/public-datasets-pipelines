@@ -30,50 +30,26 @@ def main(
     target_gcs_path: str,
 ) -> None:
 
-    logging.info(
-        "International Database (Life Expectancy - Country Names) process started"
-    )
+    logging.info("International Database (Country Names) Delivery process started")
 
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
 
-    df_life_exp = obtain_source_data(
-        source_url, source_file, ["country_code", "year"], "_life_exp_data.csv", 0, ","
-    )
-    df_country = obtain_source_data(
-        source_url, source_file, ["country_code"], "_country_data.csv", 1, ","
-    )
-
-    df = pd.merge(
-        df_life_exp,
-        df_country,
-        left_on="country_code",
-        right_on="country_code",
-        how="left",
-    )
+    df = obtain_source_data(source_url, source_file, ["country_code"], "_country_data.csv", 0, ",")
 
     df = reorder_headers(df)
 
     save_to_new_file(df, target_file, ",")
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
-    logging.info(
-        "International Database (Life Expectancy - Country Names) process completed"
-    )
+    logging.info("International Database (Country Names) Delivery process completed")
 
 
-def obtain_source_data(
-    source_url: str,
-    source_file: str,
-    key_list: list,
-    file_suffix: str,
-    path_ordinal: int,
-    separator: str = ",",
-) -> pd.DataFrame:
+def obtain_source_data(source_url: str, source_file: str, key_list: list, file_suffix: str, path_ordinal: int, separator: str=",") -> pd.DataFrame:
     source_data_filepath = str(source_file).replace(".csv", file_suffix)
     download_file_gs(
         source_url.split(",")[path_ordinal].replace('"', "").strip(),
-        source_data_filepath,
-    )
+        source_data_filepath
+        )
     df = pd.read_csv(
         source_data_filepath,
         engine="python",
@@ -82,7 +58,9 @@ def obtain_source_data(
         sep=",",  # data column separator, typically ","
     )
     df = add_key(df, key_list)
-    df.drop_duplicates(subset=["key"], keep="last", inplace=True, ignore_index=False)
+    df.drop_duplicates(
+        subset=['key'], keep="last", inplace=True, ignore_index=False
+    )
 
     return df
 
@@ -97,12 +75,7 @@ def add_key(df: pd.DataFrame, key_list: list) -> pd.DataFrame:
     logging.info(f"Adding key column(s) {key_list}")
     df["key"] = ""
     for key in key_list:
-        df["key"] = df.apply(
-            lambda x: str(x[key])
-            if not str(x["key"])
-            else str(x["key"]) + "-" + str(x[key]),
-            axis=1,
-        )
+        df["key"] = df.apply(lambda x: str(x[key]) if not str(x["key"]) else str(x["key"]) + '-' + str(x[key]), axis=1)
     df["key_val"] = df["key"]
 
     return df
@@ -114,19 +87,7 @@ def reorder_headers(df: pd.DataFrame) -> pd.DataFrame:
         [
             "country_code",
             "country_name",
-            "year",
-            "infant_mortality",
-            "infant_mortality_male",
-            "infant_mortality_female",
-            "life_expectancy",
-            "life_expectancy_male",
-            "life_expectancy_female",
-            "mortality_rate_under5",
-            "mortality_rate_under5_male",
-            "mortality_rate_under5_female",
-            "mortality_rate_1to4",
-            "mortality_rate_1to4_male",
-            "mortality_rate_1to4_female",
+            "country_area"
         ]
     ]
 
