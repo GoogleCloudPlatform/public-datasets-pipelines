@@ -58,26 +58,30 @@ def main(
     save_to_new_file(df, target_file, ",")
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
-    import pdb;pdb.set_trace()
-
     logging.info(
         "International Database (Country Names - Midyear Population, by Age and Country Code) Delivery process completed"
     )
 
 
 def unpivot_data(df: pd.DataFrame) -> pd.DataFrame:
-    df["pop_exp"] = df.apply( lambda x: x.population.split(","), axis=1 )
+    df["pop_exp"] = df.apply(lambda x: x.population.split(","), axis=1)
     df_exp_unpivot = df.explode("pop_exp").reset_index().drop(columns="index", axis=1)
     df_exp_unpivot["age_exp"] = df_exp_unpivot.groupby("key_val_x").cumcount()
-    df_exp_unpivot = df_exp_unpivot.drop(columns=['population','age'])
+    df_exp_unpivot = df_exp_unpivot.drop(columns=["population", "age"])
 
     return df_exp_unpivot
 
 
-def resolve_sex(df: pd.mDataFrame) -> pd.DataFrame:
-    df['sex'] = df.apply( lambda x: 'Male' if str(x['sex']) == '2' else ('Female' if str(x['sex']) == '3' else 'Unknown'), axis=1)
+def resolve_sex(df: pd.DataFrame) -> pd.DataFrame:
+    df["sex"] = df.apply(
+        lambda x: "Male"
+        if str(x["sex"]) == "2"
+        else ("Female" if str(x["sex"]) == "3" else "Unknown"),
+        axis=1,
+    )
 
     return df
+
 
 def rename_headers(df: pd.DataFrame) -> pd.DataFrame:
     header_names = {
@@ -142,16 +146,7 @@ def add_key(df: pd.DataFrame, key_list: list) -> pd.DataFrame:
 
 def reorder_headers(df: pd.DataFrame) -> pd.DataFrame:
     logging.info("Reordering headers..")
-    df = df[
-        [
-            "country_code",
-            "country_name",
-            "year",
-            "sex",
-            "population",
-            "age"
-        ]
-    ]
+    df = df[["country_code", "country_name", "year", "sex", "population", "age"]]
 
     return df
 
@@ -162,7 +157,7 @@ def save_to_new_file(df, file_path, sep="|") -> None:
 
 
 def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:
-    logging.info("Uploading to GCS {gcs_bucket} in {gcs_path}")
+    logging.info(f"Uploading to GCS {gcs_bucket} in {gcs_path}")
     storage_client = storage.Client()
     bucket = storage_client.bucket(gcs_bucket)
     blob = bucket.blob(gcs_path)
