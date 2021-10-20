@@ -64,6 +64,7 @@ def main(
 
 
 def unpivot_data(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Unpivoting Data")
     df["pop_exp"] = df.apply(lambda x: x.population.split(","), axis=1)
     df_exp_unpivot = df.explode("pop_exp").reset_index().drop(columns="index", axis=1)
     df_exp_unpivot["age_exp"] = df_exp_unpivot.groupby("key_val_x").cumcount()
@@ -73,17 +74,21 @@ def unpivot_data(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def resolve_sex(df: pd.DataFrame) -> pd.DataFrame:
-    df["sex"] = df.apply(
-        lambda x: "Male"
-        if str(x["sex"]) == "2"
-        else ("Female" if str(x["sex"]) == "3" else "Unknown"),
-        axis=1,
+    logging.info("Resolving gender data point")
+    df = df.replace(
+        to_replace={
+            "sex": {
+                2: "Male",
+                3: "Female"
+            }
+        }
     )
 
     return df
 
 
 def rename_headers(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Renaming headers")
     header_names = {
         "country_code": "country_code",
         "country_name": "country_name",
