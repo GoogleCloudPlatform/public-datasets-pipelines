@@ -30,34 +30,67 @@ def main(
 ) -> None:
 
     logging.info(
-        "International Database (Life Expectancy - Country Names) process started"
+        "International Database (Country Names - Midyear Population, by Age and Country Code) Delivery process started"
     )
 
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
 
-    df_life_exp = obtain_source_data(
-        source_url, source_file, ["country_code", "year"], "_life_exp_data.csv", 0, ","
+    df_pop = obtain_source_data(
+        source_url, source_file, ["country_code", "year"], "_pop_data.csv", 0, ","
     )
     df_country = obtain_source_data(
         source_url, source_file, ["country_code"], "_country_data.csv", 1, ","
     )
 
     df = pd.merge(
-        df_life_exp,
+        df_pop,
         df_country,
         left_on="country_code",
         right_on="country_code",
         how="left",
     )
 
+    df = unpivot_data(df)
+    df = resolve_sex(df)
+    df = rename_headers(df)
     df = reorder_headers(df)
 
     save_to_new_file(df, target_file, ",")
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
+    import pdb;pdb.set_trace()
+
     logging.info(
-        "International Database (Life Expectancy - Country Names) process completed"
+        "International Database (Country Names - Midyear Population, by Age and Country Code) Delivery process completed"
     )
+
+
+def unpivot_data(df: pd.DataFrame) -> pd.DataFrame:
+    df["pop_exp"] = df.apply( lambda x: x.population.split(","), axis=1 )
+    df_exp_unpivot = df.explode("pop_exp").reset_index().drop(columns="index", axis=1)
+    df_exp_unpivot["age_exp"] = df_exp_unpivot.groupby("key_val_x").cumcount()
+    df_exp_unpivot = df_exp_unpivot.drop(columns=['population','age'])
+
+    return df_exp_unpivot
+
+
+def resolve_sex(df: pd.mDataFrame) -> pd.DataFrame:
+    df['sex'] = df.apply( lambda x: 'Male' if str(x['sex']) == '2' else ('Female' if str(x['sex']) == '3' else 'Unknown'), axis=1)
+
+    return df
+
+def rename_headers(df: pd.DataFrame) -> pd.DataFrame:
+    header_names = {
+        "country_code": "country_code",
+        "country_name": "country_name",
+        "year": "year",
+        "sex": "sex",
+        "pop_exp": "population",
+        "age_exp": "age",
+    }
+    df = df.rename(columns=header_names)
+
+    return df
 
 
 def obtain_source_data(
@@ -114,18 +147,9 @@ def reorder_headers(df: pd.DataFrame) -> pd.DataFrame:
             "country_code",
             "country_name",
             "year",
-            "infant_mortality",
-            "infant_mortality_male",
-            "infant_mortality_female",
-            "life_expectancy",
-            "life_expectancy_male",
-            "life_expectancy_female",
-            "mortality_rate_under5",
-            "mortality_rate_under5_male",
-            "mortality_rate_under5_female",
-            "mortality_rate_1to4",
-            "mortality_rate_1to4_male",
-            "mortality_rate_1to4_female",
+            "sex",
+            "population",
+            "age"
         ]
     ]
 

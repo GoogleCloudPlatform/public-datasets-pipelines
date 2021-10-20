@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# import modules
 import logging
 import os
 import pathlib
@@ -34,7 +33,9 @@ def main(
 
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
 
-    df = obtain_source_data(source_url, source_file, ["country_code"], "_country_data.csv", 0, ",")
+    df = obtain_source_data(
+        source_url, source_file, ["country_code"], "_country_data.csv", 0, ","
+    )
 
     df = reorder_headers(df)
 
@@ -44,12 +45,19 @@ def main(
     logging.info("International Database (Country Names) Delivery process completed")
 
 
-def obtain_source_data(source_url: str, source_file: str, key_list: list, file_suffix: str, path_ordinal: int, separator: str=",") -> pd.DataFrame:
+def obtain_source_data(
+    source_url: str,
+    source_file: str,
+    key_list: list,
+    file_suffix: str,
+    path_ordinal: int,
+    separator: str = ",",
+) -> pd.DataFrame:
     source_data_filepath = str(source_file).replace(".csv", file_suffix)
     download_file_gs(
         source_url.split(",")[path_ordinal].replace('"', "").strip(),
-        source_data_filepath
-        )
+        source_data_filepath,
+    )
     df = pd.read_csv(
         source_data_filepath,
         engine="python",
@@ -58,9 +66,7 @@ def obtain_source_data(source_url: str, source_file: str, key_list: list, file_s
         sep=",",  # data column separator, typically ","
     )
     df = add_key(df, key_list)
-    df.drop_duplicates(
-        subset=['key'], keep="last", inplace=True, ignore_index=False
-    )
+    df.drop_duplicates(subset=["key"], keep="last", inplace=True, ignore_index=False)
 
     return df
 
@@ -75,7 +81,12 @@ def add_key(df: pd.DataFrame, key_list: list) -> pd.DataFrame:
     logging.info(f"Adding key column(s) {key_list}")
     df["key"] = ""
     for key in key_list:
-        df["key"] = df.apply(lambda x: str(x[key]) if not str(x["key"]) else str(x["key"]) + '-' + str(x[key]), axis=1)
+        df["key"] = df.apply(
+            lambda x: str(x[key])
+            if not str(x["key"])
+            else str(x["key"]) + "-" + str(x[key]),
+            axis=1,
+        )
     df["key_val"] = df["key"]
 
     return df
@@ -83,13 +94,7 @@ def add_key(df: pd.DataFrame, key_list: list) -> pd.DataFrame:
 
 def reorder_headers(df: pd.DataFrame) -> pd.DataFrame:
     logging.info("Reordering headers..")
-    df = df[
-        [
-            "country_code",
-            "country_name",
-            "country_area"
-        ]
-    ]
+    df = df[["country_code", "country_name", "country_area"]]
 
     return df
 
