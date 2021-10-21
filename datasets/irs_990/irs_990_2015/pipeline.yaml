@@ -55,6 +55,16 @@ dag:
         # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
         namespace: "default"
 
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: cloud.google.com/gke-nodepool
+                      operator: In
+                      values:
+                        - "pool-e2-standard-4"
+
         image_pull_policy: "Always"
 
         # Docker images will be built and pushed to GCR by default whenever the `scripts/generate_dag.py` is run. To skip building and pushing images, use the optional `--skip-builds` flag.
@@ -65,7 +75,7 @@ dag:
           SOURCE_URL: "https://www.irs.gov/pub/irs-soi/15eofinextract990.dat.dat"
           SOURCE_FILE: "files/data.dat"
           TARGET_FILE: "files/data_output.csv"
-          TARGET_GCS_BUCKET: "{{ var.json.shared.composer_bucket }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/irs_990/irs_990_2015/data_output.csv"
           PIPELINE_NAME: "irs_990_2015"
           CSV_HEADERS: >-
@@ -85,7 +95,7 @@ dag:
         task_id: "load_irs_990_to_bq"
 
         # The GCS bucket where the CSV file is located in.
-        bucket: "{{ var.json.shared.composer_bucket }}"
+        bucket: "{{ var.value.composer_bucket }}"
 
         # The GCS object path for the CSV file
         source_objects: ["data/irs_990/irs_990_2015/data_output.csv"]

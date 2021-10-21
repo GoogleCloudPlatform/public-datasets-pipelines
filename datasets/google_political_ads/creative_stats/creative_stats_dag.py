@@ -38,6 +38,23 @@ with DAG(
         startup_timeout_seconds=600,
         name="creative_stats",
         namespace="default",
+        affinity={
+            "nodeAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                    "nodeSelectorTerms": [
+                        {
+                            "matchExpressions": [
+                                {
+                                    "key": "cloud.google.com/gke-nodepool",
+                                    "operator": "In",
+                                    "values": ["pool-e2-standard-4"],
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
         image_pull_policy="Always",
         image="{{ var.json.google_political_ads.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -45,7 +62,7 @@ with DAG(
             "SOURCE_FILE": "files/data.zip",
             "FILE_NAME": "google-political-ads-transparency-bundle/google-political-ads-creative-stats.csv",
             "TARGET_FILE": "files/data_output.csv",
-            "TARGET_GCS_BUCKET": "{{ var.json.shared.composer_bucket }}",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/google_political_ads/creative_stats/data_output.csv",
             "PIPELINE_NAME": "creative_stats",
             "CSV_HEADERS": '["ad_id","ad_url","ad_type","regions","advertiser_id","advertiser_name","ad_campaigns_list","date_range_start","date_range_end","num_of_days","impressions","spend_usd","first_served_timestamp","last_served_timestamp","age_targeting","gender_targeting","geo_targeting_included","geo_targeting_excluded","spend_range_min_usd","spend_range_max_usd","spend_range_min_eur","spend_range_max_eur","spend_range_min_inr","spend_range_max_inr","spend_range_min_bgn","spend_range_max_bgn","spend_range_min_hrk","spend_range_max_hrk","spend_range_min_czk","spend_range_max_czk","spend_range_min_dkk","spend_range_max_dkk","spend_range_min_huf","spend_range_max_huf","spend_range_min_pln","spend_range_max_pln","spend_range_min_ron","spend_range_max_ron","spend_range_min_sek","spend_range_max_sek","spend_range_min_gbp","spend_range_max_gbp","spend_range_min_nzd","spend_range_max_nzd"]',
@@ -57,7 +74,7 @@ with DAG(
     # Task to load CSV data to a BigQuery table
     load_creative_stats_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
         task_id="load_creative_stats_to_bq",
-        bucket="{{ var.json.shared.composer_bucket }}",
+        bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/google_political_ads/creative_stats/data_output.csv"],
         source_format="CSV",
         destination_project_dataset_table="google_political_ads.creative_stats",

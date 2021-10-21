@@ -37,7 +37,7 @@ with DAG(
     download_raw_csv_files = bash_operator.BashOperator(
         task_id="download_raw_csv_files",
         env={
-            "airflow_home": "{{ var.json.shared.airflow_home }}",
+            "airflow_home": "{{ var.value.airflow_home }}",
             "dataset": "covid19_tracking",
             "pipeline": "state_facility_level_long_term_care",
         },
@@ -49,7 +49,7 @@ with DAG(
         task_id="process_raw_csv_files",
         bash_command="WORKING_DIR=$airflow_home/data/covid19_tracking/state_facility_level_long_term_care python $airflow_home/dags/$dataset/$pipeline/custom/multi_csv_transform.py\n",
         env={
-            "airflow_home": "{{ var.json.shared.airflow_home }}",
+            "airflow_home": "{{ var.value.airflow_home }}",
             "dataset": "covid19_tracking",
             "pipeline": "state_facility_level_long_term_care",
         },
@@ -58,7 +58,7 @@ with DAG(
     # Task to load the CSV from the pipeline's data folder to BigQuery
     load_csv_files_to_bq_table = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
         task_id="load_csv_files_to_bq_table",
-        bucket="{{ var.json.shared.composer_bucket }}",
+        bucket="{{ var.value.composer_bucket }}",
         source_objects=[
             "data/covid19_tracking/state_facility_level_long_term_care/facilities-ar.csv",
             "data/covid19_tracking/state_facility_level_long_term_care/facilities-ga.csv",
@@ -221,7 +221,7 @@ with DAG(
     # Task to archive the CSV file in the destination bucket
     archive_csv_files_to_destination_bucket = gcs_to_gcs.GoogleCloudStorageToGoogleCloudStorageOperator(
         task_id="archive_csv_files_to_destination_bucket",
-        source_bucket="{{ var.json.shared.composer_bucket }}",
+        source_bucket="{{ var.value.composer_bucket }}",
         source_object="data/covid19_tracking/state_facility_level_long_term_care/*",
         destination_bucket="{{ var.json.covid19_tracking.destination_bucket }}",
         destination_object="datasets/covid19_tracking/state_facility_level_long_term_care/{{ ds }}/",

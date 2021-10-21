@@ -41,7 +41,7 @@ dag:
           mkdir -p $airflow_home/data/$dataset/$pipeline/run_date={{ ds }}
           SOURCE_URL=$source_url CSV_OUTPUT_PATH=$airflow_home/data/$dataset/$pipeline/run_date={{ ds }}/data.csv GCS_PATH_PREFIX="gs://$destination_bucket/datasets/$dataset/$pipeline/run_date={{ ds }}/screenshots" python $airflow_home/dags/$dataset/$pipeline/custom/web_scrape_and_generate_csv.py
         env:
-          airflow_home: "{{ var.json.shared.airflow_home }}"
+          airflow_home: "{{ var.value.airflow_home }}"
           destination_bucket: "{{ var.json.covid19_tracking.destination_bucket }}"
           source_url: "https://screenshots.covidtracking.com"
           dataset: "covid19_tracking"
@@ -57,7 +57,7 @@ dag:
           DOWNLOAD_PREFIX=$airflow_home/data/$dataset/$pipeline/run_date={{ ds }} \
           python $airflow_home/dags/$dataset/$pipeline/custom/download_screenshots.py
         env:
-          airflow_home: "{{ var.json.shared.airflow_home }}"
+          airflow_home: "{{ var.value.airflow_home }}"
           dataset: "covid19_tracking"
           pipeline: "state_screenshots"
 
@@ -65,7 +65,7 @@ dag:
       description: "Upload all downloaded screenshots to the destination bucket"
       args:
         task_id: "upload_screenshots_to_destination_bucket"
-        source_bucket: "{{ var.json.shared.composer_bucket }}"
+        source_bucket: "{{ var.value.composer_bucket }}"
         source_object: "data/covid19_tracking/state_screenshots/run_date={{ ds }}/*"
         destination_bucket: "{{ var.json.covid19_tracking.destination_bucket }}"
         destination_object: "datasets/covid19_tracking/state_screenshots/run_date={{ ds }}/"
@@ -75,7 +75,7 @@ dag:
       description: "Task to load the data from Airflow data folder to BigQuery"
       args:
         task_id: "load_screenshots_to_bq_table"
-        bucket: "{{ var.json.shared.composer_bucket }}"
+        bucket: "{{ var.value.composer_bucket }}"
         source_objects: ["data/covid19_tracking/state_screenshots/run_date={{ ds }}/data.csv"]
         source_format: "CSV"
         destination_project_dataset_table: "covid19_tracking.state_screenshots"
@@ -115,7 +115,7 @@ dag:
       description: "Delete downloaded screenshots from the Cloud Composer bucket"
       args:
         task_id: "delete_screenshots_from_composer_bucket"
-        bucket_name: "{{ var.json.shared.composer_bucket }}"
+        bucket_name: "{{ var.value.composer_bucket }}"
         prefix: "data/covid19_tracking/state_screenshots/run_date={{ ds }}"
 
   graph_paths:

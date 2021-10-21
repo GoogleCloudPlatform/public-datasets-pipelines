@@ -15,7 +15,7 @@
  */
 
 
-resource "google_bigquery_table" "data_by_province" {
+resource "google_bigquery_table" "covid19_italy_data_by_province" {
   project    = var.project_id
   dataset_id = "covid19_italy"
   table_id   = "data_by_province"
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "data_by_province" {
   ]
 }
 
-output "bigquery_table-data_by_province-table_id" {
-  value = google_bigquery_table.data_by_province.table_id
+output "bigquery_table-covid19_italy_data_by_province-table_id" {
+  value = google_bigquery_table.covid19_italy_data_by_province.table_id
 }
 
-output "bigquery_table-data_by_province-id" {
-  value = google_bigquery_table.data_by_province.id
+output "bigquery_table-covid19_italy_data_by_province-id" {
+  value = google_bigquery_table.covid19_italy_data_by_province.id
 }

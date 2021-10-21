@@ -23,3 +23,13 @@ resource "google_bigquery_dataset" "ml_datasets" {
 output "bigquery_dataset-ml_datasets-dataset_id" {
   value = google_bigquery_dataset.ml_datasets.dataset_id
 }
+
+resource "google_bigquery_dataset" "ml_datasets_uscentral1" {
+  dataset_id = "ml_datasets_uscentral1"
+  project    = var.project_id
+  location   = "us-central1"
+}
+
+output "bigquery_dataset-ml_datasets_uscentral1-dataset_id" {
+  value = google_bigquery_dataset.ml_datasets_uscentral1.dataset_id
+}

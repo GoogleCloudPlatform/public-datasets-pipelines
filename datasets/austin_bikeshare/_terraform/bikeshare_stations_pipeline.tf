@@ -15,7 +15,7 @@
  */
 
 
-resource "google_bigquery_table" "bikeshare_stations" {
+resource "google_bigquery_table" "austin_bikeshare_bikeshare_stations" {
   project    = var.project_id
   dataset_id = "austin_bikeshare"
   table_id   = "bikeshare_stations"
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "bikeshare_stations" {
   ]
 }
 
-output "bigquery_table-bikeshare_stations-table_id" {
-  value = google_bigquery_table.bikeshare_stations.table_id
+output "bigquery_table-austin_bikeshare_bikeshare_stations-table_id" {
+  value = google_bigquery_table.austin_bikeshare_bikeshare_stations.table_id
 }
 
-output "bigquery_table-bikeshare_stations-id" {
-  value = google_bigquery_table.bikeshare_stations.id
+output "bigquery_table-austin_bikeshare_bikeshare_stations-id" {
+  value = google_bigquery_table.austin_bikeshare_bikeshare_stations.id
 }
