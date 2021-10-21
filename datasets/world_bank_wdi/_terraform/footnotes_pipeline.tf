@@ -15,7 +15,7 @@
  */
 
 
-resource "google_bigquery_table" "footnotes" {
+resource "google_bigquery_table" "world_bank_wdi_footnotes" {
   project    = var.project_id
   dataset_id = "world_bank_wdi"
   table_id   = "footnotes"
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "footnotes" {
   ]
 }
 
-output "bigquery_table-footnotes-table_id" {
-  value = google_bigquery_table.footnotes.table_id
+output "bigquery_table-world_bank_wdi_footnotes-table_id" {
+  value = google_bigquery_table.world_bank_wdi_footnotes.table_id
 }
 
-output "bigquery_table-footnotes-id" {
-  value = google_bigquery_table.footnotes.id
+output "bigquery_table-world_bank_wdi_footnotes-id" {
+  value = google_bigquery_table.world_bank_wdi_footnotes.id
 }
