@@ -15,7 +15,7 @@
  */
 
 
-resource "google_bigquery_table" "country_summary" {
+resource "google_bigquery_table" "world_bank_wdi_country_summary" {
   project    = var.project_id
   dataset_id = "world_bank_wdi"
   table_id   = "country_summary"
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "country_summary" {
   ]
 }
 
-output "bigquery_table-country_summary-table_id" {
-  value = google_bigquery_table.country_summary.table_id
+output "bigquery_table-world_bank_wdi_country_summary-table_id" {
+  value = google_bigquery_table.world_bank_wdi_country_summary.table_id
 }
 
-output "bigquery_table-country_summary-id" {
-  value = google_bigquery_table.country_summary.id
+output "bigquery_table-world_bank_wdi_country_summary-id" {
+  value = google_bigquery_table.world_bank_wdi_country_summary.id
 }

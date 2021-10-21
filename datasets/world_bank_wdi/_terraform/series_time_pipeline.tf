@@ -15,7 +15,7 @@
  */
 
 
-resource "google_bigquery_table" "series_time" {
+resource "google_bigquery_table" "world_bank_wdi_series_time" {
   project    = var.project_id
   dataset_id = "world_bank_wdi"
   table_id   = "series_time"
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "series_time" {
   ]
 }
 
-output "bigquery_table-series_time-table_id" {
-  value = google_bigquery_table.series_time.table_id
+output "bigquery_table-world_bank_wdi_series_time-table_id" {
+  value = google_bigquery_table.world_bank_wdi_series_time.table_id
 }
 
-output "bigquery_table-series_time-id" {
-  value = google_bigquery_table.series_time.id
+output "bigquery_table-world_bank_wdi_series_time-id" {
+  value = google_bigquery_table.world_bank_wdi_series_time.id
 }
