@@ -15,7 +15,7 @@
  */
 
 
-resource "google_bigquery_table" "geo_spend" {
+resource "google_bigquery_table" "google_political_ads_geo_spend" {
   project    = var.project_id
   dataset_id = "google_political_ads"
   table_id   = "geo_spend"
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "geo_spend" {
   ]
 }
 
-output "bigquery_table-geo_spend-table_id" {
-  value = google_bigquery_table.geo_spend.table_id
+output "bigquery_table-google_political_ads_geo_spend-table_id" {
+  value = google_bigquery_table.google_political_ads_geo_spend.table_id
 }
 
-output "bigquery_table-geo_spend-id" {
-  value = google_bigquery_table.geo_spend.id
+output "bigquery_table-google_political_ads_geo_spend-id" {
+  value = google_bigquery_table.google_political_ads_geo_spend.id
 }

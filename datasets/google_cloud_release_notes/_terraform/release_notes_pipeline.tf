@@ -15,7 +15,7 @@
  */
 
 
-resource "google_bigquery_table" "release_notes" {
+resource "google_bigquery_table" "google_cloud_release_notes_release_notes" {
   project    = var.project_id
   dataset_id = "google_cloud_release_notes"
   table_id   = "release_notes"
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "release_notes" {
   ]
 }
 
-output "bigquery_table-release_notes-table_id" {
-  value = google_bigquery_table.release_notes.table_id
+output "bigquery_table-google_cloud_release_notes_release_notes-table_id" {
+  value = google_bigquery_table.google_cloud_release_notes_release_notes.table_id
 }
 
-output "bigquery_table-release_notes-id" {
-  value = google_bigquery_table.release_notes.id
+output "bigquery_table-google_cloud_release_notes_release_notes-id" {
+  value = google_bigquery_table.google_cloud_release_notes_release_notes.id
 }

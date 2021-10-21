@@ -38,6 +38,23 @@ with DAG(
         startup_timeout_seconds=600,
         name="campaign_targeting",
         namespace="default",
+        affinity={
+            "nodeAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                    "nodeSelectorTerms": [
+                        {
+                            "matchExpressions": [
+                                {
+                                    "key": "cloud.google.com/gke-nodepool",
+                                    "operator": "In",
+                                    "values": ["pool-e2-standard-4"],
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
         image_pull_policy="Always",
         image="{{ var.json.google_political_ads.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -45,7 +62,7 @@ with DAG(
             "SOURCE_FILE": "files/data.zip",
             "FILE_NAME": "google-political-ads-transparency-bundle/google-political-ads-campaign-targeting.csv",
             "TARGET_FILE": "files/data_output.csv",
-            "TARGET_GCS_BUCKET": "{{ var.json.shared.composer_bucket }}",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/google_political_ads/campaign_targeting/data_output.csv",
             "PIPELINE_NAME": "campaign_targeting",
             "CSV_HEADERS": '["campaign_id","age_targeting","gender_targeting","geo_targeting_included","geo_targeting_excluded","start_date","end_date","ads_list","advertiser_id","advertiser_name"]',
@@ -57,7 +74,7 @@ with DAG(
     # Task to load CSV data to a BigQuery table
     load_campaign_targeting_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
         task_id="load_campaign_targeting_to_bq",
-        bucket="{{ var.json.shared.composer_bucket }}",
+        bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/google_political_ads/campaign_targeting/data_output.csv"],
         source_format="CSV",
         destination_project_dataset_table="google_political_ads.campaign_targeting",

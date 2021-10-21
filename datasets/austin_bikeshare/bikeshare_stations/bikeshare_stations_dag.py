@@ -37,13 +37,30 @@ with DAG(
         task_id="austin_bikeshare_stations_transform_csv",
         name="bikeshare_stations",
         namespace="default",
+        affinity={
+            "nodeAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                    "nodeSelectorTerms": [
+                        {
+                            "matchExpressions": [
+                                {
+                                    "key": "cloud.google.com/gke-nodepool",
+                                    "operator": "In",
+                                    "values": ["pool-e2-standard-4"],
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
         image_pull_policy="Always",
         image="{{ var.json.austin_bikeshare.container_registry.run_csv_transform_kub }}",
         env_vars={
             "SOURCE_URL": "https://data.austintexas.gov/api/views/qd73-bsdg/rows.csv",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
-            "TARGET_GCS_BUCKET": "{{ var.json.shared.composer_bucket }}",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/austin_bikeshare/bikeshare_stations/data_output.csv",
             "PIPELINE_NAME": "bikeshare_stations",
             "CSV_HEADERS": '["station_id","name","status","address","alternate_name","city_asset_number","property_type","number_of_docks","power_type","footprint_length","footprint_width","notes","council_district","modified_date"]',
@@ -56,7 +73,7 @@ with DAG(
     load_austin_bikeshare_stations_to_bq = (
         gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
             task_id="load_austin_bikeshare_stations_to_bq",
-            bucket="{{ var.json.shared.composer_bucket }}",
+            bucket="{{ var.value.composer_bucket }}",
             source_objects=["data/austin_bikeshare/bikeshare_stations/data_output.csv"],
             source_format="CSV",
             destination_project_dataset_table="austin_bikeshare.bikeshare_stations",

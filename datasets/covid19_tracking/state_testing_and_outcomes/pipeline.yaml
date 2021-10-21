@@ -44,13 +44,13 @@ dag:
           curl -o $airflow_data_folder/covid19_tracking/state_testing_and_outcomes/all-states-history-{{ ds }}.csv -L $csv_source_url
         env:
           csv_source_url: "https://covidtracking.com/data/download/all-states-history.csv"
-          airflow_data_folder: "{{ var.json.shared.airflow_data_folder }}"
+          airflow_data_folder: "{{ var.value.airflow_data_folder }}"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load the data from Airflow data folder to BigQuery"
       args:
         task_id: "load_csv_file_to_bq_table"
-        bucket: "{{ var.json.shared.composer_bucket }}"
+        bucket: "{{ var.value.composer_bucket }}"
         source_objects: ["data/covid19_tracking/state_testing_and_outcomes/all-states-history-{{ ds }}.csv"]
         source_format: "CSV"
         destination_project_dataset_table: "covid19_tracking.state_testing_and_outcomes"
@@ -225,7 +225,7 @@ dag:
       description: "Task to archive the CSV file in the destination bucket"
       args:
         task_id: "archive_csv_file_to_destination_bucket"
-        source_bucket: "{{ var.json.shared.composer_bucket }}"
+        source_bucket: "{{ var.value.composer_bucket }}"
         source_object: "data/covid19_tracking/state_testing_and_outcomes/all-states-history-{{ ds }}.csv"
         destination_bucket: "{{ var.json.covid19_tracking.destination_bucket }}"
         destination_object: "datasets/covid19_tracking/state_testing_and_outcomes/all-states-history-{{ ds }}.csv"

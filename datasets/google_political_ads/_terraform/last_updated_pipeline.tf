@@ -15,7 +15,7 @@
  */
 
 
-resource "google_bigquery_table" "last_updated" {
+resource "google_bigquery_table" "google_political_ads_last_updated" {
   project    = var.project_id
   dataset_id = "google_political_ads"
   table_id   = "last_updated"
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "last_updated" {
   ]
 }
 
-output "bigquery_table-last_updated-table_id" {
-  value = google_bigquery_table.last_updated.table_id
+output "bigquery_table-google_political_ads_last_updated-table_id" {
+  value = google_bigquery_table.google_political_ads_last_updated.table_id
 }
 
-output "bigquery_table-last_updated-id" {
-  value = google_bigquery_table.last_updated.id
+output "bigquery_table-google_political_ads_last_updated-id" {
+  value = google_bigquery_table.google_political_ads_last_updated.id
 }
