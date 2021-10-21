@@ -13,14 +13,7 @@
 # limitations under the License.
 
 ---
-resources:
-
-  - type: bigquery_table
-    # Required Properties:
-    table_id: lightning_strikes_by_year
-
-    # Description of the table
-    description: "noaaspc"
+resources: ~
 
 dag:
   airflow_version: 2
@@ -33,7 +26,7 @@ dag:
       depends_on_past: False
       start_date: '2021-12-30'
     max_active_runs: 1
-    schedule_interval: "@yearly"  # run once a week at Sunday 12am
+    schedule_interval: "None"
     catchup: False
     default_view: graph
 
