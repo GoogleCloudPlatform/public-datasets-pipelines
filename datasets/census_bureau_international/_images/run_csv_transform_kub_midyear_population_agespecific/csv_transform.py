@@ -75,14 +75,7 @@ def unpivot_data(df: pd.DataFrame) -> pd.DataFrame:
 
 def resolve_sex(df: pd.DataFrame) -> pd.DataFrame:
     logging.info("Resolving gender data point")
-    df = df.replace(
-        to_replace={
-            "sex": {
-                2: "Male",
-                3: "Female"
-            }
-        }
-    )
+    df = df.replace(to_replace={"sex": {2: "Male", 3: "Female"}})
 
     return df
 
