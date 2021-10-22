@@ -372,6 +372,7 @@ def main(
         2: "state",
         3: "county",
         4: "tract",
+        5:"block_group",
         "geography": "KPI_Name",
     }
 
@@ -388,7 +389,7 @@ def main(
     df['county']=df['county'].apply(change_length,args=("3"))
 
     logging.info("Creating column ")
-    df['geo_id'] = df['state'] + df['county'] + df['tract']
+    df['geo_id'] = df['state'] + df['county'] + df['tract'] + df['block_group'].astype(str)
 
     logging.info("Pivotinf the dataframe...")
     df=df[['geo_id','KPI_Name','KPI_Value']]
@@ -417,15 +418,7 @@ def extract_data_and_convert_to_df(geography: dict, state_code: dict) -> pd.Data
         for sc in state_code:
             logging.info(f"reading data from API for KPI {key}...")
             logging.info(f"reading the content of the API for state {sc}...")
-            source_url = (
-                "https://api.census.gov/data/2019/acs/acs5?get=NAME,"
-                + key[0:-3]
-                + "_"
-                + key[-3:]
-                + "E&for=tract:*&in=state:"
-                + sc
-                + "&key=550e53635053be51754b09b5e9f5009c94aa0586"
-            )
+            source_url = 'https://api.census.gov/data/2019/acs/acs5?get=NAME,'+key[0:-3]+'_'+key[-3:]+'E&for=block%20group:*&in=state:'+sc+'&in=county:*&in=tract:*&key=550e53635053be51754b09b5e9f5009c94aa0586'
             r = requests.get(source_url, stream=True)
             if r.status_code == 200:
                 text = r.json()

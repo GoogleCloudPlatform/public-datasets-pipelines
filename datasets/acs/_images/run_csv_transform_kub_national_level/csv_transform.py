@@ -30,23 +30,25 @@ from google.cloud import storage
 def main(
     # source_url: str,
     # source_file: pathlib.Path,
+    year_report: str,
+    api_naming_convention: str,
     target_file: pathlib.Path,
     target_gcs_bucket: str,
     target_gcs_path: str,
     # headers: typing.List[str],
     # rename_mappings: dict,
-    # pipeline_name: str,
+    pipeline_name: str,
 ) -> None:
 
     logging.info(
-        f"ACS process started at "
+        f"ACS {pipeline_name} process started at "
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
 
     logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
 
-    geography = {
+    group_id = {
         "B25001001": "housing_units",
         "B25003001": "occupied_housing_units",
         "B25003003": "housing_units_renter_occupied",
@@ -299,100 +301,38 @@ def main(
         "B25035001": "median_year_structure_built",
     }
 
-    state_code = {
-        "01": "Alabama",
-        "02": "Alaska",
-        "04": "Arizona",
-        "05": "Arkansas",
-        "06": "California",
-        "08": "Colorado",
-        "09": "Connecticut",
-        "10": "Delaware",
-        "11": "District of Columbia",
-        "12": "Florida",
-        "13": "Georgia",
-        "15": "Hawaii",
-        "16": "Idaho",
-        "17": "Illinois",
-        "18": "Indiana",
-        "19": "Iowa",
-        "20": "Kansas",
-        "21": "Kentucky",
-        "22": "Louisiana",
-        "23": "Maine",
-        "24": "Maryland",
-        "25": "Massachusetts",
-        "26": "Michigan",
-        "27": "Minnesota",
-        "28": "Mississippi",
-        "29": "Missouri",
-        "30": "Montana",
-        "31": "Nebraska",
-        "32": "Nevada",
-        "33": "New Hampshire",
-        "34": "New Jersey",
-        "35": "New Mexico",
-        "36": "New York",
-        "37": "North Carolina",
-        "38": "North Dakota",
-        "39": "Ohio",
-        "40": "Oklahoma",
-        "41": "Oregon",
-        "42": "Pennsylvania",
-        "44": "Rhode Island",
-        "45": "South Carolina",
-        "46": "South Dakota",
-        "47": "Tennessee",
-        "48": "Texas",
-        "49": "Utah",
-        "50": "Vermont",
-        "51": "Virginia",
-        "53": "Washington",
-        "54": "West Virginia",
-        "55": "Wisconsin",
-        "56": "Wyoming",
-        "60": "American Samoa",
-        "66": "Guam",
-        "69": "Commonwealth of the Northern Mariana Islands",
-        "72": "Puerto Rico",
-        "78": "United States Virgin Islands",
-    }
-
     logging.info("Extracting the data from API and loading into dataframe...")
-    df = extract_data_and_convert_to_df(geography, state_code)
+    df = extract_data_and_convert_to_df(group_id, year_report,api_naming_convention)
 
     logging.info("Replacing values...")
     df = df.replace( to_replace={
-        "geography": geography
+        "group_id": group_id
         })
 
-    rename_mappings = {
-        0: "name",
-        1: "KPI_Value",
-        2: "state",
-        3: "county",
-        4: "tract",
-        "geography": "KPI_Name",
-    }
+    # rename_mappings = {
+    #     0: "name",
+    #     1: "KPI_Value",
+    #     2: "state",
+    #     3: "county",
+    #     4: "tract",
+    #     "group_id": "KPI_Name",
+    # }
 
-    logging.info("Renaming headers...")
-    rename_headers(df, rename_mappings)
+    # logging.info("Renaming headers...")
+    # rename_headers(df, rename_mappings)
 
-    # logging.info(f"Transform: converting to integer... ")
-    # # df["KPI_Value"] = df["KPI_Value"].apply(convert_to_integer_string)
-    # df["KPI_Value"] = df["KPI_Value"].astype(int)
 
-    logging.info("Changing length of the integers...")
-    df['tract']=df['tract'].apply(change_length,args=("6"))
-    df['state']=df['state'].apply(change_length,args=("2"))
-    df['county']=df['county'].apply(change_length,args=("3"))
+    # logging.info("Changing length of the integers...")
+    # df['tract']=df['tract'].apply(change_length,args=("6"))
+    # df['state']=df['state'].apply(change_length,args=("2"))
+    # df['county']=df['county'].apply(change_length,args=("3"))
 
-    logging.info("Creating column ")
-    df['geo_id'] = df['state'] + df['county'] + df['tract']
+    # logging.info("Creating column ")
+    # df['geo_id'] = df['state'] + df['county'] + df['tract']
 
-    logging.info("Pivotinf the dataframe...")
-    df=df[['geo_id','KPI_Name','KPI_Value']]
-    df=df.pivot_table(index='geo_id',columns='KPI_Name',values='KPI_Value',aggfunc=np.sum).reset_index()
+    # logging.info("Pivotinf the dataframe...")
+    # df=df[['geo_id','KPI_Name','KPI_Value']]
+    # df=df.pivot_table(index='geo_id',columns='KPI_Name',values='KPI_Value',aggfunc=np.sum).reset_index()
 
     logging.info(f"Saving to output file.. {target_file}")
     try:
@@ -406,33 +346,33 @@ def main(
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
     logging.info(
-        f"ACS process completed at "
+        f"ACS {pipeline_name} process completed at "
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
 
 
-def extract_data_and_convert_to_df(geography: dict, state_code: dict) -> pd.DataFrame:
+def extract_data_and_convert_to_df(group_id: dict, year_report: str,api_naming_convention: str) -> pd.DataFrame:
     list_temp = []
-    for key in geography:
-        for sc in state_code:
-            logging.info(f"reading data from API for KPI {key}...")
-            logging.info(f"reading the content of the API for state {sc}...")
-            source_url = (
-                "https://api.census.gov/data/2019/acs/acs5?get=NAME,"
-                + key[0:-3]
-                + "_"
-                + key[-3:]
-                + "E&for=tract:*&in=state:"
-                + sc
-                + "&key=550e53635053be51754b09b5e9f5009c94aa0586"
-            )
-            r = requests.get(source_url, stream=True)
-            if r.status_code == 200:
-                text = r.json()
-                frame = pd.DataFrame(text)
-                frame = frame.iloc[1:, :]
-                frame["geography"] = key
-                list_temp.append(frame)
+    for key in group_id:
+        logging.info(f"reading data from API for KPI {key}...")
+        source_url = (
+            'https://api.census.gov/data/2019/acs/acs'
+            +year_report
+            +'?get=NAME,'
+            +key[0:-3]
+            + "_"
+            + key[-3:]
+            +'E&for='
+            +api_naming_convention
+            +':*&key=550e53635053be51754b09b5e9f5009c94aa0586'
+        )
+        r = requests.get(source_url, stream=True)
+        if r.status_code == 200:
+            text = r.json()
+            frame = pd.DataFrame(text)
+            frame = frame.iloc[1:, :]
+            frame["group_id"] = key
+            list_temp.append(frame)
     logging.info("creating the dataframe...")
     df = pd.concat(list_temp)
     return df
@@ -482,10 +422,12 @@ if __name__ == "__main__":
     main(
         # source_url=os.environ["SOURCE_URL"],
         # source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
+        year_report=os.environ["YEAR_REPORT"],
+        api_naming_convention=os.environ["API_NAMING_CONVENTION"],
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
         # headers=json.loads(os.environ["CSV_HEADERS"]),
         # rename_mappings=json.loads(os.environ["RENAME_MAPPINGS"]),
-        # pipeline_name=os.environ["PIPELINE_NAME"],
+        pipeline_name=os.environ["PIPELINE_NAME"],
     )

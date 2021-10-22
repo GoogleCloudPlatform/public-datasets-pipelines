@@ -24,7 +24,7 @@ default_args = {
 
 
 with DAG(
-    dag_id="acs.census_tracts",
+    dag_id="acs.place_2019_5yr",
     default_args=default_args,
     max_active_runs=1,
     schedule_interval="@daily",
@@ -33,10 +33,10 @@ with DAG(
 ) as dag:
 
     # Run CSV transform within kubernetes pod
-    census_tracts_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
-        task_id="census_tracts_transform_csv",
+    place_2019_5yr_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+        task_id="place_2019_5yr_transform_csv",
         startup_timeout_seconds=600,
-        name="census_tracts",
+        name="place_2019_5yr",
         namespace="default",
         affinity={
             "nodeAffinity": {
@@ -56,22 +56,26 @@ with DAG(
             }
         },
         image_pull_policy="Always",
-        image="{{ var.json.acs.container_registry.run_csv_transform_kub }}",
+        image="{{ var.json.acs.container_registry.run_csv_transform_kub_national_level }}",
         env_vars={
+            "YEAR_REPORT": "5",
+            "API_NAMING_CONVENTION": "place",
             "TARGET_FILE": "files/data_output.csv",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
-            "TARGET_GCS_PATH": "data/acs/census_tracts/data_output.csv",
+            "TARGET_GCS_PATH": "data/acs/place_2019_5yr/data_output.csv",
+            "PIPELINE_NAME": "place_2019_5yr",
+            "RENAME_MAPPINGS": '{0:"name", 1:"KPI_Value", 2:"state", 3:"county", "group_id":"KPI_Name"}',
         },
         resources={"request_memory": "2G", "request_cpu": "1"},
     )
 
     # Task to load CSV data to a BigQuery table
-    load_census_tracts_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
-        task_id="load_census_tracts_to_bq",
+    load_place_2019_5yr_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+        task_id="load_place_2019_5yr_to_bq",
         bucket="{{ var.value.composer_bucket }}",
-        source_objects=["data/acs/census_tracts/data_output.csv"],
+        source_objects=["data/acs/place_2019_5yr/data_output.csv"],
         source_format="CSV",
-        destination_project_dataset_table="acs.census_tracts",
+        destination_project_dataset_table="acs.place_2019_5yr",
         skip_leading_rows=1,
         allow_quoted_newlines=True,
         write_disposition="WRITE_TRUNCATE",
@@ -79,10 +83,9 @@ with DAG(
             {"name": "name", "type": "string", "mode": "nullable"},
             {"name": "KPI_Value", "type": "float", "mode": "nullable"},
             {"name": "state", "type": "string", "mode": "nullable"},
-            {"name": "county", "type": "integer", "mode": "nullable"},
-            {"name": "tract", "type": "integer", "mode": "nullable"},
+            {"name": "place", "type": "string", "mode": "nullable"},
             {"name": "KPI_Name", "type": "string", "mode": "nullable"},
         ],
     )
 
-    census_tracts_transform_csv >> load_census_tracts_to_bq
+    place_2019_5yr_transform_csv >> load_place_2019_5yr_to_bq
