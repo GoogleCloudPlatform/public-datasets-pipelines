@@ -30,7 +30,7 @@ def main(
 ) -> None:
 
     logging.info(
-        "International Database (Country Names - Total Midyear Population) Delivery process started"
+        "International Database (Country Names - Fertility Rates) Delivery process started"
     )
 
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
@@ -56,7 +56,7 @@ def main(
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
     logging.info(
-        "International Database (Country Names - Total Midyear Population) Delivery process completed"
+        "International Database (Country Names - Fertility Rates) Delivery process completed"
     )
 
 
@@ -109,7 +109,19 @@ def add_key(df: pd.DataFrame, key_list: list) -> pd.DataFrame:
 
 def reorder_headers(df: pd.DataFrame) -> pd.DataFrame:
     logging.info("Reordering headers..")
-    df = df[["country_code", "country_name", "year", "midyear_population"]]
+    df = df[
+        [
+            "country_code",
+            "country_name", "year", "fertility_rate_15_19",
+        "fertility_rate_20_24",
+        "fertility_rate_25_29",
+        "fertility_rate_30_34",
+        "fertility_rate_35_39",
+        "fertility_rate_40_44",
+        "fertility_rate_45_49",
+        "total_fertility_rate",
+        "gross_reproduction_rate",
+        "sex_ratio_at_birth"]]
 
     return df
 
