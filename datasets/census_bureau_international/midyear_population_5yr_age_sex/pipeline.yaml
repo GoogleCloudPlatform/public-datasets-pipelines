@@ -129,6 +129,5 @@ dag:
             type: "INTEGER"
             mode: "NULLABLE"
 
-
   graph_paths:
     - "midyear_population_5yr_age_sex_transform_csv >> load_midyear_population_5yr_age_sex_to_bq"

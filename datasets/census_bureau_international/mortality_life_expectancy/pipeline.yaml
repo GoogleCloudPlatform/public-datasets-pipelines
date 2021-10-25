@@ -142,5 +142,6 @@ dag:
           - name: "mortality_rate_1to4_female"
             type: "FLOAT"
             mode: "NULLABLE"
+
   graph_paths:
     - "mortality_life_expectancy_transform_csv >> load_mortality_life_expectancy_to_bq"
