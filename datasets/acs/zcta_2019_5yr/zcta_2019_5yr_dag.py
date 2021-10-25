@@ -24,7 +24,7 @@ default_args = {
 
 
 with DAG(
-    dag_id="acs.block_group",
+    dag_id="acs.zcta_2019_5yr",
     default_args=default_args,
     max_active_runs=1,
     schedule_interval="@daily",
@@ -33,10 +33,10 @@ with DAG(
 ) as dag:
 
     # Run CSV transform within kubernetes pod
-    block_group_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
-        task_id="block_group_transform_csv",
+    zcta_2019_5yr_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+        task_id="zcta_2019_5yr_transform_csv",
         startup_timeout_seconds=600,
-        name="block_group",
+        name="zcta_2019_5yr",
         namespace="default",
         affinity={
             "nodeAffinity": {
@@ -56,22 +56,26 @@ with DAG(
             }
         },
         image_pull_policy="Always",
-        image="{{ var.json.acs.container_registry.run_csv_transform_kub_block_group }}",
+        image="{{ var.json.acs.container_registry.run_csv_transform_kub_national_level }}",
         env_vars={
+            "YEAR_REPORT": "5",
+            "API_NAMING_CONVENTION": "zip%20code%20tabulation%20area",
             "TARGET_FILE": "files/data_output.csv",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
-            "TARGET_GCS_PATH": "data/acs/block_group/data_output.csv",
+            "TARGET_GCS_PATH": "data/acs/zcta_2019_5yr/data_output.csv",
+            "PIPELINE_NAME": "zcta_2019_5yr",
+            "RENAME_MAPPINGS": '{0:"name", 1:"KPI_Value", 2:"state", 3:"county", "group_id":"KPI_Name"}',
         },
-        resources={"request_memory": "3G", "request_cpu": "1"},
+        resources={"request_memory": "2G", "request_cpu": "1"},
     )
 
     # Task to load CSV data to a BigQuery table
-    load_block_group_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
-        task_id="load_block_group_to_bq",
+    load_zcta_2019_5yr_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+        task_id="load_zcta_2019_5yr_to_bq",
         bucket="{{ var.value.composer_bucket }}",
-        source_objects=["data/acs/block_group/data_output.csv"],
+        source_objects=["data/acs/zcta_2019_5yr/data_output.csv"],
         source_format="CSV",
-        destination_project_dataset_table="acs.block_group",
+        destination_project_dataset_table="acs.zcta_2019_5yr",
         skip_leading_rows=1,
         allow_quoted_newlines=True,
         write_disposition="WRITE_TRUNCATE",
@@ -79,10 +83,9 @@ with DAG(
             {"name": "name", "type": "string", "mode": "nullable"},
             {"name": "KPI_Value", "type": "float", "mode": "nullable"},
             {"name": "state", "type": "string", "mode": "nullable"},
-            {"name": "county", "type": "integer", "mode": "nullable"},
-            {"name": "tract", "type": "integer", "mode": "nullable"},
+            {"name": "zip_code_tabulation_area", "type": "string", "mode": "nullable"},
             {"name": "KPI_Name", "type": "string", "mode": "nullable"},
         ],
     )
 
-    block_group_transform_csv >> load_block_group_to_bq
+    zcta_2019_5yr_transform_csv >> load_zcta_2019_5yr_to_bq

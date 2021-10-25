@@ -73,7 +73,7 @@ dag:
           #     DESCRIPTION: "description"
 
         resources:
-          request_memory: "2G"
+          request_memory: "3G"
           request_cpu: "1"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"

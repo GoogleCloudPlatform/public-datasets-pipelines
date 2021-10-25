@@ -17,7 +17,7 @@ resources:
 
   - type: bigquery_table
     table_id: puma_2019_5yr
-    description: "County 2019 1 year table"
+    description: "PUMA 2019 5 year table"
 
 dag:
   airflow_version: 1
