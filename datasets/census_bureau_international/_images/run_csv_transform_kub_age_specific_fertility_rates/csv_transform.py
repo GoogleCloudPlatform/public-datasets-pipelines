@@ -112,16 +112,20 @@ def reorder_headers(df: pd.DataFrame) -> pd.DataFrame:
     df = df[
         [
             "country_code",
-            "country_name", "year", "fertility_rate_15_19",
-        "fertility_rate_20_24",
-        "fertility_rate_25_29",
-        "fertility_rate_30_34",
-        "fertility_rate_35_39",
-        "fertility_rate_40_44",
-        "fertility_rate_45_49",
-        "total_fertility_rate",
-        "gross_reproduction_rate",
-        "sex_ratio_at_birth"]]
+            "country_name",
+            "year",
+            "fertility_rate_15_19",
+            "fertility_rate_20_24",
+            "fertility_rate_25_29",
+            "fertility_rate_30_34",
+            "fertility_rate_35_39",
+            "fertility_rate_40_44",
+            "fertility_rate_45_49",
+            "total_fertility_rate",
+            "gross_reproduction_rate",
+            "sex_ratio_at_birth"
+        ]
+    ]
 
     return df
 
