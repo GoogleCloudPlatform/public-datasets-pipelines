@@ -41,7 +41,7 @@ dag:
 
       args:
 
-        task_id: "midyear_population_5yr_age_sex_transform_csv"
+        task_id: "transform_csv"
 
         startup_timeout_seconds: 600
 
@@ -84,7 +84,7 @@ dag:
       description: "Task to load CSV data to a BigQuery table"
 
       args:
-        task_id: "load_midyear_population_5yr_age_sex_to_bq"
+        task_id: "load_to_bq"
 
         bucket: "{{ var.value.composer_bucket }}"
 
@@ -130,4 +130,4 @@ dag:
             mode: "NULLABLE"
 
   graph_paths:
-    - "midyear_population_5yr_age_sex_transform_csv >> load_midyear_population_5yr_age_sex_to_bq"
+    - "transform_csv >> load_to_bq"
