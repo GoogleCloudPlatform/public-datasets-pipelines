@@ -123,7 +123,7 @@ def reorder_headers(df: pd.DataFrame) -> pd.DataFrame:
             "fertility_rate_45_49",
             "total_fertility_rate",
             "gross_reproduction_rate",
-            "sex_ratio_at_birth"
+            "sex_ratio_at_birth",
         ]
     ]
 
