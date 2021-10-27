@@ -15,10 +15,10 @@
  */
 
 
-resource "google_bigquery_table" "epa_historical_air_quality_annual_summaries" {
+resource "google_bigquery_table" "epa_historical_air_quality_hap_daily_summary" {
   project    = var.project_id
   dataset_id = "epa_historical_air_quality"
-  table_id   = "annual_summaries"
+  table_id   = "hap_daily_summary"
 
   description = "epaspc"
 
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "epa_historical_air_quality_annual_summaries" {
   ]
 }
 
-output "bigquery_table-epa_historical_air_quality_annual_summaries-table_id" {
-  value = google_bigquery_table.epa_historical_air_quality_annual_summaries.table_id
+output "bigquery_table-epa_historical_air_quality_hap_daily_summary-table_id" {
+  value = google_bigquery_table.epa_historical_air_quality_hap_daily_summary.table_id
 }
 
-output "bigquery_table-epa_historical_air_quality_annual_summaries-id" {
-  value = google_bigquery_table.epa_historical_air_quality_annual_summaries.id
+output "bigquery_table-epa_historical_air_quality_hap_daily_summary-id" {
+  value = google_bigquery_table.epa_historical_air_quality_hap_daily_summary.id
 }
