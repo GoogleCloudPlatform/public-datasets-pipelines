@@ -56,7 +56,7 @@ with DAG(
             }
         },
         image_pull_policy="Always",
-        image="{{ var.json.epa.container_registry.run_csv_transform_kub_annual_summaries }}",
+        image="{{ var.json.epa.container_registry.run_csv_transform_kub }}",
         env_vars={
             "SOURCE_URL": "https://aqs.epa.gov/aqsweb/airdata/annual_conc_by_monitor_~year~.zip",
             "START_YEAR": "1980",
@@ -77,7 +77,7 @@ with DAG(
         bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/epa/annual_summaries/data_output.csv"],
         source_format="CSV",
-        destination_project_dataset_table="{{ var.json.epa.container_registry.annual_summaries_destination_table }}",
+        destination_project_dataset_table="epa_historical_air_quality.air_quality_annual_summary",
         skip_leading_rows=1,
         allow_quoted_newlines=True,
         write_disposition="WRITE_TRUNCATE",

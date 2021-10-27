@@ -39,7 +39,7 @@ def main(
     data_dtypes: dict
 ) -> None:
 
-    logging.info("Annual Summaries process started")
+    logging.info("Pipeline process started")
 
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
     dest_path = os.path.split(source_file)[0]
@@ -50,81 +50,23 @@ def main(
     download_url_files_from_year_range(source_url, st_year, end_year, dest_path, True, True)
     file_group_wildcard = os.path.split(source_url)[1].replace("_~year~.zip", "")
     source = concatenate_files(source_file, dest_path, file_group_wildcard, False, ",")
-    target = source.replace(".csv", "_output.csv")
 
     key_list = ["state_code", "county_code", "site_num", "sample_duration", "pollutant_standard", "metric_used", "method_name", "address", "date_of_last_change"]
     process_source_file(
         source,
-        target,
+        target_file,
         data_names,
-        # {},
         data_dtypes,
         int(chunksize),
         key_list
     )
 
-    # trip_data_filepath = str(target_file).replace(".csv", "_trip_data.csv")
-    # logging.info(f"Opening {trip_data_filepath}")
-    # df_trip_data = pd.read_csv(
-    #     trip_data_filepath,
-    #     engine="python",
-    #     encoding="utf-8",
-    #     quotechar='"',  # string separator, typically double-quotes
-    #     sep="|",  # data column separator, typically ","
-    # )
+    upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
-    # tripdata_filepath = str(target_file).replace(".csv", "_tripdata.csv")
-    # logging.info(f"Opening {tripdata_filepath}")
-    # df_tripdata = pd.read_csv(
-    #     tripdata_filepath,
-    #     engine="python",
-    #     encoding="utf-8",
-    #     quotechar='"',  # string separator, typically double-quotes
-    #     sep="|",  # data column separator, typically ","
-    # )
-
-    # logging.info("Dropping duplicate rows")
-    # df = df_trip_data
-    # df.drop_duplicates(
-    #     subset=["key_val"], keep="last", inplace=True, ignore_index=False
-    # )
-    # df_tripdata.drop_duplicates(
-    #     subset=["key_val"], keep="last", inplace=True, ignore_index=False
-    # )
-
-    # logging.info("Populating empty trip-id values")
-    # df_tripdata["trip_id"] = df_tripdata["key_val"].str.replace("-", "")
-
-    # logging.info("Creating indexes")
-    # df.set_index("key", inplace=True)
-    # df_tripdata.set_index("key", inplace=True)
-
-    # logging.info("Merging data")
-    # df = df.append(df_tripdata, sort=True)
-
-    # logging.info("Creating subscriber_type_new")
-    # df["subscriber_type_new"] = df.apply(
-    #     lambda x: str(x.subscription_type)
-    #     if not str(x.subscriber_type)
-    #     else str(x.subscriber_type),
-    #     axis=1,
-    # )
-    # df = df.drop(columns=["subscriber_type"])
-
-    # logging.info("Resolving datatypes")
-    # df["member_birth_year"] = df["member_birth_year"].fillna(0).astype(int)
-
-    # df = rename_headers_output_file(df)
-    # df = reorder_headers(df)
-
-    # save_to_new_file(df, target_file, ",")
-    # upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
-
-    logging.info("Annual Summaries process completed")
+    logging.info("Pipeline process completed")
 
 
 def download_url_files_from_year_range(source_url: str, start_year: int, end_year: int, dest_path: str, remove_file: bool=False, continue_on_error: bool=False):
-    # for yr in range(start_year, (datetime.datetime.today().year - 1), 1):
     for yr in range(start_year, end_year + 1, 1):
         src_url = source_url.replace("~year~", str(yr))
         dest_file = dest_path + "/source_" + os.path.split(src_url)[1]
@@ -199,35 +141,35 @@ def add_key(df: pd.DataFrame, key_list: list) -> pd.DataFrame:
     return df
 
 
-def reorder_headers(df: pd.DataFrame) -> pd.DataFrame:
-    logging.info("Reordering headers output file")
-    df = df[
-        [
-            "trip_id",
-            "duration_sec",
-            "start_date",
-            "start_station_name",
-            "start_station_id",
-            "end_date",
-            "end_station_name",
-            "end_station_id",
-            "bike_number",
-            "zip_code",
-            "subscriber_type",
-            "subscription_type",
-            "start_station_latitude",
-            "start_station_longitude",
-            "end_station_latitude",
-            "end_station_longitude",
-            "member_birth_year",
-            "member_gender",
-            "bike_share_for_all_trip",
-            "start_station_geom",
-            "end_station_geom",
-        ]
-    ]
+# def reorder_headers(df: pd.DataFrame) -> pd.DataFrame:
+#     logging.info("Reordering headers output file")
+#     df = df[
+#         [
+#             "trip_id",
+#             "duration_sec",
+#             "start_date",
+#             "start_station_name",
+#             "start_station_id",
+#             "end_date",
+#             "end_station_name",
+#             "end_station_id",
+#             "bike_number",
+#             "zip_code",
+#             "subscriber_type",
+#             "subscription_type",
+#             "start_station_latitude",
+#             "start_station_longitude",
+#             "end_station_latitude",
+#             "end_station_longitude",
+#             "member_birth_year",
+#             "member_gender",
+#             "bike_share_for_all_trip",
+#             "start_station_geom",
+#             "end_station_geom",
+#         ]
+#     ]
 
-    return df
+#     return df
 
 
 def concatenate_files(
@@ -262,15 +204,15 @@ def concatenate_files(
     return target_file_path
 
 
-def listdirs(rootdir: str) -> list:
-    rtn_list = []
-    for file in os.listdir(rootdir):
-        d = os.path.join(rootdir, file)
-        if os.path.isdir(d):
-            rtn_list.append(d)
-            for elem in listdirs(d):
-                rtn_list.append(elem)
-    return rtn_list
+# def listdirs(rootdir: str) -> list:
+#     rtn_list = []
+#     for file in os.listdir(rootdir):
+#         d = os.path.join(rootdir, file)
+#         if os.path.isdir(d):
+#             rtn_list.append(d)
+#             for elem in listdirs(d):
+#                 rtn_list.append(elem)
+#     return rtn_list
 
 
 def resolve_date_format(
@@ -337,7 +279,7 @@ def save_to_new_file(df, file_path, sep="|") -> None:
 
 
 def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:
-    logging.info("Uploading to GCS {gcs_bucket} in {gcs_path}")
+    logging.info(f"Uploading to GCS {gcs_bucket} in {gcs_path}")
     storage_client = storage.Client()
     bucket = storage_client.bucket(gcs_bucket)
     blob = bucket.blob(gcs_path)
