@@ -44,9 +44,18 @@ def main(
 
     logging.info(f"Transforming.. {source_file}")
 
-    logging.info("Transform: Renaming headers..")
+    logging.info("Transform: Renaming headers...")
     rename_headers(df, rename_mappings)
-    date_convert(df)
+
+    logging.info("Transform: Converting the date format...")
+    df["report_date"] = df["report_date"].apply(
+        lambda x: datetime.strptime(x, "%m/%d/%Y").strftime("%Y-%m-%d")
+    )
+    df["load_time"] = df["load_time"].apply(
+        lambda x: datetime.strptime(x, "%m/%d/%Y %H:%M:%S %p").strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
+    )
 
     logging.info("Transform: Reordering headers..")
     df = df[headers]
@@ -66,27 +75,6 @@ def main(
 
 def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
     df = df.rename(columns=rename_mappings, inplace=True)
-
-
-def convert_dt_format(dt_str: str) -> str:
-    # Old format: MM/dd/yyyy hh:mm:ss aa
-    # New format: yyyy-MM-dd HH:mm:ss
-    if not dt_str:
-        return dt_str
-    else:
-        if len(dt_str) == 10:
-            return datetime.strptime(dt_str, "%m/%d/%Y").strftime("%Y-%m-%d")
-        else:
-            return datetime.strptime(dt_str, "%m/%d/%Y %H:%M:%S %p").strftime(
-                "%Y-%m-%d %H:%M:%S"
-            )
-
-
-def date_convert(df: pd.DataFrame) -> None:
-    dt_cols = ["report_date", "load_time"]
-
-    for dt_col in dt_cols:
-        df[dt_col] = df[dt_col].apply(convert_dt_format)
 
 
 def save_to_new_file(df, file_path):
