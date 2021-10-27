@@ -173,7 +173,7 @@ def add_key(df: pd.DataFrame, key_list: list) -> pd.DataFrame:
 
 
 def concatenate_files(
-    target_file_path: str, dest_path: str, file_group_wildcard: str, incl_file_source_path: bool=False, separator: str=","
+    target_file_path: str, dest_path: str, file_group_wildcard: str, incl_file_source_path: bool=False, separator: str=",", delete_src_file: bool=True
 ) -> str:
     target_file_dir = os.path.split(str(target_file_path))[0]
     target_file_path = str(target_file_path).replace(".csv", "_" + file_group_wildcard + ".csv")
@@ -200,6 +200,8 @@ def concatenate_files(
                             line
                         )
                     target_file.write(line)
+        if os.path.isfile(src_file_path) and delete_src_file:
+            os.unlink(src_file_path)
 
     return target_file_path
 
