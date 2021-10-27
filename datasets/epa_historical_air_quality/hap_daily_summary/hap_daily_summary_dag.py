@@ -25,7 +25,7 @@ default_args = {
 
 
 with DAG(
-    dag_id="epa.co_hourly_summary",
+    dag_id="epa_historical_air_quality.hap_daily_summary",
     default_args=default_args,
     max_active_runs=1,
     schedule_interval="@daily",
@@ -36,7 +36,7 @@ with DAG(
     # Run CSV transform within kubernetes pod
     transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="transform_csv",
-        name="co_hourly_summary",
+        name="hap_daily_summary",
         namespace="default",
         affinity={
             "nodeAffinity": {
@@ -56,17 +56,17 @@ with DAG(
             }
         },
         image_pull_policy="Always",
-        image="{{ var.json.epa.container_registry.run_csv_transform_kub }}",
+        image="{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}",
         env_vars={
-            "SOURCE_URL": "https://aqs.epa.gov/aqsweb/airdata/hourly_42101_~year~.zip",
+            "SOURCE_URL": "https://aqs.epa.gov/aqsweb/airdata/daily_HAPS_~year~.zip",
             "START_YEAR": "1990",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
             "CHUNKSIZE": "2500000",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
-            "TARGET_GCS_PATH": "data/epa/co_hourly_summary/data_output.csv",
-            "DATA_NAMES": '[ "state_code", "county_code", "site_num", "parameter_code", "poc", "latitude", "longitude", "datum", "parameter_name", "sample_duration", "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count", "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi", "method_code", "method_name", "local_site_name", "address", "state_name", "county_name", "city_name", "cbsa_name", "date_of_last_change" ]',
-            "DATA_DTYPES": '{ "state_code": "str", "county_code": "str", "site_num": "str", "parameter_code": "int32", "poc": "int32", "latitude": "str", "longitude": "str", "datum": "str", "parameter_name": "str", "sample_duration": "str", "pollutant_standard": "str", "date_local": "datetime64[ns]", "time_local": "str", "date_gmt": "datetime64[ns]", "time_gmt": "str", "sample_measurement": "str", "units_of_measure": "str", "mdl": "float64", "uncertainty": "str", "qualifier": "str", "method_type": "str", "method_code": "str", "method_name": "str", "state_name": "str", "date_of_last_change": "datetime64[ns]" }',
+            "TARGET_GCS_PATH": "data/epa_historical_air_quality/hap_daily_summary/data_output.csv",
+            "DATA_NAMES": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "sample_duration",\n  "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",\n  "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",\n  "method_code", "method_name", "local_site_name", "address", "state_name",\n  "county_name", "city_name", "cbsa_name", "date_of_last_change" ]',
+            "DATA_DTYPES": '{ "state_code": "str", "county_code": "str", "site_num": "str", "parameter_code": "int32", "poc": "int32",\n  "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "sample_duration": "str",\n  "pollutant_standard": "str", "date_local": "datetime64[ns]", "units_of_measure": "str", "event_type": "str", "observation_count": "int32",\n  "observation_percent": "float64", "arithmetic_mean": "float64", "first_max_value": "float64", "first_max_hour": "int32", "aqi": "str",\n  "method_code": "str", "method_name": "str", "local_site_name": "str", "address": "str", "state_name": "str",\n  "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "datetime64[ns]" }',
         },
         resources={"limit_memory": "8G", "limit_cpu": "3"},
     )
@@ -75,9 +75,11 @@ with DAG(
     load_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_to_bq",
         bucket="{{ var.value.composer_bucket }}",
-        source_objects=["data/epa/hourly_summaries/data_output.csv"],
+        source_objects=[
+            "data/epa_historical_air_quality/hap_daily_summary/data_output.csv"
+        ],
         source_format="CSV",
-        destination_project_dataset_table="epa_historical_air_quality.co_hourly_summary",
+        destination_project_dataset_table="epa_historical_air_quality.hap_daily_summary",
         skip_leading_rows=1,
         allow_quoted_newlines=True,
         write_disposition="WRITE_TRUNCATE",

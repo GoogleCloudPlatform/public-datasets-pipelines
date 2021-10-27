@@ -36,29 +36,38 @@ def main(
     target_gcs_bucket: str,
     target_gcs_path: str,
     data_names: typing.List[str],
-    data_dtypes: dict
+    data_dtypes: dict,
 ) -> None:
 
     logging.info("Pipeline process started")
 
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
     dest_path = os.path.split(source_file)[0]
-    end_year = (datetime.datetime.today().year - 2)
-    download_url_files_from_year_range(source_url, start_year, end_year, dest_path, True, False)
-    st_year = (datetime.datetime.today().year - 1)
-    end_year = (datetime.datetime.today().year)
-    download_url_files_from_year_range(source_url, st_year, end_year, dest_path, True, True)
+    end_year = datetime.datetime.today().year - 2
+    download_url_files_from_year_range(
+        source_url, start_year, end_year, dest_path, True, False
+    )
+    st_year = datetime.datetime.today().year - 1
+    end_year = datetime.datetime.today().year
+    download_url_files_from_year_range(
+        source_url, st_year, end_year, dest_path, True, True
+    )
     file_group_wildcard = os.path.split(source_url)[1].replace("_~year~.zip", "")
     source = concatenate_files(source_file, dest_path, file_group_wildcard, False, ",")
 
-    key_list = ["state_code", "county_code", "site_num", "sample_duration", "pollutant_standard", "metric_used", "method_name", "address", "date_of_last_change"]
+    key_list = [
+        "state_code",
+        "county_code",
+        "site_num",
+        "sample_duration",
+        "pollutant_standard",
+        "metric_used",
+        "method_name",
+        "address",
+        "date_of_last_change",
+    ]
     process_source_file(
-        source,
-        target_file,
-        data_names,
-        data_dtypes,
-        int(chunksize),
-        key_list
+        source, target_file, data_names, data_dtypes, int(chunksize), key_list
     )
 
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
@@ -66,32 +75,55 @@ def main(
     logging.info("Pipeline process completed")
 
 
-def download_url_files_from_year_range(source_url: str, start_year: int, end_year: int, dest_path: str, remove_file: bool=False, continue_on_error: bool=False):
+def download_url_files_from_year_range(
+    source_url: str,
+    start_year: int,
+    end_year: int,
+    dest_path: str,
+    remove_file: bool = False,
+    continue_on_error: bool = False,
+):
     for yr in range(start_year, end_year + 1, 1):
         src_url = source_url.replace("~year~", str(yr))
         dest_file = dest_path + "/source_" + os.path.split(src_url)[1]
         download_file_http(src_url, dest_file)
         unpack_file(dest_file, dest_path, "zip")
-        if remove_file :
+        if remove_file:
             os.remove(dest_file)
 
 
-def download_file_http(source_url: str, source_file: pathlib.Path, continue_on_error: bool=False) -> None:
+def download_file_http(
+    source_url: str, source_file: pathlib.Path, continue_on_error: bool = False
+) -> None:
     logging.info(f"Downloading {source_url} to {source_file}")
     try:
         src_file = requests.get(source_url, stream=True)
         with open(source_file, "wb") as f:
             for chunk in src_file:
                 f.write(chunk)
-    except:
+    except requests.exceptions.RequestException as e:
+        if e == requests.exceptions.HTTPError:
+            err_msg = "A HTTP error occurred."
+        elif e == requests.exceptions.Timeout:
+            err_msg = "A HTTP timeout error occurred."
+        elif e == requests.exceptions.TooManyRedirects:
+            err_msg = "Too Many Redirects occurred."
         if not continue_on_error:
-            logging.info(f"Unable to obtain {source_url}")
+            logging.info(f"{err_msg} Unable to obtain {source_url}")
+            raise SystemExit(e)
         else:
-            logging.info(f"Unable to obtain {source_url}. Continuing execution.")
+            logging.info(
+                f"{err_msg} Unable to obtain {source_url}. Continuing execution."
+            )
 
 
 def process_source_file(
-    source_file: str, target_file: str, names: list, dtypes: dict, chunksize: int, key_list: list
+    source_file: str,
+    target_file: str,
+    names: list,
+    dtypes: dict,
+    chunksize: int,
+    key_list: list,
 ) -> None:
     logging.info(f"Opening batch file {source_file}")
     with pd.read_csv(
@@ -105,7 +137,7 @@ def process_source_file(
         names=names,
         dtype=dtypes,
         keep_default_na=True,
-        na_values=[' ']
+        na_values=[" "]
         # parse_dates=["start_date", "end_date"],
     ) as reader:
         for chunk_number, chunk in enumerate(reader):
@@ -114,11 +146,17 @@ def process_source_file(
             )
             df = pd.DataFrame()
             df = pd.concat([df, chunk])
-            process_chunk(df, target_file_batch, target_file, (not chunk_number == 0), key_list)
+            process_chunk(
+                df, target_file_batch, target_file, (not chunk_number == 0), key_list
+            )
 
 
 def process_chunk(
-    df: pd.DataFrame, target_file_batch: str, target_file: str, skip_header: bool, key_list: list
+    df: pd.DataFrame,
+    target_file_batch: str,
+    target_file: str,
+    skip_header: bool,
+    key_list: list,
 ) -> None:
     df = resolve_date_format(df, "%Y-%m-%d %H:%M")
     # df = add_key(df, key_list)
@@ -173,10 +211,17 @@ def add_key(df: pd.DataFrame, key_list: list) -> pd.DataFrame:
 
 
 def concatenate_files(
-    target_file_path: str, dest_path: str, file_group_wildcard: str, incl_file_source_path: bool=False, separator: str=",", delete_src_file: bool=True
+    target_file_path: str,
+    dest_path: str,
+    file_group_wildcard: str,
+    incl_file_source_path: bool = False,
+    separator: str = ",",
+    delete_src_file: bool = True,
 ) -> str:
     target_file_dir = os.path.split(str(target_file_path))[0]
-    target_file_path = str(target_file_path).replace(".csv", "_" + file_group_wildcard + ".csv")
+    target_file_path = str(target_file_path).replace(
+        ".csv", "_" + file_group_wildcard + ".csv"
+    )
     logging.info(f"Concatenating files {target_file_dir}/*{file_group_wildcard}")
     if os.path.isfile(target_file_path):
         os.unlink(target_file_path)
@@ -193,12 +238,14 @@ def concatenate_files(
                 for line in src_file:
                     if incl_file_source_path:
                         line = (
-                            '"' + os.path.split(src_file_path)[1].strip() + '"' + separator + line
+                            '"'
+                            + os.path.split(src_file_path)[1].strip()
+                            + '"'
+                            + separator
+                            + line
                         )  # include the file source
                     else:
-                        line = (
-                            line
-                        )
+                        line = line
                     target_file.write(line)
         if os.path.isfile(src_file_path) and delete_src_file:
             os.unlink(src_file_path)
@@ -217,38 +264,38 @@ def concatenate_files(
 #     return rtn_list
 
 
-def resolve_date_format(
-    df: pd.DataFrame, from_format: str
-) -> pd.DataFrame:
+def resolve_date_format(df: pd.DataFrame, from_format: str) -> pd.DataFrame:
     logging.info("Resolving Date Format")
     for col in df.columns:
-        if df[col].dtype == 'datetime64[ns]':
-	        logging.info(f"Resolving datetime on {col}")
-	        df[col] = df[col].apply(lambda x: convert_dt_format(str(x), from_format))
+        if df[col].dtype == "datetime64[ns]":
+            logging.info(f"Resolving datetime on {col}")
+            df[col] = df[col].apply(lambda x: convert_dt_format(str(x), from_format))
 
     return df
 
 
 def convert_dt_format(dt_str: str, from_format: str) -> str:
-	# rtnval = ""
+    # rtnval = ""
     if not dt_str or str(dt_str).lower() == "nan" or str(dt_str).lower() == "nat":
         rtnval = ""
     elif len(dt_str.strip()) == 10:
         # if there is no time format
-        rtnval = dt_str + ' 00:00:00'
+        rtnval = dt_str + " 00:00:00"
     elif len(dt_str.strip().split(" ")[1]) == 8:
         # if format of time portion is 00:00:00 then use 00:00 format
         dt_str = dt_str[:-3]
-        rtnval = datetime.datetime.strptime(dt_str, from_format).strftime("%Y-%m-%d %H:%M:%S")
+        rtnval = datetime.datetime.strptime(dt_str, from_format).strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
     elif (len(dt_str.strip().split("-")[0]) == 4) and (
-            len(from_format.strip().split("/")[0]) == 2
-        ):
-            # if the format of the date portion of the data is in YYYY-MM-DD format
-            # and from_format is in MM-DD-YYYY then resolve this by modifying the from_format
-            # to use the YYYY-MM-DD.  This resolves mixed date formats in files
-            from_format = "%Y-%m-%d " + from_format.strip().split(" ")[1]
+        len(from_format.strip().split("/")[0]) == 2
+    ):
+        # if the format of the date portion of the data is in YYYY-MM-DD format
+        # and from_format is in MM-DD-YYYY then resolve this by modifying the from_format
+        # to use the YYYY-MM-DD.  This resolves mixed date formats in files
+        from_format = "%Y-%m-%d " + from_format.strip().split(" ")[1]
     else:
-	    dt_str = ""
+        dt_str = ""
 
     # return datetime.datetime.strptime(dt_str, from_format).strftime("%Y-%m-%d %H:%M:%S")
     return rtnval
@@ -298,7 +345,7 @@ def unpack_file(infile: str, dest_path: str, compression_type: str = "zip") -> N
         else:
             logging.info(
                 f"{infile} ignored as it is not compressed or is of unknown compression"
-        )
+            )
     else:
         logging.info(f"{infile} not unpacked because it does not exist.")
 

@@ -13,9 +13,9 @@
 # limitations under the License.
 
 dataset:
-  name: epa
-  friendly_name: ~
-  description: ~
+  name: epa_historical_air_quality
+  friendly_name: epa_historical_air_quality
+  description: "EPA Historical Air Quality Datasets"
   dataset_sources: ~
   terms_of_use: ~
 
@@ -23,5 +23,5 @@ dataset:
 resources:
 
   - type: bigquery_dataset
-    dataset_id: epa
-    description: epa
+    dataset_id: epa_historical_air_quality
+    description: "EPA Historical Air Quality Datasets"
