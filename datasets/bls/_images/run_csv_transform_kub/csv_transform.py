@@ -101,7 +101,8 @@ def read_files(source_files, joining_key):
             _df = pd.read_csv(source_file)
         else:
             _df = pd.read_csv(source_file, sep="\t")
-        if source_files.index(source_file) == 0:
+
+        if df.empty:
             df = _df
         else:
             df = pd.merge(df, _df, how="left", on=joining_key)
