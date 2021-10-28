@@ -25,7 +25,7 @@ default_args = {
 
 
 with DAG(
-    dag_id="epa_historical_air_quality.hap_hourly_summary",
+    dag_id="epa_historical_air_quality.lead_daily_summary",
     default_args=default_args,
     max_active_runs=1,
     schedule_interval="@daily",
@@ -36,7 +36,7 @@ with DAG(
     # Run CSV transform within kubernetes pod
     transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="transform_csv",
-        name="hap_hourly_summary",
+        name="lead_daily_summary",
         namespace="default",
         affinity={
             "nodeAffinity": {
@@ -58,15 +58,15 @@ with DAG(
         image_pull_policy="Always",
         image="{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}",
         env_vars={
-            "SOURCE_URL": "https://aqs.epa.gov/aqsweb/airdata/hourly_HAPS_~year~.zip",
-            "START_YEAR": "1993",
+            "SOURCE_URL": "https://aqs.epa.gov/aqsweb/airdata/daily_LEAD_~year~.zip",
+            "START_YEAR": "1990",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
             "CHUNKSIZE": "2500000",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
-            "TARGET_GCS_PATH": "data/epa_historical_air_quality/hap_hourly_summary/data_output.csv",
-            "DATA_NAMES": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "date_local",\n  "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",\n  "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",\n  "state_name", "county_name", "date_of_last_change" ]',
-            "DATA_DTYPES": '{ "state_code": "str", "county_code": "str", "site_num": "str", "parameter_code": "int32", "poc": "int32",\n  "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "date_local": "datetime64[ns]",\n  "time_local": "str", "date_gmt": "datetime64[ns]", "time_gmt": "str", "sample_measurement": "float64", "units_of_measure": "str",\n  "mdl": "float64", "uncertainty": "float64", "qualifier": "str", "method_type": "str", "method_code": "int32", "method_name": "str",\n  "state_name": "str", "county_name": "str", "date_of_last_change": "datetime64[ns]" }',
+            "TARGET_GCS_PATH": "data/epa_historical_air_quality/lead_daily_summary/data_output.csv",
+            "DATA_NAMES": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "sample_duration",\n  "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",\n  "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",\n  "method_code", "method_name", "local_site_name", "address", "state_name",\n  "county_name", "city_name", "cbsa_name", "date_of_last_change" ]',
+            "DATA_DTYPES": '{ "state_code": "str", "county_code": "str", "site_num": "str", "parameter_code": "int32", "poc": "int32",\n  "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "sample_duration": "str",\n  "pollutant_standard": "str", "date_local": "datetime64[ns]", "units_of_measure": "str", "event_type": "str", "observation_count": "int32",\n  "observation_percent": "float64", "arithmetic_mean": "float64", "first_max_value": "float64", "first_max_hour": "int32", "aqi": "str",\n  "method_code": "str", "method_name": "str", "local_site_name": "str", "address": "str", "state_name": "str",\n  "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "datetime64[ns]" }',
         },
         resources={"limit_memory": "8G", "limit_cpu": "3"},
     )
@@ -76,10 +76,10 @@ with DAG(
         task_id="load_to_bq",
         bucket="{{ var.value.composer_bucket }}",
         source_objects=[
-            "data/epa_historical_air_quality/hap_hourly_summary/data_output.csv"
+            "data/epa_historical_air_quality/lead_daily_summary/data_output.csv"
         ],
         source_format="CSV",
-        destination_project_dataset_table="epa_historical_air_quality.hap_hourly_summary",
+        destination_project_dataset_table="epa_historical_air_quality.lead_daily_summary",
         skip_leading_rows=1,
         allow_quoted_newlines=True,
         write_disposition="WRITE_TRUNCATE",
@@ -139,33 +139,21 @@ with DAG(
                 "mode": "NULLABLE",
             },
             {
+                "name": "sample_duration",
+                "type": "STRING",
+                "description": "The length of time that air passes through the monitoring device before it is analyzed (measured). So, it represents an averaging period in the atmosphere (for example, a 24-hour sample duration draws ambient air over a collection filter for 24 straight hours). For continuous monitors, it can represent an averaging time of many samples (for example, a 1-hour value may be the average of four one-minute samples collected during each quarter of the hour).",
+                "mode": "NULLABLE",
+            },
+            {
+                "name": "pollutant_standard",
+                "type": "STRING",
+                "description": "A description of the ambient air quality standard rules used to aggregate statistics. (See description at beginning of document.)",
+                "mode": "NULLABLE",
+            },
+            {
                 "name": "date_local",
                 "type": "TIMESTAMP",
                 "description": "The calendar date for the summary. All daily summaries are for the local standard day (midnight to midnight) at the monitor.",
-                "mode": "NULLABLE",
-            },
-            {
-                "name": "time_local",
-                "type": "STRING",
-                "description": "The time of day that sampling began on a 24-hour clock in Local Standard Time.",
-                "mode": "NULLABLE",
-            },
-            {
-                "name": "date_gmt",
-                "type": "TIMESTAMP",
-                "description": "The calendar date of the sample in Greenwich Mean Time.",
-                "mode": "NULLABLE",
-            },
-            {
-                "name": "time_gmt",
-                "type": "STRING",
-                "description": "The time of day that sampling began on a 24-hour clock in Greenwich Mean Time.",
-                "mode": "NULLABLE",
-            },
-            {
-                "name": "sample_measurement",
-                "type": "FLOAT",
-                "description": "The measured value in the standard units of measure for the parameter.",
                 "mode": "NULLABLE",
             },
             {
@@ -175,32 +163,50 @@ with DAG(
                 "mode": "NULLABLE",
             },
             {
-                "name": "mdl",
-                "type": "FLOAT",
-                "description": "The Method Detection Limit. The minimum sample concentration detectable for the monitor and method. Note: if samples are reported below this level, they may have been replaced by 1/2 the MDL.",
-                "mode": "NULLABLE",
-            },
-            {
-                "name": "uncertainty",
-                "type": "FLOAT",
-                "description": "The total measurement uncertainty associated with a reported measurement as indicated by the reporting agency.",
-                "mode": "NULLABLE",
-            },
-            {
-                "name": "qualifier",
+                "name": "event_type",
                 "type": "STRING",
-                "description": "Sample values may have qualifiers that indicate why they are missing or that they are out of the ordinary. Types of qualifiers are: null data, exceptional event, natural events, and quality assurance. The highest ranking qualifier, if any, is described in this field.",
+                "description": "Indicates whether data measured during exceptional events are included in the summary. A wildfire is an example of an exceptional event; it is something that affects air quality, but the local agency has no control over. No Events means no events occurred. Events Included means events occurred and the data from them is included in the summary. Events Excluded means that events occurred but data form them is excluded from the summary. Concurred Events Excluded means that events occurred but only EPA concurred exclusions are removed from the summary. If an event occurred for the parameter in question, the data will have multiple records for each monitor.",
                 "mode": "NULLABLE",
             },
             {
-                "name": "method_type",
-                "type": "STRING",
-                "description": "An indication of whether the method used to collect the data is a federal reference method (FRM), equivalent to a federal reference method, an approved regional method, or none of the above (non-federal reference method).",
+                "name": "observation_count",
+                "type": "INTEGER",
+                "description": "The number of observations (samples) taken during the day.",
+                "mode": "NULLABLE",
+            },
+            {
+                "name": "observation_percent",
+                "type": "FLOAT",
+                "description": "The percent representing the number of observations taken with respect to the number scheduled to be taken during the day. This is only calculated for monitors where measurements are required (e.g., only certain parameters).",
+                "mode": "NULLABLE",
+            },
+            {
+                "name": "arithmetic_mean",
+                "type": "FLOAT",
+                "description": "The average (arithmetic mean) value for the day.",
+                "mode": "NULLABLE",
+            },
+            {
+                "name": "first_max_value",
+                "type": "FLOAT",
+                "description": "The highest value for the day.",
+                "mode": "NULLABLE",
+            },
+            {
+                "name": "first_max_hour",
+                "type": "INTEGER",
+                "description": "The hour (on a 24-hour clock) when the highest value for the day (the previous field) was taken.",
+                "mode": "NULLABLE",
+            },
+            {
+                "name": "aqi",
+                "type": "INTEGER",
+                "description": "The Air Quality Index for the day for the pollutant, if applicable.",
                 "mode": "NULLABLE",
             },
             {
                 "name": "method_code",
-                "type": "STRING",
+                "type": "INTEGER",
                 "description": "An internal system code indicating the method (processes, equipment, and protocols) used in gathering and measuring the sample. The method name is in the next column.",
                 "mode": "NULLABLE",
             },
@@ -208,6 +214,18 @@ with DAG(
                 "name": "method_name",
                 "type": "STRING",
                 "description": "A short description of the processes, equipment, and protocols used in gathering and measuring the sample.",
+                "mode": "NULLABLE",
+            },
+            {
+                "name": "local_site_name",
+                "type": "STRING",
+                "description": "The name of the site (if any) given by the State, local, or tribal air pollution control agency that operates it.",
+                "mode": "NULLABLE",
+            },
+            {
+                "name": "address",
+                "type": "STRING",
+                "description": "The approximate street address of the monitoring site.",
                 "mode": "NULLABLE",
             },
             {
@@ -220,6 +238,18 @@ with DAG(
                 "name": "county_name",
                 "type": "STRING",
                 "description": "The name of the county where the monitoring site is located.",
+                "mode": "NULLABLE",
+            },
+            {
+                "name": "city_name",
+                "type": "STRING",
+                "description": "The name of the city where the monitoring site is located. This represents the legal incorporated boundaries of cities and not urban areas.",
+                "mode": "NULLABLE",
+            },
+            {
+                "name": "cbsa_name",
+                "type": "STRING",
+                "description": "The name of the core bases statistical area (metropolitan area) where the monitoring site is located.",
                 "mode": "NULLABLE",
             },
             {
