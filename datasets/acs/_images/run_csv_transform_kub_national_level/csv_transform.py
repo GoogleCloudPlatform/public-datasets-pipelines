@@ -35,9 +35,10 @@ def main(
     target_file: pathlib.Path,
     target_gcs_bucket: str,
     target_gcs_path: str,
-    # headers: typing.List[str],
-    # rename_mappings: dict,
+    headers: typing.List[str],
+    rename_mappings: dict,
     pipeline_name: str,
+    geography: str,
 ) -> None:
 
     logging.info(
@@ -306,7 +307,7 @@ def main(
 
     logging.info("Replacing values...")
     df = df.replace( to_replace={
-        "group_id": group_id
+        "KPI_Name": group_id
         })
 
     # rename_mappings = {
@@ -318,8 +319,8 @@ def main(
     #     "group_id": "KPI_Name",
     # }
 
-    # logging.info("Renaming headers...")
-    # rename_headers(df, rename_mappings)
+    logging.info("Renaming headers...")
+    rename_headers(df, rename_mappings)
 
 
     # logging.info("Changing length of the integers...")
@@ -327,12 +328,16 @@ def main(
     # df['state']=df['state'].apply(change_length,args=("2"))
     # df['county']=df['county'].apply(change_length,args=("3"))
 
-    # logging.info("Creating column ")
-    # df['geo_id'] = df['state'] + df['county'] + df['tract']
+    logging.info("Creating column geo_id...")
+    if geography == 'state' :
+        df['geo_id'] = df['state'] # state
 
-    # logging.info("Pivotinf the dataframe...")
-    # df=df[['geo_id','KPI_Name','KPI_Value']]
-    # df=df.pivot_table(index='geo_id',columns='KPI_Name',values='KPI_Value',aggfunc=np.sum).reset_index()
+    logging.info("Pivotinf the dataframe...")
+    df=df[['geo_id','KPI_Name','KPI_Value']]
+    df=df.pivot_table(index='geo_id',columns='KPI_Name',values='KPI_Value',aggfunc=np.sum).reset_index()
+
+    logging.info("Reordering headers...")
+    df=df[headers]
 
     logging.info(f"Saving to output file.. {target_file}")
     try:
@@ -371,7 +376,7 @@ def extract_data_and_convert_to_df(group_id: dict, year_report: str,api_naming_c
             text = r.json()
             frame = pd.DataFrame(text)
             frame = frame.iloc[1:, :]
-            frame["group_id"] = key
+            frame["KPI_Name"] = key
             list_temp.append(frame)
     logging.info("creating the dataframe...")
     df = pd.concat(list_temp)
@@ -402,6 +407,7 @@ def change_length(val: str, length: int) -> str:
 
 
 def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
+    rename_mappings= {int(k):str(v) for k,v in rename_mappings.items()}
     df.rename(columns=rename_mappings, inplace=True)
 
 
@@ -427,7 +433,8 @@ if __name__ == "__main__":
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
-        # headers=json.loads(os.environ["CSV_HEADERS"]),
-        # rename_mappings=json.loads(os.environ["RENAME_MAPPINGS"]),
+        headers=json.loads(os.environ["CSV_HEADERS"]),
+        rename_mappings=json.loads(os.environ["RENAME_MAPPINGS"]),
         pipeline_name=os.environ["PIPELINE_NAME"],
+        geography=os.environ["GEOGRAPHY"],
     )

@@ -64,6 +64,7 @@ with DAG(
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/acs/zcta_2019_5yr/data_output.csv",
             "PIPELINE_NAME": "zcta_2019_5yr",
+            "GEOGRAPHY": "zcta",
             "RENAME_MAPPINGS": '{0:"name", 1:"KPI_Value", 2:"state", 3:"county", "group_id":"KPI_Name"}',
         },
         resources={"request_memory": "2G", "request_cpu": "1"},
