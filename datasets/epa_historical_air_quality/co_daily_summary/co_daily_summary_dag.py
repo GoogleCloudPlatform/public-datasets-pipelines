@@ -152,7 +152,7 @@ with DAG(
             },
             {
                 "name": "date_local",
-                "type": "date",
+                "type": "TIMESTAMP",
                 "description": "The calendar date for the summary. All daily summaries are for the local standard day (midnight to midnight) at the monitor.",
                 "mode": "NULLABLE",
             },

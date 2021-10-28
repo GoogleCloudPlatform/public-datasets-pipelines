@@ -78,7 +78,7 @@ dag:
               "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "sample_duration": "str",
               "pollutant_standard": "str", "metric_used": "str", "method_name": "str", "year": "int32", "units_of_measure": "str",
               "event_type": "str", "observation_count": "int32", "observation_percent": "float64", "completeness_indicator": "str", "valid_day_count": "int32",
-              "required_day_count": "int32", "exceptional_data_count": "int32", "null_data_count": "int32", "primary_exceedance_count": "float64", "secondary_exceedance_count": "float64",
+              "required_day_count": "int32", "exceptional_data_count": "int32", "null_data_count": "int32", "primary_exceedance_count": "str", "secondary_exceedance_count": "str",
               "certification_indicator": "str", "num_obs_below_mdl": "int32", "arithmetic_mean": "float64", "arithmetic_standard_dev": "float64", "first_max_value": "float64",
               "first_max_datetime": "datetime64[ns]", "second_max_value": "float64", "second_max_datetime": "datetime64[ns]", "third_max_value": "float64", "third_max_datetime": "datetime64[ns]",
               "fourth_max_value": "float64", "fourth_max_datetime": "datetime64[ns]", "first_max_non_overlapping_value": "float64", "first_no_max_datetime": "datetime64[ns]", "second_max_non_overlapping_value": "float64",
@@ -320,7 +320,7 @@ dag:
             "description": "The name of the core bases statistical area (metropolitan area) where the monitoring site is located."
             "mode": "NULLABLE"
           - "name": "date_of_last_change"
-            "type": "date"
+            "type": "TIMESTAMP"
             "description": "The date the last time any numeric values in this record were updated in the AQS data system."
             "mode": "NULLABLE"
 

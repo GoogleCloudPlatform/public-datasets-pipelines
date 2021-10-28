@@ -157,7 +157,7 @@ with DAG(
                 "mode": "NULLABLE",
             },
             {
-                "name": "time_local",
+                "name": "time_gmt",
                 "type": "STRING",
                 "description": "The time of day that sampling began on a 24-hour clock in Greenwich Mean Time.",
                 "mode": "NULLABLE",

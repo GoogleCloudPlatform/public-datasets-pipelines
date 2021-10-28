@@ -138,7 +138,7 @@ dag:
             "description": "A description of the ambient air quality standard rules used to aggregate statistics. (See description at beginning of document.)"
             "mode": "NULLABLE"
           - "name": "date_local"
-            "type": "date"
+            "type": "TIMESTAMP"
             "description": "The calendar date for the summary. All daily summaries are for the local standard day (midnight to midnight) at the monitor."
             "mode": "NULLABLE"
           - "name": "units_of_measure"
