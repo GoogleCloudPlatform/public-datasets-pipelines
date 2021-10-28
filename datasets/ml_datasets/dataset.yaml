@@ -55,3 +55,18 @@ resources:
     #   location      (The geographic location where the dataset should reside)
     dataset_id: ml_datasets
     description: ~
+
+
+  - type: bigquery_dataset
+    # Google BigQuery dataset to namespace all tables managed by this folder
+    #
+    # Required Properties:
+    #   dataset_id
+    #
+    # Optional Properties:
+    #   friendly_name (A user-friendly name of the dataset)
+    #   description   (A user-friendly description of the dataset)
+    #   location      (The geographic location where the dataset should reside)
+    dataset_id: ml_datasets_uscentral1
+    location: us-central1
+    description: ~

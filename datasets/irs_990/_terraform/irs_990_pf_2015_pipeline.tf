@@ -15,7 +15,7 @@
  */
 
 
-resource "google_bigquery_table" "irs_990_pf_2015" {
+resource "google_bigquery_table" "irs_990_irs_990_pf_2015" {
   project    = var.project_id
   dataset_id = "irs_990"
   table_id   = "irs_990_pf_2015"
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "irs_990_pf_2015" {
   ]
 }
 
-output "bigquery_table-irs_990_pf_2015-table_id" {
-  value = google_bigquery_table.irs_990_pf_2015.table_id
+output "bigquery_table-irs_990_irs_990_pf_2015-table_id" {
+  value = google_bigquery_table.irs_990_irs_990_pf_2015.table_id
 }
 
-output "bigquery_table-irs_990_pf_2015-id" {
-  value = google_bigquery_table.irs_990_pf_2015.id
+output "bigquery_table-irs_990_irs_990_pf_2015-id" {
+  value = google_bigquery_table.irs_990_irs_990_pf_2015.id
 }

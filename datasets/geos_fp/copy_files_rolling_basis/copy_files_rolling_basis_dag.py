@@ -37,6 +37,23 @@ with DAG(
         task_id="copy_files_dated_today",
         name="geosfp",
         namespace="default",
+        affinity={
+            "nodeAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                    "nodeSelectorTerms": [
+                        {
+                            "matchExpressions": [
+                                {
+                                    "key": "cloud.google.com/gke-nodepool",
+                                    "operator": "In",
+                                    "values": ["pool-e2-standard-4"],
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
         image="{{ var.json.geos_fp.container_registry.rolling_copy }}",
         image_pull_policy="Always",
         env_vars={
@@ -58,6 +75,23 @@ with DAG(
         task_id="copy_files_dated_today_minus_1_day",
         name="geosfp",
         namespace="default",
+        affinity={
+            "nodeAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                    "nodeSelectorTerms": [
+                        {
+                            "matchExpressions": [
+                                {
+                                    "key": "cloud.google.com/gke-nodepool",
+                                    "operator": "In",
+                                    "values": ["pool-e2-standard-4"],
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
         image="{{ var.json.geos_fp.container_registry.rolling_copy }}",
         image_pull_policy="Always",
         env_vars={
@@ -79,6 +113,23 @@ with DAG(
         task_id="copy_files_dated_today_minus_2_days",
         name="geosfp",
         namespace="default",
+        affinity={
+            "nodeAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                    "nodeSelectorTerms": [
+                        {
+                            "matchExpressions": [
+                                {
+                                    "key": "cloud.google.com/gke-nodepool",
+                                    "operator": "In",
+                                    "values": ["pool-e2-standard-4"],
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
         image="{{ var.json.geos_fp.container_registry.rolling_copy }}",
         image_pull_policy="Always",
         env_vars={
@@ -100,6 +151,23 @@ with DAG(
         task_id="copy_files_dated_today_minus_3_days",
         name="geosfp",
         namespace="default",
+        affinity={
+            "nodeAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                    "nodeSelectorTerms": [
+                        {
+                            "matchExpressions": [
+                                {
+                                    "key": "cloud.google.com/gke-nodepool",
+                                    "operator": "In",
+                                    "values": ["pool-e2-standard-4"],
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
         image="{{ var.json.geos_fp.container_registry.rolling_copy }}",
         image_pull_policy="Always",
         env_vars={
@@ -121,6 +189,23 @@ with DAG(
         task_id="copy_files_dated_today_minus_4_days",
         name="geosfp",
         namespace="default",
+        affinity={
+            "nodeAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                    "nodeSelectorTerms": [
+                        {
+                            "matchExpressions": [
+                                {
+                                    "key": "cloud.google.com/gke-nodepool",
+                                    "operator": "In",
+                                    "values": ["pool-e2-standard-4"],
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
         image="{{ var.json.geos_fp.container_registry.rolling_copy }}",
         image_pull_policy="Always",
         env_vars={
@@ -142,6 +227,23 @@ with DAG(
         task_id="copy_files_dated_today_minus_5_days",
         name="geosfp",
         namespace="default",
+        affinity={
+            "nodeAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                    "nodeSelectorTerms": [
+                        {
+                            "matchExpressions": [
+                                {
+                                    "key": "cloud.google.com/gke-nodepool",
+                                    "operator": "In",
+                                    "values": ["pool-e2-standard-4"],
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
         image="{{ var.json.geos_fp.container_registry.rolling_copy }}",
         image_pull_policy="Always",
         env_vars={
@@ -163,6 +265,23 @@ with DAG(
         task_id="copy_files_dated_today_minus_6_days",
         name="geosfp",
         namespace="default",
+        affinity={
+            "nodeAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                    "nodeSelectorTerms": [
+                        {
+                            "matchExpressions": [
+                                {
+                                    "key": "cloud.google.com/gke-nodepool",
+                                    "operator": "In",
+                                    "values": ["pool-e2-standard-4"],
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
         image="{{ var.json.geos_fp.container_registry.rolling_copy }}",
         image_pull_policy="Always",
         env_vars={
@@ -184,6 +303,23 @@ with DAG(
         task_id="copy_files_dated_today_minus_7_days",
         name="geosfp",
         namespace="default",
+        affinity={
+            "nodeAffinity": {
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                    "nodeSelectorTerms": [
+                        {
+                            "matchExpressions": [
+                                {
+                                    "key": "cloud.google.com/gke-nodepool",
+                                    "operator": "In",
+                                    "values": ["pool-e2-standard-4"],
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
         image="{{ var.json.geos_fp.container_registry.rolling_copy }}",
         image_pull_policy="Always",
         env_vars={

@@ -24,10 +24,6 @@ resources:
     schema: |-
       [
         {
-          "name": "rank",
-          "type": "INTEGER"
-        },
-        {
           "name": "refresh_date",
           "type": "DATE"
         },
@@ -49,6 +45,10 @@ resources:
         },
         {
           "name": "score",
+          "type": "INTEGER"
+        },
+        {
+          "name": "rank",
           "type": "INTEGER"
         }
       ]
@@ -63,14 +63,6 @@ resources:
     schema: |-
       [
         {
-          "name": "rank",
-          "type": "INTEGER"
-        },
-        {
-          "name": "refresh_date",
-          "type": "DATE"
-        },
-        {
           "name": "dma_name",
           "type": "STRING"
         },
@@ -89,6 +81,18 @@ resources:
         {
           "name": "score",
           "type": "INTEGER"
+        },
+        {
+          "name": "rank",
+          "type": "INTEGER"
+        },
+        {
+          "name": "percent_gain",
+          "type": "INTEGER"
+        },
+        {
+          "name": "refresh_date",
+          "type": "DATE"
         }
       ]
 
