@@ -13,9 +13,10 @@
 # limitations under the License.
 
 
-from airflow import DAG
 from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow import DAG
 from airflow.providers.google.cloud.transfers import gcs_to_bigquery
+
 
 default_args = {
     "owner": "Google",
@@ -79,7 +80,7 @@ with DAG(
             "data/epa_historical_air_quality/annual_summaries/data_output.csv"
         ],
         source_format="CSV",
-        destination_project_dataset_table="epa_historical_air_quality.air_quality_annual_summary",
+        destination_project_dataset_table="{{ var.value.container_registry.annual_summaries_destination_table }}",
         skip_leading_rows=1,
         allow_quoted_newlines=True,
         write_disposition="WRITE_TRUNCATE",

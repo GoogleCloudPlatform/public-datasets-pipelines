@@ -79,7 +79,7 @@ with DAG(
             "data/epa_historical_air_quality/hap_daily_summary/data_output.csv"
         ],
         source_format="CSV",
-        destination_project_dataset_table="epa_historical_air_quality.hap_daily_summary",
+        destination_project_dataset_table="{{ var.value.container_registry.hap_daily_summary_destination_table }}",
         skip_leading_rows=1,
         allow_quoted_newlines=True,
         write_disposition="WRITE_TRUNCATE",
