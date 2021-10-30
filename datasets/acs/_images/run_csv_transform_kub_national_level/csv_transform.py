@@ -303,7 +303,7 @@ def main(
     }
 
     logging.info("Extracting the data from API and loading into dataframe...")
-    df = extract_data_and_convert_to_df(group_id, year_report,api_naming_convention)
+    df = extract_data_and_convert_to_df(group_id, year_report,api_naming_convention,geography)
 
     logging.info("Replacing values...")
     df = df.replace( to_replace={
@@ -331,6 +331,18 @@ def main(
     logging.info("Creating column geo_id...")
     if geography == 'state' :
         df['geo_id'] = df['state'] # state
+    elif geography == 'county' :
+        df['geo_id'] = df['state'] + df['county']
+    elif geography == 'cbsa' :
+        df['geo_id'] = df['combined_statistical_area']
+    elif geography == 'place' :
+        df['geo_id'] = df['state'] + df['place']
+    elif geography == 'puma' :
+        df['geo_id'] = df['state'] + df['public_use_microdata_area']
+    elif geography == 'zcta' :
+        df['geo_id'] = df['state'] + df['zip_code_tabulation_area']
+    elif geography == 'congressionaldistrict' :
+        df['geo_id'] = df['state'] + df['congressional_district']
 
     logging.info("Pivotinf the dataframe...")
     df=df[['geo_id','KPI_Name','KPI_Value']]
@@ -356,11 +368,12 @@ def main(
     )
 
 
-def extract_data_and_convert_to_df(group_id: dict, year_report: str,api_naming_convention: str) -> pd.DataFrame:
+def extract_data_and_convert_to_df(group_id: dict, year_report: str,api_naming_convention: str, geography: str) -> pd.DataFrame:
     list_temp = []
     for key in group_id:
         logging.info(f"reading data from API for KPI {key}...")
-        source_url = (
+        if geography == 'congressionaldistrict' :
+            source_url = (
             'https://api.census.gov/data/2019/acs/acs'
             +year_report
             +'?get=NAME,'
@@ -369,8 +382,20 @@ def extract_data_and_convert_to_df(group_id: dict, year_report: str,api_naming_c
             + key[-3:]
             +'E&for='
             +api_naming_convention
-            +':*&key=550e53635053be51754b09b5e9f5009c94aa0586'
-        )
+            +':*&in=state:*&key=550e53635053be51754b09b5e9f5009c94aa0586'
+            )
+        else :
+            source_url = (
+                'https://api.census.gov/data/2019/acs/acs'
+                +year_report
+                +'?get=NAME,'
+                +key[0:-3]
+                + "_"
+                + key[-3:]
+                +'E&for='
+                +api_naming_convention
+                +':*&key=550e53635053be51754b09b5e9f5009c94aa0586'
+                )
         r = requests.get(source_url, stream=True)
         if r.status_code == 200:
             text = r.json()
