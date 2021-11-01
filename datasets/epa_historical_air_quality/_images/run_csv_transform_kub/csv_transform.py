@@ -54,9 +54,7 @@ def main(
     file_group_wildcard = os.path.split(source_url)[1].replace("_~year~.zip", "")
     source = concatenate_files(source_file, dest_path, file_group_wildcard, False, ",")
 
-    process_source_file(
-        source, target_file, data_names, data_dtypes, int(chunksize)
-    )
+    process_source_file(source, target_file, data_names, data_dtypes, int(chunksize))
 
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
@@ -171,11 +169,7 @@ def concatenate_files(
 
 
 def process_source_file(
-    source_file: str,
-    target_file: str,
-    names: list,
-    dtypes: dict,
-    chunksize: int
+    source_file: str, target_file: str, names: list, dtypes: dict, chunksize: int
 ) -> None:
     logging.info(f"Opening batch file {source_file}")
     with pd.read_csv(
@@ -189,7 +183,7 @@ def process_source_file(
         names=names,
         dtype=dtypes,
         keep_default_na=True,
-        na_values=[" "]
+        na_values=[" "],
     ) as reader:
         for chunk_number, chunk in enumerate(reader):
             target_file_batch = str(target_file).replace(
@@ -197,9 +191,7 @@ def process_source_file(
             )
             df = pd.DataFrame()
             df = pd.concat([df, chunk])
-            process_chunk(
-                df, target_file_batch, target_file, (not chunk_number == 0)
-            )
+            process_chunk(df, target_file_batch, target_file, (not chunk_number == 0))
 
 
 def process_chunk(
