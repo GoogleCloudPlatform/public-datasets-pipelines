@@ -62,7 +62,7 @@ with DAG(
             "START_YEAR": "1990",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
-            "CHUNKSIZE": "2500000",
+            "CHUNKSIZE": "750000",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/epa_historical_air_quality/temperature_daily_summary/files/data_output.csv",
             "DATA_NAMES": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "sample_duration",\n  "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",\n  "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",\n  "method_code", "method_name", "local_site_name", "address", "state_name",\n  "county_name", "city_name", "cbsa_name", "date_of_last_change" ]',

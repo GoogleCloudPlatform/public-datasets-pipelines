@@ -14,8 +14,9 @@
 
 
 from airflow import DAG
-from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
 from airflow.providers.google.cloud.transfers import gcs_to_bigquery
+from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+
 
 default_args = {
     "owner": "Google",
