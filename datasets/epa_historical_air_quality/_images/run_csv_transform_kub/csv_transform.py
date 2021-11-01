@@ -21,7 +21,6 @@ import pathlib
 import typing
 import zipfile as zip
 
-# import numpy
 import pandas as pd
 import requests
 from google.cloud import storage
@@ -55,19 +54,8 @@ def main(
     file_group_wildcard = os.path.split(source_url)[1].replace("_~year~.zip", "")
     source = concatenate_files(source_file, dest_path, file_group_wildcard, False, ",")
 
-    key_list = [
-        "state_code",
-        "county_code",
-        "site_num",
-        "sample_duration",
-        "pollutant_standard",
-        "metric_used",
-        "method_name",
-        "address",
-        "date_of_last_change",
-    ]
     process_source_file(
-        source, target_file, data_names, data_dtypes, int(chunksize), key_list
+        source, target_file, data_names, data_dtypes, int(chunksize)
     )
 
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
@@ -86,7 +74,7 @@ def download_url_files_from_year_range(
     for yr in range(start_year, end_year + 1, 1):
         src_url = source_url.replace("~year~", str(yr))
         dest_file = dest_path + "/source_" + os.path.split(src_url)[1]
-        download_file_http(src_url, dest_file)
+        download_file_http(src_url, dest_file, continue_on_error)
         unpack_file(dest_file, dest_path, "zip")
         if remove_file:
             os.remove(dest_file)
@@ -117,97 +105,26 @@ def download_file_http(
             )
 
 
-def process_source_file(
-    source_file: str,
-    target_file: str,
-    names: list,
-    dtypes: dict,
-    chunksize: int,
-    key_list: list,
-) -> None:
-    logging.info(f"Opening batch file {source_file}")
-    with pd.read_csv(
-        source_file,  # path to main source file to load in batches
-        engine="python",
-        encoding="utf-8",
-        quotechar='"',  # string separator, typically double-quotes
-        chunksize=chunksize,  # size of batch data, in no. of records
-        sep=",",  # data column separator, typically ","
-        header=None,  # use when the data file does not contain a header
-        names=names,
-        dtype=dtypes,
-        keep_default_na=True,
-        na_values=[" "]
-        # parse_dates=["start_date", "end_date"],
-    ) as reader:
-        for chunk_number, chunk in enumerate(reader):
-            target_file_batch = str(target_file).replace(
-                ".csv", "-" + str(chunk_number) + ".csv"
+def unpack_file(infile: str, dest_path: str, compression_type: str = "zip") -> None:
+    if os.path.exists(infile):
+        if compression_type == "zip":
+            logging.info(f"Unpacking {infile} to {dest_path}")
+            with zip.ZipFile(infile, mode="r") as zipf:
+                zipf.extractall(dest_path)
+                zipf.close()
+        else:
+            logging.info(
+                f"{infile} ignored as it is not compressed or is of unknown compression"
             )
-            df = pd.DataFrame()
-            df = pd.concat([df, chunk])
-            process_chunk(
-                df, target_file_batch, target_file, (not chunk_number == 0), key_list
-            )
+    else:
+        logging.info(f"{infile} not unpacked because it does not exist.")
 
 
-def process_chunk(
-    df: pd.DataFrame,
-    target_file_batch: str,
-    target_file: str,
-    skip_header: bool,
-    key_list: list,
-) -> None:
-    df = resolve_date_format(df, "%Y-%m-%d %H:%M")
-    # df = add_key(df, key_list)
-    save_to_new_file(df, file_path=str(target_file_batch), sep=",")
-    append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
-
-
-def add_key(df: pd.DataFrame, key_list: list) -> pd.DataFrame:
-    logging.info(f"Adding key column(s) {key_list}")
-    df["key"] = ""
-    for key in key_list:
-        df["key"] = df.apply(
-            lambda x: str(x[key])
-            if not str(x["key"])
-            else str(x["key"]) + "-" + str(x[key]),
-            axis=1,
-        )
-    df["key_val"] = df["key"]
-
-    return df
-
-
-# def reorder_headers(df: pd.DataFrame) -> pd.DataFrame:
-#     logging.info("Reordering headers output file")
-#     df = df[
-#         [
-#             "trip_id",
-#             "duration_sec",
-#             "start_date",
-#             "start_station_name",
-#             "start_station_id",
-#             "end_date",
-#             "end_station_name",
-#             "end_station_id",
-#             "bike_number",
-#             "zip_code",
-#             "subscriber_type",
-#             "subscription_type",
-#             "start_station_latitude",
-#             "start_station_longitude",
-#             "end_station_latitude",
-#             "end_station_longitude",
-#             "member_birth_year",
-#             "member_gender",
-#             "bike_share_for_all_trip",
-#             "start_station_geom",
-#             "end_station_geom",
-#         ]
-#     ]
-
-#     return df
+def zip_decompress(infile: str, dest_path: str) -> None:
+    logging.info(f"Unpacking {infile} to {dest_path}")
+    with zip.ZipFile(infile, mode="r") as zipf:
+        zipf.extractall(dest_path)
+        zipf.close()
 
 
 def concatenate_files(
@@ -253,15 +170,47 @@ def concatenate_files(
     return target_file_path
 
 
-# def listdirs(rootdir: str) -> list:
-#     rtn_list = []
-#     for file in os.listdir(rootdir):
-#         d = os.path.join(rootdir, file)
-#         if os.path.isdir(d):
-#             rtn_list.append(d)
-#             for elem in listdirs(d):
-#                 rtn_list.append(elem)
-#     return rtn_list
+def process_source_file(
+    source_file: str,
+    target_file: str,
+    names: list,
+    dtypes: dict,
+    chunksize: int
+) -> None:
+    logging.info(f"Opening batch file {source_file}")
+    with pd.read_csv(
+        source_file,  # path to main source file to load in batches
+        engine="python",
+        encoding="utf-8",
+        quotechar='"',  # string separator, typically double-quotes
+        chunksize=chunksize,  # size of batch data, in no. of records
+        sep=",",  # data column separator, typically ","
+        header=None,  # use when the data file does not contain a header
+        names=names,
+        dtype=dtypes,
+        keep_default_na=True,
+        na_values=[" "]
+    ) as reader:
+        for chunk_number, chunk in enumerate(reader):
+            target_file_batch = str(target_file).replace(
+                ".csv", "-" + str(chunk_number) + ".csv"
+            )
+            df = pd.DataFrame()
+            df = pd.concat([df, chunk])
+            process_chunk(
+                df, target_file_batch, target_file, (not chunk_number == 0)
+            )
+
+
+def process_chunk(
+    df: pd.DataFrame,
+    target_file_batch: str,
+    target_file: str,
+    skip_header: bool,
+) -> None:
+    df = resolve_date_format(df, "%Y-%m-%d %H:%M")
+    save_to_new_file(df, file_path=str(target_file_batch), sep=",")
+    append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
 
 
 def resolve_date_format(df: pd.DataFrame, from_format: str) -> pd.DataFrame:
@@ -301,6 +250,11 @@ def convert_dt_format(dt_str: str, from_format: str) -> str:
     return rtnval
 
 
+def save_to_new_file(df, file_path, sep="|") -> None:
+    logging.info(f"Saving to file {file_path} separator='{sep}'")
+    df.to_csv(file_path, sep=sep, index=False)
+
+
 def append_batch_file(
     batch_file_path: str, target_file_path: str, skip_header: bool, truncate_file: bool
 ) -> None:
@@ -322,39 +276,12 @@ def append_batch_file(
         os.remove(batch_file_path)
 
 
-def save_to_new_file(df, file_path, sep="|") -> None:
-    logging.info(f"Saving to file {file_path} separator='{sep}'")
-    df.to_csv(file_path, sep=sep, index=False)
-
-
 def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:
     logging.info(f"Uploading to GCS {gcs_bucket} in {gcs_path}")
     storage_client = storage.Client()
     bucket = storage_client.bucket(gcs_bucket)
     blob = bucket.blob(gcs_path)
     blob.upload_from_filename(file_path)
-
-
-def unpack_file(infile: str, dest_path: str, compression_type: str = "zip") -> None:
-    if os.path.exists(infile):
-        if compression_type == "zip":
-            logging.info(f"Unpacking {infile} to {dest_path}")
-            with zip.ZipFile(infile, mode="r") as zipf:
-                zipf.extractall(dest_path)
-                zipf.close()
-        else:
-            logging.info(
-                f"{infile} ignored as it is not compressed or is of unknown compression"
-            )
-    else:
-        logging.info(f"{infile} not unpacked because it does not exist.")
-
-
-def zip_decompress(infile: str, dest_path: str) -> None:
-    logging.info(f"Unpacking {infile} to {dest_path}")
-    with zip.ZipFile(infile, mode="r") as zipf:
-        zipf.extractall(dest_path)
-        zipf.close()
 
 
 if __name__ == "__main__":
