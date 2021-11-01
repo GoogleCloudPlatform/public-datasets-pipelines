@@ -64,7 +64,7 @@ with DAG(
             "TARGET_FILE": "files/data_output.csv",
             "CHUNKSIZE": "2500000",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
-            "TARGET_GCS_PATH": "data/epa_historical_air_quality/no2_hourly_summary/data_output.csv",
+            "TARGET_GCS_PATH": "data/epa_historical_air_quality/no2_hourly_summary/files/data_output.csv",
             "DATA_NAMES": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "date_local",\n  "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",\n  "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",\n  "state_name", "county_name", "date_of_last_change" ]',
             "DATA_DTYPES": '{ "state_code": "str", "county_code": "str", "site_num": "str", "parameter_code": "int32", "poc": "int32",\n  "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "date_local": "datetime64[ns]",\n  "time_local": "str", "date_gmt": "datetime64[ns]", "time_gmt": "str", "sample_measurement": "float64", "units_of_measure": "str",\n  "mdl": "float64", "uncertainty": "float64", "qualifier": "str", "method_type": "str", "method_code": "int32", "method_name": "str",\n  "state_name": "str", "county_name": "str", "date_of_last_change": "datetime64[ns]" }',
         },
@@ -76,10 +76,10 @@ with DAG(
         task_id="load_to_bq",
         bucket="{{ var.value.composer_bucket }}",
         source_objects=[
-            "data/epa_historical_air_quality/no2_hourly_summary/data_output.csv"
+            "data/epa_historical_air_quality/no2_hourly_summary/files/data_output.csv"
         ],
         source_format="CSV",
-        destination_project_dataset_table="{{ var.value.container_registry.no2_hourly_summary_destination_table }}",
+        destination_project_dataset_table="{{ var.json.epa_historical_air_quality.container_registry.no2_hourly_summary_destination_table }}",
         skip_leading_rows=1,
         allow_quoted_newlines=True,
         write_disposition="WRITE_TRUNCATE",

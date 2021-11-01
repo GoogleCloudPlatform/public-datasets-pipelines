@@ -64,7 +64,7 @@ with DAG(
             "TARGET_FILE": "files/data_output.csv",
             "CHUNKSIZE": "2500000",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
-            "TARGET_GCS_PATH": "data/epa_historical_air_quality/co_hourly_summary/data_output.csv",
+            "TARGET_GCS_PATH": "data/epa_historical_air_quality/co_hourly_summary/files/data_output.csv",
             "DATA_NAMES": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "date_local",\n  "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",\n  "mdl", "uncertainty", "qualifier", "method_type", "method_code",\n  "method_name", "state_name", "county_name", "date_of_last_change" ]',
             "DATA_DTYPES": '{ "state_code": "str", "county_code": "str", "site_num": "str", "parameter_code": "int32", "poc": "int32",\n  "latitude": "str", "longitude": "str", "datum": "str", "parameter_name": "str", "date_local": "datetime64[ns]", "time_local": "str",\n  "date_gmt": "datetime64[ns]", "time_gmt": "str", "sample_measurement": "str", "units_of_measure": "str",\n  "mdl": "float64", "uncertainty": "str", "qualifier": "str", "method_type": "str", "method_code": "str",\n  "method_name": "str", "state_name": "str", "date_of_last_change": "datetime64[ns]" }',
         },
@@ -76,10 +76,10 @@ with DAG(
         task_id="load_to_bq",
         bucket="{{ var.value.composer_bucket }}",
         source_objects=[
-            "data/epa_historical_air_quality/hourly_summaries/data_output.csv"
+            "data/epa_historical_air_quality/co_hourly_summary/files/data_output.csv"
         ],
         source_format="CSV",
-        destination_project_dataset_table="{{ var.value.container_registry.co_hourly_summary_destination_table }}",
+        destination_project_dataset_table="{{ var.json.epa_historical_air_quality.container_registry.co_hourly_summary_destination_table }}",
         skip_leading_rows=1,
         allow_quoted_newlines=True,
         write_disposition="WRITE_TRUNCATE",

@@ -25,7 +25,7 @@ default_args = {
 
 
 with DAG(
-    dag_id="epa_historical_air_quality.voc_daily_summary",
+    dag_id="epa_historical_air_quality.pm25_speciation_daily_summary",
     default_args=default_args,
     max_active_runs=1,
     schedule_interval="@daily",
@@ -36,7 +36,7 @@ with DAG(
     # Run CSV transform within kubernetes pod
     transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="transform_csv",
-        name="voc_daily_summary",
+        name="pm25_speciation_daily_summary",
         namespace="default",
         affinity={
             "nodeAffinity": {
@@ -58,13 +58,13 @@ with DAG(
         image_pull_policy="Always",
         image="{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}",
         env_vars={
-            "SOURCE_URL": "https://aqs.epa.gov/aqsweb/airdata/daily_VOCS_~year~.zip",
+            "SOURCE_URL": "https://aqs.epa.gov/aqsweb/airdata/daily_SPEC_~year~.zip",
             "START_YEAR": "1990",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
             "CHUNKSIZE": "2500000",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
-            "TARGET_GCS_PATH": "data/epa_historical_air_quality/voc_daily_summary/files/data_output.csv",
+            "TARGET_GCS_PATH": "data/epa_historical_air_quality/pm25_daily_speciation_summary/files/data_output.csv",
             "DATA_NAMES": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "sample_duration",\n  "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",\n  "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",\n  "method_code", "method_name", "local_site_name", "address", "state_name",\n  "county_name", "city_name", "cbsa_name", "date_of_last_change" ]',
             "DATA_DTYPES": '{ "state_code": "str", "county_code": "str", "site_num": "str", "parameter_code": "int32", "poc": "int32",\n  "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "sample_duration": "str",\n  "pollutant_standard": "str", "date_local": "datetime64[ns]", "units_of_measure": "str", "event_type": "str", "observation_count": "int32",\n  "observation_percent": "float64", "arithmetic_mean": "float64", "first_max_value": "float64", "first_max_hour": "int32", "aqi": "str",\n  "method_code": "str", "method_name": "str", "local_site_name": "str", "address": "str", "state_name": "str",\n  "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "datetime64[ns]" }',
         },
@@ -76,10 +76,10 @@ with DAG(
         task_id="load_to_bq",
         bucket="{{ var.value.composer_bucket }}",
         source_objects=[
-            "data/epa_historical_air_quality/voc_daily_summary/files/data_output.csv"
+            "data/epa_historical_air_quality/pm25_speciation_daily_summary/files/data_output.csv"
         ],
         source_format="CSV",
-        destination_project_dataset_table="{{ var.json.epa_historical_air_quality.container_registry.voc_daily_summary_destination_table }}",
+        destination_project_dataset_table="{{ var.json.epa_historical_air_quality.container_registry.pm25_speciation_daily_summary_destination_table }}",
         skip_leading_rows=1,
         allow_quoted_newlines=True,
         write_disposition="WRITE_TRUNCATE",
