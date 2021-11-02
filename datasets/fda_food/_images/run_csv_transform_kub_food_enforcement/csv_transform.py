@@ -35,37 +35,39 @@ def main(
     target_gcs_bucket: str,
     target_gcs_path: str,
     data_names: typing.List[str],
-    data_dtypes: dict
+    data_dtypes: dict,
 ) -> None:
 
-    logging.info("Food and Drug Administration (FDA) - Food Enforcement process started")
+    logging.info(
+        "Food and Drug Administration (FDA) - Food Enforcement process started"
+    )
 
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
-    # source_file_json = str(source_file).replace(".csv", "") + "_status.json"
     dest_path = os.path.split(source_file)[0]
     source_zip_file = dest_path + "/" + os.path.split(source_url)[1]
     source_json_file = source_zip_file.replace(".zip", "")
-    # source_csv_file = source_json_file.replace(".json", ".csv")
 
-    # download_file_http(source_url, source_zip_file, False)
-    # unpack_file(source_zip_file, dest_path, "zip")
-    # convert_json_to_csv(source_json_file, source_file)
+    download_file_http(source_url, source_zip_file, False)
+    unpack_file(source_zip_file, dest_path, "zip")
+    convert_json_to_csv(source_json_file, source_file)
 
     process_source_file(
-        source_file, target_file, data_names, data_dtypes, int(chunksize) #, key_list=[]
+        source_file,
+        target_file,
+        data_names,
+        data_dtypes,
+        int(chunksize),  # , key_list=[]
     )
 
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
-    logging.info("Food and Drug Administration (FDA) - Food Enforcement process completed")
+    logging.info(
+        "Food and Drug Administration (FDA) - Food Enforcement process completed"
+    )
+
 
 def process_source_file(
-    source_file: str,
-    target_file: str,
-    names: list,
-    dtypes: dict,
-    chunksize: int,
-    # key_list: list,
+    source_file: str, target_file: str, names: list, dtypes: dict, chunksize: int
 ) -> None:
     logging.info(f"Opening batch file {source_file}")
     with pd.read_csv(
@@ -90,41 +92,62 @@ def process_source_file(
             df = pd.DataFrame()
             df = pd.concat([df, chunk])
             process_chunk(
-                df, target_file_batch, target_file, (not chunk_number == 0) #, key_list
+                df,
+                target_file_batch,
+                target_file,
+                (not chunk_number == 0),  # , key_list
             )
-
 
 
 def process_chunk(
     df: pd.DataFrame, target_file_batch: str, target_file: str, skip_header: bool
 ) -> None:
     df = trim_whitespace(df)
-    date_col_list = ["center_classification_date", "report_date", "termination_date", "recall_initiation_date"]
+    date_col_list = [
+        "center_classification_date",
+        "report_date",
+        "termination_date",
+        "recall_initiation_date",
+    ]
     df = resolve_date_format(df, date_col_list, "%Y%m%d", "%Y-%m-%d", True)
     df = reorder_headers(df)
     save_to_new_file(df, file_path=str(target_file_batch))
     append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
 
 
-def resolve_date_format(df: pd.DataFrame, date_col_list: list, from_format: str, to_format: str="%Y-%m-%d %H:%M:%S", is_date: bool=False) -> pd.DataFrame:
+def resolve_date_format(
+    df: pd.DataFrame,
+    date_col_list: list,
+    from_format: str,
+    to_format: str = "%Y-%m-%d %H:%M:%S",
+    is_date: bool = False,
+) -> pd.DataFrame:
     logging.info("Resolving Date Format")
     for col in date_col_list:
-            logging.info(f"Resolving datetime on {col}")
-            df[col] = df[col].apply(lambda x: convert_dt_format(str(x), from_format, to_format, is_date))
+        logging.info(f"Resolving datetime on {col}")
+        df[col] = df[col].apply(
+            lambda x: convert_dt_format(str(x), from_format, to_format, is_date)
+        )
 
     return df
 
 
-def convert_dt_format(dt_str: str, from_format: str, to_format: str, is_date: bool) -> str:
+def convert_dt_format(
+    dt_str: str, from_format: str, to_format: str, is_date: bool
+) -> str:
     rtnval = "<initial_value>"
     if not dt_str or str(dt_str).lower() == "nan" or str(dt_str).lower() == "nat":
         rtnval = ""
     elif len(dt_str.strip()) == 10:
         # if there is no time format
         rtnval = dt_str + " 00:00:00"
-    elif (is_date): # and from_format == "%Y%m%d" and to_format == "%Y-%m-%d") or (len(dt_str.strip()) == 8):
+    elif (
+        is_date
+    ):  # and from_format == "%Y%m%d" and to_format == "%Y-%m-%d") or (len(dt_str.strip()) == 8):
         # if there is only a date in YYYYMMDD format then add dashes
-        rtnval = dt_str.strip()[:4] + "-" + dt_str.strip()[4:6] + "-" + dt_str.strip()[6:8]
+        rtnval = (
+            dt_str.strip()[:4] + "-" + dt_str.strip()[4:6] + "-" + dt_str.strip()[6:8]
+        )
     elif len(dt_str.strip().split(" ")[1]) == 8:
         # if format of time portion is 00:00:00 then use 00:00 format
         dt_str = dt_str[:-3]
@@ -181,7 +204,7 @@ def reorder_headers(df: pd.DataFrame) -> pd.DataFrame:
             "address_1",
             "address_2",
             "product_quantity",
-            "more_code_info"
+            "more_code_info",
         ]
     ]
 
@@ -253,9 +276,7 @@ def unpack_file(infile: str, dest_path: str, compression_type: str = "zip") -> N
         logging.info(f"{infile} not unpacked because it does not exist.")
 
 
-def convert_json_to_csv(
-    source_file_json: str, source_file_csv: str
-) -> None:
+def convert_json_to_csv(source_file_json: str, source_file_csv: str) -> None:
     logging.info(f"Converting JSON file {source_file_json} to {source_file_csv}")
     f = open(
         source_file_json.strip(),
