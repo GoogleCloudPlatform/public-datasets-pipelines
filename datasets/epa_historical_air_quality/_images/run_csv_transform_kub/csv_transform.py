@@ -51,7 +51,7 @@ def main(
     download_url_files_from_year_range(
         source_url, st_year, end_year, dest_path, True, True
     )
-    file_group_wildcard = os.path.split(source_url)[1].replace("_~year~.zip", "")
+    file_group_wildcard = os.path.split(source_url)[1].replace("_YEAR_ITERATOR.zip", "")
     source = concatenate_files(source_file, dest_path, file_group_wildcard, False, ",")
 
     process_source_file(source, target_file, data_names, data_dtypes, int(chunksize))
@@ -70,7 +70,7 @@ def download_url_files_from_year_range(
     continue_on_error: bool = False,
 ):
     for yr in range(start_year, end_year + 1, 1):
-        src_url = source_url.replace("~year~", str(yr))
+        src_url = source_url.replace("YEAR_ITERATOR", str(yr))
         dest_file = dest_path + "/source_" + os.path.split(src_url)[1]
         download_file_http(src_url, dest_file, continue_on_error)
         unpack_file(dest_file, dest_path, "zip")
@@ -216,7 +216,6 @@ def resolve_date_format(df: pd.DataFrame, from_format: str) -> pd.DataFrame:
 
 
 def convert_dt_format(dt_str: str, from_format: str) -> str:
-    # rtnval = ""
     if not dt_str or str(dt_str).lower() == "nan" or str(dt_str).lower() == "nat":
         rtnval = ""
     elif len(dt_str.strip()) == 10:
@@ -250,22 +249,20 @@ def save_to_new_file(df, file_path, sep="|") -> None:
 def append_batch_file(
     batch_file_path: str, target_file_path: str, skip_header: bool, truncate_file: bool
 ) -> None:
-    data_file = open(batch_file_path, "r")
-    if truncate_file:
-        target_file = open(target_file_path, "w+").close()
-    target_file = open(target_file_path, "a+")
-    if skip_header:
-        logging.info(
-            f"Appending batch file {batch_file_path} to {target_file_path} with skip header"
-        )
-        next(data_file)
-    else:
-        logging.info(f"Appending batch file {batch_file_path} to {target_file_path}")
-    target_file.write(data_file.read())
-    data_file.close()
-    target_file.close()
-    if os.path.exists(batch_file_path):
-        os.remove(batch_file_path)
+    with open(batch_file_path, "r") as data_file:
+        if truncate_file:
+            target_file = open(target_file_path, "w+").close()
+        with open(target_file_path, "a+") as target_file:
+            if skip_header:
+                logging.info(
+                    f"Appending batch file {batch_file_path} to {target_file_path} with skip header"
+                )
+                next(data_file)
+            else:
+                logging.info(f"Appending batch file {batch_file_path} to {target_file_path}")
+            target_file.write(data_file.read())
+            if os.path.exists(batch_file_path):
+                os.remove(batch_file_path)
 
 
 def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:
