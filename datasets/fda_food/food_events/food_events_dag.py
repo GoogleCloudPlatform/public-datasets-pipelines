@@ -80,6 +80,8 @@ with DAG(
         destination_project_dataset_table="{{ var.json.fda_food.container_registry.food_events_destination_table }}",
         skip_leading_rows=1,
         allow_quoted_newlines=True,
+        field_delimiter=",",
+        quote_character='"',
         write_disposition="WRITE_TRUNCATE",
         schema_fields=[
             {

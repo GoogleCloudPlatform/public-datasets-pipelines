@@ -20,6 +20,7 @@ import pathlib
 import typing
 import zipfile as zip
 
+import numpy as np
 import pandas as pd
 import requests
 from google.cloud import storage
@@ -104,9 +105,10 @@ def process_chunk(
 ) -> None:
 
     df = rename_headers(df, rename_mappings)
+    df = reorder_headers(df)
     list_data = [ 'reactions', 'outcomes' ]
     df = format_list_data(df, list_data)
-    # import pdb;pdb.set_trace()
+    df = replace_nan_data(df)
     df = trim_whitespace(df)
     col_list = [
         "date_started",
@@ -122,6 +124,12 @@ def process_chunk(
     df = resolve_date_format(df, date_col_list, "%Y%m%d", "%Y-%m-%d", True)
     save_to_new_file(df, file_path=str(target_file_batch))
     append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
+
+def replace_nan_data(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Replacing NaN data")
+    df = df.replace(np.nan, '', regex=True)
+
+    return df
 
 def format_list_data(df: pd.DataFrame, list_data: list) -> pd.DataFrame:
     logging.info("Formatting list data")
@@ -202,6 +210,10 @@ def trim_whitespace(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def save_to_new_file(df, file_path) -> None:
+    # df = df[ df['reactions'] == 'RASH, DIARRHOEA']
+    # df = df[ df['report_number'].isin(['80961']) ]
+    # df = df[ df['report_number'] != '150055']
+    # df = df[ df['report_number'] != '172480']
     df.to_csv(file_path, index=False)
 
 
