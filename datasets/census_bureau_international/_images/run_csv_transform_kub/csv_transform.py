@@ -50,16 +50,14 @@ def main(
     if pipeline_name == "country_names_area":
         df = df
     else:
-        logging.info("Filter Headers ...")
+        logging.info("Filter headers ...")
         df = df.drop(["country_area"], axis=1)
 
-    logging.info("Search and Replacing the values..")
+    logging.info("Search and replacing the values..")
     if pipeline_name == "midyear_population_age_sex":
         df["sex"] = df["sex"].apply({2: "Male", 3: "Female"}.get)
-    else:
-        df = df
 
-    logging.info("Transform: Reordering headers..")
+    logging.info("Reordering headers..")
     df = df[headers]
 
     logging.info(f"Saving to output file.. {target_file}")
