@@ -58,7 +58,7 @@ dag:
           # SOURCE_URL: "gs://pdp-feeds-staging/RelayWorldBank/WDI_csv/WDICountry-Series.csv"
           # SOURCE_FILE: "files/data.csv"
           # COLUMN_TO_REMOVE: "Unnamed: 3"
-          SOURCE_URL: "https://api.census.gov/data/2019/acs/acs+year_report+?get=NAME,+key[0:-3]+_+key[-3:]+E&for=+api_naming_convention+:*&in=state:+sc+:*&key=550e53635053be51754b09b5e9f5009c94aa0586"
+          SOURCE_URL: "https://api.census.gov/data/2019/acs/acs+year_report+?get=NAME,+key[0:-3]+_+key[-3:]+E&for=+api_naming_convention+:*&in=state:+sc+&key=550e53635053be51754b09b5e9f5009c94aa0586"
           YEAR_REPORT: "5"
           API_NAMING_CONVENTION: "school%20district%20(secondary)"
           TARGET_FILE: "files/data_output.csv"

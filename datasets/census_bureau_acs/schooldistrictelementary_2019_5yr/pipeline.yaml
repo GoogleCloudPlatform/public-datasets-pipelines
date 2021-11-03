@@ -55,7 +55,7 @@ dag:
 
         image: "{{ var.json.census_bureau_acs.container_registry.run_csv_transform_kub }}"
         env_vars:
-          SOURCE_URL: "https://api.census.gov/data/2019/acs/acs+year_report+?get=NAME,+key[0:-3]+_+key[-3:]+E&for=+api_naming_convention+:*&in=state:+sc+:*&key=550e53635053be51754b09b5e9f5009c94aa0586"
+          SOURCE_URL: "https://api.census.gov/data/2019/acs/acs+year_report+?get=NAME,+key[0:-3]+_+key[-3:]+E&for=+api_naming_convention+:*&in=state:+sc+&key=550e53635053be51754b09b5e9f5009c94aa0586"
           # SOURCE_FILE: "files/data.csv"
           # COLUMN_TO_REMOVE: "Unnamed: 3"
           YEAR_REPORT: "5"

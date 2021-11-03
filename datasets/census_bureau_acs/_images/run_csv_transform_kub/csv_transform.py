@@ -16,7 +16,6 @@
 import datetime
 import json
 import logging
-import math
 import os
 import pathlib
 import typing
@@ -29,7 +28,6 @@ from google.cloud import storage
 
 def main(
     source_url: str,
-    # source_file: pathlib.Path,
     year_report: str,
     api_naming_convention: str,
     target_file: pathlib.Path,
@@ -40,7 +38,7 @@ def main(
     pipeline_name: str,
     geography: str,
     report_level: str,
-    concat_col: typing.List[str]
+    concat_col: typing.List[str],
 ) -> None:
 
     logging.info(
@@ -364,34 +362,38 @@ def main(
     }
 
     logging.info("Extracting the data from API and loading into dataframe...")
-    if report_level == "national_level" :
-        df = extract_data_and_convert_to_df_national_level(group_id, year_report,api_naming_convention,source_url)
-    elif report_level == "state_level" :
-        extract_data_and_convert_to_df_state_level(group_id,state_code, year_report,api_naming_convention,source_url)
-
+    if report_level == "national_level":
+        df = extract_data_and_convert_to_df_national_level(
+            group_id, year_report, api_naming_convention, source_url
+        )
+    elif report_level == "state_level":
+        df = extract_data_and_convert_to_df_state_level(
+            group_id, state_code, year_report, api_naming_convention, source_url
+        )
 
     logging.info("Replacing values...")
-    df = df.replace( to_replace={
-        "KPI_Name": group_id
-        })
+    df = df.replace(to_replace={"KPI_Name": group_id})
 
     logging.info("Renaming headers...")
     rename_headers(df, rename_mappings)
 
     logging.info("Creating column geo_id...")
-    if geography == 'censustract' :
-        df['tract']=df['tract'].apply(change_length,args=("6"))
-        df['state']=df['state'].apply(change_length,args=("2"))
-        df['county']=df['county'].apply(change_length,args=("3"))
+    if geography == "censustract":
+        df["tract"] = df["tract"].apply(change_length, args=("6"))
+        df["state"] = df["state"].apply(change_length, args=("2"))
+        df["county"] = df["county"].apply(change_length, args=("3"))
 
-    df = create_geo_id(df,concat_col)
+    # This part needs confirmation from Shane
+    df = create_geo_id(df, concat_col)
 
     logging.info("Pivoting the dataframe...")
-    df=df[['geo_id','KPI_Name','KPI_Value']]
-    df=df.pivot_table(index='geo_id',columns='KPI_Name',values='KPI_Value',aggfunc=np.sum).reset_index()
+    df = df[["geo_id", "KPI_Name", "KPI_Value"]]
+    df = df.pivot_table(
+        index="geo_id", columns="KPI_Name", values="KPI_Value", aggfunc=np.sum
+    ).reset_index()
 
     logging.info("Reordering headers...")
-    df=df[headers]
+    df = df[headers]
 
     logging.info(f"Saving to output file.. {target_file}")
     try:
@@ -409,47 +411,27 @@ def main(
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
 
-def string_replace(source_url,replace: dict) -> str :
-    for k,v in replace.items() :
-        source_url=source_url.replace(k,v)
+
+def string_replace(source_url, replace: dict) -> str:
+    for k, v in replace.items():
+        source_url = source_url.replace(k, v)
     return source_url
 
-def extract_data_and_convert_to_df_national_level(group_id: dict, year_report: str,api_naming_convention: str,source_url: str) -> pd.DataFrame:
+
+def extract_data_and_convert_to_df_national_level(
+    group_id: dict, year_report: str, api_naming_convention: str, source_url: str
+) -> pd.DataFrame:
     list_temp = []
     for key in group_id:
         logging.info(f"reading data from API for KPI {key}...")
-        replece={
-                    "+year_report+":year_report,
-                    "+key[0:-3]+":key[0:-3],
-                    "+key[-3:]+":key[-3:],
-                    "+api_naming_convention+":api_naming_convention,
-                }
-        source_url = string_replace(source_url,replece)
-        r = requests.get(source_url, stream=True)
-        if r.status_code == 200:
-            text = r.json()
-            frame = pd.DataFrame(text)
-            frame = frame.iloc[1:, :]
-            frame["KPI_Name"] = key
-            list_temp.append(frame)
-    logging.info("creating the dataframe...")
-    df = pd.concat(list_temp)
-    return df
-
-def extract_data_and_convert_to_df_state_level(group_id: dict,state_code: dict, year_report: str,api_naming_convention: str,source_url: str) -> pd.DataFrame:
-    list_temp = []
-    for key in group_id:
-        for sc in state_code :
-            logging.info(f"reading data from API for KPI {key}...")
-            logging.info(f"reading data from API for KPI {sc}...")
-            replece={
-                        "+year_report+":year_report,
-                        "+key[0:-3]+":key[0:-3],
-                        "+key[-3:]+":key[-3:],
-                        "+api_naming_convention+":api_naming_convention,
-                        "+sc+":sc,
-                    }
-            source_url = string_replace(source_url,replece)
+        replece = {
+            "+year_report+": year_report,
+            "+key[0:-3]+": key[0:-3],
+            "+key[-3:]+": key[-3:],
+            "+api_naming_convention+": api_naming_convention,
+        }
+        source_url = string_replace(source_url, replece)
+        try:
             r = requests.get(source_url, stream=True)
             if r.status_code == 200:
                 text = r.json()
@@ -457,41 +439,64 @@ def extract_data_and_convert_to_df_state_level(group_id: dict,state_code: dict, 
                 frame = frame.iloc[1:, :]
                 frame["KPI_Name"] = key
                 list_temp.append(frame)
+        except OSError as e:
+            logging.info(f"error : {e}")
     logging.info("creating the dataframe...")
     df = pd.concat(list_temp)
     return df
 
 
-def create_geo_id(df: pd.DataFrame,concat_col: str) -> pd.DataFrame :
-    df['geo_id'] =''
+def extract_data_and_convert_to_df_state_level(
+    group_id: dict,
+    state_code: dict,
+    year_report: str,
+    api_naming_convention: str,
+    source_url: str,
+) -> pd.DataFrame:
+    list_temp = []
+    for key in group_id:
+        for sc in state_code:
+            logging.info(f"reading data from API for KPI {key}...")
+            logging.info(f"reading data from API for KPI {sc}...")
+            replece = {
+                "+year_report+": year_report,
+                "+key[0:-3]+": key[0:-3],
+                "+key[-3:]+": key[-3:],
+                "+api_naming_convention+": api_naming_convention,
+                "+sc+": sc,
+            }
+            source_url = string_replace(source_url, replece)
+            try:
+                r = requests.get(source_url, stream=True)
+                if r.status_code == 200:
+                    text = r.json()
+                    frame = pd.DataFrame(text)
+                    frame = frame.iloc[1:, :]
+                    frame["KPI_Name"] = key
+                    list_temp.append(frame)
+            except OSError as e:
+                logging.info(f"error : {e}")
+    logging.info("creating the dataframe...")
+    df = pd.concat(list_temp)
+    return df
+
+
+def create_geo_id(df: pd.DataFrame, concat_col: str) -> pd.DataFrame:
+    df["geo_id"] = ""
     for col in concat_col:
-        df['geo_id'] = df['geo_id'] + df[col]
-    # if geography == 'state' :
-    #     df['geo_id'] = df['state'] # state
-    # elif geography == 'county' :
-    #     df['geo_id'] = df['state'] + df['county']
-    # elif geography == 'cbsa' :
-    #     df['geo_id'] = df['combined_statistical_area']
-    # elif geography == 'place' :
-    #     df['geo_id'] = df['state'] + df['place']
-    # elif geography == 'puma' :
-    #     df['geo_id'] = df['state'] + df['public_use_microdata_area']
-    # elif geography == 'zcta' :
-    #     df['geo_id'] = df['state'] + df['zip_code_tabulation_area']
-    # elif geography == 'congressionaldistrict' :
-    #     df['geo_id'] = df['state'] + df['congressional_district']
+        df["geo_id"] = df["geo_id"] + df[col]
     return df
 
 
 def change_length(val: str, length: int) -> str:
-    if(len(str(val)) < int(length)) :
-        return ('0'*(int(length)-len(str(val))))+str(val)
-    else :
+    if len(str(val)) < int(length):
+        return ("0" * (int(length) - len(str(val)))) + str(val)
+    else:
         return str(val)
 
 
 def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
-    rename_mappings= {int(k):str(v) for k,v in rename_mappings.items()}
+    rename_mappings = {int(k): str(v) for k, v in rename_mappings.items()}
     df.rename(columns=rename_mappings, inplace=True)
 
 
