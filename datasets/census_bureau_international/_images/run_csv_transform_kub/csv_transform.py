@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import glob
 import json
 import logging
 import os
@@ -40,12 +39,7 @@ def main(
     download_file(source_url, source_file)
 
     logging.info(f"Reading the file {source_url}")
-    if pipeline_name == "country_names_area":
-        df = pd.read_csv(source_file[0])
-    else:
-        df1 = pd.read_csv(source_file[0])
-        df2 = pd.read_csv(source_file[1])
-        df = pd.merge(df1, df2, how="left", on=["country_code"])
+    df = read_files(source_file)
 
     if pipeline_name == "country_names_area":
         df = df
@@ -77,22 +71,23 @@ def save_to_new_file(df, file_path):
     df.to_csv(file_path, index=False)
 
 
+def read_files(source_files: typing.List[str]) -> pd.DataFrame:
+    df = pd.DataFrame()
+    for source_file in source_files:
+        _df = pd.read_csv(source_file)
+        if df.empty:
+            df = _df
+        else:
+            df = pd.merge(df, _df, how="left", on=["country_code"])
+    return df
+
+
 def download_file(
     source_url: typing.List[str], source_file: typing.List[pathlib.Path]
 ) -> None:
     for url, file in zip(source_url, source_file):
         logging.info(f"Downloading file from {url} ...")
         subprocess.check_call(["gsutil", "cp", f"{url}", f"{file}"])
-
-
-def read_files(path: pathlib.Path) -> pd.DataFrame:
-    all_files = glob.glob(path + "/*.csv")
-    df_temp = []
-    for filename in all_files:
-        frame = pd.read_csv(filename, index_col=None, header=0)
-        df_temp.append(frame)
-    df = pd.concat(df_temp, axis=0, ignore_index=True)
-    return df
 
 
 def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:
