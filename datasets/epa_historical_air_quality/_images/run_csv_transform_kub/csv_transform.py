@@ -259,7 +259,9 @@ def append_batch_file(
                 )
                 next(data_file)
             else:
-                logging.info(f"Appending batch file {batch_file_path} to {target_file_path}")
+                logging.info(
+                    f"Appending batch file {batch_file_path} to {target_file_path}"
+                )
             target_file.write(data_file.read())
             if os.path.exists(batch_file_path):
                 os.remove(batch_file_path)
