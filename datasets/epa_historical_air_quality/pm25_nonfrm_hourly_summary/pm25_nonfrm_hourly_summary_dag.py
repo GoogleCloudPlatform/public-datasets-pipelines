@@ -28,7 +28,7 @@ with DAG(
     dag_id="epa_historical_air_quality.pm25_nonfrm_hourly_summary",
     default_args=default_args,
     max_active_runs=1,
-    schedule_interval="@daily",
+    schedule_interval="0 8 * * *",
     catchup=False,
     default_view="graph",
 ) as dag:
