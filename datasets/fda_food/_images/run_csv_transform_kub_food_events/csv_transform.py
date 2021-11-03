@@ -35,12 +35,10 @@ def main(
     target_gcs_path: str,
     data_names: typing.List[str],
     data_dtypes: dict,
-    rename_mappings: dict
+    rename_mappings: dict,
 ) -> None:
 
-    logging.info(
-        "Food and Drug Administration (FDA) - Food Events process started"
-    )
+    logging.info("Food and Drug Administration (FDA) - Food Events process started")
 
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
     dest_path = os.path.split(source_file)[0]
@@ -49,7 +47,7 @@ def main(
 
     download_file_http(source_url, source_zip_file, False)
     unpack_file(source_zip_file, dest_path, "zip")
-    convert_json_to_csv(source_json_file, source_file, separator='|')
+    convert_json_to_csv(source_json_file, source_file, separator="|")
 
     process_source_file(
         source_file,
@@ -57,18 +55,21 @@ def main(
         data_names,
         data_dtypes,
         int(chunksize),
-        rename_mappings
+        rename_mappings,
     )
 
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
-    logging.info(
-        "Food and Drug Administration (FDA) - Food Events process completed"
-    )
+    logging.info("Food and Drug Administration (FDA) - Food Events process completed")
 
 
 def process_source_file(
-    source_file: str, target_file: str, names: list, dtypes: dict, chunksize: int, rename_mappings: dict
+    source_file: str,
+    target_file: str,
+    names: list,
+    dtypes: dict,
+    chunksize: int,
+    rename_mappings: dict,
 ) -> None:
     logging.info(f"Opening batch file {source_file}")
     with pd.read_csv(
@@ -83,7 +84,7 @@ def process_source_file(
         skiprows=1,
         dtype=dtypes,
         keep_default_na=True,
-        na_values=[" "]
+        na_values=[" "],
     ) as reader:
         for chunk_number, chunk in enumerate(reader):
             target_file_batch = str(target_file).replace(
@@ -96,17 +97,21 @@ def process_source_file(
                 target_file_batch=target_file_batch,
                 target_file=target_file,
                 rename_mappings=rename_mappings,
-                skip_header=(not chunk_number == 0)
+                skip_header=(not chunk_number == 0),
             )
 
 
 def process_chunk(
-    df: pd.DataFrame, target_file_batch: str, target_file: str, rename_mappings: dict, skip_header: bool=False
+    df: pd.DataFrame,
+    target_file_batch: str,
+    target_file: str,
+    rename_mappings: dict,
+    skip_header: bool = False,
 ) -> None:
 
     df = rename_headers(df, rename_mappings)
     df = reorder_headers(df)
-    list_data = [ 'reactions', 'outcomes' ]
+    list_data = ["reactions", "outcomes"]
     df = format_list_data(df, list_data)
     df = replace_nan_data(df)
     df = trim_whitespace(df)
@@ -114,38 +119,39 @@ def process_chunk(
         "date_started",
         "date_created",
         "products_industry_name",
-        "products_industry_code"
+        "products_industry_code",
     ]
     df = replace_nulls(df, col_list)
-    date_col_list = [
-        "date_started",
-        "date_created"
-    ]
+    date_col_list = ["date_started", "date_created"]
     df = resolve_date_format(df, date_col_list, "%Y%m%d", "%Y-%m-%d", True)
     save_to_new_file(df, file_path=str(target_file_batch))
     append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
 
+
 def replace_nan_data(df: pd.DataFrame) -> pd.DataFrame:
     logging.info("Replacing NaN data")
-    df = df.replace(np.nan, '', regex=True)
+    df = df.replace(np.nan, "", regex=True)
 
     return df
+
 
 def format_list_data(df: pd.DataFrame, list_data: list) -> pd.DataFrame:
     logging.info("Formatting list data")
     for col in list_data:
-        df[col] = df[col].apply(lambda x: str(x).replace("[", "").replace("]", "").replace("'", ""))
+        df[col] = df[col].apply(
+            lambda x: str(x).replace("[", "").replace("]", "").replace("'", "")
+        )
 
     return df
+
 
 def replace_nulls(df: pd.DataFrame, col_list: list) -> pd.DataFrame:
     logging.info("Resolving null text in source data")
     for col in col_list:
-                df[col] = df[col].apply(
-                lambda x: "" if str(x).lower() == "null" else x
-            )
+        df[col] = df[col].apply(lambda x: "" if str(x).lower() == "null" else x)
 
     return df
+
 
 def resolve_date_format(
     df: pd.DataFrame,
@@ -284,7 +290,7 @@ def reorder_headers(df: pd.DataFrame) -> pd.DataFrame:
             "date_started",
             "consumer_gender",
             "consumer_age",
-            "consumer_age_unit"
+            "consumer_age_unit",
         ]
     ]
 
@@ -306,7 +312,9 @@ def unpack_file(infile: str, dest_path: str, compression_type: str = "zip") -> N
         logging.info(f"{infile} not unpacked because it does not exist.")
 
 
-def convert_json_to_csv(source_file_json: str, source_file_csv: str, separator: str="|") -> None:
+def convert_json_to_csv(
+    source_file_json: str, source_file_csv: str, separator: str = "|"
+) -> None:
     logging.info(f"Converting JSON file {source_file_json} to {source_file_csv}")
     f = open(
         source_file_json.strip(),
@@ -314,21 +322,24 @@ def convert_json_to_csv(source_file_json: str, source_file_csv: str, separator: 
     json_data = json.load(f)
     df = pd.json_normalize(
         json_data["results"],
-        record_path=['products'],
+        record_path=["products"],
         meta=[
-                'report_number',
-                'outcomes',
-                'date_created',
-                'reactions',
-                'date_started',
-                ["consumer", "age"],
-                ["consumer", "age_unit"],
-                ["consumer", "gender"]],
-                errors='ignore'
-        )
+            "report_number",
+            "outcomes",
+            "date_created",
+            "reactions",
+            "date_started",
+            ["consumer", "age"],
+            ["consumer", "age_unit"],
+            ["consumer", "gender"],
+        ],
+        errors="ignore",
+    )
     for col in df.columns:
-        df[col] = df[col].fillna('')
-    df.to_csv(source_file_csv, index=False, sep=separator, quotechar='"', encoding="utf-8")
+        df[col] = df[col].fillna("")
+    df.to_csv(
+        source_file_csv, index=False, sep=separator, quotechar='"', encoding="utf-8"
+    )
 
 
 def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:
@@ -350,5 +361,5 @@ if __name__ == "__main__":
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
         data_names=json.loads(os.environ["DATA_NAMES"]),
         data_dtypes=json.loads(os.environ["DATA_DTYPES"]),
-        rename_mappings=json.loads(os.environ["RENAME_MAPPINGS"])
+        rename_mappings=json.loads(os.environ["RENAME_MAPPINGS"]),
     )
