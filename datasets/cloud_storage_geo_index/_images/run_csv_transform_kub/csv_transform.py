@@ -36,7 +36,7 @@ def main(
     pipeline_name: str,
 ) -> None:
 
-    logging.info("creating 'files' folder")
+    logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
 
     logging.info(f"Downloading file {source_url}")
@@ -66,9 +66,8 @@ def main(
             df = df[headers]
             if pipeline_name == "sentinel_2_index":
                 df["total_size"] = df["total_size"].astype("Int64")
-            else:
-                df = df
-            processChunk(df, target_file_batch)
+
+            process_chunk(df, target_file_batch)
 
             logging.info(f"Appending batch {chunk_number} to {target_file}")
             if chunk_number == 0:
@@ -86,7 +85,7 @@ def main(
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
 
-def processChunk(df: pd.DataFrame, target_file_batch: str) -> None:
+def process_chunk(df: pd.DataFrame, target_file_batch: str) -> None:
 
     logging.info(f"Saving to output file.. {target_file_batch}")
     try:

@@ -13,19 +13,13 @@
 # limitations under the License.
 
 dataset:
-
   name: cloud_storage_geo_index
-
   friendly_name: Cloud_Storage_Geo_Index
-
   description: landsat_index datasets
-
   dataset_sources: ~
-
   terms_of_use: ~
 
 resources:
   - type: bigquery_dataset
-
     dataset_id: cloud_storage_geo_index
     description: Cloud_Storage_Geo_Index Data
