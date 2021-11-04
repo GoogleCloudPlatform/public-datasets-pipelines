@@ -1,5 +1,22 @@
 # Changelog
 
+## [2.6.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v2.5.0...v2.6.0) (2021-11-04)
+
+
+### Features
+
+* Onboard Austin Waste dataset ([#200](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/200)) ([79dbf5d](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/79dbf5dd406151fd62174f72de2627b9241fd9e9))
+* Onboard BLS dataset ([#201](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/201)) ([c7cdd82](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/c7cdd82a55344f5fea68c887a97720e58880b170))
+* Onboard Chicago Crime dataset ([#199](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/199)) ([d766547](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/d766547c8393c284084641fab113b1f36959ee32))
+* Onboard sunroof dataset ([#166](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/166)) ([375cbae](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/375cbaea0009d56d08b32bddaed274a933e4b781))
+* Onboard World Bank Intl Education dataset ([#182](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/182)) ([ff384fd](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/ff384fda3d99512fb03a8f19bff7554811231e05))
+* Onboard World Bank WDI dataset ([#198](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/198)) ([cbad321](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/cbad3211ada15d830139328405045a44cdbfb2fe))
+
+
+### Bug Fixes
+
+* Set `location` field as required for GCS buckets ([#224](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/224)) ([bd8a3db](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/bd8a3dbc95e3fd0244d84d28be8415e98825c586))
+
 ## [2.5.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v2.4.0...v2.5.0) (2021-10-14)
 
 
