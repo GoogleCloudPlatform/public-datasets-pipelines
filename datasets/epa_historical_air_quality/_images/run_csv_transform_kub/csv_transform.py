@@ -237,7 +237,6 @@ def convert_dt_format(dt_str: str, from_format: str) -> str:
     else:
         dt_str = ""
 
-    # return datetime.datetime.strptime(dt_str, from_format).strftime("%Y-%m-%d %H:%M:%S")
     return rtnval
 
 
