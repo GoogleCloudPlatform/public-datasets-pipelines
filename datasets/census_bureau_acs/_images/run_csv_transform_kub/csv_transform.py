@@ -414,8 +414,8 @@ def main(
 
 def string_replace(source_url, replace: dict) -> str:
     for k, v in replace.items():
-        source_url = source_url.replace(k, v)
-    return source_url
+        source_url_new = source_url.replace(k, v)
+    return source_url_new
 
 
 def extract_data_and_convert_to_df_national_level(
@@ -424,15 +424,21 @@ def extract_data_and_convert_to_df_national_level(
     list_temp = []
     for key in group_id:
         logging.info(f"reading data from API for KPI {key}...")
-        replece = {
-            "+year_report+": year_report,
-            "+key[0:-3]+": key[0:-3],
-            "+key[-3:]+": key[-3:],
-            "+api_naming_convention+": api_naming_convention,
-        }
-        source_url = string_replace(source_url, replece)
+        # replece = {
+        #     "+year_report+": year_report,
+        #     "+key[0:-3]+": key[0:-3],
+        #     "+key[-3:]+": key[-3:],
+        #     "+api_naming_convention+": api_naming_convention,
+        # }
+        # source_url_new = string_replace(source_url, replece)
+        str1=source_url.replace("+year_report+",year_report)
+        str2=str1.replace("+key[0:-3]+",key[0:-3])
+        str3=str2.replace("+key[-3:]+",key[-3:])
+        source_url_new=str3.replace("+api_naming_convention+",api_naming_convention)
         try:
-            r = requests.get(source_url, stream=True)
+            r = requests.get(source_url_new, stream=True)
+            logging.info(f"Source url : {source_url_new}")
+            logging.info(f"status code : {r.status_code}")
             if r.status_code == 200:
                 text = r.json()
                 frame = pd.DataFrame(text)
@@ -458,16 +464,23 @@ def extract_data_and_convert_to_df_state_level(
         for sc in state_code:
             logging.info(f"reading data from API for KPI {key}...")
             logging.info(f"reading data from API for KPI {sc}...")
-            replece = {
-                "+year_report+": year_report,
-                "+key[0:-3]+": key[0:-3],
-                "+key[-3:]+": key[-3:],
-                "+api_naming_convention+": api_naming_convention,
-                "+sc+": sc,
-            }
-            source_url = string_replace(source_url, replece)
+            # replece = {
+            #     "+year_report+": year_report,
+            #     "+key[0:-3]+": key[0:-3],
+            #     "+key[-3:]+": key[-3:],
+            #     "+api_naming_convention+": api_naming_convention,
+            #     "+sc+": sc,
+            # }
+            str1=source_url.replace("+year_report+",year_report)
+            str2=str1.replace("+key[0:-3]+",key[0:-3])
+            str3=str2.replace("+key[-3:]+",key[-3:])
+            str4=str3.replace("+api_naming_convention+",api_naming_convention)
+            source_url_new=str4.replace("+sc+",sc)
+            # source_url = string_replace(source_url, replece)
             try:
-                r = requests.get(source_url, stream=True)
+                r = requests.get(source_url_new, stream=True)
+                logging.info(f"Source url : {source_url_new}")
+                logging.info(f"status code : {r.status_code}")
                 if r.status_code == 200:
                     text = r.json()
                     frame = pd.DataFrame(text)
