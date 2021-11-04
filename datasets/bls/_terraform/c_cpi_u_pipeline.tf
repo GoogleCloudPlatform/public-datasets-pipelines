@@ -15,25 +15,25 @@
  */
 
 
-resource "google_bigquery_table" "noaa_gsod_stations" {
+resource "google_bigquery_table" "c_cpi_u" {
   project    = var.project_id
-  dataset_id = "noaa"
-  table_id   = "gsod_stations"
+  dataset_id = "bls"
+  table_id   = "c_cpi_u"
 
-  description = "noaaspc"
+  description = "C_CPI_U Dataset"
 
 
 
 
   depends_on = [
-    google_bigquery_dataset.noaa
+    google_bigquery_dataset.bls
   ]
 }
 
-output "bigquery_table-noaa_gsod_stations-table_id" {
-  value = google_bigquery_table.noaa_gsod_stations.table_id
+output "bigquery_table-c_cpi_u-table_id" {
+  value = google_bigquery_table.c_cpi_u.table_id
 }
 
-output "bigquery_table-noaa_gsod_stations-id" {
-  value = google_bigquery_table.noaa_gsod_stations.id
+output "bigquery_table-c_cpi_u-id" {
+  value = google_bigquery_table.c_cpi_u.id
 }

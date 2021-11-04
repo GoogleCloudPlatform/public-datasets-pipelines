@@ -15,25 +15,25 @@
  */
 
 
-resource "google_bigquery_table" "noaa_gsod_stations" {
+resource "google_bigquery_table" "unemployment_cps_series" {
   project    = var.project_id
-  dataset_id = "noaa"
-  table_id   = "gsod_stations"
+  dataset_id = "bls"
+  table_id   = "unemployment_cps_series"
 
-  description = "noaaspc"
+  description = "Unemployment_CPS_Series Dataset"
 
 
 
 
   depends_on = [
-    google_bigquery_dataset.noaa
+    google_bigquery_dataset.bls
   ]
 }
 
-output "bigquery_table-noaa_gsod_stations-table_id" {
-  value = google_bigquery_table.noaa_gsod_stations.table_id
+output "bigquery_table-unemployment_cps_series-table_id" {
+  value = google_bigquery_table.unemployment_cps_series.table_id
 }
 
-output "bigquery_table-noaa_gsod_stations-id" {
-  value = google_bigquery_table.noaa_gsod_stations.id
+output "bigquery_table-unemployment_cps_series-id" {
+  value = google_bigquery_table.unemployment_cps_series.id
 }

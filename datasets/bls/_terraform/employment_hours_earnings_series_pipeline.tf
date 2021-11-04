@@ -15,25 +15,25 @@
  */
 
 
-resource "google_bigquery_table" "lightning_strikes_by_year" {
+resource "google_bigquery_table" "employment_hours_earnings_series" {
   project    = var.project_id
-  dataset_id = "noaa"
-  table_id   = "lightning_strikes_by_year"
+  dataset_id = "bls"
+  table_id   = "employment_hours_earnings_series"
 
-  description = "noaaspc"
+  description = "Employment_Hours_Earnings_Series Dataset"
 
 
 
 
   depends_on = [
-    google_bigquery_dataset.noaa
+    google_bigquery_dataset.bls
   ]
 }
 
-output "bigquery_table-lightning_strikes_by_year-table_id" {
-  value = google_bigquery_table.lightning_strikes_by_year.table_id
+output "bigquery_table-employment_hours_earnings_series-table_id" {
+  value = google_bigquery_table.employment_hours_earnings_series.table_id
 }
 
-output "bigquery_table-lightning_strikes_by_year-id" {
-  value = google_bigquery_table.lightning_strikes_by_year.id
+output "bigquery_table-employment_hours_earnings_series-id" {
+  value = google_bigquery_table.employment_hours_earnings_series.id
 }

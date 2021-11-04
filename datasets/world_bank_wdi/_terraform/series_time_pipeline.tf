@@ -15,25 +15,25 @@
  */
 
 
-resource "google_bigquery_table" "noaa_gsod_stations" {
+resource "google_bigquery_table" "world_bank_wdi_series_time" {
   project    = var.project_id
-  dataset_id = "noaa"
-  table_id   = "gsod_stations"
+  dataset_id = "world_bank_wdi"
+  table_id   = "series_time"
 
-  description = "noaaspc"
+  description = "Series Times table"
 
 
 
 
   depends_on = [
-    google_bigquery_dataset.noaa
+    google_bigquery_dataset.world_bank_wdi
   ]
 }
 
-output "bigquery_table-noaa_gsod_stations-table_id" {
-  value = google_bigquery_table.noaa_gsod_stations.table_id
+output "bigquery_table-world_bank_wdi_series_time-table_id" {
+  value = google_bigquery_table.world_bank_wdi_series_time.table_id
 }
 
-output "bigquery_table-noaa_gsod_stations-id" {
-  value = google_bigquery_table.noaa_gsod_stations.id
+output "bigquery_table-world_bank_wdi_series_time-id" {
+  value = google_bigquery_table.world_bank_wdi_series_time.id
 }

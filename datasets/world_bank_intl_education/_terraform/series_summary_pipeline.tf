@@ -15,25 +15,25 @@
  */
 
 
-resource "google_bigquery_table" "noaa_gsod_stations" {
+resource "google_bigquery_table" "series_summary" {
   project    = var.project_id
-  dataset_id = "noaa"
-  table_id   = "gsod_stations"
+  dataset_id = "world_bank_intl_education"
+  table_id   = "series_summary"
 
-  description = "noaaspc"
+  description = "Series Summary table"
 
 
 
 
   depends_on = [
-    google_bigquery_dataset.noaa
+    google_bigquery_dataset.world_bank_intl_education
   ]
 }
 
-output "bigquery_table-noaa_gsod_stations-table_id" {
-  value = google_bigquery_table.noaa_gsod_stations.table_id
+output "bigquery_table-series_summary-table_id" {
+  value = google_bigquery_table.series_summary.table_id
 }
 
-output "bigquery_table-noaa_gsod_stations-id" {
-  value = google_bigquery_table.noaa_gsod_stations.id
+output "bigquery_table-series_summary-id" {
+  value = google_bigquery_table.series_summary.id
 }

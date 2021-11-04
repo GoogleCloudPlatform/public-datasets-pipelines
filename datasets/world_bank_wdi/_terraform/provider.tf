@@ -15,25 +15,14 @@
  */
 
 
-resource "google_bigquery_table" "noaa_gsod_stations" {
-  project    = var.project_id
-  dataset_id = "noaa"
-  table_id   = "gsod_stations"
-
-  description = "noaaspc"
-
-
-
-
-  depends_on = [
-    google_bigquery_dataset.noaa
-  ]
+provider "google" {
+  project                     = var.project_id
+  impersonate_service_account = var.impersonating_acct
+  region                      = var.region
 }
 
-output "bigquery_table-noaa_gsod_stations-table_id" {
-  value = google_bigquery_table.noaa_gsod_stations.table_id
-}
+data "google_client_openid_userinfo" "me" {}
 
-output "bigquery_table-noaa_gsod_stations-id" {
-  value = google_bigquery_table.noaa_gsod_stations.id
+output "impersonating-account" {
+  value = data.google_client_openid_userinfo.me.email
 }

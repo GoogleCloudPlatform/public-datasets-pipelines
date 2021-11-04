@@ -24,7 +24,7 @@ default_args = {
 
 
 with DAG(
-    dag_id="noaa.lightning_strikes_by_year",
+    dag_id="bls.employment_hours_earnings_series",
     default_args=default_args,
     max_active_runs=1,
     schedule_interval="@daily",
@@ -35,7 +35,8 @@ with DAG(
     # Run CSV transform within kubernetes pod
     transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
         task_id="transform_csv",
-        name="lightning_strikes_by_year",
+        startup_timeout_seconds=600,
+        name="employment_hours_earnings_series",
         namespace="default",
         affinity={
             "nodeAffinity": {
@@ -55,35 +56,43 @@ with DAG(
             }
         },
         image_pull_policy="Always",
-        image="{{ var.json.noaa_lightning_strikes_by_year.container_registry.run_csv_transform_kub_lightning_strikes_by_year }}",
+        image="{{ var.json.bls.container_registry.run_csv_transform_kub }}",
         env_vars={
-            "SOURCE_URL": "https://www1.ncdc.noaa.gov/pub/data/swdi/database-csv/v2/nldn-tiles-{{ macros.ds_format(macros.ds_add(ds, -365), '%Y-%m-%d', '%Y') }}.csv.gz",
-            "SOURCE_FILE": "files/data.csv",
+            "SOURCE_URLS": '["gs://pdp-feeds-staging/Bureau/ce.series.tsv"]',
+            "SOURCE_FILES": '["files/data1.tsv"]',
             "TARGET_FILE": "files/data_output.csv",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
-            "TARGET_GCS_PATH": "data/noaa/lightning_strikes_by_year/data_output.csv",
+            "TARGET_GCS_PATH": "data/bls/employment_hours_earnings_series/data_output.csv",
+            "PIPELINE_NAME": "employment_hours_earnings_series",
+            "JOINING_KEY": "",
+            "TRIM_SPACE": '["series_id","footnote_codes"]',
+            "CSV_HEADERS": '["series_id","supersector_code","industry_code","data_type_code","seasonal","series_title","footnote_codes","begin_year","begin_period","end_year","end_period"]',
         },
-        resources={"limit_memory": "2G", "limit_cpu": "1"},
+        resources={"request_memory": "4G", "request_cpu": "1"},
     )
 
     # Task to load CSV data to a BigQuery table
     load_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
         task_id="load_to_bq",
         bucket="{{ var.value.composer_bucket }}",
-        source_objects=["data/noaa/lightning_strikes_by_year/data_output.csv"],
+        source_objects=["data/bls/employment_hours_earnings_series/data_output.csv"],
         source_format="CSV",
-        destination_project_dataset_table="noaa.lightning_strikes_{{ macros.ds_format(macros.ds_add(ds, -365), \u0027%Y-%m-%d\u0027, \u0027%Y\u0027) }}",
+        destination_project_dataset_table="bls.employment_hours_earnings_series",
         skip_leading_rows=1,
+        allow_quoted_newlines=True,
         write_disposition="WRITE_TRUNCATE",
         schema_fields=[
-            {"name": "date", "type": "TIMESTAMP", "mode": "NULLABLE"},
-            {"name": "number_of_strikes", "type": "INTEGER", "mode": "NULLABLE"},
-            {
-                "name": "center_point_geom",
-                "type": "GEOGRAPHY",
-                "description": "Center point of 0.10-degree tiles (roughly 1.1km) that aggregate strikes within the given tile.",
-                "mode": "NULLABLE",
-            },
+            {"name": "series_id", "type": "STRING", "mode": "required"},
+            {"name": "supersector_code", "type": "INTEGER", "mode": "NULLABLE"},
+            {"name": "industry_code", "type": "INTEGER", "mode": "NULLABLE"},
+            {"name": "data_type_code", "type": "INTEGER", "mode": "NULLABLE"},
+            {"name": "seasonal", "type": "STRING", "mode": "NULLABLE"},
+            {"name": "series_title", "type": "STRING", "mode": "NULLABLE"},
+            {"name": "footnote_codes", "type": "STRING", "mode": "NULLABLE"},
+            {"name": "begin_year", "type": "INTEGER", "mode": "NULLABLE"},
+            {"name": "begin_period", "type": "STRING", "mode": "NULLABLE"},
+            {"name": "end_year", "type": "INTEGER", "mode": "NULLABLE"},
+            {"name": "end_period", "type": "STRING", "mode": "NULLABLE"},
         ],
     )
 

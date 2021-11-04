@@ -15,25 +15,25 @@
  */
 
 
-resource "google_bigquery_table" "noaa_gsod_stations" {
+resource "google_bigquery_table" "crime" {
   project    = var.project_id
-  dataset_id = "noaa"
-  table_id   = "gsod_stations"
+  dataset_id = "chicago_crime"
+  table_id   = "crime"
 
-  description = "noaaspc"
+  description = "Chicago Crime dataset"
 
 
 
 
   depends_on = [
-    google_bigquery_dataset.noaa
+    google_bigquery_dataset.chicago_crime
   ]
 }
 
-output "bigquery_table-noaa_gsod_stations-table_id" {
-  value = google_bigquery_table.noaa_gsod_stations.table_id
+output "bigquery_table-crime-table_id" {
+  value = google_bigquery_table.crime.table_id
 }
 
-output "bigquery_table-noaa_gsod_stations-id" {
-  value = google_bigquery_table.noaa_gsod_stations.id
+output "bigquery_table-crime-id" {
+  value = google_bigquery_table.crime.id
 }

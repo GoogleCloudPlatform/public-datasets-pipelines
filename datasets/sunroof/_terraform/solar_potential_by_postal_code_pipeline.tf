@@ -15,25 +15,25 @@
  */
 
 
-resource "google_bigquery_table" "noaa_gsod_stations" {
+resource "google_bigquery_table" "solar_potential_by_postal_code" {
   project    = var.project_id
-  dataset_id = "noaa"
-  table_id   = "gsod_stations"
+  dataset_id = "sunroof"
+  table_id   = "solar_potential_by_postal_code"
 
-  description = "noaaspc"
+  description = "Sunroof Solar Potential By Postal Code"
 
 
 
 
   depends_on = [
-    google_bigquery_dataset.noaa
+    google_bigquery_dataset.sunroof
   ]
 }
 
-output "bigquery_table-noaa_gsod_stations-table_id" {
-  value = google_bigquery_table.noaa_gsod_stations.table_id
+output "bigquery_table-solar_potential_by_postal_code-table_id" {
+  value = google_bigquery_table.solar_potential_by_postal_code.table_id
 }
 
-output "bigquery_table-noaa_gsod_stations-id" {
-  value = google_bigquery_table.noaa_gsod_stations.id
+output "bigquery_table-solar_potential_by_postal_code-id" {
+  value = google_bigquery_table.solar_potential_by_postal_code.id
 }

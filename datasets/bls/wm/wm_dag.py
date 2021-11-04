@@ -14,29 +14,29 @@
 
 
 from airflow import DAG
-from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
-from airflow.providers.google.cloud.transfers import gcs_to_bigquery
+from airflow.contrib.operators import gcs_to_bq, kubernetes_pod_operator
 
 default_args = {
     "owner": "Google",
     "depends_on_past": False,
-    "start_date": "2021-12-30",
+    "start_date": "2021-03-01",
 }
 
 
 with DAG(
-    dag_id="noaa.gsod_stations",
+    dag_id="bls.wm",
     default_args=default_args,
     max_active_runs=1,
-    schedule_interval="@yearly",
+    schedule_interval="@daily",
     catchup=False,
     default_view="graph",
 ) as dag:
 
     # Run CSV transform within kubernetes pod
-    transform_csv = kubernetes_pod.KubernetesPodOperator(
+    transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
         task_id="transform_csv",
-        name="gsod_stations",
+        startup_timeout_seconds=600,
+        name="wm",
         namespace="default",
         affinity={
             "nodeAffinity": {
@@ -56,41 +56,39 @@ with DAG(
             }
         },
         image_pull_policy="Always",
-        image="{{ var.json.noaa_gsod_stations.container_registry.run_csv_transform_kub_gsod_stations }}",
+        image="{{ var.json.bls.container_registry.run_csv_transform_kub }}",
         env_vars={
-            "SOURCE_URL": "ftp://ftp.ncdc.noaa.gov/pub/data/noaa/isd-history.txt",
-            "FTP_HOST": "ftp.ncdc.noaa.gov",
-            "FTP_DIR": "/pub/data/noaa",
-            "FTP_FILENAME": "isd-history.txt",
-            "SOURCE_FILE": "files/data.csv",
+            "SOURCE_URLS": '["gs://pdp-feeds-staging/Bureau/wages_list_join.csv","gs://pdp-feeds-staging/Bureau_new/wm.csv"]',
+            "SOURCE_FILES": '["files/data1.csv","files/data2.csv"]',
             "TARGET_FILE": "files/data_output.csv",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
-            "TARGET_GCS_PATH": "data/noaa/gsod_stations/data_output.csv",
+            "TARGET_GCS_PATH": "data/bls/wm/data_output.csv",
+            "PIPELINE_NAME": "wm",
+            "JOINING_KEY": "series_id",
+            "TRIM_SPACE": '["series_id","value","footnote_codes","series_title"]',
+            "CSV_HEADERS": '["series_id","year","period","value","footnote_codes","date","series_title"]',
         },
-        resources={"limit_memory": "2G", "limit_cpu": "1"},
+        resources={"request_memory": "4G", "request_cpu": "1"},
     )
 
     # Task to load CSV data to a BigQuery table
-    load_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
+    load_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
         task_id="load_to_bq",
         bucket="{{ var.value.composer_bucket }}",
-        source_objects=["data/noaa/gsod_stations/data_output.csv"],
+        source_objects=["data/bls/wm/data_output.csv"],
         source_format="CSV",
-        destination_project_dataset_table="noaa.gsod_stations",
+        destination_project_dataset_table="bls.wm",
         skip_leading_rows=1,
+        allow_quoted_newlines=True,
         write_disposition="WRITE_TRUNCATE",
         schema_fields=[
-            {"name": "usaf", "type": "STRING", "mode": "NULLABLE"},
-            {"name": "wban", "type": "STRING", "mode": "NULLABLE"},
-            {"name": "name", "type": "STRING", "mode": "NULLABLE"},
-            {"name": "country", "type": "STRING", "mode": "NULLABLE"},
-            {"name": "state", "type": "STRING", "mode": "NULLABLE"},
-            {"name": "call", "type": "STRING", "mode": "NULLABLE"},
-            {"name": "lat", "type": "FLOAT", "mode": "NULLABLE"},
-            {"name": "lon", "type": "FLOAT", "mode": "NULLABLE"},
-            {"name": "elev", "type": "STRING", "mode": "NULLABLE"},
-            {"name": "begin", "type": "STRING", "mode": "NULLABLE"},
-            {"name": "end", "type": "STRING", "mode": "NULLABLE"},
+            {"name": "series_id", "type": "STRING", "mode": "required"},
+            {"name": "year", "type": "INTEGER", "mode": "NULLABLE"},
+            {"name": "period", "type": "STRING", "mode": "NULLABLE"},
+            {"name": "value", "type": "FLOAT", "mode": "NULLABLE"},
+            {"name": "footnote_codes", "type": "STRING", "mode": "NULLABLE"},
+            {"name": "date", "type": "DATE", "mode": "NULLABLE"},
+            {"name": "series_title", "type": "STRING", "mode": "NULLABLE"},
         ],
     )
 

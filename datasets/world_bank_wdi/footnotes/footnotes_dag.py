@@ -14,29 +14,29 @@
 
 
 from airflow import DAG
-from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
-from airflow.providers.google.cloud.transfers import gcs_to_bigquery
+from airflow.contrib.operators import gcs_to_bq, kubernetes_pod_operator
 
 default_args = {
     "owner": "Google",
     "depends_on_past": False,
-    "start_date": "2021-12-30",
+    "start_date": "2021-03-01",
 }
 
 
 with DAG(
-    dag_id="noaa.gsod_stations",
+    dag_id="world_bank_wdi.footnotes",
     default_args=default_args,
     max_active_runs=1,
-    schedule_interval="@yearly",
+    schedule_interval="@daily",
     catchup=False,
     default_view="graph",
 ) as dag:
 
     # Run CSV transform within kubernetes pod
-    transform_csv = kubernetes_pod.KubernetesPodOperator(
-        task_id="transform_csv",
-        name="gsod_stations",
+    footnotes_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+        task_id="footnotes_transform_csv",
+        startup_timeout_seconds=600,
+        name="footnotes",
         namespace="default",
         affinity={
             "nodeAffinity": {
@@ -56,42 +56,37 @@ with DAG(
             }
         },
         image_pull_policy="Always",
-        image="{{ var.json.noaa_gsod_stations.container_registry.run_csv_transform_kub_gsod_stations }}",
+        image="{{ var.json.world_bank_wdi.container_registry.run_csv_transform_kub }}",
         env_vars={
-            "SOURCE_URL": "ftp://ftp.ncdc.noaa.gov/pub/data/noaa/isd-history.txt",
-            "FTP_HOST": "ftp.ncdc.noaa.gov",
-            "FTP_DIR": "/pub/data/noaa",
-            "FTP_FILENAME": "isd-history.txt",
+            "SOURCE_URL": "gs://pdp-feeds-staging/RelayWorldBank/WDI_csv/WDIFootNote.csv",
             "SOURCE_FILE": "files/data.csv",
+            "COLUMN_TO_REMOVE": "Unnamed: 4",
             "TARGET_FILE": "files/data_output.csv",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
-            "TARGET_GCS_PATH": "data/noaa/gsod_stations/data_output.csv",
+            "TARGET_GCS_PATH": "data/world_bank_wdi/footnotes/data_output.csv",
+            "PIPELINE_NAME": "footnotes",
+            "CSV_HEADERS": '["country_code","series_code","year","description"]',
+            "RENAME_MAPPINGS": '{"CountryCode":"country_code","SeriesCode":"series_code","Year":"year","DESCRIPTION":"description"}',
         },
-        resources={"limit_memory": "2G", "limit_cpu": "1"},
+        resources={"request_memory": "2G", "request_cpu": "1"},
     )
 
     # Task to load CSV data to a BigQuery table
-    load_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
-        task_id="load_to_bq",
+    load_footnotes_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+        task_id="load_footnotes_to_bq",
         bucket="{{ var.value.composer_bucket }}",
-        source_objects=["data/noaa/gsod_stations/data_output.csv"],
+        source_objects=["data/world_bank_wdi/footnotes/data_output.csv"],
         source_format="CSV",
-        destination_project_dataset_table="noaa.gsod_stations",
+        destination_project_dataset_table="world_bank_wdi.footnotes",
         skip_leading_rows=1,
+        allow_quoted_newlines=True,
         write_disposition="WRITE_TRUNCATE",
         schema_fields=[
-            {"name": "usaf", "type": "STRING", "mode": "NULLABLE"},
-            {"name": "wban", "type": "STRING", "mode": "NULLABLE"},
-            {"name": "name", "type": "STRING", "mode": "NULLABLE"},
-            {"name": "country", "type": "STRING", "mode": "NULLABLE"},
-            {"name": "state", "type": "STRING", "mode": "NULLABLE"},
-            {"name": "call", "type": "STRING", "mode": "NULLABLE"},
-            {"name": "lat", "type": "FLOAT", "mode": "NULLABLE"},
-            {"name": "lon", "type": "FLOAT", "mode": "NULLABLE"},
-            {"name": "elev", "type": "STRING", "mode": "NULLABLE"},
-            {"name": "begin", "type": "STRING", "mode": "NULLABLE"},
-            {"name": "end", "type": "STRING", "mode": "NULLABLE"},
+            {"name": "country_code", "type": "string", "mode": "nullable"},
+            {"name": "series_code", "type": "string", "mode": "nullable"},
+            {"name": "year", "type": "integer", "mode": "nullable"},
+            {"name": "description", "type": "string", "mode": "nullable"},
         ],
     )
 
-    transform_csv >> load_to_bq
+    footnotes_transform_csv >> load_footnotes_to_bq
