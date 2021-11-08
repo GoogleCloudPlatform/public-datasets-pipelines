@@ -1,3 +1,7 @@
+[packages]
+beautifulsoup4 = "==4.9.3"
+"google.cloud" = "*"
+
 requests
 google-cloud-storage
 pandas
