@@ -64,6 +64,9 @@ with DAG(
             "CHUNKSIZE": "750000",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/census_bureau_international/mortality_life_expectancy/data_output.csv",
+            "TRANSFORM_LIST": '[ "obtain_population", "obtain_country", "reorder_headers" ]',
+            "REORDER_HEADERS": '[ "country_code", "country_name", "year", "infant_mortality", "infant_mortality_male",\n  "infant_mortality_female", "life_expectancy", "life_expectancy_male", "life_expectancy_female", "mortality_rate_under5",\n  "mortality_rate_under5_male", "mortality_rate_under5_female", "mortality_rate_1to4", "mortality_rate_1to4_male", "mortality_rate_1to4_female" ]',
+            "PIPELINE_ENGLISH_NAME": "International Database (Life Expectancy - Country Names) Delivery",
         },
         resources={"limit_memory": "8G", "limit_cpu": "3"},
     )
@@ -76,7 +79,7 @@ with DAG(
             "data/census_bureau_international/mortality_life_expectancy/data_output.csv"
         ],
         source_format="CSV",
-        destination_project_dataset_table="census_bureau_international.mortality_life_expectancy",
+        destination_project_dataset_table="{{ var.json.census_bureau_international.container_registry.mortality_life_expectancy_destination_table }}",
         skip_leading_rows=1,
         allow_quoted_newlines=True,
         write_disposition="WRITE_TRUNCATE",

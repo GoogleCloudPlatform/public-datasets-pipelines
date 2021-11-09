@@ -56,7 +56,7 @@ with DAG(
             }
         },
         image_pull_policy="Always",
-        image="{{ var.json.census_bureau_international.container_registry.run_csv_transform_kub_country_names_area }}",
+        image="{{ var.json.census_bureau_international.container_registry.run_csv_transform_kub }}",
         env_vars={
             "SOURCE_URL": "gs://pdp-feeds-staging/Census/idbzip/IDBextCTYS.csv",
             "SOURCE_FILE": "files/data.csv",
@@ -64,6 +64,9 @@ with DAG(
             "CHUNKSIZE": "750000",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/census_bureau_international/country_names_area/data_output.csv",
+            "TRANSFORM_LIST": ["obtain_country", "reorder_headers"],
+            "REORDER_HEADERS": ["country_code", "country_name", "country_area"],
+            "PIPELINE_ENGLISH_NAME": "International Database (Country Names) Delivery",
         },
         resources={"limit_memory": "8G", "limit_cpu": "3"},
     )
@@ -76,7 +79,7 @@ with DAG(
             "data/census_bureau_international/country_names_area/data_output.csv"
         ],
         source_format="CSV",
-        destination_project_dataset_table="census_bureau_international.country_names_area",
+        destination_project_dataset_table="{{ var.json.census_bureau_international.container_registry.country_names_area_destination_table }}",
         skip_leading_rows=1,
         allow_quoted_newlines=True,
         write_disposition="WRITE_TRUNCATE",

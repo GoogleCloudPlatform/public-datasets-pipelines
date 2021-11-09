@@ -56,7 +56,7 @@ with DAG(
             }
         },
         image_pull_policy="Always",
-        image="{{ var.json.census_bureau_international.container_registry.run_csv_transform_kub_age_specific_fertility_rates }}",
+        image="{{ var.json.census_bureau_international.container_registry.run_csv_transform_kub }}",
         env_vars={
             "SOURCE_URL": '"gs://pdp-feeds-staging/Census/idbzip/IDBext028.csv",\n"gs://pdp-feeds-staging/Census/idbzip/IDBextCTYS.csv"\n',
             "SOURCE_FILE": "files/data.csv",
@@ -64,6 +64,13 @@ with DAG(
             "CHUNKSIZE": "750000",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/census_bureau_international/age_specific_fertility_rates/data_output.csv",
+            "TRANSFORM_LIST": [
+                "obtain_population",
+                "obtain_country",
+                "reorder_headers",
+            ],
+            "REORDER_HEADERS": '[ "country_code", "country_name", "year", "fertility_rate_15_19", "fertility_rate_20_24",\n  "fertility_rate_25_29", "fertility_rate_30_34", "fertility_rate_35_39", "fertility_rate_40_44",\n  "fertility_rate_45_49", "total_fertility_rate", "gross_reproduction_rate", "sex_ratio_at_birth" ]',
+            "PIPELINE_ENGLISH_NAME": "International Database (Country Names - Fertility Rates) Delivery",
         },
         resources={"limit_memory": "8G", "limit_cpu": "3"},
     )
@@ -76,7 +83,7 @@ with DAG(
             "data/census_bureau_international/age_specific_fertility_rates/data_output.csv"
         ],
         source_format="CSV",
-        destination_project_dataset_table="census_bureau_international.age_specific_fertility_rates",
+        destination_project_dataset_table="{{ var.json.census_bureau_international.container_registry.age_specific_fertility_rates_destination_table }}",
         skip_leading_rows=1,
         allow_quoted_newlines=True,
         write_disposition="WRITE_TRUNCATE",
