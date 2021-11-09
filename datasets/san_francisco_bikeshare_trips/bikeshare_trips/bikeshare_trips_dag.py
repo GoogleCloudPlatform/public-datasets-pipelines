@@ -76,7 +76,7 @@ with DAG(
             "data/san_francisco_bikeshare_trips/bikeshare_trips/data_output.csv"
         ],
         source_format="CSV",
-        destination_project_dataset_table="san_francisco_bikeshare_trips.bikeshare_trips",
+        destination_project_dataset_table="{{ var.json.san_francisco_bikeshare_trips.container_registry.bikeshare_trips_destination_table }}",
         skip_leading_rows=1,
         allow_quoted_newlines=True,
         write_disposition="WRITE_TRUNCATE",
