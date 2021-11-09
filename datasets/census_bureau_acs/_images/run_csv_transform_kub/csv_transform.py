@@ -378,7 +378,7 @@ def main(
     rename_headers(df, rename_mappings)
 
     logging.info("Creating column geo_id...")
-    if geography == "censustract":
+    if geography == "censustract" or geography == "blockgroup" :
         df["tract"] = df["tract"].apply(change_length, args=("6"))
         df["state"] = df["state"].apply(change_length, args=("2"))
         df["county"] = df["county"].apply(change_length, args=("3"))
@@ -447,6 +447,7 @@ def extract_data_and_convert_to_df_national_level(
                 list_temp.append(frame)
         except OSError as e:
             logging.info(f"error : {e}")
+            pass
     logging.info("creating the dataframe...")
     df = pd.concat(list_temp)
     return df
