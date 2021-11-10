@@ -60,7 +60,7 @@ with DAG(
         env_vars={
             "SOURCE_URL": "https://api.census.gov/data/2019/acs/acs+year_report+?get=NAME,+key[0:-3]+_+key[-3:]+E&for=+api_naming_convention+:*&key=550e53635053be51754b09b5e9f5009c94aa0586",
             "YEAR_REPORT": "1",
-            "API_NAMING_CONVENTION": "combined%20statistical%20area",
+            "API_NAMING_CONVENTION": "metropolitan%20statistical%20area/micropolitan%20statistical%20area",
             "TARGET_FILE": "files/data_output.csv",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/census_bureau_acs/cbsa_2019_1yr/data_output.csv",

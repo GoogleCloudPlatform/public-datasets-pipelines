@@ -2,3 +2,5 @@ requests
 pandas
 google-cloud-storage
 numpy
+beautifulsoup4 = "==4.9.3"
+"google.cloud" = "*"
