@@ -33,8 +33,8 @@ with DAG(
 ) as dag:
 
     # Run CSV transform within kubernetes pod
-    schooldistrictunified_2019_1yr_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
-        task_id="schooldistrictunified_2019_1yr_transform_csv",
+    transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+        task_id="transform_csv",
         startup_timeout_seconds=600,
         name="schooldistrictunified_2019_1yr",
         namespace="default",
@@ -75,8 +75,8 @@ with DAG(
     )
 
     # Task to load CSV data to a BigQuery table
-    load_schooldistrictunified_2019_1yr_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
-        task_id="load_schooldistrictunified_2019_1yr_to_bq",
+    load_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+        task_id="load_to_bq",
         bucket="{{ var.value.composer_bucket }}",
         source_objects=[
             "data/census_bureau_acs/schooldistrictunified_2019_1yr/data_output.csv"
@@ -539,4 +539,4 @@ with DAG(
         ],
     )
 
-    schooldistrictunified_2019_1yr_transform_csv >> load_schooldistrictunified_2019_1yr_to_bq
+    transform_csv >> load_to_bq

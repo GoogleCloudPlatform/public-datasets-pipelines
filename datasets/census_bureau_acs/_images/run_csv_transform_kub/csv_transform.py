@@ -378,12 +378,11 @@ def main(
     rename_headers(df, rename_mappings)
 
     logging.info("Creating column geo_id...")
-    if geography == "censustract" or geography == "blockgroup" :
+    if geography == "censustract" or geography == "blockgroup":
         df["tract"] = df["tract"].apply(change_length, args=("6"))
         df["state"] = df["state"].apply(change_length, args=("2"))
         df["county"] = df["county"].apply(change_length, args=("3"))
 
-    # This part needs confirmation from Shane
     df = create_geo_id(df, concat_col)
 
     logging.info("Pivoting the dataframe...")
@@ -431,10 +430,10 @@ def extract_data_and_convert_to_df_national_level(
         #     "+api_naming_convention+": api_naming_convention,
         # }
         # source_url_new = string_replace(source_url, replece)
-        str1=source_url.replace("+year_report+",year_report)
-        str2=str1.replace("+key[0:-3]+",key[0:-3])
-        str3=str2.replace("+key[-3:]+",key[-3:])
-        source_url_new=str3.replace("+api_naming_convention+",api_naming_convention)
+        str1 = source_url.replace("+year_report+", year_report)
+        str2 = str1.replace("+key[0:-3]+", key[0:-3])
+        str3 = str2.replace("+key[-3:]+", key[-3:])
+        source_url_new = str3.replace("+api_naming_convention+", api_naming_convention)
         try:
             r = requests.get(source_url_new, stream=True)
             logging.info(f"Source url : {source_url_new}")
@@ -472,11 +471,11 @@ def extract_data_and_convert_to_df_state_level(
             #     "+api_naming_convention+": api_naming_convention,
             #     "+sc+": sc,
             # }
-            str1=source_url.replace("+year_report+",year_report)
-            str2=str1.replace("+key[0:-3]+",key[0:-3])
-            str3=str2.replace("+key[-3:]+",key[-3:])
-            str4=str3.replace("+api_naming_convention+",api_naming_convention)
-            source_url_new=str4.replace("+sc+",sc)
+            str1 = source_url.replace("+year_report+", year_report)
+            str2 = str1.replace("+key[0:-3]+", key[0:-3])
+            str3 = str2.replace("+key[-3:]+", key[-3:])
+            str4 = str3.replace("+api_naming_convention+", api_naming_convention)
+            source_url_new = str4.replace("+sc+", sc)
             # source_url = string_replace(source_url, replece)
             try:
                 r = requests.get(source_url_new, stream=True)
