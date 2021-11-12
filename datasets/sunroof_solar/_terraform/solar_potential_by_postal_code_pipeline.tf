@@ -15,25 +15,25 @@
  */
 
 
-resource "google_bigquery_table" "solar_potential_by_census_tract" {
+resource "google_bigquery_table" "sunroof_solar_solar_potential_by_postal_code" {
   project    = var.project_id
-  dataset_id = "sunroof"
-  table_id   = "solar_potential_by_census_tract"
+  dataset_id = "sunroof_solar"
+  table_id   = "solar_potential_by_postal_code"
 
-  description = "Sunroof Solar Potential By Census Tract"
+  description = "Sunroof Solar Potential By Postal Code"
 
 
 
 
   depends_on = [
-    google_bigquery_dataset.sunroof
+    google_bigquery_dataset.sunroof_solar
   ]
 }
 
-output "bigquery_table-solar_potential_by_census_tract-table_id" {
-  value = google_bigquery_table.solar_potential_by_census_tract.table_id
+output "bigquery_table-sunroof_solar_solar_potential_by_postal_code-table_id" {
+  value = google_bigquery_table.sunroof_solar_solar_potential_by_postal_code.table_id
 }
 
-output "bigquery_table-solar_potential_by_census_tract-id" {
-  value = google_bigquery_table.solar_potential_by_census_tract.id
+output "bigquery_table-sunroof_solar_solar_potential_by_postal_code-id" {
+  value = google_bigquery_table.sunroof_solar_solar_potential_by_postal_code.id
 }

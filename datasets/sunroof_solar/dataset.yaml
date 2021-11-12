@@ -13,14 +13,15 @@
 # limitations under the License.
 
 dataset:
-  name: sunroof
-  friendly_name: sunroof
-  description: sunroof
+  name: sunroof_solar
+  friendly_name: sunroof_solar
+  description: sunroof_solar
   dataset_sources: ~
   terms_of_use: ~
 
 
 resources:
   - type: bigquery_dataset
-    dataset_id: sunroof
-    description: sunroof
+    dataset_id: sunroof_solar
+    description: |-
+      Project Sunroof computes how much sunlight hits your roof in a year. Solar viability is determined using a methodology found here: https://www.google.com/get/sunroof/data-explorer/data-explorer-methodology.pdf The use of this data is subject to Google's Terms of Service. Feel free to include this data from Project Sunroof in other analyses, materials, reports, and communications with the following attribution: Source: Google Project Sunroof data explorer (August 2017).
