@@ -65,7 +65,7 @@ dag:
           limit_cpu: "3"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
-      description: "Task to load CSV data to a BigQuery table"
+      description: "Load CSV data to a BigQuery table"
 
       args:
         task_id: "load_to_bq"
