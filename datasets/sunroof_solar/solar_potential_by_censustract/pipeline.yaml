@@ -16,13 +16,13 @@
 resources:
 
   - type: bigquery_table
-    table_id: "solar_potential_by_census_tract"
+    table_id: "solar_potential_by_censustract"
     description: "Sunroof Solar Potential By Census Tract"
 
 dag:
   airflow_version: 2
   initialize:
-    dag_id: solar_potential_by_census_tract
+    dag_id: solar_potential_by_censustract
     default_args:
       owner: "Google"
       depends_on_past: False
@@ -40,7 +40,7 @@ dag:
       args:
 
         task_id: "transform_csv"
-        name: "solar_potential_by_census_tract"
+        name: "solar_potential_by_censustract"
         namespace: "default"
         affinity:
           nodeAffinity:
@@ -52,14 +52,14 @@ dag:
                       values:
                         - "pool-e2-standard-4"
         image_pull_policy: "Always"
-        image: "{{ var.json.sunroof.container_registry.run_csv_transform_kub }}"
+        image: "{{ var.json.sunroof_solar.container_registry.run_csv_transform_kub }}"
         env_vars:
           SOURCE_URL: "gs://project-sunroof/csv/latest/project-sunroof-census_tract.csv"
           SOURCE_FILE: "files/data.csv"
           TARGET_FILE: "files/data_output.csv"
           CHUNKSIZE: "750000"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
-          TARGET_GCS_PATH: "data/sunroof/solar_potential_by_census_tract/data_output.csv"
+          TARGET_GCS_PATH: "data/sunroof/solar_potential_by_censustract/data_output.csv"
         resources:
           limit_memory: "8G"
           limit_cpu: "3"
@@ -70,9 +70,9 @@ dag:
       args:
         task_id: "load_to_bq"
         bucket: "{{ var.value.composer_bucket }}"
-        source_objects: ["data/sunroof/solar_potential_by_census_tract/data_output.csv"]
+        source_objects: ["data/sunroof/solar_potential_by_censustract/data_output.csv"]
         source_format: "CSV"
-        destination_project_dataset_table: "sunroof.solar_potential_by_census_tract"
+        destination_project_dataset_table: "sunroof.solar_potential_by_censustract"
         skip_leading_rows: 1
         allow_quoted_newlines: True
         write_disposition: "WRITE_TRUNCATE"

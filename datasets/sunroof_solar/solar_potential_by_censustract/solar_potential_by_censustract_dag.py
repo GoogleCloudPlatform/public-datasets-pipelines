@@ -25,7 +25,7 @@ default_args = {
 
 
 with DAG(
-    dag_id="sunroof.solar_potential_by_postal_code",
+    dag_id="sunroof_solar.solar_potential_by_censustract",
     default_args=default_args,
     max_active_runs=1,
     schedule_interval="@daily",
@@ -36,7 +36,7 @@ with DAG(
     # Run CSV transform within kubernetes pod
     transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="transform_csv",
-        name="solar_potential_by_postal_code",
+        name="solar_potential_by_censustract",
         namespace="default",
         affinity={
             "nodeAffinity": {
@@ -56,14 +56,14 @@ with DAG(
             }
         },
         image_pull_policy="Always",
-        image="{{ var.json.sunroof.container_registry.run_csv_transform_kub }}",
+        image="{{ var.json.sunroof_solar.container_registry.run_csv_transform_kub }}",
         env_vars={
-            "SOURCE_URL": "gs://project-sunroof/csv/latest/project-sunroof-postal_code.csv",
+            "SOURCE_URL": "gs://project-sunroof/csv/latest/project-sunroof-census_tract.csv",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
             "CHUNKSIZE": "750000",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
-            "TARGET_GCS_PATH": "data/sunroof/solar_potential_by_postal_code/data_output.csv",
+            "TARGET_GCS_PATH": "data/sunroof/solar_potential_by_censustract/data_output.csv",
         },
         resources={"limit_memory": "8G", "limit_cpu": "3"},
     )
@@ -72,9 +72,9 @@ with DAG(
     load_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_to_bq",
         bucket="{{ var.value.composer_bucket }}",
-        source_objects=["data/sunroof/solar_potential_by_postal_code/data_output.csv"],
+        source_objects=["data/sunroof/solar_potential_by_censustract/data_output.csv"],
         source_format="CSV",
-        destination_project_dataset_table="sunroof.solar_potential_by_postal_code",
+        destination_project_dataset_table="sunroof.solar_potential_by_censustract",
         skip_leading_rows=1,
         allow_quoted_newlines=True,
         write_disposition="WRITE_TRUNCATE",
@@ -248,7 +248,7 @@ with DAG(
                 "mode": "NULLABLE",
             },
             {
-                "name": "install_size_kw_buckets_json",
+                "name": "install_size_kw_buckets",
                 "type": "STRING",
                 "description": "# of buildings with potential for various installation size buckets. Format is a JSON array, where each element is a tuple containing (1) lower bound of bucket, in kW, and (2) number of buildings in that bucket.",
                 "mode": "NULLABLE",
