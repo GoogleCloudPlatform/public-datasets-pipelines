@@ -15,7 +15,7 @@
  */
 
 
-resource "google_bigquery_table" "wm" {
+resource "google_bigquery_table" "bls_wm" {
   project    = var.project_id
   dataset_id = "bls"
   table_id   = "wm"
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "wm" {
   ]
 }
 
-output "bigquery_table-wm-table_id" {
-  value = google_bigquery_table.wm.table_id
+output "bigquery_table-bls_wm-table_id" {
+  value = google_bigquery_table.bls_wm.table_id
 }
 
-output "bigquery_table-wm-id" {
-  value = google_bigquery_table.wm.id
+output "bigquery_table-bls_wm-id" {
+  value = google_bigquery_table.bls_wm.id
 }
