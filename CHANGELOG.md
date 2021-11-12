@@ -1,5 +1,13 @@
 # Changelog
 
+### [2.6.1](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v2.6.0...v2.6.1) (2021-11-12)
+
+
+### Bug Fixes
+
+* Namespace Terraform resources under dataset names ([#227](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/227)) ([a3f4b34](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/a3f4b34e9fda61ae4bab6bc48c68d0b620ea2c7e))
+* Renamed dataset from `sunroof` to `sunroof_solar`  ([#226](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/226)) ([0780df8](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/0780df8c39a53da8b32ff4724f8f51a73938d335))
+
 ## [2.6.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v2.5.0...v2.6.0) (2021-11-04)
 
 
