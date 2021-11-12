@@ -15,7 +15,7 @@
  */
 
 
-resource "google_bigquery_table" "waste_and_diversion" {
+resource "google_bigquery_table" "austin_waste_waste_and_diversion" {
   project    = var.project_id
   dataset_id = "austin_waste"
   table_id   = "waste_and_diversion"
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "waste_and_diversion" {
   ]
 }
 
-output "bigquery_table-waste_and_diversion-table_id" {
-  value = google_bigquery_table.waste_and_diversion.table_id
+output "bigquery_table-austin_waste_waste_and_diversion-table_id" {
+  value = google_bigquery_table.austin_waste_waste_and_diversion.table_id
 }
 
-output "bigquery_table-waste_and_diversion-id" {
-  value = google_bigquery_table.waste_and_diversion.id
+output "bigquery_table-austin_waste_waste_and_diversion-id" {
+  value = google_bigquery_table.austin_waste_waste_and_diversion.id
 }

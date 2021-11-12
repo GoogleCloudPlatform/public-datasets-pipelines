@@ -15,7 +15,7 @@
  */
 
 
-resource "google_bigquery_table" "unemployment_cps" {
+resource "google_bigquery_table" "bls_unemployment_cps" {
   project    = var.project_id
   dataset_id = "bls"
   table_id   = "unemployment_cps"
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "unemployment_cps" {
   ]
 }
 
-output "bigquery_table-unemployment_cps-table_id" {
-  value = google_bigquery_table.unemployment_cps.table_id
+output "bigquery_table-bls_unemployment_cps-table_id" {
+  value = google_bigquery_table.bls_unemployment_cps.table_id
 }
 
-output "bigquery_table-unemployment_cps-id" {
-  value = google_bigquery_table.unemployment_cps.id
+output "bigquery_table-bls_unemployment_cps-id" {
+  value = google_bigquery_table.bls_unemployment_cps.id
 }
