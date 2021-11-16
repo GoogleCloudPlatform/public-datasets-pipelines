@@ -18,12 +18,12 @@ import json
 import logging
 import os
 import pathlib
+import time
 import typing
 
 import numpy as np
 import pandas as pd
 import requests
-import time
 from google.cloud import storage
 
 
@@ -466,7 +466,7 @@ def extract_data_and_convert_to_df_state_level(
             logging.info(f"reading data from API for KPI {key}...")
             logging.info(f"reading data from API for KPI {sc}...")
             # replece = {
-            #     "+year_report+": year_report,
+            #     "+year_report+": y ear_report,
             #     "+key[0:-3]+": key[0:-3],
             #     "+key[-3:]+": key[-3:],
             #     "+api_naming_convention+": api_naming_convention,
@@ -490,7 +490,7 @@ def extract_data_and_convert_to_df_state_level(
                     list_temp.append(frame)
             except OSError as e:
                 logging.info(f"error : {e}")
-            except  TypeError as error :
+            except TypeError as error:
                 logging.inf(error)
                 time.sleep(5)
                 continue
