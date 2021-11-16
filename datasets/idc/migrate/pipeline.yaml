@@ -62,7 +62,5 @@ dag:
 
   #       impersonation_chain: "{{ var.json.idc.impersonation_account }}"
 
-
-
   # graph_paths:
   #   - "transfer_image_files"

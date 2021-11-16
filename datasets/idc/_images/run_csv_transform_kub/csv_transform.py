@@ -19,8 +19,9 @@ import pathlib
 from airflow.contrib.operators.gcs_to_gcs import (
     GoogleCloudStorageToGoogleCloudStorageOperator,
 )
-from airflow.exceptions import AirflowException
-from google.cloud import bigquery, bigquery_datatransfer, storage
+
+# from airflow.exceptions import AirflowException
+from google.cloud import bigquery, bigquery_datatransfer  # , storage
 
 
 def main(
@@ -32,7 +33,7 @@ def main(
     source_dataset_prefix: str,
     source_dataset_list: list,
     target_project_id: str,
-    user_id: str
+    user_id: str,
 ) -> None:
 
     logging.info("IDC data migration process started")
@@ -42,15 +43,29 @@ def main(
     # dataset_ver = obtain_project_new_version(project_id=project_id, dataset_prefix=dataset_prefix)
     # logging.info(f"Dataset to use is {project_id}.{dataset_ver}")
 
-    transfer_bq_data(source_project_id, source_dataset_list, target_project_id, user_id, copy_display_name="copy executing..." )
+    transfer_bq_data(
+        source_project_id,
+        source_dataset_list,
+        target_project_id,
+        user_id,
+        copy_display_name="copy executing...",
+    )
 
     logging.info("IDC data migration process completed")
 
 
-def transfer_bq_data(source_project_id: str, source_dataset_list: list, target_project_id: str, user_id: str, copy_display_name: str="copy executing..." ):
+def transfer_bq_data(
+    source_project_id: str,
+    source_dataset_list: list,
+    target_project_id: str,
+    user_id: str,
+    copy_display_name: str = "copy executing...",
+):
     transfer_client = bigquery_datatransfer.DataTransferServiceClient()
     # transfer_config = ""
-    logging.info(f"Creating transfer config for {source_project_id}.[{source_dataset_list}] -> {target_project_id}")
+    logging.info(
+        f"Creating transfer config for {source_project_id}.[{source_dataset_list}] -> {target_project_id}"
+    )
     for ds in source_dataset_list:
         transfer_config = bigquery_datatransfer.TransferConfig(
             destination_dataset_id=ds,
@@ -58,30 +73,43 @@ def transfer_bq_data(source_project_id: str, source_dataset_list: list, target_p
             # data_source_id="cross_region_copy",
             params={
                 "source_project_id": source_project_id,
-                "source_dataset_id": ds # source_dataset_id,
+                "source_dataset_id": ds,  # source_dataset_id,
             },
             # schedule="every 24 hours",
             user_id=user_id
             # authenticationinfo=user_id
         )
         transfer_config = transfer_client.create_transfer_config(
-            parent = transfer_client.common_project_path(target_project_id),
-            transfer_config = transfer_config,
+            parent=transfer_client.common_project_path(target_project_id),
+            transfer_config=transfer_config,
         )
         logging.info(f"Created transfer config {transfer_config.name}")
 
-def update_images(source_gcs_bucket: str, source_gcs_files: str, target_gcs_bucket: str, target_gcs_path: str):
-    download_images(source_gcs_bucket, source_gcs_files, target_gcs_bucket, target_gcs_path)
+
+def update_images(
+    source_gcs_bucket: str,
+    source_gcs_files: str,
+    target_gcs_bucket: str,
+    target_gcs_path: str,
+):
+    download_images(
+        source_gcs_bucket, source_gcs_files, target_gcs_bucket, target_gcs_path
+    )
     # load_image_data()
 
 
-def download_images(source_gcs_bucket: str, source_gcs_files: str, target_gcs_bucket: str, target_gcs_path: str) -> None:
+def download_images(
+    source_gcs_bucket: str,
+    source_gcs_files: str,
+    target_gcs_bucket: str,
+    target_gcs_path: str,
+) -> None:
     copy_image_files = GoogleCloudStorageToGoogleCloudStorageOperator(
         task_id="copy_files",
         source_bucket=source_gcs_bucket,
         source_object=source_gcs_files,
         destination_bucket=target_gcs_bucket,
-        destination_object=f"{target_gcs_path}/"
+        destination_object=f"{target_gcs_path}/",
     )
     copy_image_files.execute(None)
 
@@ -147,6 +175,7 @@ def obtain_project_new_version(project_id: str = "", dataset_prefix: str = "") -
 
     return max_ver
 
+
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
 
@@ -160,5 +189,5 @@ if __name__ == "__main__":
         source_dataset_prefix=os.environ["SOURCE_DATASET_PREFIX"],
         source_dataset_list=os.environ["SOURCE_DATASET_LIST"],
         target_project_id=os.environ["TARGET_PROJECT_ID"],
-        user_id=os.environ["USER_ID"]
+        user_id=os.environ["USER_ID"],
     )
