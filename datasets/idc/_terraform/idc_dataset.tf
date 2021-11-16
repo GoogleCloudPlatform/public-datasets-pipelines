@@ -1,0 +1,77 @@
+/**
+ * Copyright 2021 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+
+resource "google_storage_bucket" "public-datasets-dev-idc" {
+  name                        = "${var.bucket_name_prefix}-public-datasets-dev-idc"
+  force_destroy               = true
+  location                    = "US"
+  uniform_bucket_level_access = true
+}
+
+output "storage_bucket-public-datasets-dev-idc-name" {
+  value = google_storage_bucket.public-datasets-dev-idc.name
+}
+
+resource "google_bigquery_dataset" "idc_v1" {
+  dataset_id  = "idc_v1"
+  project     = var.project_id
+  description = "IDC data migration v1 data"
+}
+
+output "bigquery_dataset-idc_v1-dataset_id" {
+  value = google_bigquery_dataset.idc_v1.dataset_id
+}
+
+resource "google_bigquery_dataset" "idc_v2" {
+  dataset_id  = "idc_v2"
+  project     = var.project_id
+  description = "IDC data migration v2 data"
+}
+
+output "bigquery_dataset-idc_v2-dataset_id" {
+  value = google_bigquery_dataset.idc_v2.dataset_id
+}
+
+resource "google_bigquery_dataset" "idc_v3" {
+  dataset_id  = "idc_v3"
+  project     = var.project_id
+  description = "IDC data migration v3 data"
+}
+
+output "bigquery_dataset-idc_v3-dataset_id" {
+  value = google_bigquery_dataset.idc_v3.dataset_id
+}
+
+resource "google_bigquery_dataset" "idc_v4" {
+  dataset_id  = "idc_v4"
+  project     = var.project_id
+  description = "IDC data migration v4 data"
+}
+
+output "bigquery_dataset-idc_v4-dataset_id" {
+  value = google_bigquery_dataset.idc_v4.dataset_id
+}
+
+resource "google_bigquery_dataset" "idc_v5" {
+  dataset_id  = "idc_v5"
+  project     = var.project_id
+  description = "IDC data migration v5 data"
+}
+
+output "bigquery_dataset-idc_v5-dataset_id" {
+  value = google_bigquery_dataset.idc_v5.dataset_id
+}

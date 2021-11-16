@@ -1,0 +1,48 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+dataset:
+  name: idc
+  friendly_name: ~
+  description: ~
+  dataset_sources: ~
+  terms_of_use: ~
+
+
+resources:
+
+  - type: storage_bucket
+    name: "public-datasets-dev-idc"
+    uniform_bucket_level_access: True
+    location: US
+
+  - type: bigquery_dataset
+    dataset_id: idc_v1
+    description: IDC data migration v1 data
+
+  - type: bigquery_dataset
+    dataset_id: idc_v2
+    description: IDC data migration v2 data
+
+  - type: bigquery_dataset
+    dataset_id: idc_v3
+    description: IDC data migration v3 data
+
+  - type: bigquery_dataset
+    dataset_id: idc_v4
+    description: IDC data migration v4 data
+
+  - type: bigquery_dataset
+    dataset_id: idc_v5
+    description: IDC data migration v5 data
