@@ -23,6 +23,7 @@ import typing
 import numpy as np
 import pandas as pd
 import requests
+import time
 from google.cloud import storage
 
 
@@ -489,6 +490,11 @@ def extract_data_and_convert_to_df_state_level(
                     list_temp.append(frame)
             except OSError as e:
                 logging.info(f"error : {e}")
+            except  TypeError as error :
+                logging.inf(error)
+                time.sleep(5)
+                continue
+
     logging.info("creating the dataframe...")
     df = pd.concat(list_temp)
     return df
