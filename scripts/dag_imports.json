@@ -40,7 +40,7 @@
       },
       "CloudDataTransferServiceGCSToGCSOperator": {
         "import": "from airflow.providers.google.cloud.operators import cloud_storage_transfer_service",
-        "class": "CloudDataTransferServiceGCSToGCSOperator"
+        "class": "cloud_storage_transfer_service.CloudDataTransferServiceGCSToGCSOperator"
       },
       "GoogleCloudStorageToGoogleCloudStorageOperator": {
         "import": "from airflow.providers.google.cloud.transfers import gcs_to_gcs",
