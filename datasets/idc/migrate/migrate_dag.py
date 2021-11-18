@@ -15,6 +15,7 @@
 
 from airflow import DAG
 from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.transfers import gcs_to_gcs
 
 default_args = {
     "owner": "Google",
@@ -57,17 +58,24 @@ with DAG(
         image_pull_policy="Always",
         image="{{ var.json.idc.container_registry.run_csv_transform_kub }}",
         env_vars={
-            "SOURCE_GCS_BUCKET": "{{ var.json.idc.container_registry.source_bucket }}",
-            "SOURCE_GCS_FILES": "{{ var.json.idc.container_registry.source_object }}",
             "SOURCE_PROJECT_ID": "{{ var.json.idc.container_registry.source_project }}",
-            "SOURCE_DATASET_PREFIX": "{{ var.json.idc.container_registry.source_dataset_prefix }}",
             "SOURCE_DATASET_LIST": '[ "idc_v1", "idc_v2", "idc_v3", "idc_v4", "idc_v5" ]',
-            "TARGET_GCS_BUCKET": "{{ var.json.idc.container_registry.destination_bucket }}",
-            "TARGET_GCS_PATH": "{{ var.json.idc.container_registry.destination_path }}",
             "TARGET_PROJECT_ID": "{{ var.json.idc.container_registry.destination_project_id }}",
             "USER_ID": "{{ var.json.idc.container_registry.impersonation_account }}",
         },
         resources={"limit_memory": "8G", "limit_cpu": "3"},
     )
 
-    transfer_idc_db
+    # Task to run a GoogleCloudStorageToGoogleCloudStorageOperator
+    transfer_image_files = gcs_to_gcs.GCSToGCSOperator(
+        task_id="transfer_image_files",
+        source_bucket="{{ var.json.idc.source_bucket }}",
+        source_object="{{ var.json.idc.source_object }}",
+        destination_bucket="{{ var.json.idc.destination_bucket }}",
+        destination_object="{{ var.json.idc.destination_path }}",
+        move_object=False,
+        replace=False,
+        impersonation_chain="{{ var.json.idc.impersonation_account }}",
+    )
+
+    transfer_idc_v1_db >> transfer_image_files

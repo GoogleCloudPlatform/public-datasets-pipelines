@@ -31,11 +31,35 @@ dag:
 
   tasks:
 
+    # - operator: "BashOperator"
+    #   description: "Task to copy IDC v1 dataset from source to destination"
+    #   args:
+    #     task_id: "transfer_idc_v1_db_bash"
+    #     # impersonation_chain: "{{ var.json.idc.container_registry.impersonation_account }}"
+    #     bash_command: |
+    #       CLOUDSDK_PYTHON="/usr/bin/python" /usr/bin/bq mk --transfer_config --project_id=$target_project_id --data_source=cross_region_copy --target_dataset=idc_v1 --display_name='copy_idc_v1' --params='{"source_dataset_id":"idc_v1","source_project_id":"$source_project_id","overwrite_destination_table":"false"}'
+    #       # cat /usr/lib/google-cloud-sdk/lib/googlecloudsdk/core/execution_utils.py
+    #       # /usr/bin/bq mk --transfer_config --project_id=$target_project_id --data_source=cross_region_copy --target_dataset=idc_v1 --display_name='copy_idc_v1' --params='{"source_dataset_id":"idc_v1","source_project_id":"$source_project_id","overwrite_destination_table":"false"}'
+    #       # which python
+    #       # python --version
+    #       # echo $PATH
+    #       # which bq
+    #       # ls -la /usr/lib/google-cloud-sdk/lib/googlecloudsdk/core
+    #     env:
+    #       source_gcs_bucket: "{{ var.json.idc.container_registry.source_bucket }}"
+    #       source_gcs_files: "{{ var.json.idc.container_registry.source_object }}"
+    #       source_project_id: "{{ var.json.idc.container_registry.source_project }}"
+    #       source_dataset_prefix: "{{ var.json.idc.container_registry.source_dataset_prefix }}"
+    #       source_dataset_list: >-
+    #         [ "idc_v1", "idc_v2", "idc_v3", "idc_v4", "idc_v5" ]
+    #       target_gcs_bucket: "{{ var.json.idc.container_registry.destination_bucket }}"
+    #       target_gcs_path: "{{ var.json.idc.container_registry.destination_path }}"
+    #       target_project_id: "{{ var.json.idc.container_registry.destination_project_id }}"
+    #       user_id: "{{ var.json.idc.container_registry.impersonation_account }}"
+
     - operator: "KubernetesPodOperator"
       description: "Transfer IDC Databases"
-
       args:
-
         task_id: "transfer_idc_db"
         name: "transfer_idc"
         namespace: "default"
@@ -51,37 +75,26 @@ dag:
         image_pull_policy: "Always"
         image: "{{ var.json.idc.container_registry.run_csv_transform_kub }}"
         env_vars:
-          SOURCE_GCS_BUCKET: "{{ var.json.idc.container_registry.source_bucket }}"
-          SOURCE_GCS_FILES: "{{ var.json.idc.container_registry.source_object }}"
           SOURCE_PROJECT_ID: "{{ var.json.idc.container_registry.source_project }}"
-          SOURCE_DATASET_PREFIX: "{{ var.json.idc.container_registry.source_dataset_prefix }}"
           SOURCE_DATASET_LIST: >-
             [ "idc_v1", "idc_v2", "idc_v3", "idc_v4", "idc_v5" ]
-          TARGET_GCS_BUCKET: "{{ var.json.idc.container_registry.destination_bucket }}"
-          TARGET_GCS_PATH: "{{ var.json.idc.container_registry.destination_path }}"
           TARGET_PROJECT_ID: "{{ var.json.idc.container_registry.destination_project_id }}"
           USER_ID: "{{ var.json.idc.container_registry.impersonation_account }}"
         resources:
           limit_memory: "8G"
           limit_cpu: "3"
 
-  #   - operator: "GoogleCloudStorageToGoogleCloudStorageOperator"
-
-  #     # Task description
-  #     description: "Task to run a GoogleCloudStorageToGoogleCloudStorageOperator"
-
-  #     args:
-  #       # Arguments supported by this operator:
-  #       # https://airflow.apache.org/docs/apache-airflow-providers-google/stable/_api/airflow/providers/google/cloud/transfers/gcs_to_gcs/index.html
-  #       task_id: "transfer_image_files"
-  #       source_bucket: "{{ var.json.idc.source_bucket }}"
-  #       source_object: "{{ var.json.idc.source_object }}"
-  #       destination_bucket: "{{ var.json.idc.destination_bucket }}"
-  #       destination_object: "{{ var.json.idc.destination_path }}"
-  #       move_object: False
-  #       replace: False
-  #       impersonation_chain: "{{ var.json.idc.impersonation_account }}"
+    - operator: "GoogleCloudStorageToGoogleCloudStorageOperator"
+      description: "Task to run a GoogleCloudStorageToGoogleCloudStorageOperator"
+      args:
+        task_id: "transfer_image_files"
+        source_bucket: "{{ var.json.idc.source_bucket }}"
+        source_object: "{{ var.json.idc.source_object }}"
+        destination_bucket: "{{ var.json.idc.destination_bucket }}"
+        destination_object: "{{ var.json.idc.destination_path }}"
+        move_object: False
+        replace: False
+        impersonation_chain: "{{ var.json.idc.impersonation_account }}"
 
   graph_paths:
-    - "transfer_idc_db"
-  #   - "transfer_image_files"
+    - "transfer_idc_v1_db >> transfer_image_files"
