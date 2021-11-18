@@ -55,7 +55,8 @@ dag:
           SOURCE_GCS_FILES: "{{ var.json.idc.container_registry.source_object }}"
           SOURCE_PROJECT_ID: "{{ var.json.idc.container_registry.source_project }}"
           SOURCE_DATASET_PREFIX: "{{ var.json.idc.container_registry.source_dataset_prefix }}"
-          SOURCE_DATASET_LIST: "{{ var.json.idc.container_registry.source_dataset_list }}"
+          SOURCE_DATASET_LIST: >-
+            [ "idc_v1", "idc_v2", "idc_v3", "idc_v4", "idc_v5" ]
           TARGET_GCS_BUCKET: "{{ var.json.idc.container_registry.destination_bucket }}"
           TARGET_GCS_PATH: "{{ var.json.idc.container_registry.destination_path }}"
           TARGET_PROJECT_ID: "{{ var.json.idc.container_registry.destination_project_id }}"

@@ -12,16 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 import logging
 import os
 import pathlib
-
-from airflow.contrib.operators.gcs_to_gcs import (
-    GoogleCloudStorageToGoogleCloudStorageOperator,
-)
+import subprocess
 
 # from airflow.exceptions import AirflowException
 from google.cloud import bigquery, bigquery_datatransfer  # , storage
+
+# from airflow.contrib.operators.gcs_to_gcs import (
+#     GoogleCloudStorageToGoogleCloudStorageOperator,
+# )
+
 
 
 def main(
@@ -40,18 +43,43 @@ def main(
 
     # update_images(source_gcs_bucket, source_gcs_files, target_gcs_bucket, target_gcs_path)
 
-    # dataset_ver = obtain_project_new_version(project_id=project_id, dataset_prefix=dataset_prefix)
-    # logging.info(f"Dataset to use is {project_id}.{dataset_ver}")
+    # dataset_ver = obtain_project_new_version(project_id=source_project_id, dataset_prefix=source_dataset_prefix, credentials=user_id)
+    # logging.info(f"Dataset to use is {source_project_id}.{dataset_ver}")
 
-    transfer_bq_data(
+    transfer_bq_data_bash(
         source_project_id,
         source_dataset_list,
         target_project_id,
         user_id,
-        copy_display_name="copy executing...",
     )
 
+    # transfer_bq_data(
+    #     source_project_id,
+    #     source_dataset_list,
+    #     target_project_id,
+    #     user_id,
+    #     copy_display_name="copy executing...",
+    # )
+
     logging.info("IDC data migration process completed")
+
+
+def transfer_bq_data_bash(
+    source_project_id: str,
+    source_dataset_list: list,
+    target_project_id: str,
+    user_id: str
+):
+    for ds in source_dataset_list:
+        logging.info(f"Transferring dataset: {ds}")
+        cmd = f"bq mk --transfer_config --project_id={target_project_id} --data_source=cross_region_copy --target_dataset={ds} --display_name='copy_{ds}' " \
+                + "--params='" + '{"' \
+                + "source_dataset_id" + '":"' + f"{ds}" + '",' \
+                + '"' + "source_project_id" + '":"' + f"{source_project_id}" + '",' \
+                + '"' + "overwrite_destination_table" + '":"' + "true" + '"}' + "'"
+        logging.info(f"command: {cmd}")
+        subprocess.call(cmd,shell=True)
+
 
 
 def transfer_bq_data(
@@ -76,12 +104,12 @@ def transfer_bq_data(
                 "source_dataset_id": ds,  # source_dataset_id,
             },
             # schedule="every 24 hours",
-            user_id=user_id
+            # user_id=user_id
             # authenticationinfo=user_id
         )
         transfer_config = transfer_client.create_transfer_config(
             parent=transfer_client.common_project_path(target_project_id),
-            transfer_config=transfer_config,
+            transfer_config=transfer_config, service_account_name=user_id
         )
         logging.info(f"Created transfer config {transfer_config.name}")
 
@@ -114,7 +142,7 @@ def download_images(
     copy_image_files.execute(None)
 
 
-def list_datasets(project_id: str = "") -> None:
+def list_datasets(credentials: str, project_id: str = "") -> None:
     if project_id:
         client = bigquery.Client(project=project_id)
     else:
@@ -150,11 +178,17 @@ def list_projects() -> None:
         logging.info("{} client does not contain any projects.".format(client))
 
 
-def obtain_project_new_version(project_id: str = "", dataset_prefix: str = "") -> str:
+def obtain_project_new_version(project_id: str = "", dataset_prefix: str = "", credentials: str = "") -> str:
     if project_id:
-        client = bigquery.Client(project=project_id)
+        # if credentials:
+        #     client = bigquery.Client(project=project_id, credentials=credentials)
+        # else:
+            client = bigquery.Client(project=project_id)
     else:
-        client = bigquery.Client()
+        # if credentials:
+        #     client = bigquery.Client(credentials=credentials)
+        # else:
+            client = bigquery.Client()
     project = client.project
     logging.info("Identifying max version of dataset in project {}:".format(project))
     proj_dataset = ""
@@ -187,7 +221,7 @@ if __name__ == "__main__":
         # chunksize=os.environ["CHUNKSIZE"],
         source_project_id=os.environ["SOURCE_PROJECT_ID"],
         source_dataset_prefix=os.environ["SOURCE_DATASET_PREFIX"],
-        source_dataset_list=os.environ["SOURCE_DATASET_LIST"],
+        source_dataset_list=json.loads(os.environ["SOURCE_DATASET_LIST"]),
         target_project_id=os.environ["TARGET_PROJECT_ID"],
         user_id=os.environ["USER_ID"],
     )
