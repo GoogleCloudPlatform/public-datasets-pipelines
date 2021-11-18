@@ -169,7 +169,7 @@ dag:
     - operator: "CloudDataTransferServiceGCSToGCSOperator"
 
       # Task description
-      description: "Task to run a GCS to GCS operation using Google resources"
+      description: "Task to run a GCS to GCS operation using the Cloud Data Transfer Service"
 
       # Arguments supported by this operator:
       # https://airflow.apache.org/docs/apache-airflow-providers-google/stable/_api/airflow/providers/google/cloud/operators/cloud_storage_transfer_service/index.html#airflow.providers.google.cloud.operators.cloud_storage_transfer_service.CloudDataTransferServiceGCSToGCSOperator
