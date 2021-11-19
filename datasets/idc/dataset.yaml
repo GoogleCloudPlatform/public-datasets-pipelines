@@ -23,26 +23,26 @@ dataset:
 resources:
 
   - type: storage_bucket
-    name: "public-datasets-dev-idc"
+    name: "idc"
     uniform_bucket_level_access: True
     location: US
 
   - type: bigquery_dataset
     dataset_id: idc_v1
-    description: IDC data migration v1 data
+    description: Imaging Data Commons (IDC) - The Cancer Imaging Archive (TCIA) v1 data
 
   - type: bigquery_dataset
     dataset_id: idc_v2
-    description: IDC data migration v2 data
+    description: Imaging Data Commons (IDC) - The Cancer Imaging Archive (TCIA) v2 data
 
   - type: bigquery_dataset
     dataset_id: idc_v3
-    description: IDC data migration v3 data
+    description: Imaging Data Commons (IDC) - The Cancer Imaging Archive (TCIA) v3 data
 
   - type: bigquery_dataset
     dataset_id: idc_v4
-    description: IDC data migration v4 data
+    description: Imaging Data Commons (IDC) - The Cancer Imaging Archive (TCIA) v4 data
 
   - type: bigquery_dataset
     dataset_id: idc_v5
-    description: IDC data migration v5 data
+    description: Imaging Data Commons (IDC) - The Cancer Imaging Archive (TCIA) v5 data

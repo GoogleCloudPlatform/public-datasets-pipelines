@@ -15,17 +15,17 @@
 
 from airflow import DAG
 from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
-from airflow.providers.google.cloud.transfers import gcs_to_gcs
+from airflow.providers.google.cloud.operators import cloud_storage_transfer_service
 
 default_args = {
     "owner": "Google",
     "depends_on_past": False,
-    "start_date": "2021-03-01",
+    "start_date": "2021-11-17",
 }
 
 
 with DAG(
-    dag_id="idc.idc_tcia_transfer_bq_data",
+    dag_id="idc.copy_tcia_data",
     default_args=default_args,
     max_active_runs=1,
     schedule_interval="@monthly",
@@ -33,10 +33,24 @@ with DAG(
     default_view="graph",
 ) as dag:
 
+    # Task to run a GCS to GCS operation using Google resources
+    copy_gcs_bucket = (
+        cloud_storage_transfer_service.CloudDataTransferServiceGCSToGCSOperator(
+            task_id="copy_gcs_bucket",
+            timeout=43200,
+            retries=0,
+            wait=True,
+            project_id="bigquery-public-data-dev",
+            source_bucket="{{ var.json.idc.source_bucket }}",
+            destination_bucket="{{ var.json.idc.destination_bucket}}",
+            google_impersonation_chain="{{ var.json.idc.service_account }}",
+        )
+    )
+
     # Transfer IDC Databases
-    transfer_idc_db = kubernetes_pod.KubernetesPodOperator(
-        task_id="transfer_idc_db",
-        name="transfer_idc",
+    copy_bq_datasets = kubernetes_pod.KubernetesPodOperator(
+        task_id="copy_bq_datasets",
+        name="copy_bq_datasets",
         namespace="default",
         affinity={
             "nodeAffinity": {
@@ -56,26 +70,15 @@ with DAG(
             }
         },
         image_pull_policy="Always",
-        image="{{ var.json.idc.container_registry.run_csv_transform_kub }}",
+        image="{{ var.json.idc.container_registry.copy_bq_datasets }}",
         env_vars={
-            "SOURCE_PROJECT_ID": "{{ var.json.idc.container_registry.source_project }}",
-            "SOURCE_DATASET_LIST": '[ "idc_v1", "idc_v2", "idc_v3", "idc_v4", "idc_v5" ]',
-            "TARGET_PROJECT_ID": "{{ var.json.idc.container_registry.destination_project_id }}",
-            "USER_ID": "{{ var.json.idc.container_registry.impersonation_account }}",
+            "SOURCE_PROJECT_ID": "{{ var.json.idc.source_project_id }}",
+            "TARGET_PROJECT_ID": "{{ var.json.idc.target_project_id }}",
+            "SERVICE_ACCOUNT": "{{ var.json.idc.service_account }}",
+            "DATASET_NAME": "idc",
+            "DATASET_VERSIONS": '["v1", "v2", "v3", "v4", "v5"]',
         },
-        resources={"limit_memory": "8G", "limit_cpu": "3"},
+        resources={"limit_memory": "128M", "limit_cpu": "200m"},
     )
 
-    # Task to run a GoogleCloudStorageToGoogleCloudStorageOperator
-    transfer_image_files = gcs_to_gcs.GCSToGCSOperator(
-        task_id="transfer_image_files",
-        source_bucket="{{ var.json.idc.source_bucket }}",
-        source_object="{{ var.json.idc.source_object }}",
-        destination_bucket="{{ var.json.idc.destination_bucket }}",
-        destination_object="{{ var.json.idc.destination_path }}",
-        move_object=False,
-        replace=False,
-        impersonation_chain="{{ var.json.idc.impersonation_account }}",
-    )
-
-    transfer_idc_v1_db >> transfer_image_files
+    copy_gcs_bucket >> copy_bq_datasets

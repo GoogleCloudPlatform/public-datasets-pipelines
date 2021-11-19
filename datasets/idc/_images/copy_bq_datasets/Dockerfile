@@ -17,5 +17,5 @@ ENV PYTHONUNBUFFERED True
 COPY requirements.txt ./
 RUN python3 -m pip install --no-cache-dir -r requirements.txt
 WORKDIR /custom
-COPY ./csv_transform.py .
-CMD ["python3", "csv_transform.py"]
+COPY ./script.py .
+CMD ["python3", "script.py"]

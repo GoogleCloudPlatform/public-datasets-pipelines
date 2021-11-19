@@ -1,5 +1,0 @@
-google-cloud-storage
-google-cloud-bigquery
-google-cloud-bigquery_datatransfer
-bigquery
-bq
