@@ -73,9 +73,9 @@ def main(
             if chunk_number == 0:
                 subprocess.run(["cp", target_file_batch, target_file])
             else:
-                subprocess.check_call(f"sed -i '1d' {target_file_batch}", shell=True)
+                subprocess.check_call([f"sed -i '1d' {target_file_batch}"], shell=True)
                 subprocess.check_call(
-                    f"cat {target_file_batch} >> {target_file}", shell=True
+                    [f"cat {target_file_batch} >> {target_file}"], shell=True
                 )
             subprocess.run(["rm", target_file_batch])
 

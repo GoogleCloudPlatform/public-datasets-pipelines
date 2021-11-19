@@ -19,7 +19,7 @@ resources:
     description: "Landsat_Index Dataset"
 
 dag:
-  airflow_version: 1
+  airflow_version: 2
   initialize:
     dag_id: landsat_index
     default_args:
@@ -63,8 +63,8 @@ dag:
           RENAME_MAPPINGS: >-
             {"SCENE_ID" : "scene_id","SPACECRAFT_ID" : "spacecraft_id","SENSOR_ID" : "sensor_id","DATE_ACQUIRED" : "date_acquired","COLLECTION_NUMBER" : "collection_number","COLLECTION_CATEGORY" : "collection_category","DATA_TYPE" : "data_type","WRS_PATH" : "wrs_path","WRS_ROW" : "wrs_row","CLOUD_COVER" : "cloud_cover","NORTH_LAT" : "north_lat","SOUTH_LAT" : "south_lat","WEST_LON" : "west_lon","EAST_LON" : "east_lon","TOTAL_SIZE" : "total_size","BASE_URL" : "base_url","PRODUCT_ID" : "product_id","SENSING_TIME" : "sensing_time"}
         resources:
-          limit_memory: "8G"
-          limit_cpu: "3"
+          limit_memory: "4G"
+          limit_cpu: "1"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
