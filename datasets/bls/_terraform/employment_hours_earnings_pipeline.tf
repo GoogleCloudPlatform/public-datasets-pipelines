@@ -15,7 +15,7 @@
  */
 
 
-resource "google_bigquery_table" "employment_hours_earnings" {
+resource "google_bigquery_table" "bls_employment_hours_earnings" {
   project    = var.project_id
   dataset_id = "bls"
   table_id   = "employment_hours_earnings"
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "employment_hours_earnings" {
   ]
 }
 
-output "bigquery_table-employment_hours_earnings-table_id" {
-  value = google_bigquery_table.employment_hours_earnings.table_id
+output "bigquery_table-bls_employment_hours_earnings-table_id" {
+  value = google_bigquery_table.bls_employment_hours_earnings.table_id
 }
 
-output "bigquery_table-employment_hours_earnings-id" {
-  value = google_bigquery_table.employment_hours_earnings.id
+output "bigquery_table-bls_employment_hours_earnings-id" {
+  value = google_bigquery_table.bls_employment_hours_earnings.id
 }

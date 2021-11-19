@@ -15,7 +15,7 @@
  */
 
 
-resource "google_bigquery_table" "c_cpi_u" {
+resource "google_bigquery_table" "bls_c_cpi_u" {
   project    = var.project_id
   dataset_id = "bls"
   table_id   = "c_cpi_u"
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "c_cpi_u" {
   ]
 }
 
-output "bigquery_table-c_cpi_u-table_id" {
-  value = google_bigquery_table.c_cpi_u.table_id
+output "bigquery_table-bls_c_cpi_u-table_id" {
+  value = google_bigquery_table.bls_c_cpi_u.table_id
 }
 
-output "bigquery_table-c_cpi_u-id" {
-  value = google_bigquery_table.c_cpi_u.id
+output "bigquery_table-bls_c_cpi_u-id" {
+  value = google_bigquery_table.bls_c_cpi_u.id
 }
