@@ -40,7 +40,7 @@ with DAG(
             timeout=43200,
             retries=0,
             wait=True,
-            project_id="bigquery-public-data-dev",
+            project_id="bigquery-public-data",
             source_bucket="{{ var.json.idc.source_bucket }}",
             destination_bucket="{{ var.json.idc.destination_bucket}}",
             google_impersonation_chain="{{ var.json.idc.service_account }}",
