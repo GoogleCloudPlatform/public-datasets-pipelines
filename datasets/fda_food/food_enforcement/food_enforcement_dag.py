@@ -56,18 +56,23 @@ with DAG(
             }
         },
         image_pull_policy="Always",
-        image="{{ var.json.fda_food.container_registry.run_csv_transform_kub_food_enforcement }}",
+        image="{{ var.json.fda_food.container_registry.run_csv_transform_kub }}",
         env_vars={
+            "PIPELINE": "food enforcement",
             "SOURCE_URL": "https://download.open.fda.gov/food/enforcement/food-enforcement-0001-of-0001.json.zip",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
             "CHUNKSIZE": "750000",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/fda_food/food_enforcement/files/data_output.csv",
-            "DATA_NAMES": '[ "country", "city", "address_1", "reason_for_recall", "address_2",\n  "product_quantity", "code_info", "center_classification_date", "distribution_pattern", "state",\n  "product_description", "report_date", "classification", "openfda", "recalling_firm",\n  "recall_number", "initial_firm_notification", "product_type", "event_id", "termination_date",\n  "more_code_info", "recall_initiation_date", "postal_code", "voluntary_mandated", "status" ]',
-            "DATA_DTYPES": '{ "country": "str", "city": "str", "address_1": "str", "reason_for_recall": "str", "address_2": "str",\n  "product_quantity": "str", "code_info": "str", "center_classification_date": "str", "distribution_pattern": "str", "state": "str",\n  "product_description": "str", "report_date": "str", "classification": "str", "openfda": "str", "recalling_firm": "str",\n  "recall_number": "str", "initial_firm_notification": "str", "product_type": "str", "event_id": "str", "termination_date": "str",\n  "more_code_info": "str", "recall_initiation_date": "str", "postal_code": "str", "voluntary_mandated": "str", "status": "str" }',
+            "DATA_NAMES": '[ "status", "city", "state", "country", "classification",\n  "openfda", "product_type", "event_id", "recalling_firm", "address_1",\n  "address_2", "postal_code", "voluntary_mandated", "initial_firm_notification", "distribution_pattern",\n  "recall_number", "product_description", "product_quantity", "reason_for_recall", "recall_initiation_date",\n  "center_classification_date", "report_date", "code_info", "more_code_info", "termination_date" ]',
+            "DATA_DTYPES": '{ "status": "str", "city": "str", "state": "str", "country": "str", "classification": "str",\n  "openfda": "str", "product_type": "str", "event_id": "str", "recalling_firm": "str", "address_1": "str",\n  "address_2": "str", "postal_code": "str", "voluntary_mandated": "str", "initial_firm_notification": "str", "distribution_pattern": "str",\n  "recall_number": "str", "product_description": "str", "product_quantity": "str", "reason_for_recall": "str", "recall_initiation_date": "str",\n  "center_classification_date": "str", "report_date": "str", "code_info": "str", "more_code_info": "str", "termination_date": "str" }',
+            "RENAME_MAPPINGS": "{ }",
+            "REORDER_HEADERS": '[ "classification", "center_classification_date", "report_date", "postal_code", "termination_date",\n  "recall_initiation_date", "recall_number", "city", "event_id", "distribution_pattern",\n  "recalling_firm", "voluntary_mandated", "state", "reason_for_recall", "initial_firm_notification",\n  "status", "product_type", "country", "product_description", "code_info",\n  "address_1", "address_2", "product_quantity", "more_code_info" ]',
+            "RECORD_PATH": "",
+            "META": '[ "status", "city", "state", "country", "classification",\n  "openfda", "product_type", "event_id", "recalling_firm", "address_1",\n  "address_2", "postal_code", "voluntary_mandated", "initial_firm_notification", "distribution_pattern",\n  "recall_number", "product_description", "product_quantity", "reason_for_recall", "recall_initiation_date",\n  "center_classification_date", "report_date", "code_info", "more_code_info", "termination_date" ]',
         },
-        resources={"limit_memory": "8G", "limit_cpu": "3"},
+        resources={"limit_memory": "4G", "limit_cpu": "1"},
     )
 
     # Task to load CSV data to a BigQuery table

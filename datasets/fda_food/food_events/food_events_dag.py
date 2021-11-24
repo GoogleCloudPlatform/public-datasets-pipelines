@@ -56,8 +56,9 @@ with DAG(
             }
         },
         image_pull_policy="Always",
-        image="{{ var.json.fda_food.container_registry.run_csv_transform_kub_food_events }}",
+        image="{{ var.json.fda_food.container_registry.run_csv_transform_kub }}",
         env_vars={
+            "PIPELINE": "food events",
             "SOURCE_URL": "https://download.open.fda.gov/food/event/food-event-0001-of-0001.json.zip",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
@@ -67,6 +68,9 @@ with DAG(
             "DATA_NAMES": '[ "role", "name_brand", "industry_code", "industry_name", "report_number",\n  "outcomes", "date_created", "reactions", "date_started", "consumer.age",\n  "consumer.age_unit", "consumer.gender" ]',
             "DATA_DTYPES": '{ "role": "str", "name_brand": "str", "industry_code": "str", "industry_name": "str", "report_number": "str",\n  "outcomes": "str", "date_created": "str", "reactions": "str", "date_started": "str", "consumer.age": "float64",\n  "consumer.age_unit": "str", "consumer.gender": "str" }',
             "RENAME_MAPPINGS": '{ "report_number": "report_number", "reactions": "reactions", "outcomes": "outcomes", "name_brand": "products_brand_name", "industry_code": "products_industry_code",\n  "role": "products_role", "industry_name": "products_industry_name", "date_created": "date_created", "date_started": "date_started", "consumer.gender": "consumer_gender",\n  "consumer.age": "consumer_age", "consumer.age_unit": "consumer_age_unit" }',
+            "REORDER_HEADERS": '[ "report_number", "reactions", "outcomes", "products_brand_name", "products_industry_code",\n  "products_role", "products_industry_name", "date_created", "date_started", "consumer_gender",\n  "consumer_age", "consumer_age_unit" ]',
+            "RECORD_PATH": "products",
+            "META": '[\n  "report_number", "outcomes", "date_created", "reactions", "date_started",\n  ["consumer", "age"], ["consumer", "age_unit"], ["consumer", "gender"]\n]',
         },
         resources={"limit_memory": "8G", "limit_cpu": "3"},
     )

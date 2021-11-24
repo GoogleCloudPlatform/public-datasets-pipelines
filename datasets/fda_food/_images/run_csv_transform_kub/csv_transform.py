@@ -27,6 +27,7 @@ from google.cloud import storage
 
 
 def main(
+    pipeline: str,
     source_url: str,
     source_file: pathlib.Path,
     target_file: pathlib.Path,
@@ -36,6 +37,9 @@ def main(
     data_names: typing.List[str],
     data_dtypes: dict,
     rename_mappings: dict,
+    reorder_headers_list: typing.List[str],
+    record_path: str,
+    meta: typing.List[str]
 ) -> None:
 
     logging.info("Food and Drug Administration (FDA) - Food Events process started")
@@ -47,15 +51,17 @@ def main(
 
     download_file_http(source_url, source_zip_file, False)
     unpack_file(source_zip_file, dest_path, "zip")
-    convert_json_to_csv(source_json_file, source_file, separator="|")
+    convert_json_to_csv(source_json_file, source_file, record_path=record_path, meta=meta, separator="|")
 
     process_source_file(
+        pipeline,
         source_file,
         target_file,
         data_names,
         data_dtypes,
         int(chunksize),
         rename_mappings,
+        reorder_headers_list
     )
 
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
@@ -64,12 +70,14 @@ def main(
 
 
 def process_source_file(
+    pipeline: str,
     source_file: str,
     target_file: str,
     names: list,
     dtypes: dict,
     chunksize: int,
     rename_mappings: dict,
+    reorder_headers_list: list
 ) -> None:
     logging.info(f"Opening batch file {source_file}")
     with pd.read_csv(
@@ -97,7 +105,9 @@ def process_source_file(
                 target_file_batch=target_file_batch,
                 target_file=target_file,
                 rename_mappings=rename_mappings,
-                skip_header=(not chunk_number == 0),
+                reorder_headers_list=reorder_headers_list,
+                pipeline=pipeline,
+                skip_header=(not chunk_number == 0)
             )
 
 
@@ -106,11 +116,27 @@ def process_chunk(
     target_file_batch: str,
     target_file: str,
     rename_mappings: dict,
+    reorder_headers_list: list,
+    pipeline: str,
     skip_header: bool = False,
 ) -> None:
+    if pipeline == 'food events':
+        df = process_food_events(df, rename_mappings, reorder_headers_list)
+    elif pipeline == 'food enforcement':
+        df = process_food_enforcement(df, reorder_headers_list)
+    else:
+        logging.info('pipeline was not specified')
+    save_to_new_file(df, file_path=str(target_file_batch))
+    append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
 
+
+def process_food_events(
+    df: pd.DataFrame,
+    rename_mappings: dict,
+    reorder_headers_list: list
+) -> None:
     df = rename_headers(df, rename_mappings)
-    df = reorder_headers(df)
+    df = reorder_headers(df, reorder_headers_list)
     list_data = ["reactions", "outcomes"]
     df = format_list_data(df, list_data)
     df = replace_nan_data(df)
@@ -124,8 +150,25 @@ def process_chunk(
     df = replace_nulls(df, col_list)
     date_col_list = ["date_started", "date_created"]
     df = resolve_date_format(df, date_col_list, "%Y%m%d", "%Y-%m-%d", True)
-    save_to_new_file(df, file_path=str(target_file_batch))
-    append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
+
+    return df
+
+
+def process_food_enforcement(
+    df: pd.DataFrame,
+    reorder_headers_list: list
+) -> None:
+    df = trim_whitespace(df)
+    date_col_list = [
+        "center_classification_date",
+        "report_date",
+        "termination_date",
+        "recall_initiation_date",
+    ]
+    df = resolve_date_format(df, date_col_list, "%Y%m%d", "%Y-%m-%d", True)
+    df = reorder_headers(df, reorder_headers_list)
+
+    return df
 
 
 def replace_nan_data(df: pd.DataFrame) -> pd.DataFrame:
@@ -200,7 +243,6 @@ def convert_dt_format(
     else:
         dt_str = "<blank>"
 
-    # return datetime.datetime.strptime(dt_str, from_format).strftime("%Y-%m-%d %H:%M:%S")
     return rtnval
 
 
@@ -216,10 +258,6 @@ def trim_whitespace(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def save_to_new_file(df, file_path) -> None:
-    # df = df[ df['reactions'] == 'RASH, DIARRHOEA']
-    # df = df[ df['report_number'].isin(['80961']) ]
-    # df = df[ df['report_number'] != '150055']
-    # df = df[ df['report_number'] != '172480']
     df.to_csv(file_path, index=False)
 
 
@@ -275,24 +313,9 @@ def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
     return df
 
 
-def reorder_headers(df: pd.DataFrame) -> pd.DataFrame:
+def reorder_headers(df: pd.DataFrame, reorder_headers_list: list) -> pd.DataFrame:
     logging.info("Re-ordering Headers")
-    df = df[
-        [
-            "report_number",
-            "reactions",
-            "outcomes",
-            "products_brand_name",
-            "products_industry_code",
-            "products_role",
-            "products_industry_name",
-            "date_created",
-            "date_started",
-            "consumer_gender",
-            "consumer_age",
-            "consumer_age_unit",
-        ]
-    ]
+    df = df.reindex(columns=reorder_headers_list)
 
     return df
 
@@ -313,28 +336,26 @@ def unpack_file(infile: str, dest_path: str, compression_type: str = "zip") -> N
 
 
 def convert_json_to_csv(
-    source_file_json: str, source_file_csv: str, separator: str = "|"
+    source_file_json: str,
+    source_file_csv: str,
+    record_path: str,
+    meta: list,
+    separator: str = "|"
 ) -> None:
     logging.info(f"Converting JSON file {source_file_json} to {source_file_csv}")
     f = open(
         source_file_json.strip(),
     )
     json_data = json.load(f)
-    df = pd.json_normalize(
-        json_data["results"],
-        record_path=["products"],
-        meta=[
-            "report_number",
-            "outcomes",
-            "date_created",
-            "reactions",
-            "date_started",
-            ["consumer", "age"],
-            ["consumer", "age_unit"],
-            ["consumer", "gender"],
-        ],
-        errors="ignore",
-    )
+    if record_path:
+        df = pd.json_normalize(
+            json_data["results"],
+            record_path=[record_path],
+            meta=meta,
+            errors="ignore",
+        )
+    else:
+        df = pd.DataFrame(json_data["results"])
     for col in df.columns:
         df[col] = df[col].fillna("")
     df.to_csv(
@@ -353,6 +374,7 @@ if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
 
     main(
+        pipeline=os.environ["PIPELINE"],
         source_url=os.environ["SOURCE_URL"],
         source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
@@ -362,4 +384,7 @@ if __name__ == "__main__":
         data_names=json.loads(os.environ["DATA_NAMES"]),
         data_dtypes=json.loads(os.environ["DATA_DTYPES"]),
         rename_mappings=json.loads(os.environ["RENAME_MAPPINGS"]),
+        reorder_headers_list=json.loads(os.environ["REORDER_HEADERS"]),
+        record_path=os.environ["RECORD_PATH"],
+        meta=json.loads(os.environ["META"])
     )
