@@ -180,5 +180,5 @@ if __name__ == "__main__":
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
         pipeline_english_name=os.environ["PIPELINE_ENGLISH_NAME"],
         transform_list=json.loads(os.environ["TRANSFORM_LIST"]),
-        reorder_header_list=json.loads(os.environ["REORDER_HEADERS"]),
+        reorder_header_list=json.loads(os.environ["REORDER_HEADERS"])
     )

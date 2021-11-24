@@ -13,9 +13,10 @@
 # limitations under the License.
 
 
-from airflow import DAG
 from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow import DAG
 from airflow.providers.google.cloud.transfers import gcs_to_bigquery
+
 
 default_args = {
     "owner": "Google",
