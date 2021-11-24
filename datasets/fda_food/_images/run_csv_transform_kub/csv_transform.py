@@ -39,7 +39,7 @@ def main(
     rename_mappings: dict,
     reorder_headers_list: typing.List[str],
     record_path: str,
-    meta: typing.List[str]
+    meta: typing.List[str],
 ) -> None:
 
     logging.info("Food and Drug Administration (FDA) - Food Events process started")
@@ -51,7 +51,9 @@ def main(
 
     download_file_http(source_url, source_zip_file, False)
     unpack_file(source_zip_file, dest_path, "zip")
-    convert_json_to_csv(source_json_file, source_file, record_path=record_path, meta=meta, separator="|")
+    convert_json_to_csv(
+        source_json_file, source_file, record_path=record_path, meta=meta, separator="|"
+    )
 
     process_source_file(
         pipeline,
@@ -61,7 +63,7 @@ def main(
         data_dtypes,
         int(chunksize),
         rename_mappings,
-        reorder_headers_list
+        reorder_headers_list,
     )
 
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
@@ -77,7 +79,7 @@ def process_source_file(
     dtypes: dict,
     chunksize: int,
     rename_mappings: dict,
-    reorder_headers_list: list
+    reorder_headers_list: list,
 ) -> None:
     logging.info(f"Opening batch file {source_file}")
     with pd.read_csv(
@@ -107,7 +109,7 @@ def process_source_file(
                 rename_mappings=rename_mappings,
                 reorder_headers_list=reorder_headers_list,
                 pipeline=pipeline,
-                skip_header=(not chunk_number == 0)
+                skip_header=(not chunk_number == 0),
             )
 
 
@@ -120,20 +122,18 @@ def process_chunk(
     pipeline: str,
     skip_header: bool = False,
 ) -> None:
-    if pipeline == 'food events':
+    if pipeline == "food events":
         df = process_food_events(df, rename_mappings, reorder_headers_list)
-    elif pipeline == 'food enforcement':
+    elif pipeline == "food enforcement":
         df = process_food_enforcement(df, reorder_headers_list)
     else:
-        logging.info('pipeline was not specified')
+        logging.info("pipeline was not specified")
     save_to_new_file(df, file_path=str(target_file_batch))
     append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
 
 
 def process_food_events(
-    df: pd.DataFrame,
-    rename_mappings: dict,
-    reorder_headers_list: list
+    df: pd.DataFrame, rename_mappings: dict, reorder_headers_list: list
 ) -> None:
     df = rename_headers(df, rename_mappings)
     df = reorder_headers(df, reorder_headers_list)
@@ -154,10 +154,7 @@ def process_food_events(
     return df
 
 
-def process_food_enforcement(
-    df: pd.DataFrame,
-    reorder_headers_list: list
-) -> None:
+def process_food_enforcement(df: pd.DataFrame, reorder_headers_list: list) -> None:
     df = trim_whitespace(df)
     date_col_list = [
         "center_classification_date",
@@ -340,7 +337,7 @@ def convert_json_to_csv(
     source_file_csv: str,
     record_path: str,
     meta: list,
-    separator: str = "|"
+    separator: str = "|",
 ) -> None:
     logging.info(f"Converting JSON file {source_file_json} to {source_file_csv}")
     f = open(
@@ -386,5 +383,5 @@ if __name__ == "__main__":
         rename_mappings=json.loads(os.environ["RENAME_MAPPINGS"]),
         reorder_headers_list=json.loads(os.environ["REORDER_HEADERS"]),
         record_path=os.environ["RECORD_PATH"],
-        meta=json.loads(os.environ["META"])
+        meta=json.loads(os.environ["META"]),
     )
