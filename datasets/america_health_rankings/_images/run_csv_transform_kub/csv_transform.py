@@ -22,7 +22,6 @@ import typing
 import pandas as pd
 import requests
 from google.cloud import storage
-from openpyxl import Workbook
 
 
 def main(

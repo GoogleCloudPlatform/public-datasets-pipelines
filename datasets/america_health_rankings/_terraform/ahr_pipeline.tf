@@ -15,7 +15,7 @@
  */
 
 
-resource "google_bigquery_table" "america_health_rankings_america_health_rankings" {
+resource "google_bigquery_table" "america_health_rankings" {
   project    = var.project_id
   dataset_id = "america_health_rankings"
   table_id   = "america_health_rankings"
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "america_health_rankings_america_health_ranking
   ]
 }
 
-output "bigquery_table-america_health_rankings_america_health_rankings-table_id" {
-  value = google_bigquery_table.america_health_rankings_america_health_rankings.table_id
+output "bigquery_table-america_health_rankings-table_id" {
+  value = google_bigquery_table.america_health_rankings.table_id
 }
 
-output "bigquery_table-america_health_rankings_america_health_rankings-id" {
-  value = google_bigquery_table.america_health_rankings_america_health_rankings.id
+output "bigquery_table-america_health_rankings-id" {
+  value = google_bigquery_table.america_health_rankings.id
 }
