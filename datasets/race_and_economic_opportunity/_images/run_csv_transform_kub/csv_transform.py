@@ -74,6 +74,7 @@ def main(
 def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
     df.rename(columns=rename_mappings, inplace=True)
 
+
 def save_to_new_file(df: pd.DataFrame, file_path: str) -> None:
     df.to_csv(file_path, float_format="%.0f", index=False)
 
