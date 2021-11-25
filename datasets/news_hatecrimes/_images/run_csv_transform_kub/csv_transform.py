@@ -58,8 +58,7 @@ def main(
     logging.info("Transform: Change date format... ")
     # Old format: MM/dd/yy hh:mm:ss aa
     # New format: yyyy-MM-dd HH:mm:ss
-    df['date'] = pd.to_datetime(df['date'], infer_datetime_format=True)
-
+    df["date"] = pd.to_datetime(df["date"], infer_datetime_format=True)
 
     logging.info("Transform: Reordering headers..")
     df = df[headers]
