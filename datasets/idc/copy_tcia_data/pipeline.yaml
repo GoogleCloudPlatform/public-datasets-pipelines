@@ -23,7 +23,7 @@ dag:
     default_args:
       owner: "Google"
       depends_on_past: False
-      start_date: '2021-11-17'
+      start_date: '2021-11-23'
     max_active_runs: 1
     schedule_interval: "@monthly"
     catchup: False
