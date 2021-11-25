@@ -25,6 +25,6 @@ resources:
     dataset_id: news_hatecrimes
     description: News Hatecrimes dataset
   - type: storage_bucket
-    name: news_hatecrimes
+    name: news-hatecrimes
     uniform_bucket_level_access: True
     location: US
