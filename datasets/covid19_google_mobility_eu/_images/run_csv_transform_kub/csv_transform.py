@@ -83,7 +83,7 @@ def main(
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
     logging.info(
-        f"COVID19 Google Mobility (EU) process completed at "
+        "COVID19 Google Mobility (EU) process completed at "
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
 
