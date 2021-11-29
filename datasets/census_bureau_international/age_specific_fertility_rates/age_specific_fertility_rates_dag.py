@@ -59,20 +59,16 @@ with DAG(
         image="{{ var.json.census_bureau_international.container_registry.run_csv_transform_kub }}",
         env_vars={
             "SOURCE_URL": '"gs://pdp-feeds-staging/Census/idbzip/IDBext028.csv",\n"gs://pdp-feeds-staging/Census/idbzip/IDBextCTYS.csv"\n',
-            "SOURCE_FILE": "files/data.csv",
-            "TARGET_FILE": "files/data_output.csv",
-            "CHUNKSIZE": "750000",
+            "SOURCE_FILE": "data.csv",
+            "TARGET_FILE": "data_output.csv",
+            "CHUNKSIZE": "50000",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/census_bureau_international/age_specific_fertility_rates/data_output.csv",
             "REORDER_HEADERS": '[ "country_code", "country_name", "year", "fertility_rate_15_19", "fertility_rate_20_24",\n  "fertility_rate_25_29", "fertility_rate_30_34", "fertility_rate_35_39", "fertility_rate_40_44",\n  "fertility_rate_45_49", "total_fertility_rate", "gross_reproduction_rate", "sex_ratio_at_birth" ]',
-            "TRANSFORM_LIST": [
-                "obtain_population",
-                "obtain_country",
-                "reorder_headers",
-            ],
+            "TRANSFORM_LIST": '[ "obtain_population", "obtain_country", "reorder_headers" ]',
             "PIPELINE_ENGLISH_NAME": "International Database (Country Names - Fertility Rates) Delivery",
         },
-        resources={"limit_memory": "8G", "limit_cpu": "3"},
+        resources={"limit_memory": "4G", "limit_cpu": "1"},
     )
 
     # Task to load CSV data to a BigQuery table

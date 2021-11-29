@@ -56,19 +56,19 @@ with DAG(
             }
         },
         image_pull_policy="Always",
-        image="{{ var.json.census_bureau_international.container_registry.run_csv_transform_kub_midyear_population }}",
+        image="{{ var.json.census_bureau_international.container_registry.run_csv_transform_kub }}",
         env_vars={
             "SOURCE_URL": '"gs://pdp-feeds-staging/Census/idbzip/IDBext001.csv",\n"gs://pdp-feeds-staging/Census/idbzip/IDBextCTYS.csv"\n',
-            "SOURCE_FILE": "files/data.csv",
-            "TARGET_FILE": "files/data_output.csv",
-            "CHUNKSIZE": "750000",
+            "SOURCE_FILE": "data.csv",
+            "TARGET_FILE": "data_output.csv",
+            "CHUNKSIZE": "50000",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/census_bureau_international/midyear_population/data_output.csv",
-            "TRANSFORM_LIST": '[ "obtain_population", "obtain_country", "reorder_headers" ]',
             "REORDER_HEADERS": '[ "country_code", "country_name", "year", "midyear_population" ]',
-            "PIPELINE_ENGLISH_NAME": '"International Database (Country Names - Total Midyear Population) Delivery"',
+            "TRANSFORM_LIST": '[ "obtain_population", "obtain_country", "reorder_headers" ]',
+            "PIPELINE_ENGLISH_NAME": "International Database (Country Names - Total Midyear Population) Delivery",
         },
-        resources={"limit_memory": "8G", "limit_cpu": "3"},
+        resources={"limit_memory": "4G", "limit_cpu": "1"},
     )
 
     # Task to load CSV data to a BigQuery table

@@ -52,18 +52,16 @@ dag:
                       values:
                         - "pool-e2-standard-4"
         image_pull_policy: "Always"
-        image: "{{ var.json.census_bureau_international.container_registry.run_csv_transform_kub_midyear_population_agespecific }}"
+        image: "{{ var.json.census_bureau_international.container_registry.run_csv_transform_kub }}"
         env_vars:
           SOURCE_URL: |
             "gs://pdp-feeds-staging/Census/merge_age_code/idbzip/IDBext194.csv",
             "gs://pdp-feeds-staging/Census/idbzip/IDBextCTYS.csv"
-          SOURCE_FILE: "files/data.csv"
-          TARGET_FILE: "files/data_output.csv"
-          CHUNKSIZE: "750000"
+          SOURCE_FILE: "data.csv"
+          TARGET_FILE: "data_output.csv"
+          CHUNKSIZE: "50000"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/census_bureau_international/midyear_population_agespecific/data_output.csv"
-          TRANSFORM_LIST: >-
-            [ "obtain_population", "obtain_country", "unpivot_population_data", "resolve_sex", "reorder_headers" ]
           REORDER_HEADERS: >-
             [ "country_code", "country_name", "year", "sex", "max_age",
               "population_age_0", "population_age_1", "population_age_2", "population_age_3", "population_age_4",
@@ -87,12 +85,13 @@ dag:
               "population_age_90", "population_age_91", "population_age_92", "population_age_93", "population_age_94",
               "population_age_95", "population_age_96", "population_age_97", "population_age_98", "population_age_99",
               "population_age_100" ]
-          PIPELINE_ENGLISH_NAME: >-
-            "International Database (Country Names - Midyear Population, by Age and Country Code) Delivery"
+          TRANSFORM_LIST: >-
+            [ "obtain_population", "obtain_country", "unpivot_population_data", "resolve_sex", "reorder_headers" ]
+          PIPELINE_ENGLISH_NAME: "International Database (Country Names - Midyear Population, by Age and Country Code) Delivery"
 
         resources:
-          limit_memory: "8G"
-          limit_cpu: "3"
+          limit_memory: "4G"
+          limit_cpu: "1"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"

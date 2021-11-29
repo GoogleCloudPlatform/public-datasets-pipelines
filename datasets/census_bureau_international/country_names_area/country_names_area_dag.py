@@ -59,16 +59,16 @@ with DAG(
         image="{{ var.json.census_bureau_international.container_registry.run_csv_transform_kub }}",
         env_vars={
             "SOURCE_URL": "gs://pdp-feeds-staging/Census/idbzip/IDBextCTYS.csv",
-            "SOURCE_FILE": "files/data.csv",
-            "TARGET_FILE": "files/data_output.csv",
-            "CHUNKSIZE": "750000",
+            "SOURCE_FILE": "data.csv",
+            "TARGET_FILE": "data_output.csv",
+            "CHUNKSIZE": "50000",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/census_bureau_international/country_names_area/data_output.csv",
-            "TRANSFORM_LIST": ["obtain_country", "reorder_headers"],
-            "REORDER_HEADERS": ["country_code", "country_name", "country_area"],
+            "REORDER_HEADERS": '[ "country_code", "country_name", "country_area" ]',
+            "TRANSFORM_LIST": '[ "obtain_country", "reorder_headers" ]',
             "PIPELINE_ENGLISH_NAME": "International Database (Country Names) Delivery",
         },
-        resources={"limit_memory": "8G", "limit_cpu": "3"},
+        resources={"limit_memory": "4G", "limit_cpu": "1"},
     )
 
     # Task to load CSV data to a BigQuery table
