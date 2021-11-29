@@ -58,7 +58,7 @@ dag:
           START_YEAR: "1990"
           SOURCE_FILE: "files/data.csv"
           TARGET_FILE: "files/data_output.csv"
-          CHUNKSIZE: "2500000"
+          CHUNKSIZE: "500000"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/epa_historical_air_quality/pressure_daily_summary/files/data_output.csv"
           DATA_NAMES: >-
@@ -76,8 +76,8 @@ dag:
               "method_code": "str", "method_name": "str", "local_site_name": "str", "address": "str", "state_name": "str",
               "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "datetime64[ns]" }
         resources:
-          limit_memory: "4G"
-          limit_cpu: "1"
+          limit_memory: "8G"
+          limit_cpu: "3"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
