@@ -73,10 +73,7 @@ def process_chunk(
 
 def rename_headers(df: pd.DataFrame) -> None:
     logging.info("Renaming Headers")
-    header_names = {
-        "data.regions.region_id": "region_id",
-        "data.regions.name": "name"
-    }
+    header_names = {"data.regions.region_id": "region_id", "data.regions.name": "name"}
 
     df.rename(columns=header_names)
 
@@ -93,12 +90,7 @@ def filter_empty_data(df: pd.DataFrame) -> pd.DataFrame:
 
 def reorder_headers(df: pd.DataFrame) -> pd.DataFrame:
     logging.info("Reordering Headers")
-    df = df[
-        [
-            "region_id",
-            "name"
-        ]
-    ]
+    df = df[["region_id", "name"]]
 
     return df
 
