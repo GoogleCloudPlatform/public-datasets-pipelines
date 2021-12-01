@@ -37,14 +37,18 @@ def main(
     filter_rows_list: typing.List[str],
     geom_field_list: typing.List[typing.List],
     field_type_list: typing.List[typing.List],
-    reorder_headers_list: typing.List[str]
+    reorder_headers_list: typing.List[str],
 ) -> None:
 
     logging.info(f"{logging_english_name} started")
 
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
-    source_file_stations_json = str(source_file).replace(".csv", "") + f"_{json_node_name}.json"
-    download_file_json(source_url_json, source_file_stations_json, source_file, json_node_name)
+    source_file_stations_json = (
+        str(source_file).replace(".csv", "") + f"_{json_node_name}.json"
+    )
+    download_file_json(
+        source_url_json, source_file_stations_json, source_file, json_node_name
+    )
 
     chunksz = int(chunksize)
 
@@ -73,7 +77,7 @@ def main(
                 filter_rows_list,
                 geom_field_list,
                 field_type_list,
-                reorder_headers_list
+                reorder_headers_list,
             )
 
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
@@ -91,7 +95,7 @@ def process_chunk(
     filter_rows_list: list,
     geom_field_list: list,
     field_type_list: list,
-    reorder_headers_list: list
+    reorder_headers_list: list,
 ) -> None:
     for transform in transform_list:
         if transform == "rename_headers":
@@ -187,7 +191,7 @@ def download_file_json(
     source_url_json: str,
     source_file_json: str,
     source_file_csv: str,
-    json_node_name: str
+    json_node_name: str,
 ) -> None:
 
     # this function extracts the json from a source url and creates
@@ -234,5 +238,5 @@ if __name__ == "__main__":
         filter_rows_list=json.loads(os.environ["FILTER_ROWS_LIST"]),
         geom_field_list=json.loads(os.environ["GEOM_FIELD_LIST"]),
         field_type_list=json.loads(os.environ["FIELD_TYPE_LIST"]),
-        reorder_headers_list=json.loads(os.environ["REORDER_HEADERS"])
+        reorder_headers_list=json.loads(os.environ["REORDER_HEADERS"]),
     )
