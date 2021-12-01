@@ -64,8 +64,16 @@ with DAG(
             "CHUNKSIZE": "750000",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/san_francisco_bikeshare/bikeshare_station_status/data_output.csv",
+            "LOGGING_ENGLISH_NAME": "San francisco bikeshare station status",
+            "TRANSFORM_LIST": '[ "rename_headers", "filter_empty_data", "reorder_headers" ]',
+            "REORDER_HEADERS": '[ "station_id", "num_bikes_available", "num_bikes_disabled", "num_docks_available", "num_docks_disabled",\n  "is_installed", "is_renting", "is_returning", "last_reported", "num_ebikes_available",\n  "eightd_has_available_keys" ]',
+            "RENAME_HEADERS": '{ "data.stations.eightd_has_available_keys": "eightd_has_available_keys",\n  "data.stations.is_installed": "is_installed", "data.stations.is_renting": "is_renting",\n  "data.stations.is_returning": "is_returning", "data.stations.last_reported": "last_reported",\n  "data.stations.num_bikes_available": "num_bikes_available", "data.stations.num_bikes_disabled": "num_bikes_disabled",\n  "data.stations.num_docks_available": "num_docks_available", "data.stations.num_docks_disabled": "num_docks_disabled",\n  "data.stations.num_ebikes_available": "num_ebikes_available", "data.stations.station_id": "station_id" }',
+            "GEOM_FIELD_LIST": "[ [ ] ]",
+            "JSON_NODE_NAME": "stations",
+            "FIELD_TYPE_LIST": "[ [ ] ]",
+            "FILTER_ROWS_LIST": '[ [ "station_id", "num_bikes_available", "num_docks_available", "is_installed", "is_renting",\n    "is_returning", "last_reported" ] ]',
         },
-        resources={"limit_memory": "8G", "limit_cpu": "3"},
+        resources={"limit_memory": "2G", "limit_cpu": "1"},
     )
 
     # Task to load CSV data to a BigQuery table

@@ -64,8 +64,16 @@ with DAG(
             "CHUNKSIZE": "750000",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/san_francisco_bikeshare/bikeshare_station_info/data_output.csv",
+            "LOGGING_ENGLISH_NAME": "San francisco bikeshare station info",
+            "TRANSFORM_LIST": '[ "rename_headers", "filter_empty_data", "generate_location", "resolve_datatypes", "reorder_headers" ]',
+            "REORDER_HEADERS": '[ "station_id", "name", "short_name", "lat", "lon",\n  "region_id", "rental_methods", "capacity", "external_id", "eightd_has_key_dispenser",\n  "has_kiosk", "station_geom" ]',
+            "RENAME_HEADERS": '{ "data.stations.station_id": "station_id", "data.stations.name": "name",\n  "data.stations.short_name": "short_name", "data.stations.lat": "lat",\n  "data.stations.lon": "lon", "data.stations.region_id": "region_id",\n  "data.stations.rental_methods": "rental_methods", "data.stations.capacity": "capacity",\n  "data.stations.eightd_has_key_dispenser": "eightd_has_key_dispenser", "data.stations.has_kiosk": "has_kiosk",\n  "data.stations.external_id": "external_id" }',
+            "GEOM_FIELD_LIST": '[ [ "station_geom", "lat", "lon" ] ]',
+            "JSON_NODE_NAME": "stations",
+            "FIELD_TYPE_LIST": '[ [ "region_id", "Int64" ] ]',
+            "FILTER_ROWS_LIST": '[ [ "station_id", "name", "lat", "lon"] ]',
         },
-        resources={"limit_memory": "8G", "limit_cpu": "3"},
+        resources={"limit_memory": "2G", "limit_cpu": "1"},
     )
 
     # Task to load CSV data to a BigQuery table

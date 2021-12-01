@@ -60,6 +60,21 @@ dag:
           CHUNKSIZE: "50000"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/san_francisco_bikeshare/bikeshare_regions/data_output.csv"
+          LOGGING_ENGLISH_NAME: "San francisco bikeshare regions"
+          TRANSFORM_LIST: >-
+            [ "rename_headers", "filter_empty_data", "reorder_headers" ]
+          REORDER_HEADERS: >-
+            [ "region_id", "name" ]
+          RENAME_HEADERS: >-
+            { "data.regions.region_id": "region_id", "data.regions.name": "name" }
+          GEOM_FIELD_LIST: >-
+            [ [ ] ]
+          JSON_NODE_NAME: "regions"
+          FIELD_TYPE_LIST: >-
+            [ [ ] ]
+          FILTER_ROWS_LIST: >-
+            [ [ "region_id", "name" ] ]
+
         resources:
           limit_memory: "4G"
           limit_cpu: "1"
