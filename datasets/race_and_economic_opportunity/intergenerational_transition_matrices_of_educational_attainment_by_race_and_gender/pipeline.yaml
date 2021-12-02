@@ -17,17 +17,17 @@ resources:
 
   - type: bigquery_table
     # Required Properties:
-    table_id: non_parametric_estimates_of_income_ranks_for_second_generation_immigrant
+    table_id: intergenerational_transition_matrices_of_educational_attainment_by_race_and_gender
 
     # Description of the table
-    description: "Non-Parametric Estimates of Income Ranks for Second Generation Immigrant Children by Parent Income, Country of Origin, and Gender"
+    description: "Intergenerational Transition Matrices of Educational Attainment by Race and Gender"
 
 dag:
 
   airflow_version: 1
 
   initialize:
-    dag_id: non_parametric_estimates_of_income_ranks_for_second_generation_immigrant
+    dag_id: intergenerational_transition_matrices_of_educational_attainment_by_race_and_gender
     default_args:
       owner: "Google"
 
@@ -48,11 +48,11 @@ dag:
 
       args:
 
-        task_id: "non_parametric_transform_csv"
+        task_id: "transition_matrices_transform_csv"
         startup_timeout_seconds: 600
 
         # The name of the pod in which the task will run. This will be used (plus a random suffix) to generate a pod id
-        name: "race_and_economic_opportunity_non_parametric_estimates_of_income_ranks_for_second_generation_immigrant"
+        name: "race_and_economic_opportunity_intergenerational_transition_matrices_of_educational_attainment_by_race_and_gender"
 
         # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
         namespace: "default"
@@ -74,16 +74,16 @@ dag:
 
         # Set the environment variables you need initialized in the container. Use these as input variables for the script your container is expected to perform.
         env_vars:
-          SOURCE_URL: "https://www2.census.gov/ces/opportunity/race_table6b_nonpar.csv"
+          SOURCE_URL: "https://www2.census.gov/ces/opportunity/table_7.csv"
           SOURCE_FILE: "files/data.csv"
           TARGET_FILE: "files/data_output.csv"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
-          TARGET_GCS_PATH: "data/race_and_economic_opportunity/non_parametric_estimates_of_income_ranks_for_second_generation_immigrant/data_output.csv"
+          TARGET_GCS_PATH: "data/race_and_economic_opportunity/intergenerational_transition_matrices_of_educational_attainment_by_race_and_gender/data_output.csv"
           CSV_HEADERS: >-
            ["kid_race","gender","count","kid_edu1","kid_edu2","kid_edu3","kid_edu4","par_edu1","par_edu2","par_edu3","par_edu4","kid_edu1_cond_par_edu1","kid_edu1_cond_par_edu2","kid_edu1_cond_par_edu3","kid_edu1_cond_par_edu4","kid_edu2_cond_par_edu1","kid_edu2_cond_par_edu2","kid_edu2_cond_par_edu3","kid_edu2_cond_par_edu4","kid_edu3_cond_par_edu1","kid_edu3_cond_par_edu2","kid_edu3_cond_par_edu3","kid_edu3_cond_par_edu4","kid_edu4_cond_par_edu1","kid_edu4_cond_par_edu2","kid_edu4_cond_par_edu3","kid_edu4_cond_par_edu4"]
           RENAME_MAPPINGS: >-
            {"kid_race": "kid_race","gender": "gender","count": "count","kid_edu1": "kid_edu1","kid_edu2": "kid_edu2","kid_edu3": "kid_edu3","kid_edu4": "kid_edu4","par_edu1": "par_edu1","par_edu2": "par_edu2","par_edu3": "par_edu3","par_edu4": "par_edu4","kid_edu1_cond_par_edu1": "kid_edu1_cond_par_edu1","kid_edu1_cond_par_edu2": "kid_edu1_cond_par_edu2","kid_edu1_cond_par_edu3": "kid_edu1_cond_par_edu3","kid_edu1_cond_par_edu4": "kid_edu1_cond_par_edu4","kid_edu2_cond_par_edu1": "kid_edu2_cond_par_edu1","kid_edu2_cond_par_edu2": "kid_edu2_cond_par_edu2","kid_edu2_cond_par_edu3": "kid_edu2_cond_par_edu3","kid_edu2_cond_par_edu4": "kid_edu2_cond_par_edu4","kid_edu3_cond_par_edu1": "kid_edu3_cond_par_edu1","kid_edu3_cond_par_edu2": "kid_edu3_cond_par_edu2","kid_edu3_cond_par_edu3": "kid_edu3_cond_par_edu3","kid_edu3_cond_par_edu4": "kid_edu3_cond_par_edu4","kid_edu4_cond_par_edu1": "kid_edu4_cond_par_edu1","kid_edu4_cond_par_edu2": "kid_edu4_cond_par_edu2","kid_edu4_cond_par_edu3": "kid_edu4_cond_par_edu3","kid_edu4_cond_par_edu4": "kid_edu4_cond_par_edu4"}
-          PIPELINE_NAME: "non_parametric_estimates_of_income_ranks_for_second_generation_immigrant"
+          PIPELINE_NAME: "intergenerational_transition_matrices_of_educational_attainment_by_race_and_gender"
 
         # Set resource limits for the pod here. For resource units in Kubernetes, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes
         resources:
@@ -93,15 +93,15 @@ dag:
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
       args:
-        task_id: "load_non_parametric_to_bq"
+        task_id: "load_transition_matrices_to_bq"
 
         # The GCS bucket where the CSV file is located in.
         bucket: "{{ var.value.composer_bucket }}"
 
         # The GCS object path for the CSV file
-        source_objects: ["data/race_and_economic_opportunity/non_parametric_estimates_of_income_ranks_for_second_generation_immigrant/data_output.csv"]
+        source_objects: ["data/race_and_economic_opportunity/intergenerational_transition_matrices_of_educational_attainment_by_race_and_gender/data_output.csv"]
         source_format: "CSV"
-        destination_project_dataset_table: "race_and_economic_opportunity.non_parametric_estimates_of_income_ranks_for_second_generation_immigrant"
+        destination_project_dataset_table: "race_and_economic_opportunity.intergenerational_transition_matrices_of_educational_attainment_by_race_and_gender"
 
         # Use this if your CSV file contains a header row
         skip_leading_rows: 1
@@ -199,4 +199,4 @@ dag:
             mode: "NULLABLE"
 
   graph_paths:
-    - "non_parametric_transform_csv >> load_non_parametric_to_bq"
+    - "transition_matrices_transform_csv >> load_transition_matrices_to_bq"

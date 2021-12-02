@@ -15,12 +15,12 @@
  */
 
 
-resource "google_bigquery_table" "race_and_economic_opportunity_non_parametric_estimates_of_income_ranks_for_second_generation_immigrant" {
+resource "google_bigquery_table" "race_and_economic_opportunity_intergenerational_transition_matrices_of_educational_attainment_by_race_and_gender" {
   project    = var.project_id
   dataset_id = "race_and_economic_opportunity"
-  table_id   = "non_parametric_estimates_of_income_ranks_for_second_generation_immigrant"
+  table_id   = "intergenerational_transition_matrices_of_educational_attainment_by_race_and_gender"
 
-  description = "Non-Parametric Estimates of Income Ranks for Second Generation Immigrant Children by Parent Income, Country of Origin, and Gender"
+  description = "Intergenerational Transition Matrices of Educational Attainment by Race and Gender"
 
 
 
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "race_and_economic_opportunity_non_parametric_e
   ]
 }
 
-output "bigquery_table-race_and_economic_opportunity_non_parametric_estimates_of_income_ranks_for_second_generation_immigrant-table_id" {
-  value = google_bigquery_table.race_and_economic_opportunity_non_parametric_estimates_of_income_ranks_for_second_generation_immigrant.table_id
+output "bigquery_table-race_and_economic_opportunity_intergenerational_transition_matrices_of_educational_attainment_by_race_and_gender-table_id" {
+  value = google_bigquery_table.race_and_economic_opportunity_intergenerational_transition_matrices_of_educational_attainment_by_race_and_gender.table_id
 }
 
-output "bigquery_table-race_and_economic_opportunity_non_parametric_estimates_of_income_ranks_for_second_generation_immigrant-id" {
-  value = google_bigquery_table.race_and_economic_opportunity_non_parametric_estimates_of_income_ranks_for_second_generation_immigrant.id
+output "bigquery_table-race_and_economic_opportunity_intergenerational_transition_matrices_of_educational_attainment_by_race_and_gender-id" {
+  value = google_bigquery_table.race_and_economic_opportunity_intergenerational_transition_matrices_of_educational_attainment_by_race_and_gender.id
 }

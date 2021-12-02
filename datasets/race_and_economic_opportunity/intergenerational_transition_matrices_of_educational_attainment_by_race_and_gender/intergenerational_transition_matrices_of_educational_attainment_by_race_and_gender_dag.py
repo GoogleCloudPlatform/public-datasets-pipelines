@@ -24,7 +24,7 @@ default_args = {
 
 
 with DAG(
-    dag_id="race_and_economic_opportunity.non_parametric_estimates_of_income_ranks_for_second_generation_immigrant",
+    dag_id="race_and_economic_opportunity.intergenerational_transition_matrices_of_educational_attainment_by_race_and_gender",
     default_args=default_args,
     max_active_runs=1,
     schedule_interval="@daily",
@@ -33,10 +33,10 @@ with DAG(
 ) as dag:
 
     # Run CSV transform within kubernetes pod
-    non_parametric_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
-        task_id="non_parametric_transform_csv",
+    transition_matrices_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+        task_id="transition_matrices_transform_csv",
         startup_timeout_seconds=600,
-        name="race_and_economic_opportunity_non_parametric_estimates_of_income_ranks_for_second_generation_immigrant",
+        name="race_and_economic_opportunity_intergenerational_transition_matrices_of_educational_attainment_by_race_and_gender",
         namespace="default",
         affinity={
             "nodeAffinity": {
@@ -58,27 +58,27 @@ with DAG(
         image_pull_policy="Always",
         image="{{ var.json.race_and_economic_opportunity.container_registry.run_csv_transform_kub }}",
         env_vars={
-            "SOURCE_URL": "https://www2.census.gov/ces/opportunity/race_table6b_nonpar.csv",
+            "SOURCE_URL": "https://www2.census.gov/ces/opportunity/table_7.csv",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
-            "TARGET_GCS_PATH": "data/race_and_economic_opportunity/non_parametric_estimates_of_income_ranks_for_second_generation_immigrant/data_output.csv",
+            "TARGET_GCS_PATH": "data/race_and_economic_opportunity/intergenerational_transition_matrices_of_educational_attainment_by_race_and_gender/data_output.csv",
             "CSV_HEADERS": '["kid_race","gender","count","kid_edu1","kid_edu2","kid_edu3","kid_edu4","par_edu1","par_edu2","par_edu3","par_edu4","kid_edu1_cond_par_edu1","kid_edu1_cond_par_edu2","kid_edu1_cond_par_edu3","kid_edu1_cond_par_edu4","kid_edu2_cond_par_edu1","kid_edu2_cond_par_edu2","kid_edu2_cond_par_edu3","kid_edu2_cond_par_edu4","kid_edu3_cond_par_edu1","kid_edu3_cond_par_edu2","kid_edu3_cond_par_edu3","kid_edu3_cond_par_edu4","kid_edu4_cond_par_edu1","kid_edu4_cond_par_edu2","kid_edu4_cond_par_edu3","kid_edu4_cond_par_edu4"]',
             "RENAME_MAPPINGS": '{"kid_race": "kid_race","gender": "gender","count": "count","kid_edu1": "kid_edu1","kid_edu2": "kid_edu2","kid_edu3": "kid_edu3","kid_edu4": "kid_edu4","par_edu1": "par_edu1","par_edu2": "par_edu2","par_edu3": "par_edu3","par_edu4": "par_edu4","kid_edu1_cond_par_edu1": "kid_edu1_cond_par_edu1","kid_edu1_cond_par_edu2": "kid_edu1_cond_par_edu2","kid_edu1_cond_par_edu3": "kid_edu1_cond_par_edu3","kid_edu1_cond_par_edu4": "kid_edu1_cond_par_edu4","kid_edu2_cond_par_edu1": "kid_edu2_cond_par_edu1","kid_edu2_cond_par_edu2": "kid_edu2_cond_par_edu2","kid_edu2_cond_par_edu3": "kid_edu2_cond_par_edu3","kid_edu2_cond_par_edu4": "kid_edu2_cond_par_edu4","kid_edu3_cond_par_edu1": "kid_edu3_cond_par_edu1","kid_edu3_cond_par_edu2": "kid_edu3_cond_par_edu2","kid_edu3_cond_par_edu3": "kid_edu3_cond_par_edu3","kid_edu3_cond_par_edu4": "kid_edu3_cond_par_edu4","kid_edu4_cond_par_edu1": "kid_edu4_cond_par_edu1","kid_edu4_cond_par_edu2": "kid_edu4_cond_par_edu2","kid_edu4_cond_par_edu3": "kid_edu4_cond_par_edu3","kid_edu4_cond_par_edu4": "kid_edu4_cond_par_edu4"}',
-            "PIPELINE_NAME": "non_parametric_estimates_of_income_ranks_for_second_generation_immigrant",
+            "PIPELINE_NAME": "intergenerational_transition_matrices_of_educational_attainment_by_race_and_gender",
         },
         resources={"limit_memory": "2G", "limit_cpu": "1"},
     )
 
     # Task to load CSV data to a BigQuery table
-    load_non_parametric_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
-        task_id="load_non_parametric_to_bq",
+    load_transition_matrices_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+        task_id="load_transition_matrices_to_bq",
         bucket="{{ var.value.composer_bucket }}",
         source_objects=[
-            "data/race_and_economic_opportunity/non_parametric_estimates_of_income_ranks_for_second_generation_immigrant/data_output.csv"
+            "data/race_and_economic_opportunity/intergenerational_transition_matrices_of_educational_attainment_by_race_and_gender/data_output.csv"
         ],
         source_format="CSV",
-        destination_project_dataset_table="race_and_economic_opportunity.non_parametric_estimates_of_income_ranks_for_second_generation_immigrant",
+        destination_project_dataset_table="race_and_economic_opportunity.intergenerational_transition_matrices_of_educational_attainment_by_race_and_gender",
         skip_leading_rows=1,
         write_disposition="WRITE_TRUNCATE",
         schema_fields=[
@@ -112,4 +112,4 @@ with DAG(
         ],
     )
 
-    non_parametric_transform_csv >> load_non_parametric_to_bq
+    transition_matrices_transform_csv >> load_transition_matrices_to_bq
