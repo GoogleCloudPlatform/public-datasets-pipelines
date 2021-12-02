@@ -31,7 +31,7 @@ def main(
     pipeline_english_name: str,
     transform_list: list,
     reorder_headers_list: list,
-    filter_headers_list: list
+    filter_headers_list: list,
 ) -> None:
 
     logging.info(f"{pipeline_english_name} process started")
@@ -194,5 +194,5 @@ if __name__ == "__main__":
         pipeline_english_name=os.environ["PIPELINE_ENGLISH_NAME"],
         transform_list=json.loads(os.environ["TRANSFORM_LIST"]),
         reorder_headers_list=json.loads(os.environ["REORDER_HEADERS"]),
-        filter_headers_list=json.loads(os.environ["FILTER_HEADERS"])
+        filter_headers_list=json.loads(os.environ["FILTER_HEADERS"]),
     )
