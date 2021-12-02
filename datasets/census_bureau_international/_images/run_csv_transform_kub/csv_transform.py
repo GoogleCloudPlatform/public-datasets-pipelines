@@ -30,7 +30,8 @@ def main(
     target_gcs_path: str,
     pipeline_english_name: str,
     transform_list: list,
-    reorder_header_list: list,
+    reorder_headers_list: list,
+    filter_headers_list: list
 ) -> None:
 
     logging.info(f"{pipeline_english_name} process started")
@@ -58,14 +59,19 @@ def main(
             how="left",
         )
 
-    if "unpivot_population_data" in transform_list:
-        df = unpivot_population_data(df)
+    for transform in transform_list:
 
-    if "resolve_sex" in transform_list:
-        df = resolve_sex(df)
+        if transform == "unpivot_population_data":
+            df = unpivot_population_data(df)
 
-    if "reorder_headers" in transform_list:
-        df = reorder_headers(df, reorder_header_list)
+        if transform == "resolve_sex":
+            df = resolve_sex(df)
+
+        if transform == "filter_headers":
+            df = filter_headers(df, filter_headers_list)
+
+        if transform == "reorder_headers":
+            df = reorder_headers(df, reorder_headers_list)
 
     save_to_new_file(df, target_file, ",")
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
@@ -126,6 +132,14 @@ def resolve_sex(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def filter_headers(df: pd.DataFrame, filter_headers_list: list) -> pd.DataFrame:
+    for column in filter_headers_list:
+        logging.info(f"Dropping column {column}")
+        df = df.drop(column, 1)
+
+    return df
+
+
 def download_file_gs(source_url: str, source_file: pathlib.Path) -> None:
     logging.info(f"Downloading {source_url} to {source_file}")
     with open(source_file, "wb+") as file_obj:
@@ -179,5 +193,6 @@ if __name__ == "__main__":
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
         pipeline_english_name=os.environ["PIPELINE_ENGLISH_NAME"],
         transform_list=json.loads(os.environ["TRANSFORM_LIST"]),
-        reorder_header_list=json.loads(os.environ["REORDER_HEADERS"]),
+        reorder_headers_list=json.loads(os.environ["REORDER_HEADERS"]),
+        filter_headers_list=json.loads(os.environ["FILTER_HEADERS"])
     )

@@ -16,13 +16,13 @@
 resources:
 
   - type: bigquery_table
-    table_id: "country_names_area"
+    table_id: "birth_death_growth_rates"
     description: "census_bureau_internationalspc"
 
 dag:
   airflow_version: 2
   initialize:
-    dag_id: country_names_area
+    dag_id: birth_death_growth_rates
     default_args:
       owner: "Google"
       depends_on_past: False
@@ -40,7 +40,7 @@ dag:
       args:
 
         task_id: "transform_csv"
-        name: "country_names_area"
+        name: "age_specific_fertility_rates"
         namespace: "default"
         affinity:
           nodeAffinity:
@@ -54,19 +54,22 @@ dag:
         image_pull_policy: "Always"
         image: "{{ var.json.census_bureau_international.container_registry.run_csv_transform_kub }}"
         env_vars:
-          SOURCE_URL: "gs://pdp-feeds-staging/Census/idbzip/IDBextCTYS.csv"
+          SOURCE_URL: |
+            "gs://pdp-feeds-staging/Census/idbzip/IDBext008.csv",
+            "gs://pdp-feeds-staging/Census/idbzip/IDBextCTYS.csv"
           SOURCE_FILE: "data.csv"
           TARGET_FILE: "data_output.csv"
           CHUNKSIZE: "50000"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
-          TARGET_GCS_PATH: "data/census_bureau_international/country_names_area/data_output.csv"
+          TARGET_GCS_PATH: "data/census_bureau_international/birth_death_growth_rates/data_output.csv"
           REORDER_HEADERS: >-
-            [ "country_code", "country_name", "country_area" ]
+            [ "country_code", "country_name", "year", "crude_birth_rate", "crude_death_rate",
+              "net_migration", "rate_natural_increase", "growth_rate" ]
           FILTER_HEADERS: >-
-            [ ]
+            [ "country_area" ]
           TRANSFORM_LIST: >-
-            [ "obtain_country", "reorder_headers" ]
-          PIPELINE_ENGLISH_NAME: "International Database (Country Names) Delivery"
+            [ "obtain_population", "obtain_country", "filter_headers", "reorder_headers" ]
+          PIPELINE_ENGLISH_NAME: "International Database (Country Names - Growth Rates) Delivery"
         resources:
           limit_memory: "4G"
           limit_cpu: "1"
@@ -77,9 +80,9 @@ dag:
       args:
         task_id: "load_to_bq"
         bucket: "{{ var.value.composer_bucket }}"
-        source_objects: ["data/census_bureau_international/country_names_area/data_output.csv"]
+        source_objects: ["data/census_bureau_international/birth_death_growth_rates/data_output.csv"]
         source_format: "CSV"
-        destination_project_dataset_table: "{{ var.json.census_bureau_international.container_registry.country_names_area_destination_table }}"
+        destination_project_dataset_table: "{{ var.json.census_bureau_international.container_registry.birth_death_growth_rates_destination_table }}"
         skip_leading_rows: 1
         allow_quoted_newlines: True
         write_disposition: "WRITE_TRUNCATE"
@@ -92,9 +95,29 @@ dag:
             type: "STRING"
             description: "Country or area name"
             mode: "NULLABLE"
-          - name: "country_area"
+          - name: "year"
+            type: "INTEGER"
+            description: "Year"
+            mode: "REQUIRED"
+          - name: "crude_birth_rate"
             type: "FLOAT"
-            description: "Area in square kilometers"
+            description: "Crude birth rate (births per 1,000 population)"
+            mode: "NULLABLE"
+          - name: "crude_death_rate"
+            type: "FLOAT"
+            description: "Crude death rate (deaths per 1,000 population)"
+            mode: "NULLABLE"
+          - name: "net_migration"
+            type: "FLOAT"
+            description: "Net migration rate (net number of migrants per 1,000 population)"
+            mode: "NULLABLE"
+          - name: "rate_natural_increase"
+            type: "FLOAT"
+            description: "Rate of natural increase (percent)"
+            mode: "NULLABLE"
+          - name: "growth_rate"
+            type: "FLOAT"
+            description: "Growth rate (percent)"
             mode: "NULLABLE"
 
   graph_paths:

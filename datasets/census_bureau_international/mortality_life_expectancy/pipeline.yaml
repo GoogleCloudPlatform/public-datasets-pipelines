@@ -66,6 +66,8 @@ dag:
             [ "country_code", "country_name", "year", "infant_mortality", "infant_mortality_male",
               "infant_mortality_female", "life_expectancy", "life_expectancy_male", "life_expectancy_female", "mortality_rate_under5",
               "mortality_rate_under5_male", "mortality_rate_under5_female", "mortality_rate_1to4", "mortality_rate_1to4_male", "mortality_rate_1to4_female" ]
+          FILTER_HEADERS: >-
+            [ ]
           TRANSFORM_LIST: >-
             [ "obtain_population", "obtain_country", "reorder_headers" ]
           PIPELINE_ENGLISH_NAME: "International Database (Life Expectancy - Country Names) Delivery"

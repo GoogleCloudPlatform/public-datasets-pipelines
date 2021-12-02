@@ -65,6 +65,7 @@ with DAG(
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/census_bureau_international/midyear_population/data_output.csv",
             "REORDER_HEADERS": '[ "country_code", "country_name", "year", "midyear_population" ]',
+            "FILTER_HEADERS": "[ ]",
             "TRANSFORM_LIST": '[ "obtain_population", "obtain_country", "reorder_headers" ]',
             "PIPELINE_ENGLISH_NAME": "International Database (Country Names - Total Midyear Population) Delivery",
         },

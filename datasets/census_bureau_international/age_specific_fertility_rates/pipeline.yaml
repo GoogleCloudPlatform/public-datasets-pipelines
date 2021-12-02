@@ -66,6 +66,8 @@ dag:
             [ "country_code", "country_name", "year", "fertility_rate_15_19", "fertility_rate_20_24",
               "fertility_rate_25_29", "fertility_rate_30_34", "fertility_rate_35_39", "fertility_rate_40_44",
               "fertility_rate_45_49", "total_fertility_rate", "gross_reproduction_rate", "sex_ratio_at_birth" ]
+          FILTER_HEADERS: >-
+            [ ]
           TRANSFORM_LIST: >-
             [ "obtain_population", "obtain_country", "reorder_headers" ]
           PIPELINE_ENGLISH_NAME: "International Database (Country Names - Fertility Rates) Delivery"

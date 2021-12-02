@@ -85,13 +85,15 @@ dag:
               "population_age_90", "population_age_91", "population_age_92", "population_age_93", "population_age_94",
               "population_age_95", "population_age_96", "population_age_97", "population_age_98", "population_age_99",
               "population_age_100" ]
+          FILTER_HEADERS: >-
+            [ ]
           TRANSFORM_LIST: >-
             [ "obtain_population", "obtain_country", "unpivot_population_data", "resolve_sex", "reorder_headers" ]
           PIPELINE_ENGLISH_NAME: "International Database (Country Names - Midyear Population, by Age and Country Code) Delivery"
 
         resources:
-          limit_memory: "4G"
-          limit_cpu: "1"
+          limit_memory: "8G"
+          limit_cpu: "3"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"

@@ -85,6 +85,8 @@ dag:
               "population_age_90", "population_age_91", "population_age_92", "population_age_93", "population_age_94",
               "population_age_95", "population_age_96", "population_age_97", "population_age_98", "population_age_99",
               "population_age_100" ]
+          FILTER_HEADERS: >-
+            [ ]
           TRANSFORM_LIST: >-
             [ "obtain_population", "obtain_country", "resolve_sex", "reorder_headers" ]
           PIPELINE_ENGLISH_NAME: "International Database (Country Names - Midyear Population, by Age and Sex) Delivery"

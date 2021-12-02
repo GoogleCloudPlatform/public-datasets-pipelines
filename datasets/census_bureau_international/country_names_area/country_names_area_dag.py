@@ -65,6 +65,7 @@ with DAG(
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/census_bureau_international/country_names_area/data_output.csv",
             "REORDER_HEADERS": '[ "country_code", "country_name", "country_area" ]',
+            "FILTER_HEADERS": "[ ]",
             "TRANSFORM_LIST": '[ "obtain_country", "reorder_headers" ]',
             "PIPELINE_ENGLISH_NAME": "International Database (Country Names) Delivery",
         },
