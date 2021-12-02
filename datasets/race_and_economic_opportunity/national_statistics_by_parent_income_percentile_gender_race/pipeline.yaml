@@ -20,7 +20,7 @@ resources:
     table_id: national_statistics_by_parent_income_percentile_gender_race
 
     # Description of the table
-    description: "Race and Economic Opportunity Data Tables"
+    description: "National Statistics by Parent Income Percentile, Gender, and Race"
 
 dag:
 

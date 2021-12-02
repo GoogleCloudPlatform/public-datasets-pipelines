@@ -1,0 +1,325 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+resources:
+
+  - type: bigquery_table
+    # Required Properties:
+    table_id: national_child_and_parent_income_transition_matrices_by_race_and_gender
+
+    # Description of the table
+    description: "National Child and Parent Income Transition Matrices by Race and Gender"
+
+dag:
+
+  airflow_version: 1
+
+  initialize:
+    dag_id: national_child_and_parent_income_transition_matrices_by_race_and_gender
+    default_args:
+      owner: "Google"
+
+      # When set to True, keeps a task from getting triggered if the previous schedule for the task hasn’t succeeded
+      depends_on_past: False
+      start_date: '2021-03-01'
+    max_active_runs: 1
+    schedule_interval: "@daily"
+    catchup: False
+    default_view: graph
+
+  tasks:
+
+    - operator: "KubernetesPodOperator"
+
+      # Task description
+      description: "Run CSV transform within kubernetes pod"
+
+      args:
+
+        task_id: "income_transition_transform_csv"
+        startup_timeout_seconds: 600
+
+        # The name of the pod in which the task will run. This will be used (plus a random suffix) to generate a pod id
+        name: "race_and_economic_opportunity_national_child_and_parent_income_transition_matrices_by_race_and_gender"
+
+        # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
+        namespace: "default"
+
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: cloud.google.com/gke-nodepool
+                      operator: In
+                      values:
+                        - "pool-e2-standard-4"
+
+        image_pull_policy: "Always"
+
+        # Docker images will be built and pushed to GCR by default whenever the `scripts/generate_dag.py` is run. To skip building and pushing images, use the optional `--skip-builds` flag.
+        image: "{{ var.json.race_and_economic_opportunity.container_registry.run_csv_transform_kub }}"
+
+        # Set the environment variables you need initialized in the container. Use these as input variables for the script your container is expected to perform.
+        env_vars:
+          SOURCE_URL: "https://www2.census.gov/ces/opportunity/table_2-3.csv"
+          SOURCE_FILE: "files/data.csv"
+          TARGET_FILE: "files/data_output.csv"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/race_and_economic_opportunity/national_child_and_parent_income_transition_matrices_by_race_and_gender/data_output.csv"
+          CSV_HEADERS: >-
+           ["kid_race","gender","count","kir_q1","kir_q2","kir_q3","kir_q4","kir_q5","kfr_q1","kfr_q2","kfr_q3","kfr_q4","kfr_q5","par_q1","par_q2","par_q3","par_q4","par_q5","kir_q1_cond_par_q1","kir_q1_cond_par_q2","kir_q1_cond_par_q3","kir_q1_cond_par_q4","kir_q1_cond_par_q5","kir_q2_cond_par_q1","kir_q2_cond_par_q2","kir_q2_cond_par_q3","kir_q2_cond_par_q4","kir_q2_cond_par_q5","kir_q3_cond_par_q1","kir_q3_cond_par_q2","kir_q3_cond_par_q3","kir_q3_cond_par_q4","kir_q3_cond_par_q5","kir_q4_cond_par_q1","kir_q4_cond_par_q2","kir_q4_cond_par_q3","kir_q4_cond_par_q4","kir_q4_cond_par_q5","kir_q5_cond_par_q1","kir_q5_cond_par_q2","kir_q5_cond_par_q3","kir_q5_cond_par_q4","kir_q5_cond_par_q5","kfr_q1_cond_par_q1","kfr_q1_cond_par_q2","kfr_q1_cond_par_q3","kfr_q1_cond_par_q4","kfr_q1_cond_par_q5","kfr_q2_cond_par_q1","kfr_q2_cond_par_q2","kfr_q2_cond_par_q3","kfr_q2_cond_par_q4","kfr_q2_cond_par_q5","kfr_q3_cond_par_q1","kfr_q3_cond_par_q2","kfr_q3_cond_par_q3","kfr_q3_cond_par_q4","kfr_q3_cond_par_q5","kfr_q4_cond_par_q1","kfr_q4_cond_par_q2","kfr_q4_cond_par_q3","kfr_q4_cond_par_q4","kfr_q4_cond_par_q5","kfr_q5_cond_par_q1","kfr_q5_cond_par_q2","kfr_q5_cond_par_q3","kfr_q5_cond_par_q4","kfr_q5_cond_par_q5"]
+          RENAME_MAPPINGS: >-
+           {"kid_race": "kid_race","gender": "gender","count": "count","kir_q1": "kir_q1","kir_q2": "kir_q2","kir_q3": "kir_q3","kir_q4": "kir_q4","kir_q5": "kir_q5","kfr_q1": "kfr_q1","kfr_q2": "kfr_q2","kfr_q3": "kfr_q3","kfr_q4": "kfr_q4","kfr_q5": "kfr_q5","par_q1": "par_q1","par_q2": "par_q2","par_q3": "par_q3","par_q4": "par_q4","par_q5": "par_q5","kir_q1_cond_par_q1": "kir_q1_cond_par_q1","kir_q1_cond_par_q2": "kir_q1_cond_par_q2","kir_q1_cond_par_q3": "kir_q1_cond_par_q3","kir_q1_cond_par_q4": "kir_q1_cond_par_q4","kir_q1_cond_par_q5": "kir_q1_cond_par_q5","kir_q2_cond_par_q1": "kir_q2_cond_par_q1","kir_q2_cond_par_q2": "kir_q2_cond_par_q2","kir_q2_cond_par_q3": "kir_q2_cond_par_q3","kir_q2_cond_par_q4": "kir_q2_cond_par_q4","kir_q2_cond_par_q5": "kir_q2_cond_par_q5","kir_q3_cond_par_q1": "kir_q3_cond_par_q1","kir_q3_cond_par_q2": "kir_q3_cond_par_q2","kir_q3_cond_par_q3": "kir_q3_cond_par_q3","kir_q3_cond_par_q4": "kir_q3_cond_par_q4","kir_q3_cond_par_q5": "kir_q3_cond_par_q5","kir_q4_cond_par_q1": "kir_q4_cond_par_q1","kir_q4_cond_par_q2": "kir_q4_cond_par_q2","kir_q4_cond_par_q3": "kir_q4_cond_par_q3","kir_q4_cond_par_q4": "kir_q4_cond_par_q4","kir_q4_cond_par_q5": "kir_q4_cond_par_q5","kir_q5_cond_par_q1": "kir_q5_cond_par_q1","kir_q5_cond_par_q2": "kir_q5_cond_par_q2","kir_q5_cond_par_q3": "kir_q5_cond_par_q3","kir_q5_cond_par_q4": "kir_q5_cond_par_q4","kir_q5_cond_par_q5": "kir_q5_cond_par_q5","kfr_q1_cond_par_q1": "kfr_q1_cond_par_q1","kfr_q1_cond_par_q2": "kfr_q1_cond_par_q2","kfr_q1_cond_par_q3": "kfr_q1_cond_par_q3","kfr_q1_cond_par_q4": "kfr_q1_cond_par_q4","kfr_q1_cond_par_q5": "kfr_q1_cond_par_q5","kfr_q2_cond_par_q1": "kfr_q2_cond_par_q1","kfr_q2_cond_par_q2": "kfr_q2_cond_par_q2","kfr_q2_cond_par_q3": "kfr_q2_cond_par_q3","kfr_q2_cond_par_q4": "kfr_q2_cond_par_q4","kfr_q2_cond_par_q5": "kfr_q2_cond_par_q5","kfr_q3_cond_par_q1": "kfr_q3_cond_par_q1","kfr_q3_cond_par_q2": "kfr_q3_cond_par_q2","kfr_q3_cond_par_q3": "kfr_q3_cond_par_q3","kfr_q3_cond_par_q4": "kfr_q3_cond_par_q4","kfr_q3_cond_par_q5": "kfr_q3_cond_par_q5","kfr_q4_cond_par_q1": "kfr_q4_cond_par_q1","kfr_q4_cond_par_q2": "kfr_q4_cond_par_q2","kfr_q4_cond_par_q3": "kfr_q4_cond_par_q3","kfr_q4_cond_par_q4": "kfr_q4_cond_par_q4","kfr_q4_cond_par_q5": "kfr_q4_cond_par_q5","kfr_q5_cond_par_q1": "kfr_q5_cond_par_q1","kfr_q5_cond_par_q2": "kfr_q5_cond_par_q2","kfr_q5_cond_par_q3": "kfr_q5_cond_par_q3","kfr_q5_cond_par_q4": "kfr_q5_cond_par_q4","kfr_q5_cond_par_q5": "kfr_q5_cond_par_q5"}
+          PIPELINE_NAME: "national_child_and_parent_income_transition_matrices_by_race_and_gender"
+
+        # Set resource limits for the pod here. For resource units in Kubernetes, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes
+        resources:
+          limit_memory: "2G"
+          limit_cpu: "1"
+
+    - operator: "GoogleCloudStorageToBigQueryOperator"
+      description: "Task to load CSV data to a BigQuery table"
+      args:
+        task_id: "load_income_transition_to_bq"
+
+        # The GCS bucket where the CSV file is located in.
+        bucket: "{{ var.value.composer_bucket }}"
+
+        # The GCS object path for the CSV file
+        source_objects: ["data/race_and_economic_opportunity/national_child_and_parent_income_transition_matrices_by_race_and_gender/data_output.csv"]
+        source_format: "CSV"
+        destination_project_dataset_table: "race_and_economic_opportunity.national_child_and_parent_income_transition_matrices_by_race_and_gender"
+
+        # Use this if your CSV file contains a header row
+        skip_leading_rows: 1
+
+        # How to write data to the table: overwrite, append, or write if empty
+        # See https://cloud.google.com/bigquery/docs/reference/auditlogs/rest/Shared.Types/WriteDisposition
+        write_disposition: "WRITE_TRUNCATE"
+
+        # The BigQuery table schema based on the CSV file. For more info, see
+        # https://cloud.google.com/bigquery/docs/schemas.
+        # Always use snake_case and lowercase for column names, and be explicit,
+        # i.e. specify modes for all columns.
+        # types: "INTEGER", "TIMESTAMP", "STRING"
+        schema_fields:
+          - name: "kid_race"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "gender"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "count"
+            type: "INTEGER"
+            mode: "NULLABLE"
+          - name: "kir_q1"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kir_q2"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kir_q3"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kir_q4"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kir_q5"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kfr_q1"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kfr_q2"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kfr_q3"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kfr_q4"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kfr_q5"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "par_q1"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "par_q2"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "par_q3"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "par_q4"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "par_q5"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kir_q1_cond_par_q1"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kir_q1_cond_par_q2"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kir_q1_cond_par_q3"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kir_q1_cond_par_q4"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kir_q1_cond_par_q5"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kir_q2_cond_par_q1"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kir_q2_cond_par_q2"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kir_q2_cond_par_q3"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kir_q2_cond_par_q4"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kir_q2_cond_par_q5"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kir_q3_cond_par_q1"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kir_q3_cond_par_q2"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kir_q3_cond_par_q3"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kir_q3_cond_par_q4"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kir_q3_cond_par_q5"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kir_q4_cond_par_q1"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kir_q4_cond_par_q2"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kir_q4_cond_par_q3"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kir_q4_cond_par_q4"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kir_q4_cond_par_q5"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kir_q5_cond_par_q1"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kir_q5_cond_par_q2"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kir_q5_cond_par_q3"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kir_q5_cond_par_q4"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kir_q5_cond_par_q5"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kfr_q1_cond_par_q1"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kfr_q1_cond_par_q2"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kfr_q1_cond_par_q3"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kfr_q1_cond_par_q4"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kfr_q1_cond_par_q5"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kfr_q2_cond_par_q1"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kfr_q2_cond_par_q2"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kfr_q2_cond_par_q3"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kfr_q2_cond_par_q4"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kfr_q2_cond_par_q5"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kfr_q3_cond_par_q1"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kfr_q3_cond_par_q2"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kfr_q3_cond_par_q3"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kfr_q3_cond_par_q4"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kfr_q3_cond_par_q5"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kfr_q4_cond_par_q1"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kfr_q4_cond_par_q2"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kfr_q4_cond_par_q3"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kfr_q4_cond_par_q4"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kfr_q4_cond_par_q5"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kfr_q5_cond_par_q1"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kfr_q5_cond_par_q2"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kfr_q5_cond_par_q3"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kfr_q5_cond_par_q4"
+            type: "FLOAT"
+            mode: "NULLABLE"
+          - name: "kfr_q5_cond_par_q5"
+            type: "FLOAT"
+            mode: "NULLABLE"
+
+  graph_paths:
+    - "income_transition_transform_csv >> load_income_transition_to_bq"

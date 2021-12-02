@@ -20,7 +20,7 @@ resource "google_bigquery_table" "race_and_economic_opportunity_national_statist
   dataset_id = "race_and_economic_opportunity"
   table_id   = "national_statistics_by_parent_income_percentile_gender_race"
 
-  description = "Race and Economic Opportunity Data Tables"
+  description = "National Statistics by Parent Income Percentile, Gender, and Race"
 
 
 
