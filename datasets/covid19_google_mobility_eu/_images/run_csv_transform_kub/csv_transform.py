@@ -46,7 +46,6 @@ def main(
     download_file(source_url, source_file)
 
     logging.info(f"Opening file {source_file}")
-
     with pd.read_csv(
         source_file,
         chunksize=int(chunk_size),
@@ -60,13 +59,9 @@ def main(
             df = pd.concat([df, chunk])
 
     logging.info(f"Transforming {source_file}... ")
-
     rename_headers(df, rename_mappings)
-
     convert_values_to_integer_string(df, intcolumns)
-
     df = df[headers]
-
     process_chunk(df, target_file_batch)
 
     logging.info(f"Appending batch {chunk_number} to {target_file}")
