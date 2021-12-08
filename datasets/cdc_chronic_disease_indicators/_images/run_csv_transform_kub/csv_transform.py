@@ -42,17 +42,13 @@ def main(
     download_file(source_url, source_file)
 
     logging.info(f"Opening file {source_file}")
-
     df = pd.read_csv(str(source_file))
 
     logging.info(f"Transformation Process Starting.. {source_file}")
-
     rename_headers(df, rename_mappings)
-
     df = df[headers]
 
     logging.info(f"Transformation Process complete .. {source_file}")
-
     logging.info(f"Saving to output file.. {target_file}")
 
     try:

@@ -45,14 +45,5 @@ resources:
   # the repository.
 
   - type: bigquery_dataset
-    # Google BigQuery dataset to namespace all tables managed by this folder
-    #
-    # Required Properties:
-    #   dataset_id
-    #
-    # Optional Properties:
-    #   friendly_name (A user-friendly name of the dataset)
-    #   description   (A user-friendly description of the dataset)
-    #   location      (The geographic location where the dataset should reside)
     dataset_id: cdc_chronic_disease_indicators
     description: "CDC U.S. Chronic Disease Indicators (CDI)"
