@@ -16,10 +16,8 @@
 resources:
 
   - type: bigquery_table
-    # Required Properties:
     table_id: parametric_estimates_of_income_ranks_for_second_generation_immigrant_children
 
-    # Description of the table
     description: "Parametric Estimates of Income Ranks for Second Generation Immigrant Children by Parent Income, Country of Origin, and Gender"
 
 dag:
@@ -31,7 +29,6 @@ dag:
     default_args:
       owner: "Google"
 
-      # When set to True, keeps a task from getting triggered if the previous schedule for the task hasn’t succeeded
       depends_on_past: False
       start_date: '2021-03-01'
     max_active_runs: 1
@@ -43,7 +40,6 @@ dag:
 
     - operator: "KubernetesPodOperator"
 
-      # Task description
       description: "Run CSV transform within kubernetes pod"
 
       args:
@@ -51,10 +47,8 @@ dag:
         task_id: "parametric_transform_csv"
         startup_timeout_seconds: 600
 
-        # The name of the pod in which the task will run. This will be used (plus a random suffix) to generate a pod id
         name: "race_and_economic_opportunity_parametric_estimates_of_income_ranks_for_second_generation_immigrant_children"
 
-        # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
         namespace: "default"
 
         affinity:
@@ -69,10 +63,8 @@ dag:
 
         image_pull_policy: "Always"
 
-        # Docker images will be built and pushed to GCR by default whenever the `scripts/generate_dag.py` is run. To skip building and pushing images, use the optional `--skip-builds` flag.
         image: "{{ var.json.race_and_economic_opportunity.container_registry.run_csv_transform_kub }}"
 
-        # Set the environment variables you need initialized in the container. Use these as input variables for the script your container is expected to perform.
         env_vars:
           SOURCE_URL: "https://www2.census.gov/ces/opportunity/race_table6a_parametric.csv"
           SOURCE_FILE: "files/data.csv"
@@ -85,7 +77,6 @@ dag:
            {"country": "country","n_kfr_P": "n_kfr_p","kfr_P_p25": "kfr_p_p25","kfr_P_p25_se": "kfr_p_p25_se","kfr_P_p75": "kfr_p_p75","kfr_P_p75_se": "kfr_p_p75_se","n_kir_F": "n_kir_f","kir_F_p25": "kir_f_p25","kir_F_p25_se": "kir_f_p25_se","kir_F_p75": "kir_f_p75","kir_F_p75_se": "kir_f_p75_se","n_kir_M": "n_kir_m","kir_M_p25": "kir_m_p25","kir_M_p25_se": "kir_m_p25_se","kir_M_p75": "kir_m_p75","kir_M_p75_se": "kir_m_p75_se","age_in2015_mom_P": "age_in2015_mom_p","age_in2015_dad_P": "age_in2015_dad_p","age_in2015_mom_F": "age_in2015_mom_f","age_in2015_dad_F": "age_in2015_dad_f","age_in2015_mom_M": "age_in2015_mom_m","age_in2015_dad_M": "age_in2015_dad_m","us_yrs_before_mom_P": "us_yrs_before_mom_p","us_yrs_before_dad_P": "us_yrs_before_dad_p","us_yrs_before_mom_F": "us_yrs_before_mom_f","us_yrs_before_dad_F": "us_yrs_before_dad_f","us_yrs_before_mom_M": "us_yrs_before_mom_m","us_yrs_before_dad_M": "us_yrs_before_dad_m"}
           PIPELINE_NAME: "parametric_estimates_of_income_ranks_for_second_generation_immigrant_children"
 
-        # Set resource limits for the pod here. For resource units in Kubernetes, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes
         resources:
           limit_memory: "2G"
           limit_cpu: "1"
@@ -95,26 +86,15 @@ dag:
       args:
         task_id: "load_parametric_to_bq"
 
-        # The GCS bucket where the CSV file is located in.
         bucket: "{{ var.value.composer_bucket }}"
 
-        # The GCS object path for the CSV file
         source_objects: ["data/race_and_economic_opportunity/parametric_estimates_of_income_ranks_for_second_generation_immigrant_children/data_output.csv"]
         source_format: "CSV"
         destination_project_dataset_table: "race_and_economic_opportunity.parametric_estimates_of_income_ranks_for_second_generation_immigrant_children"
 
-        # Use this if your CSV file contains a header row
         skip_leading_rows: 1
-
-        # How to write data to the table: overwrite, append, or write if empty
-        # See https://cloud.google.com/bigquery/docs/reference/auditlogs/rest/Shared.Types/WriteDisposition
         write_disposition: "WRITE_TRUNCATE"
 
-        # The BigQuery table schema based on the CSV file. For more info, see
-        # https://cloud.google.com/bigquery/docs/schemas.
-        # Always use snake_case and lowercase for column names, and be explicit,
-        # i.e. specify modes for all columns.
-        # types: "INTEGER", "TIMESTAMP", "STRING"
         schema_fields:
           - name: "country"
             type: "STRING"
