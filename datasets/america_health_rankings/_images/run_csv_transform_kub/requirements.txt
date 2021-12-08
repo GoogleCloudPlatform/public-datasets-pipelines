@@ -1,0 +1,4 @@
+requests
+google-cloud-storage
+pandas
+openpyxl
