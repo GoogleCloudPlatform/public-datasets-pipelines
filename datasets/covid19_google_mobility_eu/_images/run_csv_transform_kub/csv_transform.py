@@ -61,9 +61,7 @@ def main(
     logging.info(f"Transforming {source_file}... ")
     rename_headers(df, rename_mappings)
     convert_values_to_integer_string(df, intcolumns)
-
     df = df[headers]
-
     process_chunk(df, target_file_batch)
 
     logging.info(f"Appending batch {chunk_number} to {target_file}")
