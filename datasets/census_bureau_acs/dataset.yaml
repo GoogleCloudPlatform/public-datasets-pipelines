@@ -24,3 +24,7 @@ resources:
   - type: bigquery_dataset
     dataset_id: census_bureau_acs
     description: American Comunity Survey dataset
+  - type: storage_bucket
+    name: census-bureau-acs
+    uniform_bucket_level_access: True
+    location: US

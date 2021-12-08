@@ -27,7 +27,7 @@ with DAG(
     dag_id="census_bureau_acs.county_2019_1yr",
     default_args=default_args,
     max_active_runs=1,
-    schedule_interval="@daily",
+    schedule_interval="@once",
     catchup=False,
     default_view="graph",
 ) as dag:

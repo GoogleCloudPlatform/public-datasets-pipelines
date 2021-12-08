@@ -20,7 +20,7 @@ resource "google_bigquery_table" "zcta_2019_5yr" {
   dataset_id = "census_bureau_acs"
   table_id   = "zcta_2019_5yr"
 
-  description = "State 2019 5 year table"
+  description = "ZCTA 2019 5 years report table"
 
 
 

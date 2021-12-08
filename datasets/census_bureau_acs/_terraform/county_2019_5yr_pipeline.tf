@@ -20,7 +20,7 @@ resource "google_bigquery_table" "county_2019_5yr" {
   dataset_id = "census_bureau_acs"
   table_id   = "county_2019_5yr"
 
-  description = "County 2019 5 year table"
+  description = "County 2019 5 years report table"
 
 
 

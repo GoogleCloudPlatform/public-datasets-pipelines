@@ -20,7 +20,7 @@ resource "google_bigquery_table" "schooldistrictunified_2019_1yr" {
   dataset_id = "census_bureau_acs"
   table_id   = "schooldistrictunified_2019_1yr"
 
-  description = "State 2019 5 year table"
+  description = "School district unified 2019 1 year report table"
 
 
 

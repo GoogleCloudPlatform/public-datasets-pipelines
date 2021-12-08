@@ -20,7 +20,7 @@ resource "google_bigquery_table" "congressionaldistrict_2019_1yr" {
   dataset_id = "census_bureau_acs"
   table_id   = "congressionaldistrict_2019_1yr"
 
-  description = "State 2019 5 year table"
+  description = "Congressional district 2019 1 year table"
 
 
 

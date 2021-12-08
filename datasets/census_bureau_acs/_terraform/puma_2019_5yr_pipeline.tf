@@ -20,7 +20,7 @@ resource "google_bigquery_table" "puma_2019_5yr" {
   dataset_id = "census_bureau_acs"
   table_id   = "puma_2019_5yr"
 
-  description = "PUMA 2019 5 year table"
+  description = "PUMA 2019 5 years report table"
 
 
 
