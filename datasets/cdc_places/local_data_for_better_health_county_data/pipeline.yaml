@@ -16,10 +16,8 @@
 resources:
 
   - type: bigquery_table
-    # Required Properties:
     table_id: local_data_for_better_health_county_data
 
-    # Description of the table
     description: "Local Data for Better Health, County Data"
 
 dag:
@@ -31,7 +29,6 @@ dag:
     default_args:
       owner: "Google"
 
-      # When set to True, keeps a task from getting triggered if the previous schedule for the task hasn’t succeeded
       depends_on_past: False
       start_date: '2021-03-01'
     max_active_runs: 1
@@ -43,7 +40,6 @@ dag:
 
     - operator: "KubernetesPodOperator"
 
-      # Task description
       description: "Run CSV transform within kubernetes pod"
 
       args:
@@ -51,10 +47,8 @@ dag:
         task_id: "local_data_transform_csv"
         startup_timeout_seconds: 600
 
-        # The name of the pod in which the task will run. This will be used (plus a random suffix) to generate a pod id
         name: "cdc_places_local_data_for_better_health_county_data"
 
-        # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
         namespace: "default"
 
         affinity:
@@ -69,10 +63,8 @@ dag:
 
         image_pull_policy: "Always"
 
-        # Docker images will be built and pushed to GCR by default whenever the `scripts/generate_dag.py` is run. To skip building and pushing images, use the optional `--skip-builds` flag.
         image: "{{ var.json.cdc_places.container_registry.run_csv_transform_kub }}"
 
-        # Set the environment variables you need initialized in the container. Use these as input variables for the script your container is expected to perform.
         env_vars:
           SOURCE_URL: "https://chronicdata.cdc.gov/resource/swc5-untb.csv"
           SOURCE_FILE: "files/data.csv"
@@ -85,7 +77,6 @@ dag:
            {"year": "year","stateabbr": "stateabbr","statedesc": "statedesc","locationname": "locationname","datasource": "datasource","category": "category","measure": "measure","data_value_unit": "data_value_unit","data_value_type": "data_value_type","data_value": "data_value","data_value_footnote_symbol": "data_value_footnote_symbol","data_value_footnote": "data_value_footnote","low_confidence_limit": "low_confidence_limit","high_confidence_limit": "high_confidence_limit","totalpopulation": "totalpopulation","locationid": "locationid","categoryid": "categoryid","measureid": "measureid","datavaluetypeid": "datavaluetypeid","short_question_text": "short_question_text","geolocation": "geolocation"}
           PIPELINE_NAME: "local_data_for_better_health_county_data"
 
-        # Set resource limits for the pod here. For resource units in Kubernetes, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes
         resources:
           limit_memory: "4G"
           limit_cpu: "2"
@@ -96,26 +87,15 @@ dag:
       args:
         task_id: "load_local_data_to_bq"
 
-        # The GCS bucket where the CSV file is located in.
         bucket: "{{ var.value.composer_bucket }}"
 
-        # The GCS object path for the CSV file
         source_objects: ["data/cdc_places/local_data_for_better_health_county_data/data_output.csv"]
         source_format: "CSV"
         destination_project_dataset_table: "cdc_places.local_data_for_better_health_county_data"
 
-        # Use this if your CSV file contains a header row
         skip_leading_rows: 1
-
-        # How to write data to the table: overwrite, append, or write if empty
-        # See https://cloud.google.com/bigquery/docs/reference/auditlogs/rest/Shared.Types/WriteDisposition
         write_disposition: "WRITE_TRUNCATE"
 
-        # The BigQuery table schema based on the CSV file. For more info, see
-        # https://cloud.google.com/bigquery/docs/schemas.
-        # Always use snake_case and lowercase for column names, and be explicit,
-        # i.e. specify modes for all columns.
-        # types: "INTEGER", "TIMESTAMP", "STRING"
         schema_fields:
           - name: "year"
             type: "INTEGER"
