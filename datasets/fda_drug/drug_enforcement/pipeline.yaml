@@ -127,12 +127,12 @@ dag:
               "product_quantity": "product_quantity",
               "openfda_dosage_form": "openfda_dosage_form"
             }
-          DATE_FORMAT_LIST:
+          DATE_FORMAT_LIST: >-
             [
-              ["center_classification_date", "%Y%m%d", "%Y-%m-%d %H:%M:%S"],
-              ["report_date", "%Y%m%d", "%Y-%m-%d %H:%M:%S"],
-              ["termination_date", "%Y%m%d", "%Y-%m-%d %H:%M:%S"],
-              ["recall_initiation_date", "%Y%m%d", "%Y-%m-%d %H:%M:%S"]
+              ["center_classification_date", "%Y%m%d", "%Y-%m-%d"],
+              ["report_date", "%Y%m%d", "%Y-%m-%d"],
+              ["termination_date", "%Y%m%d", "%Y-%m-%d"],
+              ["recall_initiation_date", "%Y%m%d", "%Y-%m-%d"]
             ]
         resources:
           limit_memory: "4G"

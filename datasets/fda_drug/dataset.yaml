@@ -25,3 +25,4 @@ resources:
   - type: bigquery_dataset
     dataset_id: fda_drug
     description: fda_drug
+    location: US
