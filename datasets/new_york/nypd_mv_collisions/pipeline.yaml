@@ -53,7 +53,7 @@ dag:
             [ "replace_regex", "add_crash_timestamp", "rename_headers", "reorder_headers" ]
           REGEX_LIST: >-
             [
-              [ "OFF STREET NAME", "\n", " " ]
+              [ "OFF STREET NAME", "\\n", " " ]
             ]
           DATE_FORMAT_LIST: >-
             [

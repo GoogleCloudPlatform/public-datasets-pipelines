@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import datetime
 import json
 import logging
 import os
@@ -36,13 +37,13 @@ def main(
     rename_headers_list: dict,
     regex_list: typing.List[typing.List],
     crash_field_list: typing.List[typing.List],
-    date_format_list: typing.List[typing.List]
+    date_format_list: typing.List[typing.List],
 ) -> None:
 
     logging.info(f"{english_pipeline_name} process started")
 
-    # pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
-    # download_file(source_url, source_file)
+    pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
+    download_file(source_url, source_file)
 
     logging.info(f"Opening source file {source_file}")
     with pd.read_csv(
@@ -59,16 +60,17 @@ def main(
             )
             df = pd.DataFrame()
             df = pd.concat([df, chunk])
-            process_chunk(df,
-                          target_file_batch,
-                          target_file,
-                          (not chunk_number == 0),
-                          transform_list=transform_list,
-                          reorder_headers_list=reorder_headers_list,
-                          rename_headers_list=rename_headers_list,
-                          regex_list=regex_list,
-                          crash_field_list=crash_field_list,
-                          date_format_list=date_format_list
+            process_chunk(
+                df=df,
+                target_file_batch=target_file_batch,
+                target_file=target_file,
+                skip_header=(not chunk_number == 0),
+                transform_list=transform_list,
+                reorder_headers_list=reorder_headers_list,
+                rename_headers_list=rename_headers_list,
+                regex_list=regex_list,
+                crash_field_list=crash_field_list,
+                date_format_list=date_format_list,
             )
 
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
@@ -94,12 +96,13 @@ def process_chunk(
             df = replace_regex(df, regex_list)
         elif transform == "add_crash_timestamp":
             for fld in crash_field_list:
-                new_crash_field=fld[0]
-                crash_date_field=fld[1]
-                crash_time_field=fld[2]
-                logging.info(f"add_crash_timestamp '{new_crash_field}' '{crash_date_field}' '{crash_time_field}'")
+                new_crash_field = fld[0]
+                crash_date_field = fld[1]
+                crash_time_field = fld[2]
                 df[new_crash_field] = ""
-                df = add_crash_timestamp(df, new_crash_field, crash_date_field, crash_time_field)
+                df = add_crash_timestamp(
+                    df, new_crash_field, crash_date_field, crash_time_field
+                )
         elif transform == "convert_date_format":
             df = resolve_date_format(df, date_format_list)
         elif transform == "rename_headers":
@@ -113,6 +116,9 @@ def process_chunk(
 
 def reorder_headers(df: pd.DataFrame, headers_list: list) -> pd.DataFrame:
     logging.info("Reordering Headers")
+    import pdb
+
+    pdb.set_trace
     df = df[headers_list]
     return df
 
@@ -120,7 +126,7 @@ def reorder_headers(df: pd.DataFrame, headers_list: list) -> pd.DataFrame:
 def rename_headers(df: pd.DataFrame, header_list: dict) -> pd.DataFrame:
     logging.info("Renaming Headers")
     header_names = header_list
-    df.rename(columns=header_names)
+    df.rename(columns=header_names, inplace=True)
     return df
 
 
@@ -129,9 +135,14 @@ def replace_regex(df: pd.DataFrame, regex_list: dict) -> pd.DataFrame:
         field_name = regex_item[0]
         search_expr = regex_item[1]
         replace_expr = regex_item[2]
-        logging.info(f"Replacing data via regex on field {field_name} '{field_name}' '{search_expr}' '{replace_expr}'")
-        df[field_name] = df[field_name].replace(r"" + search_expr, replace_expr, regex=True)
+        logging.info(
+            f"Replacing data via regex on field {field_name} '{field_name}' '{search_expr}' '{replace_expr}'"
+        )
+        df[field_name] = df[field_name].replace(
+            r"" + search_expr, replace_expr, regex=True
+        )
     return df
+
 
 def resolve_date_format(df: pd.DataFrame, date_fields: list = []) -> pd.DataFrame:
     logging.info("Resolving Date Format")
@@ -172,19 +183,22 @@ def convert_dt_format(
 
 
 def add_crash_timestamp(
-        df: pd.DataFrame,
-        new_crash_field: str,
-        crash_date_field: str,
-        crash_time_field: str
+    df: pd.DataFrame, new_crash_field: str, crash_date_field: str, crash_time_field: str
 ) -> pd.DataFrame:
-    df[new_crash_field] = df.apply(lambda x, crash_date_field, crash_time_field: crash_timestamp(x['' + crash_date_field], x['' + crash_time_field]), args=[crash_date_field, crash_time_field], axis=1)
-    import pdb; pdb.set_trace()
+    logging.info(
+        f"add_crash_timestamp '{new_crash_field}' '{crash_date_field}' '{crash_time_field}'"
+    )
+    df[new_crash_field] = df.apply(
+        lambda x, crash_date_field, crash_time_field: crash_timestamp(
+            x["" + crash_date_field], x["" + crash_time_field]
+        ),
+        args=[crash_date_field, crash_time_field],
+        axis=1,
+    )
+    return df
 
 
-def crash_timestamp(
-        crash_date: str,
-        crash_time: str
-) -> str:
+def crash_timestamp(crash_date: str, crash_time: str) -> str:
     if len(crash_time) == 4:
         crash_time = f"0{crash_time}"
     return f"{crash_date} {crash_time}:00"
@@ -249,5 +263,5 @@ if __name__ == "__main__":
         rename_headers_list=json.loads(os.environ["RENAME_HEADERS_LIST"]),
         regex_list=json.loads(os.environ["REGEX_LIST"]),
         crash_field_list=json.loads(os.environ["CRASH_FIELD_LIST"]),
-        date_format_list=json.loads(os.environ["DATE_FORMAT_LIST"])
+        date_format_list=json.loads(os.environ["DATE_FORMAT_LIST"]),
     )
