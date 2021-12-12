@@ -19,6 +19,7 @@ import os
 import pathlib
 import typing
 
+import numpy as np
 import pandas as pd
 import requests
 from google.cloud import storage
@@ -45,6 +46,38 @@ def main(
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
     download_file(source_url, source_file)
 
+    source_dtypes = {
+        "CRASH DATE": np.str_,
+        "CRASH TIME": np.str_,
+        "BOROUGH": np.str_,
+        "ZIP CODE": np.str_,
+        "LATITUDE": np.float_,
+        "LONGITUDE": np.float_,
+        "LOCATION": np.str_,
+        "ON STREET NAME": np.str_,
+        "CROSS STREET NAME": np.str_,
+        "OFF STREET NAME": np.str_,
+        "NUMBER OF PERSONS INJURED": np.str_,
+        "NUMBER OF PERSONS KILLED": np.str_,
+        "NUMBER OF PEDESTRIANS INJURED": np.str_,
+        "NUMBER OF PEDESTRIANS KILLED": np.str_,
+        "NUMBER OF CYCLIST INJURED": np.str_,
+        "NUMBER OF CYCLIST KILLED": np.str_,
+        "NUMBER OF MOTORIST INJURED": np.str_,
+        "NUMBER OF MOTORIST KILLED": np.str_,
+        "CONTRIBUTING FACTOR VEHICLE 1": np.str_,
+        "CONTRIBUTING FACTOR VEHICLE 2": np.str_,
+        "CONTRIBUTING FACTOR VEHICLE 3": np.str_,
+        "CONTRIBUTING FACTOR VEHICLE 4": np.str_,
+        "CONTRIBUTING FACTOR VEHICLE 5": np.str_,
+        "COLLISION_ID": np.int_,
+        "VEHICLE TYPE CODE 1": np.str_,
+        "VEHICLE TYPE CODE 2": np.str_,
+        "VEHICLE TYPE CODE 3": np.str_,
+        "VEHICLE TYPE CODE 4": np.str_,
+        "VEHICLE TYPE CODE 5": np.str_
+    }
+
     logging.info(f"Opening source file {source_file}")
     with pd.read_csv(
         source_file,
@@ -52,6 +85,7 @@ def main(
         encoding="utf-8",
         quotechar='"',
         sep=",",
+        dtype=source_dtypes,
         chunksize=int(chunksize),
     ) as reader:
         for chunk_number, chunk in enumerate(reader):
@@ -105,6 +139,8 @@ def process_chunk(
                 )
         elif transform == "convert_date_format":
             df = resolve_date_format(df, date_format_list)
+        elif transform == "resolve_datatypes":
+            df = resolve_datatypes(df) # column_data_types_list)
         elif transform == "rename_headers":
             df = rename_headers(df, rename_headers_list)
         elif transform == "reorder_headers":
@@ -112,6 +148,25 @@ def process_chunk(
     save_to_new_file(df, file_path=str(target_file_batch))
     append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
     logging.info(f"Processing batch file {target_file_batch} completed")
+
+
+def resolve_datatypes(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Resolving column datatypes")
+    convert_dict = {
+                    "latitude": float,
+                    "longitude": float,
+                    "number_of_cyclist_injured": int,
+                    "number_of_cyclist_killed": int,
+                    "number_of_motorist_injured": int,
+                    "number_of_motorist_killed": int,
+                    "number_of_pedestrians_injured": int,
+                    "number_of_pedestrians_killed": int,
+                    "number_of_persons_injured": int,
+                    "number_of_persons_killed": int
+               }
+    df = df.astype(convert_dict, errors='ignore')
+    return df
+
 
 
 def reorder_headers(df: pd.DataFrame, headers_list: list) -> pd.DataFrame:
@@ -199,9 +254,10 @@ def add_crash_timestamp(
 
 
 def crash_timestamp(crash_date: str, crash_time: str) -> str:
+    # if crash time format is H:MM then convert to HH:MM:SS
     if len(crash_time) == 4:
-        crash_time = f"0{crash_time}"
-    return f"{crash_date} {crash_time}:00"
+        crash_time = f"0{crash_time}:00"
+    return f"{crash_date} {crash_time}"
 
 
 def save_to_new_file(df: pd.DataFrame, file_path: str) -> None:

@@ -50,14 +50,14 @@ dag:
           TARGET_GCS_PATH: "data/new_york/nypd_mv_collisions/data_output.csv"
           ENGLISH_PIPELINE_NAME: "New York - NYPD Motor Vehicle Collisions"
           TRANSFORM_LIST: >-
-            [ "replace_regex", "add_crash_timestamp", "rename_headers", "reorder_headers" ]
+            [ "replace_regex", "add_crash_timestamp", "convert_date_format", "rename_headers", "resolve_datatypes", "reorder_headers" ]
           REGEX_LIST: >-
             [
               [ "OFF STREET NAME", "\\n", " " ]
             ]
           DATE_FORMAT_LIST: >-
             [
-              ["CRASH DATE", "%m/%d/%Y", "%Y-%m-%d"]
+              ["timestamp", "%m/%d/%Y %H:%M", "%Y-%m-%d %H:%M:%S"]
             ]
           CRASH_FIELD_LIST: >-
             [ [ "timestamp", "CRASH DATE", "CRASH TIME" ] ]
