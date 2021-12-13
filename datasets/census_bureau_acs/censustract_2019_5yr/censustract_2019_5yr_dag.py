@@ -27,7 +27,7 @@ with DAG(
     dag_id="census_bureau_acs.censustract_2019_5yr",
     default_args=default_args,
     max_active_runs=1,
-    schedule_interval="@once",
+    schedule_interval="@daily",
     catchup=False,
     default_view="graph",
 ) as dag:
@@ -58,7 +58,7 @@ with DAG(
         image_pull_policy="Always",
         image="{{ var.json.census_bureau_acs.container_registry.run_csv_transform_kub }}",
         env_vars={
-            "SOURCE_URL": "https://api.census.gov/data/2019/acs/acs+year_report+?get=NAME,+key[0:-3]+_+key[-3:]+E&for=+api_naming_convention+:*&in=state:+sc+&key=550e53635053be51754b09b5e9f5009c94aa0586",
+            "SOURCE_URL": "https://api.census.gov/data/2019/acs/acs~year_report~?get=NAME,~group_id~_~row_position~E&for=~api_naming_convention~:*&in=state:~state_code~&key=550e53635053be51754b09b5e9f5009c94aa0586",
             "YEAR_REPORT": "5",
             "API_NAMING_CONVENTION": "tract",
             "TARGET_FILE": "files/data_output.csv",
