@@ -49,6 +49,38 @@ dag:
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/new_york/nypd_mv_collisions/data_output.csv"
           ENGLISH_PIPELINE_NAME: "New York - NYPD Motor Vehicle Collisions"
+          SOURCE_DTYPES: >-
+            {
+              "CRASH DATE": "str",
+              "CRASH TIME": "str",
+              "BOROUGH": "str",
+              "ZIP CODE": "str",
+              "LATITUDE": "float64",
+              "LONGITUDE": "float64",
+              "LOCATION": "str",
+              "ON STREET NAME": "str",
+              "CROSS STREET NAME": "str",
+              "OFF STREET NAME": "str",
+              "NUMBER OF PERSONS INJURED": "str",
+              "NUMBER OF PERSONS KILLED" : "str",
+              "NUMBER OF PEDESTRIANS INJURED" : "str",
+              "NUMBER OF PEDESTRIANS KILLED" : "str",
+              "NUMBER OF CYCLIST INJURED" : "str",
+              "NUMBER OF CYCLIST KILLED" : "str",
+              "NUMBER OF MOTORIST INJURED" : "str",
+              "NUMBER OF MOTORIST KILLED" : "str",
+              "CONTRIBUTING FACTOR VEHICLE 1" : "str",
+              "CONTRIBUTING FACTOR VEHICLE 2" : "str",
+              "CONTRIBUTING FACTOR VEHICLE 3" : "str",
+              "CONTRIBUTING FACTOR VEHICLE 4" : "str",
+              "CONTRIBUTING FACTOR VEHICLE 5" : "str",
+              "COLLISION_ID": "int64",
+              "VEHICLE TYPE CODE 1" : "str",
+              "VEHICLE TYPE CODE 2" : "str",
+              "VEHICLE TYPE CODE 3" : "str",
+              "VEHICLE TYPE CODE 4" : "str",
+              "VEHICLE TYPE CODE 5": "str"
+            }
           TRANSFORM_LIST: >-
             [ "replace_regex", "add_crash_timestamp", "convert_date_format", "rename_headers", "resolve_datatypes", "reorder_headers" ]
           REGEX_LIST: >-

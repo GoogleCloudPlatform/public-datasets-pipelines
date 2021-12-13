@@ -19,7 +19,6 @@ import os
 import pathlib
 import typing
 
-import numpy as np
 import pandas as pd
 import requests
 from google.cloud import storage
@@ -33,6 +32,7 @@ def main(
     target_gcs_bucket: str,
     target_gcs_path: str,
     english_pipeline_name: str,
+    source_dtypes: dict,
     transform_list: typing.List[str],
     reorder_headers_list: typing.List[str],
     rename_headers_list: dict,
@@ -46,38 +46,36 @@ def main(
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
     download_file(source_url, source_file)
 
-    source_dtypes = {
-        "CRASH DATE": np.str_,
-        "CRASH TIME": np.str_,
-        "BOROUGH": np.str_,
-        "ZIP CODE": np.str_,
-        "LATITUDE": np.float_,
-        "LONGITUDE": np.float_,
-        "LOCATION": np.str_,
-        "ON STREET NAME": np.str_,
-        "CROSS STREET NAME": np.str_,
-        "OFF STREET NAME": np.str_,
-        "NUMBER OF PERSONS INJURED": np.str_,
-        "NUMBER OF PERSONS KILLED": np.str_,
-        "NUMBER OF PEDESTRIANS INJURED": np.str_,
-        "NUMBER OF PEDESTRIANS KILLED": np.str_,
-        "NUMBER OF CYCLIST INJURED": np.str_,
-        "NUMBER OF CYCLIST KILLED": np.str_,
-        "NUMBER OF MOTORIST INJURED": np.str_,
-        "NUMBER OF MOTORIST KILLED": np.str_,
-        "CONTRIBUTING FACTOR VEHICLE 1": np.str_,
-        "CONTRIBUTING FACTOR VEHICLE 2": np.str_,
-        "CONTRIBUTING FACTOR VEHICLE 3": np.str_,
-        "CONTRIBUTING FACTOR VEHICLE 4": np.str_,
-        "CONTRIBUTING FACTOR VEHICLE 5": np.str_,
-        "COLLISION_ID": np.int_,
-        "VEHICLE TYPE CODE 1": np.str_,
-        "VEHICLE TYPE CODE 2": np.str_,
-        "VEHICLE TYPE CODE 3": np.str_,
-        "VEHICLE TYPE CODE 4": np.str_,
-        "VEHICLE TYPE CODE 5": np.str_
-    }
+    process_source_file(
+        source_file=source_file,
+        target_file=target_file,
+        chunksize=chunksize,
+        source_dtypes=source_dtypes,
+        transform_list=transform_list,
+        reorder_headers_list=reorder_headers_list,
+        rename_headers_list=rename_headers_list,
+        regex_list=regex_list,
+        crash_field_list=crash_field_list,
+        date_format_list=date_format_list,
+    )
 
+    upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
+
+    logging.info(f"{english_pipeline_name} process completed")
+
+
+def process_source_file(
+    source_file: pathlib.Path,
+    target_file: pathlib.Path,
+    chunksize: str,
+    source_dtypes: dict,
+    transform_list: typing.List[str],
+    reorder_headers_list: typing.List[str],
+    rename_headers_list: dict,
+    regex_list: typing.List[typing.List],
+    crash_field_list: typing.List[typing.List],
+    date_format_list: typing.List[typing.List],
+) -> None:
     logging.info(f"Opening source file {source_file}")
     with pd.read_csv(
         source_file,
@@ -106,10 +104,6 @@ def main(
                 crash_field_list=crash_field_list,
                 date_format_list=date_format_list,
             )
-
-    upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
-
-    logging.info(f"{english_pipeline_name} process completed")
 
 
 def process_chunk(
@@ -140,7 +134,7 @@ def process_chunk(
         elif transform == "convert_date_format":
             df = resolve_date_format(df, date_format_list)
         elif transform == "resolve_datatypes":
-            df = resolve_datatypes(df) # column_data_types_list)
+            df = resolve_datatypes(df)  # column_data_types_list)
         elif transform == "rename_headers":
             df = rename_headers(df, rename_headers_list)
         elif transform == "reorder_headers":
@@ -153,20 +147,19 @@ def process_chunk(
 def resolve_datatypes(df: pd.DataFrame) -> pd.DataFrame:
     logging.info("Resolving column datatypes")
     convert_dict = {
-                    "latitude": float,
-                    "longitude": float,
-                    "number_of_cyclist_injured": int,
-                    "number_of_cyclist_killed": int,
-                    "number_of_motorist_injured": int,
-                    "number_of_motorist_killed": int,
-                    "number_of_pedestrians_injured": int,
-                    "number_of_pedestrians_killed": int,
-                    "number_of_persons_injured": int,
-                    "number_of_persons_killed": int
-               }
-    df = df.astype(convert_dict, errors='ignore')
+        "latitude": float,
+        "longitude": float,
+        "number_of_cyclist_injured": int,
+        "number_of_cyclist_killed": int,
+        "number_of_motorist_injured": int,
+        "number_of_motorist_killed": int,
+        "number_of_pedestrians_injured": int,
+        "number_of_pedestrians_killed": int,
+        "number_of_persons_injured": int,
+        "number_of_persons_killed": int,
+    }
+    df = df.astype(convert_dict, errors="ignore")
     return df
-
 
 
 def reorder_headers(df: pd.DataFrame, headers_list: list) -> pd.DataFrame:
@@ -314,6 +307,7 @@ if __name__ == "__main__":
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
         english_pipeline_name=os.environ["ENGLISH_PIPELINE_NAME"],
+        source_dtypes=json.loads(os.environ["SOURCE_DTYPES"]),
         transform_list=json.loads(os.environ["TRANSFORM_LIST"]),
         reorder_headers_list=json.loads(os.environ["REORDER_HEADERS_LIST"]),
         rename_headers_list=json.loads(os.environ["RENAME_HEADERS_LIST"]),
