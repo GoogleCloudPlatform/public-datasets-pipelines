@@ -33,3 +33,14 @@ resource "google_bigquery_dataset" "ml_datasets_uscentral1" {
 output "bigquery_dataset-ml_datasets_uscentral1-dataset_id" {
   value = google_bigquery_dataset.ml_datasets_uscentral1.dataset_id
 }
+
+resource "google_storage_bucket" "ml-datasets" {
+  name                        = "${var.bucket_name_prefix}-ml-datasets"
+  force_destroy               = true
+  location                    = "US"
+  uniform_bucket_level_access = true
+}
+
+output "storage_bucket-ml-datasets-name" {
+  value = google_storage_bucket.ml-datasets.name
+}

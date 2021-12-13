@@ -15,14 +15,25 @@
  */
 
 
-provider "google" {
-  project                     = var.project_id
-  impersonate_service_account = var.impersonating_acct
-  region                      = var.region
+resource "google_bigquery_table" "ml_datasets_iris" {
+  project    = var.project_id
+  dataset_id = "ml_datasets"
+  table_id   = "iris"
+
+  description = "iris table"
+
+
+
+
+  depends_on = [
+    google_bigquery_dataset.ml_datasets
+  ]
 }
 
-# data "google_client_openid_userinfo" "me" {}
+output "bigquery_table-ml_datasets_iris-table_id" {
+  value = google_bigquery_table.ml_datasets_iris.table_id
+}
 
-# output "impersonating-account" {
-#   value = data.google_client_openid_userinfo.me.email
-# }
+output "bigquery_table-ml_datasets_iris-id" {
+  value = google_bigquery_table.ml_datasets_iris.id
+}
