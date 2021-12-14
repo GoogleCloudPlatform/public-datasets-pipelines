@@ -76,8 +76,9 @@ resources:
     #
     # Required Properties:
     #   name
+    #   location
     #
     # Optional Properties:
-    #   location
     #   uniform_bucket_level_access (we suggest False for fine-grained access)
     name: YOUR-BUCKET-NAME
+    location: US

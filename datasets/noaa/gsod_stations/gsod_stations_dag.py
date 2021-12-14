@@ -14,12 +14,13 @@
 
 
 from airflow import DAG
-from airflow.contrib.operators import gcs_to_bq, kubernetes_pod_operator
+from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
     "owner": "Google",
     "depends_on_past": False,
-    "start_date": "2021-03-01",
+    "start_date": "2021-12-30",
 }
 
 
@@ -27,13 +28,13 @@ with DAG(
     dag_id="noaa.gsod_stations",
     default_args=default_args,
     max_active_runs=1,
-    schedule_interval="@daily",
+    schedule_interval="@yearly",
     catchup=False,
     default_view="graph",
 ) as dag:
 
     # Run CSV transform within kubernetes pod
-    transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+    transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="transform_csv",
         name="gsod_stations",
         namespace="default",
@@ -70,7 +71,7 @@ with DAG(
     )
 
     # Task to load CSV data to a BigQuery table
-    load_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    load_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_to_bq",
         bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/noaa/gsod_stations/data_output.csv"],
