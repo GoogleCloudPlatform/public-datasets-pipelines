@@ -109,7 +109,7 @@ with DAG(
             "QUERIES_DIR": "/custom/queries",
             "GCP_PROJECT": "{{ var.value.gcp_project }}",
             "DATASET_NAME": "idc",
-            "DATASET_VERSIONS": '["v1", "v2", "v3", "v4", "v5"]',
+            "DATASET_VERSIONS": '["v1", "v2", "v3", "v4", "v5", "current"]',
         },
         resources={"limit_memory": "128M", "limit_cpu": "200m"},
     )

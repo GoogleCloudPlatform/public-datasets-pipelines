@@ -23,7 +23,7 @@ dag:
     default_args:
       owner: "Google"
       depends_on_past: False
-      start_date: '2021-11-17'
+      start_date: '2021-11-23'
     max_active_runs: 1
     schedule_interval: "@monthly"
     catchup: False
@@ -92,7 +92,7 @@ dag:
           GCP_PROJECT: "{{ var.value.gcp_project }}"
           DATASET_NAME: "idc"
           DATASET_VERSIONS: >-
-            ["v1", "v2", "v3", "v4", "v5"]
+            ["v1", "v2", "v3", "v4", "v5", "current"]
         resources:
           limit_memory: "128M"
           limit_cpu: "200m"
