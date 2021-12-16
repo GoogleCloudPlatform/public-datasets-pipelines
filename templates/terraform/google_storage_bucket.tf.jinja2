@@ -24,6 +24,11 @@ resource "google_storage_bucket" "{{ name }}" {
   {% if uniform_bucket_level_access -%}
     uniform_bucket_level_access = {{ uniform_bucket_level_access|tojson }}
   {% endif -%}
+  lifecycle {
+    ignore_changes = [
+      logging,
+    ]
+  }
 }
 
 output "storage_bucket-{{ name }}-name" {

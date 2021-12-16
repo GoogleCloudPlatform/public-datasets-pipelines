@@ -37,24 +37,8 @@ with DAG(
         task_id="local_data_transform_csv",
         startup_timeout_seconds=600,
         name="cdc_places_local_data_for_better_health_county_data",
-        namespace="default",
-        affinity={
-            "nodeAffinity": {
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                    "nodeSelectorTerms": [
-                        {
-                            "matchExpressions": [
-                                {
-                                    "key": "cloud.google.com/gke-nodepool",
-                                    "operator": "In",
-                                    "values": ["pool-e2-standard-4"],
-                                }
-                            ]
-                        }
-                    ]
-                }
-            }
-        },
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.cdc_places.container_registry.run_csv_transform_kub }}",
         env_vars={

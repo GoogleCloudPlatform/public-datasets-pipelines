@@ -36,24 +36,8 @@ with DAG(
     austin_crime_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
         task_id="austin_crime_transform_csv",
         name="crime",
-        namespace="default",
-        affinity={
-            "nodeAffinity": {
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                    "nodeSelectorTerms": [
-                        {
-                            "matchExpressions": [
-                                {
-                                    "key": "cloud.google.com/gke-nodepool",
-                                    "operator": "In",
-                                    "values": ["pool-e2-standard-4"],
-                                }
-                            ]
-                        }
-                    ]
-                }
-            }
-        },
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.austin_crime.container_registry.run_csv_transform_kub }}",
         env_vars={

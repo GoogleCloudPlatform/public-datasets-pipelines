@@ -15,12 +15,12 @@
  */
 
 
-resource "google_bigquery_table" "sentinel_2_index" {
+resource "google_bigquery_table" "cloud_storage_geo_index_sentinel_2_index" {
   project    = var.project_id
   dataset_id = "cloud_storage_geo_index"
   table_id   = "sentinel_2_index"
 
-  description = "sentinel_2_index dataset"
+  description = "Sentinel_2_Index Dataset"
 
 
 
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "sentinel_2_index" {
   ]
 }
 
-output "bigquery_table-sentinel_2_index-table_id" {
-  value = google_bigquery_table.sentinel_2_index.table_id
+output "bigquery_table-cloud_storage_geo_index_sentinel_2_index-table_id" {
+  value = google_bigquery_table.cloud_storage_geo_index_sentinel_2_index.table_id
 }
 
-output "bigquery_table-sentinel_2_index-id" {
-  value = google_bigquery_table.sentinel_2_index.id
+output "bigquery_table-cloud_storage_geo_index_sentinel_2_index-id" {
+  value = google_bigquery_table.cloud_storage_geo_index_sentinel_2_index.id
 }

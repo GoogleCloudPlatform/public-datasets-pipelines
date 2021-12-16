@@ -47,16 +47,9 @@ dag:
       args:
         task_id: "copy_bq_datasets"
         name: "copy_bq_datasets"
-        namespace: "default"
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                    - key: cloud.google.com/gke-nodepool
-                      operator: In
-                      values:
-                        - "pool-e2-standard-4"
+        namespace: "composer"
+        service_account_name: "datasets"
+
         image_pull_policy: "Always"
         image: "{{ var.json.idc.container_registry.copy_bq_datasets }}"
         env_vars:
@@ -75,16 +68,9 @@ dag:
       args:
         task_id: "generate_bq_views"
         name: "generate_bq_views"
-        namespace: "default"
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                    - key: cloud.google.com/gke-nodepool
-                      operator: In
-                      values:
-                        - "pool-e2-standard-4"
+        namespace: "composer"
+        service_account_name: "datasets"
+
         image_pull_policy: "Always"
         image: "{{ var.json.idc.container_registry.generate_bq_views }}"
         env_vars:

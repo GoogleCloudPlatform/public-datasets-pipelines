@@ -15,10 +15,13 @@
  */
 
 
-resource "google_bigquery_table" "bqt_2020_sales_train" {
+resource "google_bigquery_table" "bqt_iowa_liquor_sales_forecasting_2020_sales_train" {
   project    = var.project_id
   dataset_id = "iowa_liquor_sales_forecasting"
   table_id   = "2020_sales_train"
+
+
+
 
 
 
@@ -27,10 +30,10 @@ resource "google_bigquery_table" "bqt_2020_sales_train" {
   ]
 }
 
-output "bigquery_table-2020_sales_train-table_id" {
-  value = google_bigquery_table.bqt_2020_sales_train.table_id
+output "bigquery_table-bqt_iowa_liquor_sales_forecasting_2020_sales_train-table_id" {
+  value = google_bigquery_table.bqt_iowa_liquor_sales_forecasting_2020_sales_train.table_id
 }
 
-output "bigquery_table-2020_sales_train-id" {
-  value = google_bigquery_table.bqt_2020_sales_train.id
+output "bigquery_table-bqt_iowa_liquor_sales_forecasting_2020_sales_train-id" {
+  value = google_bigquery_table.bqt_iowa_liquor_sales_forecasting_2020_sales_train.id
 }

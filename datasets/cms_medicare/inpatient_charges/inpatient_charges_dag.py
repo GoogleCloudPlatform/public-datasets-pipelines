@@ -37,24 +37,8 @@ with DAG(
         task_id="inpatient_2011_transform_csv",
         startup_timeout_seconds=600,
         name="cms_medicare_inpatient_charges_2011",
-        namespace="default",
-        affinity={
-            "nodeAffinity": {
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                    "nodeSelectorTerms": [
-                        {
-                            "matchExpressions": [
-                                {
-                                    "key": "cloud.google.com/gke-nodepool",
-                                    "operator": "In",
-                                    "values": ["pool-e2-standard-4"],
-                                }
-                            ]
-                        }
-                    ]
-                }
-            }
-        },
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.cms_medicare.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -75,24 +59,8 @@ with DAG(
         task_id="inpatient_2012_transform_csv",
         startup_timeout_seconds=600,
         name="cms_medicare_inpatient_charges_2012",
-        namespace="default",
-        affinity={
-            "nodeAffinity": {
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                    "nodeSelectorTerms": [
-                        {
-                            "matchExpressions": [
-                                {
-                                    "key": "cloud.google.com/gke-nodepool",
-                                    "operator": "In",
-                                    "values": ["pool-e2-standard-4"],
-                                }
-                            ]
-                        }
-                    ]
-                }
-            }
-        },
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.cms_medicare.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -113,24 +81,8 @@ with DAG(
         task_id="inpatient_2013_transform_csv",
         startup_timeout_seconds=600,
         name="cms_medicare_inpatient_charges_2013",
-        namespace="default",
-        affinity={
-            "nodeAffinity": {
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                    "nodeSelectorTerms": [
-                        {
-                            "matchExpressions": [
-                                {
-                                    "key": "cloud.google.com/gke-nodepool",
-                                    "operator": "In",
-                                    "values": ["pool-e2-standard-4"],
-                                }
-                            ]
-                        }
-                    ]
-                }
-            }
-        },
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.cms_medicare.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -151,24 +103,8 @@ with DAG(
         task_id="inpatient_2014_transform_csv",
         startup_timeout_seconds=600,
         name="cms_medicare_inpatient_charges_2014",
-        namespace="default",
-        affinity={
-            "nodeAffinity": {
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                    "nodeSelectorTerms": [
-                        {
-                            "matchExpressions": [
-                                {
-                                    "key": "cloud.google.com/gke-nodepool",
-                                    "operator": "In",
-                                    "values": ["pool-e2-standard-4"],
-                                }
-                            ]
-                        }
-                    ]
-                }
-            }
-        },
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.cms_medicare.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -189,24 +125,8 @@ with DAG(
         task_id="inpatient_2015_transform_csv",
         startup_timeout_seconds=600,
         name="cms_medicare_inpatient_charges_2015",
-        namespace="default",
-        affinity={
-            "nodeAffinity": {
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                    "nodeSelectorTerms": [
-                        {
-                            "matchExpressions": [
-                                {
-                                    "key": "cloud.google.com/gke-nodepool",
-                                    "operator": "In",
-                                    "values": ["pool-e2-standard-4"],
-                                }
-                            ]
-                        }
-                    ]
-                }
-            }
-        },
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.cms_medicare.container_registry.run_csv_transform_kub }}",
         env_vars={
