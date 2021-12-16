@@ -15,7 +15,7 @@
  */
 
 
-resource "google_bigquery_table" "hospital_general_info" {
+resource "google_bigquery_table" "cms_medicare_hospital_general_info" {
   project    = var.project_id
   dataset_id = "cms_medicare"
   table_id   = "hospital_general_info"
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "hospital_general_info" {
   ]
 }
 
-output "bigquery_table-hospital_general_info-table_id" {
-  value = google_bigquery_table.hospital_general_info.table_id
+output "bigquery_table-cms_medicare_hospital_general_info-table_id" {
+  value = google_bigquery_table.cms_medicare_hospital_general_info.table_id
 }
 
-output "bigquery_table-hospital_general_info-id" {
-  value = google_bigquery_table.hospital_general_info.id
+output "bigquery_table-cms_medicare_hospital_general_info-id" {
+  value = google_bigquery_table.cms_medicare_hospital_general_info.id
 }

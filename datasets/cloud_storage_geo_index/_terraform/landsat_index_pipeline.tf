@@ -15,12 +15,12 @@
  */
 
 
-resource "google_bigquery_table" "landsat_index" {
+resource "google_bigquery_table" "cloud_storage_geo_index_landsat_index" {
   project    = var.project_id
   dataset_id = "cloud_storage_geo_index"
   table_id   = "landsat_index"
 
-  description = "landsat_index dataset"
+  description = "Landsat_Index Dataset"
 
 
 
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "landsat_index" {
   ]
 }
 
-output "bigquery_table-landsat_index-table_id" {
-  value = google_bigquery_table.landsat_index.table_id
+output "bigquery_table-cloud_storage_geo_index_landsat_index-table_id" {
+  value = google_bigquery_table.cloud_storage_geo_index_landsat_index.table_id
 }
 
-output "bigquery_table-landsat_index-id" {
-  value = google_bigquery_table.landsat_index.id
+output "bigquery_table-cloud_storage_geo_index_landsat_index-id" {
+  value = google_bigquery_table.cloud_storage_geo_index_landsat_index.id
 }

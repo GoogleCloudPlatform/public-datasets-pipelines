@@ -21,11 +21,6 @@ resource "google_bigquery_dataset" "epa_historical_air_quality" {
   description = "EPA Historical Air Quality Datasets"
 }
 
-resource "google_storage_bucket" "epa_historical_air_quality" {
-  name          = "${var.bucket_name_prefix}-epa_historical_air_quality"
-  force_destroy = true
-}
-
 output "bigquery_dataset-epa_historical_air_quality-dataset_id" {
   value = google_bigquery_dataset.epa_historical_air_quality.dataset_id
 }

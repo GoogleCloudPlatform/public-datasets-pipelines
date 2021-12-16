@@ -15,7 +15,7 @@
  */
 
 
-resource "google_bigquery_table" "outpatient_charges_2011" {
+resource "google_bigquery_table" "cms_medicare_outpatient_charges_2011" {
   project    = var.project_id
   dataset_id = "cms_medicare"
   table_id   = "outpatient_charges_2011"
@@ -30,15 +30,15 @@ resource "google_bigquery_table" "outpatient_charges_2011" {
   ]
 }
 
-output "bigquery_table-outpatient_charges_2011-table_id" {
-  value = google_bigquery_table.outpatient_charges_2011.table_id
+output "bigquery_table-cms_medicare_outpatient_charges_2011-table_id" {
+  value = google_bigquery_table.cms_medicare_outpatient_charges_2011.table_id
 }
 
-output "bigquery_table-outpatient_charges_2011-id" {
-  value = google_bigquery_table.outpatient_charges_2011.id
+output "bigquery_table-cms_medicare_outpatient_charges_2011-id" {
+  value = google_bigquery_table.cms_medicare_outpatient_charges_2011.id
 }
 
-resource "google_bigquery_table" "outpatient_charges_2012" {
+resource "google_bigquery_table" "cms_medicare_outpatient_charges_2012" {
   project    = var.project_id
   dataset_id = "cms_medicare"
   table_id   = "outpatient_charges_2012"
@@ -53,15 +53,15 @@ resource "google_bigquery_table" "outpatient_charges_2012" {
   ]
 }
 
-output "bigquery_table-outpatient_charges_2012-table_id" {
-  value = google_bigquery_table.outpatient_charges_2012.table_id
+output "bigquery_table-cms_medicare_outpatient_charges_2012-table_id" {
+  value = google_bigquery_table.cms_medicare_outpatient_charges_2012.table_id
 }
 
-output "bigquery_table-outpatient_charges_2012-id" {
-  value = google_bigquery_table.outpatient_charges_2012.id
+output "bigquery_table-cms_medicare_outpatient_charges_2012-id" {
+  value = google_bigquery_table.cms_medicare_outpatient_charges_2012.id
 }
 
-resource "google_bigquery_table" "outpatient_charges_2013" {
+resource "google_bigquery_table" "cms_medicare_outpatient_charges_2013" {
   project    = var.project_id
   dataset_id = "cms_medicare"
   table_id   = "outpatient_charges_2013"
@@ -76,15 +76,15 @@ resource "google_bigquery_table" "outpatient_charges_2013" {
   ]
 }
 
-output "bigquery_table-outpatient_charges_2013-table_id" {
-  value = google_bigquery_table.outpatient_charges_2013.table_id
+output "bigquery_table-cms_medicare_outpatient_charges_2013-table_id" {
+  value = google_bigquery_table.cms_medicare_outpatient_charges_2013.table_id
 }
 
-output "bigquery_table-outpatient_charges_2013-id" {
-  value = google_bigquery_table.outpatient_charges_2013.id
+output "bigquery_table-cms_medicare_outpatient_charges_2013-id" {
+  value = google_bigquery_table.cms_medicare_outpatient_charges_2013.id
 }
 
-resource "google_bigquery_table" "outpatient_charges_2014" {
+resource "google_bigquery_table" "cms_medicare_outpatient_charges_2014" {
   project    = var.project_id
   dataset_id = "cms_medicare"
   table_id   = "outpatient_charges_2014"
@@ -99,10 +99,10 @@ resource "google_bigquery_table" "outpatient_charges_2014" {
   ]
 }
 
-output "bigquery_table-outpatient_charges_2014-table_id" {
-  value = google_bigquery_table.outpatient_charges_2014.table_id
+output "bigquery_table-cms_medicare_outpatient_charges_2014-table_id" {
+  value = google_bigquery_table.cms_medicare_outpatient_charges_2014.table_id
 }
 
-output "bigquery_table-outpatient_charges_2014-id" {
-  value = google_bigquery_table.outpatient_charges_2014.id
+output "bigquery_table-cms_medicare_outpatient_charges_2014-id" {
+  value = google_bigquery_table.cms_medicare_outpatient_charges_2014.id
 }

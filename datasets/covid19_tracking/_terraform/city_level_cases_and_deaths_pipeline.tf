@@ -15,10 +15,13 @@
  */
 
 
-resource "google_bigquery_table" "city_level_cases_and_deaths" {
+resource "google_bigquery_table" "covid19_tracking_city_level_cases_and_deaths" {
   project    = var.project_id
   dataset_id = "covid19_tracking"
   table_id   = "city_level_cases_and_deaths"
+
+
+
 
 
 
@@ -27,10 +30,10 @@ resource "google_bigquery_table" "city_level_cases_and_deaths" {
   ]
 }
 
-output "bigquery_table-city_level_cases_and_deaths-table_id" {
-  value = google_bigquery_table.city_level_cases_and_deaths.table_id
+output "bigquery_table-covid19_tracking_city_level_cases_and_deaths-table_id" {
+  value = google_bigquery_table.covid19_tracking_city_level_cases_and_deaths.table_id
 }
 
-output "bigquery_table-city_level_cases_and_deaths-id" {
-  value = google_bigquery_table.city_level_cases_and_deaths.id
+output "bigquery_table-covid19_tracking_city_level_cases_and_deaths-id" {
+  value = google_bigquery_table.covid19_tracking_city_level_cases_and_deaths.id
 }
