@@ -37,24 +37,8 @@ with DAG(
     transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="transform_csv",
         name="solar_potential_by_censustract",
-        namespace="default",
-        affinity={
-            "nodeAffinity": {
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                    "nodeSelectorTerms": [
-                        {
-                            "matchExpressions": [
-                                {
-                                    "key": "cloud.google.com/gke-nodepool",
-                                    "operator": "In",
-                                    "values": ["pool-e2-standard-4"],
-                                }
-                            ]
-                        }
-                    ]
-                }
-            }
-        },
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.sunroof_solar.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -68,7 +52,7 @@ with DAG(
         resources={"limit_memory": "8G", "limit_cpu": "3"},
     )
 
-    # Task to load CSV data to a BigQuery table
+    # Load CSV data to a BigQuery table
     load_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_to_bq",
         bucket="{{ var.value.composer_bucket }}",

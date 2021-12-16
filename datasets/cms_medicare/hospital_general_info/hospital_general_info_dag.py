@@ -37,24 +37,8 @@ with DAG(
         task_id="hospital_info_transform_csv",
         startup_timeout_seconds=600,
         name="cms_medicare_hospital_general_info",
-        namespace="default",
-        affinity={
-            "nodeAffinity": {
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                    "nodeSelectorTerms": [
-                        {
-                            "matchExpressions": [
-                                {
-                                    "key": "cloud.google.com/gke-nodepool",
-                                    "operator": "In",
-                                    "values": ["pool-e2-standard-4"],
-                                }
-                            ]
-                        }
-                    ]
-                }
-            }
-        },
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.cms_medicare.container_registry.run_csv_transform_kub }}",
         env_vars={

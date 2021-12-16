@@ -37,24 +37,8 @@ with DAG(
     transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="transform_csv",
         name="gsod_stations",
-        namespace="default",
-        affinity={
-            "nodeAffinity": {
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                    "nodeSelectorTerms": [
-                        {
-                            "matchExpressions": [
-                                {
-                                    "key": "cloud.google.com/gke-nodepool",
-                                    "operator": "In",
-                                    "values": ["pool-e2-standard-4"],
-                                }
-                            ]
-                        }
-                    ]
-                }
-            }
-        },
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.noaa_gsod_stations.container_registry.run_csv_transform_kub_gsod_stations }}",
         env_vars={
