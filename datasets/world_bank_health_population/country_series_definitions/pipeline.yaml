@@ -41,8 +41,6 @@ dag:
         name: "country_series_definitions"
         namespace: "composer"
         service_account_name: "datasets"
-
-
         image_pull_policy: "Always"
         image: "{{ var.json.world_bank_health_population.container_registry.run_csv_transform_kub }}"
         env_vars:

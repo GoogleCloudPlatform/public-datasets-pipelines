@@ -31,8 +31,6 @@ dataset:
     • Or, read the dataset documentation: https://www.google.com/covid19/mobility/data_documentation.html.
   dataset_sources: ~
   terms_of_use: ~
-
-
 resources:
   - type: bigquery_dataset
     dataset_id: covid19_google_mobility

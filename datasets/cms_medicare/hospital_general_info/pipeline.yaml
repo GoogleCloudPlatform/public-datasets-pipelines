@@ -58,8 +58,6 @@ dag:
         namespace: "composer"
         service_account_name: "datasets"
 
-
-
         image_pull_policy: "Always"
 
         # Docker images will be built and pushed to GCR by default whenever the `scripts/generate_dag.py` is run. To skip building and pushing images, use the optional `--skip-builds` flag.

@@ -79,8 +79,6 @@ dag:
         namespace: "composer"
         service_account_name: "datasets"
 
-
-
         image_pull_policy: "Always"
 
         # Docker images will be built and pushed to GCR by default whenever the `scripts/generate_dag.py` is run. To skip building and pushing images, use the optional `--skip-builds` flag.
@@ -115,8 +113,6 @@ dag:
         # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
         namespace: "composer"
         service_account_name: "datasets"
-
-
 
         image_pull_policy: "Always"
 
@@ -153,8 +149,6 @@ dag:
         namespace: "composer"
         service_account_name: "datasets"
 
-
-
         image_pull_policy: "Always"
 
         # Docker images will be built and pushed to GCR by default whenever the `scripts/generate_dag.py` is run. To skip building and pushing images, use the optional `--skip-builds` flag.
@@ -189,8 +183,6 @@ dag:
         # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
         namespace: "composer"
         service_account_name: "datasets"
-
-
 
         image_pull_policy: "Always"
 

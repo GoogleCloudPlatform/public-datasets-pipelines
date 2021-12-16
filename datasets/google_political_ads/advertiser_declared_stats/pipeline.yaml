@@ -56,8 +56,6 @@ dag:
         namespace: "composer"
         service_account_name: "datasets"
 
-
-
         image_pull_policy: "Always"
 
         # Docker images will be built and pushed to GCR by default whenever the `scripts/generate_dag.py` is run. To skip building and pushing images, use the optional `--skip-builds` flag.
@@ -76,8 +74,6 @@ dag:
             ["advertiser_id","advertiser_declared_name","advertiser_declared_regulatory_id","advertiser_declared_scope","advertiser_declared_promoter_name","advertiser_declared_promoter_address"]
           RENAME_MAPPINGS: >-
             {"Advertiser_ID" : "advertiser_id","Advertiser_Declared_Name" : "advertiser_declared_name","Advertiser_Declared_Regulatory_ID" : "advertiser_declared_regulatory_id","Advertiser_Declared_Scope" : "advertiser_declared_scope","Advertiser_Declared_Promoter_Name" : "advertiser_declared_promoter_name","Advertiser_Declared_Promoter_Address" : "advertiser_declared_promoter_address"}
-
-
         # Set resource limits for the pod here. For resource units in Kubernetes, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes
         resources:
           request_memory: "2G"
@@ -134,7 +130,5 @@ dag:
             type: "string"
             description: "The New Zealand advertiser’s declared Promoter Statement address."
             mode: "nullable"
-
-
   graph_paths:
     - "advertiser_declared_stats_transform_csv >> load_advertiser_declared_stats_to_bq"

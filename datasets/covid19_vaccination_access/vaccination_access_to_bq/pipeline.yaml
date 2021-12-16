@@ -256,8 +256,6 @@ dag:
             type: "GEOGRAPHY"
             mode: "NULLABLE"
             description: "A GeoJSON representation of the catchment area boundary of the site, for a particular mode of transportation and travel time threshold. Consists of multiple latitude and longitude points."
-
-
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV file from covid19-open-data bucket to facility_boundary_us_walk"
       args:

@@ -166,7 +166,5 @@ dag:
             type: "FLOAT"
             description: Total volume of liquor ordered in gallons. (i.e. (Bottle Volume (ml) x Bottles Sold)/3785.411784)"
             mode: "NULLABLE"
-
-
   graph_paths:
     - "transform_csv >> load_to_bq"

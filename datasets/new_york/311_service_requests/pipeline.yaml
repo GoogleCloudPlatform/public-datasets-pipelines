@@ -230,7 +230,5 @@ dag:
             type: "STRING"
             description: ""
             mode: "NULLABLE"
-
-
   graph_paths:
     - "transform_csv >> load_to_bq"

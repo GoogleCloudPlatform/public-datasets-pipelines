@@ -80,7 +80,5 @@ dag:
           - name: "description"
             type: "string"
             mode: "nullable"
-
-
   graph_paths:
     - "country_series_definitions_transform_csv >> load_country_series_definitions_to_bq"

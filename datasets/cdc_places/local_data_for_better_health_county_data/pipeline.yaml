@@ -52,8 +52,6 @@ dag:
         namespace: "composer"
         service_account_name: "datasets"
 
-
-
         image_pull_policy: "Always"
 
         image: "{{ var.json.cdc_places.container_registry.run_csv_transform_kub }}"

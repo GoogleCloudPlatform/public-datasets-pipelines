@@ -56,8 +56,6 @@ dag:
         namespace: "composer"
         service_account_name: "datasets"
 
-
-
         image_pull_policy: "Always"
 
         # Docker images will be built and pushed to GCR by default whenever the `scripts/generate_dag.py` is run. To skip building and pushing images, use the optional `--skip-builds` flag.
@@ -75,8 +73,6 @@ dag:
             ["ein","elf","tax_pd","subseccd","totcntrbs","prgmservrev","duesassesmnts","othrinvstinc","grsamtsalesastothr","basisalesexpnsothr","gnsaleofastothr","grsincgaming","grsrevnuefndrsng","direxpns","netincfndrsng","grsalesminusret","costgoodsold","grsprft","othrevnue","totrevnue","totexpns","totexcessyr","othrchgsnetassetfnd","networthend","totassetsend","totliabend","totnetassetsend","actvtynotprevrptcd","chngsinorgcd","unrelbusincd","filedf990tcd","contractioncd","politicalexpend","filedf1120polcd","loanstoofficerscd","loanstoofficers","initiationfee","grspublicrcpts","s4958excessbenefcd","prohibtdtxshltrcd","nonpfrea","totnooforgscnt","totsupport","gftgrntsrcvd170","txrevnuelevied170","srvcsval170","pubsuppsubtot170","exceeds2pct170","pubsupplesspct170","samepubsuppsubtot170","grsinc170","netincunreltd170","othrinc170","totsupp170","grsrcptsrelated170","totgftgrntrcvd509","grsrcptsadmissn509","grsrcptsactivities509","txrevnuelevied509","srvcsval509","pubsuppsubtot509","rcvdfrmdisqualsub509","exceeds1pct509","subtotpub509","pubsupplesub509","samepubsuppsubtot509","grsinc509","unreltxincls511tx509","subtotsuppinc509","netincunrelatd509","othrinc509","totsupp509"]
           RENAME_MAPPINGS: >-
             {"EIN": "ein","a_tax_prd": "tax_pd","taxpd": "tax_pd","taxprd": "tax_pd","subseccd": "subseccd","prgmservrev": "prgmservrev","duesassesmnts": "duesassesmnts","othrinvstinc": "othrinvstinc","grsamtsalesastothr": "grsamtsalesastothr","basisalesexpnsothr": "basisalesexpnsothr","gnsaleofastothr": "gnsaleofastothr","grsincgaming": "grsincgaming","grsrevnuefndrsng": "grsrevnuefndrsng","direxpns": "direxpns","netincfndrsng": "netincfndrsng","grsalesminusret": "grsalesminusret","costgoodsold": "costgoodsold","grsprft": "grsprft","othrevnue": "othrevnue","totrevnue": "totrevnue","totexpns": "totexpns","totexcessyr": "totexcessyr","othrchgsnetassetfnd": "othrchgsnetassetfnd","networthend": "networthend","totassetsend": "totassetsend","totliabend": "totliabend","totnetassetsend": "totnetassetsend","actvtynotprevrptcd": "actvtynotprevrptcd","chngsinorgcd": "chngsinorgcd","unrelbusincd": "unrelbusincd","filedf990tcd": "filedf990tcd","contractioncd": "contractioncd","politicalexpend": "politicalexpend","filedfYYN0polcd": "filedf1120polcd","loanstoofficerscd": "loanstoofficerscd","loanstoofficers": "loanstoofficers","initiationfee": "initiationfee","grspublicrcpts": "grspublicrcpts","s4958excessbenefcd": "s4958excessbenefcd","prohibtdtxshltrcd": "prohibtdtxshltrcd","nonpfrea": "nonpfrea","totnoforgscnt": "totnooforgscnt","totsupport": "totsupport","gftgrntrcvd170": "gftgrntsrcvd170","txrevnuelevied170": "txrevnuelevied170","srvcsval170": "srvcsval170","pubsuppsubtot170": "pubsuppsubtot170","excds2pct170": "exceeds2pct170","pubsupplesspct170": "pubsupplesspct170","samepubsuppsubtot170": "samepubsuppsubtot170","grsinc170": "grsinc170","netincunrelatd170": "netincunreltd170","othrinc170": "othrinc170","totsupport170": "totsupp170","grsrcptsrelatd170": "grsrcptsrelated170","totgftgrntrcvd509": "totgftgrntrcvd509","grsrcptsadmiss509": "grsrcptsadmissn509","grsrcptsactvts509": "grsrcptsactivities509","txrevnuelevied509": "txrevnuelevied509","srvcsval509": "srvcsval509","pubsuppsubtot509": "pubsuppsubtot509","rcvdfrmdisqualsub509": "rcvdfrmdisqualsub509","excds1pct509": "exceeds1pct509","subtotpub509": "subtotpub509","pubsupplesssub509": "pubsupplesub509","samepubsuppsubtot509": "samepubsuppsubtot509","grsinc509": "grsinc509","unreltxincls511tx509": "unreltxincls511tx509","subtotsuppinc509": "subtotsuppinc509","netincunreltd509": "netincunrelatd509","othrinc509": "othrinc509","totsupp509": "totsupp509","elf": "elf","totcntrbs": "totcntrbs"}
-
-
         # Set resource limits for the pod here. For resource units in Kubernetes, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes
         resources:
           request_memory: "4G"
@@ -398,7 +394,5 @@ dag:
             type: "integer"
             description: "Total support (509)"
             mode: "nullable"
-
-
   graph_paths:
     - "irs_990_ez_2016_transform_csv >> load_irs_990_ez_2016_to_bq"

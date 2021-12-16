@@ -166,7 +166,5 @@ dag:
           - name: "latest_water_withdrawal_data"
             type: "integer"
             mode: "nullable"
-
-
   graph_paths:
     - "country_summary_transform_csv >> load_country_summary_to_bq"

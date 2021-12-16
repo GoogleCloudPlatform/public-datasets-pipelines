@@ -18,8 +18,6 @@ dataset:
   description: ~
   dataset_sources: ~
   terms_of_use: ~
-
-
 resources:
 
   - type: storage_bucket

@@ -144,7 +144,5 @@ dag:
             type: "string"
             description: "Location formatted for mapping"
             mode: "nullable"
-
-
   graph_paths:
     - "street_trees_transform_csv >> load_street_trees_to_bq"
