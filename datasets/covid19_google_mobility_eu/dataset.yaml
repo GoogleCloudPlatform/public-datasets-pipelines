@@ -13,8 +13,8 @@
 # limitations under the License.
 
 dataset:
-  name: covid19_google_mobility
-  friendly_name: covid19_google_mobility
+  name: covid19_google_mobility_eu
+  friendly_name: covid19_google_mobility_eu
   description: |-
     Terms of use
     In order to download or use the data or reports, you must agree to the Google Terms of Service: https://policies.google.com/terms
@@ -40,3 +40,7 @@ resources:
         To learn more about the dataset, the place categories, and how we calculate these trends and preserve privacy, do the following:
         • Visit the help center: https://support.google.com/covid19-mobility.
         • Or, read the dataset documentation: https://www.google.com/covid19/mobility/data_documentation.html.
+  - type: storage_bucket
+    name: covid19-google-mobility-eu
+    uniform_bucket_level_access: True
+    location: US
