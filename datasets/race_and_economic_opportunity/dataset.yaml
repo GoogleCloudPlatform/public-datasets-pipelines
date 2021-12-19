@@ -25,6 +25,6 @@ resources:
     dataset_id: race_and_economic_opportunity
     description: "Race and Economic Opportunity Data Tables"
   - type: storage_bucket
-    name: race-and-economic-opportunity
+    name: race-and-economic
     uniform_bucket_level_access: True
     location: US
