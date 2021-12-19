@@ -24,3 +24,14 @@ resource "google_bigquery_dataset" "city_health_dashboard" {
 output "bigquery_dataset-city_health_dashboard-dataset_id" {
   value = google_bigquery_dataset.city_health_dashboard.dataset_id
 }
+
+resource "google_storage_bucket" "city-health-dashboard" {
+  name                        = "${var.bucket_name_prefix}-city-health-dashboard"
+  force_destroy               = true
+  location                    = "US"
+  uniform_bucket_level_access = true
+}
+
+output "storage_bucket-city-health-dashboard-name" {
+  value = google_storage_bucket.city-health-dashboard.name
+}

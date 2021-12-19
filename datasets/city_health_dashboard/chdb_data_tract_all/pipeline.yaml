@@ -17,18 +17,14 @@ resources:
 
   - type: bigquery_table
     table_id: chdb_data_tract_all
-
     description: "City Health Dashboard Data Tract"
 
 dag:
-
   airflow_version: 1
-
   initialize:
     dag_id: chdb_data_tract_all
     default_args:
       owner: "Google"
-
       depends_on_past: False
       start_date: '2021-03-01'
     max_active_runs: 1
@@ -37,20 +33,13 @@ dag:
     default_view: graph
 
   tasks:
-
     - operator: "KubernetesPodOperator"
-
       description: "Run CSV transform within kubernetes pod"
-
       args:
-
         task_id: "data_tract_transform_csv"
         startup_timeout_seconds: 600
-
         name: "city_health_dashboard_chdb_data_tract_all"
-
         namespace: "default"
-
         affinity:
           nodeAffinity:
             requiredDuringSchedulingIgnoredDuringExecution:
@@ -62,7 +51,6 @@ dag:
                         - "pool-e2-standard-4"
 
         image_pull_policy: "Always"
-
         image: "{{ var.json.city_health_dashboard.container_registry.run_csv_transform_kub }}"
 
         env_vars:
@@ -77,7 +65,6 @@ dag:
            {"state_abbr": "state_abbr","state_fips": "state_fips","county_fips": "county_fips","county_name": "county_name","tract_code": "tract_code","stcotr_fips": "stcotr_fips","stpl_fips": "stpl_fips","city_name": "city_name","metric_name": "metric_name","metric_number": "metric_number","group_name": "group_name","group_number": "group_number","num": "num","denom": "denom","est": "est","lci": "lci","uci": "uci","data_yr_type": "data_yr_type","geo_level": "geo_level","date_export": "date_export"}
           PIPELINE_NAME: "chdb_data_tract_all"
           FILE_NAME: "CHDB_data_tract_all v13_0.csv"
-
         resources:
           limit_memory: "2G"
           limit_cpu: "1"
@@ -86,13 +73,10 @@ dag:
       description: "Task to load CSV data to a BigQuery table"
       args:
         task_id: "load_data_tract_to_bq"
-
         bucket: "{{ var.value.composer_bucket }}"
-
         source_objects: ["data/city_health_dashboard/chdb_data_tract_all/data_output.csv"]
         source_format: "CSV"
         destination_project_dataset_table: "city_health_dashboard.chdb_data_tract_all"
-
         skip_leading_rows: 1
         write_disposition: "WRITE_TRUNCATE"
 
