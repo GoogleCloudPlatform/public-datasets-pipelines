@@ -17,18 +17,14 @@ resources:
 
   - type: bigquery_table
     table_id: chronic_disease_indicators
-
     description: "CDC U.S. Chronic Disease Indicators (CDI)"
 
 dag:
-
   airflow_version: 1
-
   initialize:
     dag_id: chronic_disease_indicators
     default_args:
       owner: "Google"
-
       depends_on_past: False
       start_date: '2021-03-01'
     max_active_runs: 1
@@ -37,20 +33,13 @@ dag:
     default_view: graph
 
   tasks:
-
     - operator: "KubernetesPodOperator"
-
       description: "Run CSV transform within kubernetes pod"
-
       args:
-
         task_id: "chronic_disease_transform_csv"
         startup_timeout_seconds: 600
-
         name: "cdc_chronic_disease_indicators_chronic_disease_indicators"
-
         namespace: "default"
-
         affinity:
           nodeAffinity:
             requiredDuringSchedulingIgnoredDuringExecution:
@@ -62,7 +51,6 @@ dag:
                         - "pool-e2-standard-4"
 
         image_pull_policy: "Always"
-
         image: "{{ var.json.cdc_chronic_disease_indicators.container_registry.run_csv_transform_kub }}"
 
         env_vars:
@@ -76,23 +64,18 @@ dag:
           RENAME_MAPPINGS: >-
            {"yearstart": "yearstart","yearend": "yearend","locationabbr": "locationabbr","locationdesc": "locationdesc","datasource": "datasource","topic": "topic","question": "question","response": "response","datavalueunit": "datavalueunit","datavaluetype": "datavaluetype","datavalue": "datavalue","datavaluealt": "datavaluealt","datavaluefootnotesymbol": "datavaluefootnotesymbol","datavaluefootnote": "datavaluefootnote","lowconfidencelimit": "lowconfidencelimit","highconfidencelimit": "highconfidencelimit","stratificationcategory1": "stratificationcategory1","stratification1": "stratification1","stratificationcategory2": "stratificationcategory2","stratification2": "stratification2","stratificationcategory3": "stratificationcategory3","stratification3": "stratification3","geolocation": "geolocation","responseid": "responseid","locationid": "locationid","topicid": "topicid","questionid": "questionid","datavaluetypeid": "datavaluetypeid","stratificationcategoryid1": "stratificationcategoryid1","stratificationid1": "stratificationid1","stratificationcategoryid2": "stratificationcategoryid2","stratificationid2": "stratificationid2","stratificationcategoryid3": "stratificationcategoryid3","stratificationid3": "stratificationid3"}
           PIPELINE_NAME: "chronic_disease_indicators"
-
         resources:
           limit_memory: "2G"
           limit_cpu: "1"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
-
       args:
         task_id: "load_chronic_disease_to_bq"
-
         bucket: "{{ var.value.composer_bucket }}"
-
         source_objects: ["data/cdc_chronic_disease_indicators/chronic_disease_indicators/data_output.csv"]
         source_format: "CSV"
         destination_project_dataset_table: "cdc_places.chronic_disease_indicators"
-
         skip_leading_rows: 1
         write_disposition: "WRITE_TRUNCATE"
 
