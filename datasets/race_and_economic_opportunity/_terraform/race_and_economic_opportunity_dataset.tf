@@ -24,3 +24,14 @@ resource "google_bigquery_dataset" "race_and_economic_opportunity" {
 output "bigquery_dataset-race_and_economic_opportunity-dataset_id" {
   value = google_bigquery_dataset.race_and_economic_opportunity.dataset_id
 }
+
+resource "google_storage_bucket" "race-and-economic-opportunity" {
+  name                        = "${var.bucket_name_prefix}-race-and-economic-opportunity"
+  force_destroy               = true
+  location                    = "US"
+  uniform_bucket_level_access = true
+}
+
+output "storage_bucket-race-and-economic-opportunity-name" {
+  value = google_storage_bucket.race-and-economic-opportunity.name
+}

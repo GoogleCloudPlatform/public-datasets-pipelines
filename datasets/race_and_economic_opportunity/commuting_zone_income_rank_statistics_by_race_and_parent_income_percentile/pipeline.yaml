@@ -17,18 +17,15 @@ resources:
 
   - type: bigquery_table
     table_id: commuting_zone_income_rank_statistics_by_race_and_parent_income_percentile
-
     description: "Commuting Zone Income Rank Statistics by Race and Parent Income Percentile"
 
 dag:
 
   airflow_version: 1
-
   initialize:
     dag_id: commuting_zone_income_rank_statistics_by_race_and_parent_income_percentile
     default_args:
       owner: "Google"
-
       depends_on_past: False
       start_date: '2021-03-01'
     max_active_runs: 1
@@ -39,18 +36,12 @@ dag:
   tasks:
 
     - operator: "KubernetesPodOperator"
-
       description: "Run CSV transform within kubernetes pod"
-
       args:
-
         task_id: "income_statistics_transform_csv"
         startup_timeout_seconds: 600
-
         name: "race_and_economic_opportunity_commuting_zone_income_rank_statistics_by_race_and_parent_income_percentile"
-
         namespace: "default"
-
         affinity:
           nodeAffinity:
             requiredDuringSchedulingIgnoredDuringExecution:
@@ -62,7 +53,6 @@ dag:
                         - "pool-e2-standard-4"
 
         image_pull_policy: "Always"
-
         image: "{{ var.json.race_and_economic_opportunity.container_registry.run_csv_transform_kub }}"
 
         env_vars:
@@ -85,13 +75,10 @@ dag:
       description: "Task to load CSV data to a BigQuery table"
       args:
         task_id: "load_income_statistics_to_bq"
-
         bucket: "{{ var.value.composer_bucket }}"
-
         source_objects: ["data/race_and_economic_opportunity/commuting_zone_income_rank_statistics_by_race_and_parent_income_percentile/data_output.csv"]
         source_format: "CSV"
         destination_project_dataset_table: "race_and_economic_opportunity.commuting_zone_income_rank_statistics_by_race_and_parent_income_percentile"
-
         skip_leading_rows: 1
         write_disposition: "WRITE_TRUNCATE"
 

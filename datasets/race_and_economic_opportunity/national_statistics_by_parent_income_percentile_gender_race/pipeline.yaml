@@ -17,18 +17,14 @@ resources:
 
   - type: bigquery_table
     table_id: national_statistics_by_parent_income_percentile_gender_race
-
     description: "National Statistics by Parent Income Percentile, Gender, and Race"
 
 dag:
-
   airflow_version: 1
-
   initialize:
     dag_id: national_statistics_by_parent_income_percentile_gender_race
     default_args:
       owner: "Google"
-
       depends_on_past: False
       start_date: '2021-03-01'
     max_active_runs: 1
@@ -37,20 +33,13 @@ dag:
     default_view: graph
 
   tasks:
-
     - operator: "KubernetesPodOperator"
-
       description: "Run CSV transform within kubernetes pod"
-
       args:
-
         task_id: "national_statistics_transform_csv"
         startup_timeout_seconds: 600
-
         name: "race_and_economic_opportunity_national_statistics_by_parent_income_percentile_gender_race"
-
         namespace: "default"
-
         affinity:
           nodeAffinity:
             requiredDuringSchedulingIgnoredDuringExecution:
@@ -62,7 +51,6 @@ dag:
                         - "pool-e2-standard-4"
 
         image_pull_policy: "Always"
-
         image: "{{ var.json.race_and_economic_opportunity.container_registry.run_csv_transform_kub }}"
 
         env_vars:
@@ -76,7 +64,6 @@ dag:
           RENAME_MAPPINGS: >-
            {"par_pctile": "par_pctile","count_pooled": "count_pooled","count_aian_pooled": "count_aian_pooled","count_asian_pooled": "count_asian_pooled","count_black_pooled": "count_black_pooled","count_hisp_pooled": "count_hisp_pooled","count_white_pooled": "count_white_pooled","density_aian_pooled": "density_aian_pooled","density_asian_pooled": "density_asian_pooled","density_black_pooled": "density_black_pooled","density_hisp_pooled": "density_hisp_pooled","density_white_pooled": "density_white_pooled","kfr_aian_pooled": "kfr_aian_pooled","kfr_asian_pooled": "kfr_asian_pooled","kfr_black_female": "kfr_black_female","kfr_black_male": "kfr_black_male","kfr_black_pooled": "kfr_black_pooled","kfr_hisp_pooled": "kfr_hisp_pooled","kfr_nativemom_aian_pooled": "kfr_nativemom_aian_pooled","kfr_nativemom_asian_pooled": "kfr_nativemom_asian_pooled","kfr_nativemom_black_pooled": "kfr_nativemom_black_pooled","kfr_nativemom_hisp_pooled": "kfr_nativemom_hisp_pooled","kfr_nativemom_white_pooled": "kfr_nativemom_white_pooled","kfr_pooled": "kfr_pooled","kfr_white_female": "kfr_white_female","kfr_white_male": "kfr_white_male","kfr_white_pooled": "kfr_white_pooled","kid_college_black_female": "kid_college_black_female","kid_college_black_male": "kid_college_black_male","kid_college_white_female": "kid_college_white_female","kid_college_white_male": "kid_college_white_male","kid_hours_black_female": "kid_hours_black_female","kid_hours_black_male": "kid_hours_black_male","kid_hours_white_female": "kid_hours_white_female","kid_hours_white_male": "kid_hours_white_male","kid_jail_black_female": "kid_jail_black_female","kid_jail_black_male": "kid_jail_black_male","kid_jail_white_female": "kid_jail_white_female","kid_jail_white_male": "kid_jail_white_male","kid_married_black_pooled": "kid_married_black_pooled","kid_married_white_pooled": "kid_married_white_pooled","kid_no_hs_black_female": "kid_no_hs_black_female","kid_no_hs_black_male": "kid_no_hs_black_male","kid_no_hs_white_female": "kid_no_hs_white_female","kid_no_hs_white_male": "kid_no_hs_white_male","kid_pos_hours_black_female": "kid_pos_hours_black_female","kid_pos_hours_black_male": "kid_pos_hours_black_male","kid_pos_hours_white_female": "kid_pos_hours_white_female","kid_pos_hours_white_male": "kid_pos_hours_white_male","kid_wage_rank_black_female": "kid_wage_rank_black_female","kid_wage_rank_black_male": "kid_wage_rank_black_male","kid_wage_rank_white_female": "kid_wage_rank_white_female","kid_wage_rank_white_male": "kid_wage_rank_white_male","kir_black_female": "kir_black_female","kir_black_male": "kir_black_male","kir_black_pooled": "kir_black_pooled","kir_white_female": "kir_white_female","kir_white_male": "kir_white_male","kir_white_pooled ": "kir_white_pooled","kir_1par_black_male": "kir_1par_black_male","kir_1par_white_male": "kir_1par_white_male","kir_2par_black_male": "kir_2par_black_male","kir_2par_white_male": "kir_2par_white_male","kir_par_nohome_black_male": "kir_par_nohome_black_male","kir_par_nohome_white_male": "kir_par_nohome_white_male","spouse_rank_black_female": "spouse_rank_black_female","spouse_rank_black_male": "spouse_rank_black_male","spouse_rank_white_female": "spouse_rank_white_female","spouse_rank_white_male": "spouse_rank_white_male"}
           PIPELINE_NAME: "national_statistics_by_parent_income_percentile_gender_race"
-
         resources:
           limit_memory: "2G"
           limit_cpu: "1"
@@ -85,13 +72,10 @@ dag:
       description: "Task to load CSV data to a BigQuery table"
       args:
         task_id: "load_national_statistics_to_bq"
-
         bucket: "{{ var.value.composer_bucket }}"
-
         source_objects: ["data/race_and_economic_opportunity/national_statistics_by_parent_income_percentile_gender_race/data_output.csv"]
         source_format: "CSV"
         destination_project_dataset_table: "race_and_economic_opportunity.national_statistics_by_parent_income_percentile_gender_race"
-
         skip_leading_rows: 1
         write_disposition: "WRITE_TRUNCATE"
 

@@ -17,18 +17,15 @@ resources:
 
   - type: bigquery_table
     table_id: national_child_and_parent_income_transition_matrices_by_race_and_gender
-
     description: "National Child and Parent Income Transition Matrices by Race and Gender"
 
 dag:
 
   airflow_version: 1
-
   initialize:
     dag_id: national_child_and_parent_income_transition_matrices_by_race_and_gender
     default_args:
       owner: "Google"
-
       depends_on_past: False
       start_date: '2021-03-01'
     max_active_runs: 1
@@ -37,20 +34,13 @@ dag:
     default_view: graph
 
   tasks:
-
     - operator: "KubernetesPodOperator"
-
       description: "Run CSV transform within kubernetes pod"
-
       args:
-
         task_id: "income_transition_transform_csv"
         startup_timeout_seconds: 600
-
         name: "race_and_economic_opportunity_national_child_and_parent_income_transition_matrices_by_race_and_gender"
-
         namespace: "default"
-
         affinity:
           nodeAffinity:
             requiredDuringSchedulingIgnoredDuringExecution:
@@ -62,7 +52,6 @@ dag:
                         - "pool-e2-standard-4"
 
         image_pull_policy: "Always"
-
         image: "{{ var.json.race_and_economic_opportunity.container_registry.run_csv_transform_kub }}"
 
         env_vars:
@@ -76,7 +65,6 @@ dag:
           RENAME_MAPPINGS: >-
            {"kid_race": "kid_race","gender": "gender","count": "count","kir_q1": "kir_q1","kir_q2": "kir_q2","kir_q3": "kir_q3","kir_q4": "kir_q4","kir_q5": "kir_q5","kfr_q1": "kfr_q1","kfr_q2": "kfr_q2","kfr_q3": "kfr_q3","kfr_q4": "kfr_q4","kfr_q5": "kfr_q5","par_q1": "par_q1","par_q2": "par_q2","par_q3": "par_q3","par_q4": "par_q4","par_q5": "par_q5","kir_q1_cond_par_q1": "kir_q1_cond_par_q1","kir_q1_cond_par_q2": "kir_q1_cond_par_q2","kir_q1_cond_par_q3": "kir_q1_cond_par_q3","kir_q1_cond_par_q4": "kir_q1_cond_par_q4","kir_q1_cond_par_q5": "kir_q1_cond_par_q5","kir_q2_cond_par_q1": "kir_q2_cond_par_q1","kir_q2_cond_par_q2": "kir_q2_cond_par_q2","kir_q2_cond_par_q3": "kir_q2_cond_par_q3","kir_q2_cond_par_q4": "kir_q2_cond_par_q4","kir_q2_cond_par_q5": "kir_q2_cond_par_q5","kir_q3_cond_par_q1": "kir_q3_cond_par_q1","kir_q3_cond_par_q2": "kir_q3_cond_par_q2","kir_q3_cond_par_q3": "kir_q3_cond_par_q3","kir_q3_cond_par_q4": "kir_q3_cond_par_q4","kir_q3_cond_par_q5": "kir_q3_cond_par_q5","kir_q4_cond_par_q1": "kir_q4_cond_par_q1","kir_q4_cond_par_q2": "kir_q4_cond_par_q2","kir_q4_cond_par_q3": "kir_q4_cond_par_q3","kir_q4_cond_par_q4": "kir_q4_cond_par_q4","kir_q4_cond_par_q5": "kir_q4_cond_par_q5","kir_q5_cond_par_q1": "kir_q5_cond_par_q1","kir_q5_cond_par_q2": "kir_q5_cond_par_q2","kir_q5_cond_par_q3": "kir_q5_cond_par_q3","kir_q5_cond_par_q4": "kir_q5_cond_par_q4","kir_q5_cond_par_q5": "kir_q5_cond_par_q5","kfr_q1_cond_par_q1": "kfr_q1_cond_par_q1","kfr_q1_cond_par_q2": "kfr_q1_cond_par_q2","kfr_q1_cond_par_q3": "kfr_q1_cond_par_q3","kfr_q1_cond_par_q4": "kfr_q1_cond_par_q4","kfr_q1_cond_par_q5": "kfr_q1_cond_par_q5","kfr_q2_cond_par_q1": "kfr_q2_cond_par_q1","kfr_q2_cond_par_q2": "kfr_q2_cond_par_q2","kfr_q2_cond_par_q3": "kfr_q2_cond_par_q3","kfr_q2_cond_par_q4": "kfr_q2_cond_par_q4","kfr_q2_cond_par_q5": "kfr_q2_cond_par_q5","kfr_q3_cond_par_q1": "kfr_q3_cond_par_q1","kfr_q3_cond_par_q2": "kfr_q3_cond_par_q2","kfr_q3_cond_par_q3": "kfr_q3_cond_par_q3","kfr_q3_cond_par_q4": "kfr_q3_cond_par_q4","kfr_q3_cond_par_q5": "kfr_q3_cond_par_q5","kfr_q4_cond_par_q1": "kfr_q4_cond_par_q1","kfr_q4_cond_par_q2": "kfr_q4_cond_par_q2","kfr_q4_cond_par_q3": "kfr_q4_cond_par_q3","kfr_q4_cond_par_q4": "kfr_q4_cond_par_q4","kfr_q4_cond_par_q5": "kfr_q4_cond_par_q5","kfr_q5_cond_par_q1": "kfr_q5_cond_par_q1","kfr_q5_cond_par_q2": "kfr_q5_cond_par_q2","kfr_q5_cond_par_q3": "kfr_q5_cond_par_q3","kfr_q5_cond_par_q4": "kfr_q5_cond_par_q4","kfr_q5_cond_par_q5": "kfr_q5_cond_par_q5"}
           PIPELINE_NAME: "national_child_and_parent_income_transition_matrices_by_race_and_gender"
-
         resources:
           limit_memory: "2G"
           limit_cpu: "1"
@@ -85,13 +73,10 @@ dag:
       description: "Task to load CSV data to a BigQuery table"
       args:
         task_id: "load_income_transition_to_bq"
-
         bucket: "{{ var.value.composer_bucket }}"
-
         source_objects: ["data/race_and_economic_opportunity/national_child_and_parent_income_transition_matrices_by_race_and_gender/data_output.csv"]
         source_format: "CSV"
         destination_project_dataset_table: "race_and_economic_opportunity.national_child_and_parent_income_transition_matrices_by_race_and_gender"
-
         skip_leading_rows: 1
         write_disposition: "WRITE_TRUNCATE"
 
