@@ -17,18 +17,15 @@ resources:
 
   - type: bigquery_table
     table_id: america_health_rankings
-
     description: "America Health Rankings"
 
 dag:
 
   airflow_version: 1
-
   initialize:
     dag_id: ahr
     default_args:
       owner: "Google"
-
       depends_on_past: False
       start_date: '2021-03-01'
     max_active_runs: 1
@@ -39,18 +36,12 @@ dag:
   tasks:
 
     - operator: "KubernetesPodOperator"
-
       description: "Run CSV transform within kubernetes pod"
-
       args:
-
         task_id: "ahr_transform_csv"
         startup_timeout_seconds: 600
-
         name: "america_health_rankings_ahr"
-
         namespace: "default"
-
         affinity:
           nodeAffinity:
             requiredDuringSchedulingIgnoredDuringExecution:
@@ -62,7 +53,6 @@ dag:
                         - "pool-e2-standard-4"
 
         image_pull_policy: "Always"
-
         image: "{{ var.json.america_health_rankings.container_registry.run_csv_transform_kub }}"
 
         env_vars:
@@ -85,13 +75,10 @@ dag:
 
       args:
         task_id: "load_ahr_to_bq"
-
         bucket: "{{ var.value.composer_bucket }}"
-
         source_objects: ["data/america_health_rankings/ahr/data_output.csv"]
         source_format: "CSV"
         destination_project_dataset_table: "america_health_rankings.ahr"
-
         skip_leading_rows: 1
         write_disposition: "WRITE_TRUNCATE"
 

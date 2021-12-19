@@ -24,3 +24,14 @@ resource "google_bigquery_dataset" "america_health_rankings" {
 output "bigquery_dataset-america_health_rankings-dataset_id" {
   value = google_bigquery_dataset.america_health_rankings.dataset_id
 }
+
+resource "google_storage_bucket" "america-health-rankings" {
+  name                        = "${var.bucket_name_prefix}-america-health-rankings"
+  force_destroy               = true
+  location                    = "US"
+  uniform_bucket_level_access = true
+}
+
+output "storage_bucket-america-health-rankings-name" {
+  value = google_storage_bucket.america-health-rankings.name
+}

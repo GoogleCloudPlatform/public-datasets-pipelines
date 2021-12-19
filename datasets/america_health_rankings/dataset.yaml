@@ -13,37 +13,19 @@
 # limitations under the License.
 
 dataset:
-  # The `dataset` block includes properties for your dataset that will be shown
-  # to users of your data on the Google Cloud website.
-
-  # Must be exactly the same name as the folder name your dataset.yaml is in.
   name: cms_medicare
-
-  # A friendly, human-readable name of the dataset
   friendly_name: cms_medicare
-
-  # A short, descriptive summary of the dataset.
   description: CMS Medicare
-
-  # A list of sources the dataset is derived from, using the YAML list syntax.
   dataset_sources: ~
-
-  # A list of terms and conditions that users of the dataset should agree on,
-  # using the YAML list syntax.
   terms_of_use: ~
 
 
 resources:
-  # A list of Google Cloud resources needed by your dataset. In principle, all
-  # pipelines under a dataset should be able to share these resources.
-  #
-  # The currently supported resources are shown below. Use only the resources
-  # you need, and delete the rest as needed by your pipeline.
-  #
-  # We will keep adding to the list below to support more Google Cloud resources
-  # over time. If a resource you need isn't supported, please file an issue on
-  # the repository.
 
   - type: bigquery_dataset
     dataset_id: america_health_rankings
     description: "America Health Rankings"
+  - type: storage_bucket
+    name: america-health-rankings
+    uniform_bucket_level_access: True
+    location: US
