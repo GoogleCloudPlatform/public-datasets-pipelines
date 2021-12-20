@@ -24,3 +24,19 @@ resource "google_bigquery_dataset" "covid19_google_mobility_eu" {
 output "bigquery_dataset-covid19_google_mobility_eu-dataset_id" {
   value = google_bigquery_dataset.covid19_google_mobility_eu.dataset_id
 }
+
+resource "google_storage_bucket" "covid19-mobility-eu" {
+  name                        = "${var.bucket_name_prefix}-covid19-mobility-eu"
+  force_destroy               = true
+  location                    = "US"
+  uniform_bucket_level_access = true
+  lifecycle {
+    ignore_changes = [
+      logging,
+    ]
+  }
+}
+
+output "storage_bucket-covid19-mobility-eu-name" {
+  value = google_storage_bucket.covid19-mobility-eu.name
+}

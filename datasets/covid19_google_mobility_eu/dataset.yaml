@@ -41,6 +41,6 @@ resources:
         • Visit the help center: https://support.google.com/covid19-mobility.
         • Or, read the dataset documentation: https://www.google.com/covid19/mobility/data_documentation.html.
   - type: storage_bucket
-    name: covid19-google-mobility-eu
+    name: covid19-mobility-eu
     uniform_bucket_level_access: True
     location: US
