@@ -37,7 +37,8 @@ with DAG(
         task_id="austin_waste_transform_csv",
         startup_timeout_seconds=600,
         name="austin_waste",
-        namespace="default",
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.austin_waste.container_registry.run_csv_transform_kub }}",
         env_vars={

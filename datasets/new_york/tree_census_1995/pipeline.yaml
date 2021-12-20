@@ -39,7 +39,8 @@ dag:
       args:
         task_id: "transform_csv"
         name: "tree_census_1995"
-        namespace: "default"
+        namespace: "composer"
+        service_account_name: "datasets"
         image_pull_policy: "Always"
         image: "{{ var.json.new_york.container_registry.run_csv_transform_kub_tree_census_1995 }}"
         env_vars:

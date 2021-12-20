@@ -15,10 +15,13 @@
  */
 
 
-resource "google_bigquery_table" "national_testing_and_outcomes" {
+resource "google_bigquery_table" "covid19_tracking_national_testing_and_outcomes" {
   project    = var.project_id
   dataset_id = "covid19_tracking"
   table_id   = "national_testing_and_outcomes"
+
+
+
 
 
 
@@ -27,10 +30,10 @@ resource "google_bigquery_table" "national_testing_and_outcomes" {
   ]
 }
 
-output "bigquery_table-national_testing_and_outcomes-table_id" {
-  value = google_bigquery_table.national_testing_and_outcomes.table_id
+output "bigquery_table-covid19_tracking_national_testing_and_outcomes-table_id" {
+  value = google_bigquery_table.covid19_tracking_national_testing_and_outcomes.table_id
 }
 
-output "bigquery_table-national_testing_and_outcomes-id" {
-  value = google_bigquery_table.national_testing_and_outcomes.id
+output "bigquery_table-covid19_tracking_national_testing_and_outcomes-id" {
+  value = google_bigquery_table.covid19_tracking_national_testing_and_outcomes.id
 }

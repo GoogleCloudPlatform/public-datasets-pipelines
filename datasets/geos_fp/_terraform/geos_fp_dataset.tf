@@ -19,6 +19,11 @@ resource "google_storage_bucket" "geos-fp" {
   name                        = "${var.bucket_name_prefix}-geos-fp"
   force_destroy               = true
   uniform_bucket_level_access = true
+  lifecycle {
+    ignore_changes = [
+      logging,
+    ]
+  }
 }
 
 output "storage_bucket-geos-fp-name" {

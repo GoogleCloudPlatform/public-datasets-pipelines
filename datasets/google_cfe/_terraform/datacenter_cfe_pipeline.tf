@@ -15,7 +15,7 @@
  */
 
 
-resource "google_bigquery_table" "datacenter_cfe" {
+resource "google_bigquery_table" "google_cfe_datacenter_cfe" {
   project    = var.project_id
   dataset_id = "google_cfe"
   table_id   = "datacenter_cfe"
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "datacenter_cfe" {
   ]
 }
 
-output "bigquery_table-datacenter_cfe-table_id" {
-  value = google_bigquery_table.datacenter_cfe.table_id
+output "bigquery_table-google_cfe_datacenter_cfe-table_id" {
+  value = google_bigquery_table.google_cfe_datacenter_cfe.table_id
 }
 
-output "bigquery_table-datacenter_cfe-id" {
-  value = google_bigquery_table.datacenter_cfe.id
+output "bigquery_table-google_cfe_datacenter_cfe-id" {
+  value = google_bigquery_table.google_cfe_datacenter_cfe.id
 }

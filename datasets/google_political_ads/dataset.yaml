@@ -47,8 +47,6 @@ dataset:
   # A list of terms and conditions that users of the dataset should agree on,
   # using the YAML list syntax.
   terms_of_use: ~
-
-
 resources:
   # A list of Google Cloud resources needed by your dataset. In principle, all
   # pipelines under a dataset should be able to share these resources.

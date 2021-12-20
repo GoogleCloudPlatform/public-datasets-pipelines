@@ -52,17 +52,8 @@ dag:
         name: "gsod_stations"
 
         # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
-        namespace: "default"
-
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                    - key: cloud.google.com/gke-nodepool
-                      operator: In
-                      values:
-                        - "pool-e2-standard-4"
+        namespace: "composer"
+        service_account_name: "datasets"
 
         image_pull_policy: "Always"
 
@@ -79,8 +70,6 @@ dag:
           TARGET_FILE: "files/data_output.csv"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/noaa/gsod_stations/data_output.csv"
-
-
         # Set resource limits for the pod here. For resource units in Kubernetes, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes
         resources:
           limit_memory: "2G"

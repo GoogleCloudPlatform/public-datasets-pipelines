@@ -53,17 +53,8 @@ dag:
         name: "advertiser_declared_stats"
 
         # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment"s resources without starving other pipelines.
-        namespace: "default"
-
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                    - key: cloud.google.com/gke-nodepool
-                      operator: In
-                      values:
-                        - "pool-e2-standard-4"
+        namespace: "composer"
+        service_account_name: "datasets"
 
         image_pull_policy: "Always"
 
@@ -83,8 +74,6 @@ dag:
             ["advertiser_id","advertiser_declared_name","advertiser_declared_regulatory_id","advertiser_declared_scope","advertiser_declared_promoter_name","advertiser_declared_promoter_address"]
           RENAME_MAPPINGS: >-
             {"Advertiser_ID" : "advertiser_id","Advertiser_Declared_Name" : "advertiser_declared_name","Advertiser_Declared_Regulatory_ID" : "advertiser_declared_regulatory_id","Advertiser_Declared_Scope" : "advertiser_declared_scope","Advertiser_Declared_Promoter_Name" : "advertiser_declared_promoter_name","Advertiser_Declared_Promoter_Address" : "advertiser_declared_promoter_address"}
-
-
         # Set resource limits for the pod here. For resource units in Kubernetes, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes
         resources:
           request_memory: "2G"
@@ -141,7 +130,5 @@ dag:
             type: "string"
             description: "The New Zealand advertiser’s declared Promoter Statement address."
             mode: "nullable"
-
-
   graph_paths:
     - "advertiser_declared_stats_transform_csv >> load_advertiser_declared_stats_to_bq"
