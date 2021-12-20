@@ -30,3 +30,6 @@ tmp
 /datasets/**/Pipfile
 /datasets/**/*.json
 /datasets/**/*.tfvars
+
+# ignore temp folders
+.tmp
