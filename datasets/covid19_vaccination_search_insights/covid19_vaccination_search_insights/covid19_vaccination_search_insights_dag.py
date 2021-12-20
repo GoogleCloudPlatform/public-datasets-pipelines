@@ -37,7 +37,9 @@ with DAG(
         task_id="gcs_to_bq_vaccination_search_insights",
         bucket="{{ var.json.covid19_vaccination_search_insights.source_bucket }}",
         source_objects=[
-            "{{ var.json.covid19_vaccination_search_insights.source_prefix }}/Global_vaccination_search_insights.csv"
+            "{{ var.json.covid19_vaccination_search_insights.source_prefix }}/CA_vaccination_search_insights.csv",
+            "{{ var.json.covid19_vaccination_search_insights.source_prefix }}/GB_vaccination_search_insights.csv",
+            "{{ var.json.covid19_vaccination_search_insights.source_prefix }}/US_vaccination_search_insights.csv"
         ],
         source_format="CSV",
         destination_project_dataset_table="covid19_vaccination_search_insights.covid19_vaccination_search_insights",
