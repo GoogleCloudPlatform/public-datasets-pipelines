@@ -1,2 +1,2 @@
-pandas
+requests
 google-cloud-storage
