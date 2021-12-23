@@ -13,17 +13,11 @@
 # limitations under the License.
 
 dataset:
-
   name: sec_failure_to_deliver
-
   friendly_name: sec_failure_to_deliver
-
   description: sec_failure_to_deliver datasets
-
   dataset_sources: ~
-
   terms_of_use: ~
-
 resources:
   - type: bigquery_dataset
     dataset_id: sec_failure_to_deliver
@@ -32,4 +26,3 @@ resources:
     name: sec-failure-to-deliver
     uniform_bucket_level_access: True
     location: US
-
