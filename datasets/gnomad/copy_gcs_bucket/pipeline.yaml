@@ -1,0 +1,73 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+---
+resources: ~
+
+dag:
+  # [Required] Specify the Airflow version of the operators used by the DAG.
+  airflow_version: 2
+
+  # The DAG acronym stands for directed acyclic graph. This block represents
+  # your data pipeline along with every property and configuration it needs to
+  # onboard your data.
+  initialize:
+    dag_id: copy_gcs_bucket
+    default_args:
+      owner: "Google"
+
+      # When set to True, keeps a task from getting triggered if the previous schedule for the task hasn’t succeeded
+      depends_on_past: False
+      start_date: '2021-03-01'
+    max_active_runs: 1
+    schedule_interval: "@once"
+    catchup: False
+    default_view: graph
+
+  tasks:
+    # Copies objects from a bucket to another using the Google Cloud Storage Transfer Service.
+    # This operator does not control the copying process locally, but uses Google resources, which allows them to perform this task faster and more economically.
+    #
+    # Warning: This operator is NOT idempotent. If you run it many times, many transfer jobs will be created in the Google Cloud.
+    - operator: "CloudDataTransferServiceGCSToGCSOperator"
+
+      # Task description
+      description: "Task to run a GCS to GCS operation using the Cloud Data Transfer Service"
+
+      # Arguments supported by this operator:
+      # https://airflow.apache.org/docs/apache-airflow-providers-google/stable/_api/airflow/providers/google/cloud/operators/cloud_storage_transfer_service/index.html#airflow.providers.google.cloud.operators.cloud_storage_transfer_service.CloudDataTransferServiceGCSToGCSOperator
+      args:
+        task_id: "gnomad_gcs_bucket_transfer"
+        project_id: "{{ var.value.gcp_project }}"
+
+        # The GCS bucket to copy from
+        source_bucket: "gnomad-public-requester-pays"
+
+        # The GCS bucket to copy to
+        destination_bucket: "gcp-public-data--gnomad"
+
+        # The service account to use that have been granted read access to the source bucket
+        google_impersonation_chain: "{{ var.json.gnomad.service_account }}"
+
+
+  graph_paths:
+    # This is where you specify the relationships (i.e. directed paths/edges)
+    # among the tasks specified above. Use the bitshift operator to define the
+    # relationships and the `task_id` value above to represent tasks.
+    #
+    # For more info, see
+    # https://airflow.apache.org/docs/apache-airflow/stable/tutorial.html#setting-up-dependencies
+    - "gnomad_gcs_bucket_transfer"
+
