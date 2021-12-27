@@ -1,5 +1,44 @@
 # Changelog
 
+## [2.7.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v2.6.0...v2.7.0) (2021-12-14)
+
+
+### Datasets
+
+* Onboard CDC Places Dataset ([#241](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/241)) ([e2fcb0c](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/e2fcb0c40c647af918e46c6c0c2cabedcdb4ba58))
+* Onboard Cloud Storage Geo Index Dataset ([#219](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/219)) ([27a2c8e](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/27a2c8e356cac8c51aa7b65fae508ad1d7202e9e))
+* Onboard EPA historical air quality dataset ([#221](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/221)) ([6267b82](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/6267b828d490ff9d3340320e5ce894d4f29df247))
+* Onboard FDA food dataset ([#223](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/223)) ([f0ced96](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/f0ced963ddeeb58313d3e5c777ea6383bb163863))
+* Onboard IDC PDP datasets ([#230](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/230)) ([3f944df](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/3f944df14b428ba4e156695237563debbee67b57))
+
+
+### Features
+
+* Support CloudDataTransferServiceGCSToGCSOperator ([#229](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/229)) ([977b687](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/977b687afc4d66ba2fc3cc68bc8a21dd8c46787e))
+
+
+### Bug Fixes
+
+* Namespace Terraform resources under dataset names ([#227](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/227)) ([a3f4b34](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/a3f4b34e9fda61ae4bab6bc48c68d0b620ea2c7e))
+* Renamed dataset from `sunroof` to `sunroof_solar`  ([#226](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/226)) ([0780df8](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/0780df8c39a53da8b32ff4724f8f51a73938d335))
+
+## [2.6.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v2.5.0...v2.6.0) (2021-11-04)
+
+
+### Datasets
+
+* Onboard Austin Waste dataset ([#200](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/200)) ([79dbf5d](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/79dbf5dd406151fd62174f72de2627b9241fd9e9))
+* Onboard BLS dataset ([#201](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/201)) ([c7cdd82](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/c7cdd82a55344f5fea68c887a97720e58880b170))
+* Onboard Chicago Crime dataset ([#199](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/199)) ([d766547](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/d766547c8393c284084641fab113b1f36959ee32))
+* Onboard Sunroof Solar dataset ([#166](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/166)) ([375cbae](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/375cbaea0009d56d08b32bddaed274a933e4b781))
+* Onboard World Bank Intl Education dataset ([#182](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/182)) ([ff384fd](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/ff384fda3d99512fb03a8f19bff7554811231e05))
+* Onboard World Bank WDI dataset ([#198](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/198)) ([cbad321](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/cbad3211ada15d830139328405045a44cdbfb2fe))
+
+
+### Bug Fixes
+
+* Set `location` field as required for GCS buckets ([#224](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/224)) ([bd8a3db](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/bd8a3dbc95e3fd0244d84d28be8415e98825c586))
+
 ## [2.5.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v2.4.0...v2.5.0) (2021-10-14)
 
 

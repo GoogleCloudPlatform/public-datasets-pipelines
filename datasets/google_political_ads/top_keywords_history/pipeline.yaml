@@ -53,17 +53,8 @@ dag:
         name: "top_keywords_history"
 
         # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
-        namespace: "default"
-
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                    - key: cloud.google.com/gke-nodepool
-                      operator: In
-                      values:
-                        - "pool-e2-standard-4"
+        namespace: "composer"
+        service_account_name: "datasets"
 
         image_pull_policy: "Always"
 
@@ -180,7 +171,5 @@ dag:
             type: "string"
             description: "[DEPRECATED] The elections during which these keywords were used."
             mode: "nullable"
-
-
   graph_paths:
     - "top_keywords_history_transform_csv >> load_top_keywords_history_to_bq"

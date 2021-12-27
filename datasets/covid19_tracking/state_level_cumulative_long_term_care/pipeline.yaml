@@ -43,8 +43,6 @@ dag:
         env:
           csv_source_url: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRa9HnmEl83YXHfbgSPpt0fJe4SyuYLc0GuBAglF4yMYaoKSPRCyXASaWXMrTu1WEYp1oeJZIYHpj7t/pub?gid=467018747&single=true&output=csv"
           airflow_home: "{{ var.value.airflow_home }}"
-
-
     - operator: "BashOperator"
       description: "Run the custom/csv_transform.py script to process the raw CSV contents into a BigQuery friendly format"
       args:

@@ -53,17 +53,8 @@ dag:
         name: "advertiser_weekly_spend"
 
         # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
-        namespace: "default"
-
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                    - key: cloud.google.com/gke-nodepool
-                      operator: In
-                      values:
-                        - "pool-e2-standard-4"
+        namespace: "composer"
+        service_account_name: "datasets"
 
         image_pull_policy: "Always"
 
@@ -184,7 +175,5 @@ dag:
             type: "integer"
             description: "The amount in NZD spent on election ads during the given week by the advertiser."
             mode: "nullable"
-
-
   graph_paths:
     - "advertiser_weekly_spend_transform_csv >> load_advertiser_weekly_spend_to_bq"

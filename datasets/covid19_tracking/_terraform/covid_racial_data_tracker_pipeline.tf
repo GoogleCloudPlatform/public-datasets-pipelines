@@ -15,10 +15,13 @@
  */
 
 
-resource "google_bigquery_table" "covid_racial_data_tracker" {
+resource "google_bigquery_table" "covid19_tracking_covid_racial_data_tracker" {
   project    = var.project_id
   dataset_id = "covid19_tracking"
   table_id   = "covid_racial_data_tracker"
+
+
+
 
 
 
@@ -27,10 +30,10 @@ resource "google_bigquery_table" "covid_racial_data_tracker" {
   ]
 }
 
-output "bigquery_table-covid_racial_data_tracker-table_id" {
-  value = google_bigquery_table.covid_racial_data_tracker.table_id
+output "bigquery_table-covid19_tracking_covid_racial_data_tracker-table_id" {
+  value = google_bigquery_table.covid19_tracking_covid_racial_data_tracker.table_id
 }
 
-output "bigquery_table-covid_racial_data_tracker-id" {
-  value = google_bigquery_table.covid_racial_data_tracker.id
+output "bigquery_table-covid19_tracking_covid_racial_data_tracker-id" {
+  value = google_bigquery_table.covid19_tracking_covid_racial_data_tracker.id
 }

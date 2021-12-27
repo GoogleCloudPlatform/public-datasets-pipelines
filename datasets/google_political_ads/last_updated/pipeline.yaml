@@ -53,17 +53,8 @@ dag:
         name: "last_updated"
 
         # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
-        namespace: "default"
-
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                    - key: cloud.google.com/gke-nodepool
-                      operator: In
-                      values:
-                        - "pool-e2-standard-4"
+        namespace: "composer"
+        service_account_name: "datasets"
 
         image_pull_policy: "Always"
 
@@ -120,7 +111,5 @@ dag:
             type: "Date"
             description: "The date the report data was most reecntly updated"
             mode: "nullable"
-
-
   graph_paths:
     - "last_updated_transform_csv >> load_last_updated_to_bq"

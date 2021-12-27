@@ -15,7 +15,7 @@
  */
 
 
-resource "google_bigquery_table" "country_series_definitions" {
+resource "google_bigquery_table" "world_bank_intl_education_country_series_definitions" {
   project    = var.project_id
   dataset_id = "world_bank_intl_education"
   table_id   = "country_series_definitions"
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "country_series_definitions" {
   ]
 }
 
-output "bigquery_table-country_series_definitions-table_id" {
-  value = google_bigquery_table.country_series_definitions.table_id
+output "bigquery_table-world_bank_intl_education_country_series_definitions-table_id" {
+  value = google_bigquery_table.world_bank_intl_education_country_series_definitions.table_id
 }
 
-output "bigquery_table-country_series_definitions-id" {
-  value = google_bigquery_table.country_series_definitions.id
+output "bigquery_table-world_bank_intl_education_country_series_definitions-id" {
+  value = google_bigquery_table.world_bank_intl_education_country_series_definitions.id
 }

@@ -29,6 +29,11 @@ resource "google_storage_bucket" "covid-tracking-project" {
   name                        = "${var.bucket_name_prefix}-covid-tracking-project"
   force_destroy               = true
   uniform_bucket_level_access = true
+  lifecycle {
+    ignore_changes = [
+      logging,
+    ]
+  }
 }
 
 output "storage_bucket-covid-tracking-project-name" {

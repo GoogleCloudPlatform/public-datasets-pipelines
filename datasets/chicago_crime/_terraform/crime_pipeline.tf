@@ -15,7 +15,7 @@
  */
 
 
-resource "google_bigquery_table" "crime" {
+resource "google_bigquery_table" "chicago_crime_crime" {
   project    = var.project_id
   dataset_id = "chicago_crime"
   table_id   = "crime"
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "crime" {
   ]
 }
 
-output "bigquery_table-crime-table_id" {
-  value = google_bigquery_table.crime.table_id
+output "bigquery_table-chicago_crime_crime-table_id" {
+  value = google_bigquery_table.chicago_crime_crime.table_id
 }
 
-output "bigquery_table-crime-id" {
-  value = google_bigquery_table.crime.id
+output "bigquery_table-chicago_crime_crime-id" {
+  value = google_bigquery_table.chicago_crime_crime.id
 }

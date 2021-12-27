@@ -55,8 +55,6 @@ resources:
     #   location      (The geographic location where the dataset should reside)
     dataset_id: ml_datasets
     description: ~
-
-
   - type: bigquery_dataset
     # Google BigQuery dataset to namespace all tables managed by this folder
     #

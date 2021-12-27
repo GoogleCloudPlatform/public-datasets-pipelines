@@ -28,6 +28,11 @@ output "bigquery_dataset-bls-dataset_id" {
 resource "google_storage_bucket" "bls" {
   name          = "${var.bucket_name_prefix}-bls"
   force_destroy = true
+  lifecycle {
+    ignore_changes = [
+      logging,
+    ]
+  }
 }
 
 output "storage_bucket-bls-name" {

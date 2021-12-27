@@ -191,8 +191,6 @@ dag:
           - name: "weekly_percentincr_deaths"
             type: "NUMERIC"
             mode: "NULLABLE"
-
-
     - operator: "GoogleCloudStorageToGoogleCloudStorageOperator"
       description: "Task to archive the CSV file in the destination bucket"
       args:

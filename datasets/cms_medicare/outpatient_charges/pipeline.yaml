@@ -76,17 +76,8 @@ dag:
         name: "cms_medicare_outpatient_charges_2011"
 
         # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
-        namespace: "default"
-
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                    - key: cloud.google.com/gke-nodepool
-                      operator: In
-                      values:
-                        - "pool-e2-standard-4"
+        namespace: "composer"
+        service_account_name: "datasets"
 
         image_pull_policy: "Always"
 
@@ -120,17 +111,8 @@ dag:
         name: "cms_medicare_outpatient_charges_2012"
 
         # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
-        namespace: "default"
-
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                    - key: cloud.google.com/gke-nodepool
-                      operator: In
-                      values:
-                        - "pool-e2-standard-4"
+        namespace: "composer"
+        service_account_name: "datasets"
 
         image_pull_policy: "Always"
 
@@ -164,17 +146,8 @@ dag:
         name: "cms_medicare_outpatient_charges_2013"
 
         # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
-        namespace: "default"
-
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                    - key: cloud.google.com/gke-nodepool
-                      operator: In
-                      values:
-                        - "pool-e2-standard-4"
+        namespace: "composer"
+        service_account_name: "datasets"
 
         image_pull_policy: "Always"
 
@@ -208,17 +181,8 @@ dag:
         name: "cms_medicare_outpatient_charges_2014"
 
         # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
-        namespace: "default"
-
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                    - key: cloud.google.com/gke-nodepool
-                      operator: In
-                      values:
-                        - "pool-e2-standard-4"
+        namespace: "composer"
+        service_account_name: "datasets"
 
         image_pull_policy: "Always"
 
