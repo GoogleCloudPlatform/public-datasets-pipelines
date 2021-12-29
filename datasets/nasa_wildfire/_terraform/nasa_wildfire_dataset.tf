@@ -30,6 +30,11 @@ resource "google_storage_bucket" "nasa-wildfire" {
   force_destroy               = true
   location                    = "US"
   uniform_bucket_level_access = true
+  lifecycle {
+    ignore_changes = [
+      logging,
+    ]
+  }
 }
 
 output "storage_bucket-nasa-wildfire-name" {
