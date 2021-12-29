@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.8.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v2.7.0...v2.8.0) (2021-12-29)
+
+
+### Features
+
+* Onboard America Health Rankings dataset ([#244](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/244)) ([8ecbfda](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/8ecbfda2ce4dfd279e85606aa8a7d0a3405dbdb3))
+* Onboard American Community Survey dataset ([#222](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/222)) ([861d0e6](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/861d0e6bd54acdd3944826b72b7bcf13af839552))
+* Onboard Census Opportunity Atlas dataset ([#248](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/248)) ([0e62f27](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/0e62f27d71b8dc8b735b68035e6f63a130b6dc14))
+* Onboard Chronic Disease Indicators dataset ([#242](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/242)) ([48c96f2](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/48c96f2b227c2bb854fefcfeafa0c458afee5372))
+* Onboard City Health Dashboard dataset ([#250](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/250)) ([8cc5286](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/8cc528620140e1224348432dbae3ea513f16887c))
+* Onboard MLCommons Multilingual Spoken Words Corpus (MSWC) dataset ([#252](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/252)) ([ec93997](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/ec93997100ef9e85f32df1e1acaf30a73a51cc37))
+* Onboard Race and Economic Opportunity dataset ([#236](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/236)) ([fe6c826](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/fe6c82630a259a294b36a9f881a345725e3dada0))
+
 ## [2.7.0](https://www.github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v2.6.0...v2.7.0) (2021-12-14)
 
 
