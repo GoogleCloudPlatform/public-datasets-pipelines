@@ -63,7 +63,14 @@ def main(
         df['distance_between_service']=""
         df['time_between_service']=""
 
-    
+    if pipeline_name=="tlc_yellow_trips_2018":
+        logging.info("Transform: Removing Null rows... ")
+        df=df.dropna(how="any",axis=0)       
+        
+        logging.info("Transform: Changing date time format... ")
+        df["pickup_datetime"]=df["pickup_datetime"].apply(lambda x: x.strftime("%Y-%m-%d %H:%M:%S"))
+        df["dropoff_datetime"]=df["dropoff_datetime"].apply(lambda x: x.strftime("%Y-%m-%d %H:%M:%S"))
+        
     logging.info("Transform: Reordering headers..")
     df = df[headers]
 
