@@ -79,6 +79,7 @@ with DAG(
         source_objects=[
             "data/census_opportunity_atlas/tract_outcomes/files/data_output.csv"
         ],
+        schema_object="data/census_opportunity_atlas/tract_outcomes/schema.json",
         source_format="CSV",
         destination_project_dataset_table="{{ var.json.census_opportunity_atlas.container_registry.tract_outcomes_destination_table }}",
         skip_leading_rows=1,
