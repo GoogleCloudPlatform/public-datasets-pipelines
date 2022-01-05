@@ -80,6 +80,92 @@ with DAG(
         skip_leading_rows=1,
         allow_quoted_newlines=True,
         write_disposition="WRITE_TRUNCATE",
+        schema_fields=[
+            {
+                "name": "latitude",
+                "type": "float",
+                "description": "Center of nominal 375 m fire pixel",
+                "mode": "nullable",
+            },
+            {
+                "name": "longitude",
+                "type": "float",
+                "description": "Center of nominal 375 m fire pixel",
+                "mode": "nullable",
+            },
+            {
+                "name": "bright_ti4",
+                "type": "float",
+                "description": "Brightness temperature I-4: VIIRS I-4 channel brightness temperature of the fire pixel measured in Kelvin.",
+                "mode": "nullable",
+            },
+            {
+                "name": "scan",
+                "type": "float",
+                "description": "The algorithm produces approximately 375 m pixels at nadir. Scan and track reflect actual pixel size.",
+                "mode": "nullable",
+            },
+            {
+                "name": "track",
+                "type": "float",
+                "description": "The algorithm produces approximately 375 m pixels at nadir. Scan and track reflect actual pixel size.",
+                "mode": "nullable",
+            },
+            {
+                "name": "acq_date",
+                "type": "date",
+                "description": "Date of VIIRS acquisition.",
+                "mode": "nullable",
+            },
+            {
+                "name": "acq_time",
+                "type": "time",
+                "description": "Time of acquisition/overpass of the satellite (in UTC).",
+                "mode": "nullable",
+            },
+            {
+                "name": "satellite",
+                "type": "string",
+                "description": "N= Suomi National Polar-orbiting Partnership (Suomi-NPP)",
+                "mode": "nullable",
+            },
+            {
+                "name": "confidence",
+                "type": "string",
+                "description": "This value is based on a collection of intermediate algorithm quantities used in the detection process. It is intended to help users gauge the quality of individual hotspot/fire pixels. Confidence values are set to low nominal and high. Low confidence daytime fire pixels are typically associated with areas of sun glint and lower relative temperature anomaly (<15K) in the mid-infrared channel I4. Nominal confidence pixels are those free of potential sun glint contamination during the day and marked by strong (>15K) temperature anomaly in either day or nighttime data. High confidence fire pixels are associated with day or nighttime saturated pixels.",
+                "mode": "nullable",
+            },
+            {
+                "name": "version",
+                "type": "string",
+                "description": "Version identifies the collection (e.g. VIIRS Collection 1) and source of data processing: Near Real-Time (NRT suffix added to collection) or Standard Processing (collection only). 1.0NRT - Collection 1 NRT processing. 1.0 - Collection 1 Standard processing",
+                "mode": "nullable",
+            },
+            {
+                "name": "bright_ti5",
+                "type": "float",
+                "description": "Brightness temperature I-5: I-5 Channel brightness temperature of the fire pixel measured in Kelvin.",
+                "mode": "nullable",
+            },
+            {
+                "name": "frp",
+                "type": "float",
+                "description": "Fire Radiative Power: FRP depicts the pixel-integrated fire radiative power in MW (megawatts). FRP depicts the pixel-integrated fire radiative power in MW (megawatts). Given the unique spatial and spectral resolution of the data the VIIRS 375 m fire detection algorithm was customized and tuned in order to optimize its response over small fires while balancing the occurrence of false alarms. Frequent saturation of the mid-infrared I4 channel (3.55-3.93 µm) driving the detection of active fires requires additional tests and procedures to avoid pixel classification errors. As a result sub-pixel fire characterization (e.g. fire radiative power [FRP] retrieval) is only viable across small and/or low-intensity fires. Systematic FRP retrievals are based on a hybrid approach combining 375 and 750 m data. In fact starting in 2015 the algorithm incorporated additional VIIRS channel M13 (3.973-4.128 µm) 750 m data in both aggregated and unaggregated format.",
+                "mode": "nullable",
+            },
+            {
+                "name": "daynight",
+                "type": "string",
+                "description": "D= Daytime fire N= Nighttime fire",
+                "mode": "nullable",
+            },
+            {
+                "name": "acquisition_timestamp",
+                "type": "timestamp",
+                "description": "",
+                "mode": "nullable",
+            },
+        ],
     )
 
     past_week_transform_csv >> load_past_week_to_bq
