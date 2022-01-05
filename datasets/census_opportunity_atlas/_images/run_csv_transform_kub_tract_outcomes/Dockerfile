@@ -12,16 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-dataset:
-  name: census_opportunity_atlas
-  friendly_name: census_opportunity_atlas
-  description: SDOH census opportunity atlas
-  dataset_sources: ~
-  terms_of_use: ~
-
-
-resources:
-  - type: bigquery_dataset
-    dataset_id: census_opportunity_atlas
-    description: census_opportunity_atlas
-    location: US
+FROM python:3.8
+ENV PYTHONUNBUFFERED True
+COPY requirements.txt ./
+RUN python3 -m pip install --no-cache-dir -r requirements.txt
+WORKDIR /custom
+COPY ./csv_transform.py .
+CMD ["python3", "csv_transform.py"]
