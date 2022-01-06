@@ -58,7 +58,7 @@ with DAG(
         image_pull_policy="Always",
         image="{{ var.json.decennial_census_quick_facts.container_registry.run_csv_transform_kub }}",
         env_vars={
-            "SOURCE_URL": "gs://pdp-public-data-dev-test-dataflow/QuickFacts Dec-20-2021.csv",
+            "SOURCE_URL": "gs://public-datasets-dev-decennial-census-quick-facts/QuickFacts_Dec-23-2021.csv",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
