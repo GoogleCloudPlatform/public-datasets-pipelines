@@ -16,6 +16,7 @@
 import datetime
 import json
 import logging
+import math
 import os
 import pathlib
 import typing
@@ -34,6 +35,7 @@ def main(
     headers: typing.List[str],
     rename_mappings: dict,
     pipeline_name: str,
+    integer_string_col: typing.List[str]
 ) -> None:
 
     logging.info(
@@ -51,22 +53,33 @@ def main(
     df = pd.read_csv(str(source_file))
 
     logging.info(f"Transforming {source_file}... ")
+    
+    
 
     logging.info("Transform: Rename columns... ")
     rename_headers(df, rename_mappings)
 
     if pipeline_name == "tree_census_2015":
         logging.info("Transform: Changing date time format... ")
-        df["created_at"]=df["created_at"].apply(lambda x: datetime.strftime(x,"%Y-&m-%d"))
+        df["created_at"]=df["created_at"].apply(lambda x: datetime.datetime.strptime(x,"%m/%d/%Y"))
+        df["created_at"]=df["created_at"].apply(lambda x: datetime.datetime.strftime(x,"%Y-%m-%d"))
+        
+        # logging.info("Transform: Converting to integers..")
+        # convert_values_to_integer_string_2015(df)
+# remove else
     else:
         df=df
         
     if pipeline_name == "tree_census_2005":
         logging.info("Transform: Trimming white spaces in headers... ")
         df=df.rename(columns=lambda x: x.strip())
+        
+# remove else
     else:
         df=df
     
+    logging.info("Transform: Converting to integers..")
+    convert_values_to_integer_string(df, integer_string_col)
 
     logging.info("Transform: Reordering headers..")
     df = df[headers]
@@ -86,6 +99,24 @@ def main(
         f"New York trees {pipeline_name} process completed at "
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
+
+def convert_to_integer_string(input: typing.Union[str, float]) -> str:
+    if not input or (math.isnan(input)):
+        return ""
+    else : 
+        return str(int(round(input, 0)))
+
+
+def convert_values_to_integer_string(df: pd.DataFrame, integer_string_col: typing.List) -> None:
+    for cols in integer_string_col:
+        df[cols] = df[cols].apply(convert_to_integer_string)
+
+# remove this function
+def convert_values_to_integer_string_2015(df: pd.DataFrame) -> None:
+    cols = ["tree_id", "block_id", "tree_dbh", "stump_diam", "zipcode", "cb_num","borocode","cncldist","st_assem","st_senate","boro_ct"]
+
+    for cols in cols:
+        df[cols] = df[cols].apply(convert_to_integer_string)
 
 
 def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
@@ -126,4 +157,5 @@ if __name__ == "__main__":
         headers=json.loads(os.environ["CSV_HEADERS"]),
         rename_mappings=json.loads(os.environ["RENAME_MAPPINGS"]),
         pipeline_name=os.environ["PIPELINE_NAME"],
+        integer_string_col=json.loads(os.environ["INTEGER_STRING_COL"]),
     )

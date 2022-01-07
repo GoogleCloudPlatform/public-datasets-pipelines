@@ -22,7 +22,7 @@ dataset:
 
 resources:
   - type: bigquery_dataset
-    dataset_id: :new_york_trees
+    dataset_id: new_york_trees
     description: New York Trees dataset
   - type: storage_bucket
     name: newyork-trees
