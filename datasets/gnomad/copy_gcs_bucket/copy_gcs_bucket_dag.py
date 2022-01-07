@@ -32,11 +32,14 @@ with DAG(
     default_view="graph",
 ) as dag:
 
-    # Task to run a GCS to GCS operation using the Cloud Data Transfer Service
+    # Task to run a GCS to GCS operation using Google resources
     gnomad_gcs_bucket_transfer = (
         cloud_storage_transfer_service.CloudDataTransferServiceGCSToGCSOperator(
             task_id="gnomad_gcs_bucket_transfer",
-            project_id="{{ var.value.gcp_project }}",
+            timeout=43200,
+            retries=0,
+            wait=True,
+            project_id="bigquery-public-data-dev",
             source_bucket="gnomad-public-requester-pays",
             destination_bucket="gcp-public-data--gnomad",
             google_impersonation_chain="{{ var.json.gnomad.service_account }}",
