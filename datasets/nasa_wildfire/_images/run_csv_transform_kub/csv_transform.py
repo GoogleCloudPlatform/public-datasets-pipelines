@@ -56,20 +56,16 @@ def main(
     rename_headers(df, rename_mappings)
 
     logging.info("Transform: Changing date time format... ")
-    # df = df.replace(
-    #     to_replace={
-    #         "timely_response": {
-    #             "yes": "true",
-    #             "no": "false",
-    #         },
-    #         "consumer_disputed": {"yes": "true", "no": "false", np.nan: ""},
-    #     }
-    # )
-    df['acq_time']=df['acq_time'].apply(lambda x: x[:2]+':'+x[2:]+':00')
-    df['acq_time']=df['acq_time'].apply(lambda x : datetime.strftime(x,'%H:%M:%S').time())
+    # df['acq_time']=df['acq_time'].apply(lambda x: x[:2]+':'+x[2:]+':00')
+    # df['acq_time']=df['acq_time'].apply(lambda x : datetime.strftime(x,'%H:%M:%S').time())
+    df['acq_time']=df['acq_time'].astype(str)
+    df['acq_time']=df['acq_time'].apply(convert_datetime)
+    df['acq_time']=df['acq_time'].astype(str).apply(lambda x: x[:2]+':'+x[2:4]+':'+x[4:6])
+    df['acq_time']=df['acq_time'].apply(lambda x: datetime.datetime.strptime(x,"%H:%M:%S").time())
+    
     
     logging.info("Transform: Concatenating date and time... ")
-    df['acquisition_timestamp']=df['acq_date']+' '+df['acq_time']
+    df['acquisition_timestamp']=df['acq_date'].astype(str)+' '+df['acq_time'].astype(str)
     
 
     logging.info("Transform: Reordering headers..")
@@ -91,6 +87,17 @@ def main(
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
 
+
+def convert_datetime(x): 
+    if len(x)==1:
+        x='000'+x+'00'
+    elif len(x)==2:
+        x='00'+x+'00'
+    elif len(x)==3:
+        x='0'+x+'00'
+    else:
+        x=x+'00'
+    return x
 
 def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
     df.rename(columns=rename_mappings, inplace=True)

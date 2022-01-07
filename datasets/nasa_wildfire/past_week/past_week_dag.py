@@ -64,7 +64,7 @@ with DAG(
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/nasa_wildfire/past_week/data_output.csv",
             "PIPELINE_NAME": "past_week",
-            "CSV_HEADERS": '["latitude","longitude","bright_ti4","scan","track","acq_date","acq_time","satellite","confidence","version","bright_ti5","frp","daynight"]',
+            "CSV_HEADERS": '["latitude","longitude","bright_ti4","scan","track","acq_date","acq_time","satellite","confidence","version","bright_ti5","frp","daynight","acquisition_timestamp"]',
             "RENAME_MAPPINGS": '{"latitude":"latitude","longitude":"longitude","bright_ti4":"bright_ti4","scan":"scan","track":"track","acq_date":"acq_date","acq_time":"acq_time","satellite":"satellite","confidence":"confidence","version":"version","bright_ti5":"bright_ti5","frp":"frp","daynight":"daynight"}',
         },
         resources={"request_memory": "2G", "request_cpu": "1"},
