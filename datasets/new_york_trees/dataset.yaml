@@ -28,3 +28,4 @@ resources:
     name: newyork-trees
     uniform_bucket_level_access: True
     location: US
+    
