@@ -20,3 +20,9 @@ provider "google" {
   impersonate_service_account = var.impersonating_acct
   region                      = var.region
 }
+
+data "google_client_openid_userinfo" "me" {}
+
+output "impersonating-account" {
+  value = data.google_client_openid_userinfo.me.email
+}
