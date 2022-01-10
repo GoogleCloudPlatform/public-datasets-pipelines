@@ -64,19 +64,11 @@ def main(
         df["created_at"]=df["created_at"].apply(lambda x: datetime.datetime.strptime(x,"%m/%d/%Y"))
         df["created_at"]=df["created_at"].apply(lambda x: datetime.datetime.strftime(x,"%Y-%m-%d"))
         
-        # logging.info("Transform: Converting to integers..")
-        # convert_values_to_integer_string_2015(df)
-# remove else
-    else:
-        df=df
         
     if pipeline_name == "tree_census_2005":
         logging.info("Transform: Trimming white spaces in headers... ")
         df=df.rename(columns=lambda x: x.strip())
         
-# remove else
-    else:
-        df=df
     
     logging.info("Transform: Converting to integers..")
     convert_values_to_integer_string(df, integer_string_col)
@@ -109,13 +101,6 @@ def convert_to_integer_string(input: typing.Union[str, float]) -> str:
 
 def convert_values_to_integer_string(df: pd.DataFrame, integer_string_col: typing.List) -> None:
     for cols in integer_string_col:
-        df[cols] = df[cols].apply(convert_to_integer_string)
-
-# remove this function
-def convert_values_to_integer_string_2015(df: pd.DataFrame) -> None:
-    cols = ["tree_id", "block_id", "tree_dbh", "stump_diam", "zipcode", "cb_num","borocode","cncldist","st_assem","st_senate","boro_ct"]
-
-    for cols in cols:
         df[cols] = df[cols].apply(convert_to_integer_string)
 
 
