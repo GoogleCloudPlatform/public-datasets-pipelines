@@ -244,7 +244,7 @@ dag:
           - name: "y_sp"
             type: "float"
             description: "Y coordinate in state plane. Units are feet"
-            mode: "nullable" 
+            mode: "nullable"
 
   graph_paths:
     - "tree_census_2015_transform_csv >> load_tree_census_2015_to_bq"
