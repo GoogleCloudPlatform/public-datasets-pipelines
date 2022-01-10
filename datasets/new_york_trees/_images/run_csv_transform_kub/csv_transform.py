@@ -35,7 +35,7 @@ def main(
     headers: typing.List[str],
     rename_mappings: dict,
     pipeline_name: str,
-    integer_string_col: typing.List[str]
+    integer_string_col: typing.List[str],
 ) -> None:
 
     logging.info(
@@ -53,23 +53,23 @@ def main(
     df = pd.read_csv(str(source_file))
 
     logging.info(f"Transforming {source_file}... ")
-    
-    
 
     logging.info("Transform: Rename columns... ")
     rename_headers(df, rename_mappings)
 
     if pipeline_name == "tree_census_2015":
         logging.info("Transform: Changing date time format... ")
-        df["created_at"]=df["created_at"].apply(lambda x: datetime.datetime.strptime(x,"%m/%d/%Y"))
-        df["created_at"]=df["created_at"].apply(lambda x: datetime.datetime.strftime(x,"%Y-%m-%d"))
-        
-        
+        df["created_at"] = df["created_at"].apply(
+            lambda x: datetime.datetime.strptime(x, "%m/%d/%Y")
+        )
+        df["created_at"] = df["created_at"].apply(
+            lambda x: datetime.datetime.strftime(x, "%Y-%m-%d")
+        )
+
     if pipeline_name == "tree_census_2005":
         logging.info("Transform: Trimming white spaces in headers... ")
-        df=df.rename(columns=lambda x: x.strip())
-        
-    
+        df = df.rename(columns=lambda x: x.strip())
+
     logging.info("Transform: Converting to integers..")
     convert_values_to_integer_string(df, integer_string_col)
 
@@ -92,14 +92,17 @@ def main(
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
 
+
 def convert_to_integer_string(input: typing.Union[str, float]) -> str:
     if not input or (math.isnan(input)):
         return ""
-    else : 
+    else:
         return str(int(round(input, 0)))
 
 
-def convert_values_to_integer_string(df: pd.DataFrame, integer_string_col: typing.List) -> None:
+def convert_values_to_integer_string(
+    df: pd.DataFrame, integer_string_col: typing.List
+) -> None:
     for cols in integer_string_col:
         df[cols] = df[cols].apply(convert_to_integer_string)
 
