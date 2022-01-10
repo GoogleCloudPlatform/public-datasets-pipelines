@@ -14,7 +14,7 @@
 
 dataset:
   name: :new_york_taxi_trips
-  friendly_name: :new_york_taxi_trips
+  friendly_name: new_york_taxi_trips
   description: "New York Taxi Trips dataset"
   dataset_sources: ~
   terms_of_use: ~
@@ -22,7 +22,7 @@ dataset:
 
 resources:
   - type: bigquery_dataset
-    dataset_id: :new_york_taxi_trips
+    dataset_id: new_york_taxi_trips
     description: "TLC Green trips 2018 dataset"
   - type: storage_bucket
     name: new-york-taxi-trips

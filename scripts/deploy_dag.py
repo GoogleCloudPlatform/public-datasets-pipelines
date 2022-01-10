@@ -178,8 +178,8 @@ def import_variables_to_airflow_env(
     gcloud composer environments run COMPOSER_ENV --location COMPOSER_REGION variables -- import /home/airflow/gcs/data/variables/{DATASET_ID}_variables.json
     """
     for cwd, filename in (
-        (env_path / "datasets", "shared_variables.json"),
-        (env_path / "datasets" / dataset_id, f"{dataset_id}_variables.json"),
+        # (env_path / "datasets", "shared_variables.json"),
+        # (env_path / "datasets" / dataset_id, f"{dataset_id}_variables.json"),
     ):
         if local:
             print(f"\nImporting Airflow variables from {cwd / filename}...\n")

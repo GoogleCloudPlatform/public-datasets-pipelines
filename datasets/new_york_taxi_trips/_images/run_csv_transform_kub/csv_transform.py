@@ -65,7 +65,7 @@ def main(
 
     if pipeline_name=="tlc_yellow_trips_2018":
         logging.info("Transform: Removing Null rows... ")
-        df=df.dropna(how="any",axis=0)       
+        df=df.dropna(axis=0,subset=['vendor_id'])       
         
         logging.info("Transform: Changing date time format... ")
         df["pickup_datetime"]=df["pickup_datetime"].apply(lambda x: x.strftime("%Y-%m-%d %H:%M:%S"))
