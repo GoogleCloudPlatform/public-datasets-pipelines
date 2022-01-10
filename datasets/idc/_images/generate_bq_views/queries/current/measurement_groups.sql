@@ -1,1 +1,1 @@
-select * from `PROJECT.idc_v5.measurement_groups`
+select * from `PROJECT.idc_CURRENT_VERSION.measurement_groups`

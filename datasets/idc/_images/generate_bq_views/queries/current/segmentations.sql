@@ -1,1 +1,1 @@
-select * from `PROJECT.idc_v5.segmentations`
+select * from `PROJECT.idc_CURRENT_VERSION.segmentations`

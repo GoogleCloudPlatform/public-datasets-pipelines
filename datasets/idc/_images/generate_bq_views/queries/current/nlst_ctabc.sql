@@ -1,1 +1,1 @@
-select * from `PROJECT.idc_v5.nlst_ctabc`
+select * from `PROJECT.idc_CURRENT_VERSION.nlst_ctabc`

@@ -1,1 +1,1 @@
-select * from `PROJECT.idc_v5.auxiliary_metadata`
+select * from `PROJECT.idc_CURRENT_VERSION.auxiliary_metadata`

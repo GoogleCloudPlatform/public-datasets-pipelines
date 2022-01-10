@@ -1,1 +1,1 @@
-select * from `PROJECT.idc_v5.nlst_screen`
+select * from `PROJECT.idc_CURRENT_VERSION.nlst_screen`

@@ -1,1 +1,1 @@
-select * from `PROJECT.idc_v5.qualitative_measurements`
+select * from `PROJECT.idc_CURRENT_VERSION.qualitative_measurements`

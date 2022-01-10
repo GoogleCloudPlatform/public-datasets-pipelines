@@ -1,1 +1,1 @@
-select * from `PROJECT.idc_v5.original_collections_metadata`
+select * from `PROJECT.idc_CURRENT_VERSION.original_collections_metadata`

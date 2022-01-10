@@ -67,4 +67,4 @@ SELECT
   pivot.tcia_species
 FROM `PROJECT.DATASET.dicom_derived_all` pivot
 JOIN `PROJECT.DATASET.dicom_all` dicom_all
-ON pivot.SOPInstanceUID = dicom_all.SOPInstanceUID;
+ON pivot.SOPInstanceUID = dicom_all.SOPInstanceUID
