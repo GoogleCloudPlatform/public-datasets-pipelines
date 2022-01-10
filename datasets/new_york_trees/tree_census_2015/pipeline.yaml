@@ -248,4 +248,3 @@ dag:
 
   graph_paths:
     - "tree_census_2015_transform_csv >> load_tree_census_2015_to_bq"
-    
