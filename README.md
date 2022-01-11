@@ -156,7 +156,7 @@ Docker images will be built and pushed to GCR by default whenever the command ab
 
 (Note: If your pipeline doesn't use any Airflow variables, you can skip this step.)
 
-Running the command in the previous step will parse your pipeline config and inform you about the Airflow variables that your pipeline expects to use. In this step, you must declare and set those variables.
+Running the command in the previous step will parse your pipeline config and inform you about the Airflow variables that your pipeline expects to use. In this step, you will be declaring and setting those variables.
 
 There are two types of variables that pipelines can use: **shared variables** and **dataset-specific variables**. 
 
@@ -183,7 +183,7 @@ and inside the file, nest the variables under a common parent key. For example:
 }
 ```
 
-#### Dataset-specific variables
+### Dataset-specific variables
 
 Another type of variable is dataset-specific variables. To make use of dataset-specific variables, create the following file
 
