@@ -74,6 +74,8 @@ Every YAML file supports a `resources` block. To use this, identify what Google 
 - GCS bucket to store intermediate, midstream data.
 - GCS bucket to store final, downstream, customer-facing data
 - Sometimes, for very large datasets, you might need to provision a [Dataflow](https://cloud.google.com/dataflow/docs) job
+
+
 ## 3. Generate Terraform files and actuate GCP resources
 
 Run the following command from the project root:
@@ -102,17 +104,20 @@ Consider this "dot" directory as your own dedicated space for prototyping. The f
 
 As a concrete example, the unit tests use a temporary `.test` directory as their environment.
 
+
 ## 4. Generate DAGs and container images
 
 Run the following command from the project root:
 
 ```bash
 $ pipenv run python scripts/generate_dag.py \
-    --dataset DATASET_DIR \
-    --pipeline PIPELINE_DIR \
+    --dataset DATASET \
+    --pipeline PIPELINE \
     [--skip-builds] \
     [--env] dev
 ```
+
+(Note: After this command runs successfully, it may ask you to set your pipeline's variables. Declaring and setting pipeline variables are explained in the [next step](https://github.com/googlecloudplatform/public-datasets-pipelines#5-declare-and-set-your-airflow-variables).)
 
 This generates a Python file that represents the DAG (directed acyclic graph) for the pipeline (the dot dir also gets a copy). To standardize DAG files, the resulting Python code is based entirely out of the contents in the `pipeline.yaml` config file.
 
@@ -149,11 +154,15 @@ Docker images will be built and pushed to GCR by default whenever the command ab
 
 ## 5. Declare and set your Airflow variables
 
-Running the command in the previous step will parse your pipeline config and inform you about the Airflow variables that your pipeline expects to use and must be defined.
+(Note: If your pipeline doesn't use any Airflow variables, you can skip this step.)
 
-If your pipeline doesn't use any Airflow variables, you can skip this step.
+Running the command in the previous step will parse your pipeline config and inform you about the Airflow variables that your pipeline expects to use. In this step, you must declare and set those variables.
 
-There are two types of variables that pipelines can use: **shared** and **dataset-specific**. Shared variables are those that can be reused by other pipelines in the same Airflow or Cloud Composer environment. These variables will have the same values for any pipeline. Examples of shared variables include your Cloud Composer environment name and bucket, your GCP project ID, and paths to the Airflow DAG and data folders (e.g. `/home/airflow/gcs/data`). To specify your shared variables, you can either
+There are two types of variables that pipelines can use: **shared variables** and **dataset-specific variables**. 
+
+### Shared variables
+
+Shared variables are those that can be reused by other pipelines in the same Airflow or Cloud Composer environment. These variables will have the same values for any pipeline. Examples of shared variables include your Cloud Composer environment name and bucket, your GCP project ID, and paths to the Airflow DAG and data folders (e.g. `/home/airflow/gcs/data`). To specify your shared variables, you can either
 
 * Store the variables as Cloud Composer environment variables [using Airflow's built-in `AIRFLOW_VAR_*` behavior](https://airflow.apache.org/docs/apache-airflow/stable/howto/variable.html#storing-variables-in-environment-variables). (Preferred)
 * or, use a single `shared_variables.json` file by creating it under
@@ -173,6 +182,8 @@ and inside the file, nest the variables under a common parent key. For example:
   }
 }
 ```
+
+#### Dataset-specific variables
 
 Another type of variable is dataset-specific variables. To make use of dataset-specific variables, create the following file
 
@@ -201,7 +212,9 @@ then your variables JSON file should look like this
 
 ## 6. Deploy the DAGs and variables
 
-Deploy the DAG and the variables to your own Cloud Composer environment using one of the two commands:
+This step assumes you have a Cloud Composer environment up and running. In this step, you will deploy the DAG to this environment. To create a new Cloud Composer environment, see [this guide](https://cloud.google.com/composer/docs/how-to/managing/creating).
+
+To deploy the DAG and the variables to your a Cloud Composer environment, use the command
 
 ```
 $ pipenv run python scripts/deploy_dag.py \
