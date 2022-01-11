@@ -14,13 +14,12 @@
 
 ---
 resources:
-
   - type: bigquery_table
     table_id: past_week
     description: "Past Week table"
 
 dag:
-  airflow_version: 1
+  airflow_version: 2
   initialize:
     dag_id: past_week
     default_args:
@@ -134,6 +133,6 @@ dag:
             type: "timestamp"
             description: ""
             mode: "nullable"  
-
+            
   graph_paths:
     - "past_week_transform_csv >> load_past_week_to_bq"
