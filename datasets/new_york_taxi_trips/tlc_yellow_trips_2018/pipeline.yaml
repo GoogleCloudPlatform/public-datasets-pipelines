@@ -54,6 +54,7 @@ dag:
           SOURCE_URL: "https://data.cityofnewyork.us/api/views/t29m-gskq/rows.csv"
           SOURCE_FILE: "files/data.csv"
           TARGET_FILE: "files/data_output.csv"
+          CHUNKSIZE: "1000000"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/new_york_taxi_trips/tlc_yellow_trips_2018/data_output.csv"
           PIPELINE_NAME: "tlc_yellow_trips_2018"
@@ -62,7 +63,7 @@ dag:
           RENAME_MAPPINGS: >-
             {"VendorID":"vendor_id","tpep_pickup_datetime":"pickup_datetime","tpep_dropoff_datetime":"dropoff_datetime","RatecodeID":"rate_code","improvement_surcharge":"imp_surcharge","DOLocationID":"dropoff_location_id","PULocationID":"pickup_location_id"}
         resources:
-          request_memory: "2G"
+          request_memory: "4G"
           request_cpu: "1"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"

@@ -12,13 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-import datetime
 import json
 import logging
+import math
 import os
 import pathlib
+import subprocess
 import typing
+from datetime import datetime
 
 import pandas as pd
 import requests
@@ -29,6 +30,7 @@ def main(
     source_url: str,
     source_file: pathlib.Path,
     target_file: pathlib.Path,
+    chunksize: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
     headers: typing.List[str],
@@ -36,66 +38,116 @@ def main(
     pipeline_name: str,
 ) -> None:
 
-    logging.info(
-        f"New York Taxi trips{pipeline_name} process started at "
-        + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    )
-
     logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
 
-    logging.info(f"Downloading file from {source_url}...")
+    logging.info(f"Downloading file {source_url}")
     download_file(source_url, source_file)
+    chunksz = int(chunksize)
 
-    logging.info(f"Opening file {source_file}...")
-    df = pd.read_csv(str(source_file))
+    logging.info(f"Reading csv file {source_url}")
+    with pd.read_csv(
+        source_file,
+        engine="python",
+        encoding="utf-8",
+        quotechar='"',
+        # compression="csv",
+        chunksize=chunksz,
+    ) as reader:
+        for chunk_number, chunk in enumerate(reader):
+            logging.info(f"Processing batch {chunk_number}")
+            target_file_batch = str(target_file).replace(
+                ".csv", "-" + str(chunk_number) + ".csv"
+            )
+            df = pd.DataFrame()
+            df = pd.concat([df, chunk])
 
-    logging.info(f"Transforming {source_file}... ")
+            logging.info(" Renaming headers...")
+            rename_headers(df, rename_mappings)
 
-    logging.info("Transform: Rename columns... ")
-    rename_headers(df, rename_mappings)
-    
-    if pipeline_name=="tlc_green_trips_2018":
-        logging.info("Transform: Removing Null rows... ")
-        df=df.dropna(how="any",axis=0)
-        
-        logging.info("Transform: Adding new headers... ")
-        df['distance_between_service']=""
-        df['time_between_service']=""
+            if pipeline_name == "tlc_green_trips_2018":
+                logging.info("Transform: Removing Null rows... ")
+                df = df.dropna(axis=0, subset=["vendor_id"])
 
-    if pipeline_name=="tlc_yellow_trips_2018":
-        logging.info("Transform: Removing Null rows... ")
-        df=df.dropna(axis=0,subset=['vendor_id'])       
-        
-        logging.info("Transform: Changing date time format... ")
-        df["pickup_datetime"]=df["pickup_datetime"].apply(lambda x: x.strftime("%Y-%m-%d %H:%M:%S"))
-        df["dropoff_datetime"]=df["dropoff_datetime"].apply(lambda x: x.strftime("%Y-%m-%d %H:%M:%S"))
-        
-    logging.info("Transform: Reordering headers..")
-    df = df[headers]
+                logging.info("Transform: Adding new columns... ")
+                df["distance_between_service"] = ""
+                df["time_between_service"] = ""
 
-    logging.info(f"Saving to output file.. {target_file}")
-    try:
-        save_to_new_file(df, file_path=str(target_file))
-    except Exception as e:
-        logging.error(f"Error saving output file: {e}.")
+                logging.info("Transform: Adding new columns... ")
+                df["pickup_datetime"] = df["pickup_datetime"].apply(
+                    lambda x: datetime.strptime(x, "%m/%d/%Y %I:%M:%S %p")
+                )
+                df["dropoff_datetime"] = df["dropoff_datetime"].apply(
+                    lambda x: datetime.strptime(x, "%m/%d/%Y %I:%M:%S %p")
+                )
+                df["pickup_datetime"] = df["pickup_datetime"].apply(
+                    lambda x: x.strftime("%Y-%m-%d %H:%M:%S")
+                )
+                df["dropoff_datetime"] = df["dropoff_datetime"].apply(
+                    lambda x: x.strftime("%Y-%m-%d %H:%M:%S")
+                )
+
+            if pipeline_name == "tlc_yellow_trips_2018":
+                logging.info("Transform: Removing Null rows... ")
+                df = df.dropna(axis=0, subset=["vendor_id"])
+
+                logging.info("Transform: Changing date time format... ")
+                df["pickup_datetime"] = df["pickup_datetime"].apply(
+                    lambda x: x.strftime("%Y-%m-%d %H:%M:%S")
+                )
+                df["dropoff_datetime"] = df["dropoff_datetime"].apply(
+                    lambda x: x.strftime("%Y-%m-%d %H:%M:%S")
+                )
+
+            process_chunk(df, target_file_batch)
+
+            logging.info("Transform: Reordering headers..")
+            df = df[headers]
+
+            logging.info(f"Appending batch {chunk_number} to {target_file}")
+            if chunk_number == 0:
+                subprocess.run(["cp", target_file_batch, target_file])
+            else:
+                subprocess.check_call([f"sed -i '1d' {target_file_batch}"], shell=True)
+                subprocess.check_call(
+                    [f"cat {target_file_batch} >> {target_file}"], shell=True
+                )
+            subprocess.run(["rm", target_file_batch])
 
     logging.info(
         f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
     )
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
-    logging.info(
-        f"CFPB Complaints {pipeline_name} process completed at "
-        + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    )
+
+def process_chunk(df: pd.DataFrame, target_file_batch: str) -> None:
+
+    logging.info(f"Saving to output file.. {target_file_batch}")
+    try:
+        save_to_new_file(df, file_path=str(target_file_batch))
+    except Exception as e:
+        logging.error(f"Error saving output file: {e}.")
+    logging.info("..Done!")
 
 
 def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
-    df.rename(columns=rename_mappings, inplace=True)
+    df = df.rename(columns=rename_mappings, inplace=True)
 
 
-def save_to_new_file(df: pd.DataFrame, file_path: str) -> None:
+def convert_to_integer_string(input: typing.Union[str, float]) -> str:
+
+    if not input or (math.isnan(input)):
+        return ""
+    return str(int(round(input, 0)))
+
+
+# def convert_values_to_integer_string(df: pd.DataFrame) -> None:
+
+# for cols in cols:
+#     df[cols] = df[cols].apply(convert_to_integer_string)
+
+
+def save_to_new_file(df: pd.DataFrame, file_path) -> None:
     df.to_csv(file_path, index=False)
 
 
@@ -124,6 +176,7 @@ if __name__ == "__main__":
         source_url=os.environ["SOURCE_URL"],
         source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
+        chunksize=os.environ["CHUNKSIZE"],
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
         headers=json.loads(os.environ["CSV_HEADERS"]),

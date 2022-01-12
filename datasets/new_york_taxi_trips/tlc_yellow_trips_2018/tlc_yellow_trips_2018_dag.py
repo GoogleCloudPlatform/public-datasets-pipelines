@@ -61,6 +61,7 @@ with DAG(
             "SOURCE_URL": "https://data.cityofnewyork.us/api/views/t29m-gskq/rows.csv",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
+            "CHUNKSIZE": "1000000",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/new_york_taxi_trips/tlc_yellow_trips_2018/data_output.csv",
             "PIPELINE_NAME": "tlc_yellow_trips_2018",

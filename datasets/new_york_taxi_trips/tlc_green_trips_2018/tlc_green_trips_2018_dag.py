@@ -61,13 +61,14 @@ with DAG(
             "SOURCE_URL": "https://data.cityofnewyork.us/api/views/w7fs-fd9i/rows.csv",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
+            "CHUNKSIZE": "1000000",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/new_york_taxi_trips/tlc_green_trips_2018/data_output.csv",
             "PIPELINE_NAME": "tlc_green_trips_2018",
             "CSV_HEADERS": '["vendor_id","pickup_datetime","dropoff_datetime","store_and_fwd_flag","rate_code","passenger_count","trip_distance","fare_amount","extra","mta_tax","tip_amount","tolls_amount","ehail_fee","total_amount","payment_type","distance_between_service","time_between_service","trip_type","imp_surcharge","pickup_location_id","dropoff_location_id"]',
             "RENAME_MAPPINGS": '{"VendorID":"vendor_id","lpep_pickup_datetime":"pickup_datetime","lpep_dropoff_datetime":"dropoff_datetime","RatecodeID":"rate_code","improvement_surcharge":"imp_surcharge","DOLocationID":"dropoff_location_id","PULocationID":"pickup_location_id"}',
         },
-        resources={"request_memory": "2G", "request_cpu": "1"},
+        resources={"request_memory": "4G", "request_cpu": "1"},
     )
 
     # Task to load CSV data to a BigQuery table
