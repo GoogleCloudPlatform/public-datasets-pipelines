@@ -1,1 +1,1 @@
-select * from `PROJECT.idc_v5.dicom_metadata_curated`
+select * from `PROJECT.idc_CURRENT_VERSION.dicom_metadata_curated`

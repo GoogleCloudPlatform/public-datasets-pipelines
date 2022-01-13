@@ -1,1 +1,1 @@
-select * from `PROJECT.idc_v5.tcga_biospecimen_rel9`
+select * from `PROJECT.idc_CURRENT_VERSION.tcga_biospecimen_rel9`

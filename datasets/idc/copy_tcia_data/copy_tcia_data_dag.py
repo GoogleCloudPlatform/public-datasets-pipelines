@@ -60,7 +60,7 @@ with DAG(
             "TARGET_PROJECT_ID": "{{ var.json.idc.target_project_id }}",
             "SERVICE_ACCOUNT": "{{ var.json.idc.service_account }}",
             "DATASET_NAME": "idc",
-            "DATASET_VERSIONS": '["v1", "v2", "v3", "v4", "v5"]',
+            "DATASET_VERSIONS": '["v1", "v2", "v3", "v4", "v5", "v6"]',
         },
         resources={"limit_memory": "128M", "limit_cpu": "200m"},
     )
@@ -77,7 +77,8 @@ with DAG(
             "QUERIES_DIR": "/custom/queries",
             "GCP_PROJECT": "{{ var.value.gcp_project }}",
             "DATASET_NAME": "idc",
-            "DATASET_VERSIONS": '["v1", "v2", "v3", "v4", "v5", "current"]',
+            "DATASET_VERSIONS": '["v1", "v2", "v3", "v4", "v5", "v6", "current"]',
+            "CURRENT_VERSION": "v6",
         },
         resources={"limit_memory": "128M", "limit_cpu": "200m"},
     )

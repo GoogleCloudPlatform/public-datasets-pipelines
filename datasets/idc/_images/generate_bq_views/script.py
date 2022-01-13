@@ -26,6 +26,7 @@ def main(
     gcp_project: str,
     dataset_name: str,
     dataset_versions: typing.List[str],
+    current_version: str,
 ):
     client = bigquery.Client()
     for version in dataset_versions:
@@ -35,17 +36,21 @@ def main(
                 sql_file=sql_file,
                 gcp_project=gcp_project,
                 dataset=f"{dataset_name}_{version}",
+                current_version=current_version,
             )
 
             client.query(query)
 
 
-def load_query(sql_file: pathlib.Path, gcp_project: str, dataset: str) -> str:
+def load_query(
+    sql_file: pathlib.Path, gcp_project: str, dataset: str, current_version: str
+) -> str:
     query = sql_file.read_text()
 
     # Replace template variables
     query = query.replace("PROJECT", gcp_project)
     query = query.replace("DATASET", dataset)
+    query = query.replace("CURRENT_VERSION", current_version)
     query = f"""
         CREATE OR REPLACE VIEW
             `{gcp_project}.{dataset}.{sql_file.stem}`
@@ -65,4 +70,5 @@ if __name__ == "__main__":
         gcp_project=os.environ["GCP_PROJECT"],
         dataset_name=os.environ["DATASET_NAME"],
         dataset_versions=json.loads(os.environ["DATASET_VERSIONS"]),
+        current_version=os.environ["CURRENT_VERSION"],
     )
