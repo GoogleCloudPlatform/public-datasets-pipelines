@@ -1,5 +1,6 @@
 name: Lint Python
-on: [pull_request]
+on: [push]
+#on: [pull_request]
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -9,7 +10,7 @@ jobs:
         uses: actions/setup-python@v2
       - name: Install dependencies
         run:
-          python -m pip install flake8 isort
+          python -m pip install flake8 isort nbqa
       - uses: psf/black@20.8b1
         with:
           args: ". --check"
@@ -17,3 +18,5 @@ jobs:
         run: flake8
       - name: Run isort
         run: isort --check-only --profile black --diff .
+      - name: Run flake8 on notebooks
+        run: nbqa flake8 .
