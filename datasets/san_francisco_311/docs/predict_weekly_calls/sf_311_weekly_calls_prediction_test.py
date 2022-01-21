@@ -1,8 +1,10 @@
 from testbook import testbook
 
 
-@testbook('./sf_311_weekly_calls_prediction.ipynb')
-def test_get_details(tb):
+@testbook(
+    "datasets/san_francisco_311/docs/predict_weekly_calls/sf_311_weekly_calls_prediction.ipynb"
+)
+def test_run_notebook(tb):
     tb.inject(
         """
         from unittest import mock
@@ -16,14 +18,13 @@ def test_get_details(tb):
         p1.start()
         """,
         before=3,
-        run=False
+        run=False,
     )
 
     tb.execute()
-    dataframe = tb.get('dataframe')
+    dataframe = tb.get("dataframe")
     assert dataframe.shape == (50, 3)
 
-    train_predict_plot = tb.get('train_predict_plot')
+    train_predict_plot = tb.get("train_predict_plot")
     print(train_predict_plot)
     assert train_predict_plot is not None
-
