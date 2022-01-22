@@ -8,6 +8,7 @@ def test_run_notebook(tb):
     tb.inject(
         """
         from unittest import mock
+        import pandas as pd
         mock_client = mock.MagicMock()
         mock_df = pd.DataFrame()
         mock_df['week'] = range(50)
@@ -25,6 +26,6 @@ def test_run_notebook(tb):
     dataframe = tb.get("dataframe")
     assert dataframe.shape == (50, 3)
 
-    train_predict_plot = tb.get("train_predict_plot")
-    print(train_predict_plot)
-    assert train_predict_plot is not None
+    train_pred_plot = tb.get("train_pred_plot")
+    print(train_pred_plot)
+    assert train_pred_plot is not None
