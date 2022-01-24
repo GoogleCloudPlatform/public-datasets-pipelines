@@ -67,6 +67,7 @@ with DAG(
             "PIPELINE_NAME": "tlc_green_trips_2018",
             "CSV_HEADERS": '["vendor_id","pickup_datetime","dropoff_datetime","store_and_fwd_flag","rate_code","passenger_count","trip_distance","fare_amount","extra","mta_tax","tip_amount","tolls_amount","ehail_fee","total_amount","payment_type","distance_between_service","time_between_service","trip_type","imp_surcharge","pickup_location_id","dropoff_location_id"]',
             "RENAME_MAPPINGS": '{"VendorID":"vendor_id","lpep_pickup_datetime":"pickup_datetime","lpep_dropoff_datetime":"dropoff_datetime","RatecodeID":"rate_code","improvement_surcharge":"imp_surcharge","DOLocationID":"dropoff_location_id","PULocationID":"pickup_location_id"}',
+            "INTEGER_STRING_COL": '["passenger_count", "time_between_service"]',
         },
         resources={"request_memory": "4G", "request_cpu": "1"},
     )

@@ -67,8 +67,9 @@ with DAG(
             "PIPELINE_NAME": "tlc_yellow_trips_2018",
             "CSV_HEADERS": '["vendor_id","pickup_datetime","dropoff_datetime","passenger_count","trip_distance","rate_code","store_and_fwd_flag","payment_type","fare_amount","extra","mta_tax","tip_amount","tolls_amount","imp_surcharge","total_amount","pickup_location_id","dropoff_location_id"]',
             "RENAME_MAPPINGS": '{"VendorID":"vendor_id","tpep_pickup_datetime":"pickup_datetime","tpep_dropoff_datetime":"dropoff_datetime","RatecodeID":"rate_code","improvement_surcharge":"imp_surcharge","DOLocationID":"dropoff_location_id","PULocationID":"pickup_location_id"}',
+            "INTEGER_STRING_COL": '["passenger_count"]',
         },
-        resources={"request_memory": "2G", "request_cpu": "1"},
+        resources={"request_memory": "4G", "request_cpu": "1"},
     )
 
     # Task to load CSV data to a BigQuery table
