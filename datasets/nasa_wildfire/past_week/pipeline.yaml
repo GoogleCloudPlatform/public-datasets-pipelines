@@ -77,7 +77,7 @@ dag:
         write_disposition: "WRITE_TRUNCATE"
 
         schema_fields:
-          - name: "latitude"  
+          - name: "latitude"
             type: "float"
             description: "Center of nominal 375 m fire pixel"
             mode: "nullable"
@@ -132,7 +132,7 @@ dag:
           - name: "acquisition_timestamp"
             type: "timestamp"
             description: ""
-            mode: "nullable"  
-            
+            mode: "nullable"
+
   graph_paths:
     - "past_week_transform_csv >> load_past_week_to_bq"

@@ -14,7 +14,8 @@
 
 
 from airflow import DAG
-from airflow.contrib.operators import gcs_to_bq, kubernetes_pod_operator
+from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
     "owner": "Google",
@@ -33,7 +34,7 @@ with DAG(
 ) as dag:
 
     # Run CSV transform within kubernetes pod
-    past_week_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+    past_week_transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="past_week_transform_csv",
         startup_timeout_seconds=600,
         name="past_week",
@@ -71,7 +72,7 @@ with DAG(
     )
 
     # Task to load CSV data to a BigQuery table
-    load_past_week_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    load_past_week_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_past_week_to_bq",
         bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/nasa_wildfire/past_week/data_output.csv"],
