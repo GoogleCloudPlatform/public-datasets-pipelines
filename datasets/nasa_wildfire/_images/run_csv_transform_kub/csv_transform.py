@@ -44,8 +44,8 @@ def main(
     logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
 
-    # logging.info(f"Downloading file from {source_url}...")
-    # download_file(source_url, source_file)
+    logging.info(f"Downloading file from {source_url}...")
+    download_file(source_url, source_file)
 
     logging.info("Reading file ...")
     df = pd.read_csv(str(source_file))
