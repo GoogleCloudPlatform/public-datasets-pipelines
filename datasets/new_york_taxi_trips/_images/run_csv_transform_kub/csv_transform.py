@@ -19,6 +19,7 @@ import os
 import pathlib
 import typing
 from datetime import datetime
+from datetime import timedelta
 
 import pandas as pd
 import requests
@@ -39,34 +40,62 @@ def main(
 ) -> None:
     logging.info("New York taxi trips - green trips process started")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
-    download_file(source_url, source_file)
-    with pd.read_csv(
-        source_file,
-        engine="python",
-        encoding="utf-8",
-        quotechar='"',
-        # compression="csv",
-        chunksize=int(chunksize),
-    ) as reader:
-        for chunk_number, chunk in enumerate(reader):
-            logging.info(f"Processing batch {chunk_number}")
-            target_file_batch = str(target_file).replace(
-                ".csv", "-" + str(chunk_number) + ".csv"
-            )
-            df = pd.DataFrame()
-            df = pd.concat([df, chunk])
-            process_chunk(
-                df,
-                target_file_batch,
-                target_file,
-                (not chunk_number == 0),
-                headers,
-                rename_mappings,
-                pipeline_name,
-                integer_string_col,
-            )
+
+    start_date_year = int(datetime.strftime((datetime.now() + timedelta(days=-1825)), '%Y'))
+    current_year = int(datetime.strftime(datetime.now(), '%Y'))
+    for year_data in range(start_date_year, (current_year + 1)):
+        for month_data in range(1, 13):
+            process_month = str(year_data) + '-' + str(month_data).zfill(2)
+            print(process_month)
+            source_url_to_process = source_url + process_month + '.csv'
+            successful_download = download_file(source_url_to_process, source_file)
+            if successful_download:
+                with pd.read_csv(
+                    source_file,
+                    engine="python",
+                    encoding="utf-8",
+                    quotechar='"',
+                    chunksize=int(chunksize),
+                ) as reader:
+                    for chunk_number, chunk in enumerate(reader):
+                        logging.info(f"Processing batch {chunk_number}")
+                        target_file_batch = str(target_file).replace(
+                            ".csv", "-" + str(chunk_number) + ".csv"
+                        )
+                        df = pd.DataFrame()
+                        df = pd.concat([df, chunk])
+                        process_chunk(
+                            df,
+                            target_file_batch,
+                            target_file,
+                            (not chunk_number == 0),
+                            headers,
+                            rename_mappings,
+                            pipeline_name,
+                            integer_string_col,
+                        )
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
     logging.info("New York taxi trips - green trips process completed")
+
+
+def download_file(source_url: str, source_file: pathlib.Path) -> bool:
+    logging.info(f"Downloading {source_url} into {source_file}")
+    success = False
+    try:
+        r = requests.get(source_url, stream=True)
+        with open(source_file, "wb") as f:
+            for chunk in r:
+                if chunk.find('<Code>NoSuchKey</Code>'):
+                    #return fail if the file contains no-such-key
+                    success=False
+                    break
+                else:
+                    f.write(chunk)
+        success = True
+    except:
+        logging.error(f"Unable to download {source_url}: {r.text}")
+        success = False
+    return success
 
 
 def process_chunk(
@@ -96,6 +125,53 @@ def process_chunk(
     logging.info(f"Processing Batch {target_file_batch} completed")
 
 
+def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
+    logging.info(" Renaming headers...")
+    df.rename(columns=rename_mappings, inplace=True)
+    return df
+
+
+def remove_null_rows(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Transform: Removing Null rows... ")
+    df = df.dropna(axis=0, subset=["vendor_id"])
+    return df
+
+
+def format_date_time(
+    df: pd.DataFrame, field_name: str, str_pf_time: str, dt_format: str
+) -> pd.DataFrame:
+    if str_pf_time == "strptime":
+        logging.info(
+            f"Transform: Formatting datetime for field {field_name} from datetime to {dt_format}  "
+        )
+        df[field_name] = df[field_name].apply(lambda x: datetime.strptime(x, dt_format))
+    else:
+        logging.info(
+            f"Transform: Formatting datetime for field {field_name} from {dt_format} to datetime "
+        )
+        df[field_name] = df[field_name].apply(lambda x: x.strftime(dt_format))
+    return df
+
+
+def convert_values_to_integer_string(
+    df: pd.DataFrame, integer_string_col: typing.List
+) -> None:
+    logging.info("Transform: Converting to integers..")
+    for cols in integer_string_col:
+        df[cols] = df[cols].apply(convert_to_integer_string)
+    return df
+
+
+def convert_to_integer_string(input: typing.Union[str, float]) -> str:
+    if not input or (math.isnan(input)):
+        return ""
+    return str(int(round(input, 0)))
+
+
+def save_to_new_file(df: pd.DataFrame, file_path) -> None:
+    df.to_csv(file_path, index=False)
+
+
 def append_batch_file(
     batch_file_path: str, target_file_path: str, skip_header: bool, truncate_file: bool
 ) -> None:
@@ -117,74 +193,21 @@ def append_batch_file(
         os.remove(batch_file_path)
 
 
-def format_date_time(
-    df: pd.DataFrame, field_name: str, str_pf_time: str, dt_format: str
-) -> pd.DataFrame:
-    if str_pf_time == "strptime":
-        logging.info(
-            f"Transform: Formatting datetime for field {field_name} from datetime to {dt_format}  "
-        )
-        df[field_name] = df[field_name].apply(lambda x: datetime.strptime(x, dt_format))
-    else:
-        logging.info(
-            f"Transform: Formatting datetime for field {field_name} from {dt_format} to datetime "
-        )
-        df[field_name] = df[field_name].apply(lambda x: x.strftime(dt_format))
-    return df
-
-
-def remove_null_rows(df: pd.DataFrame) -> pd.DataFrame:
-    logging.info("Transform: Removing Null rows... ")
-    df = df.dropna(axis=0, subset=["vendor_id"])
-    return df
-
-
-def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
-    logging.info(" Renaming headers...")
-    df.rename(columns=rename_mappings, inplace=True)
-    return df
-
-
-def convert_to_integer_string(input: typing.Union[str, float]) -> str:
-    if not input or (math.isnan(input)):
-        return ""
-    return str(int(round(input, 0)))
-
-
-def convert_values_to_integer_string(
-    df: pd.DataFrame, integer_string_col: typing.List
-) -> None:
-    logging.info("Transform: Converting to integers..")
-    for cols in integer_string_col:
-        df[cols] = df[cols].apply(convert_to_integer_string)
-    return df
-
-
-def save_to_new_file(df: pd.DataFrame, file_path) -> None:
-    df.to_csv(file_path, index=False)
-
-
-def download_file(source_url: str, source_file: pathlib.Path) -> None:
-    logging.info(f"Downloading {source_url} into {source_file}")
-    r = requests.get(source_url, stream=True)
-    if r.status_code == 200:
-        with open(source_file, "wb") as f:
-            for chunk in r:
-                f.write(chunk)
-    else:
-        logging.error(f"Couldn't download {source_url}: {r.text}")
-
-
 def upload_file_to_gcs(
     file_path: pathlib.Path, target_gcs_bucket: str, target_gcs_path: str
 ) -> None:
-    logging.info(
-        f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
-    )
-    storage_client = storage.Client()
-    bucket = storage_client.bucket(target_gcs_bucket)
-    blob = bucket.blob(target_gcs_path)
-    blob.upload_from_filename(file_path)
+    if os.path.exists(file_path):
+        logging.info(
+            f"Uploading output file to gs://{target_gcs_bucket}/{target_gcs_path}"
+        )
+        storage_client = storage.Client()
+        bucket = storage_client.bucket(target_gcs_bucket)
+        blob = bucket.blob(target_gcs_path)
+        blob.upload_from_filename(file_path)
+    else:
+        logging.info(
+            f"Cannot upload file to gs://{target_gcs_bucket}/{target_gcs_path} as it does not exist."
+        )
 
 
 if __name__ == "__main__":

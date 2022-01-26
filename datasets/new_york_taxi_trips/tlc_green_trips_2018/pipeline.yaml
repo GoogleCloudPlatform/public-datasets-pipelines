@@ -178,7 +178,7 @@ dag:
         image_pull_policy: "Always"
         image: "{{ var.json.new_york_taxi_trips.container_registry.run_csv_transform_kub }}"
         env_vars:
-          SOURCE_URL: "https://s3.amazonaws.com/nyc-tlc/trip+data/green_tripdata_2021-01.csv"
+          SOURCE_URL: "https://s3.amazonaws.com/nyc-tlc/trip+data/green_tripdata_"
           SOURCE_FILE: "files/data.csv"
           TARGET_FILE: "files/data_output.csv"
           CHUNKSIZE: "500000"
