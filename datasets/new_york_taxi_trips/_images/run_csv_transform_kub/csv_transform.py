@@ -18,8 +18,7 @@ import math
 import os
 import pathlib
 import typing
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 import pandas as pd
 import requests
@@ -41,13 +40,15 @@ def main(
     logging.info("New York taxi trips - green trips process started")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
 
-    start_date_year = int(datetime.strftime((datetime.now() + timedelta(days=-1825)), '%Y'))
-    current_year = int(datetime.strftime(datetime.now(), '%Y'))
+    start_date_year = int(
+        datetime.strftime((datetime.now() + timedelta(days=-1825)), "%Y")
+    )
+    current_year = int(datetime.strftime(datetime.now(), "%Y"))
     for year_data in range(start_date_year, (current_year + 1)):
         for month_data in range(1, 13):
-            process_month = str(year_data) + '-' + str(month_data).zfill(2)
+            process_month = str(year_data) + "-" + str(month_data).zfill(2)
             print(process_month)
-            source_url_to_process = source_url + process_month + '.csv'
+            source_url_to_process = source_url + process_month + ".csv"
             successful_download = download_file(source_url_to_process, source_file)
             if successful_download:
                 with pd.read_csv(
@@ -81,20 +82,20 @@ def main(
 def download_file(source_url: str, source_file: pathlib.Path) -> bool:
     logging.info(f"Downloading {source_url} into {source_file}")
     success = False
-    try:
-        r = requests.get(source_url, stream=True)
-        with open(source_file, "wb") as f:
-            for chunk in r:
-                if chunk.find('<Code>NoSuchKey</Code>'):
-                    #return fail if the file contains no-such-key
-                    success=False
-                    break
-                else:
-                    f.write(chunk)
-        success = True
-    except:
-        logging.error(f"Unable to download {source_url}: {r.text}")
-        success = False
+    r = requests.get(source_url, stream=True)
+    with open(source_file, "wb") as f:
+        for chunk in r:
+            if chunk.find((b"<Code>NoSuchKey</Code>")):
+                # return fail if the file contains no-such-key
+                success = False
+                break
+            else:
+                f.write(chunk)
+                success = True
+    if success:
+        logging.info(f"Download {source_url} to {source_file} complete.")
+    else:
+        logging.info(f"Unable to download {source_url} to {source_file} at this time.  The URL may not exist.")
     return success
 
 
