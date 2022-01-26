@@ -37,14 +37,9 @@ def main(
     pipeline_name: str,
     integer_string_col: typing.List[str],
 ) -> None:
-
     logging.info("New York taxi trips - green trips process started")
-
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
-
-    # download_file(source_url, source_file)
-
-    logging.info(f"Reading csv file {source_url}")
+    download_file(source_url, source_file)
     with pd.read_csv(
         source_file,
         engine="python",
@@ -84,23 +79,21 @@ def process_chunk(
     pipeline_name: str,
     integer_string_col: typing.List[str],
 ) -> None:
-    logging.info(f"Processing Batch {target_file_batch}")
     df = rename_headers(df, rename_mappings)
     df = remove_null_rows(df)
-    if pipeline_name == "tlc_green_trips_2018":
+
+    if pipeline_name == "ny_green_trips":
         df["distance_between_service"] = ""
         df["time_between_service"] = ""
-        df = format_date_time(df, "pickup_datetime", "strptime", "%m/%d/%Y %I:%M:%S %p")
-        df = format_date_time(
-            df, "dropoff_datetime", "strptime", "%m/%d/%Y %I:%M:%S %p"
-        )
+        df = format_date_time(df, "pickup_datetime", "strptime", "%Y-%m-%d %H:%M:%S")
+        df = format_date_time(df, "dropoff_datetime", "strptime", "%Y-%m-%d %H:%M:%S")
     df = format_date_time(df, "pickup_datetime", "strftime", "%Y-%m-%d %H:%M:%S")
     df = format_date_time(df, "dropoff_datetime", "strftime", "%Y-%m-%d %H:%M:%S")
-    convert_values_to_integer_string(df, integer_string_col)
+    df = convert_values_to_integer_string(df, integer_string_col)
     df = df[headers]
     save_to_new_file(df, file_path=str(target_file_batch))
     append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
-    logging.info("..Done!")
+    logging.info(f"Processing Batch {target_file_batch} completed")
 
 
 def append_batch_file(
@@ -148,7 +141,7 @@ def remove_null_rows(df: pd.DataFrame) -> pd.DataFrame:
 
 def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
     logging.info(" Renaming headers...")
-    df = df.rename(columns=rename_mappings, inplace=True)
+    df.rename(columns=rename_mappings, inplace=True)
     return df
 
 
