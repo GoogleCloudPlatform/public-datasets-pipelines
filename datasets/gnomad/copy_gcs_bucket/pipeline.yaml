@@ -49,6 +49,8 @@ dag:
         source_bucket: "gnomad-public-requester-pays"
         destination_bucket: "gcp-public-data--gnomad"
         google_impersonation_chain: "{{ var.json.gnomad.service_account }}"
+        transfer_options:
+          deleteObjectsUniqueInSink: False
 
   graph_paths:
     # This is where you specify the relationships (i.e. directed paths/edges)
