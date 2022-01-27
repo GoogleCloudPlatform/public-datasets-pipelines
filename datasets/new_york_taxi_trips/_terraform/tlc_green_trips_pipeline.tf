@@ -15,12 +15,12 @@
  */
 
 
-resource "google_bigquery_table" "new_york_taxi_trips_tlc_green_trips_2018" {
+resource "google_bigquery_table" "new_york_taxi_trips_tlc_green_trips" {
   project    = var.project_id
   dataset_id = "new_york_taxi_trips"
-  table_id   = "tlc_green_trips_2018"
+  table_id   = "tlc_green_trips"
 
-  description = "Tree Census table"
+  description = "New York TLC Green Taxi Trips table"
 
 
 
@@ -30,10 +30,10 @@ resource "google_bigquery_table" "new_york_taxi_trips_tlc_green_trips_2018" {
   ]
 }
 
-output "bigquery_table-new_york_taxi_trips_tlc_green_trips_2018-table_id" {
-  value = google_bigquery_table.new_york_taxi_trips_tlc_green_trips_2018.table_id
+output "bigquery_table-new_york_taxi_trips_tlc_green_trips-table_id" {
+  value = google_bigquery_table.new_york_taxi_trips_tlc_green_trips.table_id
 }
 
-output "bigquery_table-new_york_taxi_trips_tlc_green_trips_2018-id" {
-  value = google_bigquery_table.new_york_taxi_trips_tlc_green_trips_2018.id
+output "bigquery_table-new_york_taxi_trips_tlc_green_trips-id" {
+  value = google_bigquery_table.new_york_taxi_trips_tlc_green_trips.id
 }

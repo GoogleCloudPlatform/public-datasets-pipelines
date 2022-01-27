@@ -45,6 +45,8 @@ def main(
     )
     current_year = int(datetime.strftime(datetime.now(), "%Y"))
     for year_data in range(start_date_year, (current_year + 1)):
+        target_file_ordinal = str(current_year - year_data)
+        logging.info("Processing year {year_data} as ordinal {target_file_ordinal}")
         for month_data in range(1, 13):
             process_month = str(year_data) + "-" + str(month_data).zfill(2)
             print(process_month)
@@ -61,21 +63,40 @@ def main(
                     for chunk_number, chunk in enumerate(reader):
                         logging.info(f"Processing batch {chunk_number}")
                         target_file_batch = str(target_file).replace(
-                            ".csv", "-" + str(chunk_number) + ".csv"
+                            ".csv",
+                            "-"
+                            + "_"
+                            + str(target_file_ordinal)
+                            + "-"
+                            + str(chunk_number)
+                            + ".csv",
                         )
                         df = pd.DataFrame()
                         df = pd.concat([df, chunk])
                         process_chunk(
                             df,
                             target_file_batch,
-                            target_file,
+                            str.replace(
+                                target_file,
+                                ".csv",
+                                "_" + str(target_file_ordinal) + ".csv",
+                            ),
                             (not chunk_number == 0),
                             headers,
                             rename_mappings,
                             pipeline_name,
                             integer_string_col,
                         )
-    upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
+                upload_file_to_gcs(
+                    str.replace(
+                        target_file, ".csv", "_" + str(target_file_ordinal) + ".csv"
+                    ),
+                    target_gcs_bucket,
+                    target_gcs_path,
+                )
+                logging.info(
+                    "Processing year {year_data} as ordinal {target_file_ordinal} completed"
+                )
     logging.info("New York taxi trips - green trips process completed")
 
 
