@@ -20,7 +20,6 @@ import os
 import pathlib
 import typing
 
-import numpy as np
 import pandas as pd
 import requests
 from google.cloud import storage
@@ -57,13 +56,7 @@ def main(
     rename_headers(df, rename_mappings)
 
     logging.info("Transform: Replacing values... ")
-    df = df.replace(
-        to_replace={
-            "species": {
-                "Iris-": ""
-            }
-        }
-    )
+    df = df.replace(to_replace={"species": {"Iris-": ""}})
 
     logging.info("Transform: Reordering headers..")
     df = df[headers]

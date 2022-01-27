@@ -64,8 +64,8 @@ with DAG(
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/ml_datasets/iris/data_output.csv",
             "PIPELINE_NAME": "iris",
-            "CSV_HEADERS": "['sepal_length','sepal_width','petal_length','petal_width','species']",
-            "RENAME_MAPPINGS": "{'sepallength':'sepal_length','sepalwidth':'sepal_width','petallength':'petal+legth','petalwidth':'petal_width','class':'species'}",
+            "CSV_HEADERS": '["sepal_length","sepal_width","petal_length","petal_width","species"]',
+            "RENAME_MAPPINGS": '{"sepallength": "sepal_length","sepalwidth": "sepal_width","petallength": "petal_length","petalwidth": "petal_width","class": "species"}',
         },
         resources={"request_memory": "2G", "request_cpu": "1"},
     )
