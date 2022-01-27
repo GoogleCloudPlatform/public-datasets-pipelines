@@ -95,7 +95,9 @@ def download_file(source_url: str, source_file: pathlib.Path) -> bool:
     if success:
         logging.info(f"Download {source_url} to {source_file} complete.")
     else:
-        logging.info(f"Unable to download {source_url} to {source_file} at this time.  The URL may not exist.")
+        logging.info(
+            f"Unable to download {source_url} to {source_file} at this time.  The URL may not exist."
+        )
     return success
 
 
