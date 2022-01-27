@@ -39,10 +39,11 @@ with DAG(
             timeout=43200,
             retries=0,
             wait=True,
-            project_id="bigquery-public-data-dev",
+            project_id="bigquery-public-data",
             source_bucket="gnomad-public-requester-pays",
             destination_bucket="gcp-public-data--gnomad",
             google_impersonation_chain="{{ var.json.gnomad.service_account }}",
+            transfer_options={"deleteObjectsUniqueInSink": False},
         )
     )
 
