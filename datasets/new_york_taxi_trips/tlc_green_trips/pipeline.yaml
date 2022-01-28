@@ -53,7 +53,7 @@ dag:
           SOURCE_URL: "https://s3.amazonaws.com/nyc-tlc/trip+data/green_tripdata_"
           SOURCE_FILE: "files/data.csv"
           TARGET_FILE: "files/data_output.csv"
-          CHUNKSIZE: "500000"
+          CHUNKSIZE: "1500000"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/new_york_taxi_trips/tlc_green_trips/data_output.csv"
           PIPELINE_NAME: "tlc_green_trips"
