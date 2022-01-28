@@ -15,29 +15,8 @@
 ---
 resources:
   - type: bigquery_table
-    table_id: "tlc_green_trips_{{ macros.ds_format(macros.ds_add(ds, 0), '%Y-%m-%d', '%Y') }}"
+    table_id: "tlc_green_trips"
     description: "New york green taxi trips table"
-    schema_object: "green_trips_schema.yaml"
-  - type: bigquery_table
-    table_id: "tlc_green_trips_{{ macros.ds_format(macros.ds_add(ds, -1), '%Y-%m-%d', '%Y') }}"
-    description: "New york green taxi trips table"
-    schema_object: "green_trips_schema.yaml"
-  - type: bigquery_table
-    table_id: "tlc_green_trips_{{ macros.ds_format(macros.ds_add(ds, -2), '%Y-%m-%d', '%Y') }}"
-    description: "New york green taxi trips table"
-    schema_object: "green_trips_schema.yaml"
-  - type: bigquery_table
-    table_id: "tlc_green_trips_{{ macros.ds_format(macros.ds_add(ds, -3), '%Y-%m-%d', '%Y') }}"
-    description: "New york green taxi trips table"
-    schema_object: "green_trips_schema.yaml"
-  - type: bigquery_table
-    table_id: "tlc_green_trips_{{ macros.ds_format(macros.ds_add(ds, -4), '%Y-%m-%d', '%Y') }}"
-    description: "New york green taxi trips table"
-    schema_object: "green_trips_schema.yaml"
-  - type: bigquery_table
-    table_id: "tlc_green_trips_{{ macros.ds_format(macros.ds_add(ds, -5), '%Y-%m-%d', '%Y') }}"
-    description: "New york green taxi trips table"
-    schema_object: "green_trips_schema.yaml"
 
 dag:
   airflow_version: 1
@@ -84,85 +63,32 @@ dag:
              "tip_amount", "tolls_amount", "ehail_fee", "total_amount", "payment_type",
              "distance_between_service", "time_between_service", "trip_type", "imp_surcharge", "pickup_location_id",
              "dropoff_location_id"]
-          RENAME_MAPPINGS: >-
-            {"VendorID": "vendor_id",
-             "lpep_pickup_datetime": "pickup_datetime",
-             "lpep_dropoff_datetime": "dropoff_datetime",
-             "RatecodeID": "rate_code",
-             "improvement_surcharge": "imp_surcharge",
-             "DOLocationID": "dropoff_location_id",
-             "PULocationID": "pickup_location_id"}
-          INTEGER_STRING_COL: >-
-            ["passenger_count", "time_between_service"]
+          DATA_DTYPES: >-
+            { "vendor_id": "str",
+              "pickup_datetime": "datetime64[ns]",
+              "dropoff_datetime": "datetime64[ns]",
+              "store_and_fwd_flag": "str",
+              "rate_code": "str",
+              "pickup_location_id": "str",
+              "dropoff_location_id": "str",
+              "passenger_count": "int64",
+              "trip_distance": "float64",
+              "fare_amount": "float64",
+              "extra": "float64",
+              "mta_tax": "float64",
+              "tip_amount": "float64",
+              "tolls_amount": "float64",
+              "ehail_fee": "float64",
+              "imp_surcharge": "float64",
+              "total_amount": "float64",
+              "payment_type": "str",
+              "trip_type": "str",
+              "congestion_surcharge": "float64" }
         resources:
           request_memory: "4G"
           request_cpu: "1"
 
-    - operator: "GoogleCloudStorageToBigQueryOperator"
-      description: "Task to load CSV data to a BigQuery table"
-      args:
-        task_id: "load_to_bq_current_year"
-        bucket: "{{ var.value.composer_bucket }}"
-        source_objects: ["data/new_york_taxi_trips/tlc_green_trips/data_output_current_year.csv"]
-        source_format: "CSV"
-        destination_project_dataset_table: "{{ var.json.new_york_taxi_trips.container_registry.green_trips_current_year_destination_table }}"
-        skip_leading_rows: 1
-        allow_quoted_newlines: True
-        write_disposition: "WRITE_TRUNCATE"
-    - operator: "GoogleCloudStorageToBigQueryOperator"
-      description: "Task to load CSV data to a BigQuery table"
-      args:
-        task_id: "load_to_bq_year_minus_1"
-        bucket: "{{ var.value.composer_bucket }}"
-        source_objects: ["data/new_york_taxi_trips/tlc_green_trips/data_output_year_minus_1.csv"]
-        source_format: "CSV"
-        destination_project_dataset_table: "{{ var.json.new_york_taxi_trips.container_registry.green_trips_year_minus_1_destination_table }}"
-        skip_leading_rows: 1
-        allow_quoted_newlines: True
-        write_disposition: "WRITE_TRUNCATE"
-    - operator: "GoogleCloudStorageToBigQueryOperator"
-      description: "Task to load CSV data to a BigQuery table"
-      args:
-        task_id: "load_to_bq_year_minus_2"
-        bucket: "{{ var.value.composer_bucket }}"
-        source_objects: ["data/new_york_taxi_trips/tlc_green_trips/data_output_year_minus_2.csv"]
-        source_format: "CSV"
-        destination_project_dataset_table: "{{ var.json.new_york_taxi_trips.container_registry.green_trips_year_minus_2_destination_table }}"
-        skip_leading_rows: 1
-        allow_quoted_newlines: True
-        write_disposition: "WRITE_TRUNCATE"
-    - operator: "GoogleCloudStorageToBigQueryOperator"
-      description: "Task to load CSV data to a BigQuery table"
-      args:
-        task_id: "load_to_bq_year_minus_3"
-        bucket: "{{ var.value.composer_bucket }}"
-        source_objects: ["data/new_york_taxi_trips/tlc_green_trips/data_output_year_minus_3.csv"]
-        source_format: "CSV"
-        destination_project_dataset_table: "{{ var.json.new_york_taxi_trips.container_registry.green_trips_year_minus_3_destination_table }}"
-        skip_leading_rows: 1
-        allow_quoted_newlines: True
-        write_disposition: "WRITE_TRUNCATE"
-    - operator: "GoogleCloudStorageToBigQueryOperator"
-      description: "Task to load CSV data to a BigQuery table"
-      args:
-        task_id: "load_to_bq_year_minus_4"
-        bucket: "{{ var.value.composer_bucket }}"
-        source_objects: ["data/new_york_taxi_trips/tlc_green_trips/data_output_year_minus_4.csv"]
-        source_format: "CSV"
-        destination_project_dataset_table: "{{ var.json.new_york_taxi_trips.container_registry.green_trips_year_minus_4_destination_table }}"
-        skip_leading_rows: 1
-        allow_quoted_newlines: True
-        write_disposition: "WRITE_TRUNCATE"
-    - operator: "GoogleCloudStorageToBigQueryOperator"
-      description: "Task to load CSV data to a BigQuery table"
-      args:
-        task_id: "load_to_bq_year_minus_5"
-        bucket: "{{ var.value.composer_bucket }}"
-        source_objects: ["data/new_york_taxi_trips/tlc_green_trips/data_output_year_minus_5.csv"]
-        source_format: "CSV"
-        destination_project_dataset_table: "{{ var.json.new_york_taxi_trips.container_registry.green_trips_year_minus_5_destination_table }}"
-        skip_leading_rows: 1
-        allow_quoted_newlines: True
-        write_disposition: "WRITE_TRUNCATE"
   graph_paths:
-    - "transform_csv >> load_to_bq_current_year >> load_to_bq_year_minus_1 >> load_to_bq_year_minus_2 >> load_to_bq_year_minus_3 >> load_to_bq_year_minus_4 >> load_to_bq_year_minus_5"
+    - "transform_csv"
+    # - "transform_csv >> load_to_bq_current_year"
+    # - "transform_csv >> load_to_bq_current_year >> load_to_bq_year_minus_1 >> load_to_bq_year_minus_2 >> load_to_bq_year_minus_3 >> load_to_bq_year_minus_4 >> load_to_bq_year_minus_5"
