@@ -43,15 +43,20 @@ def main(
     current_year = int(datetime.strftime(datetime.now(), "%Y"))
     for year_data in range((current_year), start_date_year - 1, -1):
         target_file_ordinal = str(current_year - year_data)
+        target_file_name = str.replace(
+                            str(target_file),
+                            ".csv",
+                            "_" + str(target_file_ordinal) + ".csv",
+                            )
         logging.info(f"Processing year {year_data} as ordinal {target_file_ordinal}")
         for month_data in range(1, 13):
             process_month = str(year_data) + "-" + str(month_data).zfill(2)
-            print(process_month)
             source_url_to_process = source_url + process_month + ".csv"
-            successful_download = download_file(source_url_to_process, source_file)
+            source_file_to_process = str(source_file).replace(".csv", "-" + process_month + ".csv")
+            successful_download = download_file(source_url_to_process, source_file_to_process)
             if successful_download:
                 with pd.read_csv(
-                    source_file,
+                    source_file_to_process,
                     engine="python",
                     encoding="utf-8",
                     quotechar='"',
@@ -65,8 +70,7 @@ def main(
                         logging.info(f"Processing batch {chunk_number}")
                         target_file_batch = str(target_file).replace(
                             ".csv",
-                            "-"
-                            + "_"
+                            "_"
                             + str(target_file_ordinal)
                             + "-"
                             + str(chunk_number)
@@ -77,21 +81,14 @@ def main(
                         process_chunk(
                             df,
                             target_file_batch,
-                            str.replace(
-                                str(target_file),
-                                ".csv",
-                                "_" + str(target_file_ordinal) + ".csv",
-                            ),
+                            target_file_name,
                             (not chunk_number == 0),
+                            (month_data == 1),
                             headers,
                             pipeline_name,
                         )
                 upload_file_to_gcs(
-                    str.replace(
-                        str(target_file),
-                        ".csv",
-                        "_" + str(target_file_ordinal) + ".csv",
-                    ),
+                    target_file_name,
                     target_gcs_bucket,
                     str.replace(
                         target_gcs_path, ".csv", "_" + str(target_file_ordinal) + ".csv"
@@ -128,6 +125,7 @@ def process_chunk(
     target_file_batch: str,
     target_file: str,
     skip_header: bool,
+    truncate_file: bool,
     headers: typing.List[str],
     pipeline_name: str,
 ) -> None:
@@ -139,7 +137,8 @@ def process_chunk(
     df = df[headers]
     df = remove_null_rows(df)
     save_to_new_file(df, file_path=str(target_file_batch))
-    append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
+    append_batch_file(target_file_batch, target_file, skip_header, truncate_file)
+    # import pdb; pdb.set_trace()
     logging.info(f"Processing Batch {target_file_batch} completed")
 
 
