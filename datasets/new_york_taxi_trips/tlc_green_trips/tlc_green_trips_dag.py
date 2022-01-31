@@ -59,6 +59,7 @@ with DAG(
         image="{{ var.json.new_york_taxi_trips.container_registry.run_csv_transform_kub }}",
         env_vars={
             "SOURCE_URL": "https://s3.amazonaws.com/nyc-tlc/trip+data/green_tripdata_",
+            "SOURCE_YEARS_TO_LOAD": "{{ var.json.new_york_taxi_trips.container_registry.green_trips_years_to_load }}",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
             "CHUNKSIZE": "1500000",

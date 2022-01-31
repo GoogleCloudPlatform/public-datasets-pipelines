@@ -21,12 +21,12 @@ from datetime import datetime, timedelta
 
 import pandas as pd
 import requests
-from airflow import DAG
 from google.cloud import storage
-from airflow.contrib.operators import gcs_to_bq
+
 
 def main(
     source_url: str,
+    source_years_to_load: str,
     source_file: pathlib.Path,
     target_file: pathlib.Path,
     chunksize: str,
@@ -38,15 +38,20 @@ def main(
 ) -> None:
     logging.info("New York taxi trips - green trips process started")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
-    start_date_year = int(
-        datetime.strftime((datetime.now() + timedelta(days=-1825)), "%Y")
-    )
-    current_year = int(datetime.strftime(datetime.now(), "%Y"))
+    # start_date_year = int(
+    #     datetime.strftime((datetime.now() + timedelta(days=-1825)), "%Y")
+    # )
+    # current_year = int(datetime.strftime(datetime.now(), "%Y"))
 
-    execute_pipeline(current_year,
-                     str(target_file),
-                     source_url,
+    # for yr in source_years_to_load.split("|"):
+    #     logging.info(yr)
+
+    #     import pdb;pdb.set_trace()
+
+    execute_pipeline(source_url,
+                     source_years_to_load,
                      str(source_file),
+                     str(target_file),
                      chunksize,
                      headers,
                      data_dtypes,
@@ -56,10 +61,10 @@ def main(
 
     logging.info("New York taxi trips - green trips process completed")
 
-def execute_pipeline(current_year: int,
-                     target_file: str,
-                     source_url: str,
+def execute_pipeline(source_url: str,
+                     source_years_to_load: str,
                      source_file: str,
+                     target_file: str,
                      chunksize: str,
                      headers: typing.List[str],
                      data_dtypes: dict,
@@ -68,20 +73,20 @@ def execute_pipeline(current_year: int,
                      target_gcs_path: str
     ) -> None:
     # for year_data in range((current_year), start_date_year - 1, -1):
-    for year_number in range(2021, 2022):  #test
-        target_file_ordinal = str(current_year - year_data)
+    # for year_number in range(2021, 2022):  #test
+    for year_number in source_years_to_load.split("|"):
+        # target_file_ordinal = str(current_year - year_data)
         target_file_name = str.replace(
                             target_file,
                             ".csv",
-                            "_" + target_file_ordinal + ".csv",
+                            "_" + year_number + ".csv"
                             )
         process_year_data(
-                        year_number,
-                        target_file,
-                        target_file_ordinal,
-                        target_file_name,
                         source_url,
+                        int(year_number),
                         source_file,
+                        target_file,
+                        target_file_name,
                         chunksize,
                         headers,
                         data_dtypes,
@@ -90,12 +95,11 @@ def execute_pipeline(current_year: int,
                         target_gcs_path)
 
 
-def process_year_data(year_number: int,
-                      target_file: str,
-                      target_file_ordinal: str,
-                      target_file_name: str,
-                      source_url: str,
+def process_year_data(source_url: str,
+                      year_number: int,
                       source_file: str,
+                      target_file: str,
+                      target_file_name: str,
                       chunksize: str,
                       headers: typing.List[str],
                       data_dtypes: dict,
@@ -103,31 +107,36 @@ def process_year_data(year_number: int,
                       target_gcs_bucket: str,
                       target_gcs_path: str
     ) -> None:
-    logging.info(f"Processing year {year_number} as ordinal {target_file_ordinal}")
+    logging.info(f"Processing year {year_number}")
     for month_number in range(1, 13):
-        process_month(year_number,
+        process_month(source_url,
+                      year_number,
                       month_number,
-                      target_file,
-                      target_file_ordinal,
-                      target_file_name,
-                      source_url,
                       source_file,
+                      target_file,
+                      target_file_name,
                       chunksize,
                       headers,
                       data_dtypes,
                       pipeline_name,
                       target_gcs_bucket,
                       target_gcs_path)
-    logging.info(f"Processing year {year_number} as ordinal {target_file_ordinal} completed")
+    upload_file_to_gcs(
+        target_file_name,
+        target_gcs_bucket,
+        str(target_gcs_path).replace(
+            ".csv", "_" + str(year_number) + ".csv"
+        )
+    )
+    logging.info(f"Processing year {year_number} completed")
 
 
-def process_month(year_number: int,
+def process_month(source_url: str,
+                  year_number: int,
                   month_number: int,
-                  target_file: str,
-                  target_file_ordinal: str,
-                  target_file_name: str,
-                  source_url: str,
                   source_file: str,
+                  target_file: str,
+                  target_file_name: str,
                   chunksize: str,
                   headers: typing.List[str],
                   data_dtypes: dict,
@@ -135,10 +144,10 @@ def process_month(year_number: int,
                   target_gcs_bucket: str,
                   target_gcs_path: str
     ) -> None:
-    logging.info(f"Processing {year_number}-{month_number} as ordinal {target_file_ordinal}")
+    logging.info(f"Processing {year_number}-{month_number}")
     process_month = str(year_number) + "-" + str(month_number).zfill(2)
     source_url_to_process = source_url + process_month + ".csv"
-    source_file_to_process = str(source_file).replace(".csv", "-" + process_month + ".csv")
+    source_file_to_process = str(source_file).replace(".csv", "_" + process_month + ".csv")
     successful_download = download_file(source_url_to_process, source_file_to_process)
     if successful_download:
         with pd.read_csv(
@@ -156,8 +165,8 @@ def process_month(year_number: int,
                 logging.info(f"Processing batch {chunk_number}")
                 target_file_batch = str(target_file).replace(
                     ".csv",
-                    "_"
-                    + str(target_file_ordinal)
+                    "-"
+                    + process_month
                     + "-"
                     + str(chunk_number)
                     + ".csv",
@@ -169,18 +178,11 @@ def process_month(year_number: int,
                     target_file_batch,
                     target_file_name,
                     (not chunk_number == 0),
-                    (month_data == 1),
+                    (month_number == 1),
                     headers,
                     pipeline_name,
                 )
-        upload_file_to_gcs(
-            target_file_name,
-            target_gcs_bucket,
-            str.replace(
-                target_gcs_path, ".csv", "_" + str(target_file_ordinal) + ".csv"
-            ),
-        )
-    logging.info(f"Processing {year_number}-{month_number} as ordinal {target_file_ordinal} completed")
+    logging.info(f"Processing {year_number}-{month_number} completed")
 
 
 def create_table_bigquery(table_name: str) -> None:
@@ -306,6 +308,7 @@ if __name__ == "__main__":
 
     main(
         source_url=os.environ["SOURCE_URL"],
+        source_years_to_load=os.environ["SOURCE_YEARS_TO_LOAD"],
         source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
         chunksize=os.environ["CHUNKSIZE"],
