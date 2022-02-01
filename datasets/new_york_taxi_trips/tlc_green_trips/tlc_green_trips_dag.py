@@ -95,7 +95,7 @@ with DAG(
         source_format="CSV",
         skip_leading_rows=1,
         allow_quoted_newlines=True,
-        write_disposition="WRITE_APPEND",
+        write_disposition="WRITE_TRUNCATE",
     )
 
     # Task to load CSV data to a BigQuery table
@@ -108,7 +108,7 @@ with DAG(
         source_format="CSV",
         skip_leading_rows=1,
         allow_quoted_newlines=True,
-        write_disposition="WRITE_APPEND",
+        write_disposition="WRITE_TRUNCATE",
     )
 
     # Task to load CSV data to a BigQuery table
@@ -121,7 +121,7 @@ with DAG(
         source_format="CSV",
         skip_leading_rows=1,
         allow_quoted_newlines=True,
-        write_disposition="WRITE_APPEND",
+        write_disposition="WRITE_TRUNCATE",
     )
 
     # Task to load CSV data to a BigQuery table
@@ -134,7 +134,7 @@ with DAG(
         source_format="CSV",
         skip_leading_rows=1,
         allow_quoted_newlines=True,
-        write_disposition="WRITE_APPEND",
+        write_disposition="WRITE_TRUNCATE",
     )
 
     transform_csv >> load_to_bq_year_0 >> load_to_bq_year_minus_1 >> load_to_bq_year_minus_2 >> load_to_bq_year_minus_3 >> load_to_bq_year_minus_4

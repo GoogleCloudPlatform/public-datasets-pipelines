@@ -112,7 +112,7 @@ dag:
         source_format: "CSV"
         skip_leading_rows: 1
         allow_quoted_newlines: True
-        write_disposition: "WRITE_APPEND"
+        write_disposition: "WRITE_TRUNCATE"
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
       args:
@@ -124,7 +124,7 @@ dag:
         source_format: "CSV"
         skip_leading_rows: 1
         allow_quoted_newlines: True
-        write_disposition: "WRITE_APPEND"
+        write_disposition: "WRITE_TRUNCATE"
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
       args:
@@ -136,7 +136,7 @@ dag:
         source_format: "CSV"
         skip_leading_rows: 1
         allow_quoted_newlines: True
-        write_disposition: "WRITE_APPEND"
+        write_disposition: "WRITE_TRUNCATE"
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
       args:
@@ -148,7 +148,7 @@ dag:
         source_format: "CSV"
         skip_leading_rows: 1
         allow_quoted_newlines: True
-        write_disposition: "WRITE_APPEND"
+        write_disposition: "WRITE_TRUNCATE"
 
   graph_paths:
     - "transform_csv >> load_to_bq_year_0 >> load_to_bq_year_minus_1 >> load_to_bq_year_minus_2 >> load_to_bq_year_minus_3 >> load_to_bq_year_minus_4"
