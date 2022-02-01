@@ -14,7 +14,7 @@
 
 
 from airflow import DAG
-from airflow.contrib.operators import kubernetes_pod_operator
+from airflow.contrib.operators import gcs_to_bq, kubernetes_pod_operator
 
 default_args = {
     "owner": "Google",
@@ -72,4 +72,69 @@ with DAG(
         resources={"request_memory": "4G", "request_cpu": "1"},
     )
 
-    transform_csv
+    # Task to load CSV data to a BigQuery table
+    load_to_bq_year_0 = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+        task_id="load_to_bq_year_0",
+        bucket="{{ var.value.composer_bucket }}",
+        source_objects="{{ var.json.new_york_taxi_trips.container_registry.green_trips_year_0_source_file }}",
+        destination_project_dataset_table="{{ var.json.new_york_taxi_trips.container_registry.green_trips_year_0_destination_table }}",
+        schema_object="schema/new_york_taxi_trips/tlc_green_trips/green_trips_schema.json",
+        source_format="CSV",
+        skip_leading_rows=1,
+        allow_quoted_newlines=True,
+        write_disposition="WRITE_TRUNCATE",
+    )
+
+    # Task to load CSV data to a BigQuery table
+    load_to_bq_year_minus_1 = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+        task_id="load_to_bq_year_minus_1",
+        bucket="{{ var.value.composer_bucket }}",
+        source_objects="{{ var.json.new_york_taxi_trips.container_registry.green_trips_year_minus_1_source_file }}",
+        destination_project_dataset_table="{{ var.json.new_york_taxi_trips.container_registry.green_trips_year_minus_1_destination_table }}",
+        schema_object="schema/new_york_taxi_trips/tlc_green_trips/green_trips_schema.json",
+        source_format="CSV",
+        skip_leading_rows=1,
+        allow_quoted_newlines=True,
+        write_disposition="WRITE_APPEND",
+    )
+
+    # Task to load CSV data to a BigQuery table
+    load_to_bq_year_minus_2 = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+        task_id="load_to_bq_year_minus_2",
+        bucket="{{ var.value.composer_bucket }}",
+        source_objects="{{ var.json.new_york_taxi_trips.container_registry.green_trips_year_minus_2_source_file }}",
+        destination_project_dataset_table="{{ var.json.new_york_taxi_trips.container_registry.green_trips_year_minus_2_destination_table }}",
+        schema_object="schema/new_york_taxi_trips/tlc_green_trips/green_trips_schema.json",
+        source_format="CSV",
+        skip_leading_rows=1,
+        allow_quoted_newlines=True,
+        write_disposition="WRITE_APPEND",
+    )
+
+    # Task to load CSV data to a BigQuery table
+    load_to_bq_year_minus_3 = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+        task_id="load_to_bq_year_minus_3",
+        bucket="{{ var.value.composer_bucket }}",
+        source_objects="{{ var.json.new_york_taxi_trips.container_registry.green_trips_year_minus_3_source_file }}",
+        destination_project_dataset_table="{{ var.json.new_york_taxi_trips.container_registry.green_trips_year_minus_3_destination_table }}",
+        schema_object="schema/new_york_taxi_trips/tlc_green_trips/green_trips_schema.json",
+        source_format="CSV",
+        skip_leading_rows=1,
+        allow_quoted_newlines=True,
+        write_disposition="WRITE_APPEND",
+    )
+
+    # Task to load CSV data to a BigQuery table
+    load_to_bq_year_minus_4 = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+        task_id="load_to_bq_year_minus_4",
+        bucket="{{ var.value.composer_bucket }}",
+        source_objects="{{ var.json.new_york_taxi_trips.container_registry.green_trips_year_minus_4_source_file }}",
+        destination_project_dataset_table="{{ var.json.new_york_taxi_trips.container_registry.green_trips_year_minus_4_destination_table }}",
+        schema_object="schema/new_york_taxi_trips/tlc_green_trips/green_trips_schema.json",
+        source_format="CSV",
+        skip_leading_rows=1,
+        allow_quoted_newlines=True,
+        write_disposition="WRITE_APPEND",
+    )
+
+    transform_csv >> load_to_bq_year_0 >> load_to_bq_year_minus_1 >> load_to_bq_year_minus_2 >> load_to_bq_year_minus_3 >> load_to_bq_year_minus_4
