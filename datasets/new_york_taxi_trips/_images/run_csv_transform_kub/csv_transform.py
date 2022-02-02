@@ -32,11 +32,12 @@ def main(
     chunksize: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
-    headers: typing.List[str],
+    input_headers: typing.List[str],
     data_dtypes: dict,
+    output_headers: typing.List[str],
     pipeline_name: str,
 ) -> None:
-    logging.info("New York taxi trips - green trips process started")
+    logging.info(f"New York taxi trips - {pipeline_name} process started")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
     execute_pipeline(
         source_url,
@@ -44,14 +45,15 @@ def main(
         str(source_file),
         str(target_file),
         chunksize,
-        headers,
+        input_headers,
         data_dtypes,
+        output_headers,
         pipeline_name,
         target_gcs_bucket,
         target_gcs_path,
     )
 
-    logging.info("New York taxi trips - green trips process completed")
+    logging.info(f"New York taxi trips - {pipeline_name} process completed")
 
 
 def execute_pipeline(
@@ -60,14 +62,14 @@ def execute_pipeline(
     source_file: str,
     target_file: str,
     chunksize: str,
-    headers: typing.List[str],
+    input_headers: typing.List[str],
     data_dtypes: dict,
+    output_headers: typing.List[str],
     pipeline_name: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
 ) -> None:
     for year_number in source_years_to_load.split("|"):
-        # target_file_ordinal = str(current_year - year_data)
         target_file_name = str.replace(target_file, ".csv", "_" + year_number + ".csv")
         process_year_data(
             source_url,
@@ -76,8 +78,9 @@ def execute_pipeline(
             target_file,
             target_file_name,
             chunksize,
-            headers,
+            input_headers,
             data_dtypes,
+            output_headers,
             pipeline_name,
             target_gcs_bucket,
             target_gcs_path,
@@ -91,8 +94,9 @@ def process_year_data(
     target_file: str,
     target_file_name: str,
     chunksize: str,
-    headers: typing.List[str],
+    input_headers: typing.List[str],
     data_dtypes: dict,
+    output_headers: typing.List[str],
     pipeline_name: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
@@ -107,8 +111,9 @@ def process_year_data(
             target_file,
             target_file_name,
             chunksize,
-            headers,
+            input_headers,
             data_dtypes,
+            output_headers,
             pipeline_name,
             target_gcs_bucket,
             target_gcs_path,
@@ -129,14 +134,15 @@ def process_month(
     target_file: str,
     target_file_name: str,
     chunksize: str,
-    headers: typing.List[str],
+    input_headers: typing.List[str],
     data_dtypes: dict,
+    output_headers: typing.List[str],
     pipeline_name: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
 ) -> None:
-    logging.info(f"Processing {year_number}-{month_number}")
     process_month = str(year_number) + "-" + str(month_number).zfill(2)
+    logging.info(f"Processing {process_month} started")
     source_url_to_process = source_url + process_month + ".csv"
     source_file_to_process = str(source_file).replace(
         ".csv", "_" + process_month + ".csv"
@@ -150,15 +156,16 @@ def process_month(
             quotechar='"',
             chunksize=int(chunksize),
             sep=",",
-            names=headers,
+            names=input_headers,
             skiprows=1,
             dtype=data_dtypes,
         ) as reader:
             for chunk_number, chunk in enumerate(reader):
-                logging.info(f"Processing batch {chunk_number}")
+                logging.info(
+                    f"Processing chunk #{chunk_number} of file {process_month} started"
+                )
                 target_file_batch = str(target_file).replace(
-                    ".csv",
-                    "-" + process_month + "-" + str(chunk_number) + ".csv",
+                    ".csv", "-" + process_month + "-" + str(chunk_number) + ".csv"
                 )
                 df = pd.DataFrame()
                 df = pd.concat([df, chunk])
@@ -168,10 +175,13 @@ def process_month(
                     target_file_name,
                     month_number == 1 and chunk_number == 0,
                     month_number == 1 and chunk_number == 0,
-                    headers,
+                    output_headers,
                     pipeline_name,
                 )
-    logging.info(f"Processing {year_number}-{month_number} completed")
+                logging.info(
+                    f"Processing chunk #{chunk_number} of file {process_month} completed"
+                )
+    logging.info(f"Processing {process_month} completed")
 
 
 def download_file(source_url: str, source_file: pathlib.Path) -> bool:
@@ -200,7 +210,7 @@ def process_chunk(
     target_file: str,
     include_header: bool,
     truncate_file: bool,
-    headers: typing.List[str],
+    output_headers: typing.List[str],
     pipeline_name: str,
 ) -> None:
     if pipeline_name == "tlc_green_trips":
@@ -208,8 +218,8 @@ def process_chunk(
         df["time_between_service"] = ""
     df = format_date_time(df, "pickup_datetime", "strftime", "%Y-%m-%d %H:%M:%S")
     df = format_date_time(df, "dropoff_datetime", "strftime", "%Y-%m-%d %H:%M:%S")
-    df = df[headers]
     df = remove_null_rows(df)
+    df = df[output_headers]
     save_to_new_file(df, file_path=str(target_file_batch))
     append_batch_file(target_file_batch, target_file, include_header, truncate_file)
     logging.info(f"Processing Batch {target_file_batch} completed")
@@ -239,7 +249,7 @@ def format_date_time(
         logging.info(
             f"Transform: Formatting datetime for field {field_name} from {dt_format} to datetime "
         )
-        df[field_name] = df[field_name].apply(lambda x: x.strftime(dt_format))
+        df[field_name] = df[field_name].dt.strftime(dt_format)
     return df
 
 
@@ -304,7 +314,8 @@ if __name__ == "__main__":
         chunksize=os.environ["CHUNKSIZE"],
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
-        headers=json.loads(os.environ["CSV_HEADERS"]),
+        input_headers=json.loads(os.environ["INPUT_CSV_HEADERS"]),
         data_dtypes=json.loads(os.environ["DATA_DTYPES"]),
+        output_headers=json.loads(os.environ["OUTPUT_CSV_HEADERS"]),
         pipeline_name=os.environ["PIPELINE_NAME"],
     )
