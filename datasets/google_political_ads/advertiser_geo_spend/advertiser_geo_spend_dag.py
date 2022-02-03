@@ -14,7 +14,8 @@
 
 
 from airflow import DAG
-from airflow.contrib.operators import gcs_to_bq, kubernetes_pod_operator
+from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
     "owner": "Google",
@@ -33,7 +34,7 @@ with DAG(
 ) as dag:
 
     # Run CSV transform within kubernetes pod
-    advertiser_geo_spend_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+    advertiser_geo_spend_transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="advertiser_geo_spend_transform_csv",
         startup_timeout_seconds=600,
         name="advertiser_geo_spend",
@@ -52,11 +53,15 @@ with DAG(
             "CSV_HEADERS": '["advertiser_id","advertiser_name","country","country_subdivision_primary","spend_usd","spend_eur","spend_inr","spend_bgn","spend_hrk","spend_czk","spend_dkk","spend_huf","spend_pln","spend_ron","spend_sek","spend_gbp","spend_nzd"]',
             "RENAME_MAPPINGS": '{"Advertiser_ID" : "advertiser_id" ,"Advertiser_Name" : "advertiser_name" ,"Country" : "country" ,"Country_Subdivision_Primary" : "country_subdivision_primary" ,"Spend_USD" : "spend_usd" ,"Spend_EUR" : "spend_eur" ,"Spend_INR" : "spend_inr" ,"Spend_BGN" : "spend_bgn" ,"Spend_HRK" : "spend_hrk" ,"Spend_CZK" : "spend_czk" ,"Spend_DKK" : "spend_dkk" ,"Spend_HUF" : "spend_huf" ,"Spend_PLN" : "spend_pln" ,"Spend_RON" : "spend_ron" ,"Spend_SEK" : "spend_sek" ,"Spend_GBP" : "spend_gbp" ,"Spend_NZD" : "spend_nzd"}',
         },
-        resources={"request_memory": "2G", "request_cpu": "1"},
+        resources={
+            "request_memory": "2G",
+            "request_cpu": "1",
+            "request_ephemeral_storage": "5G",
+        },
     )
 
     # Task to load CSV data to a BigQuery table
-    load_advertiser_geo_spend_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    load_advertiser_geo_spend_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_advertiser_geo_spend_to_bq",
         bucket="{{ var.value.composer_bucket }}",
         source_objects=[
