@@ -20,7 +20,7 @@ resources:
     description: "Austin waste and diversion"
 
 dag:
-  airflow_version: 1
+  airflow_version: 2
   initialize:
     dag_id: waste_and_diversion
     default_args:
@@ -53,8 +53,9 @@ dag:
           RENAME_MAPPINGS: >-
             {"Load ID": "load_id","Report Date": "report_date","Load Type": "load_type","Load Time": "load_time","Load Weight": "load_weight","Dropoff Site": "dropoff_site","Route Type": "route_type","Route Number": "route_number"}
         resources:
-          limit_memory: "2G"
-          limit_cpu: "1"
+          request_memory: "2G"
+          request_cpu: "1"
+          request_ephemeral_storage: "10G"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"

@@ -23,7 +23,7 @@ resources:
     description: "Austin Bikeshare Stations table"
 
 dag:
-  airflow_version: 1
+  airflow_version: 2
   initialize:
     dag_id: bikeshare_stations
     default_args:
@@ -74,6 +74,7 @@ dag:
         resources:
           request_memory: "4G"
           request_cpu: "1"
+          request_ephemeral_storage: "10G"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"

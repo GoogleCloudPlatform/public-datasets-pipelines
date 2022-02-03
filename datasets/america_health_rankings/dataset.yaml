@@ -21,11 +21,6 @@ dataset:
 
 
 resources:
-
   - type: bigquery_dataset
     dataset_id: america_health_rankings
     description: "America Health Rankings"
-  - type: storage_bucket
-    name: america-health-rankings
-    uniform_bucket_level_access: True
-    location: US

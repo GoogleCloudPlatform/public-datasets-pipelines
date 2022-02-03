@@ -14,7 +14,8 @@
 
 
 from airflow import DAG
-from airflow.contrib.operators import gcs_to_bq, kubernetes_pod_operator
+from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
     "owner": "Google",
@@ -33,7 +34,7 @@ with DAG(
 ) as dag:
 
     # Run CSV transform within kubernetes pod
-    austin_bikeshare_stations_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+    austin_bikeshare_stations_transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="austin_bikeshare_stations_transform_csv",
         name="bikeshare_stations",
         namespace="composer",
@@ -50,36 +51,38 @@ with DAG(
             "CSV_HEADERS": '["station_id","name","status","address","alternate_name","city_asset_number","property_type","number_of_docks","power_type","footprint_length","footprint_width","notes","council_district","modified_date"]',
             "RENAME_MAPPINGS": '{"Kiosk ID": "station_id","Kiosk Name": "name","Kiosk Status": "status","Address": "address","Alternate Name": "alternate_name","City Asset Number": "city_asset_number","Property Type": "property_type","Number of Docks": "number_of_docks","Power Type": "power_type","Footprint Length": "footprint_length","Footprint Width": "footprint_width","Notes": "notes","Council District": "council_district","Modified Date": "modified_date"}',
         },
-        resources={"request_memory": "4G", "request_cpu": "1"},
+        resources={
+            "request_memory": "4G",
+            "request_cpu": "1",
+            "request_ephemeral_storage": "10G",
+        },
     )
 
     # Task to load CSV data to a BigQuery table
-    load_austin_bikeshare_stations_to_bq = (
-        gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
-            task_id="load_austin_bikeshare_stations_to_bq",
-            bucket="{{ var.value.composer_bucket }}",
-            source_objects=["data/austin_bikeshare/bikeshare_stations/data_output.csv"],
-            source_format="CSV",
-            destination_project_dataset_table="austin_bikeshare.bikeshare_stations",
-            skip_leading_rows=1,
-            write_disposition="WRITE_TRUNCATE",
-            schema_fields=[
-                {"name": "station_id", "type": "INTEGER", "mode": "NULLABLE"},
-                {"name": "name", "type": "STRING", "mode": "NULLABLE"},
-                {"name": "status", "type": "STRING", "mode": "NULLABLE"},
-                {"name": "address", "type": "STRING", "mode": "NULLABLE"},
-                {"name": "alternate_name", "type": "STRING", "mode": "NULLABLE"},
-                {"name": "city_asset_number", "type": "INTEGER", "mode": "NULLABLE"},
-                {"name": "property_type", "type": "STRING", "mode": "NULLABLE"},
-                {"name": "number_of_docks", "type": "INTEGER", "mode": "NULLABLE"},
-                {"name": "power_type", "type": "STRING", "mode": "NULLABLE"},
-                {"name": "footprint_length", "type": "INTEGER", "mode": "NULLABLE"},
-                {"name": "footprint_width", "type": "FLOAT", "mode": "NULLABLE"},
-                {"name": "notes", "type": "STRING", "mode": "NULLABLE"},
-                {"name": "council_district", "type": "INTEGER", "mode": "NULLABLE"},
-                {"name": "modified_date", "type": "TIMESTAMP", "mode": "NULLABLE"},
-            ],
-        )
+    load_austin_bikeshare_stations_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
+        task_id="load_austin_bikeshare_stations_to_bq",
+        bucket="{{ var.value.composer_bucket }}",
+        source_objects=["data/austin_bikeshare/bikeshare_stations/data_output.csv"],
+        source_format="CSV",
+        destination_project_dataset_table="austin_bikeshare.bikeshare_stations",
+        skip_leading_rows=1,
+        write_disposition="WRITE_TRUNCATE",
+        schema_fields=[
+            {"name": "station_id", "type": "INTEGER", "mode": "NULLABLE"},
+            {"name": "name", "type": "STRING", "mode": "NULLABLE"},
+            {"name": "status", "type": "STRING", "mode": "NULLABLE"},
+            {"name": "address", "type": "STRING", "mode": "NULLABLE"},
+            {"name": "alternate_name", "type": "STRING", "mode": "NULLABLE"},
+            {"name": "city_asset_number", "type": "INTEGER", "mode": "NULLABLE"},
+            {"name": "property_type", "type": "STRING", "mode": "NULLABLE"},
+            {"name": "number_of_docks", "type": "INTEGER", "mode": "NULLABLE"},
+            {"name": "power_type", "type": "STRING", "mode": "NULLABLE"},
+            {"name": "footprint_length", "type": "INTEGER", "mode": "NULLABLE"},
+            {"name": "footprint_width", "type": "FLOAT", "mode": "NULLABLE"},
+            {"name": "notes", "type": "STRING", "mode": "NULLABLE"},
+            {"name": "council_district", "type": "INTEGER", "mode": "NULLABLE"},
+            {"name": "modified_date", "type": "TIMESTAMP", "mode": "NULLABLE"},
+        ],
     )
 
     austin_bikeshare_stations_transform_csv >> load_austin_bikeshare_stations_to_bq
