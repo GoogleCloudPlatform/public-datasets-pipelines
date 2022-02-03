@@ -14,7 +14,8 @@
 
 
 from airflow import DAG
-from airflow.contrib.operators import gcs_to_bq, kubernetes_pod_operator
+from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
     "owner": "Google",
@@ -33,28 +34,12 @@ with DAG(
 ) as dag:
 
     # Run CSV transform within kubernetes pod
-    transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+    transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="transform_csv",
         startup_timeout_seconds=600,
         name="load_tlc_green_trips",
-        namespace="default",
-        affinity={
-            "nodeAffinity": {
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                    "nodeSelectorTerms": [
-                        {
-                            "matchExpressions": [
-                                {
-                                    "key": "cloud.google.com/gke-nodepool",
-                                    "operator": "In",
-                                    "values": ["pool-e2-standard-4"],
-                                }
-                            ]
-                        }
-                    ]
-                }
-            }
-        },
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.new_york_taxi_trips.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -70,11 +55,15 @@ with DAG(
             "DATA_DTYPES": '{ "vendor_id": "str",\n  "pickup_datetime": "datetime64[ns]",\n  "dropoff_datetime": "datetime64[ns]",\n  "store_and_fwd_flag": "str",\n  "rate_code": "str",\n  "pickup_location_id": "str",\n  "dropoff_location_id": "str",\n  "passenger_count": "str",\n  "trip_distance": "float64",\n  "fare_amount": "float64",\n  "extra": "float64",\n  "mta_tax": "float64",\n  "tip_amount": "float64",\n  "tolls_amount": "float64",\n  "ehail_fee": "float64",\n  "imp_surcharge": "float64",\n  "total_amount": "float64",\n  "payment_type": "str",\n  "trip_type": "str",\n  "congestion_surcharge": "float64" }',
             "OUTPUT_CSV_HEADERS": '[ "vendor_id", "pickup_datetime", "dropoff_datetime", "store_and_fwd_flag", "rate_code",\n  "passenger_count", "trip_distance", "fare_amount", "extra", "mta_tax",\n  "tip_amount", "tolls_amount", "ehail_fee", "total_amount", "payment_type",\n  "distance_between_service", "time_between_service", "trip_type", "imp_surcharge", "pickup_location_id",\n  "dropoff_location_id" ]',
         },
-        resources={"request_memory": "4G", "request_cpu": "1"},
+        resources={
+            "request_memory": "4G",
+            "request_cpu": "1",
+            "request_ephemeral_storage": "8G",
+        },
     )
 
     # Task to load CSV data to a BigQuery table
-    load_to_bq_year_0 = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    load_to_bq_year_0 = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_to_bq_year_0",
         bucket="{{ var.value.composer_bucket }}",
         source_objects="{{ var.json.new_york_taxi_trips.container_registry.green_trips_year_0_source_file }}",
@@ -87,7 +76,7 @@ with DAG(
     )
 
     # Task to load CSV data to a BigQuery table
-    load_to_bq_year_minus_1 = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    load_to_bq_year_minus_1 = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_to_bq_year_minus_1",
         bucket="{{ var.value.composer_bucket }}",
         source_objects="{{ var.json.new_york_taxi_trips.container_registry.green_trips_year_minus_1_source_file }}",
@@ -100,7 +89,7 @@ with DAG(
     )
 
     # Task to load CSV data to a BigQuery table
-    load_to_bq_year_minus_2 = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    load_to_bq_year_minus_2 = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_to_bq_year_minus_2",
         bucket="{{ var.value.composer_bucket }}",
         source_objects="{{ var.json.new_york_taxi_trips.container_registry.green_trips_year_minus_2_source_file }}",
@@ -113,7 +102,7 @@ with DAG(
     )
 
     # Task to load CSV data to a BigQuery table
-    load_to_bq_year_minus_3 = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    load_to_bq_year_minus_3 = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_to_bq_year_minus_3",
         bucket="{{ var.value.composer_bucket }}",
         source_objects="{{ var.json.new_york_taxi_trips.container_registry.green_trips_year_minus_3_source_file }}",
@@ -126,7 +115,7 @@ with DAG(
     )
 
     # Task to load CSV data to a BigQuery table
-    load_to_bq_year_minus_4 = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    load_to_bq_year_minus_4 = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_to_bq_year_minus_4",
         bucket="{{ var.value.composer_bucket }}",
         source_objects="{{ var.json.new_york_taxi_trips.container_registry.green_trips_year_minus_4_source_file }}",
