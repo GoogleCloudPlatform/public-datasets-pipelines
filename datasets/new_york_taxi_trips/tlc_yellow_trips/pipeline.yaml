@@ -42,13 +42,13 @@ dag:
         image_pull_policy: "Always"
         image: "{{ var.json.new_york_taxi_trips.container_registry.run_csv_transform_kub }}"
         env_vars:
-          SOURCE_URL: "https://s3.amazonaws.com/nyc-tlc/trip+data/yellow_tripdata_"
+          SOURCE_URL: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_source_url }}"
           SOURCE_YEARS_TO_LOAD: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_years_to_load }}"
           SOURCE_FILE: "files/data.csv"
           TARGET_FILE: "files/data_output.csv"
-          CHUNKSIZE: "1500000"
+          CHUNKSIZE: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_chunk_size }}"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
-          TARGET_GCS_PATH: "data/new_york_taxi_trips/tlc_yellow_trips/data_output.csv"
+          TARGET_GCS_PATH: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_target_gcs_path }}"
           PIPELINE_NAME: "tlc_yellow_trips"
           INPUT_CSV_HEADERS: >-
             [ "vendor_id", "pickup_datetime", "dropoff_datetime", "passenger_count", "trip_distance",
@@ -91,7 +91,7 @@ dag:
         bucket: "{{ var.value.composer_bucket }}"
         source_objects: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_year_0_source_file }}"
         destination_project_dataset_table: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_year_0_destination_table }}"
-        schema_object: "schema/new_york_taxi_trips/tlc_yellow_trips/yellow_trips_schema.json"
+        schema_object: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_schema_path }}"
         source_format: "CSV"
         skip_leading_rows: 1
         allow_quoted_newlines: True
@@ -103,7 +103,7 @@ dag:
         bucket: "{{ var.value.composer_bucket }}"
         source_objects: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_year_minus_1_source_file }}"
         destination_project_dataset_table: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_year_minus_1_destination_table }}"
-        schema_object: "schema/new_york_taxi_trips/tlc_yellow_trips/yellow_trips_schema.json"
+        schema_object: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_schema_path }}"
         source_format: "CSV"
         skip_leading_rows: 1
         allow_quoted_newlines: True
@@ -115,7 +115,7 @@ dag:
         bucket: "{{ var.value.composer_bucket }}"
         source_objects: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_year_minus_2_source_file }}"
         destination_project_dataset_table: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_year_minus_2_destination_table }}"
-        schema_object: "schema/new_york_taxi_trips/tlc_yellow_trips/yellow_trips_schema.json"
+        schema_object: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_schema_path }}"
         source_format: "CSV"
         skip_leading_rows: 1
         allow_quoted_newlines: True
@@ -127,7 +127,7 @@ dag:
         bucket: "{{ var.value.composer_bucket }}"
         source_objects: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_year_minus_3_source_file }}"
         destination_project_dataset_table: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_year_minus_3_destination_table }}"
-        schema_object: "schema/new_york_taxi_trips/tlc_yellow_trips/yellow_trips_schema.json"
+        schema_object: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_schema_path }}"
         source_format: "CSV"
         skip_leading_rows: 1
         allow_quoted_newlines: True
@@ -139,7 +139,7 @@ dag:
         bucket: "{{ var.value.composer_bucket }}"
         source_objects: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_year_minus_4_source_file }}"
         destination_project_dataset_table: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_year_minus_4_destination_table }}"
-        schema_object: "schema/new_york_taxi_trips/tlc_yellow_trips/yellow_trips_schema.json"
+        schema_object: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_schema_path }}"
         source_format: "CSV"
         skip_leading_rows: 1
         allow_quoted_newlines: True
