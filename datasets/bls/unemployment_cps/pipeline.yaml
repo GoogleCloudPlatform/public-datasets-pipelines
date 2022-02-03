@@ -20,7 +20,7 @@ resources:
     description: "Unemployment_CPS Dataset"
 
 dag:
-  airflow_version: 1
+  airflow_version: 2
   initialize:
     dag_id: "unemployment_cps"
     default_args:
@@ -59,8 +59,9 @@ dag:
           CSV_HEADERS: >-
             ["series_id","year","period","value","footnote_codes","date","series_title"]
         resources:
-          request_memory: "4G"
-          request_cpu: "1"
+          request_memory: "12G"
+          request_cpu: "2"
+          request_ephemeral_storage: "10G"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"

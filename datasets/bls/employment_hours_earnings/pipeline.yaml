@@ -20,7 +20,7 @@ resources:
     description: "Employment_Hours_Earnings Dataset"
 
 dag:
-  airflow_version: 1
+  airflow_version: 2
   initialize:
     dag_id: "employment_hours_earnings"
     default_args:
@@ -60,8 +60,9 @@ dag:
           CSV_HEADERS: >-
             ["series_id","year","period","value","footnote_codes","date","series_title"]
         resources:
-          request_memory: "4G"
+          request_memory: "8G"
           request_cpu: "1"
+          request_ephemeral_storage: "10G"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
