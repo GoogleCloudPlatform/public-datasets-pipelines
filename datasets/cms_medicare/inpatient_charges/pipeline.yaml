@@ -16,50 +16,31 @@
 resources:
 
   - type: bigquery_table
-    # Required Properties:
     table_id: inpatient_charges_2011
-
-    # Description of the table
     description: "CMS Medicare Inpatient Charges 2011"
 
   - type: bigquery_table
-    # Required Properties:
     table_id: inpatient_charges_2012
-
-    # Description of the table
     description: "CMS Medicare Inpatient Charges 2012"
 
   - type: bigquery_table
-    # Required Properties:
     table_id: inpatient_charges_2013
-
-    # Description of the table
     description: "CMS Medicare Inpatient Charges 2013"
 
   - type: bigquery_table
-    # Required Properties:
     table_id: inpatient_charges_2014
-
-    # Description of the table
     description: "CMS Medicare Inpatient Charges 2014"
 
   - type: bigquery_table
-    # Required Properties:
     table_id: inpatient_charges_2015
-
-    # Description of the table
     description: "CMS Medicare Inpatient Charges 2015"
 
 dag:
-
-  airflow_version: 1
-
+  airflow_version: 2
   initialize:
     dag_id: inpatient_charges
     default_args:
       owner: "Google"
-
-      # When set to True, keeps a task from getting triggered if the previous schedule for the task hasn’t succeeded
       depends_on_past: False
       start_date: '2021-03-01'
     max_active_runs: 1
@@ -68,30 +49,16 @@ dag:
     default_view: graph
 
   tasks:
-
     - operator: "KubernetesPodOperator"
-
-      # Task description
       description: "Run CSV transform within kubernetes pod"
-
       args:
-
         task_id: "inpatient_2011_transform_csv"
         startup_timeout_seconds: 600
-
-        # The name of the pod in which the task will run. This will be used (plus a random suffix) to generate a pod id
         name: "cms_medicare_inpatient_charges_2011"
-
-        # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
         namespace: "composer"
         service_account_name: "datasets"
-
         image_pull_policy: "Always"
-
-        # Docker images will be built and pushed to GCR by default whenever the `scripts/generate_dag.py` is run. To skip building and pushing images, use the optional `--skip-builds` flag.
         image: "{{ var.json.cms_medicare.container_registry.run_csv_transform_kub }}"
-
-        # Set the environment variables you need initialized in the container. Use these as input variables for the script your container is expected to perform.
         env_vars:
           SOURCE_URL: "https://www.cms.gov/Research-Statistics-Data-and-Systems/Statistics-Trends-and-Reports/Medicare-Provider-Charge-Data/Downloads/Inpatient_Data_2011_CSV.zip"
           SOURCE_FILE: "files/data.zip"
@@ -103,35 +70,20 @@ dag:
           RENAME_MAPPINGS: >-
            {"Provider Id": "provider_id","Provider Name": "provider_name","Provider Street Address": "provider_street_address","Provider City": "provider_city","Provider State": "provider_state","Provider Zip Code": "provider_zipcode","DRG Definition": "drg_definition","Hospital Referral Region (HRR) Description": "hospital_referral_region_description","Total Discharges": "total_discharges","Average Covered Charges": "average_covered_charges","Average Total Payments": "average_total_payments","Average Medicare Payments": "average_medicare_payments"}
           PIPELINE_NAME: "inpatient_charges_2011"
-
-        # Set resource limits for the pod here. For resource units in Kubernetes, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes
         resources:
           limit_memory: "2G"
           limit_cpu: "1"
 
     - operator: "KubernetesPodOperator"
-
-      # Task description
       description: "Run CSV transform within kubernetes pod"
-
       args:
-
         task_id: "inpatient_2012_transform_csv"
         startup_timeout_seconds: 600
-
-        # The name of the pod in which the task will run. This will be used (plus a random suffix) to generate a pod id
         name: "cms_medicare_inpatient_charges_2012"
-
-        # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
         namespace: "composer"
         service_account_name: "datasets"
-
         image_pull_policy: "Always"
-
-        # Docker images will be built and pushed to GCR by default whenever the `scripts/generate_dag.py` is run. To skip building and pushing images, use the optional `--skip-builds` flag.
         image: "{{ var.json.cms_medicare.container_registry.run_csv_transform_kub }}"
-
-        # Set the environment variables you need initialized in the container. Use these as input variables for the script your container is expected to perform.
         env_vars:
           SOURCE_URL: "https://www.cms.gov/Research-Statistics-Data-and-Systems/Statistics-Trends-and-Reports/Medicare-Provider-Charge-Data/Downloads/Inpatient_Data_2012_CSV.zip"
           SOURCE_FILE: "files/data.zip"
@@ -143,35 +95,20 @@ dag:
           RENAME_MAPPINGS: >-
            {"Provider Id": "provider_id","Provider Name": "provider_name","Provider Street Address": "provider_street_address","Provider City": "provider_city","Provider State": "provider_state","Provider Zip Code": "provider_zipcode","DRG Definition": "drg_definition","Hospital Referral Region (HRR) Description": "hospital_referral_region_description","Total Discharges": "total_discharges","Average Covered Charges": "average_covered_charges","Average Total Payments": "average_total_payments","Average Medicare Payments": "average_medicare_payments"}
           PIPELINE_NAME: "inpatient_charges_2012"
-
-        # Set resource limits for the pod here. For resource units in Kubernetes, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes
         resources:
           limit_memory: "2G"
           limit_cpu: "1"
 
     - operator: "KubernetesPodOperator"
-
-      # Task description
       description: "Run CSV transform within kubernetes pod"
-
       args:
-
         task_id: "inpatient_2013_transform_csv"
         startup_timeout_seconds: 600
-
-        # The name of the pod in which the task will run. This will be used (plus a random suffix) to generate a pod id
         name: "cms_medicare_inpatient_charges_2013"
-
-        # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
         namespace: "composer"
         service_account_name: "datasets"
-
         image_pull_policy: "Always"
-
-        # Docker images will be built and pushed to GCR by default whenever the `scripts/generate_dag.py` is run. To skip building and pushing images, use the optional `--skip-builds` flag.
         image: "{{ var.json.cms_medicare.container_registry.run_csv_transform_kub }}"
-
-        # Set the environment variables you need initialized in the container. Use these as input variables for the script your container is expected to perform.
         env_vars:
           SOURCE_URL: "https://www.cms.gov/Research-Statistics-Data-and-Systems/Statistics-Trends-and-Reports/Medicare-Provider-Charge-Data/Downloads/Inpatient_Data_2013_CSV.zip"
           SOURCE_FILE: "files/data.zip"
@@ -183,35 +120,20 @@ dag:
           RENAME_MAPPINGS: >-
            {"Provider Id": "provider_id","Provider Name": "provider_name","Provider Street Address": "provider_street_address","Provider City": "provider_city","Provider State": "provider_state","Provider Zip Code": "provider_zipcode","DRG Definition": "drg_definition","Hospital Referral Region (HRR) Description": "hospital_referral_region_description","Total Discharges": "total_discharges","Average Covered Charges": "average_covered_charges","Average Total Payments": "average_total_payments","Average Medicare Payments": "average_medicare_payments"}
           PIPELINE_NAME: "inpatient_charges_2013"
-
-        # Set resource limits for the pod here. For resource units in Kubernetes, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes
         resources:
           limit_memory: "2G"
           limit_cpu: "1"
 
     - operator: "KubernetesPodOperator"
-
-      # Task description
       description: "Run CSV transform within kubernetes pod"
-
       args:
-
         task_id: "inpatient_2014_transform_csv"
         startup_timeout_seconds: 600
-
-        # The name of the pod in which the task will run. This will be used (plus a random suffix) to generate a pod id
         name: "cms_medicare_inpatient_charges_2014"
-
-        # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
         namespace: "composer"
         service_account_name: "datasets"
-
         image_pull_policy: "Always"
-
-        # Docker images will be built and pushed to GCR by default whenever the `scripts/generate_dag.py` is run. To skip building and pushing images, use the optional `--skip-builds` flag.
         image: "{{ var.json.cms_medicare.container_registry.run_csv_transform_kub }}"
-
-        # Set the environment variables you need initialized in the container. Use these as input variables for the script your container is expected to perform.
         env_vars:
           SOURCE_URL: "https://www.cms.gov/Research-Statistics-Data-and-Systems/Statistics-Trends-and-Reports/Medicare-Provider-Charge-Data/Downloads/Inpatient_Data_2014_CSV.zip"
           SOURCE_FILE: "files/data.zip"
@@ -223,35 +145,20 @@ dag:
           RENAME_MAPPINGS: >-
            {"Provider Id": "provider_id","Provider Name": "provider_name","Provider Street Address": "provider_street_address","Provider City": "provider_city","Provider State": "provider_state","Provider Zip Code": "provider_zipcode","DRG Definition": "drg_definition","Hospital Referral Region (HRR) Description": "hospital_referral_region_description","Total Discharges": "total_discharges","Average Covered Charges": "average_covered_charges","Average Total Payments": "average_total_payments","Average Medicare Payments": "average_medicare_payments"}
           PIPELINE_NAME: "inpatient_charges_2014"
-
-        # Set resource limits for the pod here. For resource units in Kubernetes, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes
         resources:
           limit_memory: "2G"
           limit_cpu: "1"
 
     - operator: "KubernetesPodOperator"
-
-      # Task description
       description: "Run CSV transform within kubernetes pod"
-
       args:
-
         task_id: "inpatient_2015_transform_csv"
         startup_timeout_seconds: 600
-
-        # The name of the pod in which the task will run. This will be used (plus a random suffix) to generate a pod id
         name: "cms_medicare_inpatient_charges_2015"
-
-        # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
         namespace: "composer"
         service_account_name: "datasets"
-
         image_pull_policy: "Always"
-
-        # Docker images will be built and pushed to GCR by default whenever the `scripts/generate_dag.py` is run. To skip building and pushing images, use the optional `--skip-builds` flag.
         image: "{{ var.json.cms_medicare.container_registry.run_csv_transform_kub }}"
-
-        # Set the environment variables you need initialized in the container. Use these as input variables for the script your container is expected to perform.
         env_vars:
           SOURCE_URL: "https://www.cms.gov/Research-Statistics-Data-and-Systems/Statistics-Trends-and-Reports/Medicare-Provider-Charge-Data/Downloads/Inpatient_Data_2015_CSV.zip"
           SOURCE_FILE: "files/data.zip"
@@ -263,38 +170,20 @@ dag:
           RENAME_MAPPINGS: >-
            {"Provider Id": "provider_id","Provider Name": "provider_name","Provider Street Address": "provider_street_address","Provider City": "provider_city","Provider State": "provider_state","Provider Zip Code": "provider_zipcode","DRG Definition": "drg_definition","Hospital Referral Region (HRR) Description": "hospital_referral_region_description","Total Discharges": "total_discharges","Average Covered Charges": "average_covered_charges","Average Total Payments": "average_total_payments","Average Medicare Payments": "average_medicare_payments"}
           PIPELINE_NAME: "inpatient_charges_2015"
-
-        # Set resource limits for the pod here. For resource units in Kubernetes, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes
         resources:
           limit_memory: "2G"
           limit_cpu: "1"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
-
       args:
         task_id: "load_inpatient_2011_to_bq"
-
-        # The GCS bucket where the CSV file is located in.
         bucket: "{{ var.value.composer_bucket }}"
-
-        # The GCS object path for the CSV file
         source_objects: ["data/cms_medicare/inpatient_charges_2011/data_output.csv"]
         source_format: "CSV"
         destination_project_dataset_table: "cms_medicare.inpatient_charges_2011"
-
-        # Use this if your CSV file contains a header row
         skip_leading_rows: 1
-
-        # How to write data to the table: overwrite, append, or write if empty
-        # See https://cloud.google.com/bigquery/docs/reference/auditlogs/rest/Shared.Types/WriteDisposition
         write_disposition: "WRITE_TRUNCATE"
-
-        # The BigQuery table schema based on the CSV file. For more info, see
-        # https://cloud.google.com/bigquery/docs/schemas.
-        # Always use snake_case and lowercase for column names, and be explicit,
-        # i.e. specify modes for all columns.
-        # types: "INTEGER", "TIMESTAMP", "STRING"
         schema_fields:
           - description: "The CMS Certification Number (CCN) of the provider billing for outpatient hospital services"
             name: "provider_id"
@@ -347,30 +236,14 @@ dag:
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
-
       args:
         task_id: "load_inpatient_2012_to_bq"
-
-        # The GCS bucket where the CSV file is located in.
         bucket: "{{ var.value.composer_bucket }}"
-
-        # The GCS object path for the CSV file
         source_objects: ["data/cms_medicare/inpatient_charges_2012/data_output.csv"]
         source_format: "CSV"
         destination_project_dataset_table: "cms_medicare.inpatient_charges_2012"
-
-        # Use this if your CSV file contains a header row
         skip_leading_rows: 1
-
-        # How to write data to the table: overwrite, append, or write if empty
-        # See https://cloud.google.com/bigquery/docs/reference/auditlogs/rest/Shared.Types/WriteDisposition
         write_disposition: "WRITE_TRUNCATE"
-
-        # The BigQuery table schema based on the CSV file. For more info, see
-        # https://cloud.google.com/bigquery/docs/schemas.
-        # Always use snake_case and lowercase for column names, and be explicit,
-        # i.e. specify modes for all columns.
-        # types: "INTEGER", "TIMESTAMP", "STRING"
         schema_fields:
           - description: "The CMS Certification Number (CCN) of the provider billing for outpatient hospital services"
             name: "provider_id"
@@ -423,30 +296,14 @@ dag:
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
-
       args:
         task_id: "load_inpatient_2013_to_bq"
-
-        # The GCS bucket where the CSV file is located in.
         bucket: "{{ var.value.composer_bucket }}"
-
-        # The GCS object path for the CSV file
         source_objects: ["data/cms_medicare/inpatient_charges_2013/data_output.csv"]
         source_format: "CSV"
         destination_project_dataset_table: "cms_medicare.inpatient_charges_2013"
-
-        # Use this if your CSV file contains a header row
         skip_leading_rows: 1
-
-        # How to write data to the table: overwrite, append, or write if empty
-        # See https://cloud.google.com/bigquery/docs/reference/auditlogs/rest/Shared.Types/WriteDisposition
         write_disposition: "WRITE_TRUNCATE"
-
-        # The BigQuery table schema based on the CSV file. For more info, see
-        # https://cloud.google.com/bigquery/docs/schemas.
-        # Always use snake_case and lowercase for column names, and be explicit,
-        # i.e. specify modes for all columns.
-        # types: "INTEGER", "TIMESTAMP", "STRING"
         schema_fields:
           - description: "The CMS Certification Number (CCN) of the provider billing for outpatient hospital services"
             name: "provider_id"
@@ -499,30 +356,14 @@ dag:
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
-
       args:
         task_id: "load_inpatient_2014_to_bq"
-
-        # The GCS bucket where the CSV file is located in.
         bucket: "{{ var.value.composer_bucket }}"
-
-        # The GCS object path for the CSV file
         source_objects: ["data/cms_medicare/inpatient_charges_2014/data_output.csv"]
         source_format: "CSV"
         destination_project_dataset_table: "cms_medicare.inpatient_charges_2014"
-
-        # Use this if your CSV file contains a header row
         skip_leading_rows: 1
-
-        # How to write data to the table: overwrite, append, or write if empty
-        # See https://cloud.google.com/bigquery/docs/reference/auditlogs/rest/Shared.Types/WriteDisposition
         write_disposition: "WRITE_TRUNCATE"
-
-        # The BigQuery table schema based on the CSV file. For more info, see
-        # https://cloud.google.com/bigquery/docs/schemas.
-        # Always use snake_case and lowercase for column names, and be explicit,
-        # i.e. specify modes for all columns.
-        # types: "INTEGER", "TIMESTAMP", "STRING"
         schema_fields:
           - description: "The CMS Certification Number (CCN) of the provider billing for outpatient hospital services"
             name: "provider_id"
@@ -575,30 +416,14 @@ dag:
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
-
       args:
         task_id: "load_inpatient_2015_to_bq"
-
-        # The GCS bucket where the CSV file is located in.
         bucket: "{{ var.value.composer_bucket }}"
-
-        # The GCS object path for the CSV file
         source_objects: ["data/cms_medicare/inpatient_charges_2015/data_output.csv"]
         source_format: "CSV"
         destination_project_dataset_table: "cms_medicare.inpatient_charges_2015"
-
-        # Use this if your CSV file contains a header row
         skip_leading_rows: 1
-
-        # How to write data to the table: overwrite, append, or write if empty
-        # See https://cloud.google.com/bigquery/docs/reference/auditlogs/rest/Shared.Types/WriteDisposition
         write_disposition: "WRITE_TRUNCATE"
-
-        # The BigQuery table schema based on the CSV file. For more info, see
-        # https://cloud.google.com/bigquery/docs/schemas.
-        # Always use snake_case and lowercase for column names, and be explicit,
-        # i.e. specify modes for all columns.
-        # types: "INTEGER", "TIMESTAMP", "STRING"
         schema_fields:
           - description: "The CMS Certification Number (CCN) of the provider billing for outpatient hospital services"
             name: "provider_id"

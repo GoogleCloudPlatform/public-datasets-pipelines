@@ -24,3 +24,19 @@ resource "google_bigquery_dataset" "cfpb_complaints" {
 output "bigquery_dataset-cfpb_complaints-dataset_id" {
   value = google_bigquery_dataset.cfpb_complaints.dataset_id
 }
+
+resource "google_storage_bucket" "cfpb-complaints" {
+  name                        = "${var.bucket_name_prefix}-cfpb-complaints"
+  force_destroy               = true
+  location                    = "US"
+  uniform_bucket_level_access = true
+  lifecycle {
+    ignore_changes = [
+      logging,
+    ]
+  }
+}
+
+output "storage_bucket-cfpb-complaints-name" {
+  value = google_storage_bucket.cfpb-complaints.name
+}

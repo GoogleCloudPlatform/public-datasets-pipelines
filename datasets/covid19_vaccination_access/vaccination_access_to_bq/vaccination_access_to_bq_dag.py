@@ -14,7 +14,7 @@
 
 
 from airflow import DAG
-from airflow.contrib.operators import gcs_to_bq
+from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
     "owner": "Google",
@@ -33,7 +33,7 @@ with DAG(
 ) as dag:
 
     # Task to load CSV file from covid19-open-data bucket to facility_boundary_us_all
-    gcs_to_bq_table_us_all = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    gcs_to_bq_table_us_all = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="gcs_to_bq_table_us_all",
         bucket="{{ var.json.covid19_vaccination_access.source_bucket }}",
         source_objects=[
@@ -138,7 +138,7 @@ with DAG(
     )
 
     # Task to load CSV file from covid19-open-data bucket to facility_boundary_us_drive
-    gcs_to_bq_table_us_drive = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    gcs_to_bq_table_us_drive = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="gcs_to_bq_table_us_drive",
         bucket="{{ var.json.covid19_vaccination_access.source_bucket }}",
         source_objects=[
@@ -243,7 +243,7 @@ with DAG(
     )
 
     # Task to load CSV file from covid19-open-data bucket to facility_boundary_us_transit
-    gcs_to_bq_table_us_transit = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    gcs_to_bq_table_us_transit = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="gcs_to_bq_table_us_transit",
         bucket="{{ var.json.covid19_vaccination_access.source_bucket }}",
         source_objects=[
@@ -348,7 +348,7 @@ with DAG(
     )
 
     # Task to load CSV file from covid19-open-data bucket to facility_boundary_us_walk
-    gcs_to_bq_table_us_walk = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    gcs_to_bq_table_us_walk = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="gcs_to_bq_table_us_walk",
         bucket="{{ var.json.covid19_vaccination_access.source_bucket }}",
         source_objects=[

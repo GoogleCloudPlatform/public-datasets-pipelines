@@ -14,7 +14,8 @@
 
 
 from airflow import DAG
-from airflow.contrib.operators import gcs_to_bq, kubernetes_pod_operator
+from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
     "owner": "Google",
@@ -33,28 +34,12 @@ with DAG(
 ) as dag:
 
     # Run CSV transform within kubernetes pod
-    tract_covariates_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+    tract_covariates_transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="tract_covariates_transform_csv",
         startup_timeout_seconds=600,
         name="census_opportunity_atlas_tract_covariates",
-        namespace="default",
-        affinity={
-            "nodeAffinity": {
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                    "nodeSelectorTerms": [
-                        {
-                            "matchExpressions": [
-                                {
-                                    "key": "cloud.google.com/gke-nodepool",
-                                    "operator": "In",
-                                    "values": ["pool-e2-standard-4"],
-                                }
-                            ]
-                        }
-                    ]
-                }
-            }
-        },
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.census_opportunity_atlas.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -67,11 +52,15 @@ with DAG(
             "RENAME_MAPPINGS": '{"state": "state","county": "county","tract": "tract","cz": "cz","czname": "czname","hhinc_mean2000": "hhinc_mean2000","mean_commutetime2000": "mean_commutetime2000","frac_coll_plus2000": "frac_coll_plus2000","frac_coll_plus2010": "frac_coll_plus2010","foreign_share2010": "foreign_share2010","med_hhinc1990": "med_hhinc1990","med_hhinc2016": "med_hhinc2016","popdensity2000": "popdensity2000","poor_share2010": "poor_share2010","poor_share2000": "poor_share2000","poor_share1990": "poor_share1990","share_white2010": "share_white2010","share_black2010": "share_black2010","share_hisp2010": "share_hisp2010","share_asian2010": "share_asian2010","share_black2000": "share_black2000","share_white2000": "share_white2000","share_hisp2000": "share_hisp2000","share_asian2000": "share_asian2000","gsmn_math_g3_2013": "gsmn_math_g3_2013","rent_twobed2015": "rent_twobed2015","singleparent_share2010": "singleparent_share2010","singleparent_share1990": "singleparent_share1990","singleparent_share2000": "singleparent_share2000","traveltime15_2010": "traveltime15_2010","emp2000": "emp2000","mail_return_rate2010": "mail_return_rate2010","ln_wage_growth_hs_grad": "ln_wage_growth_hs_grad","jobs_total_5mi_2015": "jobs_total_5mi_2015","jobs_highpay_5mi_2015": "jobs_highpay_5mi_2015","popdensity2010": "popdensity2010","ann_avg_job_growth_2004_2013": "ann_avg_job_growth_2004_2013","job_density_2013": "job_density_2013"}',
             "PIPELINE_NAME": "tract_covariates",
         },
-        resources={"limit_memory": "2G", "limit_cpu": "1"},
+        resources={
+            "request_memory": "2G",
+            "request_cpu": "1",
+            "request_ephemeral_storage": "10G",
+        },
     )
 
     # Task to load CSV data to a BigQuery table
-    load_tract_covariates_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    load_tract_covariates_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_tract_covariates_to_bq",
         bucket="{{ var.value.composer_bucket }}",
         source_objects=[

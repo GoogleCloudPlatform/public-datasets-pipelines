@@ -14,7 +14,8 @@
 
 
 from airflow import DAG
-from airflow.contrib.operators import gcs_to_bq, kubernetes_pod_operator
+from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
     "owner": "Google",
@@ -33,7 +34,7 @@ with DAG(
 ) as dag:
 
     # Run CSV transform within kubernetes pod
-    outpatient_2011_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+    outpatient_2011_transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="outpatient_2011_transform_csv",
         startup_timeout_seconds=600,
         name="cms_medicare_outpatient_charges_2011",
@@ -54,7 +55,7 @@ with DAG(
     )
 
     # Run CSV transform within kubernetes pod
-    outpatient_2012_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+    outpatient_2012_transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="outpatient_2012_transform_csv",
         startup_timeout_seconds=600,
         name="cms_medicare_outpatient_charges_2012",
@@ -75,7 +76,7 @@ with DAG(
     )
 
     # Run CSV transform within kubernetes pod
-    outpatient_2013_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+    outpatient_2013_transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="outpatient_2013_transform_csv",
         startup_timeout_seconds=600,
         name="cms_medicare_outpatient_charges_2013",
@@ -96,7 +97,7 @@ with DAG(
     )
 
     # Run CSV transform within kubernetes pod
-    outpatient_2014_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+    outpatient_2014_transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="outpatient_2014_transform_csv",
         startup_timeout_seconds=600,
         name="cms_medicare_outpatient_charges_2014",
@@ -118,7 +119,7 @@ with DAG(
     )
 
     # Task to load CSV data to a BigQuery table
-    load_outpatient_2011_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    load_outpatient_2011_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_outpatient_2011_to_bq",
         bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/cms_medicare/outpatient_charges_2011/data_output.csv"],
@@ -197,7 +198,7 @@ with DAG(
     )
 
     # Task to load CSV data to a BigQuery table
-    load_outpatient_2012_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    load_outpatient_2012_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_outpatient_2012_to_bq",
         bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/cms_medicare/outpatient_charges_2012/data_output.csv"],
@@ -276,7 +277,7 @@ with DAG(
     )
 
     # Task to load CSV data to a BigQuery table
-    load_outpatient_2013_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    load_outpatient_2013_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_outpatient_2013_to_bq",
         bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/cms_medicare/outpatient_charges_2013/data_output.csv"],
@@ -355,7 +356,7 @@ with DAG(
     )
 
     # Task to load CSV data to a BigQuery table
-    load_outpatient_2014_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    load_outpatient_2014_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_outpatient_2014_to_bq",
         bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/cms_medicare/outpatient_charges_2014/data_output.csv"],

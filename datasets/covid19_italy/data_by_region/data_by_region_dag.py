@@ -14,7 +14,8 @@
 
 
 from airflow import DAG
-from airflow.contrib.operators import gcs_to_bq, kubernetes_pod_operator
+from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
     "owner": "Google",
@@ -33,7 +34,7 @@ with DAG(
 ) as dag:
 
     # Run CSV transform within kubernetes pod
-    data_by_region_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+    data_by_region_transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="data_by_region_transform_csv",
         startup_timeout_seconds=600,
         name="covid19_italy_data_by_region",
@@ -55,7 +56,7 @@ with DAG(
     )
 
     # Task to load CSV data to a BigQuery table
-    load_data_by_region_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    load_data_by_region_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_data_by_region_to_bq",
         bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/covid19_italy/data_by_region/data_output.csv"],

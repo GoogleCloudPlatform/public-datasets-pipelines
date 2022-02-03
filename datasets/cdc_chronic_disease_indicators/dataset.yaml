@@ -24,7 +24,3 @@ resources:
   - type: bigquery_dataset
     dataset_id: cdc_chronic_disease_indicators
     description: "CDC U.S. Chronic Disease Indicators (CDI)"
-  - type: storage_bucket
-    name: cdc-chronic-disease-indicators
-    uniform_bucket_level_access: True
-    location: US
