@@ -56,9 +56,9 @@ with DAG(
             "OUTPUT_CSV_HEADERS": '[ "vendor_id", "pickup_datetime", "dropoff_datetime", "passenger_count", "trip_distance",\n  "rate_code", "store_and_fwd_flag", "payment_type", "fare_amount", "extra",\n  "mta_tax", "tip_amount", "tolls_amount", "imp_surcharge", "total_amount",\n  "pickup_location_id", "dropoff_location_id" ]',
         },
         resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "8G",
+            "request_memory": "16G",
+            "request_cpu": "2",
+            "request_ephemeral_storage": "16G",
         },
     )
 
