@@ -68,25 +68,32 @@ def download_url_files_from_year_range(
     dest_path: str,
     remove_file: bool = False,
     continue_on_error: bool = False,
-):
+) -> None:
     for yr in range(start_year, end_year + 1, 1):
         src_url = source_url.replace("YEAR_ITERATOR", str(yr))
         dest_file = dest_path + "/source_" + os.path.split(src_url)[1]
-        download_file_http(src_url, dest_file, continue_on_error)
-        unpack_file(dest_file, dest_path, "zip")
-        if remove_file:
-            os.remove(dest_file)
+        file_exists = download_file_http(src_url, dest_file, continue_on_error)
+        if file_exists:
+            unpack_file(dest_file, dest_path, "zip")
+            if remove_file:
+                os.remove(dest_file)
 
 
 def download_file_http(
     source_url: str, source_file: pathlib.Path, continue_on_error: bool = False
-) -> None:
+) -> bool:
     logging.info(f"Downloading {source_url} to {source_file}")
     try:
         src_file = requests.get(source_url, stream=True)
-        with open(source_file, "wb") as f:
-            for chunk in src_file:
-                f.write(chunk)
+        rtn_status_code = src_file.status_code
+        if 400 <= rtn_status_code <= 499:
+            logging.info(f"Unable to download file {source_url} (error code was {rtn_status_code})")
+            return False
+        else:
+            with open(source_file, "wb") as f:
+                for chunk in src_file:
+                    f.write(chunk)
+            return True
     except requests.exceptions.RequestException as e:
         if e == requests.exceptions.HTTPError:
             err_msg = "A HTTP error occurred."
@@ -99,8 +106,9 @@ def download_file_http(
             raise SystemExit(e)
         else:
             logging.info(
-                f"{err_msg} Unable to obtain {source_url}. Continuing execution."
+                f"{err_msg} Unable to obtain {source_url}."
             )
+        return False
 
 
 def unpack_file(infile: str, dest_path: str, compression_type: str = "zip") -> None:

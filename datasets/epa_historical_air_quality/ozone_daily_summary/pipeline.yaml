@@ -41,16 +41,9 @@ dag:
 
         task_id: "transform_csv"
         name: "ozone_daily_summary"
-        namespace: "default"
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                    - key: cloud.google.com/gke-nodepool
-                      operator: In
-                      values:
-                        - "pool-e2-standard-4"
+        namespace: "composer"
+        service_account_name: "datasets"
+
         image_pull_policy: "Always"
         image: "{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -76,8 +69,9 @@ dag:
               "method_code": "str", "method_name": "str", "local_site_name": "str", "address": "str", "state_name": "str",
               "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "datetime64[ns]" }
         resources:
-          limit_memory: "8G"
-          limit_cpu: "3"
+          request_memory: "8G"
+          request_cpu: "3"
+          request_ephemeral_storage: "5G"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
@@ -87,7 +81,7 @@ dag:
         bucket: "{{ var.value.composer_bucket }}"
         source_objects: ["data/epa_historical_air_quality/ozone_daily_summary/files/data_output.csv"]
         source_format: "CSV"
-        destination_project_dataset_table: "{{ var.json.epa_historical_air_quality.container_registry.ozone_daily_summary_destination_table }}"
+        destination_project_dataset_table: "{{ var.json.epa_historical_air_quality.destination_tables.ozone_daily_summary }}"
         skip_leading_rows: 1
         allow_quoted_newlines: True
         write_disposition: "WRITE_TRUNCATE"
