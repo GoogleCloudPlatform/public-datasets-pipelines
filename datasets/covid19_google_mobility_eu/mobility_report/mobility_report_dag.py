@@ -14,7 +14,8 @@
 
 
 from airflow import DAG
-from airflow.contrib.operators import gcs_to_bq, kubernetes_pod_operator
+from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
     "owner": "Google",
@@ -33,28 +34,12 @@ with DAG(
 ) as dag:
 
     # Run CSV transform within kubernetes pod
-    mobility_report_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+    mobility_report_transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="mobility_report_transform_csv",
         startup_timeout_seconds=600,
         name="mobility_report",
-        namespace="default",
-        affinity={
-            "nodeAffinity": {
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                    "nodeSelectorTerms": [
-                        {
-                            "matchExpressions": [
-                                {
-                                    "key": "cloud.google.com/gke-nodepool",
-                                    "operator": "In",
-                                    "values": ["pool-e2-standard-4"],
-                                }
-                            ]
-                        }
-                    ]
-                }
-            }
-        },
+        service_account_name="datasets",
+        namespace="composer",
         image_pull_policy="Always",
         image="{{ var.json.covid19_google_mobility_eu.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -70,11 +55,12 @@ with DAG(
             "resources": None,
             "request_memory": "2G",
             "request_cpu": "1",
+            "request_ephemeral_storage": "8G",
         },
     )
 
     # Task to load CSV data to a BigQuery table
-    load_mobility_report_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    load_mobility_report_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_mobility_report_to_bq",
         bucket="{{ var.value.composer_bucket }}",
         source_objects=[
