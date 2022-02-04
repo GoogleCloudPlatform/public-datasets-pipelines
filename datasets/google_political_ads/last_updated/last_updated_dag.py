@@ -14,7 +14,8 @@
 
 
 from airflow import DAG
-from airflow.contrib.operators import gcs_to_bq, kubernetes_pod_operator
+from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
     "owner": "Google",
@@ -33,7 +34,7 @@ with DAG(
 ) as dag:
 
     # Run CSV transform within kubernetes pod
-    last_updated_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+    last_updated_transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="last_updated_transform_csv",
         startup_timeout_seconds=600,
         name="last_updated",
@@ -52,11 +53,15 @@ with DAG(
             "CSV_HEADERS": '["report_data_updated_date"]',
             "RENAME_MAPPINGS": '{"Report_Data_Updated_Date": "report_data_updated_date"}',
         },
-        resources={"request_memory": "2G", "request_cpu": "1"},
+        resources={
+            "request_memory": "2G",
+            "request_cpu": "1",
+            "request_ephemeral_storage": "5G",
+        },
     )
 
     # Task to load CSV data to a BigQuery table
-    load_last_updated_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    load_last_updated_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_last_updated_to_bq",
         bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/google_political_ads/last_updated/data_output.csv"],

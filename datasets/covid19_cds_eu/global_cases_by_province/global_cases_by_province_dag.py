@@ -14,7 +14,8 @@
 
 
 from airflow import DAG
-from airflow.contrib.operators import gcs_to_bq, kubernetes_pod_operator
+from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
     "owner": "Google",
@@ -33,28 +34,12 @@ with DAG(
 ) as dag:
 
     # Run CSV transform within kubernetes pod
-    global_cases_by_province_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+    global_cases_by_province_transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="global_cases_by_province_transform_csv",
         startup_timeout_seconds=600,
         name="global_cases_by_province",
-        namespace="default",
-        affinity={
-            "nodeAffinity": {
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                    "nodeSelectorTerms": [
-                        {
-                            "matchExpressions": [
-                                {
-                                    "key": "cloud.google.com/gke-nodepool",
-                                    "operator": "In",
-                                    "values": ["pool-e2-standard-4"],
-                                }
-                            ]
-                        }
-                    ]
-                }
-            }
-        },
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.covid19_cds_eu.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -71,143 +56,104 @@ with DAG(
     )
 
     # Task to load CSV data to a BigQuery table
-    load_global_cases_by_province_to_bq = (
-        gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
-            task_id="load_global_cases_by_province_to_bq",
-            bucket="{{ var.value.composer_bucket }}",
-            source_objects=[
-                "data/covid19_cds_eu/global_cases_by_province/data_output.csv"
-            ],
-            source_format="CSV",
-            destination_project_dataset_table="covid19_cds_eu.global_cases_by_province",
-            skip_leading_rows=1,
-            allow_quoted_newlines=True,
-            write_disposition="WRITE_TRUNCATE",
-            schema_fields=[
-                {
-                    "name": "name",
-                    "type": "string",
-                    "description": "",
-                    "mode": "nullable",
-                },
-                {
-                    "name": "level",
-                    "type": "string",
-                    "description": "",
-                    "mode": "nullable",
-                },
-                {"name": "date", "type": "date", "description": "", "mode": "nullable"},
-                {
-                    "name": "city",
-                    "type": "string",
-                    "description": "",
-                    "mode": "nullable",
-                },
-                {
-                    "name": "county",
-                    "type": "string",
-                    "description": "",
-                    "mode": "nullable",
-                },
-                {
-                    "name": "state",
-                    "type": "string",
-                    "description": "",
-                    "mode": "nullable",
-                },
-                {
-                    "name": "country",
-                    "type": "string",
-                    "description": "",
-                    "mode": "nullable",
-                },
-                {
-                    "name": "population",
-                    "type": "integer",
-                    "description": "",
-                    "mode": "nullable",
-                },
-                {
-                    "name": "latitude",
-                    "type": "float",
-                    "description": "",
-                    "mode": "nullable",
-                },
-                {
-                    "name": "longitude",
-                    "type": "float",
-                    "description": "",
-                    "mode": "nullable",
-                },
-                {
-                    "name": "aggregate",
-                    "type": "string",
-                    "description": "",
-                    "mode": "nullable",
-                },
-                {"name": "tz", "type": "string", "description": "", "mode": "nullable"},
-                {
-                    "name": "cases",
-                    "type": "integer",
-                    "description": "",
-                    "mode": "nullable",
-                },
-                {
-                    "name": "deaths",
-                    "type": "integer",
-                    "description": "",
-                    "mode": "nullable",
-                },
-                {
-                    "name": "recovered",
-                    "type": "integer",
-                    "description": "",
-                    "mode": "nullable",
-                },
-                {
-                    "name": "active",
-                    "type": "integer",
-                    "description": "",
-                    "mode": "nullable",
-                },
-                {
-                    "name": "tested",
-                    "type": "integer",
-                    "description": "",
-                    "mode": "nullable",
-                },
-                {
-                    "name": "hospitalized",
-                    "type": "integer",
-                    "description": "",
-                    "mode": "nullable",
-                },
-                {
-                    "name": "discharged",
-                    "type": "integer",
-                    "description": "",
-                    "mode": "nullable",
-                },
-                {
-                    "name": "growth_factor",
-                    "type": "string",
-                    "description": "",
-                    "mode": "nullable",
-                },
-                {
-                    "name": "url",
-                    "type": "string",
-                    "description": "",
-                    "mode": "nullable",
-                },
-                {
-                    "name": "location_geom",
-                    "type": "geography",
-                    "description": "",
-                    "mode": "nullable",
-                },
-            ],
-        )
+    load_global_cases_by_province_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
+        task_id="load_global_cases_by_province_to_bq",
+        bucket="{{ var.value.composer_bucket }}",
+        source_objects=["data/covid19_cds_eu/global_cases_by_province/data_output.csv"],
+        source_format="CSV",
+        destination_project_dataset_table="covid19_cds_eu.global_cases_by_province",
+        skip_leading_rows=1,
+        allow_quoted_newlines=True,
+        write_disposition="WRITE_TRUNCATE",
+        schema_fields=[
+            {"name": "name", "type": "string", "description": "", "mode": "nullable"},
+            {"name": "level", "type": "string", "description": "", "mode": "nullable"},
+            {"name": "date", "type": "date", "description": "", "mode": "nullable"},
+            {"name": "city", "type": "string", "description": "", "mode": "nullable"},
+            {"name": "county", "type": "string", "description": "", "mode": "nullable"},
+            {"name": "state", "type": "string", "description": "", "mode": "nullable"},
+            {
+                "name": "country",
+                "type": "string",
+                "description": "",
+                "mode": "nullable",
+            },
+            {
+                "name": "population",
+                "type": "integer",
+                "description": "",
+                "mode": "nullable",
+            },
+            {
+                "name": "latitude",
+                "type": "float",
+                "description": "",
+                "mode": "nullable",
+            },
+            {
+                "name": "longitude",
+                "type": "float",
+                "description": "",
+                "mode": "nullable",
+            },
+            {
+                "name": "aggregate",
+                "type": "string",
+                "description": "",
+                "mode": "nullable",
+            },
+            {"name": "tz", "type": "string", "description": "", "mode": "nullable"},
+            {"name": "cases", "type": "integer", "description": "", "mode": "nullable"},
+            {
+                "name": "deaths",
+                "type": "integer",
+                "description": "",
+                "mode": "nullable",
+            },
+            {
+                "name": "recovered",
+                "type": "integer",
+                "description": "",
+                "mode": "nullable",
+            },
+            {
+                "name": "active",
+                "type": "integer",
+                "description": "",
+                "mode": "nullable",
+            },
+            {
+                "name": "tested",
+                "type": "integer",
+                "description": "",
+                "mode": "nullable",
+            },
+            {
+                "name": "hospitalized",
+                "type": "integer",
+                "description": "",
+                "mode": "nullable",
+            },
+            {
+                "name": "discharged",
+                "type": "integer",
+                "description": "",
+                "mode": "nullable",
+            },
+            {
+                "name": "growth_factor",
+                "type": "string",
+                "description": "",
+                "mode": "nullable",
+            },
+            {"name": "url", "type": "string", "description": "", "mode": "nullable"},
+            {
+                "name": "location_geom",
+                "type": "geography",
+                "description": "",
+                "mode": "nullable",
+            },
+        ],
     )
 
     global_cases_by_province_transform_csv >> load_global_cases_by_province_to_bq

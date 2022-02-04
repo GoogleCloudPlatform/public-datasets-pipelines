@@ -14,7 +14,8 @@
 
 
 from airflow import DAG
-from airflow.contrib.operators import gcs_to_bq, kubernetes_pod_operator
+from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
     "owner": "Google",
@@ -33,7 +34,7 @@ with DAG(
 ) as dag:
 
     # Run CSV transform within kubernetes pod
-    advertiser_declared_stats_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+    advertiser_declared_stats_transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="advertiser_declared_stats_transform_csv",
         startup_timeout_seconds=600,
         name="advertiser_declared_stats",
@@ -52,11 +53,15 @@ with DAG(
             "CSV_HEADERS": '["advertiser_id","advertiser_declared_name","advertiser_declared_regulatory_id","advertiser_declared_scope","advertiser_declared_promoter_name","advertiser_declared_promoter_address"]',
             "RENAME_MAPPINGS": '{"Advertiser_ID" : "advertiser_id","Advertiser_Declared_Name" : "advertiser_declared_name","Advertiser_Declared_Regulatory_ID" : "advertiser_declared_regulatory_id","Advertiser_Declared_Scope" : "advertiser_declared_scope","Advertiser_Declared_Promoter_Name" : "advertiser_declared_promoter_name","Advertiser_Declared_Promoter_Address" : "advertiser_declared_promoter_address"}',
         },
-        resources={"request_memory": "2G", "request_cpu": "1"},
+        resources={
+            "request_memory": "2G",
+            "request_cpu": "1",
+            "request_ephemeral_storage": "5G",
+        },
     )
 
     # Task to load CSV data to a BigQuery table
-    load_advertiser_declared_stats_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    load_advertiser_declared_stats_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_advertiser_declared_stats_to_bq",
         bucket="{{ var.value.composer_bucket }}",
         source_objects=[

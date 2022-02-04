@@ -24,7 +24,3 @@ resources:
   - type: bigquery_dataset
     dataset_id: covid19_govt_response
     description: COVID-19 Govt Response dataset
-  - type: storage_bucket
-    name: covid19-govt-response
-    uniform_bucket_level_access: True
-    location: US

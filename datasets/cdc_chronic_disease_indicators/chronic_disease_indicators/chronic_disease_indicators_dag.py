@@ -14,7 +14,8 @@
 
 
 from airflow import DAG
-from airflow.contrib.operators import gcs_to_bq, kubernetes_pod_operator
+from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
     "owner": "Google",
@@ -33,28 +34,12 @@ with DAG(
 ) as dag:
 
     # Run CSV transform within kubernetes pod
-    chronic_disease_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+    chronic_disease_transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="chronic_disease_transform_csv",
         startup_timeout_seconds=600,
         name="cdc_chronic_disease_indicators_chronic_disease_indicators",
-        namespace="default",
-        affinity={
-            "nodeAffinity": {
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                    "nodeSelectorTerms": [
-                        {
-                            "matchExpressions": [
-                                {
-                                    "key": "cloud.google.com/gke-nodepool",
-                                    "operator": "In",
-                                    "values": ["pool-e2-standard-4"],
-                                }
-                            ]
-                        }
-                    ]
-                }
-            }
-        },
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.cdc_chronic_disease_indicators.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -67,11 +52,15 @@ with DAG(
             "RENAME_MAPPINGS": '{"yearstart": "yearstart","yearend": "yearend","locationabbr": "locationabbr","locationdesc": "locationdesc","datasource": "datasource","topic": "topic","question": "question","response": "response","datavalueunit": "datavalueunit","datavaluetype": "datavaluetype","datavalue": "datavalue","datavaluealt": "datavaluealt","datavaluefootnotesymbol": "datavaluefootnotesymbol","datavaluefootnote": "datavaluefootnote","lowconfidencelimit": "lowconfidencelimit","highconfidencelimit": "highconfidencelimit","stratificationcategory1": "stratificationcategory1","stratification1": "stratification1","stratificationcategory2": "stratificationcategory2","stratification2": "stratification2","stratificationcategory3": "stratificationcategory3","stratification3": "stratification3","geolocation": "geolocation","responseid": "responseid","locationid": "locationid","topicid": "topicid","questionid": "questionid","datavaluetypeid": "datavaluetypeid","stratificationcategoryid1": "stratificationcategoryid1","stratificationid1": "stratificationid1","stratificationcategoryid2": "stratificationcategoryid2","stratificationid2": "stratificationid2","stratificationcategoryid3": "stratificationcategoryid3","stratificationid3": "stratificationid3"}',
             "PIPELINE_NAME": "chronic_disease_indicators",
         },
-        resources={"limit_memory": "2G", "limit_cpu": "1"},
+        resources={
+            "request_memory": "2G",
+            "request_cpu": "1",
+            "request_ephemeral_storage": "10G",
+        },
     )
 
     # Task to load CSV data to a BigQuery table
-    load_chronic_disease_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    load_chronic_disease_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_chronic_disease_to_bq",
         bucket="{{ var.value.composer_bucket }}",
         source_objects=[

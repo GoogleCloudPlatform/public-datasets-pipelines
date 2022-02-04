@@ -24,7 +24,3 @@ resources:
   - type: bigquery_dataset
     dataset_id: covid19_cds_eu
     description: COVID-19 CDS EU dataset
-  - type: storage_bucket
-    name: covid19-cds-eu
-    uniform_bucket_level_access: True
-    location: US

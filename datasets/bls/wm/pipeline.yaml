@@ -20,7 +20,7 @@ resources:
     description: "WM  Dataset"
 
 dag:
-  airflow_version: 1
+  airflow_version: 2
   initialize:
     dag_id: "wm"
     default_args:

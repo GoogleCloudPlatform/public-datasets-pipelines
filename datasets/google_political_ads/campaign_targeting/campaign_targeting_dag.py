@@ -14,7 +14,8 @@
 
 
 from airflow import DAG
-from airflow.contrib.operators import gcs_to_bq, kubernetes_pod_operator
+from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
     "owner": "Google",
@@ -33,7 +34,7 @@ with DAG(
 ) as dag:
 
     # Run CSV transform within kubernetes pod
-    campaign_targeting_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+    campaign_targeting_transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="campaign_targeting_transform_csv",
         startup_timeout_seconds=600,
         name="campaign_targeting",
@@ -52,11 +53,15 @@ with DAG(
             "CSV_HEADERS": '["campaign_id","age_targeting","gender_targeting","geo_targeting_included","geo_targeting_excluded","start_date","end_date","ads_list","advertiser_id","advertiser_name"]',
             "RENAME_MAPPINGS": '{"Campaign_ID": "campaign_id","Age_Targeting": "age_targeting","Gender_Targeting": "gender_targeting","Geo_Targeting_Included": "geo_targeting_included","Geo_Targeting_Excluded": "geo_targeting_excluded","Start_Date": "start_date","End_Date": "end_date","Ads_List": "ads_list","Advertiser_ID": "advertiser_id","Advertiser_Name": "advertiser_name"}',
         },
-        resources={"request_memory": "2G", "request_cpu": "1"},
+        resources={
+            "request_memory": "2G",
+            "request_cpu": "1",
+            "request_ephemeral_storage": "5G",
+        },
     )
 
     # Task to load CSV data to a BigQuery table
-    load_campaign_targeting_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    load_campaign_targeting_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_campaign_targeting_to_bq",
         bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/google_political_ads/campaign_targeting/data_output.csv"],

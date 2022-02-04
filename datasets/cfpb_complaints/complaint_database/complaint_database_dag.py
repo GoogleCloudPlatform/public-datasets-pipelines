@@ -14,7 +14,8 @@
 
 
 from airflow import DAG
-from airflow.contrib.operators import gcs_to_bq, kubernetes_pod_operator
+from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
     "owner": "Google",
@@ -33,28 +34,12 @@ with DAG(
 ) as dag:
 
     # Run CSV transform within kubernetes pod
-    complaint_database_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+    complaint_database_transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="complaint_database_transform_csv",
         startup_timeout_seconds=600,
         name="complaint_database",
-        namespace="default",
-        affinity={
-            "nodeAffinity": {
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                    "nodeSelectorTerms": [
-                        {
-                            "matchExpressions": [
-                                {
-                                    "key": "cloud.google.com/gke-nodepool",
-                                    "operator": "In",
-                                    "values": ["pool-e2-standard-4"],
-                                }
-                            ]
-                        }
-                    ]
-                }
-            }
-        },
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.cfpb_complaints.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -67,11 +52,15 @@ with DAG(
             "CSV_HEADERS": '["date_received","product","subproduct","issue","subissue","consumer_complaint_narrative","company_public_response","company_name","state","zip_code","tags","consumer_consent_provided","submitted_via","date_sent_to_company","company_response_to_consumer","timely_response","consumer_disputed","complaint_id"]',
             "RENAME_MAPPINGS": '{"Complaint ID":"complaint_id","Date received":"date_received","Product":"product","Sub-product":"subproduct","Issue":"issue","Sub-issue":"subissue","Consumer complaint narrative":"consumer_complaint_narrative","Company response to consumer":"company_response_to_consumer","Company public response":"company_public_response","Company":"company_name","State":"state","ZIP code":"zip_code","Tags":"tags","Consumer consent provided?":"consumer_consent_provided","Submitted via":"submitted_via","Date sent to company":"date_sent_to_company","Timely response?":"timely_response","Consumer disputed?":"consumer_disputed"}',
         },
-        resources={"request_memory": "3G", "request_cpu": "1"},
+        resources={
+            "request_memory": "3G",
+            "request_cpu": "1",
+            "request_ephemeral_storage": "10G",
+        },
     )
 
     # Task to load CSV data to a BigQuery table
-    load_complaint_database_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    load_complaint_database_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_complaint_database_to_bq",
         bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/cfpb_complaints/complaint_database/data_output.csv"],

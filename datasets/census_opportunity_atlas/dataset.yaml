@@ -24,7 +24,3 @@ resources:
   - type: bigquery_dataset
     dataset_id: census_opportunity_atlas
     description: "Census Opportunity Atlas"
-  - type: storage_bucket
-    name: census-opportunity-atlas
-    uniform_bucket_level_access: True
-    location: US

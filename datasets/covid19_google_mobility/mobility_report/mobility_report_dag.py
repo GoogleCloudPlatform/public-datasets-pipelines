@@ -14,7 +14,8 @@
 
 
 from airflow import DAG
-from airflow.contrib.operators import gcs_to_bq, kubernetes_pod_operator
+from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
     "owner": "Google",
@@ -33,7 +34,7 @@ with DAG(
 ) as dag:
 
     # Run CSV transform within kubernetes pod
-    mobility_report_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+    mobility_report_transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="mobility_report_transform_csv",
         startup_timeout_seconds=600,
         name="mobility_report",
@@ -51,11 +52,15 @@ with DAG(
             "CSV_HEADERS": '["country_region_code" ,"country_region" ,"sub_region_1" ,"sub_region_2" ,"metro_area" ,"iso_3166_2_code" ,"census_fips_code" ,"place_id" ,"date" ,"retail_and_recreation_percent_change_from_baseline" ,"grocery_and_pharmacy_percent_change_from_baseline" ,"parks_percent_change_from_baseline" ,"transit_stations_percent_change_from_baseline" ,"workplaces_percent_change_from_baseline" ,"residential_percent_change_from_baseline"]',
             "RENAME_MAPPINGS": '{"country_region_code":"country_region_code" ,"country_region":"country_region" ,"sub_region_1":"sub_region_1" ,"sub_region_2":"sub_region_2" ,"metro_area":"metro_area" ,"iso_3166_2_code":"iso_3166_2_code" ,"census_fips_code":"census_fips_code" ,"place_id":"place_id" ,"date":"date" ,"retail_and_recreation_percent_change_from_baseline":"retail_and_recreation_percent_change_from_baseline" ,"grocery_and_pharmacy_percent_change_from_baseline":"grocery_and_pharmacy_percent_change_from_baseline" ,"parks_percent_change_from_baseline":"parks_percent_change_from_baseline" ,"transit_stations_percent_change_from_baseline":"transit_stations_percent_change_from_baseline" ,"workplaces_percent_change_from_baseline":"workplaces_percent_change_from_baseline" ,"residential_percent_change_from_baseline":"residential_percent_change_from_baseline"}',
         },
-        resources={"request_memory": "2G", "request_cpu": "1"},
+        resources={
+            "request_memory": "8G",
+            "request_cpu": "2",
+            "request_ephemeral_storage": "10G",
+        },
     )
 
     # Task to load CSV data to a BigQuery table
-    load_mobility_report_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    load_mobility_report_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_mobility_report_to_bq",
         bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/covid19_google_mobility/mobility_report/data_output.csv"],

@@ -23,7 +23,7 @@ resources:
     description: "This table contains the information about advertisers who have run an election ad on Google Ads Services with at least one impression. The table's primary key is advertiser_id. This table relates to the others in this dataset, with the following connections between columns: advertiser_id is referenced from: advertiser_weekly_spend.advertiser_id campaign_targeting.advertiser_id creative_stats.advertiser_id advertiser_name is referenced from: advertiser_weekly_spend.advertiser_name campaign_targeting.advertiser_name advertiser_id.advertiser_name"
 
 dag:
-  airflow_version: 1
+  airflow_version: 2
   initialize:
     dag_id: advertiser_stats
     default_args:
@@ -78,6 +78,7 @@ dag:
         resources:
           request_memory: "2G"
           request_cpu: "1"
+          request_ephemeral_storage: "5G"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"

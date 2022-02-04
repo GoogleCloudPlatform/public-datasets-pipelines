@@ -20,7 +20,7 @@ resources:
     description: "CDC U.S. Chronic Disease Indicators (CDI)"
 
 dag:
-  airflow_version: 1
+  airflow_version: 2
   initialize:
     dag_id: chronic_disease_indicators
     default_args:
@@ -39,20 +39,10 @@ dag:
         task_id: "chronic_disease_transform_csv"
         startup_timeout_seconds: 600
         name: "cdc_chronic_disease_indicators_chronic_disease_indicators"
-        namespace: "default"
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                    - key: cloud.google.com/gke-nodepool
-                      operator: In
-                      values:
-                        - "pool-e2-standard-4"
-
+        namespace: "composer"
+        service_account_name: "datasets"
         image_pull_policy: "Always"
         image: "{{ var.json.cdc_chronic_disease_indicators.container_registry.run_csv_transform_kub }}"
-
         env_vars:
           SOURCE_URL: "https://chronicdata.cdc.gov/resource/g4ie-h725.csv"
           SOURCE_FILE: "files/data.csv"
@@ -65,8 +55,9 @@ dag:
            {"yearstart": "yearstart","yearend": "yearend","locationabbr": "locationabbr","locationdesc": "locationdesc","datasource": "datasource","topic": "topic","question": "question","response": "response","datavalueunit": "datavalueunit","datavaluetype": "datavaluetype","datavalue": "datavalue","datavaluealt": "datavaluealt","datavaluefootnotesymbol": "datavaluefootnotesymbol","datavaluefootnote": "datavaluefootnote","lowconfidencelimit": "lowconfidencelimit","highconfidencelimit": "highconfidencelimit","stratificationcategory1": "stratificationcategory1","stratification1": "stratification1","stratificationcategory2": "stratificationcategory2","stratification2": "stratification2","stratificationcategory3": "stratificationcategory3","stratification3": "stratification3","geolocation": "geolocation","responseid": "responseid","locationid": "locationid","topicid": "topicid","questionid": "questionid","datavaluetypeid": "datavaluetypeid","stratificationcategoryid1": "stratificationcategoryid1","stratificationid1": "stratificationid1","stratificationcategoryid2": "stratificationcategoryid2","stratificationid2": "stratificationid2","stratificationcategoryid3": "stratificationcategoryid3","stratificationid3": "stratificationid3"}
           PIPELINE_NAME: "chronic_disease_indicators"
         resources:
-          limit_memory: "2G"
-          limit_cpu: "1"
+          request_memory: "2G"
+          request_cpu: "1"
+          request_ephemeral_storage: "10G"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"

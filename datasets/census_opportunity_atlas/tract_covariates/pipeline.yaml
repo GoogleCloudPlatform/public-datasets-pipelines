@@ -22,7 +22,7 @@ resources:
 
 dag:
 
-  airflow_version: 1
+  airflow_version: 2
 
   initialize:
     dag_id: tract_covariates
@@ -48,19 +48,8 @@ dag:
         startup_timeout_seconds: 600
 
         name: "census_opportunity_atlas_tract_covariates"
-
-        namespace: "default"
-
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                    - key: cloud.google.com/gke-nodepool
-                      operator: In
-                      values:
-                        - "pool-e2-standard-4"
-
+        namespace: "composer"
+        service_account_name: "datasets"
         image_pull_policy: "Always"
 
         image: "{{ var.json.census_opportunity_atlas.container_registry.run_csv_transform_kub }}"
@@ -78,8 +67,9 @@ dag:
           PIPELINE_NAME: "tract_covariates"
 
         resources:
-          limit_memory: "2G"
-          limit_cpu: "1"
+          request_memory: "2G"
+          request_cpu: "1"
+          request_ephemeral_storage: "10G"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"

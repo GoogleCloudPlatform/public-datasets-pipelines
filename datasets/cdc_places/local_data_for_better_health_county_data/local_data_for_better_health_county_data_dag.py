@@ -14,7 +14,8 @@
 
 
 from airflow import DAG
-from airflow.contrib.operators import gcs_to_bq, kubernetes_pod_operator
+from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
     "owner": "Google",
@@ -33,7 +34,7 @@ with DAG(
 ) as dag:
 
     # Run CSV transform within kubernetes pod
-    local_data_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+    local_data_transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="local_data_transform_csv",
         startup_timeout_seconds=600,
         name="cdc_places_local_data_for_better_health_county_data",
@@ -51,11 +52,15 @@ with DAG(
             "RENAME_MAPPINGS": '{"year": "year","stateabbr": "stateabbr","statedesc": "statedesc","locationname": "locationname","datasource": "datasource","category": "category","measure": "measure","data_value_unit": "data_value_unit","data_value_type": "data_value_type","data_value": "data_value","data_value_footnote_symbol": "data_value_footnote_symbol","data_value_footnote": "data_value_footnote","low_confidence_limit": "low_confidence_limit","high_confidence_limit": "high_confidence_limit","totalpopulation": "totalpopulation","locationid": "locationid","categoryid": "categoryid","measureid": "measureid","datavaluetypeid": "datavaluetypeid","short_question_text": "short_question_text","geolocation": "geolocation"}',
             "PIPELINE_NAME": "local_data_for_better_health_county_data",
         },
-        resources={"limit_memory": "4G", "limit_cpu": "2"},
+        resources={
+            "request_memory": "4G",
+            "request_cpu": "2",
+            "request_ephemeral_storage": "10G",
+        },
     )
 
     # Task to load CSV data to a BigQuery table
-    load_local_data_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    load_local_data_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_local_data_to_bq",
         bucket="{{ var.value.composer_bucket }}",
         source_objects=[

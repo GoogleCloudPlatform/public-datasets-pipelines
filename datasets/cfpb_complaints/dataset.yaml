@@ -24,7 +24,3 @@ resources:
   - type: bigquery_dataset
     dataset_id: cfpb_complaints
     description: CFPB Complaints dataset
-  - type: storage_bucket
-    name: cfpb-complaints
-    uniform_bucket_level_access: True
-    location: US

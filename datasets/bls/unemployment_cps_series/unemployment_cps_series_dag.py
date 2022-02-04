@@ -14,7 +14,8 @@
 
 
 from airflow import DAG
-from airflow.contrib.operators import gcs_to_bq, kubernetes_pod_operator
+from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
     "owner": "Google",
@@ -33,7 +34,7 @@ with DAG(
 ) as dag:
 
     # Run CSV transform within kubernetes pod
-    transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+    transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="transform_csv",
         startup_timeout_seconds=600,
         name="unemployment_cps_series",
@@ -52,11 +53,15 @@ with DAG(
             "TRIM_SPACE": '["series_id","footnote_codes","series_title"]',
             "CSV_HEADERS": '["series_id","lfst_code","periodicity_code","series_title","absn_code","activity_code","ages_code","class_code","duration_code","education_code","entr_code","expr_code","hheader_code","hour_code","indy_code","jdes_code","look_code","mari_code","mjhs_code","occupation_code","orig_code","pcts_code","race_code","rjnw_code","rnlf_code","rwns_code","seek_code","sexs_code","tdat_code","vets_code","wkst_code","born_code","chld_code","disa_code","seasonal","footnote_codes","begin_year","begin_period","end_year","end_period","cert_code"]',
         },
-        resources={"request_memory": "4G", "request_cpu": "1"},
+        resources={
+            "request_memory": "4G",
+            "request_cpu": "1",
+            "request_ephemeral_storage": "10G",
+        },
     )
 
     # Task to load CSV data to a BigQuery table
-    load_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    load_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_to_bq",
         bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/bls/unemployment_cps_series/data_output.csv"],
