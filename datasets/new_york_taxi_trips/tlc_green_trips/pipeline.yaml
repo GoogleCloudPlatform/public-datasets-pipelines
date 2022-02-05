@@ -51,7 +51,11 @@ dag:
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "{{ var.json.new_york_taxi_trips.container_registry.green_trips_target_gcs_path }}"
           PIPELINE_NAME: "tlc_green_trips"
-          INPUT_CSV_HEADERS: "data/new_york_taxi_trips/tlc_green_trips/green_trips_input_csv_headers_schema.json"
+          INPUT_CSV_HEADERS: >-
+            ["vendor_id", "pickup_datetime", "dropoff_datetime", "store_and_fwd_flag", "rate_code",
+             "pickup_location_id", "dropoff_location_id", "passenger_count", "trip_distance", "fare_amount",
+             "extra", "mta_tax", "tip_amount", "tolls_amount", "ehail_fee",
+             "imp_surcharge", "total_amount", "payment_type", "trip_type", "congestion_surcharge" ]
           DATA_DTYPES: >-
             { "vendor_id": "str",
               "pickup_datetime": "datetime64[ns]",

@@ -115,8 +115,6 @@ def process_year_data(
             data_dtypes,
             output_headers,
             pipeline_name,
-            target_gcs_bucket,
-            target_gcs_path,
         )
     upload_file_to_gcs(
         target_file_name,
