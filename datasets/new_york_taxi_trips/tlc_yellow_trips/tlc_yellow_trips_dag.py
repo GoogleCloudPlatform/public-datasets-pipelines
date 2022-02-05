@@ -14,7 +14,7 @@
 
 
 from airflow import DAG
-from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.operators import kubernetes_engine
 from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
@@ -32,14 +32,33 @@ with DAG(
     catchup=False,
     default_view="graph",
 ) as dag:
+    create_cluster = kubernetes_engine.GKECreateClusterOperator(
+        task_id="create_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        body={
+            "name": "new-york-taxi-trips--tlc-yellow-trips",
+            "initial_node_count": 1,
+            "network": "{{ var.value.vpc_network }}",
+            "node_config": {
+                "machine_type": "e2-standard-8",
+                "oauth_scopes": [
+                    "https://www.googleapis.com/auth/devstorage.read_write",
+                    "https://www.googleapis.com/auth/cloud-platform",
+                ],
+            },
+        },
+    )
 
     # Run CSV transform within kubernetes pod
-    transform_csv = kubernetes_pod.KubernetesPodOperator(
+    transform_csv = kubernetes_engine.GKEStartPodOperator(
         task_id="transform_csv",
         startup_timeout_seconds=600,
         name="load_tlc_yellow_trips",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="new-york-taxi-trips--tlc-yellow-trips",
         image_pull_policy="Always",
         image="{{ var.json.new_york_taxi_trips.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -54,11 +73,6 @@ with DAG(
             "INPUT_CSV_HEADERS": '[ "vendor_id", "pickup_datetime", "dropoff_datetime", "passenger_count", "trip_distance",\n  "rate_code", "store_and_fwd_flag", "pickup_location_id", "dropoff_location_id",\n  "payment_type", "fare_amount", "extra", "mta_tax", "tip_amount",\n  "tolls_amount", "imp_surcharge", "total_amount", "congestion_surcharge" ]',
             "DATA_DTYPES": '{ "vendor_id": "str",\n  "pickup_datetime": "datetime64[ns]",\n  "dropoff_datetime": "datetime64[ns]",\n  "passenger_count": "str",\n  "trip_distance": "float64",\n  "rate_code": "str",\n  "store_and_fwd_flag": "str",\n  "pickup_location_id": "str",\n  "dropoff_location_id": "str",\n  "payment_type": "str",\n  "fare_amount": "float64",\n  "extra": "float64",\n  "mta_tax": "float64",\n  "tip_amount": "float64",\n  "tolls_amount": "float64",\n  "imp_surcharge": "float64",\n  "total_amount": "float64",\n  "congestion_surcharge": "float64" }',
             "OUTPUT_CSV_HEADERS": '[ "vendor_id", "pickup_datetime", "dropoff_datetime", "passenger_count", "trip_distance",\n  "rate_code", "store_and_fwd_flag", "payment_type", "fare_amount", "extra",\n  "mta_tax", "tip_amount", "tolls_amount", "imp_surcharge", "total_amount",\n  "pickup_location_id", "dropoff_location_id" ]',
-        },
-        resources={
-            "request_memory": "16G",
-            "request_cpu": "2",
-            "request_ephemeral_storage": "16G",
         },
     )
 
@@ -126,5 +140,13 @@ with DAG(
         allow_quoted_newlines=True,
         write_disposition="WRITE_TRUNCATE",
     )
+    delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
+        task_id="delete_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        name="new-york-taxi-trips--tlc-yellow-trips",
+    )
 
+    create_cluster >> transform_csv
     transform_csv >> load_to_bq_year_0 >> load_to_bq_year_minus_1 >> load_to_bq_year_minus_2 >> load_to_bq_year_minus_3 >> load_to_bq_year_minus_4
+    load_to_bq_year_minus_4 >> delete_cluster

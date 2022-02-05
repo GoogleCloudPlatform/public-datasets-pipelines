@@ -138,8 +138,6 @@ def process_month(
     data_dtypes: dict,
     output_headers: typing.List[str],
     pipeline_name: str,
-    target_gcs_bucket: str,
-    target_gcs_path: str,
 ) -> None:
     process_month = str(year_number) + "-" + str(month_number).zfill(2)
     logging.info(f"Processing {process_month} started")
@@ -264,7 +262,7 @@ def append_batch_file(
     truncate_target_file: bool,
 ) -> None:
     logging.info(
-        f"testing: Appending file {batch_file_path} to file {target_file_path} with include_header={include_header} and truncate_target_file={truncate_target_file}"
+        f"Appending file {batch_file_path} to file {target_file_path} with include_header={include_header} and truncate_target_file={truncate_target_file}"
     )
     data_file = open(batch_file_path, "r")
     if truncate_target_file:
