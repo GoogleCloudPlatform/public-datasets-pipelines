@@ -14,7 +14,8 @@
 
 
 from airflow import DAG
-from airflow.contrib.operators import gcs_to_bq, kubernetes_pod_operator
+from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
     "owner": "Google",
@@ -33,28 +34,12 @@ with DAG(
 ) as dag:
 
     # Run CSV transform within kubernetes pod
-    data_tract_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+    data_tract_transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="data_tract_transform_csv",
         startup_timeout_seconds=600,
         name="city_health_dashboard_chdb_data_tract_all",
-        namespace="default",
-        affinity={
-            "nodeAffinity": {
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                    "nodeSelectorTerms": [
-                        {
-                            "matchExpressions": [
-                                {
-                                    "key": "cloud.google.com/gke-nodepool",
-                                    "operator": "In",
-                                    "values": ["pool-e2-standard-4"],
-                                }
-                            ]
-                        }
-                    ]
-                }
-            }
-        },
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.city_health_dashboard.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -66,13 +51,17 @@ with DAG(
             "CSV_HEADERS": '["state_abbr","state_fips","county_fips","county_name","tract_code","stcotr_fips","stpl_fips","city_name","metric_name","metric_number","group_name","group_number","num","denom","est","lci","uci","data_yr_type","geo_level","date_export"]',
             "RENAME_MAPPINGS": '{"state_abbr": "state_abbr","state_fips": "state_fips","county_fips": "county_fips","county_name": "county_name","tract_code": "tract_code","stcotr_fips": "stcotr_fips","stpl_fips": "stpl_fips","city_name": "city_name","metric_name": "metric_name","metric_number": "metric_number","group_name": "group_name","group_number": "group_number","num": "num","denom": "denom","est": "est","lci": "lci","uci": "uci","data_yr_type": "data_yr_type","geo_level": "geo_level","date_export": "date_export"}',
             "PIPELINE_NAME": "chdb_data_tract_all",
-            "FILE_NAME": "CHDB_data_tract_all v13_0.csv",
+            "FILE_NAME": "CHDB_data_tract_all_v13.1.csv",
         },
-        resources={"limit_memory": "2G", "limit_cpu": "1"},
+        resources={
+            "limit_memory": "2G",
+            "limit_cpu": "1",
+            "request_ephemeral_storage": "8G",
+        },
     )
 
     # Task to load CSV data to a BigQuery table
-    load_data_tract_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    load_data_tract_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_data_tract_to_bq",
         bucket="{{ var.value.composer_bucket }}",
         source_objects=[
