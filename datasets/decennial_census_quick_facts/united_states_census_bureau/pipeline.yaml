@@ -20,7 +20,7 @@ resources:
     description: "QuickFacts United States"
 
 dag:
-  airflow_version: 1
+  airflow_version: 2
   initialize:
     dag_id: united_states_census_bureau
     default_args:
@@ -40,17 +40,8 @@ dag:
         task_id: "facts_transform_csv"
         startup_timeout_seconds: 600
         name: "decennial_census_quick_facts_united_states_census_bureau"
-        namespace: "default"
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                    - key: cloud.google.com/gke-nodepool
-                      operator: In
-                      values:
-                        - "pool-e2-standard-4"
-
+        namespace: "composer"
+        service_account_name: "datasets"
         image_pull_policy: "Always"
         image: "{{ var.json.decennial_census_quick_facts.container_registry.run_csv_transform_kub }}"
 
@@ -69,6 +60,7 @@ dag:
         resources:
           limit_memory: "2G"
           limit_cpu: "1"
+          request_ephemeral_storage: "8G"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"

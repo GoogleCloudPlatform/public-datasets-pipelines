@@ -14,7 +14,8 @@
 
 
 from airflow import DAG
-from airflow.contrib.operators import gcs_to_bq, kubernetes_pod_operator
+from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
     "owner": "Google",
@@ -33,28 +34,12 @@ with DAG(
 ) as dag:
 
     # Run CSV transform within kubernetes pod
-    facts_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+    facts_transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="facts_transform_csv",
         startup_timeout_seconds=600,
         name="decennial_census_quick_facts_united_states_census_bureau",
-        namespace="default",
-        affinity={
-            "nodeAffinity": {
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                    "nodeSelectorTerms": [
-                        {
-                            "matchExpressions": [
-                                {
-                                    "key": "cloud.google.com/gke-nodepool",
-                                    "operator": "In",
-                                    "values": ["pool-e2-standard-4"],
-                                }
-                            ]
-                        }
-                    ]
-                }
-            }
-        },
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.decennial_census_quick_facts.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -67,11 +52,15 @@ with DAG(
             "RENAME_MAPPINGS": '{"Fact": "fact","Fact Note": "fact_note","United States": "united_states","Value Note for United States": "value_note_for_united_states"}',
             "PIPELINE_NAME": "united_states_census_bureau",
         },
-        resources={"limit_memory": "2G", "limit_cpu": "1"},
+        resources={
+            "limit_memory": "2G",
+            "limit_cpu": "1",
+            "request_ephemeral_storage": "8G",
+        },
     )
 
     # Task to load CSV data to a BigQuery table
-    load_facts_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    load_facts_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_facts_to_bq",
         bucket="{{ var.value.composer_bucket }}",
         source_objects=[
