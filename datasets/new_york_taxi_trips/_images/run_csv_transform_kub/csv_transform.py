@@ -21,29 +21,35 @@ from datetime import datetime
 
 import pandas as pd
 import requests
-from google.cloud import storage
+from google.cloud import storage, bigquery
 
 
 def main(
     source_url: str,
-    source_years_to_load: str,
     source_file: pathlib.Path,
     target_file: pathlib.Path,
+    project_id: str,
+    dataset_id: str,
+    table_id: str,
+    schema_path: str,
     chunksize: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
+    pipeline_name: str,
     input_headers: typing.List[str],
     data_dtypes: dict,
-    output_headers: typing.List[str],
-    pipeline_name: str,
+    output_headers: typing.List[str]
 ) -> None:
     logging.info(f"New York taxi trips - {pipeline_name} process started")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
     execute_pipeline(
         source_url,
-        source_years_to_load,
         str(source_file),
         str(target_file),
+        project_id,
+        dataset_id,
+        table_id,
+        schema_path,
         chunksize,
         input_headers,
         data_dtypes,
@@ -52,24 +58,26 @@ def main(
         target_gcs_bucket,
         target_gcs_path,
     )
-
     logging.info(f"New York taxi trips - {pipeline_name} process completed")
 
 
 def execute_pipeline(
     source_url: str,
-    source_years_to_load: str,
     source_file: str,
     target_file: str,
+    project_id: str,
+    dataset_id: str,
+    table_id: str,
+    schema_path: str,
     chunksize: str,
+    target_gcs_bucket: str,
+    target_gcs_path: str,
+    pipeline_name: str,
     input_headers: typing.List[str],
     data_dtypes: dict,
     output_headers: typing.List[str],
-    pipeline_name: str,
-    target_gcs_bucket: str,
-    target_gcs_path: str,
 ) -> None:
-    for year_number in source_years_to_load.split("|"):
+    for year_number in (datetime.now().year, (datetime.now().year - 7)):
         target_file_name = str.replace(target_file, ".csv", "_" + year_number + ".csv")
         process_year_data(
             source_url,
@@ -77,13 +85,17 @@ def execute_pipeline(
             source_file,
             target_file,
             target_file_name,
+            project_id,
+            dataset_id,
+            table_id,
+            schema_path,
             chunksize,
+            target_gcs_bucket,
+            target_gcs_path,
+            pipeline_name,
             input_headers,
             data_dtypes,
             output_headers,
-            pipeline_name,
-            target_gcs_bucket,
-            target_gcs_path,
         )
 
 
@@ -93,15 +105,21 @@ def process_year_data(
     source_file: str,
     target_file: str,
     target_file_name: str,
+    project_id: str,
+    dataset_id: str,
+    table_id: str,
+    schema_path: str,
     chunksize: str,
+    target_gcs_bucket: str,
+    target_gcs_path: str,
+    pipeline_name: str,
     input_headers: typing.List[str],
     data_dtypes: dict,
     output_headers: typing.List[str],
-    pipeline_name: str,
-    target_gcs_bucket: str,
-    target_gcs_path: str,
 ) -> None:
     logging.info(f"Processing year {year_number}")
+    destination_table = f"{dest_table}_{year_number}"
+    create_dest_table(project_id, dataset_id, destination_table, schema_path, target_gcs_bucket)
     for month_number in range(1, 13):
         process_month(
             source_url,
@@ -110,6 +128,9 @@ def process_year_data(
             source_file,
             target_file,
             target_file_name,
+            project_id,
+            dataset_id,
+            table_id,
             chunksize,
             input_headers,
             data_dtypes,
@@ -121,7 +142,55 @@ def process_year_data(
         target_gcs_bucket,
         str(target_gcs_path).replace(".csv", "_" + str(year_number) + ".csv"),
     )
+    load_data_bq()
     logging.info(f"Processing year {year_number} completed")
+
+
+def create_dest_table(project_id: str,
+                      dataset_id: str,
+                      table_id: str,
+                      schema_filepath: list,
+                      bucket_name: str
+                      ) -> bool:
+    client = bigquery.Client()
+    table_ref = f"{project_id}.{dataset_id}.{table_id}"
+    success = False
+    try:
+        table_exists = client.get_table(table_ref)
+        logging.info(f"Table {table_ref} currently exists.")
+        success = True
+    except:
+        try:
+            schema = create_table_schema([], bucket_name, schema_filepath)
+            table = bigquery.Table(table_ref, schema=schema)
+            client.create_table(table)  # Make an API request.
+            print(f"Table {table_ref} was created".format(table_id))
+            success = True
+        except:
+            print(f"Table {table_ref} does not exist and was not created".format(table_id))
+            success = False
+    return success
+
+
+def create_table_schema(schema_structure: list, bucket_name: str = "", schema_filepath: str = "") -> list:
+    schema = []
+    if not(schema_filepath):
+        schema_struct = schema_structure
+    else:
+        storage_client = storage.Client()
+        bucket = storage_client.get_bucket(bucket_name)
+        blob = bucket.blob(schema_filepath)
+        schema_struct = json.loads(blob.download_as_string(client=None))
+    for schema_field in schema_struct:
+        fld_name = schema_field["name"]
+        fld_type = schema_field["type"]
+        try:
+            fld_descr = schema_field["description"]
+        except:
+            fld_descr = ""
+        fld_mode = schema_field["mode"]
+        schema.append(bigquery.SchemaField(name=fld_name, field_type=fld_type, mode=fld_mode, description=fld_descr))
+    return schema
 
 
 def process_month(
@@ -304,14 +373,17 @@ if __name__ == "__main__":
 
     main(
         source_url=os.environ["SOURCE_URL"],
-        source_years_to_load=os.environ["SOURCE_YEARS_TO_LOAD"],
         source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
+        project_id=os.environ["PROJECT_ID"],
+        dataset_id=os.environ["DATASET_ID"],
+        table_id=os.environ["TABLE_ID"],
+        schema_path=os.environ["SCHEMA_PATH"],
         chunksize=os.environ["CHUNKSIZE"],
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
+        pipeline_name=os.environ["PIPELINE_NAME"],
         input_headers=json.loads(os.environ["INPUT_CSV_HEADERS"]),
         data_dtypes=json.loads(os.environ["DATA_DTYPES"]),
         output_headers=json.loads(os.environ["OUTPUT_CSV_HEADERS"]),
-        pipeline_name=os.environ["PIPELINE_NAME"],
     )
