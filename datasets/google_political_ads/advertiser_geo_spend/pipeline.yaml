@@ -23,7 +23,7 @@ resources:
     description: "This file contains total US advertiser spend on political ads, per US state and the District of Columbia."
 
 dag:
-  airflow_version: 1
+  airflow_version: 2
   initialize:
     dag_id: advertiser_geo_spend
     default_args:
@@ -53,17 +53,8 @@ dag:
         name: "advertiser_geo_spend"
 
         # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment"s resources without starving other pipelines.
-        namespace: "default"
-
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                    - key: cloud.google.com/gke-nodepool
-                      operator: In
-                      values:
-                        - "pool-e2-standard-4"
+        namespace: "composer"
+        service_account_name: "datasets"
 
         image_pull_policy: "Always"
 
@@ -83,12 +74,11 @@ dag:
             ["advertiser_id","advertiser_name","country","country_subdivision_primary","spend_usd","spend_eur","spend_inr","spend_bgn","spend_hrk","spend_czk","spend_dkk","spend_huf","spend_pln","spend_ron","spend_sek","spend_gbp","spend_nzd"]
           RENAME_MAPPINGS: >-
             {"Advertiser_ID" : "advertiser_id" ,"Advertiser_Name" : "advertiser_name" ,"Country" : "country" ,"Country_Subdivision_Primary" : "country_subdivision_primary" ,"Spend_USD" : "spend_usd" ,"Spend_EUR" : "spend_eur" ,"Spend_INR" : "spend_inr" ,"Spend_BGN" : "spend_bgn" ,"Spend_HRK" : "spend_hrk" ,"Spend_CZK" : "spend_czk" ,"Spend_DKK" : "spend_dkk" ,"Spend_HUF" : "spend_huf" ,"Spend_PLN" : "spend_pln" ,"Spend_RON" : "spend_ron" ,"Spend_SEK" : "spend_sek" ,"Spend_GBP" : "spend_gbp" ,"Spend_NZD" : "spend_nzd"}
-
-
         # Set resource limits for the pod here. For resource units in Kubernetes, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes
         resources:
           request_memory: "2G"
           request_cpu: "1"
+          request_ephemeral_storage: "5G"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
@@ -185,7 +175,5 @@ dag:
             type: "integer"
             description: "Total amount in NZD spent on election ads in this region."
             mode: "nullable"
-
-
   graph_paths:
     - "advertiser_geo_spend_transform_csv >> load_advertiser_geo_spend_to_bq"

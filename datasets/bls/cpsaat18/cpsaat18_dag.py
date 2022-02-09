@@ -14,7 +14,7 @@
 
 
 from airflow import DAG
-from airflow.contrib.operators import gcs_to_bq
+from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
     "owner": "Google",
@@ -33,7 +33,7 @@ with DAG(
 ) as dag:
 
     # Task to load the CPSAAT18 data to the BigQuery table
-    load_csv_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    load_csv_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_csv_to_bq",
         bucket="{{ var.json.bls.source_bucket }}",
         source_objects=["cpsaat18/*.csv"],

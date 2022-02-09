@@ -14,7 +14,8 @@
 
 
 from airflow import DAG
-from airflow.contrib.operators import gcs_to_bq, kubernetes_pod_operator
+from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
     "owner": "Google",
@@ -33,28 +34,12 @@ with DAG(
 ) as dag:
 
     # Run CSV transform within kubernetes pod
-    hospital_info_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+    hospital_info_transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="hospital_info_transform_csv",
         startup_timeout_seconds=600,
         name="cms_medicare_hospital_general_info",
-        namespace="default",
-        affinity={
-            "nodeAffinity": {
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                    "nodeSelectorTerms": [
-                        {
-                            "matchExpressions": [
-                                {
-                                    "key": "cloud.google.com/gke-nodepool",
-                                    "operator": "In",
-                                    "values": ["pool-e2-standard-4"],
-                                }
-                            ]
-                        }
-                    ]
-                }
-            }
-        },
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.cms_medicare.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -67,11 +52,10 @@ with DAG(
             "RENAME_MAPPINGS": '{"Facility ID": "provider_id","Facility Name": "hospital_name","Address": "address","City": "city","State": "state","ZIP Code": "zip_code","County Name": "county_name","Phone Number": "phone_number","Hospital Type": "hospital_type","Hospital Ownership": "hospital_ownership","Emergency Services": "emergency_services","Meets criteria for promoting interoperability of EHRs": "meets_criteria_for_promoting_interoperability_of_ehrs","Hospital overall rating": "hospital_overall_rating","Hospital overall rating footnote": "hospital_overall_rating_footnote","MORT Group Measure Count": "mortality_group_measure_count","Count of Facility MORT Measures": "facility_mortaility_measures_count","Count of MORT Measures Better": "mortality_measures_better_count","Count of MORT Measures No Different": "mortality_measures_no_different_count","Count of MORT Measures Worse": "mortality_measures_worse_count","MORT Group Footnote": "mortaility_group_footnote","Safety Group Measure Count": "safety_measures_count","Count of Facility Safety Measures": "facility_care_safety_measures_count","Count of Safety Measures Better": "safety_measures_better_count","Count of Safety Measures No Different": "safety_measures_no_different_count","Count of Safety Measures Worse": "safety_measures_worse_count","Safety Group Footnote": "safety_group_footnote","READM Group Measure Count": "readmission_measures_count","Count of Facility READM Measures": "facility_readmission_measures_count","Count of READM Measures Better": "readmission_measures_better_count","Count of READM Measures No Different": "readmission_measures_no_different_count","Count of READM Measures Worse": "readmission_measures_worse_count","READM Group Footnote": "readmission_measures_footnote","Pt Exp Group Measure Count": "patient_experience_measures_count","Count of Facility Pt Exp Measures": "facility_patient_experience_measures_count","Pt Exp Group Footnote": "patient_experience_measures_footnote","TE Group Measure Count": "timely_and_effective_care_measures_count","Count of Facility TE Measures": "facility_timely_and_effective_care_measures_count","TE Group Footnote": "timely_and_effective_care_measures_footnote"}',
             "PIPELINE_NAME": "hospital_general_info",
         },
-        resources={"limit_memory": "2G", "limit_cpu": "1"},
     )
 
     # Task to load CSV data to a BigQuery table
-    load_hospital_info_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    load_hospital_info_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_hospital_info_to_bq",
         bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/cms_medicare/hospital_general_info/data_output.csv"],

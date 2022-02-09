@@ -14,7 +14,7 @@
 
 
 from airflow import DAG
-from airflow.contrib.operators import gcs_to_bq
+from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
     "owner": "Google",
@@ -33,7 +33,7 @@ with DAG(
 ) as dag:
 
     # Task to load global vaccination search insights CSV file from the covid19-open-data bucket to BQ
-    gcs_to_bq_vaccination_search_insights = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    gcs_to_bq_vaccination_search_insights = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="gcs_to_bq_vaccination_search_insights",
         bucket="{{ var.json.covid19_vaccination_search_insights.source_bucket }}",
         source_objects=[

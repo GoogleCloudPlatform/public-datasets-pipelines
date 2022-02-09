@@ -28,7 +28,7 @@ resources:
     description: "This table represents the boundaries of areas surrounding vaccination facilities from which people can reach the facility by walking within predetermined time periods."
 
 dag:
-  airflow_version: 1
+  airflow_version: 2
   initialize:
     dag_id: vaccination_access_to_bq
     default_args:
@@ -256,8 +256,6 @@ dag:
             type: "GEOGRAPHY"
             mode: "NULLABLE"
             description: "A GeoJSON representation of the catchment area boundary of the site, for a particular mode of transportation and travel time threshold. Consists of multiple latitude and longitude points."
-
-
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV file from covid19-open-data bucket to facility_boundary_us_walk"
       args:

@@ -15,10 +15,13 @@
  */
 
 
-resource "google_bigquery_table" "state_facility_level_long_term_care" {
+resource "google_bigquery_table" "covid19_tracking_state_facility_level_long_term_care" {
   project    = var.project_id
   dataset_id = "covid19_tracking"
   table_id   = "state_facility_level_long_term_care"
+
+
+
 
 
 
@@ -27,10 +30,10 @@ resource "google_bigquery_table" "state_facility_level_long_term_care" {
   ]
 }
 
-output "bigquery_table-state_facility_level_long_term_care-table_id" {
-  value = google_bigquery_table.state_facility_level_long_term_care.table_id
+output "bigquery_table-covid19_tracking_state_facility_level_long_term_care-table_id" {
+  value = google_bigquery_table.covid19_tracking_state_facility_level_long_term_care.table_id
 }
 
-output "bigquery_table-state_facility_level_long_term_care-id" {
-  value = google_bigquery_table.state_facility_level_long_term_care.id
+output "bigquery_table-covid19_tracking_state_facility_level_long_term_care-id" {
+  value = google_bigquery_table.covid19_tracking_state_facility_level_long_term_care.id
 }

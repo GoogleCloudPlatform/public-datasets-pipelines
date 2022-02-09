@@ -15,10 +15,13 @@
  */
 
 
-resource "google_bigquery_table" "state_screenshots" {
+resource "google_bigquery_table" "covid19_tracking_state_screenshots" {
   project    = var.project_id
   dataset_id = "covid19_tracking"
   table_id   = "state_screenshots"
+
+
+
 
 
 
@@ -27,10 +30,10 @@ resource "google_bigquery_table" "state_screenshots" {
   ]
 }
 
-output "bigquery_table-state_screenshots-table_id" {
-  value = google_bigquery_table.state_screenshots.table_id
+output "bigquery_table-covid19_tracking_state_screenshots-table_id" {
+  value = google_bigquery_table.covid19_tracking_state_screenshots.table_id
 }
 
-output "bigquery_table-state_screenshots-id" {
-  value = google_bigquery_table.state_screenshots.id
+output "bigquery_table-covid19_tracking_state_screenshots-id" {
+  value = google_bigquery_table.covid19_tracking_state_screenshots.id
 }

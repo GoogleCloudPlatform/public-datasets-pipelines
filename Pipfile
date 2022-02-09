@@ -7,7 +7,8 @@ name = "pypi"
 beautifulsoup4 = "==4.9.3"
 
 [dev-packages]
-apache-airflow = "==2.1.1"
+apache-airflow = "==2.1.2"
+apache-airflow-providers-amazon = "2.4.0"
 apache-airflow-providers-apache-beam = "3.0.0"
 apache-airflow-providers-google = "5.0.0"
 apache-airflow-providers-cncf-kubernetes = "2.0.2"

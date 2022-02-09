@@ -14,7 +14,8 @@
 
 
 from airflow import DAG
-from airflow.contrib.operators import gcs_to_bq, kubernetes_pod_operator
+from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
     "owner": "Google",
@@ -33,28 +34,12 @@ with DAG(
 ) as dag:
 
     # Run CSV transform within kubernetes pod
-    inpatient_2011_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+    inpatient_2011_transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="inpatient_2011_transform_csv",
         startup_timeout_seconds=600,
         name="cms_medicare_inpatient_charges_2011",
-        namespace="default",
-        affinity={
-            "nodeAffinity": {
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                    "nodeSelectorTerms": [
-                        {
-                            "matchExpressions": [
-                                {
-                                    "key": "cloud.google.com/gke-nodepool",
-                                    "operator": "In",
-                                    "values": ["pool-e2-standard-4"],
-                                }
-                            ]
-                        }
-                    ]
-                }
-            }
-        },
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.cms_medicare.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -71,28 +56,12 @@ with DAG(
     )
 
     # Run CSV transform within kubernetes pod
-    inpatient_2012_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+    inpatient_2012_transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="inpatient_2012_transform_csv",
         startup_timeout_seconds=600,
         name="cms_medicare_inpatient_charges_2012",
-        namespace="default",
-        affinity={
-            "nodeAffinity": {
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                    "nodeSelectorTerms": [
-                        {
-                            "matchExpressions": [
-                                {
-                                    "key": "cloud.google.com/gke-nodepool",
-                                    "operator": "In",
-                                    "values": ["pool-e2-standard-4"],
-                                }
-                            ]
-                        }
-                    ]
-                }
-            }
-        },
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.cms_medicare.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -109,28 +78,12 @@ with DAG(
     )
 
     # Run CSV transform within kubernetes pod
-    inpatient_2013_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+    inpatient_2013_transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="inpatient_2013_transform_csv",
         startup_timeout_seconds=600,
         name="cms_medicare_inpatient_charges_2013",
-        namespace="default",
-        affinity={
-            "nodeAffinity": {
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                    "nodeSelectorTerms": [
-                        {
-                            "matchExpressions": [
-                                {
-                                    "key": "cloud.google.com/gke-nodepool",
-                                    "operator": "In",
-                                    "values": ["pool-e2-standard-4"],
-                                }
-                            ]
-                        }
-                    ]
-                }
-            }
-        },
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.cms_medicare.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -147,28 +100,12 @@ with DAG(
     )
 
     # Run CSV transform within kubernetes pod
-    inpatient_2014_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+    inpatient_2014_transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="inpatient_2014_transform_csv",
         startup_timeout_seconds=600,
         name="cms_medicare_inpatient_charges_2014",
-        namespace="default",
-        affinity={
-            "nodeAffinity": {
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                    "nodeSelectorTerms": [
-                        {
-                            "matchExpressions": [
-                                {
-                                    "key": "cloud.google.com/gke-nodepool",
-                                    "operator": "In",
-                                    "values": ["pool-e2-standard-4"],
-                                }
-                            ]
-                        }
-                    ]
-                }
-            }
-        },
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.cms_medicare.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -185,28 +122,12 @@ with DAG(
     )
 
     # Run CSV transform within kubernetes pod
-    inpatient_2015_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+    inpatient_2015_transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="inpatient_2015_transform_csv",
         startup_timeout_seconds=600,
         name="cms_medicare_inpatient_charges_2015",
-        namespace="default",
-        affinity={
-            "nodeAffinity": {
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                    "nodeSelectorTerms": [
-                        {
-                            "matchExpressions": [
-                                {
-                                    "key": "cloud.google.com/gke-nodepool",
-                                    "operator": "In",
-                                    "values": ["pool-e2-standard-4"],
-                                }
-                            ]
-                        }
-                    ]
-                }
-            }
-        },
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.cms_medicare.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -223,7 +144,7 @@ with DAG(
     )
 
     # Task to load CSV data to a BigQuery table
-    load_inpatient_2011_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    load_inpatient_2011_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_inpatient_2011_to_bq",
         bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/cms_medicare/inpatient_charges_2011/data_output.csv"],
@@ -308,7 +229,7 @@ with DAG(
     )
 
     # Task to load CSV data to a BigQuery table
-    load_inpatient_2012_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    load_inpatient_2012_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_inpatient_2012_to_bq",
         bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/cms_medicare/inpatient_charges_2012/data_output.csv"],
@@ -393,7 +314,7 @@ with DAG(
     )
 
     # Task to load CSV data to a BigQuery table
-    load_inpatient_2013_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    load_inpatient_2013_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_inpatient_2013_to_bq",
         bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/cms_medicare/inpatient_charges_2013/data_output.csv"],
@@ -478,7 +399,7 @@ with DAG(
     )
 
     # Task to load CSV data to a BigQuery table
-    load_inpatient_2014_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    load_inpatient_2014_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_inpatient_2014_to_bq",
         bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/cms_medicare/inpatient_charges_2014/data_output.csv"],
@@ -563,7 +484,7 @@ with DAG(
     )
 
     # Task to load CSV data to a BigQuery table
-    load_inpatient_2015_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    load_inpatient_2015_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_inpatient_2015_to_bq",
         bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/cms_medicare/inpatient_charges_2015/data_output.csv"],

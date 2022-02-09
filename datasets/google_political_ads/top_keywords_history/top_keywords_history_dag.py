@@ -14,7 +14,8 @@
 
 
 from airflow import DAG
-from airflow.contrib.operators import gcs_to_bq, kubernetes_pod_operator
+from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
     "owner": "Google",
@@ -33,28 +34,12 @@ with DAG(
 ) as dag:
 
     # Run CSV transform within kubernetes pod
-    top_keywords_history_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+    top_keywords_history_transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="top_keywords_history_transform_csv",
         startup_timeout_seconds=600,
         name="top_keywords_history",
-        namespace="default",
-        affinity={
-            "nodeAffinity": {
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                    "nodeSelectorTerms": [
-                        {
-                            "matchExpressions": [
-                                {
-                                    "key": "cloud.google.com/gke-nodepool",
-                                    "operator": "In",
-                                    "values": ["pool-e2-standard-4"],
-                                }
-                            ]
-                        }
-                    ]
-                }
-            }
-        },
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.google_political_ads.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -68,11 +53,15 @@ with DAG(
             "CSV_HEADERS": '["election_cycle","report_date","keyword_1","spend_usd_1","keyword_2","spend_usd_2","keyword_3","spend_usd_3","keyword_4","spend_usd_4","keyword_5","spend_usd_5","keyword_6","spend_usd_6","region","elections"]',
             "RENAME_MAPPINGS": '{"Election_Cycle": "election_cycle","Report_Date": "report_date","Keyword_1": "keyword_1","Spend_USD_1": "spend_usd_1","Keyword_2": "keyword_2","Spend_USD_2": "spend_usd_2","Keyword_3": "keyword_3","Spend_USD_3": "spend_usd_3","Keyword_4": "keyword_4","Spend_USD_4": "spend_usd_4","Keyword_5": "keyword_5","Spend_USD_5": "spend_usd_5","Keyword_6": "keyword_6","Spend_USD_6": "spend_usd_6","Region": "region","Elections": "elections"}',
         },
-        resources={"request_memory": "2G", "request_cpu": "1"},
+        resources={
+            "request_memory": "2G",
+            "request_cpu": "1",
+            "request_ephemeral_storage": "5G",
+        },
     )
 
     # Task to load CSV data to a BigQuery table
-    load_top_keywords_history_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    load_top_keywords_history_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_top_keywords_history_to_bq",
         bucket="{{ var.value.composer_bucket }}",
         source_objects=[

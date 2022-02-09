@@ -27,8 +27,6 @@ dataset:
     Update Frequency: Daily
   dataset_sources: ~
   terms_of_use: ~
-
-
 resources:
   - type: bigquery_dataset
     dataset_id: chicago_crime

@@ -38,17 +38,10 @@ dag:
         task_id: "series_summary_transform_csv"
         startup_timeout_seconds: 600
         name: "series_summary"
-        namespace: "default"
+        namespace: "composer"
+        service_account_name: "datasets"
         image_pull_policy: "Always"
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                    - key: cloud.google.com/gke-nodepool
-                      operator: In
-                      values:
-                        - "pool-e2-standard-4"
+
         image: "{{ var.json.world_bank_intl_education.container_registry.run_csv_transform_kub }}"
         env_vars:
           SOURCE_URL: "gs://pdp-feeds-staging/RelayWorldBank/Edstats_csv/EdStatsSeries.csv"

@@ -23,7 +23,7 @@ resources:
     description: "This table was deprecated and ad-level targeting information was made available in the `google_political_ads.creative_stats` BigQuery table, effective April 2020. This table contains the information related to ad campaigns run by advertisers."
 
 dag:
-  airflow_version: 1
+  airflow_version: 2
   initialize:
     dag_id: campaign_targeting
     default_args:
@@ -53,17 +53,8 @@ dag:
         name: "campaign_targeting"
 
         # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
-        namespace: "default"
-
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                    - key: cloud.google.com/gke-nodepool
-                      operator: In
-                      values:
-                        - "pool-e2-standard-4"
+        namespace: "composer"
+        service_account_name: "datasets"
 
         image_pull_policy: "Always"
 
@@ -88,6 +79,7 @@ dag:
         resources:
           request_memory: "2G"
           request_cpu: "1"
+          request_ephemeral_storage: "5G"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
@@ -156,7 +148,5 @@ dag:
             type: "string"
             description: "[DEPRECATED] Name of advertiser."
             mode: "nullable"
-
-
   graph_paths:
     - "campaign_targeting_transform_csv >> load_campaign_targeting_to_bq"

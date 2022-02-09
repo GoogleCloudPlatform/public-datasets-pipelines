@@ -23,7 +23,7 @@ resources:
     description: "This table contains the information for how much is spent buying election ads on Google Ads Services. The data is aggregated by Congressional district. The primary key is state, congressional_district."
 
 dag:
-  airflow_version: 1
+  airflow_version: 2
   initialize:
     dag_id: geo_spend
     default_args:
@@ -53,17 +53,8 @@ dag:
         name: "geo_spend"
 
         # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
-        namespace: "default"
-
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                    - key: cloud.google.com/gke-nodepool
-                      operator: In
-                      values:
-                        - "pool-e2-standard-4"
+        namespace: "composer"
+        service_account_name: "datasets"
 
         image_pull_policy: "Always"
 
@@ -88,6 +79,7 @@ dag:
         resources:
           request_memory: "2G"
           request_cpu: "1"
+          request_ephemeral_storage: "5G"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
@@ -180,7 +172,5 @@ dag:
             type: "integer"
             description: "Total amount in NZD spent on election ads in this region."
             mode: "nullable"
-
-
   graph_paths:
     - "geo_spend_transform_csv >> load_geo_spend_to_bq"

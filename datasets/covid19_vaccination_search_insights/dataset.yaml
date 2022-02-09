@@ -29,8 +29,6 @@ dataset:
     https://storage.googleapis.com/gcs-public-datasets/COVID-19%20Vaccination%20Search%20Insights%20documentation.pdf
   dataset_sources: ~
   terms_of_use: ~
-
-
 resources:
   - type: bigquery_dataset
     dataset_id: covid19_vaccination_search_insights
