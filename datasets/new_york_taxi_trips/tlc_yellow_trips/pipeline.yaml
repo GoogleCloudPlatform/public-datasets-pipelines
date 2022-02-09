@@ -45,7 +45,6 @@ dag:
             oauth_scopes:
               - https://www.googleapis.com/auth/devstorage.read_write
               - https://www.googleapis.com/auth/cloud-platform
-
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
@@ -64,7 +63,7 @@ dag:
           TARGET_FILE: "files/data_output.csv"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_dataset_id }}"
-          TABLE_ID: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_table }}"
+          TABLE_ID: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_table_id }}"
           SCHEMA_PATH: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_schema_path }}"
           CHUNKSIZE: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_chunk_size }}"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
@@ -99,67 +98,6 @@ dag:
               "rate_code", "store_and_fwd_flag", "payment_type", "fare_amount", "extra",
               "mta_tax", "tip_amount", "tolls_amount", "imp_surcharge", "total_amount",
               "pickup_location_id", "dropoff_location_id" ]
-
-    # - operator: "GoogleCloudStorageToBigQueryOperator"
-    #   description: "Task to load CSV data to a BigQuery table"
-    #   args:
-    #     task_id: "load_to_bq_year_0"
-    #     bucket: "{{ var.value.composer_bucket }}"
-    #     source_objects: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_year_0_source_file }}"
-    #     destination_project_dataset_table: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_year_0_destination_table }}"
-    #     schema_object: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_schema_path }}"
-    #     source_format: "CSV"
-    #     skip_leading_rows: 1
-    #     allow_quoted_newlines: True
-    #     write_disposition: "WRITE_TRUNCATE"
-    # - operator: "GoogleCloudStorageToBigQueryOperator"
-    #   description: "Task to load CSV data to a BigQuery table"
-    #   args:
-    #     task_id: "load_to_bq_year_minus_1"
-    #     bucket: "{{ var.value.composer_bucket }}"
-    #     source_objects: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_year_minus_1_source_file }}"
-    #     destination_project_dataset_table: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_year_minus_1_destination_table }}"
-    #     schema_object: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_schema_path }}"
-    #     source_format: "CSV"
-    #     skip_leading_rows: 1
-    #     allow_quoted_newlines: True
-    #     write_disposition: "WRITE_TRUNCATE"
-    # - operator: "GoogleCloudStorageToBigQueryOperator"
-    #   description: "Task to load CSV data to a BigQuery table"
-    #   args:
-    #     task_id: "load_to_bq_year_minus_2"
-    #     bucket: "{{ var.value.composer_bucket }}"
-    #     source_objects: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_year_minus_2_source_file }}"
-    #     destination_project_dataset_table: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_year_minus_2_destination_table }}"
-    #     schema_object: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_schema_path }}"
-    #     source_format: "CSV"
-    #     skip_leading_rows: 1
-    #     allow_quoted_newlines: True
-    #     write_disposition: "WRITE_TRUNCATE"
-    # - operator: "GoogleCloudStorageToBigQueryOperator"
-    #   description: "Task to load CSV data to a BigQuery table"
-    #   args:
-    #     task_id: "load_to_bq_year_minus_3"
-    #     bucket: "{{ var.value.composer_bucket }}"
-    #     source_objects: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_year_minus_3_source_file }}"
-    #     destination_project_dataset_table: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_year_minus_3_destination_table }}"
-    #     schema_object: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_schema_path }}"
-    #     source_format: "CSV"
-    #     skip_leading_rows: 1
-    #     allow_quoted_newlines: True
-    #     write_disposition: "WRITE_TRUNCATE"
-    # - operator: "GoogleCloudStorageToBigQueryOperator"
-    #   description: "Task to load CSV data to a BigQuery table"
-    #   args:
-    #     task_id: "load_to_bq_year_minus_4"
-    #     bucket: "{{ var.value.composer_bucket }}"
-    #     source_objects: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_year_minus_4_source_file }}"
-    #     destination_project_dataset_table: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_year_minus_4_destination_table }}"
-    #     schema_object: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_schema_path }}"
-    #     source_format: "CSV"
-    #     skip_leading_rows: 1
-    #     allow_quoted_newlines: True
-    #     write_disposition: "WRITE_TRUNCATE"
     - operator: "GKEDeleteClusterOperator"
       args:
         task_id: "delete_cluster"

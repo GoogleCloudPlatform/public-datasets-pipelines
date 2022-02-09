@@ -21,7 +21,8 @@ from datetime import datetime
 
 import pandas as pd
 import requests
-from google.cloud import storage, bigquery
+from google.cloud import bigquery, storage
+from google.cloud.exceptions import NotFound
 
 
 def main(
@@ -38,7 +39,7 @@ def main(
     pipeline_name: str,
     input_headers: typing.List[str],
     data_dtypes: dict,
-    output_headers: typing.List[str]
+    output_headers: typing.List[str],
 ) -> None:
     logging.info(f"New York taxi trips - {pipeline_name} process started")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
@@ -51,12 +52,12 @@ def main(
         table_id,
         schema_path,
         chunksize,
+        target_gcs_bucket,
+        target_gcs_path,
+        pipeline_name,
         input_headers,
         data_dtypes,
         output_headers,
-        pipeline_name,
-        target_gcs_bucket,
-        target_gcs_path,
     )
     logging.info(f"New York taxi trips - {pipeline_name} process completed")
 
@@ -77,8 +78,8 @@ def execute_pipeline(
     data_dtypes: dict,
     output_headers: typing.List[str],
 ) -> None:
-    for year_number in (datetime.now().year, (datetime.now().year - 7)):
-        target_file_name = str.replace(target_file, ".csv", "_" + year_number + ".csv")
+    for year_number in range(datetime.now().year - 1, (datetime.now().year - 5), -1):
+        target_file_name = str.replace(target_file, ".csv", f"_{year_number}.csv")
         process_year_data(
             source_url,
             int(year_number),
@@ -118,63 +119,98 @@ def process_year_data(
     output_headers: typing.List[str],
 ) -> None:
     logging.info(f"Processing year {year_number}")
-    destination_table = f"{dest_table}_{year_number}"
-    create_dest_table(project_id, dataset_id, destination_table, schema_path, target_gcs_bucket)
+    destination_table = f"{table_id}_{year_number}"
+    create_dest_table(
+        project_id, dataset_id, destination_table, schema_path, target_gcs_bucket
+    )
+    year_data_available = False
     for month_number in range(1, 13):
-        process_month(
+        month_data_available = process_month(
             source_url,
             year_number,
             month_number,
             source_file,
             target_file,
             target_file_name,
-            project_id,
-            dataset_id,
-            table_id,
             chunksize,
             input_headers,
             data_dtypes,
             output_headers,
             pipeline_name,
         )
-    upload_file_to_gcs(
-        target_file_name,
-        target_gcs_bucket,
-        str(target_gcs_path).replace(".csv", "_" + str(year_number) + ".csv"),
-    )
-    load_data_bq()
+        if month_data_available:
+            year_data_available = True
+        else:
+            pass
+    if os.path.exists(target_file_name) and year_data_available:
+        upload_file_to_gcs(
+            target_file_name,
+            target_gcs_bucket,
+            str(target_gcs_path).replace(".csv", "_" + str(year_number) + ".csv"),
+        )
+        load_data_to_bq(project_id, dataset_id, table_id, target_file_name)
+    else:
+        logging.info(
+            f"Informational: The data file {target_file_name} was not generated because no data was available for year {year_number}.  Continuing."
+        )
     logging.info(f"Processing year {year_number} completed")
 
 
-def create_dest_table(project_id: str,
-                      dataset_id: str,
-                      table_id: str,
-                      schema_filepath: list,
-                      bucket_name: str
-                      ) -> bool:
-    client = bigquery.Client()
+def load_data_to_bq(
+    project_id: str, dataset_id: str, table_id: str, file_path: str
+) -> None:
+    logging.info(
+        f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} started"
+    )
+    client = bigquery.Client(project=project_id)
+    table_ref = client.dataset(dataset_id).table(table_id)
+    job_config = bigquery.LoadJobConfig()
+    job_config.source_format = bigquery.SourceFormat.CSV
+    job_config.skip_leading_rows = 1  # ignore the header
+    job_config.autodetect = True
+    with open(file_path, "rb") as source_file:
+        job = client.load_table_from_file(source_file, table_ref, job_config=job_config)
+    job.result()
+    logging.info(
+        f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} completed"
+    )
+
+
+def create_dest_table(
+    project_id: str,
+    dataset_id: str,
+    table_id: str,
+    schema_filepath: list,
+    bucket_name: str,
+) -> bool:
     table_ref = f"{project_id}.{dataset_id}.{table_id}"
+    logging.info(f"Attempting to create table {table_ref} if it doesn't already exist")
+    client = bigquery.Client()
     success = False
     try:
-        table_exists = client.get_table(table_ref)
-        logging.info(f"Table {table_ref} currently exists.")
+        table_exists_id = client.get_table(table_ref).table_id
+        logging.info(f"Table {table_exists_id} currently exists.")
         success = True
-    except:
-        try:
-            schema = create_table_schema([], bucket_name, schema_filepath)
-            table = bigquery.Table(table_ref, schema=schema)
-            client.create_table(table)  # Make an API request.
-            print(f"Table {table_ref} was created".format(table_id))
-            success = True
-        except:
-            print(f"Table {table_ref} does not exist and was not created".format(table_id))
-            success = False
+    except NotFound:
+        logging.info(
+            (
+                f"Table {table_ref} currently does not exist.  Attempting to create table."
+            )
+        )
+        schema = create_table_schema([], bucket_name, schema_filepath)
+        table = bigquery.Table(table_ref, schema=schema)
+        client.create_table(table)  # Make an API request.
+        print(f"Table {table_ref} was created".format(table_id))
+        success = True
     return success
 
 
-def create_table_schema(schema_structure: list, bucket_name: str = "", schema_filepath: str = "") -> list:
+def create_table_schema(
+    schema_structure: list, bucket_name: str = "", schema_filepath: str = ""
+) -> list:
+    logging.info(f"Defining table schema... {bucket_name} ... {schema_filepath}")
     schema = []
-    if not(schema_filepath):
+    if not (schema_filepath):
         schema_struct = schema_structure
     else:
         storage_client = storage.Client()
@@ -186,10 +222,14 @@ def create_table_schema(schema_structure: list, bucket_name: str = "", schema_fi
         fld_type = schema_field["type"]
         try:
             fld_descr = schema_field["description"]
-        except:
+        except KeyError:
             fld_descr = ""
         fld_mode = schema_field["mode"]
-        schema.append(bigquery.SchemaField(name=fld_name, field_type=fld_type, mode=fld_mode, description=fld_descr))
+        schema.append(
+            bigquery.SchemaField(
+                name=fld_name, field_type=fld_type, mode=fld_mode, description=fld_descr
+            )
+        )
     return schema
 
 
@@ -213,6 +253,8 @@ def process_month(
         ".csv", "_" + process_month + ".csv"
     )
     successful_download = download_file(source_url_to_process, source_file_to_process)
+    # successful_download = True
+    # import pdb; pdb.set_trace()
     if successful_download:
         with pd.read_csv(
             source_file_to_process,
@@ -247,6 +289,7 @@ def process_month(
                     f"Processing chunk #{chunk_number} of file {process_month} completed"
                 )
     logging.info(f"Processing {process_month} completed")
+    return successful_download
 
 
 def download_file(source_url: str, source_file: pathlib.Path) -> bool:
@@ -288,12 +331,6 @@ def process_chunk(
     save_to_new_file(df, file_path=str(target_file_batch))
     append_batch_file(target_file_batch, target_file, include_header, truncate_file)
     logging.info(f"Processing Batch {target_file_batch} completed")
-
-
-def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
-    logging.info("Renaming headers...")
-    df.rename(columns=rename_mappings, inplace=True)
-    return df
 
 
 def remove_null_rows(df: pd.DataFrame) -> pd.DataFrame:
