@@ -16,6 +16,7 @@ import json
 import logging
 import os
 import pathlib
+import typing
 
 import pandas as pd
 import requests
@@ -29,13 +30,25 @@ def main(
     chunksize: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
+    transform_list: list,
+    logging_english_name: str,
+    json_node_name: str,
+    rename_headers_list: dict,
+    filter_rows_list: typing.List[str],
+    geom_field_list: typing.List[typing.List],
+    field_type_list: typing.List[typing.List],
+    reorder_headers_list: typing.List[str],
 ) -> None:
 
-    logging.info("San Francisco Bikeshare Stations process started")
+    logging.info(f"{logging_english_name} started")
 
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
-    source_file_stations_json = str(source_file).replace(".csv", "") + "_stations.json"
-    download_file_json(source_url_json, source_file_stations_json, source_file)
+    source_file_stations_json = (
+        str(source_file).replace(".csv", "") + f"_{json_node_name}.json"
+    )
+    download_file_json(
+        source_url_json, source_file_stations_json, source_file, json_node_name
+    )
 
     chunksz = int(chunksize)
 
@@ -54,94 +67,97 @@ def main(
             )
             df = pd.DataFrame()
             df = pd.concat([df, chunk])
-            process_chunk(df, target_file_batch, target_file, (not chunk_number == 0))
+            process_chunk(
+                df,
+                target_file_batch,
+                target_file,
+                (not chunk_number == 0),
+                transform_list,
+                rename_headers_list,
+                filter_rows_list,
+                geom_field_list,
+                field_type_list,
+                reorder_headers_list,
+            )
 
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
-    logging.info("San Francisco Bikeshare Stations process completed")
+    logging.info(f"{logging_english_name} completed")
 
 
 def process_chunk(
-    df: pd.DataFrame, target_file_batch: str, target_file: str, skip_header: bool
+    df: pd.DataFrame,
+    target_file_batch: str,
+    target_file: str,
+    skip_header: bool,
+    transform_list: list,
+    rename_headers_list: dict,
+    filter_rows_list: list,
+    geom_field_list: list,
+    field_type_list: list,
+    reorder_headers_list: list,
 ) -> None:
-    df = rename_headers(df)
-    df = filter_empty_data(df)
-    df = generate_location(df)
-    df = resolve_datatypes(df)
-    df = reorder_headers(df)
+    for transform in transform_list:
+        if transform == "rename_headers":
+            df = rename_headers(df, rename_headers_list)
+        elif transform == "filter_empty_data":
+            df = filter_empty_data(df, filter_rows_list)
+        elif transform == "generate_location":
+            df = generate_location(df, geom_field_list)
+        elif transform == "resolve_datatypes":
+            df = resolve_datatypes(df, field_type_list)
+        elif transform == "reorder_headers":
+            df = reorder_headers(df, reorder_headers_list)
     save_to_new_file(df, file_path=str(target_file_batch))
     append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
 
 
-def rename_headers(df: pd.DataFrame) -> None:
+def rename_headers(df: pd.DataFrame, header_list: dict) -> None:
     logging.info("Renaming Headers")
-    header_names = {
-        "data.stations.station_id": "station_id",
-        "data.stations.name": "name",
-        "data.stations.short_name": "short_name",
-        "data.stations.lat": "lat",
-        "data.stations.lon": "lon",
-        "data.stations.region_id": "region_id",
-        "data.stations.rental_methods": "rental_methods",
-        "data.stations.capacity": "capacity",
-        "data.stations.eightd_has_key_dispenser": "eightd_has_key_dispenser",
-        "data.stations.has_kiosk": "has_kiosk",
-        "data.stations.external_id": "external_id",
-    }
-
+    header_names = header_list
     df.rename(columns=header_names)
 
     return df
 
 
-def filter_empty_data(df: pd.DataFrame) -> pd.DataFrame:
-    logging.info("Filter rows with empty key data")
-    df = df[df["station_id"] != ""]
-    df = df[df["name"] != ""]
-    df = df[df["lat"] != ""]
-    df = df[df["lon"] != ""]
+def filter_empty_data(df: pd.DataFrame, filter_rows_list: list) -> pd.DataFrame:
+    for column in filter_rows_list:
+        logging.info(f"Remove rows with empty {column} data")
+        df = df[df[column] != ""]
 
     return df
 
 
-def generate_location(df: pd.DataFrame) -> pd.DataFrame:
+def generate_location(df: pd.DataFrame, geom_field_list: list) -> pd.DataFrame:
     logging.info("Generating location data")
-    df["station_geom"] = (
-        "POINT("
-        + df["lon"][:].astype("string")
-        + " "
-        + df["lat"][:].astype("string")
-        + ")"
-    )
+    for columns in geom_field_list:
+        column = columns[0]
+        longitude = columns[1]
+        latitude = columns[2]
+        df[column] = (
+            "POINT("
+            + df[longitude][:].astype("string")
+            + " "
+            + df[latitude][:].astype("string")
+            + ")"
+        )
 
     return df
 
 
-def resolve_datatypes(df: pd.DataFrame) -> pd.DataFrame:
+def resolve_datatypes(df: pd.DataFrame, field_type_list: list) -> pd.DataFrame:
     logging.info("Resolving datatypes")
-    df["region_id"] = df["region_id"].astype("Int64")
+    for columns in field_type_list:
+        column = columns[0]
+        datatype = columns[1]
+        df[column] = df[column].astype(datatype)
 
     return df
 
 
-def reorder_headers(df: pd.DataFrame) -> pd.DataFrame:
+def reorder_headers(df: pd.DataFrame, headers_list: list) -> pd.DataFrame:
     logging.info("Reordering Headers")
-    df = df[
-        [
-            "station_id",
-            "name",
-            "short_name",
-            "lat",
-            "lon",
-            "region_id",
-            "rental_methods",
-            "capacity",
-            "external_id",
-            "eightd_has_key_dispenser",
-            "has_kiosk",
-            "station_geom",
-        ]
-    ]
+    df = df[headers_list]
 
     return df
 
@@ -172,7 +188,10 @@ def save_to_new_file(df, file_path) -> None:
 
 
 def download_file_json(
-    source_url_json: str, source_file_json: str, source_file_csv: str
+    source_url_json: str,
+    source_file_json: str,
+    source_file_csv: str,
+    json_node_name: str,
 ) -> None:
 
     # this function extracts the json from a source url and creates
@@ -191,7 +210,7 @@ def download_file_json(
         source_file_json.strip(),
     )
     json_data = json.load(f)
-    df = pd.DataFrame(json_data["data"]["stations"])
+    df = pd.DataFrame(json_data["data"][json_node_name])
     df.to_csv(source_file_csv, index=False)
 
 
@@ -212,4 +231,12 @@ if __name__ == "__main__":
         chunksize=os.environ["CHUNKSIZE"],
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
+        transform_list=json.loads(os.environ["TRANSFORM_LIST"]),
+        logging_english_name=os.environ["LOGGING_ENGLISH_NAME"],
+        json_node_name=os.environ["JSON_NODE_NAME"],
+        rename_headers_list=json.loads(os.environ["RENAME_HEADERS"]),
+        filter_rows_list=json.loads(os.environ["FILTER_ROWS_LIST"]),
+        geom_field_list=json.loads(os.environ["GEOM_FIELD_LIST"]),
+        field_type_list=json.loads(os.environ["FIELD_TYPE_LIST"]),
+        reorder_headers_list=json.loads(os.environ["REORDER_HEADERS"]),
     )
