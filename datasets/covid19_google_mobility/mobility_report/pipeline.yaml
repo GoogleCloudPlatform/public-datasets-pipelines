@@ -20,7 +20,7 @@ resources:
     description: "Terms of use By downloading or using the data, you agree to Google's Terms of Service: https://policies.google.com/terms Description This dataset aims to provide insights into what has changed in response to policies aimed at combating COVID-19. It reports movement trends over time by geography, across different categories of places such as retail and recreation, groceries and pharmacies, parks, transit stations, workplaces, and residential. This dataset is intended to help remediate the impact of COVID-19. It shouldn’t be used for medical diagnostic, prognostic, or treatment purposes. It also isn’t intended to be used for guidance on personal travel plans. To learn more about the dataset, the place categories and how we calculate these trends and preserve privacy, read the data documentation: https://www.google.com/covid19/mobility/data_documentation.html"
 
 dag:
-  airflow_version: 1
+  airflow_version: 2
   initialize:
     dag_id: mobility_report
     default_args:
@@ -38,16 +38,8 @@ dag:
         task_id: "mobility_report_transform_csv"
         startup_timeout_seconds: 600
         name: "mobility_report"
-        namespace: "default"
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                    - key: cloud.google.com/gke-nodepool
-                      operator: In
-                      values:
-                        - "pool-e2-standard-4"
+        namespace: "composer"
+        service_account_name: "datasets"
         image_pull_policy: "Always"
         image: "{{ var.json.covid19_google_mobility.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -62,8 +54,9 @@ dag:
           RENAME_MAPPINGS: >-
             {"country_region_code":"country_region_code" ,"country_region":"country_region" ,"sub_region_1":"sub_region_1" ,"sub_region_2":"sub_region_2" ,"metro_area":"metro_area" ,"iso_3166_2_code":"iso_3166_2_code" ,"census_fips_code":"census_fips_code" ,"place_id":"place_id" ,"date":"date" ,"retail_and_recreation_percent_change_from_baseline":"retail_and_recreation_percent_change_from_baseline" ,"grocery_and_pharmacy_percent_change_from_baseline":"grocery_and_pharmacy_percent_change_from_baseline" ,"parks_percent_change_from_baseline":"parks_percent_change_from_baseline" ,"transit_stations_percent_change_from_baseline":"transit_stations_percent_change_from_baseline" ,"workplaces_percent_change_from_baseline":"workplaces_percent_change_from_baseline" ,"residential_percent_change_from_baseline":"residential_percent_change_from_baseline"}
         resources:
-          request_memory: "2G"
-          request_cpu: "1"
+          request_memory: "8G"
+          request_cpu: "2"
+          request_ephemeral_storage: "10G"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
@@ -75,7 +68,6 @@ dag:
         destination_project_dataset_table: "covid19_google_mobility.mobility_report"
         skip_leading_rows: 1
         write_disposition: "WRITE_TRUNCATE"
-
         schema_fields:
           - name: "country_region_code"
             type: "string"

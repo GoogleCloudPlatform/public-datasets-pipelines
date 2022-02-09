@@ -20,7 +20,7 @@ from airflow.providers.google.cloud.operators import cloud_storage_transfer_serv
 default_args = {
     "owner": "Google",
     "depends_on_past": False,
-    "start_date": "2021-11-17",
+    "start_date": "2021-11-23",
 }
 
 
@@ -51,24 +51,8 @@ with DAG(
     copy_bq_datasets = kubernetes_pod.KubernetesPodOperator(
         task_id="copy_bq_datasets",
         name="copy_bq_datasets",
-        namespace="default",
-        affinity={
-            "nodeAffinity": {
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                    "nodeSelectorTerms": [
-                        {
-                            "matchExpressions": [
-                                {
-                                    "key": "cloud.google.com/gke-nodepool",
-                                    "operator": "In",
-                                    "values": ["pool-e2-standard-4"],
-                                }
-                            ]
-                        }
-                    ]
-                }
-            }
-        },
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.idc.container_registry.copy_bq_datasets }}",
         env_vars={
@@ -76,7 +60,7 @@ with DAG(
             "TARGET_PROJECT_ID": "{{ var.json.idc.target_project_id }}",
             "SERVICE_ACCOUNT": "{{ var.json.idc.service_account }}",
             "DATASET_NAME": "idc",
-            "DATASET_VERSIONS": '["v1", "v2", "v3", "v4", "v5"]',
+            "DATASET_VERSIONS": '["v1", "v2", "v3", "v4", "v5", "v6"]',
         },
         resources={"limit_memory": "128M", "limit_cpu": "200m"},
     )
@@ -85,31 +69,16 @@ with DAG(
     generate_bq_views = kubernetes_pod.KubernetesPodOperator(
         task_id="generate_bq_views",
         name="generate_bq_views",
-        namespace="default",
-        affinity={
-            "nodeAffinity": {
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                    "nodeSelectorTerms": [
-                        {
-                            "matchExpressions": [
-                                {
-                                    "key": "cloud.google.com/gke-nodepool",
-                                    "operator": "In",
-                                    "values": ["pool-e2-standard-4"],
-                                }
-                            ]
-                        }
-                    ]
-                }
-            }
-        },
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.idc.container_registry.generate_bq_views }}",
         env_vars={
             "QUERIES_DIR": "/custom/queries",
             "GCP_PROJECT": "{{ var.value.gcp_project }}",
             "DATASET_NAME": "idc",
-            "DATASET_VERSIONS": '["v1", "v2", "v3", "v4", "v5"]',
+            "DATASET_VERSIONS": '["v1", "v2", "v3", "v4", "v5", "v6", "current"]',
+            "CURRENT_VERSION": "v6",
         },
         resources={"limit_memory": "128M", "limit_cpu": "200m"},
     )

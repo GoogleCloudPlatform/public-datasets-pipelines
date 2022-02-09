@@ -37,24 +37,8 @@ with DAG(
     transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="transform_csv",
         name="food_events",
-        namespace="default",
-        affinity={
-            "nodeAffinity": {
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                    "nodeSelectorTerms": [
-                        {
-                            "matchExpressions": [
-                                {
-                                    "key": "cloud.google.com/gke-nodepool",
-                                    "operator": "In",
-                                    "values": ["pool-e2-standard-4"],
-                                }
-                            ]
-                        }
-                    ]
-                }
-            }
-        },
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.fda_food.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -72,7 +56,11 @@ with DAG(
             "RECORD_PATH": "products",
             "META": '[\n  "report_number", "outcomes", "date_created", "reactions", "date_started",\n  ["consumer", "age"], ["consumer", "age_unit"], ["consumer", "gender"]\n]',
         },
-        resources={"limit_memory": "8G", "limit_cpu": "3"},
+        resources={
+            "request_memory": "4G",
+            "request_cpu": "1",
+            "request_ephemeral_storage": "5G",
+        },
     )
 
     # Task to load CSV data to a BigQuery table
@@ -81,7 +69,7 @@ with DAG(
         bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/fda_food/food_events/files/data_output.csv"],
         source_format="CSV",
-        destination_project_dataset_table="{{ var.json.fda_food.container_registry.food_events_destination_table }}",
+        destination_project_dataset_table="{{ var.json.fda_food.food_events_destination_table }}",
         skip_leading_rows=1,
         allow_quoted_newlines=True,
         field_delimiter=",",

@@ -24,7 +24,7 @@ resources:
 
 dag:
 
-  airflow_version: 1
+  airflow_version: 2
 
   initialize:
     dag_id: data_by_province
@@ -50,23 +50,12 @@ dag:
 
         task_id: "data_by_province_transform_csv"
         startup_timeout_seconds: 600
-
-
         # The name of the pod in which the task will run. This will be used (plus a random suffix) to generate a pod id
         name: "covid19_italy_data_by_province"
 
         # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
-        namespace: "default"
-
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                    - key: cloud.google.com/gke-nodepool
-                      operator: In
-                      values:
-                        - "pool-e2-standard-4"
+        namespace: "composer"
+        service_account_name: "datasets"
 
         image_pull_policy: "Always"
 

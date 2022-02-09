@@ -37,24 +37,8 @@ with DAG(
     transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="transform_csv",
         name="food_enforcement",
-        namespace="default",
-        affinity={
-            "nodeAffinity": {
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                    "nodeSelectorTerms": [
-                        {
-                            "matchExpressions": [
-                                {
-                                    "key": "cloud.google.com/gke-nodepool",
-                                    "operator": "In",
-                                    "values": ["pool-e2-standard-4"],
-                                }
-                            ]
-                        }
-                    ]
-                }
-            }
-        },
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.fda_food.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -72,7 +56,11 @@ with DAG(
             "RECORD_PATH": "",
             "META": '[ "status", "city", "state", "country", "classification",\n  "openfda", "product_type", "event_id", "recalling_firm", "address_1",\n  "address_2", "postal_code", "voluntary_mandated", "initial_firm_notification", "distribution_pattern",\n  "recall_number", "product_description", "product_quantity", "reason_for_recall", "recall_initiation_date",\n  "center_classification_date", "report_date", "code_info", "more_code_info", "termination_date" ]',
         },
-        resources={"limit_memory": "4G", "limit_cpu": "1"},
+        resources={
+            "request_memory": "4G",
+            "request_cpu": "1",
+            "request_ephemeral_storage": "5G",
+        },
     )
 
     # Task to load CSV data to a BigQuery table
@@ -81,7 +69,7 @@ with DAG(
         bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/fda_food/food_enforcement/files/data_output.csv"],
         source_format="CSV",
-        destination_project_dataset_table="{{ var.json.fda_food.container_registry.food_enforcement_destination_table }}",
+        destination_project_dataset_table="{{ var.json.fda_food.food_enforcement_destination_table }}",
         skip_leading_rows=1,
         allow_quoted_newlines=True,
         write_disposition="WRITE_TRUNCATE",

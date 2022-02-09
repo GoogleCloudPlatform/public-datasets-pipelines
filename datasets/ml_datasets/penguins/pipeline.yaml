@@ -96,8 +96,6 @@ dag:
 
         # The GCS prefix to copy the object/s to
         destination_object: "data/ml_datasets/penguins/"
-
-
     - operator: "GoogleCloudStorageToBigQueryOperator"
       # Initializes GCS to BQ task for the DAG. This operator is used to load a
       # CSV file from GCS into a BigQuery table.

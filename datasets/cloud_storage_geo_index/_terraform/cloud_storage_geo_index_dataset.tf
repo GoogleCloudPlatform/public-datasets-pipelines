@@ -18,7 +18,7 @@
 resource "google_bigquery_dataset" "cloud_storage_geo_index" {
   dataset_id  = "cloud_storage_geo_index"
   project     = var.project_id
-  description = "cloud_storage_geo_index data"
+  description = "Cloud_Storage_Geo_Index Data"
 }
 
 output "bigquery_dataset-cloud_storage_geo_index-dataset_id" {

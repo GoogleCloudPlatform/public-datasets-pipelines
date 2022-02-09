@@ -14,7 +14,8 @@
 
 
 from airflow import DAG
-from airflow.contrib.operators import gcs_to_bq, kubernetes_pod_operator
+from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
     "owner": "Google",
@@ -33,28 +34,12 @@ with DAG(
 ) as dag:
 
     # Run CSV transform within kubernetes pod
-    creative_stats_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+    creative_stats_transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="creative_stats_transform_csv",
         startup_timeout_seconds=600,
         name="creative_stats",
-        namespace="default",
-        affinity={
-            "nodeAffinity": {
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                    "nodeSelectorTerms": [
-                        {
-                            "matchExpressions": [
-                                {
-                                    "key": "cloud.google.com/gke-nodepool",
-                                    "operator": "In",
-                                    "values": ["pool-e2-standard-4"],
-                                }
-                            ]
-                        }
-                    ]
-                }
-            }
-        },
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.google_political_ads.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -68,11 +53,15 @@ with DAG(
             "CSV_HEADERS": '["ad_id","ad_url","ad_type","regions","advertiser_id","advertiser_name","ad_campaigns_list","date_range_start","date_range_end","num_of_days","impressions","spend_usd","first_served_timestamp","last_served_timestamp","age_targeting","gender_targeting","geo_targeting_included","geo_targeting_excluded","spend_range_min_usd","spend_range_max_usd","spend_range_min_eur","spend_range_max_eur","spend_range_min_inr","spend_range_max_inr","spend_range_min_bgn","spend_range_max_bgn","spend_range_min_hrk","spend_range_max_hrk","spend_range_min_czk","spend_range_max_czk","spend_range_min_dkk","spend_range_max_dkk","spend_range_min_huf","spend_range_max_huf","spend_range_min_pln","spend_range_max_pln","spend_range_min_ron","spend_range_max_ron","spend_range_min_sek","spend_range_max_sek","spend_range_min_gbp","spend_range_max_gbp","spend_range_min_nzd","spend_range_max_nzd"]',
             "RENAME_MAPPINGS": '{"Ad_ID": "ad_id","Ad_URL": "ad_url","Ad_Type": "ad_type","Regions": "regions","Advertiser_ID": "advertiser_id","Advertiser_Name": "advertiser_name","Ad_Campaigns_List": "ad_campaigns_list","Date_Range_Start": "date_range_start","Date_Range_End": "date_range_end","Num_of_Days": "num_of_days","Impressions": "impressions","Spend_USD": "spend_usd","Spend_Range_Min_USD": "spend_range_min_usd","Spend_Range_Max_USD": "spend_range_max_usd","Spend_Range_Min_EUR": "spend_range_min_eur","Spend_Range_Max_EUR": "spend_range_max_eur","Spend_Range_Min_INR": "spend_range_min_inr","Spend_Range_Max_INR": "spend_range_max_inr","Spend_Range_Min_BGN": "spend_range_min_bgn","Spend_Range_Max_BGN": "spend_range_max_bgn","Spend_Range_Min_HRK": "spend_range_min_hrk","Spend_Range_Max_HRK": "spend_range_max_hrk","Spend_Range_Min_CZK": "spend_range_min_czk","Spend_Range_Max_CZK": "spend_range_max_czk","Spend_Range_Min_DKK": "spend_range_min_dkk","Spend_Range_Max_DKK": "spend_range_max_dkk","Spend_Range_Min_HUF": "spend_range_min_huf","Spend_Range_Max_HUF": "spend_range_max_huf","Spend_Range_Min_PLN": "spend_range_min_pln","Spend_Range_Max_PLN": "spend_range_max_pln","Spend_Range_Min_RON": "spend_range_min_ron","Spend_Range_Max_RON": "spend_range_max_ron","Spend_Range_Min_SEK": "spend_range_min_sek","Spend_Range_Max_SEK": "spend_range_max_sek","Spend_Range_Min_GBP": "spend_range_min_gbp","Spend_Range_Max_GBP": "spend_range_max_gbp","Spend_Range_Min_NZD": "spend_range_min_nzd","Spend_Range_Max_NZD": "spend_range_max_nzd","Age_Targeting": "age_targeting","Gender_Targeting": "gender_targeting","Geo_Targeting_Included": "geo_targeting_included","Geo_Targeting_Excluded": "geo_targeting_excluded","First_Served_Timestamp": "first_served_timestamp","Last_Served_Timestamp": "last_served_timestamp"}',
         },
-        resources={"request_memory": "2G", "request_cpu": "1"},
+        resources={
+            "request_memory": "8G",
+            "request_cpu": "2",
+            "request_ephemeral_storage": "10G",
+        },
     )
 
     # Task to load CSV data to a BigQuery table
-    load_creative_stats_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    load_creative_stats_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_creative_stats_to_bq",
         bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/google_political_ads/creative_stats/data_output.csv"],
@@ -144,7 +133,7 @@ with DAG(
             {
                 "name": "impressions",
                 "type": "string",
-                "description": "Number of impressions for the election ad. Impressions are grouped into several buckets ≤ 10k 10k–100k 100k–1M 1M–10M > 10M.",
+                "description": "Number of impressions for the election ad. Impressions are grouped into several buckets ≤ 10k 10k-100k 100k-1M 1M-10M > 10M.",
                 "mode": "nullable",
             },
             {

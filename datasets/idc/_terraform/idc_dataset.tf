@@ -20,6 +20,11 @@ resource "google_storage_bucket" "idc" {
   force_destroy               = true
   location                    = "US"
   uniform_bucket_level_access = true
+  lifecycle {
+    ignore_changes = [
+      logging,
+    ]
+  }
 }
 
 output "storage_bucket-idc-name" {
@@ -74,4 +79,24 @@ resource "google_bigquery_dataset" "idc_v5" {
 
 output "bigquery_dataset-idc_v5-dataset_id" {
   value = google_bigquery_dataset.idc_v5.dataset_id
+}
+
+resource "google_bigquery_dataset" "idc_v6" {
+  dataset_id  = "idc_v6"
+  project     = var.project_id
+  description = "Imaging Data Commons (IDC) - The Cancer Imaging Archive (TCIA) v6 data"
+}
+
+output "bigquery_dataset-idc_v6-dataset_id" {
+  value = google_bigquery_dataset.idc_v6.dataset_id
+}
+
+resource "google_bigquery_dataset" "idc_current" {
+  dataset_id  = "idc_current"
+  project     = var.project_id
+  description = "Imaging Data Commons (IDC) - The Cancer Imaging Archive (TCIA) current data"
+}
+
+output "bigquery_dataset-idc_current-dataset_id" {
+  value = google_bigquery_dataset.idc_current.dataset_id
 }

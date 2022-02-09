@@ -22,7 +22,7 @@ resources:
 
 dag:
 
-  airflow_version: 1
+  airflow_version: 2
 
   initialize:
     dag_id: local_data_for_better_health_county_data
@@ -49,17 +49,8 @@ dag:
 
         name: "cdc_places_local_data_for_better_health_county_data"
 
-        namespace: "default"
-
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                    - key: cloud.google.com/gke-nodepool
-                      operator: In
-                      values:
-                        - "pool-e2-standard-4"
+        namespace: "composer"
+        service_account_name: "datasets"
 
         image_pull_policy: "Always"
 
@@ -78,8 +69,10 @@ dag:
           PIPELINE_NAME: "local_data_for_better_health_county_data"
 
         resources:
-          limit_memory: "4G"
-          limit_cpu: "2"
+          request_memory: "4G"
+          request_cpu: "2"
+          request_ephemeral_storage: "10G"
+
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
