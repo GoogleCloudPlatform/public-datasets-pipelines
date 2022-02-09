@@ -78,7 +78,7 @@ def execute_pipeline(
     data_dtypes: dict,
     output_headers: typing.List[str],
 ) -> None:
-    for year_number in range(datetime.now().year - 1, (datetime.now().year - 5), -1):
+    for year_number in range(datetime.now().year, (datetime.now().year - 6), -1):
         target_file_name = str.replace(target_file, ".csv", f"_{year_number}.csv")
         process_year_data(
             source_url,
@@ -120,9 +120,6 @@ def process_year_data(
 ) -> None:
     logging.info(f"Processing year {year_number}")
     destination_table = f"{table_id}_{year_number}"
-    create_dest_table(
-        project_id, dataset_id, destination_table, schema_path, target_gcs_bucket
-    )
     year_data_available = False
     for month_number in range(1, 13):
         month_data_available = process_month(
@@ -146,9 +143,12 @@ def process_year_data(
         upload_file_to_gcs(
             target_file_name,
             target_gcs_bucket,
-            str(target_gcs_path).replace(".csv", "_" + str(year_number) + ".csv"),
+            str(target_gcs_path).replace(".csv", f"_{year_number}.csv"),
         )
-        load_data_to_bq(project_id, dataset_id, table_id, target_file_name)
+        create_dest_table(
+            project_id, dataset_id, destination_table, schema_path, target_gcs_bucket
+        )
+        load_data_to_bq(project_id, dataset_id, destination_table, target_file_name)
     else:
         logging.info(
             f"Informational: The data file {target_file_name} was not generated because no data was available for year {year_number}.  Continuing."
@@ -167,7 +167,7 @@ def load_data_to_bq(
     job_config = bigquery.LoadJobConfig()
     job_config.source_format = bigquery.SourceFormat.CSV
     job_config.skip_leading_rows = 1  # ignore the header
-    job_config.autodetect = True
+    job_config.autodetect = False
     with open(file_path, "rb") as source_file:
         job = client.load_table_from_file(source_file, table_ref, job_config=job_config)
     job.result()
@@ -199,7 +199,7 @@ def create_dest_table(
         )
         schema = create_table_schema([], bucket_name, schema_filepath)
         table = bigquery.Table(table_ref, schema=schema)
-        client.create_table(table)  # Make an API request.
+        client.create_table(table)
         print(f"Table {table_ref} was created".format(table_id))
         success = True
     return success
@@ -248,13 +248,9 @@ def process_month(
 ) -> None:
     process_month = str(year_number) + "-" + str(month_number).zfill(2)
     logging.info(f"Processing {process_month} started")
-    source_url_to_process = source_url + process_month + ".csv"
-    source_file_to_process = str(source_file).replace(
-        ".csv", "_" + process_month + ".csv"
-    )
+    source_url_to_process = f"{source_url}{process_month}.csv"
+    source_file_to_process = str(source_file).replace(".csv", f"_{process_month}.csv")
     successful_download = download_file(source_url_to_process, source_file_to_process)
-    # successful_download = True
-    # import pdb; pdb.set_trace()
     if successful_download:
         with pd.read_csv(
             source_file_to_process,
@@ -272,7 +268,7 @@ def process_month(
                     f"Processing chunk #{chunk_number} of file {process_month} started"
                 )
                 target_file_batch = str(target_file).replace(
-                    ".csv", "-" + process_month + "-" + str(chunk_number) + ".csv"
+                    ".csv", f"-{process_month}-{chunk_number}.csv"
                 )
                 df = pd.DataFrame()
                 df = pd.concat([df, chunk])
