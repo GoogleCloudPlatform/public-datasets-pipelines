@@ -13,8 +13,7 @@
 # limitations under the License.
 
 name: Run unit tests
-on: [push]
-#on: [pull_request]
+on: [pull_request]
 jobs:
   build:
     runs-on: ubuntu-latest
