@@ -39,7 +39,7 @@ def main(
     intcolumns: str,
 ) -> None:
 
-    logging.info("Creating folder")
+    logging.info("Creating (files) folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
 
     logging.info(f"Downloading file {source_url}")
