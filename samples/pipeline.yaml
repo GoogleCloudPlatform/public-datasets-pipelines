@@ -428,6 +428,21 @@ dag:
         body:
           name: "sample-gke-cluster"
           initial_node_count: 1
+          node_config:
+            # For the list of machine types, see https://cloud.google.com/compute/docs/general-purpose-machines#e2-standard.
+            # Some of the machine types and their specs are listed below for convenience:
+            #
+            # Machine type     vCPUs              Memory (GB)
+            # e2-micro         2 (shared core)    1
+            # e2-small         2 (shared core)    2
+            # e2-medium        2 (shared core)    4
+            # e2-standard-2    2                  8
+            # e2-standard-4    4                  16
+            # e2-standard-8    8                  32
+            machine_type: e2-standard-2
+            # https://googleapis.dev/python/container/latest/container_v1/types.html#google.cloud.container_v1.types.NodeConfig.oauth_scopes
+            oauth_scopes:
+              - https://www.googleapis.com/auth/devstorage.read_write
 
         # Optional service account to impersonate using short-term credentials
         impersonation_chain: "{{ var.json.DATASET_FOLDER_NAME.PIPELINE_FOLDER_NAME.service_account }}"
