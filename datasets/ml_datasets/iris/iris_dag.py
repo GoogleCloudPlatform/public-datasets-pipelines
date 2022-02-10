@@ -37,24 +37,8 @@ with DAG(
         task_id="iris_transform_csv",
         startup_timeout_seconds=600,
         name="iris",
-        namespace="default",
-        affinity={
-            "nodeAffinity": {
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                    "nodeSelectorTerms": [
-                        {
-                            "matchExpressions": [
-                                {
-                                    "key": "cloud.google.com/gke-nodepool",
-                                    "operator": "In",
-                                    "values": ["pool-e2-standard-4"],
-                                }
-                            ]
-                        }
-                    ]
-                }
-            }
-        },
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.ml_datasets.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -67,7 +51,11 @@ with DAG(
             "CSV_HEADERS": '["sepal_length","sepal_width","petal_length","petal_width","species"]',
             "RENAME_MAPPINGS": '{"sepallength": "sepal_length","sepalwidth": "sepal_width","petallength": "petal_length","petalwidth": "petal_width","class": "species"}',
         },
-        resources={"request_memory": "2G", "request_cpu": "1"},
+        resources={
+            "request_memory": "2G",
+            "request_cpu": "1",
+            "request_ephemeral_storage": "5G",
+        },
     )
 
     # Task to load CSV data to a BigQuery table

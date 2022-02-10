@@ -21,8 +21,8 @@ provider "google" {
   region                      = var.region
 }
 
-# data "google_client_openid_userinfo" "me" {}
+data "google_client_openid_userinfo" "me" {}
 
-# output "impersonating-account" {
-#   value = data.google_client_openid_userinfo.me.email
-# }
+output "impersonating-account" {
+  value = data.google_client_openid_userinfo.me.email
+}

@@ -74,4 +74,3 @@ resources:
     name: ml-datasets
     uniform_bucket_level_access: True
     location: US
-    
