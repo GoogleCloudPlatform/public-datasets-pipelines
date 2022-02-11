@@ -59,7 +59,9 @@ def main(
     generate_provider_tf(project_id, dataset_id, region, impersonating_acct, env_path)
     generate_backend_tf(dataset_id, tf_state_bucket, tf_state_prefix, env_path)
 
-    dataset_config = yaml.load(open(DATASETS_PATH / dataset_id / "dataset.yaml"))
+    dataset_config = yaml.load(
+        open(DATASETS_PATH / dataset_id / "pipelines" / "dataset.yaml")
+    )
     generate_dataset_tf(dataset_id, project_id, dataset_config, env)
 
     generate_all_pipelines_tf(dataset_id, project_id, env_path)
@@ -131,7 +133,7 @@ def generate_dataset_tf(dataset_id: str, project_id: str, config: dict, env: str
 
 
 def generate_all_pipelines_tf(dataset_id: str, project_id: str, env_path: pathlib.Path):
-    pipeline_paths = list_subdirs(DATASETS_PATH / dataset_id)
+    pipeline_paths = list_subdirs(DATASETS_PATH / dataset_id / "pipelines")
 
     for pipeline_path in pipeline_paths:
         pipeline_config = yaml.load(open(pipeline_path / "pipeline.yaml"))
@@ -186,7 +188,7 @@ def generate_tfvars_file(
         TEMPLATE_PATHS["tfvars"], {"tf_vars": tf_vars}
     )
 
-    target_path = env_path / "datasets" / dataset_id / "_terraform" / "terraform.tfvars"
+    target_path = env_path / "datasets" / dataset_id / "infra" / "terraform.tfvars"
     write_to_file(contents + "\n", target_path)
     terraform_fmt(target_path)
     print_created_files([target_path])
@@ -267,10 +269,10 @@ def create_file_in_dir_tree(
     prefixes = []
 
     if use_env_dir:
-        prefixes.append(env_path / "datasets" / dataset_id / "_terraform")
+        prefixes.append(env_path / "datasets" / dataset_id / "infra")
 
     if use_project_dir:
-        prefixes.append(DATASETS_PATH / dataset_id / "_terraform")
+        prefixes.append(DATASETS_PATH / dataset_id / "infra")
 
     for prefix in prefixes:
         if not prefix.exists():
@@ -311,7 +313,7 @@ def terraform_fmt(target_file: pathlib.Path):
 
 
 def actuate_terraform_resources(dataset_id: str, env_path: pathlib.Path):
-    cwd = env_path / "datasets" / dataset_id / "_terraform"
+    cwd = env_path / "datasets" / dataset_id / "infra"
     subprocess.check_call(["terraform", "init"], cwd=cwd)
     subprocess.check_call(["terraform", "apply"], cwd=cwd)
 
