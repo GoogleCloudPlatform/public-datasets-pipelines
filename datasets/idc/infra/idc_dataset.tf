@@ -94,7 +94,7 @@ output "bigquery_dataset-idc_v6-dataset_id" {
 resource "google_bigquery_dataset" "idc_v7" {
   dataset_id  = "idc_v7"
   project     = var.project_id
-  description = "Imaging Data Commons (IDC) - The Cancer Imaging Archive (TCIA) v6 data"
+  description = "Imaging Data Commons (IDC) - The Cancer Imaging Archive (TCIA) v7 data"
 }
 
 output "bigquery_dataset-idc_v7-dataset_id" {
