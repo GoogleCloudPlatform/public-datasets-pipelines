@@ -12,8 +12,7 @@ jobs:
           python -m pip install flake8 isort
       - uses: psf/black@stable
         with:
-          options: "--check"
-          src: "."
+          args: ". --check"
           version: "21.5b1"
       - name: Run Flake8 Linter
         run: flake8
