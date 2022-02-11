@@ -2,7 +2,7 @@ from testbook import testbook
 
 
 @testbook(
-    "datasets/san_francisco_311/docs/predict_weekly_calls/sf_311_weekly_calls_prediction.ipynb"
+    "datasets/san_francisco_311/docs/tutorials/predict_weekly_calls/sf_311_weekly_calls_prediction.ipynb"
 )
 def test_run_notebook(tb):
     tb.inject(
