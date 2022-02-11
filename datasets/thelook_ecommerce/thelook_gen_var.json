@@ -1,0 +1,7 @@
+{
+    "thelook_gen": {
+        "composer_bucket": "us-central1-thelook-ecom-b96f375a-bucket",
+        "docker_image": "gcr.io/looker-private-demo/thelook_ecommerce:1.1",
+        "google_application_credentials": "looker-private-demo-4b79be14c5fc.json"
+    }
+}
