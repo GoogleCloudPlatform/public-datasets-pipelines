@@ -33,3 +33,5 @@ tmp
 
 # ignore temp folders
 .tmp
+
+.DS_Store
