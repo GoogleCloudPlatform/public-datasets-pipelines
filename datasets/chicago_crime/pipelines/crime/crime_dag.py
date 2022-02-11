@@ -112,4 +112,9 @@ with DAG(
         name="chicago-crime--crime",
     )
 
-    create_cluster >> chicago_crime_transform_csv >> load_chicago_crime_to_bq >> delete_cluster
+    (
+        create_cluster
+        >> chicago_crime_transform_csv
+        >> load_chicago_crime_to_bq
+        >> delete_cluster
+    )
