@@ -44,6 +44,7 @@ with DAG(
             source_bucket="{{ var.json.idc.source_bucket }}",
             destination_bucket="{{ var.json.idc.destination_bucket}}",
             google_impersonation_chain="{{ var.json.idc.service_account }}",
+            transfer_options={"deleteObjectsUniqueInSink": False},
         )
     )
 
@@ -60,9 +61,9 @@ with DAG(
             "TARGET_PROJECT_ID": "{{ var.json.idc.target_project_id }}",
             "SERVICE_ACCOUNT": "{{ var.json.idc.service_account }}",
             "DATASET_NAME": "idc",
-            "DATASET_VERSIONS": '["v1", "v2", "v3", "v4", "v5", "v6"]',
+            "DATASET_VERSIONS": '["v1", "v2", "v3", "v4", "v5", "v6", "v7"]',
         },
-        resources={"limit_memory": "128M", "limit_cpu": "200m"},
+        resources={"request_memory": "128M", "request_cpu": "200m"},
     )
 
     # Generate BQ views
@@ -77,10 +78,10 @@ with DAG(
             "QUERIES_DIR": "/custom/queries",
             "GCP_PROJECT": "{{ var.value.gcp_project }}",
             "DATASET_NAME": "idc",
-            "DATASET_VERSIONS": '["v1", "v2", "v3", "v4", "v5", "v6", "current"]',
-            "CURRENT_VERSION": "v6",
+            "DATASET_VERSIONS": '["v1", "v2", "v3", "v4", "v5", "v6", "v7", "current"]',
+            "CURRENT_VERSION": "v7",
         },
-        resources={"limit_memory": "128M", "limit_cpu": "200m"},
+        resources={"request_memory": "128M", "request_cpu": "200m"},
     )
 
     copy_gcs_bucket >> copy_bq_datasets >> generate_bq_views
