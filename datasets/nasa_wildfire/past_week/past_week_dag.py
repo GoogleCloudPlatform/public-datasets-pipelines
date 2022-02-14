@@ -38,24 +38,8 @@ with DAG(
         task_id="past_week_transform_csv",
         startup_timeout_seconds=600,
         name="past_week",
-        namespace="default",
-        affinity={
-            "nodeAffinity": {
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                    "nodeSelectorTerms": [
-                        {
-                            "matchExpressions": [
-                                {
-                                    "key": "cloud.google.com/gke-nodepool",
-                                    "operator": "In",
-                                    "values": ["pool-e2-standard-4"],
-                                }
-                            ]
-                        }
-                    ]
-                }
-            }
-        },
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.nasa_wildfire.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -68,7 +52,11 @@ with DAG(
             "CSV_HEADERS": '["latitude","longitude","bright_ti4","scan","track","acq_date","acq_time","satellite","confidence","version","bright_ti5","frp","daynight","acquisition_timestamp"]',
             "RENAME_MAPPINGS": '{"latitude":"latitude","longitude":"longitude","bright_ti4":"bright_ti4","scan":"scan","track":"track","acq_date":"acq_date","acq_time":"acq_time","satellite":"satellite","confidence":"confidence","version":"version","bright_ti5":"bright_ti5","frp":"frp","daynight":"daynight"}',
         },
-        resources={"request_memory": "2G", "request_cpu": "1"},
+        resources={
+            "request_memory": "3G",
+            "request_cpu": "1",
+            "request_ephemeral_storage": "5G",
+        },
     )
 
     # Task to load CSV data to a BigQuery table
