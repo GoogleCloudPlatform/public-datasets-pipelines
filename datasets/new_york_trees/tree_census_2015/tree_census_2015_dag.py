@@ -14,7 +14,8 @@
 
 
 from airflow import DAG
-from airflow.contrib.operators import gcs_to_bq, kubernetes_pod_operator
+from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
     "owner": "Google",
@@ -33,28 +34,12 @@ with DAG(
 ) as dag:
 
     # Run CSV transform within kubernetes pod
-    tree_census_2015_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+    tree_census_2015_transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="tree_census_2015_transform_csv",
         startup_timeout_seconds=600,
         name="tree_census_2015",
-        namespace="default",
-        affinity={
-            "nodeAffinity": {
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                    "nodeSelectorTerms": [
-                        {
-                            "matchExpressions": [
-                                {
-                                    "key": "cloud.google.com/gke-nodepool",
-                                    "operator": "In",
-                                    "values": ["pool-e2-standard-4"],
-                                }
-                            ]
-                        }
-                    ]
-                }
-            }
-        },
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.new_york_trees.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -68,11 +53,15 @@ with DAG(
             "RENAME_MAPPINGS": '{"postcode":"zipcode","community board":"cb_num","borough":"boroname"}',
             "INTEGER_STRING_COL": '["tree_id", "block_id", "tree_dbh", "stump_diam", "zipcode", "cb_num","borocode","cncldist","st_assem","st_senate","boro_ct"]',
         },
-        resources={"request_memory": "2G", "request_cpu": "1"},
+        resources={
+            "request_memory": "3G",
+            "request_cpu": "1",
+            "request_ephemeral_storage": "5G",
+        },
     )
 
     # Task to load CSV data to a BigQuery table
-    load_tree_census_2015_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    load_tree_census_2015_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_tree_census_2015_to_bq",
         bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/new_york_trees/tree_census_2015/data_output.csv"],
