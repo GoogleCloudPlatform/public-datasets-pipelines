@@ -17,4 +17,3 @@ artifact:
   title: Calculate the average trip per month in seconds
   description: This snippet calculates the average trip of bike rides per month.
   tier: free
-
