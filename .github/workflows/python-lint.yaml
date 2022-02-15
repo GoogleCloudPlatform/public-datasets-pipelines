@@ -9,9 +9,7 @@ jobs:
         uses: actions/setup-python@v2
       - name: Install dependencies
         run:
-          python -m pip install flake8 isort nbqa black[jupyter]
-      - uses: psf/black@20.8b1s
-          python -m pip install flake8 isort
+          python -m pip install flake8 isort nbqa
       - uses: psf/black@stable
         with:
           args: ". --check"
