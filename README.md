@@ -16,12 +16,12 @@ Cloud-native, data pipeline architecture for onboarding public datasets to [Data
 
 # Environment Setup
 
-We use Pipenv to make environment setup more deterministic and uniform across different machines.
+We use Pipenv to make environment setup more deterministic and uniform across different machines. If you haven't done so, install Pipenv using these [instructions](https://pipenv-fork.readthedocs.io/en/latest/install.html#installing-pipenv).
 
-If you haven't done so, install Pipenv using the instructions found [here](https://pipenv-fork.readthedocs.io/en/latest/install.html#installing-pipenv). Now with Pipenv installed, run the following command:
+With Pipenv installed, run the following command to install the dependencies:
 
 ```bash
-pipenv install --ignore-pipfile --dev
+pipenv install --dev
 ```
 
 This uses the `Pipfile.lock` found in the project root and installs all the development dependencies.
@@ -41,10 +41,10 @@ Follow the steps below to build a data pipeline for your dataset:
 ## 1. Create a folder hierarchy for your pipeline
 
 ```
-mkdir -p datasets/DATASET/PIPELINE
+mkdir -p datasets/$DATASET/pipelines/$PIPELINE
 
 [example]
-datasets/covid19_tracking/national_testing_and_outcomes
+datasets/google_trends/pipelines/top_terms
 ```
 
 where `DATASET` is the dataset name or category that your pipeline belongs to, and `PIPELINE` is your pipeline's name.
@@ -54,26 +54,25 @@ For examples of pipeline names, see [these pipeline folders in the repo](https:/
 Use only underscores and alpha-numeric characters for the names.
 
 
-## 2. Write your config (YAML) files
+## 2. Write your YAML configs
 
-If you created a new dataset directory above, you need to create a `datasets/DATASET/dataset.yaml` config file. See this [section](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/README.md#yaml-config-reference) for the `dataset.yaml` reference.
+### Define your `dataset.yaml`
 
-Create a `datasets/DATASET/PIPELINE/pipeline.yaml` config file for your pipeline. See [here](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/samples/) for the `pipeline.yaml` references.
+If you created a new dataset directory above, you need to create a `datasets/$DATASET/pipelines/dataset.yaml` file. See this [section](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/README.md#yaml-config-reference) for the `dataset.yaml` reference.
+
+### Define your `pipeline.yaml`
+
+Create a `datasets/$DATASET/pipelines/$PIPELINE/pipeline.yaml` config file for your pipeline. See [here](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/samples/) for the `pipeline.yaml` references.
 
 For a YAML config template using Airflow 1.10 operators, see [`samples/pipeline.airflow1.yaml`](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/samples/pipeline.airflow1.yaml).
 
-If you'd like to get started faster, you can inspect config files that already exist in the repository and infer the patterns from there:
-
-- [covid19_tracking](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/datasets/covid19_tracking/dataset.yaml) dataset config
-- [covid19_tracking/national_testing_and_outcomes](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/datasets/covid19_tracking/national_testing_and_outcomes/pipeline.yaml) pipeline config (simple, only uses built-in Airflow operators)
-- [covid19_tracking/city_level_cases_and_deaths](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/datasets/covid19_tracking/city_level_cases_and_deaths/pipeline.yaml) pipeline config (involves custom data transforms)
+As an alternative, you can inspect config files that are already in the repository and use them as a basis for your pipelines.
 
 Every YAML file supports a `resources` block. To use this, identify what Google Cloud resources need to be provisioned for your pipelines. Some examples are
 
 - BigQuery datasets and tables to store final, customer-facing data
-- GCS bucket to store intermediate, midstream data.
-- GCS bucket to store final, downstream, customer-facing data
-- Sometimes, for very large datasets, you might need to provision a [Dataflow](https://cloud.google.com/dataflow/docs) job
+- GCS bucket to store downstream data, such as those linked to in the [Datasets Marketplace](https://console.cloud.google.com/marketplace/browse?filter=solution-type:dataset).
+- Sometimes, for very large datasets that requires processing to be parallelized, you might need to provision a [Dataflow](https://cloud.google.com/dataflow/docs) (Apache Beam) job
 
 
 ## 3. Generate Terraform files and actuate GCP resources
@@ -81,26 +80,28 @@ Every YAML file supports a `resources` block. To use this, identify what Google 
 Run the following command from the project root:
 ```bash
 $ pipenv run python scripts/generate_terraform.py \
-    --dataset DATASET_DIR_NAME \
-    --gcp-project-id GCP_PROJECT_ID \
-    --region REGION \
-    --bucket-name-prefix UNIQUE_BUCKET_PREFIX \
-    [--env] dev \
-    [--tf-state-bucket] \
-    [--tf-state-prefix] \
-    [--tf-apply] \
-    [--impersonating-acct] IMPERSONATING_SERVICE_ACCT
+    --dataset $DATASET \
+    --gcp-project-id $GCP_PROJECT_ID \
+    --region $REGION \
+    --bucket-name-prefix $UNIQUE_BUCKET_PREFIX \
+    [--env $ENV] \
+    [--tf-state-bucket $TF_BUCKET] \
+    [--tf-state-prefix $TF_BUCKET_PREFIX ] \
+    [--impersonating-acct] $IMPERSONATING_SERVICE_ACCT \
+    [--tf-apply]
 ```
 
-This generates Terraform files (`*.tf`) in a `_terraform` directory inside that dataset. The files contain instrastructure-as-code on which GCP resources need to be actuated for use by the pipelines. If you passed in the `--tf-apply` parameter, the command will also run `terraform apply` to actuate those resources.
+This generates Terraform `*.tf` files  in your dataset's `infra` folder. The `.tf` files contain infrastructure-as-code: GCP resources that need to be created for the pipelines to work. The pipelines (DAGs) interact with resources such as GCS buckets or BQ tables while performing its operations (tasks).
+
+To actuate the resources specified in the generated `.tf` files, use the `--tf-apply` flag. For those familiar with Terraform, this will run the `terraform apply` command inside the `infra` folder.
 
 The `--bucket-name-prefix` is used to ensure that the buckets created by different environments and contributors are kept unique. This is to satisfy the rule where bucket names must be globally unique across all of GCS. Use hyphenated names (`some-prefix-123`) instead of snakecase or underscores (`some_prefix_123`).
 
 The `--tf-state-bucket` and `--tf-state-prefix` parameters can be optionally used if one needs to use a remote store for the Terraform state. This will create a `backend.tf` file that points to the GCS bucket and prefix to use in storing the Terraform state. For more info, see the [Terraform docs for using GCS backends](https://www.terraform.io/docs/language/settings/backends/gcs.html).
 
-In addition, the command above creates a "dot" directory in the project root. The directory name is the value you pass to the `--env` parameter of the command. If no `--env` argument was passed, the value defaults to `dev` (which generates the `.dev` folder).
+In addition, the command above creates a "dot env" directory in the project root. The directory name is the value you set for `--env`. If it's not set, the value defaults to `dev` which generates the `.dev` folder.
 
-Consider this "dot" directory as your own dedicated space for prototyping. The files and variables created in that directory will use an isolated environment. All such directories are gitignored.
+We strongly recommend using a dot directory as your own sandbox, specific to your machine, that's mainly used for prototyping. This directory is where you will set the variables specific to your environment: such as actual GCS bucket names, GCR repository URLs, and secrets (we recommend using [Secret Manager](https://cloud.google.com/composer/docs/secret-manager) for this). The files and variables created or copied in the dot directories are isolated from the main repo, meaning that all dot directories are gitignored.
 
 As a concrete example, the unit tests use a temporary `.test` directory as their environment.
 
@@ -111,58 +112,70 @@ Run the following command from the project root:
 
 ```bash
 $ pipenv run python scripts/generate_dag.py \
-    --dataset DATASET \
-    --pipeline PIPELINE \
+    --dataset $DATASET \
+    --pipeline $PIPELINE \
+    [--all-pipelines] \
     [--skip-builds] \
-    [--env] dev
+    [--env $ENV]
 ```
 
-(Note: After this command runs successfully, it may ask you to set your pipeline's variables. Declaring and setting pipeline variables are explained in the [next step](https://github.com/googlecloudplatform/public-datasets-pipelines#5-declare-and-set-your-airflow-variables).)
+**Note: When this command runs successfully, it may ask you to set your pipeline's variables. Declaring and setting pipeline variables are explained in the [next step](https://github.com/googlecloudplatform/public-datasets-pipelines#5-declare-and-set-your-airflow-variables).**
 
-This generates a Python file that represents the DAG (directed acyclic graph) for the pipeline (the dot dir also gets a copy). To standardize DAG files, the resulting Python code is based entirely out of the contents in the `pipeline.yaml` config file.
+This generates an Airflow DAG file (`.py`) in the `datasets/$DATASET/pipelines/$PIPELINE` directory, where the contents are based on the configuration specific in the `pipeline.yaml` file. This helps standardize Python code styling for all pipelines.
 
-Using `KubernetesPodOperator` requires having a container image available for use. The command above allows this architecture to build and push it to [Google Container Registry](https://cloud.google.com/container-registry) on your behalf. Follow the steps below to prepare your container image:
+The generated DAG file is a Python file that represents your pipeline (the dot dir also gets a copy), ready to be interpreted by Airflow / Cloud Composer. , the code in the generated `.py` files is based entirely out of the contents in the `pipeline.yaml` config file.
 
-1. Create an `_images` folder under your dataset folder if it doesn't exist.
+### Using the `KubernetesPodOperator` for custom DAG tasks
 
-2. Inside the `_images` folder, create another folder and name it after what the image is expected to do, e.g. `process_shapefiles`, `read_cdf_metadata`.
+Sometimes, Airflow's built-in operators don't support a specific, custom process you need for your pipeline. The recommended solution is to use `KubernetesPodOperator` which runs a container image that houses the scripts, build instructions, and dependencies needd to perform a custom process.
 
-3. In that subfolder, create a [Dockerfile](https://docs.docker.com/engine/reference/builder/) and any scripts you need to process the data. See the [`samples/container`](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/samples/container/) folder for an example. Use the [COPY command](https://docs.docker.com/engine/reference/builder/#copy) in your `Dockerfile` to include your scripts in the image.
+To prepare a container image containing your custom code, follow these instructions:
+
+1. Create an `_images` folder in your dataset's `pipelines` folder if it doesn't exist.
+
+2. Inside the `_images` folder, create a subfolder and name it after the image you intend to build or what it's expected to do, e.g. `transform_csv`, `process_shapefiles`, `read_cdf_metadata`.
+
+3. In that subfolder, create a [Dockerfile](https://docs.docker.com/engine/reference/builder/) along with the scripts and dependencies you need to run process. See the [`samples/container`](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/samples/container/) folder for an example. Use the [COPY command](https://docs.docker.com/engine/reference/builder/#copy) in your `Dockerfile` to include your scripts when the image gets built.
 
 The resulting file tree for a dataset that uses two container images may look like
 
 ```
-datasets
-└── DATASET
-    ├── _images
-    │   ├── container_a
-    │   │   ├── Dockerfile
-    │   │   ├── requirements.txt
-    │   │   └── script.py
-    │   └── container_b
-    │       ├── Dockerfile
-    │       ├── requirements.txt
-    │       └── script.py
-    ├── _terraform/
-    ├── PIPELINE_A
-    ├── PIPELINE_B
-    ├── ...
-    └── dataset.yaml
+datasets/
+└── $DATASET/
+   ├── infra/
+   └── pipelines/
+       ├── _images/
+       │   ├── container_image_1/
+       │   │   ├── Dockerfile
+       │   │   ├── requirements.txt
+       │   │   └── script.py
+       │   └── container_image_2/
+       │       ├── Dockerfile
+       │       ├── requirements.txt
+       │       └── script.py
+       ├── PIPELINE_A/
+       ├── PIPELINE_B/
+       ├── ...
+       └── dataset.yaml
 ```
+
+Running the `generate_dag.py` script allows you to build and push your container images to [Google Container Registry](https://cloud.google.com/container-registry), where they can now be referenced in the `image` parameter of the `KubernetesPodOperator`.
 
 Docker images will be built and pushed to GCR by default whenever the command above is run. To skip building and pushing images, use the optional `--skip-builds` flag.
 
 ## 5. Declare and set your Airflow variables
 
-(Note: If your pipeline doesn't use any Airflow variables, you can skip this step.)
+**Note: If your pipeline doesn't use any Airflow variables, you can skip this step.**
 
-Running the command in the previous step will parse your pipeline config and inform you about the Airflow variables that your pipeline expects to use. In this step, you will be declaring and setting those variables.
+Running the `generate_dag` command in the previous step will parse your pipeline config and inform you about the parameterized Airflow variables your pipeline expects to use. In this step, you will be declaring and setting those variables.
 
-There are two types of variables that pipelines can use: **shared variables** and **dataset-specific variables**. 
+There are two types of variables that pipelines can use: **shared variables** and **dataset-specific variables**.
 
 ### Shared variables
 
-Shared variables are those that can be reused by other pipelines in the same Airflow or Cloud Composer environment. These variables will have the same values for any pipeline. Examples of shared variables include your Cloud Composer environment name and bucket, your GCP project ID, and paths to the Airflow DAG and data folders (e.g. `/home/airflow/gcs/data`). To specify your shared variables, you can either
+**Note: Shared variables via JSON files will be deprecated in an upcoming release. Please [store shared variables as environment variables](https://airflow.apache.org/docs/apache-airflow/stable/howto/variable.html#storing-variables-in-environment-variables) in your Cloud Composer environment.**
+
+Shared variables are, by convention, those that can be reused by other pipelines in the same Airflow or Cloud Composer environment. These variables will have the same values for any pipeline. Examples of shared variables include your Cloud Composer environment name and bucket, your GCP project ID, and paths to the Airflow DAG and data folders (e.g. `/home/airflow/gcs/data`). To specify your shared variables, you can either
 
 * Store the variables as Cloud Composer environment variables [using Airflow's built-in `AIRFLOW_VAR_*` behavior](https://airflow.apache.org/docs/apache-airflow/stable/howto/variable.html#storing-variables-in-environment-variables). (Preferred)
 * or, use a single `shared_variables.json` file by creating it under
@@ -185,25 +198,25 @@ and inside the file, nest the variables under a common parent key. For example:
 
 ### Dataset-specific variables
 
-Another type of variable is dataset-specific variables. To make use of dataset-specific variables, create the following file
+Another type of variable is dataset-specific variables. To make use of dataset-specific variables, create the following JSON file
 
 ```
-  [.dev|.test]/datasets/{DATASET}/{DATASET}_variables.json
+  [.dev|.test]/datasets/$DATASET/pipelines/$DATASET_variables.json
 ```
 
-In general, pipelines use the JSON dot notation to access Airflow variables. Make sure to define and nest your variables under some parent key when writing to the JSON files above. We recommend using your dataset's name as the parent key, to mimic the same structure as the folder hierarchy in the Composer's GCS bucket. Airflow variables are globally accessed by any pipeline, which means nesting your variables helps avoid collisions. For example, if you're using the following variables in your pipeline config:
+In general, pipelines use the JSON dot notation to access Airflow variables. Make sure to define and nest your variables under the dataset's name as the parent key. Airflow variables are globally accessed by any pipeline, which means namespacing your variables under a dataset helps avoid collisions. For example, if you're using the following variables in your pipeline config for a dataset named `google_sample_dataset`:
 
-- `{{ var.json.namespace.nested }}`
-- `{{ var.json.namespace.some_key.nested_twice }}`
+- `{{ var.json.google_sample_dataset.some_variable }}`
+- `{{ var.json.google_sample_dataset.some_nesting.nested_variable }}`
 
 then your variables JSON file should look like this
 
 ```json
 {
-  "namespace": {
-    "nested": "some value",
-    "some_key": {
-      "nested_twice": "another value"
+  "google_sample_dataset": {
+    "some_variable": "value",
+    "some_nesting": {
+      "nested_variable": "another value"
     }
   }
 }
@@ -212,9 +225,9 @@ then your variables JSON file should look like this
 
 ## 6. Deploy the DAGs and variables
 
-This step assumes you have a Cloud Composer environment up and running. In this step, you will deploy the DAG to this environment. To create a new Cloud Composer environment, see [this guide](https://cloud.google.com/composer/docs/how-to/managing/creating).
+This step requires a Cloud Composer environment up and running in your Google Cloud project because you will deploy the DAG to this environment. To create a new Cloud Composer environment, see [this guide](https://cloud.google.com/composer/docs/how-to/managing/creating).
 
-To deploy the DAG and the variables to your a Cloud Composer environment, use the command
+To deploy the DAG and the variables to your Cloud Composer environment, use the command
 
 ```
 $ pipenv run python scripts/deploy_dag.py \
@@ -226,7 +239,7 @@ $ pipenv run python scripts/deploy_dag.py \
   --env ENV
 ```
 
-The specifying an argument to `--pipeline` is optional. By default, the script deploys all pipelines under the given `--dataset` argument.
+Specifying an argument to `--pipeline` is optional. By default, the script deploys all pipelines under the dataset set in `--dataset`.
 
 # Testing
 
