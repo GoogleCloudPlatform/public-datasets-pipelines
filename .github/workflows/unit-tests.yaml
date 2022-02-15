@@ -36,4 +36,4 @@ jobs:
       - name: Initialize Airflow
         run: pipenv run airflow db init
       - name: Run tests
-        run: pipenv run python -m pytest -v
+        run: pipenv run python -m pytest -v --timeout=600
