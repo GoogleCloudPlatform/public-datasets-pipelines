@@ -1,16 +1,20 @@
 ## Description
 
-Based on #<ISSUE-NUMBER>
-
-Note: It's recommended to open an issue first for context and discussion.
+Note: If you are adding or editing a dataset, please specify the dataset folder involved, e.g. `datasets/google_trends`
 
 ## Checklist
 
-Note: Delete items below that aren't applicable to your pull request.
+Note: If an item applies to you, all of its sub-items must be fulfilled
 
-- [ ] Please merge this PR for me once it is approved.
-- [ ] If this PR adds or edits a feature, I have updated the [`README`](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/README.md) accordingly.
-- [ ] If this PR adds or edits a dataset or pipeline, it was reviewed and approved by the Google Cloud Public Datasets team beforehand.
-- [ ] If this PR adds or edits a dataset or pipeline, I put all my code inside  `datasets/<YOUR-DATASET>` and nothing outside of that directory.
-- [ ] If this PR adds or edits a dataset or pipeline that I'm responsible for maintaining, my GitHub username is in the [`CONTRIBUTORS` file](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/CONTRIBUTORS).
-- [ ] This PR is appropriately labeled.
+- [ ] **(Required)** This pull request is appropriately labeled
+- [ ] Please merge this pull request after it's approved
+- [ ] I'm adding or editing a feature
+  - [ ] I have updated the [`README`](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/README.md) accordingly
+  - [ ] I have added tests for the feature
+- [ ] I'm adding or editing a dataset
+  - [ ] The [Google Cloud Datasets team](mailto:cloud-datasets-onboarding@google.com) is aware of the proposed dataset
+  - [ ] I put all my code inside  `datasets/<DATASET_NAME>` and nothing outside of that directory
+- [ ] I'm adding/editing documentation
+- [ ] I'm submitting a bugfix
+  - [ ] I have added tests to my bugfix (see the [`tests`](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/tree/main/tests) folder)
+- [ ] I'm refactoring or cleaning up some code
