@@ -1,10 +1,11 @@
 import pytest
 from testbook import testbook
 
+
+@pytest.mark.timeout(600)
 @testbook(
     "datasets/san_francisco_311/docs/tutorials/predict_weekly_calls/sf_311_weekly_calls_prediction.ipynb"
 )
-@pytest.mark.timeout(600)
 def test_run_notebook(tb):
     tb.inject(
         """
