@@ -1,5 +1,5 @@
-from testbook import testbook
 import pytest
+from testbook import testbook
 
 @testbook(
     "datasets/san_francisco_311/docs/tutorials/predict_weekly_calls/sf_311_weekly_calls_prediction.ipynb"
