@@ -121,7 +121,7 @@ dag:
           - name: "distribution_center_id"
             type: "INTEGER"
             mode: "NULLABLE"
-    
+
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load Events data to a BigQuery table"
 
@@ -250,7 +250,7 @@ dag:
           - name: "product_distribution_center_id"
             type: "INTEGER"
             mode: "NULLABLE"
-    
+
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load Order Items data to a BigQuery table"
 
@@ -307,7 +307,7 @@ dag:
           - name: "sale_price"
             type: "FLOAT"
             mode: "NULLABLE"
-    
+
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load Orders data to a BigQuery table"
 
@@ -361,7 +361,7 @@ dag:
           - name: "num_of_item"
             type: "INTEGER"
             mode: "NULLABLE"
-      
+
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load Users data to a BigQuery table"
 
@@ -430,7 +430,7 @@ dag:
           - name: "created_at"
             type: "TIMESTAMP"
             mode: "NULLABLE"
-          
+
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load Distribution Centers data to a BigQuery table"
 
@@ -469,8 +469,6 @@ dag:
           - name: "longitude"
             type: "FLOAT"
             mode: "NULLABLE"
-          
-     
 
   graph_paths:
     - "generate_thelook >> [load_products_to_bq, load_events_to_bq, load_inventory_items_to_bq, load_order_items_to_bq, load_orders_to_bq, load_users_to_bq, load_distribution_centers_to_bq]"
