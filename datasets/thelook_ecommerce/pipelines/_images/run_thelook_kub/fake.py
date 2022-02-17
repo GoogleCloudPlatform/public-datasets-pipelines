@@ -7,18 +7,14 @@ import random
 import typing
 import uuid
 from collections import defaultdict
-from dataclasses import InitVar, asdict, astuple, dataclass, field
-from datetime import date, datetime, timedelta
+from dataclasses import InitVar, asdict, dataclass, field
+from datetime import datetime, timedelta
 from io import StringIO
 from random import randrange
 from typing import Any
-
-import gspread
 import numpy as np
-import pandas as pd
 from faker import Faker
 from google.cloud import storage
-from oauth2client.service_account import ServiceAccountCredentials
 
 fake = Faker()
 # final datasets
@@ -41,7 +37,6 @@ def main(
 
     product_gender_dict = products[0]
     product_by_id_dict = products[1]
-    products_out = products[2]
 
     logging.info("generating locations data")
     location_data = generate_locations()
@@ -87,12 +82,10 @@ def main(
 
 # read from local csv and return products
 def generate_products():
-    ##################Products###########################
     product_brand_dict = {}  # products partitioned by brand - unused
     product_category_dict = {}  # product partitioned by cateogry - unused
     gender_category_dict = {}  # products partitioned by gender and category - unused
     product_id_dict = {}  # products to generate events table - unused
-
     product_gender_dict = {}  # product partitioned by gender
     product_by_id_dict = {}  # products partitioned by product ID
 
@@ -429,10 +422,6 @@ class Users(DataUtil):
             + "@"
             + fake.free_email_domain()
         )
-        year = datetime.now().year
-        month = datetime.now().month
-        day = datetime.now().day
-
         # weight newer users/orders
         choice = random.choices([0, 1], weights=[0.975, 0.025])[0]
         if choice == 0:
@@ -466,7 +455,7 @@ class Product:
     distribution_center_id: int = field(init=False)
 
     def __post_init__(self):
-        person = Person()
+        person = Users()
         random_idx = np.random.choice(
             a=len(product_gender_dict[person.gender]), size=1
         )[0]
@@ -507,7 +496,7 @@ class Order(DataUtil):
             distribution=[0.85, 0.05, 0.1],
         )
         self.created_at = self.child_created_at()
-        ##########add random generator for days it takes to ship, deliver, return etc.
+        # add random generator for days it takes to ship, deliver, return etc.
         if self.status == "Returned":
             self.shipped_at = self.created_at + timedelta(
                 minutes=randrange(4320)
@@ -530,10 +519,7 @@ class Order(DataUtil):
             self.shipped_at = None
             self.delivered_at = None
             self.returned_at = None
-
         self.user = user  # pass person object to order_items
-
-        #############GENERATE ORDER ITEM#################
         # randomly generate number of items in an order
         num_of_items = self.random_item(
             population=[1, 2, 3, 4], distribution=[0.7, 0.2, 0.05, 0.05]
