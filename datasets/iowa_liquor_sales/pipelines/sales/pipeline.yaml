@@ -98,7 +98,7 @@ dag:
             description: "Zip code where the store who ordered the liquor is located"
             mode: "NULLABLE"
           - name: "store_location"
-            type: "STRING"
+            type: "GEOGRAPHY"
             description: "Location of store who ordered the liquor. The Address, City, State and Zip Code are geocoded to provide geographic coordinates. Accuracy of geocoding is dependent on how well the address is interpreted and the completeness of the reference data used."
             mode: "NULLABLE"
           - name: "county_number"
