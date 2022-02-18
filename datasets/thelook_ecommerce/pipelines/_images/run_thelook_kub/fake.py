@@ -55,7 +55,6 @@ def main(
 
     # remove extraneous keys in order_items
     logging.info("remove extraneous keys from order items")
-    # order_item_remove_keys = ["event_type", "ip_address", "browser", "traffic_source", "session_id", "sequence_number", "uri", "is_sold"]
     for oi in order_items:
         for key in extraneous_headers:
             del oi[key]
