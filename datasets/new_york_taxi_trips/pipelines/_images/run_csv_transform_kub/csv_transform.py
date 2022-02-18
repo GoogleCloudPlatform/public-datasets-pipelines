@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -182,15 +182,13 @@ def create_dest_table(
     table_id: str,
     schema_filepath: list,
     bucket_name: str,
-) -> bool:
+) -> None:
     table_ref = f"{project_id}.{dataset_id}.{table_id}"
     logging.info(f"Attempting to create table {table_ref} if it doesn't already exist")
     client = bigquery.Client()
-    success = False
     try:
         table_exists_id = client.get_table(table_ref).table_id
         logging.info(f"Table {table_exists_id} currently exists.")
-        success = True
     except NotFound:
         logging.info(
             (
@@ -201,8 +199,6 @@ def create_dest_table(
         table = bigquery.Table(table_ref, schema=schema)
         client.create_table(table)
         print(f"Table {table_ref} was created".format(table_id))
-        success = True
-    return success
 
 
 def create_table_schema(
@@ -246,7 +242,7 @@ def process_month(
     output_headers: typing.List[str],
     pipeline_name: str,
 ) -> None:
-    process_month = str(year_number) + "-" + str(month_number).zfill(2)
+    process_month = f"{year_number}-{month_number.zfill(2)}"
     logging.info(f"Processing {process_month} started")
     source_url_to_process = f"{source_url}{process_month}.csv"
     source_file_to_process = str(source_file).replace(".csv", f"_{process_month}.csv")
