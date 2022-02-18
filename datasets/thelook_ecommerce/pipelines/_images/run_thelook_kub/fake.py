@@ -1,4 +1,8 @@
+import collections
 import csv
+import dataclasses
+import datetime
+import io
 import itertools
 import json
 import logging
@@ -6,17 +10,12 @@ import os
 import random
 import typing
 import uuid
-from collections import defaultdict
-from dataclasses import InitVar, asdict, dataclass, field
-from datetime import datetime, timedelta
-from io import StringIO
-from random import randrange
-from typing import Any
-import numpy as np
-from faker import Faker
-from google.cloud import storage
 
-fake = Faker()
+import faker
+from google.cloud import storage
+import numpy as np
+
+fake = faker.Faker()
 # final datasets
 orders = list()
 users = list()
@@ -24,10 +23,17 @@ order_items = list()
 events = list()
 inventory_items = list()
 
+THREE_MINUTES = 120
+FOUR_HOURS = 14400
+THIRTY_MINUTES = 30
+THREE_DAYS = 4320
+FIVE_DAYS = 7200
+NINETEEN_HOURS = 1140
+
 
 def main(
     num_of_users: int, target_gcs_bucket: str, extraneous_headers: typing.List[str]
-):
+) -> None:
     global product_gender_dict
     global product_by_id_dict
     global location_data
@@ -45,7 +51,7 @@ def main(
     logging.info("generating data")
     for i in range(int(num_of_users)):
         logging.info(f"user transaction {i}")
-        users.append(asdict(Users()))
+        users.append(dataclasses.asdict(Users()))
 
     # remove extraneous keys in order_items
     logging.info("remove extraneous keys from order items")
@@ -81,7 +87,7 @@ def main(
 
 
 # read from local csv and return products
-def generate_products():
+def generate_products() -> typing.List[dict]:
     product_brand_dict = {}  # products partitioned by brand - unused
     product_category_dict = {}  # product partitioned by cateogry - unused
     gender_category_dict = {}  # products partitioned by gender and category - unused
@@ -89,10 +95,10 @@ def generate_products():
     product_gender_dict = {}  # product partitioned by gender
     product_by_id_dict = {}  # products partitioned by product ID
 
-    products = defaultdict(list)
-    with open("data/products.csv", encoding="utf-8") as productcsv:
-        csvReader = csv.DictReader(productcsv)
-        for rows in csvReader:
+    products = collections.defaultdict(list)
+    with open("helper/products.csv", encoding="utf-8") as productcsv:
+        csv_reader = csv.DictReader(productcsv)
+        for rows in csv_reader:
             for k, v in rows.items():
                 products[k].append(v)
 
@@ -116,7 +122,7 @@ def generate_products():
         if department[_] == "Women":
             product_gender_dict["F"] = []
             gender_category_dict["F" + category[_]] = []
-    for val in list(
+    for col in list(
         zip(
             product_id,
             brands,
@@ -129,39 +135,39 @@ def generate_products():
             distribution_center_id,
         )
     ):
-        product_by_id_dict[val[0]] = {
-            "brand": val[1],
-            "name": val[2],
-            "cost": val[3],
-            "category": val[4],
-            "department": val[5],
-            "sku": val[6],
-            "retail_price": val[7],
-            "distribution_center_id": val[8],
+        product_by_id_dict[col[0]] = {
+            "brand": col[1],
+            "name": col[2],
+            "cost": col[3],
+            "category": col[4],
+            "department": col[5],
+            "sku": col[6],
+            "retail_price": col[7],
+            "distribution_center_id": col[8],
         }
-        product_brand_dict[val[1]].append(val)
-        product_category_dict[val[4]].append(val)
-        if val[5] == "Men":
-            product_gender_dict["M"].append(val)
-            gender_category_dict["M" + val[4]].append(val)
-        if val[5] == "Women":
-            product_gender_dict["F"].append(val)
-            gender_category_dict["F" + val[4]].append(val)
+        product_brand_dict[col[1]].append(col)
+        product_category_dict[col[4]].append(col)
+        if col[5] == "Men":
+            product_gender_dict["M"].append(col)
+            gender_category_dict["M" + col[4]].append(col)
+        if col[5] == "Women":
+            product_gender_dict["F"].append(col)
+            gender_category_dict["F" + col[4]].append(col)
 
     # helper dict to generate events
-    for val in list(zip(product_id, brands, category, department)):
-        product_id_dict[val[0]] = {
-            "brand": val[1],
-            "category": val[2],
-            "department": val[3],
+    for col in list(zip(product_id, brands, category, department)):
+        product_id_dict[col[0]] = {
+            "brand": col[1],
+            "category": col[2],
+            "department": col[3],
         }
     return product_gender_dict, product_by_id_dict, products
 
 
 # read from local csv and return locations
-def generate_locations():
+def generate_locations() -> list:
     location_data = []
-    with open("data/world_pop.csv", encoding="utf-8") as worldcsv:
+    with open("helper/world_pop.csv", encoding="utf-8") as worldcsv:
         csvReader = csv.DictReader(worldcsv)
         for rows in csvReader:
             location_data.append(rows)
@@ -169,10 +175,10 @@ def generate_locations():
 
 
 # read from local csv and return distribution centers
-def generate_distribution_centers():
+def generate_distribution_centers() -> list:
     distribution_centers = []
     with open(
-        "data/distribution_centers.csv", encoding="utf-8"
+        "helper/distribution_centers.csv", encoding="utf-8"
     ) as distributioncenterscsv:
         csvReader = csv.DictReader(distributioncenterscsv)
         for rows in csvReader:
@@ -181,7 +187,9 @@ def generate_distribution_centers():
 
 
 # returns random address based off specified distribution
-def get_address(*, country="*", state="*", postal_code="*"):
+def get_address(
+    *, country: str = "*", state: str = "*", postal_code: str = "*"
+) -> dict:
     # country = '*' OR country = 'USA' OR country={'USA':.75,'UK':.25}
     # state = '*' OR state = 'California' OR state={'California':.75,'New York':.25}
     # postal_code = '*' OR postal_code = '95060' OR postal_code={'94117':.75,'95060':.25}
@@ -271,8 +279,8 @@ def get_address(*, country="*", state="*", postal_code="*"):
 
 
 # generates random date between now and specified date
-def created_at(start_date):
-    end_date = datetime.now()
+def created_at(start_date: datetime.datetime) -> datetime.datetime:
+    end_date = datetime.datetime.now()
     time_between_dates = end_date - start_date
     days_between_dates = time_between_dates.days
     if days_between_dates <= 1:
@@ -280,14 +288,14 @@ def created_at(start_date):
     random_number_of_days = random.randrange(1, days_between_dates)
     created_at = (
         start_date
-        + timedelta(days=random_number_of_days)
-        + timedelta(minutes=randrange(1139))
+        + datetime.timedelta(days=random_number_of_days)
+        + datetime.timedelta(minutes=random.randrange(NINETEEN_HOURS))
     )
     return created_at
 
 
 # generate URI for events table
-def generate_uri(event, product):
+def generate_uri(event: str, product: str) -> str:
     if event == "product":
         return "/" + event + "/" + product[0]
     elif event == "department":
@@ -306,8 +314,8 @@ def generate_uri(event, product):
 
 
 # converts list of dicts into csv format
-def dict_to_csv(name, data):
-    output = StringIO()
+def dict_to_csv(name: str, data: dict) -> list:
+    output = io.StringIO()
     writer = csv.writer(output, quoting=csv.QUOTE_NONNUMERIC)
     header_writer = csv.DictWriter(output, fieldnames=data[0].keys())
     header_writer.writeheader()
@@ -317,7 +325,7 @@ def dict_to_csv(name, data):
 
 
 # upload into GCS Bucket
-def upload_to_bucket(bucket_name, file_name, data):
+def upload_to_bucket(bucket_name: str, file_name: str, data: list) -> str:
     storage_client = storage.Client()
     bucket = storage_client.get_bucket(bucket_name)
     blob = bucket.blob("data/{}.csv".format(file_name))
@@ -326,32 +334,34 @@ def upload_to_bucket(bucket_name, file_name, data):
 
 
 # upload local file to GCS Bucket
-def upload_file_to_bucket(bucket_name, file_name):
+def upload_file_to_bucket(bucket_name: str, file_name: str) -> str:
     storage_client = storage.Client()
     bucket = storage_client.get_bucket(bucket_name)
     blob = bucket.blob("data/{}".format(file_name))
-    blob.upload_from_filename("data/{}".format(file_name))
+    blob.upload_from_filename("helper/{}".format(file_name))
     return blob.public_url
 
 
 # utility class
 class DataUtil:
     def child_created_at(
-        self, probability="uniform"
-    ):  # returns a random timestamp between now and parent date
-        time_between_dates = datetime.now() - self.parent.created_at
+        self, probability: str = "uniform"
+    ) -> datetime.datetime:  # returns a random timestamp between now and parent date
+        time_between_dates = datetime.datetime.now() - self.parent.created_at
         days_between_dates = time_between_dates.days
         if days_between_dates <= 1:
             days_between_dates = 2
         random_number_of_days = random.randrange(
             1, days_between_dates
         )  # generates random day between now and when user initially got created
-        created_at = self.parent.created_at + timedelta(days=random_number_of_days)
+        created_at = self.parent.created_at + datetime.timedelta(
+            days=random_number_of_days
+        )
         return created_at
 
     def random_item(
         self, population, **distribution
-    ):  # returns single random item from a list based off distribution
+    ) -> str:  # returns single random item from a list based off distribution
         if distribution:
             return random.choices(
                 population=population, weights=distribution["distribution"]
@@ -360,9 +370,9 @@ class DataUtil:
             return random.choices(population=population)[0]
 
 
-@dataclass
+@dataclasses.dataclass
 class Address(object):
-    def __init__(self, data):
+    def __init__(self, data: dict):
         self.street = data["street"]
         self.city = data["city"]
         self.state = data["state"]
@@ -375,23 +385,23 @@ class Address(object):
         return f"{self.street} \n{self.city}, {self.state} \n{self.postal_code} \n{self.country} \n{self.latitude} \n{self.longitude}"
 
 
-@dataclass
+@dataclasses.dataclass
 class Users(DataUtil):
     logging.info("generating user")
-    id: int = field(default_factory=itertools.count(start=1).__next__)
-    first_name: str = field(init=False)
-    last_name: str = field(init=False)
-    email: str = field(init=False)
-    gender: str = field(init=False)
-    state: str = field(init=False)
-    street_address: str = field(init=False)
-    postal_code: str = field(init=False)
-    city: str = field(init=False)
-    country: str = field(init=False)
-    latitude: float = field(init=False)
-    longitude: float = field(init=False)
-    traffic_source: str = field(init=False)
-    created_at: datetime = field(init=False)
+    id: int = dataclasses.field(default_factory=itertools.count(start=1).__next__)
+    first_name: str = dataclasses.field(init=False)
+    last_name: str = dataclasses.field(init=False)
+    email: str = dataclasses.field(init=False)
+    gender: str = dataclasses.field(init=False)
+    state: str = dataclasses.field(init=False)
+    street_address: str = dataclasses.field(init=False)
+    postal_code: str = dataclasses.field(init=False)
+    city: str = dataclasses.field(init=False)
+    country: str = dataclasses.field(init=False)
+    latitude: float = dataclasses.field(init=False)
+    longitude: float = dataclasses.field(init=False)
+    traffic_source: str = dataclasses.field(init=False)
+    created_at: datetime.datetime = dataclasses.field(init=False)
 
     def __post_init__(self):
         self.gender = self.random_item(population=["M", "F"])  # uniform distribution
@@ -425,9 +435,11 @@ class Users(DataUtil):
         # weight newer users/orders
         choice = random.choices([0, 1], weights=[0.975, 0.025])[0]
         if choice == 0:
-            self.created_at = created_at(datetime(2019, 1, 1))
+            self.created_at = created_at(datetime.datetime(2019, 1, 1))
         if choice == 1:
-            self.created_at = created_at(datetime.now() - timedelta(days=7))
+            self.created_at = created_at(
+                datetime.datetime.now() - datetime.timedelta(days=7)
+            )
         num_of_orders = random.choices(
             population=[0, 1, 2, 3, 4], weights=[0.2, 0.5, 0.2, 0.05, 0.05]
         )[0]
@@ -435,24 +447,24 @@ class Users(DataUtil):
             pass
         else:
             for i in range(num_of_orders):
-                orders.append(asdict(Order(user=self)))
+                orders.append(dataclasses.asdict(Order(user=self)))
 
     def __str__(self):
         return f"{self.id}, {self.first_name}, {self.last_name}, {self.email}, {self.gender}, {self.state}, {self.street_address}, {self.postal_code}, {self.city}, {self.traffic_source}, {self.created_at}"
 
 
-@dataclass
+@dataclasses.dataclass
 class Product:
     logging.info("generating product")
-    product_id: int = field(init=False)
-    brand: str = field(init=False)
-    name: str = field(init=False)
-    cost: float = field(init=False)
-    category: str = field(init=False)
-    department: str = field(init=False)
-    sku: str = field(init=False)
-    retail_price: float = field(init=False)
-    distribution_center_id: int = field(init=False)
+    product_id: int = dataclasses.field(init=False)
+    brand: str = dataclasses.field(init=False)
+    name: str = dataclasses.field(init=False)
+    cost: float = dataclasses.field(init=False)
+    category: str = dataclasses.field(init=False)
+    department: str = dataclasses.field(init=False)
+    sku: str = dataclasses.field(init=False)
+    retail_price: float = dataclasses.field(init=False)
+    distribution_center_id: int = dataclasses.field(init=False)
 
     def __post_init__(self):
         person = Users()
@@ -473,19 +485,19 @@ class Product:
         return f"{self.brand}, {self.name}, {self.cost}, {self.category}, {self.department}, {self.sku}, {self.retail_price}, {self.distribution_center_id}"
 
 
-@dataclass
+@dataclasses.dataclass
 class Order(DataUtil):
     logging.info("generating order")
-    order_id: int = field(default_factory=itertools.count(start=1).__next__)
-    user_id: int = field(init=False)
-    status: str = field(init=False)
-    gender: str = field(init=False)
-    created_at: datetime = field(init=False)
-    returned_at: datetime = field(init=False)
-    shipped_at: datetime = field(init=False)
-    delivered_at: datetime = field(init=False)
-    num_of_item: int = field(init=False)
-    user: InitVar[Any] = None
+    order_id: int = dataclasses.field(default_factory=itertools.count(start=1).__next__)
+    user_id: int = dataclasses.field(init=False)
+    status: str = dataclasses.field(init=False)
+    gender: str = dataclasses.field(init=False)
+    created_at: datetime.datetime = dataclasses.field(init=False)
+    returned_at: datetime.datetime = dataclasses.field(init=False)
+    shipped_at: datetime.datetime = dataclasses.field(init=False)
+    delivered_at: datetime.datetime = dataclasses.field(init=False)
+    num_of_item: int = dataclasses.field(init=False)
+    user: dataclasses.InitVar[typing.Any] = None
 
     def __post_init__(self, user=None):
         self.parent = user
@@ -498,21 +510,21 @@ class Order(DataUtil):
         self.created_at = self.child_created_at()
         # add random generator for days it takes to ship, deliver, return etc.
         if self.status == "Returned":
-            self.shipped_at = self.created_at + timedelta(
-                minutes=randrange(4320)
+            self.shipped_at = self.created_at + datetime.timedelta(
+                minutes=random.randrange(THREE_DAYS)
             )  # shipped between 0-3 days after order placed
-            self.delivered_at = self.shipped_at + timedelta(
-                minutes=randrange(7200)
+            self.delivered_at = self.shipped_at + datetime.timedelta(
+                minutes=random.randrange(FIVE_DAYS)
             )  # delivered between 0-5 days after ship date
-            self.returned_at = self.delivered_at + timedelta(
-                minutes=randrange(4320)
+            self.returned_at = self.delivered_at + datetime.timedelta(
+                minutes=random.randrange(THREE_DAYS)
             )  # returned 0-3 days after order is delivered
         elif self.status == "Complete":
-            self.shipped_at = self.created_at + timedelta(
-                minutes=randrange(4320)
+            self.shipped_at = self.created_at + datetime.timedelta(
+                minutes=random.randrange(THREE_DAYS)
             )  # shipped between 0-3 days after order placed
-            self.delivered_at = self.shipped_at + timedelta(
-                minutes=randrange(7200)
+            self.delivered_at = self.shipped_at + datetime.timedelta(
+                minutes=random.randrange(FIVE_DAYS)
             )  # delivered between 0-5 days after ship date
             self.returned_at = None
         else:
@@ -526,31 +538,30 @@ class Order(DataUtil):
         )
         self.num_of_item = num_of_items
         for i in range(num_of_items):
-            order_items.append(asdict(Order_Item(order=self)))
+            order_items.append(dataclasses.asdict(Order_Item(order=self)))
 
     def __str__(self):
         return f"{self.order_id}, {self.user_id}, {self.status}, {self.created_at}, {self.shipped_at}, {self.delivered_at}, {self.returned_at}"
 
 
-@dataclass
+@dataclasses.dataclass
 class Events:
     logging.info("generating event")
-    id: int = field(default_factory=itertools.count(start=1).__next__)
-    user_id: int = field(init=False)
-    sequence_number: int = field(init=False)
-    session_id: str = field(init=False)
-    created_at: datetime = field(init=False)
+    id: int = dataclasses.field(default_factory=itertools.count(start=1).__next__)
+    user_id: int = dataclasses.field(init=False)
+    sequence_number: int = dataclasses.field(init=False)
+    session_id: str = dataclasses.field(init=False)
+    created_at: datetime.datetime = dataclasses.field(init=False)
     # inventory_item_id:int = field(init=False)
-    ip_address: str = field(init=False)
-    city: str = field(init=False)
-    state: str = field(init=False)
-    postal_code: str = field(init=False)
-    # country:str = field(init=False)
-    browser: str = field(init=False)
-    traffic_source: str = field(init=False)
-    uri: str = field(init=False)
-    event_type: str = field(init=False)
-    order_item: InitVar[Any] = None
+    ip_address: str = dataclasses.field(init=False)
+    city: str = dataclasses.field(init=False)
+    state: str = dataclasses.field(init=False)
+    postal_code: str = dataclasses.field(init=False)
+    browser: str = dataclasses.field(init=False)
+    traffic_source: str = dataclasses.field(init=False)
+    uri: str = dataclasses.field(init=False)
+    event_type: str = dataclasses.field(init=False)
+    order_item: dataclasses.InitVar[typing.Any] = None
 
     def __post_init__(self, order_item=None):
         self.sequence_number = order_item.sequence_number
@@ -573,32 +584,32 @@ class Events:
 inv_item_id = 0
 
 
-@dataclass
+@dataclasses.dataclass
 class Order_Item(DataUtil):
     logging.info("generating order item")
-    id: int = field(default_factory=itertools.count(start=1).__next__)
-    order_id: int = field(init=False)
-    user_id: int = field(init=False)
-    product_id: int = field(init=False)
-    inventory_item_id: int = field(init=False)
-    created_at: datetime = field(init=False)
+    id: int = dataclasses.field(default_factory=itertools.count(start=1).__next__)
+    order_id: int = dataclasses.field(init=False)
+    user_id: int = dataclasses.field(init=False)
+    product_id: int = dataclasses.field(init=False)
+    inventory_item_id: int = dataclasses.field(init=False)
+    created_at: datetime.datetime = dataclasses.field(init=False)
 
-    shipped_at: datetime = field(init=False)
-    delivered_at: datetime = field(init=False)
-    returned_at: datetime = field(init=False)
+    shipped_at: datetime.datetime = dataclasses.field(init=False)
+    delivered_at: datetime.datetime = dataclasses.field(init=False)
+    returned_at: datetime.datetime = dataclasses.field(init=False)
 
-    sale_price: float = field(init=False)
+    sale_price: float = dataclasses.field(init=False)
 
     # extras
-    event_type: str = field(init=False)
-    ip_address: str = field(init=False)
-    browser: str = field(init=False)
-    traffic_source: str = field(init=False)
-    session_id: str = field(init=False)
-    sequence_number: int = field(init=False)
-    uri: str = field(init=False)
-    is_sold: bool = field(init=False)
-    order: InitVar[Any] = None
+    event_type: str = dataclasses.field(init=False)
+    ip_address: str = dataclasses.field(init=False)
+    browser: str = dataclasses.field(init=False)
+    traffic_source: str = dataclasses.field(init=False)
+    session_id: str = dataclasses.field(init=False)
+    sequence_number: int = dataclasses.field(init=False)
+    uri: str = dataclasses.field(init=False)
+    is_sold: bool = dataclasses.field(init=False)
+    order: dataclasses.InitVar[typing.Any] = None
 
     def __post_init__(self, order=None):
         global inv_item_id
@@ -607,9 +618,8 @@ class Order_Item(DataUtil):
         self.user_id = order.user_id
         inv_item_id = inv_item_id + 1
         self.inventory_item_id = inv_item_id
-        # self.created_at = datetime.combine(order.created_at, datetime.min.time()) - timedelta(seconds=randrange(60)) #order purchased within 4 hours
-        self.created_at = order.created_at - timedelta(
-            seconds=randrange(14400)
+        self.created_at = order.created_at - datetime.timedelta(
+            seconds=random.randrange(FOUR_HOURS)
         )  # order purchased within 4 hours
 
         self.shipped_at = order.shipped_at
@@ -645,10 +655,10 @@ class Order_Item(DataUtil):
                 self.sequence_number = idx + 1
                 self.event_type = val
                 self.uri = generate_uri(val, product)
-                events.append(asdict(Events(order_item=self)))
+                events.append(dataclasses.asdict(Events(order_item=self)))
                 previous_created_at = self.created_at
-                self.created_at = previous_created_at + timedelta(
-                    seconds=randrange(180)
+                self.created_at = previous_created_at + datetime.timedelta(
+                    seconds=random.randrange(THREE_MINUTES)
                 )
         else:  # if multiple items
             sequence_num = 0  # track sequence num of purchase event
@@ -658,20 +668,20 @@ class Order_Item(DataUtil):
                     self.sequence_number = sequence_num
                     self.event_type = j
                     self.uri = generate_uri(j, product)
-                    events.append(asdict(Events(order_item=self)))
+                    events.append(dataclasses.asdict(Events(order_item=self)))
                     sequence_num = self.sequence_number
                     previous_created_at = self.created_at
-                    self.created_at = previous_created_at + timedelta(
-                        seconds=randrange(180)
+                    self.created_at = previous_created_at + datetime.timedelta(
+                        seconds=random.randrange(180)
                     )
             self.sequence_number = sequence_num + 1
-            self.created_at += timedelta(randrange(5))
+            self.created_at += datetime.timedelta(random.randrange(5))
             self.event_type = "purchase"
             self.uri = generate_uri("purchase", product)
-            events.append(asdict(Events(order_item=self)))
+            events.append(dataclasses.asdict(Events(order_item=self)))
 
         # sold inventory item
-        inventory_items.append(asdict(Inventory_Item(order_item=self)))
+        inventory_items.append(dataclasses.asdict(Inventory_Item(order_item=self)))
 
         # unsold inventory items
         num_of_items = self.random_item(
@@ -681,37 +691,37 @@ class Order_Item(DataUtil):
             self.is_sold = False
             inv_item_id += 1
             self.inventory_item_id = inv_item_id
-            inventory_items.append(asdict(Inventory_Item(order_item=self)))
+            inventory_items.append(dataclasses.asdict(Inventory_Item(order_item=self)))
 
 
-@dataclass
+@dataclasses.dataclass
 class Inventory_Item:
-    id: int = field(init=False)
-    product_id: int = field(init=False)
-    created_at: datetime = field(init=False)
-    sold_at: datetime = field(init=False)
-    cost: float = field(init=False)
-    product_category: str = field(init=False)
-    product_name: str = field(init=False)
-    product_brand: str = field(init=False)
-    product_retail_price: float = field(init=False)
-    product_department: str = field(init=False)
-    product_sku: str = field(init=False)
-    product_distribution_center_id: int = field(init=False)
-    order_item: InitVar[Any] = None
+    id: int = dataclasses.field(init=False)
+    product_id: int = dataclasses.field(init=False)
+    created_at: datetime.datetime = dataclasses.field(init=False)
+    sold_at: datetime.datetime = dataclasses.field(init=False)
+    cost: float = dataclasses.field(init=False)
+    product_category: str = dataclasses.field(init=False)
+    product_name: str = dataclasses.field(init=False)
+    product_brand: str = dataclasses.field(init=False)
+    product_retail_price: float = dataclasses.field(init=False)
+    product_department: str = dataclasses.field(init=False)
+    product_sku: str = dataclasses.field(init=False)
+    product_distribution_center_id: int = dataclasses.field(init=False)
+    order_item: dataclasses.InitVar[typing.Any] = None
 
     def __post_init__(self, order_item=None):
         self.id = order_item.inventory_item_id
         self.product_id = order_item.product_id
         if order_item.is_sold is True:
-            self.created_at = order_item.created_at - timedelta(
-                minutes=randrange(86400)
+            self.created_at = order_item.created_at - datetime.timedelta(
+                minutes=random.randrange(86400)
             )  # in inventory between 0 and 60 days
             self.sold_at = (
                 order_item.created_at
             )  # sold on the date/time the order_items was logged
         if order_item.is_sold is False:
-            self.created_at = created_at(datetime(2020, 1, 1))
+            self.created_at = created_at(datetime.datetime(2020, 1, 1))
             self.sold_at = None
         self.cost = product_by_id_dict[self.product_id]["cost"]
         self.product_category = product_by_id_dict[self.product_id]["category"]
@@ -728,27 +738,27 @@ class Inventory_Item:
         return f"{self.id}, {self.product_id}, {self.created_at}, {self.cost}, {self.product_category}, {self.product_name}, {self.product_brand}, {self.product_retail_price}, {self.product_department}, {self.product_sku}, {self.product_distribution_center_id}"
 
 
-@dataclass
+@dataclasses.dataclass
 class Ghost_Events(DataUtil):
-    id: int = field(init=False)
-    user_id: int = field(init=False)
-    sequence_number: int = field(init=False)
-    session_id: str = field(init=False)
-    created_at: datetime = field(init=False)
-    ip_address: str = field(init=False)
-    city: str = field(init=False)
-    state: str = field(init=False)
-    postal_code: str = field(init=False)
-    browser: str = field(init=False)
-    traffic_source: str = field(init=False)
-    uri: str = field(init=False)
-    event_type: str = field(init=False)
+    id: int = dataclasses.field(init=False)
+    user_id: int = dataclasses.field(init=False)
+    sequence_number: int = dataclasses.field(init=False)
+    session_id: str = dataclasses.field(init=False)
+    created_at: datetime = dataclasses.field(init=False)
+    ip_address: str = dataclasses.field(init=False)
+    city: str = dataclasses.field(init=False)
+    state: str = dataclasses.field(init=False)
+    postal_code: str = dataclasses.field(init=False)
+    browser: str = dataclasses.field(init=False)
+    traffic_source: str = dataclasses.field(init=False)
+    uri: str = dataclasses.field(init=False)
+    event_type: str = dataclasses.field(init=False)
 
     def __post_init__(self):
         address = get_address()
         self.sequence_number = 0
         self.user_id = None
-        self.created_at = created_at(datetime(2019, 1, 1))
+        self.created_at = created_at(datetime.datetime(2019, 1, 1))
         self.session_id = str(uuid.uuid4())
         self.ip_address = fake.ipv4()
         self.city = address["city"]
@@ -792,8 +802,10 @@ class Ghost_Events(DataUtil):
             self.event_type = i
             self.uri = generate_uri(i, product)
             self.sequence_number += 1
-            self.created_at = self.created_at + timedelta(minutes=randrange(30))
-            events.append(asdict(self))
+            self.created_at = self.created_at + datetime.timedelta(
+                minutes=random.randrange(THIRTY_MINUTES)
+            )
+            events.append(dataclasses.asdict(self))
 
     def __str__(self):
         return f"{self.created_at}, {self.product_id}, {self.ip_address}, {self.city}, {self.state}, {self.postal_code}"
@@ -806,7 +818,3 @@ if __name__ == "__main__":
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
         extraneous_headers=json.loads(os.environ["EXTRANEOUS_HEADERS"]),
     )
-
-    # main(target_gcs_bucket="us-central1-thelook-faker-d1ecf43a-bucket")
-
-# ["event_type", "ip_address", "browser", "traffic_source", "session_id", "sequence_number", "uri", "is_sold"]
