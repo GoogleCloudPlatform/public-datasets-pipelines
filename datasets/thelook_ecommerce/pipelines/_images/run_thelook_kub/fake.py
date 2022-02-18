@@ -12,8 +12,9 @@ import typing
 import uuid
 
 import faker
-from google.cloud import storage
 import numpy as np
+from google.cloud import storage
+
 
 fake = faker.Faker()
 # final datasets

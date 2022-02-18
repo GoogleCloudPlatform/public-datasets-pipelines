@@ -12,10 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
+from airflow import DAG
 from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
 from airflow.providers.google.cloud.transfers import gcs_to_bigquery
-from airflow import DAG
 
 
 default_args = {
