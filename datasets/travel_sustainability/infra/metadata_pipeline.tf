@@ -16,15 +16,10 @@
 
 
 resource "google_bigquery_table" "travel_sustainability_metadata" {
-  project    = var.project_id
-  dataset_id = "travel_sustainability"
-  table_id   = "metadata"
-
+  project     = var.project_id
+  dataset_id  = "travel_sustainability"
+  table_id    = "metadata"
   description = "Metadata about the dataset"
-
-
-
-
   depends_on = [
     google_bigquery_dataset.travel_sustainability
   ]
