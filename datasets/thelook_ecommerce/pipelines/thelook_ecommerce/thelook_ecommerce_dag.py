@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 from airflow import DAG
 from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
 from airflow.providers.google.cloud.transfers import gcs_to_bigquery
-
 
 default_args = {
     "owner": "Google",
@@ -42,7 +42,7 @@ with DAG(
         image_pull_policy="Always",
         image="{{ var.json.thelook_ecommerce.docker_image }}",
         env_vars={
-            "NUM_OF_USERS": "100",
+            "NUM_OF_USERS": "15000",
             "TARGET_GCS_BUCKET": "{{ var.json.thelook_ecommerce.composer_bucket }}",
             "EXTRANEOUS_HEADERS": '["event_type", "ip_address", "browser", "traffic_source", "session_id", "sequence_number", "uri", "is_sold"]',
             "GOOGLE_APPLICATION_CREDENTIALS": "{{ var.json.thelook_ecommerce.google_application_credentials }}",

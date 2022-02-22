@@ -15,7 +15,6 @@ import faker
 import numpy as np
 from google.cloud import storage
 
-
 fake = faker.Faker()
 # final datasets
 orders = list()
