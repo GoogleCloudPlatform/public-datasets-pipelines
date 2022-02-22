@@ -16,15 +16,10 @@
 
 
 resource "google_bigquery_table" "travel_sustainability_flight_emissions" {
-  project    = var.project_id
-  dataset_id = "travel_sustainability"
-  table_id   = "flight_emissions"
-
+  project     = var.project_id
+  dataset_id  = "travel_sustainability"
+  table_id    = "flight_emissions"
   description = "Flight emissions data"
-
-
-
-
   depends_on = [
     google_bigquery_dataset.travel_sustainability
   ]
