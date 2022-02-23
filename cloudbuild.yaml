@@ -41,7 +41,7 @@ steps:
         --location us-central1 --format='value(config.dagGcsPrefix)' | sed -e 's/gs:\/\/*//' -e 's/\/dags*//' > .generated/composer_bucket.txt
 
   - id: 'Validate Terraform'
-    name: 'hashicorp/terraform:1.0.9'
+    name: 'hashicorp/terraform:1.0.10'
     entrypoint: 'sh'
     env:
       - 'TF_IN_AUTOMATION=1'
