@@ -23,11 +23,7 @@ import zipfile as zip
 
 import pandas as pd
 import requests
-<<<<<<< HEAD
 from google.cloud import bigquery, storage
-=======
-from google.cloud import storage
->>>>>>> upstream/main
 
 
 def main(
@@ -35,7 +31,6 @@ def main(
     start_year: int,
     source_file: pathlib.Path,
     target_file: pathlib.Path,
-<<<<<<< HEAD
     project_id: str,
     dataset_id: str,
     table_id: str,
@@ -48,17 +43,6 @@ def main(
     output_headers: typing.List[str],
 ) -> None:
     logging.info("Pipeline process started")
-=======
-    chunksize: str,
-    target_gcs_bucket: str,
-    target_gcs_path: str,
-    data_names: typing.List[str],
-    data_dtypes: dict,
-) -> None:
-
-    logging.info("Pipeline process started")
-
->>>>>>> upstream/main
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
     dest_path = os.path.split(source_file)[0]
     end_year = datetime.datetime.today().year - 2
@@ -72,7 +56,6 @@ def main(
     )
     file_group_wildcard = os.path.split(source_url)[1].replace("_YEAR_ITERATOR.zip", "")
     source = concatenate_files(source_file, dest_path, file_group_wildcard, False, ",")
-<<<<<<< HEAD
     process_source_file(source, target_file, input_headers, data_dtypes, output_headers, int(chunksize))
     if os.path.exists(target_file):
         upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
@@ -107,16 +90,6 @@ def load_data_to_bq(
     )
 
 
-=======
-
-    process_source_file(source, target_file, data_names, data_dtypes, int(chunksize))
-
-    upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
-
-    logging.info("Pipeline process completed")
-
-
->>>>>>> upstream/main
 def download_url_files_from_year_range(
     source_url: str,
     start_year: int,
@@ -124,7 +97,6 @@ def download_url_files_from_year_range(
     dest_path: str,
     remove_file: bool = False,
     continue_on_error: bool = False,
-<<<<<<< HEAD
 ) -> None:
     for yr in range(start_year, end_year + 1, 1):
         src_url = source_url.replace("YEAR_ITERATOR", str(yr))
@@ -134,21 +106,10 @@ def download_url_files_from_year_range(
             unpack_file(dest_file, dest_path, "zip")
             if remove_file:
                 os.remove(dest_file)
-=======
-):
-    for yr in range(start_year, end_year + 1, 1):
-        src_url = source_url.replace("YEAR_ITERATOR", str(yr))
-        dest_file = dest_path + "/source_" + os.path.split(src_url)[1]
-        download_file_http(src_url, dest_file, continue_on_error)
-        unpack_file(dest_file, dest_path, "zip")
-        if remove_file:
-            os.remove(dest_file)
->>>>>>> upstream/main
 
 
 def download_file_http(
     source_url: str, source_file: pathlib.Path, continue_on_error: bool = False
-<<<<<<< HEAD
 ) -> bool:
     logging.info(f"Downloading {source_url} to {source_file}")
     try:
@@ -164,15 +125,6 @@ def download_file_http(
                 for chunk in src_file:
                     f.write(chunk)
             return True
-=======
-) -> None:
-    logging.info(f"Downloading {source_url} to {source_file}")
-    try:
-        src_file = requests.get(source_url, stream=True)
-        with open(source_file, "wb") as f:
-            for chunk in src_file:
-                f.write(chunk)
->>>>>>> upstream/main
     except requests.exceptions.RequestException as e:
         if e == requests.exceptions.HTTPError:
             err_msg = "A HTTP error occurred."
@@ -184,14 +136,8 @@ def download_file_http(
             logging.info(f"{err_msg} Unable to obtain {source_url}")
             raise SystemExit(e)
         else:
-<<<<<<< HEAD
             logging.info(f"{err_msg} Unable to obtain {source_url}.")
         return False
-=======
-            logging.info(
-                f"{err_msg} Unable to obtain {source_url}. Continuing execution."
-            )
->>>>>>> upstream/main
 
 
 def unpack_file(infile: str, dest_path: str, compression_type: str = "zip") -> None:
@@ -259,7 +205,6 @@ def concatenate_files(
     return target_file_path
 
 
-<<<<<<< HEAD
 def create_dest_table(
     project_id: str,
     dataset_id: str,
@@ -323,10 +268,6 @@ def process_source_file(
     input_headers: list,
     dtypes: dict,
     chunksize: str
-=======
-def process_source_file(
-    source_file: str, target_file: str, names: list, dtypes: dict, chunksize: int
->>>>>>> upstream/main
 ) -> None:
     logging.info(f"Opening batch file {source_file}")
     with pd.read_csv(
@@ -334,17 +275,10 @@ def process_source_file(
         engine="python",
         encoding="utf-8",
         quotechar='"',  # string separator, typically double-quotes
-<<<<<<< HEAD
         chunksize=int(chunksize),  # size of batch data, in no. of records
         sep=",",  # data column separator, typically ","
         header=None,  # use when the data file does not contain a header
         names=input_headers,
-=======
-        chunksize=chunksize,  # size of batch data, in no. of records
-        sep=",",  # data column separator, typically ","
-        header=None,  # use when the data file does not contain a header
-        names=names,
->>>>>>> upstream/main
         dtype=dtypes,
         keep_default_na=True,
         na_values=[" "],
@@ -355,15 +289,11 @@ def process_source_file(
             )
             df = pd.DataFrame()
             df = pd.concat([df, chunk])
-<<<<<<< HEAD
             process_chunk(df,
                           target_file_batch,
                           target_file,
                           (not chunk_number == 0)
             )
-=======
-            process_chunk(df, target_file_batch, target_file, (not chunk_number == 0))
->>>>>>> upstream/main
 
 
 def process_chunk(
@@ -451,7 +381,6 @@ if __name__ == "__main__":
 
     main(
         source_url=os.environ["SOURCE_URL"],
-<<<<<<< HEAD
         start_year=int(os.environ["START_YEAR"]),
         source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
@@ -465,14 +394,4 @@ if __name__ == "__main__":
         input_headers=json.loads(os.environ["INPUT_CSV_HEADERS"]),
         data_dtypes=json.loads(os.environ["DATA_DTYPES"]),
         output_headers=json.loads(os.environ["OUTPUT_CSV_HEADERS"]),
-=======
-        source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
-        target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
-        start_year=int(os.environ["START_YEAR"]),
-        chunksize=os.environ["CHUNKSIZE"],
-        target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
-        target_gcs_path=os.environ["TARGET_GCS_PATH"],
-        data_names=json.loads(os.environ["DATA_NAMES"]),
-        data_dtypes=json.loads(os.environ["DATA_DTYPES"]),
->>>>>>> upstream/main
     )

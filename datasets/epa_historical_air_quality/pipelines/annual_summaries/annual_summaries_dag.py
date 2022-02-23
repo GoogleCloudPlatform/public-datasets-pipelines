@@ -14,8 +14,9 @@
 
 
 from airflow import DAG
-from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.operators import kubernetes_engine
 from airflow.providers.google.cloud.transfers import gcs_to_bigquery
+
 
 default_args = {
     "owner": "Google",
@@ -32,13 +33,34 @@ with DAG(
     catchup=False,
     default_view="graph",
 ) as dag:
+    create_cluster = kubernetes_engine.GKECreateClusterOperator(
+        task_id="create_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        body={
+            "name": "epa-hist-air-quality--annual-summaries",
+            "initial_node_count": 1,
+            "network": "{{ var.value.vpc_network }}",
+            "node_config": {
+                "machine_type": "e2-standard-8",
+                "oauth_scopes": [
+                    "https://www.googleapis.com/auth/devstorage.read_write",
+                    "https://www.googleapis.com/auth/cloud-platform",
+                ],
+            },
+        },
+    )
 
     # Run CSV transform within kubernetes pod
-    transform_csv = kubernetes_pod.KubernetesPodOperator(
-        task_id="transform_csv",
-        name="annual_summaries",
+    transform_and_load_csv = kubernetes_engine.GKEStartPodOperator(
+        task_id="transform_and_load_csv",
+        startup_timeout_seconds=600,
+        name="load_annual_summaries",
         namespace="composer",
         service_account_name="datasets",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="epa-air-qual--annual-summaries",
         image_pull_policy="Always",
         image="{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -46,16 +68,16 @@ with DAG(
             "START_YEAR": "1980",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
-            "CHUNKSIZE": "750000",
+            "PROJECT_ID": "{{ var.value.gcp_project }}",
+            "DATASET_ID": "epa_historical_air_quality",
+            "TABLE_ID": "{{ var.json.epa_historical_air_quality.container_registry.table_id.annual_summaries }}",
+            "CHUNKSIZE": "1500000",
+            "SCHEMA_PATH": "{{ var.json.new_york_taxi_trips.container_registry.schema_path.annual_summaries }}",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/epa_historical_air_quality/annual_summaries/files/data_output.csv",
-            "DATA_NAMES": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "sample_duration",\n  "pollutant_standard", "metric_used", "method_name", "year", "units_of_measure",\n  "event_type", "observation_count", "observation_percent", "completeness_indicator", "valid_day_count",\n  "required_day_count", "exceptional_data_count", "null_data_count", "primary_exceedance_count", "secondary_exceedance_count",\n  "certification_indicator", "num_obs_below_mdl", "arithmetic_mean", "arithmetic_standard_dev", "first_max_value",\n  "first_max_datetime", "second_max_value", "second_max_datetime", "third_max_value", "third_max_datetime",\n  "fourth_max_value", "fourth_max_datetime", "first_max_non_overlapping_value", "first_no_max_datetime", "second_max_non_overlapping_value",\n  "second_no_max_datetime", "ninety_nine_percentile", "ninety_eight_percentile", "ninety_five_percentile", "ninety_percentile",\n  "seventy_five_percentile", "fifty_percentile", "ten_percentile", "local_site_name", "address",\n  "state_name", "county_name", "city_name", "cbsa_name", "date_of_last_change"]',
+            "INPUT_CSV_HEADERS": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "sample_duration",\n  "pollutant_standard", "metric_used", "method_name", "year", "units_of_measure",\n  "event_type", "observation_count", "observation_percent", "completeness_indicator", "valid_day_count",\n  "required_day_count", "exceptional_data_count", "null_data_count", "primary_exceedance_count", "secondary_exceedance_count",\n  "certification_indicator", "num_obs_below_mdl", "arithmetic_mean", "arithmetic_standard_dev", "first_max_value",\n  "first_max_datetime", "second_max_value", "second_max_datetime", "third_max_value", "third_max_datetime",\n  "fourth_max_value", "fourth_max_datetime", "first_max_non_overlapping_value", "first_no_max_datetime", "second_max_non_overlapping_value",\n  "second_no_max_datetime", "ninety_nine_percentile", "ninety_eight_percentile", "ninety_five_percentile", "ninety_percentile",\n  "seventy_five_percentile", "fifty_percentile", "ten_percentile", "local_site_name", "address",\n  "state_name", "county_name", "city_name", "cbsa_name", "date_of_last_change"]',
             "DATA_DTYPES": '{ "state_code": "str", "county_code": "str", "site_num": "str", "parameter_code": "int32", "poc": "int32",\n  "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "sample_duration": "str",\n  "pollutant_standard": "str", "metric_used": "str", "method_name": "str", "year": "int32", "units_of_measure": "str",\n  "event_type": "str", "observation_count": "int32", "observation_percent": "float64", "completeness_indicator": "str", "valid_day_count": "int32",\n  "required_day_count": "int32", "exceptional_data_count": "int32", "null_data_count": "int32", "primary_exceedance_count": "str", "secondary_exceedance_count": "str",\n  "certification_indicator": "str", "num_obs_below_mdl": "int32", "arithmetic_mean": "float64", "arithmetic_standard_dev": "float64", "first_max_value": "float64",\n  "first_max_datetime": "datetime64[ns]", "second_max_value": "float64", "second_max_datetime": "datetime64[ns]", "third_max_value": "float64", "third_max_datetime": "datetime64[ns]",\n  "fourth_max_value": "float64", "fourth_max_datetime": "datetime64[ns]", "first_max_non_overlapping_value": "float64", "first_no_max_datetime": "datetime64[ns]", "second_max_non_overlapping_value": "float64",\n  "second_no_max_datetime": "datetime64[ns]", "ninety_nine_percentile": "float64", "ninety_eight_percentile": "float64", "ninety_five_percentile": "float64", "ninety_percentile": "float64",\n  "seventy_five_percentile": "float64", "fifty_percentile": "float64", "ten_percentile": "float64", "local_site_name": "str", "address": "str",\n  "state_name": "str", "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "datetime64[ns]" }',
-        },
-        resources={
-            "request_memory": "8G",
-            "request_cpu": "3",
-            "request_ephemeral_storage": "5G",
+            "OUTPUT_CSV_HEADERS": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "sample_duration",\n  "pollutant_standard", "metric_used", "method_name", "year", "units_of_measure",\n  "event_type", "observation_count", "observation_percent", "completeness_indicator", "valid_day_count",\n  "required_day_count", "exceptional_data_count", "null_data_count", "primary_exceedance_count", "secondary_exceedance_count",\n  "certification_indicator", "num_obs_below_mdl", "arithmetic_mean", "arithmetic_standard_dev", "first_max_value",\n  "first_max_datetime", "second_max_value", "second_max_datetime", "third_max_value", "third_max_datetime",\n  "fourth_max_value", "fourth_max_datetime", "first_max_non_overlapping_value", "first_no_max_datetime", "second_max_non_overlapping_value",\n  "second_no_max_datetime", "ninety_nine_percentile", "ninety_eight_percentile", "ninety_five_percentile", "ninety_percentile",\n  "seventy_five_percentile", "fifty_percentile", "ten_percentile", "local_site_name", "address",\n  "state_name", "county_name", "city_name", "cbsa_name", "date_of_last_change"]',
         },
     )
 
@@ -404,5 +426,11 @@ with DAG(
             },
         ],
     )
+    delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
+        task_id="delete_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        name="epa-air-qual--annual-summaries",
+    )
 
-    transform_csv >> load_to_bq
+    transform_and_load_csv

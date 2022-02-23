@@ -16,15 +16,10 @@
 
 
 resource "google_bigquery_table" "epa_historical_air_quality_so2_daily_summary" {
-  project    = var.project_id
-  dataset_id = "epa_historical_air_quality"
-  table_id   = "so2_daily_summary"
-
+  project     = var.project_id
+  dataset_id  = "epa_historical_air_quality"
+  table_id    = "so2_daily_summary"
   description = "epaspc"
-
-
-
-
   depends_on = [
     google_bigquery_dataset.epa_historical_air_quality
   ]

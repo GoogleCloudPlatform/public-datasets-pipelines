@@ -16,15 +16,10 @@
 
 
 resource "google_bigquery_table" "epa_historical_air_quality_annual_summaries" {
-  project    = var.project_id
-  dataset_id = "epa_historical_air_quality"
-  table_id   = "annual_summaries"
-
+  project     = var.project_id
+  dataset_id  = "epa_historical_air_quality"
+  table_id    = "annual_summaries"
   description = "epaspc"
-
-
-
-
   depends_on = [
     google_bigquery_dataset.epa_historical_air_quality
   ]

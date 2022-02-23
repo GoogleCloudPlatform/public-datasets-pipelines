@@ -33,7 +33,6 @@ dag:
     default_view: graph
 
   tasks:
-<<<<<<< HEAD
     - operator: "GKECreateClusterOperator"
       args:
         task_id: "create_cluster"
@@ -59,19 +58,6 @@ dag:
         project_id: "{{ var.value.gcp_project }}"
         location: "us-central1-c"
         cluster_name: epa-air-qual--annual-summaries
-=======
-
-    - operator: "KubernetesPodOperator"
-      description: "Run CSV transform within kubernetes pod"
-
-      args:
-
-        task_id: "transform_csv"
-        name: "annual_summaries"
-        namespace: "composer"
-        service_account_name: "datasets"
-
->>>>>>> upstream/main
         image_pull_policy: "Always"
         image: "{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -79,7 +65,6 @@ dag:
           START_YEAR: "1980"
           SOURCE_FILE: "files/data.csv"
           TARGET_FILE: "files/data_output.csv"
-<<<<<<< HEAD
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "epa_historical_air_quality"
           TABLE_ID: "{{ var.json.epa_historical_air_quality.container_registry.table_id.annual_summaries }}"
@@ -88,12 +73,6 @@ dag:
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/epa_historical_air_quality/annual_summaries/files/data_output.csv"
           INPUT_CSV_HEADERS: >-
-=======
-          CHUNKSIZE: "750000"
-          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
-          TARGET_GCS_PATH: "data/epa_historical_air_quality/annual_summaries/files/data_output.csv"
-          DATA_NAMES: >-
->>>>>>> upstream/main
             [ "state_code", "county_code", "site_num", "parameter_code", "poc",
               "latitude", "longitude", "datum", "parameter_name", "sample_duration",
               "pollutant_standard", "metric_used", "method_name", "year", "units_of_measure",
@@ -117,7 +96,6 @@ dag:
               "second_no_max_datetime": "datetime64[ns]", "ninety_nine_percentile": "float64", "ninety_eight_percentile": "float64", "ninety_five_percentile": "float64", "ninety_percentile": "float64",
               "seventy_five_percentile": "float64", "fifty_percentile": "float64", "ten_percentile": "float64", "local_site_name": "str", "address": "str",
               "state_name": "str", "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "datetime64[ns]" }
-<<<<<<< HEAD
           OUTPUT_CSV_HEADERS: >-
             [ "state_code", "county_code", "site_num", "parameter_code", "poc",
               "latitude", "longitude", "datum", "parameter_name", "sample_duration",
@@ -132,16 +110,6 @@ dag:
               "state_name", "county_name", "city_name", "cbsa_name", "date_of_last_change"]
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
-=======
-        resources:
-          request_memory: "8G"
-          request_cpu: "3"
-          request_ephemeral_storage: "5G"
-
-    - operator: "GoogleCloudStorageToBigQueryOperator"
-      description: "Task to load CSV data to a BigQuery table"
-
->>>>>>> upstream/main
       args:
         task_id: "load_to_bq"
         bucket: "{{ var.value.composer_bucket }}"
@@ -372,7 +340,6 @@ dag:
             "type": "TIMESTAMP"
             "description": "The date the last time any numeric values in this record were updated in the AQS data system."
             "mode": "NULLABLE"
-<<<<<<< HEAD
     - operator: "GKEDeleteClusterOperator"
       args:
         task_id: "delete_cluster"
@@ -381,8 +348,3 @@ dag:
         name: epa-air-qual--annual-summaries
   graph_paths:
     - "transform_and_load_csv"
-=======
-
-  graph_paths:
-    - "transform_csv >> load_to_bq"
->>>>>>> upstream/main
