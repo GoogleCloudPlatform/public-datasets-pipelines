@@ -28,5 +28,10 @@ tmp
 
 # ignore nested Pipfiles, JSON, and tfvars files
 /datasets/**/Pipfile
-/datasets/**/*.json
+/datasets/**/*_variables.json
 /datasets/**/*.tfvars
+
+# ignore temp folders
+.tmp
+
+.DS_Store
