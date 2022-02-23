@@ -46,12 +46,14 @@ def dataset_path():
         try:
             yield pathlib.Path(dir_path)
         finally:
-            shutil.rmtree(dir_path)
+            shutil.rmtree(dir_path, ignore_errors=True)
 
 
 @pytest.fixture
 def pipeline_path(dataset_path, suffix="_pipeline"):
-    with tempfile.TemporaryDirectory(dir=dataset_path, suffix=suffix) as dir_path:
+    pipelines_dir = dataset_path / "pipelines"
+    pipelines_dir.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(dir=pipelines_dir, suffix=suffix) as dir_path:
         try:
             yield pathlib.Path(dir_path)
         finally:
@@ -119,17 +121,17 @@ def env() -> str:
 def set_dataset_ids_in_config_files(
     dataset_path: pathlib.Path, pipeline_path: pathlib.Path
 ):
-    shutil.copyfile(FILE_PATHS["dataset"], dataset_path / "dataset.yaml")
+    shutil.copyfile(FILE_PATHS["dataset"], dataset_path / "pipelines" / "dataset.yaml")
     shutil.copyfile(FILE_PATHS["pipeline"], pipeline_path / "pipeline.yaml")
 
-    dataset_config = yaml.load(dataset_path / "dataset.yaml")
+    dataset_config = yaml.load(dataset_path / "pipelines" / "dataset.yaml")
     dataset_config["dataset"]["name"] = dataset_path.name
 
     for resource in dataset_config["resources"]:
         if resource["type"] == "bigquery_dataset":
             resource["dataset_id"] = dataset_path.name
 
-    yaml.dump(dataset_config, dataset_path / "dataset.yaml")
+    yaml.dump(dataset_config, dataset_path / "pipelines" / "dataset.yaml")
 
     pipeline_config = yaml.load(pipeline_path / "pipeline.yaml")
     for resource in pipeline_config["resources"]:
@@ -169,8 +171,8 @@ def test_main_generates_tf_files(
     )
 
     for path_prefix in (
-        ENV_DATASETS_PATH / dataset_path.name / "_terraform",
-        generate_terraform.DATASETS_PATH / dataset_path.name / "_terraform",
+        ENV_DATASETS_PATH / dataset_path.name / "infra",
+        generate_terraform.DATASETS_PATH / dataset_path.name / "infra",
     ):
         assert (path_prefix / "provider.tf").exists()
         assert (path_prefix / f"{dataset_path.name}_dataset.tf").exists()
@@ -180,24 +182,19 @@ def test_main_generates_tf_files(
     assert not (
         generate_terraform.DATASETS_PATH
         / dataset_path.name
-        / "_terraform"
+        / "infra"
         / "terraform.tfvars"
     ).exists()
 
     assert (
-        ENV_DATASETS_PATH / dataset_path.name / "_terraform" / "terraform.tfvars"
+        ENV_DATASETS_PATH / dataset_path.name / "infra" / "terraform.tfvars"
     ).exists()
 
     assert not (
-        generate_terraform.DATASETS_PATH
-        / dataset_path.name
-        / "_terraform"
-        / "backend.tf"
+        generate_terraform.DATASETS_PATH / dataset_path.name / "infra" / "backend.tf"
     ).exists()
 
-    assert (
-        ENV_DATASETS_PATH / dataset_path.name / "_terraform" / "backend.tf"
-    ).exists()
+    assert (ENV_DATASETS_PATH / dataset_path.name / "infra" / "backend.tf").exists()
 
 
 def test_main_without_tf_remote_state_generates_tf_files_except_backend_tf(
@@ -223,8 +220,8 @@ def test_main_without_tf_remote_state_generates_tf_files_except_backend_tf(
     )
 
     for path_prefix in (
-        ENV_DATASETS_PATH / dataset_path.name / "_terraform",
-        generate_terraform.DATASETS_PATH / dataset_path.name / "_terraform",
+        ENV_DATASETS_PATH / dataset_path.name / "infra",
+        generate_terraform.DATASETS_PATH / dataset_path.name / "infra",
     ):
         assert (path_prefix / "provider.tf").exists()
         assert (path_prefix / f"{dataset_path.name}_dataset.tf").exists()
@@ -235,12 +232,12 @@ def test_main_without_tf_remote_state_generates_tf_files_except_backend_tf(
     assert not (
         generate_terraform.DATASETS_PATH
         / dataset_path.name
-        / "_terraform"
+        / "infra"
         / "terraform.tfvars"
     ).exists()
 
     assert (
-        ENV_DATASETS_PATH / dataset_path.name / "_terraform" / "terraform.tfvars"
+        ENV_DATASETS_PATH / dataset_path.name / "infra" / "terraform.tfvars"
     ).exists()
 
 
@@ -261,7 +258,7 @@ def test_main_with_multiple_pipelines(
 ):
     assert pipeline_path.name != pipeline_path_2.name
 
-    shutil.copyfile(FILE_PATHS["dataset"], dataset_path / "dataset.yaml")
+    shutil.copyfile(FILE_PATHS["dataset"], dataset_path / "pipelines" / "dataset.yaml")
     shutil.copyfile(FILE_PATHS["pipeline"], pipeline_path / "pipeline.yaml")
     shutil.copyfile(FILE_PATHS["pipeline"], pipeline_path_2 / "pipeline.yaml")
 
@@ -277,8 +274,8 @@ def test_main_with_multiple_pipelines(
     )
 
     for path_prefix in (
-        ENV_DATASETS_PATH / dataset_path.name / "_terraform",
-        generate_terraform.DATASETS_PATH / dataset_path.name / "_terraform",
+        ENV_DATASETS_PATH / dataset_path.name / "infra",
+        generate_terraform.DATASETS_PATH / dataset_path.name / "infra",
     ):
         assert (path_prefix / "provider.tf").exists()
         assert (path_prefix / f"{dataset_path.name}_dataset.tf").exists()
@@ -289,24 +286,19 @@ def test_main_with_multiple_pipelines(
     assert not (
         generate_terraform.DATASETS_PATH
         / dataset_path.name
-        / "_terraform"
+        / "infra"
         / "terraform.tfvars"
     ).exists()
 
     assert (
-        ENV_DATASETS_PATH / dataset_path.name / "_terraform" / "terraform.tfvars"
+        ENV_DATASETS_PATH / dataset_path.name / "infra" / "terraform.tfvars"
     ).exists()
 
     assert not (
-        generate_terraform.DATASETS_PATH
-        / dataset_path.name
-        / "_terraform"
-        / "backend.tf"
+        generate_terraform.DATASETS_PATH / dataset_path.name / "infra" / "backend.tf"
     ).exists()
 
-    assert (
-        ENV_DATASETS_PATH / dataset_path.name / "_terraform" / "backend.tf"
-    ).exists()
+    assert (ENV_DATASETS_PATH / dataset_path.name / "infra" / "backend.tf").exists()
 
 
 def test_main_with_multiple_bq_dataset_ids(
@@ -324,11 +316,11 @@ def test_main_with_multiple_bq_dataset_ids(
     another_dataset_id = "another_dataset"
     assert another_dataset_id != dataset_path.name
 
-    dataset_config = yaml.load(dataset_path / "dataset.yaml")
+    dataset_config = yaml.load(dataset_path / "pipelines" / "dataset.yaml")
     dataset_config["resources"].append(
         {"type": "bigquery_dataset", "dataset_id": another_dataset_id}
     )
-    yaml.dump(dataset_config, dataset_path / "dataset.yaml")
+    yaml.dump(dataset_config, dataset_path / "pipelines" / "dataset.yaml")
 
     # Then, add a BQ table under the additional BQ dataset
     pipeline_config = yaml.load(pipeline_path / "pipeline.yaml")
@@ -353,8 +345,8 @@ def test_main_with_multiple_bq_dataset_ids(
     )
 
     for path_prefix in (
-        ENV_DATASETS_PATH / dataset_path.name / "_terraform",
-        generate_terraform.DATASETS_PATH / dataset_path.name / "_terraform",
+        ENV_DATASETS_PATH / dataset_path.name / "infra",
+        generate_terraform.DATASETS_PATH / dataset_path.name / "infra",
     ):
         assert (path_prefix / f"{dataset_path.name}_dataset.tf").exists()
         assert (path_prefix / f"{pipeline_path.name}_pipeline.tf").exists()
@@ -365,8 +357,8 @@ def test_main_with_multiple_bq_dataset_ids(
     bq_dataset_tf_string = re.compile(regexp, flags=re.MULTILINE | re.DOTALL)
 
     for path_prefix in (
-        ENV_DATASETS_PATH / dataset_path.name / "_terraform",
-        generate_terraform.DATASETS_PATH / dataset_path.name / "_terraform",
+        ENV_DATASETS_PATH / dataset_path.name / "infra",
+        generate_terraform.DATASETS_PATH / dataset_path.name / "infra",
     ):
         matches = bq_dataset_tf_string.findall(
             (path_prefix / f"{dataset_path.name}_dataset.tf").read_text()
@@ -395,7 +387,8 @@ def test_dataset_without_any_pipelines(
     tf_state_bucket,
     tf_state_prefix,
 ):
-    shutil.copyfile(FILE_PATHS["dataset"], dataset_path / "dataset.yaml")
+    (dataset_path / "pipelines").mkdir(parents=True)
+    shutil.copyfile(FILE_PATHS["dataset"], dataset_path / "pipelines" / "dataset.yaml")
 
     generate_terraform.main(
         dataset_path.name,
@@ -409,8 +402,8 @@ def test_dataset_without_any_pipelines(
     )
 
     for path_prefix in (
-        ENV_DATASETS_PATH / dataset_path.name / "_terraform",
-        generate_terraform.DATASETS_PATH / dataset_path.name / "_terraform",
+        ENV_DATASETS_PATH / dataset_path.name / "infra",
+        generate_terraform.DATASETS_PATH / dataset_path.name / "infra",
     ):
         assert (path_prefix / "provider.tf").exists()
         assert (path_prefix / f"{dataset_path.name}_dataset.tf").exists()
@@ -418,24 +411,19 @@ def test_dataset_without_any_pipelines(
     assert not (
         generate_terraform.DATASETS_PATH
         / dataset_path.name
-        / "_terraform"
+        / "infra"
         / "terraform.tfvars"
     ).exists()
 
     assert (
-        ENV_DATASETS_PATH / dataset_path.name / "_terraform" / "terraform.tfvars"
+        ENV_DATASETS_PATH / dataset_path.name / "infra" / "terraform.tfvars"
     ).exists()
 
     assert not (
-        generate_terraform.DATASETS_PATH
-        / dataset_path.name
-        / "_terraform"
-        / "backend.tf"
+        generate_terraform.DATASETS_PATH / dataset_path.name / "infra" / "backend.tf"
     ).exists()
 
-    assert (
-        ENV_DATASETS_PATH / dataset_path.name / "_terraform" / "backend.tf"
-    ).exists()
+    assert (ENV_DATASETS_PATH / dataset_path.name / "infra" / "backend.tf").exists()
 
 
 def test_dataset_path_does_not_exist(
@@ -489,8 +477,8 @@ def test_generated_tf_files_contain_license_headers(
     ).read_text()
 
     for path_prefix in (
-        ENV_DATASETS_PATH / dataset_path.name / "_terraform",
-        generate_terraform.DATASETS_PATH / dataset_path.name / "_terraform",
+        ENV_DATASETS_PATH / dataset_path.name / "infra",
+        generate_terraform.DATASETS_PATH / dataset_path.name / "infra",
     ):
         assert (path_prefix / "provider.tf").read_text().count(license_header) == 1
         assert (path_prefix / f"{dataset_path.name}_dataset.tf").read_text().count(
@@ -502,11 +490,11 @@ def test_generated_tf_files_contain_license_headers(
         assert (path_prefix / "variables.tf").read_text().count(license_header) == 1
 
     assert (
-        ENV_DATASETS_PATH / dataset_path.name / "_terraform" / "terraform.tfvars"
+        ENV_DATASETS_PATH / dataset_path.name / "infra" / "terraform.tfvars"
     ).read_text().count(license_header) == 1
 
     assert (
-        ENV_DATASETS_PATH / dataset_path.name / "_terraform" / "backend.tf"
+        ENV_DATASETS_PATH / dataset_path.name / "infra" / "backend.tf"
     ).read_text().count(license_header) == 1
 
 
@@ -532,7 +520,7 @@ def test_dataset_tf_file_contains_description_when_specified(
         None,
     )
 
-    config = yaml.load(open(dataset_path / "dataset.yaml"))
+    config = yaml.load(open(dataset_path / "pipelines" / "dataset.yaml"))
     bq_dataset = next(
         (r for r in config["resources"] if r["type"] == "bigquery_dataset"), None
     )
@@ -545,8 +533,8 @@ def test_dataset_tf_file_contains_description_when_specified(
     bq_dataset_tf_string = re.compile(regexp, flags=re.MULTILINE | re.DOTALL)
 
     for path_prefix in (
-        ENV_DATASETS_PATH / dataset_path.name / "_terraform",
-        generate_terraform.DATASETS_PATH / dataset_path.name / "_terraform",
+        ENV_DATASETS_PATH / dataset_path.name / "infra",
+        generate_terraform.DATASETS_PATH / dataset_path.name / "infra",
     ):
         result = bq_dataset_tf_string.search(
             (path_prefix / f"{dataset_path.name}_dataset.tf").read_text()
@@ -565,10 +553,10 @@ def test_bq_dataset_can_have_a_description_with_newlines_and_quotes(
     impersonating_acct,
     env,
 ):
-    shutil.copyfile(FILE_PATHS["dataset"], dataset_path / "dataset.yaml")
+    shutil.copyfile(FILE_PATHS["dataset"], dataset_path / "pipelines" / "dataset.yaml")
     shutil.copyfile(FILE_PATHS["pipeline"], pipeline_path / "pipeline.yaml")
 
-    config = yaml.load(open(dataset_path / "dataset.yaml"))
+    config = yaml.load(open(dataset_path / "pipelines" / "dataset.yaml"))
 
     # Get a bigquery_dataset resource and modify the `description` field
     bq_dataset = next(
@@ -576,7 +564,7 @@ def test_bq_dataset_can_have_a_description_with_newlines_and_quotes(
     )
     test_description = 'Multiline\nstring with\n"quotes"'
     bq_dataset["description"] = test_description
-    with open(dataset_path / "dataset.yaml", "w") as file:
+    with open(dataset_path / "pipelines" / "dataset.yaml", "w") as file:
         yaml.dump(config, file)
 
     generate_terraform.main(
@@ -591,7 +579,7 @@ def test_bq_dataset_can_have_a_description_with_newlines_and_quotes(
     )
 
     env_dataset_path = ENV_DATASETS_PATH / dataset_path.name
-    subprocess.check_call(["terraform", "fmt"], cwd=env_dataset_path / "_terraform")
+    subprocess.check_call(["terraform", "fmt"], cwd=env_dataset_path / "infra")
 
 
 def test_dataset_tf_has_no_bq_dataset_description_when_unspecified(
@@ -605,14 +593,14 @@ def test_dataset_tf_has_no_bq_dataset_description_when_unspecified(
 ):
     set_dataset_ids_in_config_files(dataset_path, pipeline_path)
 
-    config = yaml.load(open(dataset_path / "dataset.yaml"))
+    config = yaml.load(open(dataset_path / "pipelines" / "dataset.yaml"))
 
     # Get the first bigquery_dataset resource and delete the `description` field
     bq_dataset = next(
         (r for r in config["resources"] if r["type"] == "bigquery_dataset")
     )
     del bq_dataset["description"]
-    with open(dataset_path / "dataset.yaml", "w") as file:
+    with open(dataset_path / "pipelines" / "dataset.yaml", "w") as file:
         yaml.dump(config, file)
 
     generate_terraform.main(
@@ -632,8 +620,8 @@ def test_dataset_tf_has_no_bq_dataset_description_when_unspecified(
     bq_dataset_tf_string = re.compile(regexp, flags=re.MULTILINE | re.DOTALL)
 
     for path_prefix in (
-        ENV_DATASETS_PATH / dataset_path.name / "_terraform",
-        generate_terraform.DATASETS_PATH / dataset_path.name / "_terraform",
+        ENV_DATASETS_PATH / dataset_path.name / "infra",
+        generate_terraform.DATASETS_PATH / dataset_path.name / "infra",
     ):
         result = bq_dataset_tf_string.search(
             (path_prefix / f"{dataset_path.name}_dataset.tf").read_text()
@@ -687,8 +675,8 @@ def test_pipeline_tf_contains_optional_properties_when_specified(
     bq_table_tf_string = re.compile(regexp, flags=re.MULTILINE | re.DOTALL)
 
     for path_prefix in (
-        ENV_DATASETS_PATH / dataset_path.name / "_terraform",
-        generate_terraform.DATASETS_PATH / dataset_path.name / "_terraform",
+        ENV_DATASETS_PATH / dataset_path.name / "infra",
+        generate_terraform.DATASETS_PATH / dataset_path.name / "infra",
     ):
         result = bq_table_tf_string.search(
             (path_prefix / f"{pipeline_path.name}_pipeline.tf").read_text()
@@ -746,8 +734,8 @@ def test_pipeline_tf_has_no_optional_properties_when_unspecified(
     bq_table_tf_string = re.compile(regexp, flags=re.MULTILINE | re.DOTALL)
 
     for path_prefix in (
-        ENV_DATASETS_PATH / dataset_path.name / "_terraform",
-        generate_terraform.DATASETS_PATH / dataset_path.name / "_terraform",
+        ENV_DATASETS_PATH / dataset_path.name / "infra",
+        generate_terraform.DATASETS_PATH / dataset_path.name / "infra",
     ):
         result = bq_table_tf_string.search(
             (path_prefix / f"{pipeline_path.name}_pipeline.tf").read_text()
@@ -793,7 +781,7 @@ def test_bq_table_can_have_a_description_with_newlines_and_quotes(
     )
 
     env_dataset_path = ENV_DATASETS_PATH / dataset_path.name
-    subprocess.check_call(["terraform", "fmt"], cwd=env_dataset_path / "_terraform")
+    subprocess.check_call(["terraform", "fmt"], cwd=env_dataset_path / "infra")
 
 
 def test_bq_table_name_starts_with_digits_but_tf_resource_name_does_not(
@@ -845,8 +833,8 @@ def test_bq_table_name_starts_with_digits_but_tf_resource_name_does_not(
     )
 
     for path_prefix in (
-        ENV_DATASETS_PATH / dataset_path.name / "_terraform",
-        generate_terraform.DATASETS_PATH / dataset_path.name / "_terraform",
+        ENV_DATASETS_PATH / dataset_path.name / "infra",
+        generate_terraform.DATASETS_PATH / dataset_path.name / "infra",
     ):
         result = matcher.search(
             (path_prefix / f"{pipeline_path.name}_pipeline.tf").read_text()
@@ -931,10 +919,8 @@ def test_validation_on_generated_tf_files_in_dot_env_dir(
     )
     env_dataset_path = ENV_DATASETS_PATH / dataset_path.name
 
-    subprocess.check_call(["terraform", "init"], cwd=env_dataset_path / "_terraform")
-    subprocess.check_call(
-        ["terraform", "validate"], cwd=env_dataset_path / "_terraform"
-    )
+    subprocess.check_call(["terraform", "init"], cwd=env_dataset_path / "infra")
+    subprocess.check_call(["terraform", "validate"], cwd=env_dataset_path / "infra")
 
 
 def test_validation_on_generated_tf_files_in_project_dir(
@@ -960,9 +946,7 @@ def test_validation_on_generated_tf_files_in_project_dir(
     )
     project_dataset_path = generate_terraform.DATASETS_PATH / dataset_path.name
 
+    subprocess.check_call(["terraform", "init"], cwd=(project_dataset_path / "infra"))
     subprocess.check_call(
-        ["terraform", "init"], cwd=(project_dataset_path / "_terraform")
-    )
-    subprocess.check_call(
-        ["terraform", "validate"], cwd=(project_dataset_path / "_terraform")
+        ["terraform", "validate"], cwd=(project_dataset_path / "infra")
     )
