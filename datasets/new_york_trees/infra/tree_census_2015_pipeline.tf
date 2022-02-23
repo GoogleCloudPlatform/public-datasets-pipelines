@@ -16,15 +16,10 @@
 
 
 resource "google_bigquery_table" "new_york_trees_tree_census_2015" {
-  project    = var.project_id
-  dataset_id = "new_york_trees"
-  table_id   = "tree_census_2015"
-
+  project     = var.project_id
+  dataset_id  = "new_york_trees"
+  table_id    = "tree_census_2015"
   description = "Tree Census table"
-
-
-
-
   depends_on = [
     google_bigquery_dataset.new_york_trees
   ]
