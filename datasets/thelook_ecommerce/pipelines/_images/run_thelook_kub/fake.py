@@ -23,68 +23,6 @@ order_items = list()
 events = list()
 inventory_items = list()
 
-THREE_MINUTES = 120
-FOUR_HOURS = 14400
-THIRTY_MINUTES = 30
-THREE_DAYS = 4320
-FIVE_DAYS = 7200
-NINETEEN_HOURS = 1140
-
-
-def main(
-    num_of_users: int, target_gcs_bucket: str, extraneous_headers: typing.List[str]
-) -> None:
-    global product_gender_dict
-    global product_by_id_dict
-    global location_data
-
-    logging.info("generating products helper dict")
-    products = generate_products()
-
-    product_gender_dict = products[0]
-    product_by_id_dict = products[1]
-
-    logging.info("generating locations data")
-    location_data = generate_locations()
-
-    # read and generate location
-    logging.info("generating data")
-    for i in range(int(num_of_users)):
-        logging.info(f"user transaction {i}")
-        users.append(dataclasses.asdict(Users()))
-
-    # remove extraneous keys in order_items
-    logging.info("remove extraneous keys from order items")
-    for oi in order_items:
-        for key in extraneous_headers:
-            del oi[key]
-
-    # generate ghost events
-    logging.info("generating ghost events")
-    for i in range(int(num_of_users)):
-        logging.info(f"ghost event {i}")
-        Ghost_Events()
-
-    # write generated data to gcs
-    table_dat = [users, orders, order_items, events, inventory_items]
-    table_name = ["users", "orders", "order_items", "events", "inventory_items"]
-    for name, table_dat in list(zip(table_name, table_dat)):
-        logging.info(f"converting {name} dict to csv")
-        csv_data = dict_to_csv(name, table_dat)
-        logging.info(
-            f"uploading output file to... gs://{target_gcs_bucket}/data/{name}.csv"
-        )
-        upload_to_bucket(
-            bucket_name=target_gcs_bucket, file_name=name, data=str(csv_data)
-        )
-
-    # upload static data to gcs
-    file_name = ["products.csv", "distribution_centers.csv"]
-    for i in file_name:
-        logging.info(f"uploading output file to... gs://{target_gcs_bucket}/data/{i}")
-        upload_file_to_bucket(bucket_name=target_gcs_bucket, file_name=i)
-
-
 # read from local csv and return products
 def generate_products() -> typing.List[dict]:
     product_brand_dict = {}  # products partitioned by brand - unused
@@ -134,24 +72,34 @@ def generate_products() -> typing.List[dict]:
             distribution_center_id,
         )
     ):
-        product_by_id_dict[col[0]] = {
-            "brand": col[1],
-            "name": col[2],
-            "cost": col[3],
-            "category": col[4],
-            "department": col[5],
-            "sku": col[6],
-            "retail_price": col[7],
-            "distribution_center_id": col[8],
+        product_id = col[0]
+        brand = col[1]
+        name = col[2]
+        cost = col[3]
+        category = col[4]
+        department = col[5]
+        sku = col[6]
+        retail_price = col[7]
+        distribution_center_id = col[8]
+
+        product_by_id_dict[product_id] = {
+            "brand": brand,
+            "name": name,
+            "cost": cost,
+            "category": category,
+            "department": department,
+            "sku": sku,
+            "retail_price": retail_price,
+            "distribution_center_id": distribution_center_id,
         }
-        product_brand_dict[col[1]].append(col)
-        product_category_dict[col[4]].append(col)
-        if col[5] == "Men":
+        product_brand_dict[brand].append(col)
+        product_category_dict[category].append(col)
+        if department == "Men":
             product_gender_dict["M"].append(col)
-            gender_category_dict["M" + col[4]].append(col)
-        if col[5] == "Women":
+            gender_category_dict["M" + category].append(col)
+        if department == "Women":
             product_gender_dict["F"].append(col)
-            gender_category_dict["F" + col[4]].append(col)
+            gender_category_dict["F" + category].append(col)
 
     # helper dict to generate events
     for col in list(zip(product_id, brands, category, department)):
@@ -164,7 +112,7 @@ def generate_products() -> typing.List[dict]:
 
 
 # read from local csv and return locations
-def generate_locations() -> list:
+def generate_locations() -> typing.List[str]:
     location_data = []
     with open("helper/world_pop.csv", encoding="utf-8") as worldcsv:
         csvReader = csv.DictReader(worldcsv)
@@ -173,16 +121,60 @@ def generate_locations() -> list:
     return location_data
 
 
-# read from local csv and return distribution centers
-def generate_distribution_centers() -> list:
-    distribution_centers = []
-    with open(
-        "helper/distribution_centers.csv", encoding="utf-8"
-    ) as distributioncenterscsv:
-        csvReader = csv.DictReader(distributioncenterscsv)
-        for rows in csvReader:
-            distribution_centers.append(rows)
-    return distribution_centers
+SECONDS_IN_MINUTE = 60
+MINUTES_IN_HOUR = 60
+MINUTES_IN_DAY = 1440
+
+logging.info("generating products helper dict")
+products = generate_products()
+logging.info("generating locations data")
+LOCATION_DATA = generate_locations()
+PRODUCT_GENDER_DICT = products[0]
+PRODUCT_BY_ID_DICT = products[1]
+
+
+def main(
+    num_of_users: int, target_gcs_bucket: str, extraneous_headers: typing.List[str]
+) -> None:
+
+    # read and generate location
+    logging.info("generating data")
+    for user_num in range(int(num_of_users)):
+        logging.info(f"user transaction {user_num}")
+        users.append(dataclasses.asdict(Users()))
+
+    # remove extraneous keys in order_items
+    logging.info("remove extraneous keys from order items")
+    for oi in order_items:
+        for key in extraneous_headers:
+            del oi[key]
+
+    # generate ghost events
+    logging.info("generating ghost events")
+    for user_num in range(int(num_of_users)):
+        logging.info(f"ghost event {user_num}")
+        GhostEvents()
+
+    # write generated data to gcs
+    table_dat = [users, orders, order_items, events, inventory_items]
+    table_name = ["users", "orders", "order_items", "events", "inventory_items"]
+    for name, table_dat in list(zip(table_name, table_dat)):
+        logging.info(f"converting {name} dict to csv")
+        csv_data = dict_to_csv(name, table_dat)
+        logging.info(
+            f"uploading output file to... gs://{target_gcs_bucket}/data/{name}.csv"
+        )
+        upload_to_bucket(
+            bucket_name=target_gcs_bucket, file_name=name, data=str(csv_data)
+        )
+
+    # upload static data to gcs
+    file_names = ["products.csv", "distribution_centers.csv"]
+    for file in file_names:
+        logging.info(
+            f"uploading output file to... gs://{target_gcs_bucket}/data/{file}"
+        )
+        upload_file_to_bucket(bucket_name=target_gcs_bucket, file_name=file)
 
 
 # returns random address based off specified distribution
@@ -192,36 +184,37 @@ def get_address(
     # country = '*' OR country = 'USA' OR country={'USA':.75,'UK':.25}
     # state = '*' OR state = 'California' OR state={'California':.75,'New York':.25}
     # postal_code = '*' OR postal_code = '95060' OR postal_code={'94117':.75,'95060':.25}
+    # type checking is used to provide flexibility of inputs to function (ie. can be dict with proportions, or could be single string value)
     universe = []
     if postal_code != "*":
         if type(postal_code) == str:
             universe += list(
-                filter(lambda row: row["postal_code"] == postal_code, location_data)
+                filter(lambda row: row["postal_code"] == postal_code, LOCATION_DATA)
             )
         elif type(postal_code) == dict:
             universe += list(
                 filter(
-                    lambda row: row["postal_code"] in postal_code.keys(), location_data
+                    lambda row: row["postal_code"] in postal_code.keys(), LOCATION_DATA
                 )
             )
     if state != "*":
         if type(state) == str:
-            universe += list(filter(lambda row: row["state"] == state, location_data))
+            universe += list(filter(lambda row: row["state"] == state, LOCATION_DATA))
         elif type(state) == dict:
             universe += list(
-                filter(lambda row: row["state"] in state.keys(), location_data)
+                filter(lambda row: row["state"] in state.keys(), LOCATION_DATA)
             )
     if country != "*":
         if type(country) == str:
             universe += list(
-                filter(lambda row: row["country"] == country, location_data)
+                filter(lambda row: row["country"] == country, LOCATION_DATA)
             )
         elif type(country) == dict:
             universe += list(
-                filter(lambda row: row["country"] in country.keys(), location_data)
+                filter(lambda row: row["country"] in country.keys(), LOCATION_DATA)
             )
     if len(universe) == 0:
-        universe = location_data
+        universe = LOCATION_DATA
 
     total_pop = sum([int(loc["population"]) for loc in universe])
 
@@ -288,7 +281,7 @@ def created_at(start_date: datetime.datetime) -> datetime.datetime:
     created_at = (
         start_date
         + datetime.timedelta(days=random_number_of_days)
-        + datetime.timedelta(minutes=random.randrange(NINETEEN_HOURS))
+        + datetime.timedelta(minutes=random.randrange(MINUTES_IN_HOUR * 19))
     )
     return created_at
 
@@ -296,20 +289,14 @@ def created_at(start_date: datetime.datetime) -> datetime.datetime:
 # generate URI for events table
 def generate_uri(event: str, product: str) -> str:
     if event == "product":
-        return "/" + event + "/" + product[0]
+        return f"/{event}/{product[0]}"
     elif event == "department":
-        return (
-            "/"
-            + event
-            + "/"
-            + product[5].lower()
-            + "/category/"
-            + product[4].lower().replace(" ", "")
-            + "/brand/"
-            + product[1].lower().replace(" ", "")
-        )
+        return f"""/{event}/
+                    {product[5].lower()}/category/
+                    {product[4].lower().replace(" ", "")}/brand/
+                    {product[1].lower().replace(" ", "")}"""
     else:
-        return "/" + event
+        return f"/{event}"
 
 
 # converts list of dicts into csv format
@@ -445,7 +432,7 @@ class Users(DataUtil):
         if num_of_orders == 0:
             pass
         else:
-            for i in range(num_of_orders):
+            for _ in range(num_of_orders):
                 orders.append(dataclasses.asdict(Order(user=self)))
 
     def __str__(self):
@@ -468,9 +455,9 @@ class Product:
     def __post_init__(self):
         person = Users()
         random_idx = np.random.choice(
-            a=len(product_gender_dict[person.gender]), size=1
+            a=len(PRODUCT_GENDER_DICT[person.gender]), size=1
         )[0]
-        product = product_gender_dict[person.gender][random_idx]
+        product = PRODUCT_GENDER_DICT[person.gender][random_idx]
         self.brand = product[0]
         self.name = product[1]
         self.cost = product[2]
@@ -510,20 +497,20 @@ class Order(DataUtil):
         # add random generator for days it takes to ship, deliver, return etc.
         if self.status == "Returned":
             self.shipped_at = self.created_at + datetime.timedelta(
-                minutes=random.randrange(THREE_DAYS)
+                minutes=random.randrange(MINUTES_IN_DAY * 3)
             )  # shipped between 0-3 days after order placed
             self.delivered_at = self.shipped_at + datetime.timedelta(
-                minutes=random.randrange(FIVE_DAYS)
+                minutes=random.randrange(MINUTES_IN_DAY * 5)
             )  # delivered between 0-5 days after ship date
             self.returned_at = self.delivered_at + datetime.timedelta(
-                minutes=random.randrange(THREE_DAYS)
+                minutes=random.randrange(MINUTES_IN_DAY * 3)
             )  # returned 0-3 days after order is delivered
         elif self.status == "Complete":
             self.shipped_at = self.created_at + datetime.timedelta(
-                minutes=random.randrange(THREE_DAYS)
+                minutes=random.randrange(MINUTES_IN_DAY * 3)
             )  # shipped between 0-3 days after order placed
             self.delivered_at = self.shipped_at + datetime.timedelta(
-                minutes=random.randrange(FIVE_DAYS)
+                minutes=random.randrange(MINUTES_IN_DAY * 5)
             )  # delivered between 0-5 days after ship date
             self.returned_at = None
         else:
@@ -536,8 +523,8 @@ class Order(DataUtil):
             population=[1, 2, 3, 4], distribution=[0.7, 0.2, 0.05, 0.05]
         )
         self.num_of_item = num_of_items
-        for i in range(num_of_items):
-            order_items.append(dataclasses.asdict(Order_Item(order=self)))
+        for _ in range(num_of_items):
+            order_items.append(dataclasses.asdict(OrderItem(order=self)))
 
     def __str__(self):
         return f"{self.order_id}, {self.user_id}, {self.status}, {self.created_at}, {self.shipped_at}, {self.delivered_at}, {self.returned_at}"
@@ -584,7 +571,7 @@ inv_item_id = 0
 
 
 @dataclasses.dataclass
-class Order_Item(DataUtil):
+class OrderItem(DataUtil):
     logging.info("generating order item")
     id: int = dataclasses.field(default_factory=itertools.count(start=1).__next__)
     order_id: int = dataclasses.field(init=False)
@@ -618,17 +605,17 @@ class Order_Item(DataUtil):
         inv_item_id = inv_item_id + 1
         self.inventory_item_id = inv_item_id
         self.created_at = order.created_at - datetime.timedelta(
-            seconds=random.randrange(FOUR_HOURS)
+            seconds=random.randrange(SECONDS_IN_MINUTE * 240)
         )  # order purchased within 4 hours
 
         self.shipped_at = order.shipped_at
         self.delivered_at = order.delivered_at
         self.returned_at = order.returned_at
 
-        random_idx = np.random.choice(a=len(product_gender_dict[order.gender]), size=1)[
+        random_idx = np.random.choice(a=len(PRODUCT_GENDER_DICT[order.gender]), size=1)[
             0
         ]
-        product = product_gender_dict[order.gender][random_idx]
+        product = PRODUCT_GENDER_DICT[order.gender][random_idx]
         self.product_id = product[0]
         self.sale_price = product[3]
         self.ip_address = fake.ipv4()
@@ -657,16 +644,16 @@ class Order_Item(DataUtil):
                 events.append(dataclasses.asdict(Events(order_item=self)))
                 previous_created_at = self.created_at
                 self.created_at = previous_created_at + datetime.timedelta(
-                    seconds=random.randrange(THREE_MINUTES)
+                    seconds=random.randrange(SECONDS_IN_MINUTE * 3)
                 )
         else:  # if multiple items
             sequence_num = 0  # track sequence num of purchase event
-            for i in range(order.num_of_item):
-                for j in ["department", "product", "cart"]:
+            for _ in range(order.num_of_item):
+                for event in ["department", "product", "cart"]:
                     sequence_num += 1
                     self.sequence_number = sequence_num
-                    self.event_type = j
-                    self.uri = generate_uri(j, product)
+                    self.event_type = event
+                    self.uri = generate_uri(event, product)
                     events.append(dataclasses.asdict(Events(order_item=self)))
                     sequence_num = self.sequence_number
                     previous_created_at = self.created_at
@@ -680,21 +667,21 @@ class Order_Item(DataUtil):
             events.append(dataclasses.asdict(Events(order_item=self)))
 
         # sold inventory item
-        inventory_items.append(dataclasses.asdict(Inventory_Item(order_item=self)))
+        inventory_items.append(dataclasses.asdict(InventoryItem(order_item=self)))
 
         # unsold inventory items
         num_of_items = self.random_item(
             population=[1, 2, 3], distribution=[0.5, 0.3, 0.2]
         )
-        for i in range(num_of_items):
+        for _ in range(num_of_items):
             self.is_sold = False
             inv_item_id += 1
             self.inventory_item_id = inv_item_id
-            inventory_items.append(dataclasses.asdict(Inventory_Item(order_item=self)))
+            inventory_items.append(dataclasses.asdict(InventoryItem(order_item=self)))
 
 
 @dataclasses.dataclass
-class Inventory_Item:
+class InventoryItem:
     id: int = dataclasses.field(init=False)
     product_id: int = dataclasses.field(init=False)
     created_at: datetime.datetime = dataclasses.field(init=False)
@@ -722,14 +709,14 @@ class Inventory_Item:
         if order_item.is_sold is False:
             self.created_at = created_at(datetime.datetime(2020, 1, 1))
             self.sold_at = None
-        self.cost = product_by_id_dict[self.product_id]["cost"]
-        self.product_category = product_by_id_dict[self.product_id]["category"]
-        self.product_name = product_by_id_dict[self.product_id]["name"]
-        self.product_brand = product_by_id_dict[self.product_id]["brand"]
-        self.product_retail_price = product_by_id_dict[self.product_id]["retail_price"]
-        self.product_department = product_by_id_dict[self.product_id]["department"]
-        self.product_sku = product_by_id_dict[self.product_id]["sku"]
-        self.product_distribution_center_id = product_by_id_dict[self.product_id][
+        self.cost = PRODUCT_BY_ID_DICT[self.product_id]["cost"]
+        self.product_category = PRODUCT_BY_ID_DICT[self.product_id]["category"]
+        self.product_name = PRODUCT_BY_ID_DICT[self.product_id]["name"]
+        self.product_brand = PRODUCT_BY_ID_DICT[self.product_id]["brand"]
+        self.product_retail_price = PRODUCT_BY_ID_DICT[self.product_id]["retail_price"]
+        self.product_department = PRODUCT_BY_ID_DICT[self.product_id]["department"]
+        self.product_sku = PRODUCT_BY_ID_DICT[self.product_id]["sku"]
+        self.product_distribution_center_id = PRODUCT_BY_ID_DICT[self.product_id][
             "distribution_center_id"
         ]
 
@@ -738,7 +725,7 @@ class Inventory_Item:
 
 
 @dataclasses.dataclass
-class Ghost_Events(DataUtil):
+class GhostEvents(DataUtil):
     id: int = dataclasses.field(init=False)
     user_id: int = dataclasses.field(init=False)
     sequence_number: int = dataclasses.field(init=False)
@@ -772,7 +759,7 @@ class Ghost_Events(DataUtil):
             distribution=[0.45, 0.3, 0.05, 0.1, 0.1],
         )
 
-        products = product_gender_dict[
+        products = PRODUCT_GENDER_DICT[
             self.random_item(population=["M", "F"], distribution=[0.5, 0.5])
         ]
         product = self.random_item(products)
@@ -792,17 +779,17 @@ class Ghost_Events(DataUtil):
             ]
         )
 
-        for i in random_events:
+        for event in random_events:
             # set ghost events ID to max of original
             event_id = len(events)
             self.id = event_id + 1
             event_id = self.id
 
-            self.event_type = i
-            self.uri = generate_uri(i, product)
+            self.event_type = event
+            self.uri = generate_uri(event, product)
             self.sequence_number += 1
             self.created_at = self.created_at + datetime.timedelta(
-                minutes=random.randrange(THIRTY_MINUTES)
+                minutes=random.randrange(MINUTES_IN_HOUR * 0.5)
             )
             events.append(dataclasses.asdict(self))
 
