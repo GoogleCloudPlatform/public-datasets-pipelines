@@ -49,7 +49,9 @@ def dataset_path() -> typing.Iterator[pathlib.Path]:
 def pipeline_path(
     dataset_path: pathlib.Path, suffix="_pipeline"
 ) -> typing.Iterator[pathlib.Path]:
-    with tempfile.TemporaryDirectory(dir=dataset_path, suffix=suffix) as dir_path:
+    pipelines_dir = dataset_path / "pipelines"
+    pipelines_dir.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(dir=pipelines_dir, suffix=suffix) as dir_path:
         yield pathlib.Path(dir_path)
 
 
@@ -67,18 +69,22 @@ def env() -> str:
 def copy_config_files_and_set_tmp_folder_names_as_ids(
     dataset_path: pathlib.Path, pipeline_path: pathlib.Path
 ):
-    shutil.copyfile(SAMPLE_YAML_PATHS["dataset"], dataset_path / "dataset.yaml")
+    shutil.copyfile(
+        SAMPLE_YAML_PATHS["dataset"], dataset_path / "pipelines" / "dataset.yaml"
+    )
     shutil.copyfile(SAMPLE_YAML_PATHS["pipeline"], pipeline_path / "pipeline.yaml")
 
-    dataset_config = yaml.load(dataset_path / "dataset.yaml")
+    dataset_config = yaml.load(dataset_path / "pipelines" / "dataset.yaml")
     dataset_yaml_str = (
-        (dataset_path / "dataset.yaml")
+        (dataset_path / "pipelines" / "dataset.yaml")
         .read_text()
         .replace(
             f"name: {dataset_config['dataset']['name']}", f"name: {dataset_path.name}"
         )
     )
-    generate_dag.write_to_file(dataset_yaml_str, dataset_path / "dataset.yaml")
+    generate_dag.write_to_file(
+        dataset_yaml_str, dataset_path / "pipelines" / "dataset.yaml"
+    )
 
     pipeline_config = yaml.load(pipeline_path / "pipeline.yaml")
     pipeline_yaml_str = (
@@ -90,12 +96,16 @@ def copy_config_files_and_set_tmp_folder_names_as_ids(
         )
     )
     generate_dag.write_to_file(pipeline_yaml_str, pipeline_path / "pipeline.yaml")
-    (ENV_DATASETS_PATH / dataset_path.name / pipeline_path.name).mkdir(
+    (ENV_DATASETS_PATH / dataset_path.name / "pipelines" / pipeline_path.name).mkdir(
         parents=True, exist_ok=True
     )
     shutil.copyfile(
         pipeline_path / "pipeline.yaml",
-        ENV_DATASETS_PATH / dataset_path.name / pipeline_path.name / "pipeline.yaml",
+        ENV_DATASETS_PATH
+        / dataset_path.name
+        / "pipelines"
+        / pipeline_path.name
+        / "pipeline.yaml",
     )
 
 
@@ -120,7 +130,7 @@ def setup_dag_and_variables(
 
     shutil.copyfile(
         SAMPLE_YAML_PATHS["variables"],
-        ENV_DATASETS_PATH / dataset_path.name / variables_filename,
+        ENV_DATASETS_PATH / dataset_path.name / "pipelines" / variables_filename,
     )
 
 
@@ -203,10 +213,16 @@ def test_script_can_deploy_without_variables_files(
 
     # Delete the dataset-specific variables file
     (
-        ENV_DATASETS_PATH / dataset_path.name / f"{dataset_path.name}_variables.json"
+        ENV_DATASETS_PATH
+        / dataset_path.name
+        / "pipelines"
+        / f"{dataset_path.name}_variables.json"
     ).unlink()
     assert not (
-        ENV_DATASETS_PATH / dataset_path.name / f"{dataset_path.name}_variables.json"
+        ENV_DATASETS_PATH
+        / dataset_path.name
+        / "pipelines"
+        / f"{dataset_path.name}_variables.json"
     ).exists()
 
     mocker.patch("scripts.deploy_dag.run_gsutil_cmd")
