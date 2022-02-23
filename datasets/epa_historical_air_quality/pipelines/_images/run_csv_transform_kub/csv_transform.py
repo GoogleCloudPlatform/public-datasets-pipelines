@@ -24,6 +24,7 @@ import zipfile as zip
 import pandas as pd
 import requests
 from google.cloud import bigquery, storage
+from google.cloud.exceptions import NotFound
 
 
 def main(
@@ -38,6 +39,7 @@ def main(
     chunksize: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
+    pipeline_name: str,
     input_headers: typing.List[str],
     data_dtypes: dict,
     output_headers: typing.List[str],
@@ -45,18 +47,10 @@ def main(
     logging.info("Pipeline process started")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
     dest_path = os.path.split(source_file)[0]
-    end_year = datetime.datetime.today().year - 2
-    download_url_files_from_year_range(
-        source_url, start_year, end_year, dest_path, True, False
-    )
-    st_year = datetime.datetime.today().year - 1
-    end_year = datetime.datetime.today().year
-    download_url_files_from_year_range(
-        source_url, st_year, end_year, dest_path, True, True
-    )
+    download_files(source_url, start_year, dest_path)
     file_group_wildcard = os.path.split(source_url)[1].replace("_YEAR_ITERATOR.zip", "")
     source = concatenate_files(source_file, dest_path, file_group_wildcard, False, ",")
-    process_source_file(source, target_file, input_headers, data_dtypes, output_headers, int(chunksize))
+    process_source_file(source, target_file, input_headers, output_headers, pipeline_name, data_dtypes, int(chunksize))
     if os.path.exists(target_file):
         upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
         create_dest_table(
@@ -68,6 +62,99 @@ def main(
             f"Informational: The data file {target_file} was not generated because no data was available."
         )
     logging.info("Pipeline process completed")
+
+
+def concatenate_files(
+    target_file_path: str,
+    dest_path: str,
+    file_group_wildcard: str,
+    incl_file_source_path: bool = False,
+    separator: str = ",",
+    delete_src_file: bool = True,
+) -> str:
+    target_file_dir = os.path.split(str(target_file_path))[0]
+    target_file_path = str(target_file_path).replace(
+        ".csv", "_" + file_group_wildcard + ".csv"
+    )
+    logging.info(f"Concatenating files {target_file_dir}/*{file_group_wildcard}")
+    if os.path.isfile(target_file_path):
+        os.unlink(target_file_path)
+    for src_file_path in sorted(
+        fnmatch.filter(os.listdir(dest_path), "*" + file_group_wildcard + "*")
+    ):
+        src_file_path = dest_path + "/" + src_file_path
+        with open(src_file_path, "r") as src_file:
+            with open(target_file_path, "a+") as target_file:
+                next(src_file)
+                logging.info(
+                    f"Reading from file {src_file_path}, writing to file {target_file_path}"
+                )
+                for line in src_file:
+                    if incl_file_source_path:
+                        line = (
+                            '"'
+                            + os.path.split(src_file_path)[1].strip()
+                            + '"'
+                            + separator
+                            + line
+                        )  # include the file source
+                    else:
+                        line = line
+                    target_file.write(line)
+        if os.path.isfile(src_file_path) and delete_src_file:
+            os.unlink(src_file_path)
+    return target_file_path
+
+
+def process_source_file(
+    source_file: str,
+    target_file: str,
+    input_headers: typing.List[str],
+    output_headers: typing.List[str],
+    pipeline_name: str,
+    dtypes: dict,
+    chunksize: str
+) -> None:
+    logging.info(f"Opening batch file {source_file}")
+    with pd.read_csv(
+        source_file,  # path to main source file to load in batches
+        engine="python",
+        encoding="utf-8",
+        quotechar='"',  # string separator, typically double-quotes
+        chunksize=int(chunksize),  # size of batch data, in no. of records
+        sep=",",  # data column separator, typically ","
+        header=None,  # use when the data file does not contain a header
+        names=input_headers,
+        dtype=dtypes,
+        keep_default_na=True,
+        na_values=[" "],
+    ) as reader:
+        for chunk_number, chunk in enumerate(reader):
+            target_file_batch = str(target_file).replace(
+                ".csv", "-" + str(chunk_number) + ".csv"
+            )
+            df = pd.DataFrame()
+            df = pd.concat([df, chunk])
+            process_chunk(df,
+                          target_file_batch,
+                          target_file,
+                          chunk_number == 0,
+                          chunk_number == 0,
+                          output_headers,
+                          pipeline_name
+            )
+
+
+def download_files(source_url: str, start_year: int, dest_path: str) -> None:
+    end_year = datetime.datetime.today().year - 2
+    download_url_files_from_year_range(
+        source_url, start_year, end_year, dest_path, True, False
+    )
+    st_year = datetime.datetime.today().year - 1
+    end_year = datetime.datetime.today().year
+    download_url_files_from_year_range(
+        source_url, st_year, end_year, dest_path, True, True
+    )
 
 
 def load_data_to_bq(
@@ -162,49 +249,6 @@ def zip_decompress(infile: str, dest_path: str) -> None:
         zipf.close()
 
 
-def concatenate_files(
-    target_file_path: str,
-    dest_path: str,
-    file_group_wildcard: str,
-    incl_file_source_path: bool = False,
-    separator: str = ",",
-    delete_src_file: bool = True,
-) -> str:
-    target_file_dir = os.path.split(str(target_file_path))[0]
-    target_file_path = str(target_file_path).replace(
-        ".csv", "_" + file_group_wildcard + ".csv"
-    )
-    logging.info(f"Concatenating files {target_file_dir}/*{file_group_wildcard}")
-    if os.path.isfile(target_file_path):
-        os.unlink(target_file_path)
-    for src_file_path in sorted(
-        fnmatch.filter(os.listdir(dest_path), "*" + file_group_wildcard + "*")
-    ):
-        src_file_path = dest_path + "/" + src_file_path
-        with open(src_file_path, "r") as src_file:
-            with open(target_file_path, "a+") as target_file:
-                next(src_file)
-                logging.info(
-                    f"Reading from file {src_file_path}, writing to file {target_file_path}"
-                )
-                for line in src_file:
-                    if incl_file_source_path:
-                        line = (
-                            '"'
-                            + os.path.split(src_file_path)[1].strip()
-                            + '"'
-                            + separator
-                            + line
-                        )  # include the file source
-                    else:
-                        line = line
-                    target_file.write(line)
-        if os.path.isfile(src_file_path) and delete_src_file:
-            os.unlink(src_file_path)
-
-    return target_file_path
-
-
 def create_dest_table(
     project_id: str,
     dataset_id: str,
@@ -262,49 +306,31 @@ def create_table_schema(
     return schema
 
 
-def process_source_file(
-    source_file: str,
-    target_file: str,
-    input_headers: list,
-    dtypes: dict,
-    chunksize: str
-) -> None:
-    logging.info(f"Opening batch file {source_file}")
-    with pd.read_csv(
-        source_file,  # path to main source file to load in batches
-        engine="python",
-        encoding="utf-8",
-        quotechar='"',  # string separator, typically double-quotes
-        chunksize=int(chunksize),  # size of batch data, in no. of records
-        sep=",",  # data column separator, typically ","
-        header=None,  # use when the data file does not contain a header
-        names=input_headers,
-        dtype=dtypes,
-        keep_default_na=True,
-        na_values=[" "],
-    ) as reader:
-        for chunk_number, chunk in enumerate(reader):
-            target_file_batch = str(target_file).replace(
-                ".csv", "-" + str(chunk_number) + ".csv"
-            )
-            df = pd.DataFrame()
-            df = pd.concat([df, chunk])
-            process_chunk(df,
-                          target_file_batch,
-                          target_file,
-                          (not chunk_number == 0)
-            )
+# def process_chunk(
+#     df: pd.DataFrame,
+#     target_file_batch: str,
+#     target_file: str,
+#     skip_header: bool,
+# ) -> None:
+#     df = resolve_date_format(df, "%Y-%m-%d %H:%M")
+#     save_to_new_file(df, file_path=str(target_file_batch), sep=",")
+#     append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
+#     logging.info(f"Processing Batch {target_file_batch} completed")
 
 
 def process_chunk(
     df: pd.DataFrame,
     target_file_batch: str,
     target_file: str,
-    skip_header: bool,
+    include_header: bool,
+    truncate_file: bool,
+    output_headers: typing.List[str],
+    pipeline_name: str,
 ) -> None:
     df = resolve_date_format(df, "%Y-%m-%d %H:%M")
-    save_to_new_file(df, file_path=str(target_file_batch), sep=",")
-    append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
+    save_to_new_file(df, file_path=str(target_file_batch))
+    append_batch_file(target_file_batch, target_file, include_header, truncate_file)
+    logging.info(f"Processing Batch {target_file_batch} completed")
 
 
 def resolve_date_format(df: pd.DataFrame, from_format: str) -> pd.DataFrame:
@@ -348,32 +374,49 @@ def save_to_new_file(df, file_path, sep="|") -> None:
 
 
 def append_batch_file(
-    batch_file_path: str, target_file_path: str, skip_header: bool, truncate_file: bool
+    batch_file_path: str,
+    target_file_path: str,
+    include_header: bool,
+    truncate_target_file: bool,
 ) -> None:
-    with open(batch_file_path, "r") as data_file:
-        if truncate_file:
-            target_file = open(target_file_path, "w+").close()
-        with open(target_file_path, "a+") as target_file:
-            if skip_header:
-                logging.info(
-                    f"Appending batch file {batch_file_path} to {target_file_path} with skip header"
-                )
-                next(data_file)
-            else:
-                logging.info(
-                    f"Appending batch file {batch_file_path} to {target_file_path}"
-                )
-            target_file.write(data_file.read())
-            if os.path.exists(batch_file_path):
-                os.remove(batch_file_path)
+    logging.info(
+        f"Appending file {batch_file_path} to file {target_file_path} with include_header={include_header} and truncate_target_file={truncate_target_file}"
+    )
+    data_file = open(batch_file_path, "r")
+    if truncate_target_file:
+        target_file = open(target_file_path, "w+").close()
+    target_file = open(target_file_path, "a+")
+    if not include_header:
+        logging.info(
+            f"Appending batch file {batch_file_path} to {target_file_path} without header"
+        )
+        next(data_file)
+    else:
+        logging.info(
+            f"Appending batch file {batch_file_path} to {target_file_path} with header"
+        )
+    target_file.write(data_file.read())
+    data_file.close()
+    target_file.close()
+    if os.path.exists(batch_file_path):
+        os.remove(batch_file_path)
 
 
-def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:
-    logging.info(f"Uploading to GCS {gcs_bucket} in {gcs_path}")
-    storage_client = storage.Client()
-    bucket = storage_client.bucket(gcs_bucket)
-    blob = bucket.blob(gcs_path)
-    blob.upload_from_filename(file_path)
+def upload_file_to_gcs(
+    file_path: pathlib.Path, target_gcs_bucket: str, target_gcs_path: str
+) -> None:
+    if os.path.exists(file_path):
+        logging.info(
+            f"Uploading output file to gs://{target_gcs_bucket}/{target_gcs_path}"
+        )
+        storage_client = storage.Client()
+        bucket = storage_client.bucket(target_gcs_bucket)
+        blob = bucket.blob(target_gcs_path)
+        blob.upload_from_filename(file_path)
+    else:
+        logging.info(
+            f"Cannot upload file to gs://{target_gcs_bucket}/{target_gcs_path} as it does not exist."
+        )
 
 
 if __name__ == "__main__":
@@ -391,6 +434,7 @@ if __name__ == "__main__":
         chunksize=os.environ["CHUNKSIZE"],
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
+        pipeline_name=os.environ["PIPELINE_NAME"],
         input_headers=json.loads(os.environ["INPUT_CSV_HEADERS"]),
         data_dtypes=json.loads(os.environ["DATA_DTYPES"]),
         output_headers=json.loads(os.environ["OUTPUT_CSV_HEADERS"]),
