@@ -54,9 +54,9 @@ def main(
 
     print("========== AIRFLOW DAGS ==========")
     if pipeline:
-        pipelines = [env_path / "datasets" / dataset_id / pipeline]
+        pipelines = [env_path / "datasets" / dataset_id / "pipelines" / pipeline]
     else:
-        pipelines = list_subdirs(env_path / "datasets" / dataset_id)
+        pipelines = list_subdirs(env_path / "datasets" / dataset_id / "pipelines")
 
     if local:
         runtime_airflow_version = local_airflow_version()
@@ -103,7 +103,10 @@ def copy_variables_to_airflow_data_folder(
     """
     for cwd, filename in (
         (env_path / "datasets", "shared_variables.json"),
-        (env_path / "datasets" / dataset_id, f"{dataset_id}_variables.json"),
+        (
+            env_path / "datasets" / dataset_id / "pipelines",
+            f"{dataset_id}_variables.json",
+        ),
     ):
 
         if not (cwd / filename).exists():
@@ -178,8 +181,11 @@ def import_variables_to_airflow_env(
     gcloud composer environments run COMPOSER_ENV --location COMPOSER_REGION variables -- import /home/airflow/gcs/data/variables/{DATASET_ID}_variables.json
     """
     for cwd, filename in (
-        # (env_path / "datasets", "shared_variables.json"),
-        # (env_path / "datasets" / dataset_id, f"{dataset_id}_variables.json"),
+        (env_path / "datasets", "shared_variables.json"),
+        (
+            env_path / "datasets" / dataset_id / "pipelines",
+            f"{dataset_id}_variables.json",
+        ),
     ):
         if local:
             print(f"\nImporting Airflow variables from {cwd / filename}...\n")
@@ -212,7 +218,7 @@ def copy_generated_dag_to_airflow_dags_folder(
     [remote]
     gsutil cp {PIPELINE_ID}_dag.py gs://{COMPOSER_BUCKET}/dags/{DATASET_ID}__{PIPELINE_ID}_dag.py
     """
-    cwd = env_path / "datasets" / dataset_id / pipeline_id
+    cwd = env_path / "datasets" / dataset_id / "pipelines" / pipeline_id
     filename = f"{pipeline_id}_dag.py"
 
     if local:
@@ -251,7 +257,7 @@ def copy_custom_callables_to_airflow_dags_folder(
     [remote]
     gsutil cp -r custom gs://{COMPOSER_BUCKET}/dags/{DATASET_ID}/{PIPELINE_ID}/
     """
-    cwd = env_path / "datasets" / dataset_id / pipeline_id
+    cwd = env_path / "datasets" / dataset_id / "pipelines" / pipeline_id
 
     if not (cwd / "custom").exists():
         return
@@ -286,14 +292,16 @@ def list_subdirs(path: pathlib.Path) -> typing.List[pathlib.Path]:
     return subdirs
 
 
-def local_airflow_version() -> str:
+def local_airflow_version() -> typing.Literal[1, 2]:
     airflow_version = subprocess.run(
         ["airflow", "version"], stdout=subprocess.PIPE
     ).stdout.decode("utf-8")
     return 2 if airflow_version.startswith("2") else 1
 
 
-def composer_airflow_version(composer_env: str, composer_region: str) -> str:
+def composer_airflow_version(
+    composer_env: str, composer_region: str
+) -> typing.Literal[1, 2]:
     composer_env = json.loads(
         subprocess.run(
             [
