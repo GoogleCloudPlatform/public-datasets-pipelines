@@ -23,6 +23,7 @@ order_items = list()
 events = list()
 inventory_items = list()
 
+
 # read from local csv and return products
 def generate_products() -> typing.List[dict]:
     product_brand_dict = {}  # products partitioned by brand - unused
