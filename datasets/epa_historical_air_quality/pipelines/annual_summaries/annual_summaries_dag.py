@@ -61,7 +61,7 @@ with DAG(
         image_pull_policy="Always",
         image="{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}",
         env_vars={
-            "SOURCE_URL": "https://aqs.epa.gov/aqsweb/airdata/annual_conc_by_monitor_YEAR_ITERATOR.zip",
+            "SOURCE_URL": "{{ var.json.epa_historical_air_quality.annual_summary.source_url }}",
             "START_YEAR": "1980",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
@@ -83,5 +83,11 @@ with DAG(
             "request_ephemeral_storage": "12G",
         },
     )
+    delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
+        task_id="delete_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        name="epa-air-qual--annual-summaries",
+    )
 
-    create_cluster >> transform_csv_and_load_data
+    create_cluster >> transform_csv_and_load_data >> delete_cluster
