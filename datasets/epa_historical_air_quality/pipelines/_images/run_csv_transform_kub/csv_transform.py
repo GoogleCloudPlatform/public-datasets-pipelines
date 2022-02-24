@@ -49,14 +49,43 @@ def main(
     dest_path = os.path.split(source_file)[0]
     download_files(source_url, start_year, dest_path)
     file_group_wildcard = os.path.split(source_url)[1].replace("_YEAR_ITERATOR.zip", "")
-    source = concatenate_files(source_file, dest_path, file_group_wildcard, False, ",")
-    process_source_file(source, target_file, input_headers, output_headers, pipeline_name, data_dtypes, int(chunksize))
+    field_delimiter = "|"
+    source = concatenate_files(
+        target_file_path=source_file,
+        dest_path=dest_path,
+        file_group_wildcard=file_group_wildcard,
+        incl_file_source_path=False,
+        separator=",",
+        delete_src_file=True
+    )
+    process_source_file(
+        source_file=source,
+        target_file=target_file,
+        input_headers=input_headers,
+        dtypes=data_dtypes,
+        chunksize=chunksize,
+        field_delimiter=field_delimiter,
+    )
     if os.path.exists(target_file):
-        upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
-        create_dest_table(
-            project_id, dataset_id, table_id, schema_path, target_gcs_bucket
+        upload_file_to_gcs(
+            file_path=target_file,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=target_gcs_path,
         )
-        load_data_to_bq(project_id, dataset_id, table_id, target_file)
+        create_dest_table(
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_id=table_id,
+            schema_filepath=schema_path,
+            bucket_name=target_gcs_bucket,
+        )
+        load_data_to_bq(
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_id=table_id,
+            file_path=target_file,
+            field_delimiter="|",
+        )
     else:
         logging.info(
             f"Informational: The data file {target_file} was not generated because no data was available."
@@ -110,10 +139,9 @@ def process_source_file(
     source_file: str,
     target_file: str,
     input_headers: typing.List[str],
-    output_headers: typing.List[str],
-    pipeline_name: str,
     dtypes: dict,
-    chunksize: str
+    chunksize: str,
+    field_delimiter: str,
 ) -> None:
     logging.info(f"Opening batch file {source_file}")
     with pd.read_csv(
@@ -135,42 +163,59 @@ def process_source_file(
             )
             df = pd.DataFrame()
             df = pd.concat([df, chunk])
-            process_chunk(df,
-                          target_file_batch,
-                          target_file,
-                          chunk_number == 0,
-                          chunk_number == 0,
-                          output_headers,
-                          pipeline_name
+            process_chunk(
+                df=df,
+                target_file_batch=target_file_batch,
+                target_file=target_file,
+                include_header=(chunk_number == 0),
+                truncate_file=(chunk_number == 0),
+                field_delimiter=field_delimiter,
             )
 
 
 def download_files(source_url: str, start_year: int, dest_path: str) -> None:
     end_year = datetime.datetime.today().year - 2
     download_url_files_from_year_range(
-        source_url, start_year, end_year, dest_path, True, False
+        source_url=source_url,
+        start_year=start_year,
+        end_year=end_year,
+        dest_path=dest_path,
+        remove_file=True,
+        continue_on_error=False,
     )
     st_year = datetime.datetime.today().year - 1
     end_year = datetime.datetime.today().year
     download_url_files_from_year_range(
-        source_url, st_year, end_year, dest_path, True, True
+        source_url=source_url,
+        start_year=st_year,
+        end_year=end_year,
+        dest_path=dest_path,
+        remove_file=True,
+        continue_on_error=True,
     )
 
 
 def load_data_to_bq(
-    project_id: str, dataset_id: str, table_id: str, file_path: str
+    project_id: str,
+    dataset_id: str,
+    table_id: str,
+    file_path: str,
+    field_delimiter: str,
 ) -> None:
     logging.info(
-        f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} started"
+        f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} delim={field_delimiter} started"
     )
     client = bigquery.Client(project=project_id)
     table_ref = client.dataset(dataset_id).table(table_id)
     job_config = bigquery.LoadJobConfig()
     job_config.source_format = bigquery.SourceFormat.CSV
+    job_config.field_delimiter = field_delimiter
     job_config.skip_leading_rows = 1  # ignore the header
     job_config.autodetect = False
     with open(file_path, "rb") as source_file:
-        job = client.load_table_from_file(source_file, table_ref, job_config=job_config)
+        job = client.load_table_from_file(
+            file_obj=source_file, destination=table_ref, job_config=job_config
+        )
     job.result()
     logging.info(
         f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} completed"
@@ -188,9 +233,13 @@ def download_url_files_from_year_range(
     for yr in range(start_year, end_year + 1, 1):
         src_url = source_url.replace("YEAR_ITERATOR", str(yr))
         dest_file = dest_path + "/source_" + os.path.split(src_url)[1]
-        file_exists = download_file_http(src_url, dest_file, continue_on_error)
+        file_exists = download_file_http(
+            source_url=src_url,
+            source_file=dest_file,
+            continue_on_error=continue_on_error,
+        )
         if file_exists:
-            unpack_file(dest_file, dest_path, "zip")
+            unpack_file(infile=dest_file, dest_path=dest_path, compression_type="zip")
             if remove_file:
                 os.remove(dest_file)
 
@@ -306,30 +355,22 @@ def create_table_schema(
     return schema
 
 
-# def process_chunk(
-#     df: pd.DataFrame,
-#     target_file_batch: str,
-#     target_file: str,
-#     skip_header: bool,
-# ) -> None:
-#     df = resolve_date_format(df, "%Y-%m-%d %H:%M")
-#     save_to_new_file(df, file_path=str(target_file_batch), sep=",")
-#     append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
-#     logging.info(f"Processing Batch {target_file_batch} completed")
-
-
 def process_chunk(
     df: pd.DataFrame,
     target_file_batch: str,
     target_file: str,
     include_header: bool,
     truncate_file: bool,
-    output_headers: typing.List[str],
-    pipeline_name: str,
+    field_delimiter: str,
 ) -> None:
     df = resolve_date_format(df, "%Y-%m-%d %H:%M")
-    save_to_new_file(df, file_path=str(target_file_batch))
-    append_batch_file(target_file_batch, target_file, include_header, truncate_file)
+    save_to_new_file(df=df, file_path=str(target_file_batch), sep=field_delimiter)
+    append_batch_file(
+        batch_file_path=target_file_batch,
+        target_file_path=target_file,
+        include_header=include_header,
+        truncate_target_file=truncate_file,
+    )
     logging.info(f"Processing Batch {target_file_batch} completed")
 
 
@@ -339,7 +380,6 @@ def resolve_date_format(df: pd.DataFrame, from_format: str) -> pd.DataFrame:
         if df[col].dtype == "datetime64[ns]":
             logging.info(f"Resolving datetime on {col}")
             df[col] = df[col].apply(lambda x: convert_dt_format(str(x), from_format))
-
     return df
 
 
@@ -364,7 +404,6 @@ def convert_dt_format(dt_str: str, from_format: str) -> str:
         from_format = "%Y-%m-%d " + from_format.strip().split(" ")[1]
     else:
         dt_str = ""
-
     return rtnval
 
 

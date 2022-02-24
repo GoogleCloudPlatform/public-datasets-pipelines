@@ -16,7 +16,6 @@
 from airflow import DAG
 from airflow.providers.google.cloud.operators import kubernetes_engine
 
-
 default_args = {
     "owner": "Google",
     "depends_on_past": False,
@@ -84,11 +83,5 @@ with DAG(
             "request_ephemeral_storage": "12G",
         },
     )
-    delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
-        task_id="delete_cluster",
-        project_id="{{ var.value.gcp_project }}",
-        location="us-central1-c",
-        name="epa-air-qual--annual-summaries",
-    )
 
-    create_cluster >> transform_csv_and_load_data >> delete_cluster
+    create_cluster >> transform_csv_and_load_data
