@@ -16,15 +16,10 @@
 
 
 resource "google_bigquery_table" "nasa_wildfire_past_week" {
-  project    = var.project_id
-  dataset_id = "nasa_wildfire"
-  table_id   = "past_week"
-
+  project     = var.project_id
+  dataset_id  = "nasa_wildfire"
+  table_id    = "past_week"
   description = "Past Week table"
-
-
-
-
   depends_on = [
     google_bigquery_dataset.nasa_wildfire
   ]
