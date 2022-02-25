@@ -16,15 +16,10 @@
 
 
 resource "google_bigquery_table" "ml_datasets_iris" {
-  project    = var.project_id
-  dataset_id = "ml_datasets"
-  table_id   = "iris"
-
+  project     = var.project_id
+  dataset_id  = "ml_datasets"
+  table_id    = "iris"
   description = "iris table"
-
-
-
-
   depends_on = [
     google_bigquery_dataset.ml_datasets
   ]

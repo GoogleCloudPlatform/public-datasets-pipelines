@@ -19,12 +19,6 @@ resource "google_bigquery_table" "ml_datasets_penguins" {
   project    = var.project_id
   dataset_id = "ml_datasets"
   table_id   = "penguins"
-
-
-
-
-
-
   depends_on = [
     google_bigquery_dataset.ml_datasets
   ]
@@ -42,12 +36,6 @@ resource "google_bigquery_table" "ml_datasets_uscentral1_penguins" {
   project    = var.project_id
   dataset_id = "ml_datasets_uscentral1"
   table_id   = "penguins"
-
-
-
-
-
-
   depends_on = [
     google_bigquery_dataset.ml_datasets_uscentral1
   ]
