@@ -52,5 +52,5 @@ resources:
     #   friendly_name (A user-friendly name of the dataset)
     #   description   (A user-friendly description of the dataset)
     #   location      (The geographic location where the dataset should reside)
-    dataset_id: thelook
+    dataset_id: thelook_ecommerce
     description: Fictitious E-Commerce Dataset
