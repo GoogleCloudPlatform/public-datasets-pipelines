@@ -53,7 +53,7 @@ with DAG(
     transform_csv_and_load_data = kubernetes_engine.GKEStartPodOperator(
         task_id="transform_csv_and_load_data",
         startup_timeout_seconds=600,
-        name="load_annual_summaries",
+        name="load_data",
         namespace="default",
         project_id="{{ var.value.gcp_project }}",
         location="us-central1-c",
@@ -87,7 +87,7 @@ with DAG(
         task_id="delete_cluster",
         project_id="{{ var.value.gcp_project }}",
         location="us-central1-c",
-        name="epa-air-qual--annual-summaries",
+        name="epa-hist-air-quality--annual-summaries",
     )
 
     create_cluster >> transform_csv_and_load_data >> delete_cluster

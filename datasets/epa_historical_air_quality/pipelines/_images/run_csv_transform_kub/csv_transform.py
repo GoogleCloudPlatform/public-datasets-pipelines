@@ -56,7 +56,7 @@ def main(
         file_group_wildcard=file_group_wildcard,
         incl_file_source_path=False,
         separator=",",
-        delete_src_file=True
+        delete_src_file=True,
     )
     process_source_file(
         source_file=source,
@@ -172,7 +172,7 @@ def process_source_file(
                 include_header=(chunk_number == 0),
                 truncate_file=(chunk_number == 0),
                 field_delimiter=field_delimiter,
-                output_headers=output_headers
+                output_headers=output_headers,
             )
 
 
@@ -365,7 +365,7 @@ def process_chunk(
     include_header: bool,
     truncate_file: bool,
     field_delimiter: str,
-    output_headers: typing.List[str]
+    output_headers: typing.List[str],
 ) -> None:
     df = resolve_date_format(df, "%Y-%m-%d %H:%M")
     df = df[output_headers]

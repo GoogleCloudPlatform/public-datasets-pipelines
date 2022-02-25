@@ -87,7 +87,7 @@ with DAG(
         task_id="delete_cluster",
         project_id="{{ var.value.gcp_project }}",
         location="us-central1-c",
-        name="epa-air-qual--co-daily",
+        name="epa-hist-air-quality--co-daily",
     )
 
     create_cluster >> transform_csv_and_load_data >> delete_cluster
