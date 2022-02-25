@@ -15,12 +15,12 @@
  */
 
 
-resource "google_bigquery_dataset" "thelook" {
-  dataset_id  = "thelook"
+resource "google_bigquery_dataset" "thelook_ecommerce" {
+  dataset_id  = "thelook_ecommerce"
   project     = var.project_id
   description = "Fictitious E-Commerce Dataset"
 }
 
-output "bigquery_dataset-thelook-dataset_id" {
-  value = google_bigquery_dataset.thelook.dataset_id
+output "bigquery_dataset-thelook_ecommerce-dataset_id" {
+  value = google_bigquery_dataset.thelook_ecommerce.dataset_id
 }

@@ -15,12 +15,12 @@
  */
 
 
-resource "google_bigquery_table" "thelook_ecommerce_thelook_ecommerce" {
+resource "google_bigquery_table" "thelook_ecommerce_products" {
   project    = var.project_id
   dataset_id = "thelook_ecommerce"
-  table_id   = "thelook_ecommerce"
+  table_id   = "products"
 
-  description = "The Look E-Commerce Dataset"
+  description = "The Look E-Commerce Dataset products table"
 
 
 
@@ -30,10 +30,148 @@ resource "google_bigquery_table" "thelook_ecommerce_thelook_ecommerce" {
   ]
 }
 
-output "bigquery_table-thelook_ecommerce_thelook_ecommerce-table_id" {
-  value = google_bigquery_table.thelook_ecommerce_thelook_ecommerce.table_id
+output "bigquery_table-thelook_ecommerce_products-table_id" {
+  value = google_bigquery_table.thelook_ecommerce_products.table_id
 }
 
-output "bigquery_table-thelook_ecommerce_thelook_ecommerce-id" {
-  value = google_bigquery_table.thelook_ecommerce_thelook_ecommerce.id
+output "bigquery_table-thelook_ecommerce_products-id" {
+  value = google_bigquery_table.thelook_ecommerce_products.id
+}
+
+resource "google_bigquery_table" "thelook_ecommerce_events" {
+  project    = var.project_id
+  dataset_id = "thelook_ecommerce"
+  table_id   = "events"
+
+  description = "The Look E-Commerce Dataset events table"
+
+
+
+
+  depends_on = [
+    google_bigquery_dataset.thelook_ecommerce
+  ]
+}
+
+output "bigquery_table-thelook_ecommerce_events-table_id" {
+  value = google_bigquery_table.thelook_ecommerce_events.table_id
+}
+
+output "bigquery_table-thelook_ecommerce_events-id" {
+  value = google_bigquery_table.thelook_ecommerce_events.id
+}
+
+resource "google_bigquery_table" "thelook_ecommerce_users" {
+  project    = var.project_id
+  dataset_id = "thelook_ecommerce"
+  table_id   = "users"
+
+  description = "The Look E-Commerce Dataset users table"
+
+
+
+
+  depends_on = [
+    google_bigquery_dataset.thelook_ecommerce
+  ]
+}
+
+output "bigquery_table-thelook_ecommerce_users-table_id" {
+  value = google_bigquery_table.thelook_ecommerce_users.table_id
+}
+
+output "bigquery_table-thelook_ecommerce_users-id" {
+  value = google_bigquery_table.thelook_ecommerce_users.id
+}
+
+resource "google_bigquery_table" "thelook_ecommerce_orders" {
+  project    = var.project_id
+  dataset_id = "thelook_ecommerce"
+  table_id   = "orders"
+
+  description = "The Look E-Commerce Dataset orders table"
+
+
+
+
+  depends_on = [
+    google_bigquery_dataset.thelook_ecommerce
+  ]
+}
+
+output "bigquery_table-thelook_ecommerce_orders-table_id" {
+  value = google_bigquery_table.thelook_ecommerce_orders.table_id
+}
+
+output "bigquery_table-thelook_ecommerce_orders-id" {
+  value = google_bigquery_table.thelook_ecommerce_orders.id
+}
+
+resource "google_bigquery_table" "thelook_ecommerce_order_items" {
+  project    = var.project_id
+  dataset_id = "thelook_ecommerce"
+  table_id   = "order_items"
+
+  description = "The Look E-Commerce Dataset order_items table"
+
+
+
+
+  depends_on = [
+    google_bigquery_dataset.thelook_ecommerce
+  ]
+}
+
+output "bigquery_table-thelook_ecommerce_order_items-table_id" {
+  value = google_bigquery_table.thelook_ecommerce_order_items.table_id
+}
+
+output "bigquery_table-thelook_ecommerce_order_items-id" {
+  value = google_bigquery_table.thelook_ecommerce_order_items.id
+}
+
+resource "google_bigquery_table" "thelook_ecommerce_inventory_items" {
+  project    = var.project_id
+  dataset_id = "thelook_ecommerce"
+  table_id   = "inventory_items"
+
+  description = "The Look E-Commerce Dataset inventory_items table"
+
+
+
+
+  depends_on = [
+    google_bigquery_dataset.thelook_ecommerce
+  ]
+}
+
+output "bigquery_table-thelook_ecommerce_inventory_items-table_id" {
+  value = google_bigquery_table.thelook_ecommerce_inventory_items.table_id
+}
+
+output "bigquery_table-thelook_ecommerce_inventory_items-id" {
+  value = google_bigquery_table.thelook_ecommerce_inventory_items.id
+}
+
+resource "google_bigquery_table" "thelook_ecommerce_distribution_centers" {
+  project    = var.project_id
+  dataset_id = "thelook_ecommerce"
+  table_id   = "distribution_centers"
+
+  description = "The Look E-Commerce Dataset distribution_centers table"
+
+
+
+
+  depends_on = [
+    google_bigquery_dataset.thelook_ecommerce
+  ]
+}
+
+output "bigquery_table-thelook_ecommerce_distribution_centers-table_id" {
+  value = google_bigquery_table.thelook_ecommerce_distribution_centers.table_id
+}
+
+output "bigquery_table-thelook_ecommerce_distribution_centers-id" {
+  value = google_bigquery_table.thelook_ecommerce_distribution_centers.id
 }

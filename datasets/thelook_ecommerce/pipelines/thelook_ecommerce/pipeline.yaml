@@ -80,14 +80,10 @@ dag:
         # Set the environment variables you need initialized in the container. Use these as input variables for the script your container is expected to perform.
         env_vars:
           NUM_OF_USERS: "15000"
-          TARGET_GCS_BUCKET: "{{ var.json.thelook_ecommerce.composer_bucket }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PREFIX: "data/thelook_ecommerce"
+          SOURCE_DIR: "data"
           EXTRANEOUS_HEADERS: "[\"event_type\", \"ip_address\", \"browser\", \"traffic_source\", \"session_id\", \"sequence_number\", \"uri\", \"is_sold\"]"
-          GOOGLE_APPLICATION_CREDENTIALS: "{{ var.json.thelook_ecommerce.google_application_credentials }}"
-          # Set resource limits for the pod here. For resource units in Kubernetes, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes
-        # resources:
-        #   request_memory: "4G"
-        #   request_cpu: "1"
-        #   request_ephemeral_storage: "10G"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load Products data to a BigQuery table"
@@ -96,10 +92,10 @@ dag:
         task_id: "load_products_to_bq"
 
         # The GCS bucket where the CSV file is located in.
-        bucket: "{{ var.json.thelook_ecommerce.composer_bucket }}"
+        bucket: "{{ var.value.composer_bucket }}"
 
         # The GCS object path for the CSV file
-        source_objects: ["data/products.csv"]
+        source_objects: ["data/thelook_ecommerce/products.csv"]
         source_format: "CSV"
         destination_project_dataset_table: "thelook_ecommerce.products"
 
@@ -150,10 +146,10 @@ dag:
         task_id: "load_events_to_bq"
 
         # The GCS bucket where the CSV file is located in.
-        bucket: "{{ var.json.thelook_ecommerce.composer_bucket }}"
+        bucket: "{{ var.value.composer_bucket }}"
 
         # The GCS object path for the CSV file
-        source_objects: ["data/events.csv"]
+        source_objects: ["data/thelook_ecommerce/events.csv"]
         source_format: "CSV"
         destination_project_dataset_table: "thelook_ecommerce.events"
 
@@ -216,10 +212,10 @@ dag:
         task_id: "load_inventory_items_to_bq"
 
         # The GCS bucket where the CSV file is located in.
-        bucket: "{{ var.json.thelook_ecommerce.composer_bucket }}"
+        bucket: "{{ var.value.composer_bucket }}"
 
         # The GCS object path for the CSV file
-        source_objects: ["data/inventory_items.csv"]
+        source_objects: ["data/thelook_ecommerce/inventory_items.csv"]
         source_format: "CSV"
         destination_project_dataset_table: "thelook_ecommerce.inventory_items"
 
@@ -279,10 +275,10 @@ dag:
         task_id: "load_order_items_to_bq"
 
         # The GCS bucket where the CSV file is located in.
-        bucket: "{{ var.json.thelook_ecommerce.composer_bucket }}"
+        bucket: "{{ var.value.composer_bucket }}"
 
         # The GCS object path for the CSV file
-        source_objects: ["data/order_items.csv"]
+        source_objects: ["data/thelook_ecommerce/order_items.csv"]
         source_format: "CSV"
         destination_project_dataset_table: "thelook_ecommerce.order_items"
 
@@ -336,10 +332,10 @@ dag:
         task_id: "load_orders_to_bq"
 
         # The GCS bucket where the CSV file is located in.
-        bucket: "{{ var.json.thelook_ecommerce.composer_bucket }}"
+        bucket: "{{ var.value.composer_bucket }}"
 
         # The GCS object path for the CSV file
-        source_objects: ["data/orders.csv"]
+        source_objects: ["data/thelook_ecommerce/orders.csv"]
         source_format: "CSV"
         destination_project_dataset_table: "thelook_ecommerce.orders"
 
@@ -390,10 +386,10 @@ dag:
         task_id: "load_users_to_bq"
 
         # The GCS bucket where the CSV file is located in.
-        bucket: "{{ var.json.thelook_ecommerce.composer_bucket }}"
+        bucket: "{{ var.value.composer_bucket }}"
 
         # The GCS object path for the CSV file
-        source_objects: ["data/users.csv"]
+        source_objects: ["data/thelook_ecommerce/users.csv"]
         source_format: "CSV"
         destination_project_dataset_table: "thelook_ecommerce.users"
 
@@ -459,10 +455,10 @@ dag:
         task_id: "load_distribution_centers_to_bq"
 
         # The GCS bucket where the CSV file is located in.
-        bucket: "{{ var.json.thelook_ecommerce.composer_bucket }}"
+        bucket: "{{ var.value.composer_bucket }}"
 
         # The GCS object path for the CSV file
-        source_objects: ["data/distribution_centers.csv"]
+        source_objects: ["data/thelook_ecommerce/distribution_centers.csv"]
         source_format: "CSV"
         destination_project_dataset_table: "thelook_ecommerce.distribution_centers"
 

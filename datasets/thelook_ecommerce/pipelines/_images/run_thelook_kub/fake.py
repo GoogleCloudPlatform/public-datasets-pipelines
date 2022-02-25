@@ -34,7 +34,9 @@ def generate_products() -> typing.List[dict]:
     product_by_id_dict = {}  # products partitioned by product ID
 
     products = collections.defaultdict(list)
-    with open("helper/products.csv", encoding="utf-8") as productcsv:
+    with open(
+        f"{os.environ['SOURCE_DIR']}/products.csv", encoding="utf-8"
+    ) as productcsv:
         csv_reader = csv.DictReader(productcsv)
         for rows in csv_reader:
             for k, v in rows.items():
@@ -115,7 +117,9 @@ def generate_products() -> typing.List[dict]:
 # read from local csv and return locations
 def generate_locations() -> typing.List[str]:
     location_data = []
-    with open("helper/world_pop.csv", encoding="utf-8") as worldcsv:
+    with open(
+        f"{os.environ['SOURCE_DIR']}/world_pop.csv", encoding="utf-8"
+    ) as worldcsv:
         csvReader = csv.DictReader(worldcsv)
         for rows in csvReader:
             location_data.append(rows)
@@ -126,8 +130,8 @@ SECONDS_IN_MINUTE = 60
 MINUTES_IN_HOUR = 60
 MINUTES_IN_DAY = 1440
 
-logging.info("generating products helper dict")
 products = generate_products()
+logging.info("generating products helper dict")
 logging.info("generating locations data")
 LOCATION_DATA = generate_locations()
 PRODUCT_GENDER_DICT = products[0]
@@ -135,7 +139,11 @@ PRODUCT_BY_ID_DICT = products[1]
 
 
 def main(
-    num_of_users: int, target_gcs_bucket: str, extraneous_headers: typing.List[str]
+    num_of_users: int,
+    target_gcs_prefix: str,
+    target_gcs_bucket: str,
+    source_dir: str,
+    extraneous_headers: typing.List[str],
 ) -> None:
 
     # read and generate location
@@ -161,21 +169,29 @@ def main(
     table_name = ["users", "orders", "order_items", "events", "inventory_items"]
     for name, table_dat in list(zip(table_name, table_dat)):
         logging.info(f"converting {name} dict to csv")
-        csv_data = dict_to_csv(name, table_dat)
+        csv_data = dict_to_csv(table_dat)
         logging.info(
-            f"uploading output file to... gs://{target_gcs_bucket}/data/{name}.csv"
+            f"uploading output file to... gs://{target_gcs_bucket}/{target_gcs_prefix}/{name}.csv"
         )
         upload_to_bucket(
-            bucket_name=target_gcs_bucket, file_name=name, data=str(csv_data)
+            target_bucket=target_gcs_bucket,
+            target_prefix=target_gcs_prefix,
+            target_object=f"{name}.csv",
+            source_data=csv_data,
         )
 
     # upload static data to gcs
     file_names = ["products.csv", "distribution_centers.csv"]
     for file in file_names:
         logging.info(
-            f"uploading output file to... gs://{target_gcs_bucket}/data/{file}"
+            f"uploading output file to... gs://{target_gcs_bucket}/{target_gcs_prefix}/{file}"
         )
-        upload_file_to_bucket(bucket_name=target_gcs_bucket, file_name=file)
+        upload_to_bucket(
+            target_bucket=target_gcs_bucket,
+            target_prefix=target_gcs_prefix,
+            target_object=f"{file}",
+            source_filepath=f"{source_dir}/{file}",
+        )
 
 
 # returns random address based off specified distribution
@@ -292,16 +308,13 @@ def generate_uri(event: str, product: str) -> str:
     if event == "product":
         return f"/{event}/{product[0]}"
     elif event == "department":
-        return f"""/{event}/
-                    {product[5].lower()}/category/
-                    {product[4].lower().replace(" ", "")}/brand/
-                    {product[1].lower().replace(" ", "")}"""
+        return f"""/{event}/{product[5].lower()}/category/{product[4].lower().replace(" ", "")}/brand/{product[1].lower().replace(" ", "")}"""
     else:
         return f"/{event}"
 
 
 # converts list of dicts into csv format
-def dict_to_csv(name: str, data: dict) -> list:
+def dict_to_csv(data: dict) -> str:
     output = io.StringIO()
     writer = csv.writer(output, quoting=csv.QUOTE_NONNUMERIC)
     header_writer = csv.DictWriter(output, fieldnames=data[0].keys())
@@ -312,20 +325,21 @@ def dict_to_csv(name: str, data: dict) -> list:
 
 
 # upload into GCS Bucket
-def upload_to_bucket(bucket_name: str, file_name: str, data: list) -> str:
+def upload_to_bucket(
+    target_bucket: str,
+    target_prefix: str,
+    target_object: str,
+    source_data: list = None,
+    source_filepath: str = None,
+) -> str:
     storage_client = storage.Client()
-    bucket = storage_client.get_bucket(bucket_name)
-    blob = bucket.blob("data/{}.csv".format(file_name))
-    blob.upload_from_string(data, content_type="text/csv")
-    return blob.public_url
+    bucket = storage_client.get_bucket(target_bucket)
+    blob = bucket.blob(f"{target_prefix}/{target_object}")
 
-
-# upload local file to GCS Bucket
-def upload_file_to_bucket(bucket_name: str, file_name: str) -> str:
-    storage_client = storage.Client()
-    bucket = storage_client.get_bucket(bucket_name)
-    blob = bucket.blob("data/{}".format(file_name))
-    blob.upload_from_filename("helper/{}".format(file_name))
+    if source_data:
+        blob.upload_from_string(str(source_data), content_type="text/csv")
+    else:
+        blob.upload_from_filename(source_filepath)
     return blob.public_url
 
 
@@ -413,12 +427,7 @@ class Users(DataUtil):
         self.country = address.country
         self.latitude = address.latitude
         self.longitude = address.longitude
-        self.email = (
-            self.first_name.lower()
-            + self.last_name.lower()
-            + "@"
-            + fake.free_email_domain()
-        )
+        self.email = f"{self.first_name.lower()}{self.last_name.lower()}@{fake.free_email_domain()}"
         # weight newer users/orders
         choice = random.choices([0, 1], weights=[0.975, 0.025])[0]
         if choice == 0:
@@ -565,7 +574,7 @@ class Events:
         self.traffic_source = order_item.traffic_source
 
     def __str__(self):
-        return f"{self.created_at}, {self.product_id}, {self.ip_address}, {self.city}, {self.state}, {self.postal_code}"
+        return f"{self.created_at}, {self.ip_address}, {self.city}, {self.state}, {self.postal_code}"
 
 
 inv_item_id = 0
@@ -731,7 +740,7 @@ class GhostEvents(DataUtil):
     user_id: int = dataclasses.field(init=False)
     sequence_number: int = dataclasses.field(init=False)
     session_id: str = dataclasses.field(init=False)
-    created_at: datetime = dataclasses.field(init=False)
+    created_at: datetime.datetime = dataclasses.field(init=False)
     ip_address: str = dataclasses.field(init=False)
     city: str = dataclasses.field(init=False)
     state: str = dataclasses.field(init=False)
@@ -790,18 +799,20 @@ class GhostEvents(DataUtil):
             self.uri = generate_uri(event, product)
             self.sequence_number += 1
             self.created_at = self.created_at + datetime.timedelta(
-                minutes=random.randrange(MINUTES_IN_HOUR * 0.5)
+                minutes=random.randrange(int(MINUTES_IN_HOUR * 0.5))
             )
             events.append(dataclasses.asdict(self))
 
     def __str__(self):
-        return f"{self.created_at}, {self.product_id}, {self.ip_address}, {self.city}, {self.state}, {self.postal_code}"
+        return f"{self.created_at}, {self.ip_address}, {self.city}, {self.state}, {self.postal_code}"
 
 
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
     main(
-        num_of_users=os.environ["NUM_OF_USERS"],
+        num_of_users=int(os.environ["NUM_OF_USERS"]),
+        target_gcs_prefix=os.environ["TARGET_GCS_PREFIX"],
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
+        source_dir=os.environ["SOURCE_DIR"],
         extraneous_headers=json.loads(os.environ["EXTRANEOUS_HEADERS"]),
     )

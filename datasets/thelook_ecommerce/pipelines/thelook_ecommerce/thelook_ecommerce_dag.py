@@ -38,22 +38,24 @@ with DAG(
         task_id="generate_thelook",
         is_delete_operator_pod=False,
         name="generate_thelook",
-        namespace="default",
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.thelook_ecommerce.docker_image }}",
         env_vars={
-            "NUM_OF_USERS": "15000",
-            "TARGET_GCS_BUCKET": "{{ var.json.thelook_ecommerce.composer_bucket }}",
+            "NUM_OF_USERS": "100",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
+            "TARGET_GCS_PREFIX": "data/thelook_ecommerce",
+            "SOURCE_DIR": "data",
             "EXTRANEOUS_HEADERS": '["event_type", "ip_address", "browser", "traffic_source", "session_id", "sequence_number", "uri", "is_sold"]',
-            "GOOGLE_APPLICATION_CREDENTIALS": "{{ var.json.thelook_ecommerce.google_application_credentials }}",
         },
     )
 
     # Task to load Products data to a BigQuery table
     load_products_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_products_to_bq",
-        bucket="{{ var.json.thelook_ecommerce.composer_bucket }}",
-        source_objects=["data/products.csv"],
+        bucket="{{ var.value.composer_bucket }}",
+        source_objects=["data/thelook_ecommerce/products.csv"],
         source_format="CSV",
         destination_project_dataset_table="thelook_ecommerce.products",
         skip_leading_rows=1,
@@ -74,8 +76,8 @@ with DAG(
     # Task to load Events data to a BigQuery table
     load_events_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_events_to_bq",
-        bucket="{{ var.json.thelook_ecommerce.composer_bucket }}",
-        source_objects=["data/events.csv"],
+        bucket="{{ var.value.composer_bucket }}",
+        source_objects=["data/thelook_ecommerce/events.csv"],
         source_format="CSV",
         destination_project_dataset_table="thelook_ecommerce.events",
         skip_leading_rows=1,
@@ -100,8 +102,8 @@ with DAG(
     # Task to load Iventory Items data to a BigQuery table
     load_inventory_items_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_inventory_items_to_bq",
-        bucket="{{ var.json.thelook_ecommerce.composer_bucket }}",
-        source_objects=["data/inventory_items.csv"],
+        bucket="{{ var.value.composer_bucket }}",
+        source_objects=["data/thelook_ecommerce/inventory_items.csv"],
         source_format="CSV",
         destination_project_dataset_table="thelook_ecommerce.inventory_items",
         skip_leading_rows=1,
@@ -129,8 +131,8 @@ with DAG(
     # Task to load Order Items data to a BigQuery table
     load_order_items_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_order_items_to_bq",
-        bucket="{{ var.json.thelook_ecommerce.composer_bucket }}",
-        source_objects=["data/order_items.csv"],
+        bucket="{{ var.value.composer_bucket }}",
+        source_objects=["data/thelook_ecommerce/order_items.csv"],
         source_format="CSV",
         destination_project_dataset_table="thelook_ecommerce.order_items",
         skip_leading_rows=1,
@@ -152,8 +154,8 @@ with DAG(
     # Task to load Orders data to a BigQuery table
     load_orders_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_orders_to_bq",
-        bucket="{{ var.json.thelook_ecommerce.composer_bucket }}",
-        source_objects=["data/orders.csv"],
+        bucket="{{ var.value.composer_bucket }}",
+        source_objects=["data/thelook_ecommerce/orders.csv"],
         source_format="CSV",
         destination_project_dataset_table="thelook_ecommerce.orders",
         skip_leading_rows=1,
@@ -174,8 +176,8 @@ with DAG(
     # Task to load Users data to a BigQuery table
     load_users_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_users_to_bq",
-        bucket="{{ var.json.thelook_ecommerce.composer_bucket }}",
-        source_objects=["data/users.csv"],
+        bucket="{{ var.value.composer_bucket }}",
+        source_objects=["data/thelook_ecommerce/users.csv"],
         source_format="CSV",
         destination_project_dataset_table="thelook_ecommerce.users",
         skip_leading_rows=1,
@@ -201,8 +203,8 @@ with DAG(
     # Task to load Distribution Centers data to a BigQuery table
     load_distribution_centers_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_distribution_centers_to_bq",
-        bucket="{{ var.json.thelook_ecommerce.composer_bucket }}",
-        source_objects=["data/distribution_centers.csv"],
+        bucket="{{ var.value.composer_bucket }}",
+        source_objects=["data/thelook_ecommerce/distribution_centers.csv"],
         source_format="CSV",
         destination_project_dataset_table="thelook_ecommerce.distribution_centers",
         skip_leading_rows=1,

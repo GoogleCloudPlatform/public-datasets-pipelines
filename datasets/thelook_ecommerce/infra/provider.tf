@@ -16,8 +16,9 @@
 
 
 provider "google" {
-  project = var.project_id
-  region  = var.region
+  project                     = var.project_id
+  impersonate_service_account = var.impersonating_acct
+  region                      = var.region
 }
 
 data "google_client_openid_userinfo" "me" {}
