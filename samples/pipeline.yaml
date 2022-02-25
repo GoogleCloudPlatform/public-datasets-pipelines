@@ -321,19 +321,11 @@ dag:
         # The name of the pod in which the task will run. This will be used (plus a random suffix) to generate a pod id
         name: "sample-kube-operator"
 
-        # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
-        namespace: "default"
+        # The Kubernetes namespace to run the pod in. For Composer versions >= 2.0.0, GKE pods do not have access to resources in your Google Cloud project when using the "default" namespace. You need to create a new namespace and Kubernetes service account with appropriate bindings. The new namespace and SA should be used by your pods to gain access to GCP resources in your project. For info on how to configure this, see https://cloud.google.com/composer/docs/composer-2/use-kubernetes-pod-operator.
+        namespace: "KUBE_NAMESPACE"
 
-        # Use this attribute to constrain which node pools your pod must run in.
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                    - key: cloud.google.com/gke-nodepool
-                      operator: In
-                      values:  # Specify your node pools here
-                        - "pool-e2-standard-4"
+        # The Kubernetes service account under the namespace specified above.
+        service_account_name: "KUBE_SERVICE_ACCOUNT"
 
         # The Google Container Registry image URL. To prepare a Docker image to be used by this operator:
         #
@@ -436,6 +428,21 @@ dag:
         body:
           name: "sample-gke-cluster"
           initial_node_count: 1
+          node_config:
+            # For the list of machine types, see https://cloud.google.com/compute/docs/general-purpose-machines#e2-standard.
+            # Some of the machine types and their specs are listed below for convenience:
+            #
+            # Machine type     vCPUs              Memory (GB)
+            # e2-micro         2 (shared core)    1
+            # e2-small         2 (shared core)    2
+            # e2-medium        2 (shared core)    4
+            # e2-standard-2    2                  8
+            # e2-standard-4    4                  16
+            # e2-standard-8    8                  32
+            machine_type: e2-standard-2
+            # https://googleapis.dev/python/container/latest/container_v1/types.html#google.cloud.container_v1.types.NodeConfig.oauth_scopes
+            oauth_scopes:
+              - https://www.googleapis.com/auth/devstorage.read_write
 
         # Optional service account to impersonate using short-term credentials
         impersonation_chain: "{{ var.json.DATASET_FOLDER_NAME.PIPELINE_FOLDER_NAME.service_account }}"

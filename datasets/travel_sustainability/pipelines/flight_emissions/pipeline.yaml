@@ -1,0 +1,129 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+---
+resources:
+  # A list of GCP resources that are unique and specific to your pipeline.
+  #
+  # The currently supported resources are shown below. Use only the resources
+  # needed by your pipeline, and delete the rest of the examples.
+  #
+  # We will keep adding to the list below to support more Google Cloud resources
+  # over time. If a resource you need isn't supported, please file an issue on
+  # the repository.
+  - type: bigquery_table
+    # A Google BigQuery table to store your data. Requires a `bigquery_dataset`
+    # to be specified in the config (i.e. `dataset.yaml) for the dataset that
+    # this pipeline belongs in.
+    table_id: flight_emissions
+    description: "Flight emissions data"
+
+dag:
+  # [Required] Specify the Airflow version of the operators used by the DAG.
+  airflow_version: 2
+
+  initialize:
+    dag_id: flight_emissions
+    default_args:
+      owner: "Google"
+      depends_on_past: False
+      start_date: '2021-01-09'
+    max_active_runs: 1
+    schedule_interval: "0 15 * * *"  # Daily at 3pm UTC
+    catchup: False
+    default_view: graph
+
+  tasks:
+    - operator: "GoogleCloudStorageToBigQueryOperator"
+      # Initializes GCS to BQ task for the DAG. This operator is used to load a
+      # JSON, CSV, Avro, ORC, or Parquet data from GCS into a BigQuery table.
+
+      # Task description
+      description: "Task to load CSV data to a BigQuery table"
+
+      # Arguments supported by this operator:
+      # http://airflow.apache.org/docs/apache-airflow/stable/howto/operator/gcp/gcs.html#googlecloudstoragetobigqueryoperator
+      args:
+        task_id: "flight_emissions_gcs_to_bq"
+
+        # The GCS bucket where the CSV file is located in.
+        bucket: "{{ var.json.travel_sustainability.source_bucket }}"
+
+        # Use the CSV file containing data from today
+        source_objects: ["flight_emissions.csv"]
+        source_format: "CSV"
+        destination_project_dataset_table: "travel_sustainability.flight_emissions"
+
+        # Use this if your CSV file contains a header row
+        skip_leading_rows: 1
+
+        # How to write data to the table: overwrite, append, or write if empty
+        # See https://cloud.google.com/bigquery/docs/reference/auditlogs/rest/Shared.Types/WriteDisposition
+        write_disposition: "WRITE_TRUNCATE"
+
+        schema_fields:
+          - name: "carrier"
+            type: "STRING"
+            mode: "REQUIRED"
+            description: "IATA code of the airline operating the flight"
+          - name: "flight_number"
+            type: "STRING"
+            mode: "REQUIRED"
+            description: "Flight number assigned by the operating airline"
+          - name: "departure_date"
+            type: "DATE"
+            mode: "REQUIRED"
+            description: "Departure date of the flight"
+          - name: "origin"
+            type: "STRING"
+            mode: "REQUIRED"
+            description: "IATA airport code of the origin"
+          - name: "destination"
+            type: "STRING"
+            mode: "REQUIRED"
+            description: "IATA airport code of the destination"
+          - name: "economy_co2e_grams_per_pax"
+            type: "INTEGER"
+            mode: "REQUIRED"
+            description: "Estimated CO2e in grams for one passenger in economy cabin including non-CO2 effects"
+          - name: "premium_economy_co2e_grams_per_pax"
+            type: "INTEGER"
+            mode: "REQUIRED"
+            description: "Estimated CO2e in grams for one passenger in premium economy cabin including non-CO2 effects"
+          - name: "business_co2e_grams_per_pax"
+            type: "INTEGER"
+            mode: "REQUIRED"
+            description: "Estimated CO2e in grams for one passenger in business cabin including non-CO2 effects"
+          - name: "first_co2e_grams_per_pax"
+            type: "INTEGER"
+            mode: "REQUIRED"
+            description: "Estimated CO2e in grams for one passenger in first cabin including non-CO2 effects"
+          - name: "economy_co2_grams_per_pax"
+            type: "INTEGER"
+            mode: "REQUIRED"
+            description: "Estimated CO2 in grams for one passenger in economy cabin excluding non-CO2 effects"
+          - name: "premium_economy_co2_grams_per_pax"
+            type: "INTEGER"
+            mode: "REQUIRED"
+            description: "Estimated CO2 in grams for one passenger in premium economy cabin excluding non-CO2 effects"
+          - name: "business_co2_grams_per_pax"
+            type: "INTEGER"
+            mode: "REQUIRED"
+            description: "Estimated CO2 in grams for one passenger in business cabin excluding non-CO2 effects"
+          - name: "first_co2_grams_per_pax"
+            type: "INTEGER"
+            mode: "REQUIRED"
+            description: "Estimated CO2 in grams for one passenger in first cabin excluding non-CO2 effects"
+
+  graph_paths:
+    - "flight_emissions_gcs_to_bq"
