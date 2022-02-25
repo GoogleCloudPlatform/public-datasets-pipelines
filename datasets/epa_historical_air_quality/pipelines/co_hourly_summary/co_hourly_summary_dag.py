@@ -36,7 +36,7 @@ with DAG(
         project_id="{{ var.value.gcp_project }}",
         location="us-central1-c",
         body={
-            "name": "epa-hist-air-quality--co_hourly",
+            "name": "epa-hist-air-quality--co-hourly",
             "initial_node_count": 1,
             "network": "{{ var.value.vpc_network }}",
             "node_config": {
@@ -57,7 +57,7 @@ with DAG(
         namespace="default",
         project_id="{{ var.value.gcp_project }}",
         location="us-central1-c",
-        cluster_name="epa-hist-air-quality--co_hourly",
+        cluster_name="epa-hist-air-quality--co-hourly",
         image_pull_policy="Always",
         image="{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -87,7 +87,7 @@ with DAG(
         task_id="delete_cluster",
         project_id="{{ var.value.gcp_project }}",
         location="us-central1-c",
-        name="epa-hist-air-quality--co_hourly",
+        name="epa-hist-air-quality--co-hourly",
     )
 
     create_cluster >> transform_csv_and_load_data >> delete_cluster
