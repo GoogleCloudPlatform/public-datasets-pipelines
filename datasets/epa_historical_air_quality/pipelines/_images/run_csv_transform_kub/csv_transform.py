@@ -62,6 +62,7 @@ def main(
         source_file=source,
         target_file=target_file,
         input_headers=input_headers,
+        output_headers=output_headers,
         dtypes=data_dtypes,
         chunksize=chunksize,
         field_delimiter=field_delimiter,
@@ -139,6 +140,7 @@ def process_source_file(
     source_file: str,
     target_file: str,
     input_headers: typing.List[str],
+    output_headers: typing.List[str],
     dtypes: dict,
     chunksize: str,
     field_delimiter: str,
@@ -170,6 +172,7 @@ def process_source_file(
                 include_header=(chunk_number == 0),
                 truncate_file=(chunk_number == 0),
                 field_delimiter=field_delimiter,
+                output_headers=output_headers
             )
 
 
@@ -362,8 +365,10 @@ def process_chunk(
     include_header: bool,
     truncate_file: bool,
     field_delimiter: str,
+    output_headers: typing.List[str]
 ) -> None:
     df = resolve_date_format(df, "%Y-%m-%d %H:%M")
+    df = df[output_headers]
     save_to_new_file(df=df, file_path=str(target_file_batch), sep=field_delimiter)
     append_batch_file(
         batch_file_path=target_file_batch,
