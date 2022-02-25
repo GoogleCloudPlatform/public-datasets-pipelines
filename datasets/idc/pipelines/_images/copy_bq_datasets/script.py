@@ -153,7 +153,7 @@ def trigger_config(
 ) -> None:
     now = time.time()
     seconds = int(now)
-    nanos = int((now - seconds) * 10 ** 9)
+    nanos = int((now - seconds) * pow(10, 9))
 
     try:
         client.start_manual_transfer_runs(

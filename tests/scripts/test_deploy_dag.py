@@ -56,12 +56,6 @@ def pipeline_path(
 
 
 @pytest.fixture
-def airflow_home() -> typing.Iterator[pathlib.Path]:
-    with tempfile.TemporaryDirectory(suffix="_airflow_home") as airflow_home_path:
-        yield pathlib.Path(airflow_home_path)
-
-
-@pytest.fixture
 def env() -> str:
     return "test"
 
@@ -109,20 +103,13 @@ def copy_config_files_and_set_tmp_folder_names_as_ids(
     )
 
 
-def create_airflow_folders(airflow_home: pathlib.Path):
-    (airflow_home / "dags").mkdir(parents=True, exist_ok=True)
-    (airflow_home / "data").mkdir(parents=True, exist_ok=True)
-
-
 def setup_dag_and_variables(
     dataset_path: pathlib.Path,
     pipeline_path: pathlib.Path,
-    airflow_home: pathlib.Path,
     env: str,
     variables_filename: str,
 ):
     copy_config_files_and_set_tmp_folder_names_as_ids(dataset_path, pipeline_path)
-    create_airflow_folders(airflow_home)
 
     generate_dag.main(
         dataset_id=dataset_path.name, pipeline_id=pipeline_path.name, env=env
@@ -137,31 +124,14 @@ def setup_dag_and_variables(
 def test_script_always_requires_dataset_arg(
     dataset_path: pathlib.Path,
     pipeline_path: pathlib.Path,
-    airflow_home: pathlib.Path,
     env: str,
 ):
     setup_dag_and_variables(
         dataset_path,
         pipeline_path,
-        airflow_home,
         env,
         f"{dataset_path.name}_variables.json",
     )
-
-    with pytest.raises(subprocess.CalledProcessError):
-        subprocess.check_call(
-            [
-                "python",
-                "scripts/deploy_dag.py",
-                "--env",
-                env,
-                "--airflow-home",
-                str(airflow_home),
-                "--local",
-            ],
-            cwd=deploy_dag.PROJECT_ROOT,
-        )
-
     with pytest.raises(subprocess.CalledProcessError):
         subprocess.check_call(
             [
@@ -172,21 +142,6 @@ def test_script_always_requires_dataset_arg(
             ],
             cwd=deploy_dag.PROJECT_ROOT,
         )
-
-    subprocess.check_call(
-        [
-            "python",
-            "scripts/deploy_dag.py",
-            "--dataset",
-            dataset_path.name,
-            "--env",
-            env,
-            "--airflow-home",
-            str(airflow_home),
-            "--local",
-        ],
-        cwd=deploy_dag.PROJECT_ROOT,
-    )
 
 
 pipeline_path_2 = pipeline_path
@@ -195,14 +150,12 @@ pipeline_path_2 = pipeline_path
 def test_script_can_deploy_without_variables_files(
     dataset_path: pathlib.Path,
     pipeline_path: pathlib.Path,
-    airflow_home: pathlib.Path,
     env: str,
     mocker,
 ):
     setup_dag_and_variables(
         dataset_path,
         pipeline_path,
-        airflow_home,
         env,
         f"{dataset_path.name}_variables.json",
     )
@@ -230,11 +183,9 @@ def test_script_can_deploy_without_variables_files(
     mocker.patch("scripts.deploy_dag.composer_airflow_version", return_value=2)
 
     deploy_dag.main(
-        local=False,
         env_path=ENV_PATH,
         dataset_id=dataset_path.name,
         pipeline=pipeline_path.name,
-        airflow_home=airflow_home,
         composer_env="test-env",
         composer_bucket="test-bucket",
         composer_region="test-region",
@@ -244,14 +195,12 @@ def test_script_can_deploy_without_variables_files(
 def test_script_errors_out_when_deploying_airflow2_dag_to_airflow1_env(
     dataset_path: pathlib.Path,
     pipeline_path: pathlib.Path,
-    airflow_home: pathlib.Path,
     env: str,
     mocker,
 ):
     setup_dag_and_variables(
         dataset_path,
         pipeline_path,
-        airflow_home,
         env,
         f"{dataset_path.name}_variables.json",
     )
@@ -261,28 +210,25 @@ def test_script_errors_out_when_deploying_airflow2_dag_to_airflow1_env(
 
     with pytest.raises(Exception):
         deploy_dag.main(
-            local=False,
             env_path=ENV_PATH,
             dataset_id=dataset_path.name,
             pipeline=pipeline_path.name,
-            airflow_home=airflow_home,
             composer_env="test-env",
             composer_bucket="test-bucket",
             composer_region="test-region",
         )
 
 
-def test_script_with_pipeline_arg_deploys_only_that_pipeline(
+def test_script_without_pipeline_arg_deploys_all_pipelines_under_the_dataset(
     dataset_path: pathlib.Path,
     pipeline_path: pathlib.Path,
     pipeline_path_2: pathlib.Path,
-    airflow_home: pathlib.Path,
     env: str,
+    mocker,
 ):
     setup_dag_and_variables(
         dataset_path,
         pipeline_path,
-        airflow_home,
         env,
         f"{dataset_path.name}_variables.json",
     )
@@ -290,28 +236,78 @@ def test_script_with_pipeline_arg_deploys_only_that_pipeline(
     setup_dag_and_variables(
         dataset_path,
         pipeline_path_2,
-        airflow_home,
         env,
         f"{dataset_path.name}_variables.json",
     )
 
+    airflow_version = 2
+    mocker.patch("scripts.deploy_dag.copy_variables_to_airflow_data_folder")
+    mocker.patch("scripts.deploy_dag.import_variables_to_airflow_env")
+    mocker.patch(
+        "scripts.deploy_dag.composer_airflow_version", return_value=airflow_version
+    )
+    mocker.patch("scripts.deploy_dag.copy_custom_callables_to_airflow_dags_folder")
+    mocker.patch("scripts.deploy_dag.copy_generated_dag_to_airflow_dags_folder")
+    mocker.patch("scripts.deploy_dag.check_airflow_version_compatibility")
+
     deploy_dag.main(
-        local=True,
+        env_path=ENV_PATH,
+        dataset_id=dataset_path.name,
+        composer_env="test-env",
+        composer_bucket="test-bucket",
+        composer_region="test-region",
+    )
+
+    pipelines_dir = ENV_DATASETS_PATH / dataset_path.name / "pipelines"
+    deploy_dag.check_airflow_version_compatibility.assert_any_call(
+        pipelines_dir / pipeline_path.name, airflow_version
+    )
+    deploy_dag.check_airflow_version_compatibility.assert_any_call(
+        pipelines_dir / pipeline_path_2.name, airflow_version
+    )
+
+
+def test_script_with_pipeline_arg_deploys_only_that_pipeline(
+    dataset_path: pathlib.Path,
+    pipeline_path: pathlib.Path,
+    pipeline_path_2: pathlib.Path,
+    env: str,
+    mocker,
+):
+    setup_dag_and_variables(
+        dataset_path,
+        pipeline_path,
+        env,
+        f"{dataset_path.name}_variables.json",
+    )
+
+    setup_dag_and_variables(
+        dataset_path,
+        pipeline_path_2,
+        env,
+        f"{dataset_path.name}_variables.json",
+    )
+
+    airflow_version = 2
+    mocker.patch("scripts.deploy_dag.copy_variables_to_airflow_data_folder")
+    mocker.patch("scripts.deploy_dag.import_variables_to_airflow_env")
+    mocker.patch(
+        "scripts.deploy_dag.composer_airflow_version", return_value=airflow_version
+    )
+    mocker.patch("scripts.deploy_dag.copy_custom_callables_to_airflow_dags_folder")
+    mocker.patch("scripts.deploy_dag.copy_generated_dag_to_airflow_dags_folder")
+    mocker.patch("scripts.deploy_dag.check_airflow_version_compatibility")
+
+    deploy_dag.main(
         env_path=ENV_PATH,
         dataset_id=dataset_path.name,
         pipeline=pipeline_path_2.name,
-        airflow_home=airflow_home,
-        composer_env=None,
-        composer_bucket=None,
-        composer_region=None,
+        composer_env="test-env",
+        composer_bucket="test-bucket",
+        composer_region="test-region",
     )
 
-    assert not (
-        airflow_home / "dags" / f"{dataset_path.name}__{pipeline_path.name}_dag.py"
-    ).exists()
-    assert (
-        airflow_home / "dags" / f"{dataset_path.name}__{pipeline_path_2.name}_dag.py"
-    ).exists()
+    deploy_dag.check_airflow_version_compatibility.assert_called_once()
 
 
 def test_script_without_local_flag_requires_cloud_composer_args(env: str):
@@ -368,119 +364,3 @@ def test_script_without_local_flag_requires_cloud_composer_args(env: str):
             ],
             cwd=deploy_dag.PROJECT_ROOT,
         )
-
-
-def test_script_with_local_flag_requires_airflow_home_to_be_an_existing_directory(
-    dataset_path: pathlib.Path,
-    pipeline_path: pathlib.Path,
-    airflow_home: pathlib.Path,
-    env: str,
-):
-    setup_dag_and_variables(
-        dataset_path,
-        pipeline_path,
-        airflow_home,
-        env,
-        f"{dataset_path.name}_variables.json",
-    )
-
-    with pytest.raises(subprocess.CalledProcessError):
-        subprocess.check_call(
-            [
-                "python",
-                "scripts/deploy_dag.py",
-                "--dataset",
-                dataset_path.name,
-                "--env",
-                env,
-                "--airflow-home",
-                tempfile.NamedTemporaryFile().name,
-                "--local",
-            ],
-            cwd=deploy_dag.PROJECT_ROOT,
-        )
-
-    assert airflow_home.exists()
-    subprocess.check_call(
-        [
-            "python",
-            "scripts/deploy_dag.py",
-            "--dataset",
-            dataset_path.name,
-            "--env",
-            env,
-            "--airflow-home",
-            str(airflow_home),
-            "--local",
-        ],
-        cwd=deploy_dag.PROJECT_ROOT,
-    )
-
-
-def test_script_with_local_flag_copies_files_to_local_airflow_env(
-    dataset_path: pathlib.Path,
-    pipeline_path: pathlib.Path,
-    airflow_home: pathlib.Path,
-    env: str,
-):
-    dag_filename = f"{dataset_path.name}__{pipeline_path.name}_dag.py"
-    variables_filename = f"{dataset_path.name}_variables.json"
-
-    setup_dag_and_variables(
-        dataset_path,
-        pipeline_path,
-        airflow_home,
-        env,
-        f"{dataset_path.name}_variables.json",
-    )
-
-    deploy_dag.main(
-        local=True,
-        env_path=ENV_PATH,
-        dataset_id=dataset_path.name,
-        airflow_home=airflow_home,
-        composer_env=None,
-        composer_bucket=None,
-        composer_region=None,
-    )
-
-    assert (airflow_home / "data" / "variables" / "shared_variables.json").exists()
-    assert (airflow_home / "data" / "variables" / variables_filename).exists()
-    assert (airflow_home / "dags" / dag_filename).exists()
-
-
-def test_script_with_local_flag_copies_custom_callables_dir_to_local_airflow_env(
-    dataset_path: pathlib.Path,
-    pipeline_path: pathlib.Path,
-    airflow_home: pathlib.Path,
-    env: str,
-):
-    callables_dir = pipeline_path / "custom"
-    callables_dir.mkdir(parents=True, exist_ok=True)
-    custom_file = tempfile.NamedTemporaryFile(suffix=".py", dir=callables_dir)
-
-    setup_dag_and_variables(
-        dataset_path,
-        pipeline_path,
-        airflow_home,
-        env,
-        f"{dataset_path.name}_variables.json",
-    )
-
-    deploy_dag.main(
-        local=True,
-        env_path=ENV_PATH,
-        dataset_id=dataset_path.name,
-        airflow_home=airflow_home,
-        composer_env=None,
-        composer_bucket=None,
-        composer_region=None,
-    )
-
-    target_callables_dir = (
-        airflow_home / "dags" / dataset_path.name / pipeline_path.name / "custom"
-    )
-    assert target_callables_dir.exists()
-    assert target_callables_dir.is_dir()
-    assert (target_callables_dir / custom_file.name.split("/")[-1]).exists()
-    assert not (target_callables_dir / custom_file.name.split("/")[-1]).is_dir()

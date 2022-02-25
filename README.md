@@ -16,7 +16,7 @@ Cloud-native, data pipeline architecture for onboarding public datasets to [Data
 
 # Environment Setup
 
-We use Pipenv to make environment setup more deterministic and uniform across different machines. If you haven't done so, install Pipenv using the instructions found [here](https://pipenv-fork.readthedocs.io/en/latest/install.html#installing-pipenv).
+We use Pipenv to make environment setup more deterministic and uniform across different machines. If you haven't done so, install Pipenv using these [instructions](https://pipenv-fork.readthedocs.io/en/latest/install.html#installing-pipenv).
 
 With Pipenv installed, run the following command to install the dependencies:
 
@@ -72,7 +72,7 @@ Every YAML file supports a `resources` block. To use this, identify what Google 
 
 - BigQuery datasets and tables to store final, customer-facing data
 - GCS bucket to store downstream data, such as those linked to in the [Datasets Marketplace](https://console.cloud.google.com/marketplace/browse?filter=solution-type:dataset).
-- Sometimes, for very large datasets that requires processing to be parallelized, you might need to provision a [Dataflow](https://cloud.google.com/dataflow/docs) (i.e. Apache Beam) job
+- Sometimes, for very large datasets that requires processing to be parallelized, you might need to provision a [Dataflow](https://cloud.google.com/dataflow/docs) (Apache Beam) job
 
 
 ## 3. Generate Terraform files and actuate GCP resources
@@ -101,7 +101,7 @@ The `--tf-state-bucket` and `--tf-state-prefix` parameters can be optionally use
 
 In addition, the command above creates a "dot env" directory in the project root. The directory name is the value you set for `--env`. If it's not set, the value defaults to `dev` which generates the `.dev` folder.
 
-Consider a dot directory as your own sandbox, specific to your machine, that's mainly used for prototyping. As will be seen later, this directory is where you will set the variables specific to your environment: such as actual GCS bucket names, GCR repository URLs, and secrets (we recommend using [Secret Manager](https://cloud.google.com/composer/docs/secret-manager) for this). The files and variables created or copied in the dot directories are isolated from the main repo, i.e. all dot directories are gitignored.
+We strongly recommend using a dot directory as your own sandbox, specific to your machine, that's mainly used for prototyping. This directory is where you will set the variables specific to your environment: such as actual GCS bucket names, GCR repository URLs, and secrets (we recommend using [Secret Manager](https://cloud.google.com/composer/docs/secret-manager) for this). The files and variables created or copied in the dot directories are isolated from the main repo, meaning that all dot directories are gitignored.
 
 As a concrete example, the unit tests use a temporary `.test` directory as their environment.
 

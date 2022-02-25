@@ -41,6 +41,8 @@ dag:
         source_bucket: "{{ var.json.idc.source_bucket }}"
         destination_bucket: "{{ var.json.idc.destination_bucket}}"
         google_impersonation_chain: "{{ var.json.idc.service_account }}"
+        transfer_options:
+          deleteObjectsUniqueInSink: False
 
     - operator: "KubernetesPodOperator"
       description: "Transfer IDC Databases"
@@ -49,7 +51,6 @@ dag:
         name: "copy_bq_datasets"
         namespace: "composer"
         service_account_name: "datasets"
-
         image_pull_policy: "Always"
         image: "{{ var.json.idc.container_registry.copy_bq_datasets }}"
         env_vars:
@@ -58,10 +59,10 @@ dag:
           SERVICE_ACCOUNT: "{{ var.json.idc.service_account }}"
           DATASET_NAME: "idc"
           DATASET_VERSIONS: >-
-            ["v1", "v2", "v3", "v4", "v5", "v6"]
+            ["v1", "v2", "v3", "v4", "v5", "v6", "v7"]
         resources:
-          limit_memory: "128M"
-          limit_cpu: "200m"
+          request_memory: "128M"
+          request_cpu: "200m"
 
     - operator: "KubernetesPodOperator"
       description: "Generate BQ views"
@@ -70,7 +71,6 @@ dag:
         name: "generate_bq_views"
         namespace: "composer"
         service_account_name: "datasets"
-
         image_pull_policy: "Always"
         image: "{{ var.json.idc.container_registry.generate_bq_views }}"
         env_vars:
@@ -78,11 +78,11 @@ dag:
           GCP_PROJECT: "{{ var.value.gcp_project }}"
           DATASET_NAME: "idc"
           DATASET_VERSIONS: >-
-            ["v1", "v2", "v3", "v4", "v5", "v6", "current"]
-          CURRENT_VERSION: "v6"
+            ["v1", "v2", "v3", "v4", "v5", "v6", "v7", "current"]
+          CURRENT_VERSION: "v7"
         resources:
-          limit_memory: "128M"
-          limit_cpu: "200m"
+          request_memory: "128M"
+          request_cpu: "200m"
 
   graph_paths:
     - "copy_gcs_bucket >> copy_bq_datasets >> generate_bq_views"
