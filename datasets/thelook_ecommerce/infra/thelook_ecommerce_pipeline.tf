@@ -19,7 +19,7 @@ resource "google_bigquery_table" "thelook_ecommerce_products" {
   project     = var.project_id
   dataset_id  = "thelook_ecommerce"
   table_id    = "products"
-  description = "The Look E-Commerce Dataset products table"
+  description = "The Look fictitious e-commerce dataset - products table"
   depends_on = [
     google_bigquery_dataset.thelook_ecommerce
   ]
@@ -37,7 +37,7 @@ resource "google_bigquery_table" "thelook_ecommerce_events" {
   project     = var.project_id
   dataset_id  = "thelook_ecommerce"
   table_id    = "events"
-  description = "The Look E-Commerce Dataset events table"
+  description = "Programatically generated web events for The Look fictitious e-commerce store"
   depends_on = [
     google_bigquery_dataset.thelook_ecommerce
   ]
@@ -55,7 +55,7 @@ resource "google_bigquery_table" "thelook_ecommerce_users" {
   project     = var.project_id
   dataset_id  = "thelook_ecommerce"
   table_id    = "users"
-  description = "The Look E-Commerce Dataset users table"
+  description = "Programatically generated users for The Look fictitious e-commerce store"
   depends_on = [
     google_bigquery_dataset.thelook_ecommerce
   ]
@@ -73,7 +73,7 @@ resource "google_bigquery_table" "thelook_ecommerce_orders" {
   project     = var.project_id
   dataset_id  = "thelook_ecommerce"
   table_id    = "orders"
-  description = "The Look E-Commerce Dataset orders table"
+  description = "Programatically generated orders for The Look fictitious e-commerce store"
   depends_on = [
     google_bigquery_dataset.thelook_ecommerce
   ]
@@ -91,7 +91,7 @@ resource "google_bigquery_table" "thelook_ecommerce_order_items" {
   project     = var.project_id
   dataset_id  = "thelook_ecommerce"
   table_id    = "order_items"
-  description = "The Look E-Commerce Dataset order_items table"
+  description = "Programatically generated order items for The Look fictitious e-commerce store"
   depends_on = [
     google_bigquery_dataset.thelook_ecommerce
   ]
@@ -109,7 +109,7 @@ resource "google_bigquery_table" "thelook_ecommerce_inventory_items" {
   project     = var.project_id
   dataset_id  = "thelook_ecommerce"
   table_id    = "inventory_items"
-  description = "The Look E-Commerce Dataset inventory_items table"
+  description = "Programatically generated inventory for The Look fictitious e-commerce store"
   depends_on = [
     google_bigquery_dataset.thelook_ecommerce
   ]
@@ -127,7 +127,7 @@ resource "google_bigquery_table" "thelook_ecommerce_distribution_centers" {
   project     = var.project_id
   dataset_id  = "thelook_ecommerce"
   table_id    = "distribution_centers"
-  description = "The Look E-Commerce Dataset distribution_centers table"
+  description = "The Look fictitious e-commerce dataset: distribution_centers table"
   depends_on = [
     google_bigquery_dataset.thelook_ecommerce
   ]
