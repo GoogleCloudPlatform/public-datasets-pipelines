@@ -427,7 +427,7 @@ class Users(DataUtil):
         self.country = address.country
         self.latitude = address.latitude
         self.longitude = address.longitude
-        self.email = f"{self.first_name.lower()}{self.last_name.lower()}@{fake.free_email_domain()}"
+        self.email = f"{self.first_name.lower()}{self.last_name.lower()}@{fake.safe_domain_name()}"
         # weight newer users/orders
         choice = random.choices([0, 1], weights=[0.975, 0.025])[0]
         if choice == 0:
