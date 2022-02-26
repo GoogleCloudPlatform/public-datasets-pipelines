@@ -16,15 +16,10 @@
 
 
 resource "google_bigquery_table" "thelook_ecommerce_products" {
-  project    = var.project_id
-  dataset_id = "thelook_ecommerce"
-  table_id   = "products"
-
+  project     = var.project_id
+  dataset_id  = "thelook_ecommerce"
+  table_id    = "products"
   description = "The Look E-Commerce Dataset products table"
-
-
-
-
   depends_on = [
     google_bigquery_dataset.thelook_ecommerce
   ]
@@ -39,15 +34,10 @@ output "bigquery_table-thelook_ecommerce_products-id" {
 }
 
 resource "google_bigquery_table" "thelook_ecommerce_events" {
-  project    = var.project_id
-  dataset_id = "thelook_ecommerce"
-  table_id   = "events"
-
+  project     = var.project_id
+  dataset_id  = "thelook_ecommerce"
+  table_id    = "events"
   description = "The Look E-Commerce Dataset events table"
-
-
-
-
   depends_on = [
     google_bigquery_dataset.thelook_ecommerce
   ]
@@ -62,15 +52,10 @@ output "bigquery_table-thelook_ecommerce_events-id" {
 }
 
 resource "google_bigquery_table" "thelook_ecommerce_users" {
-  project    = var.project_id
-  dataset_id = "thelook_ecommerce"
-  table_id   = "users"
-
+  project     = var.project_id
+  dataset_id  = "thelook_ecommerce"
+  table_id    = "users"
   description = "The Look E-Commerce Dataset users table"
-
-
-
-
   depends_on = [
     google_bigquery_dataset.thelook_ecommerce
   ]
@@ -85,15 +70,10 @@ output "bigquery_table-thelook_ecommerce_users-id" {
 }
 
 resource "google_bigquery_table" "thelook_ecommerce_orders" {
-  project    = var.project_id
-  dataset_id = "thelook_ecommerce"
-  table_id   = "orders"
-
+  project     = var.project_id
+  dataset_id  = "thelook_ecommerce"
+  table_id    = "orders"
   description = "The Look E-Commerce Dataset orders table"
-
-
-
-
   depends_on = [
     google_bigquery_dataset.thelook_ecommerce
   ]
@@ -108,15 +88,10 @@ output "bigquery_table-thelook_ecommerce_orders-id" {
 }
 
 resource "google_bigquery_table" "thelook_ecommerce_order_items" {
-  project    = var.project_id
-  dataset_id = "thelook_ecommerce"
-  table_id   = "order_items"
-
+  project     = var.project_id
+  dataset_id  = "thelook_ecommerce"
+  table_id    = "order_items"
   description = "The Look E-Commerce Dataset order_items table"
-
-
-
-
   depends_on = [
     google_bigquery_dataset.thelook_ecommerce
   ]
@@ -131,15 +106,10 @@ output "bigquery_table-thelook_ecommerce_order_items-id" {
 }
 
 resource "google_bigquery_table" "thelook_ecommerce_inventory_items" {
-  project    = var.project_id
-  dataset_id = "thelook_ecommerce"
-  table_id   = "inventory_items"
-
+  project     = var.project_id
+  dataset_id  = "thelook_ecommerce"
+  table_id    = "inventory_items"
   description = "The Look E-Commerce Dataset inventory_items table"
-
-
-
-
   depends_on = [
     google_bigquery_dataset.thelook_ecommerce
   ]
@@ -154,15 +124,10 @@ output "bigquery_table-thelook_ecommerce_inventory_items-id" {
 }
 
 resource "google_bigquery_table" "thelook_ecommerce_distribution_centers" {
-  project    = var.project_id
-  dataset_id = "thelook_ecommerce"
-  table_id   = "distribution_centers"
-
+  project     = var.project_id
+  dataset_id  = "thelook_ecommerce"
+  table_id    = "distribution_centers"
   description = "The Look E-Commerce Dataset distribution_centers table"
-
-
-
-
   depends_on = [
     google_bigquery_dataset.thelook_ecommerce
   ]

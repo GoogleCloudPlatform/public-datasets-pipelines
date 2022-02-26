@@ -43,7 +43,7 @@ with DAG(
         image_pull_policy="Always",
         image="{{ var.json.thelook_ecommerce.docker_image }}",
         env_vars={
-            "NUM_OF_USERS": "100",
+            "NUM_OF_USERS": "15000",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PREFIX": "data/thelook_ecommerce",
             "SOURCE_DIR": "data",
