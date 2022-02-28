@@ -211,6 +211,7 @@ def load_data_to_bq(
     client = bigquery.Client(project=project_id)
     table_ref = client.dataset(dataset_id).table(table_id)
     job_config = bigquery.LoadJobConfig()
+    job_config.write_disposition = bigquery.WriteDisposition.WRITE_TRUNCATE
     job_config.source_format = bigquery.SourceFormat.CSV
     job_config.field_delimiter = field_delimiter
     job_config.skip_leading_rows = 1  # ignore the header
