@@ -169,32 +169,21 @@ Docker images will be built and pushed to GCR by default whenever the command ab
 
 Running the `generate_dag` command in the previous step will parse your pipeline config and inform you about the parameterized Airflow variables your pipeline expects to use. In this step, you will be declaring and setting those variables.
 
-There are two types of variables that pipelines can use: **shared variables** and **dataset-specific variables**.
+There are two types of variables that pipelines use in this repo: **built-in environment variables** and **dataset-specific variables**.
 
-### Shared variables
+### Built-in environment variables
 
-**Note: Shared variables via JSON files will be deprecated in an upcoming release. Please [store shared variables as environment variables](https://airflow.apache.org/docs/apache-airflow/stable/howto/variable.html#storing-variables-in-environment-variables) in your Cloud Composer environment.**
+Built-in variables are those that are [stored as environment variables](https://cloud.google.com/composer/docs/composer-2/set-environment-variables) in the Cloud Composer environment. This is a built-in Airflow feature, as shown in [this guide](https://airflow.apache.org/docs/apache-airflow/stable/howto/variable.html#storing-variables-in-environment-variables).
 
-Shared variables are, by convention, those that can be reused by other pipelines in the same Airflow or Cloud Composer environment. These variables will have the same values for any pipeline. Examples of shared variables include your Cloud Composer environment name and bucket, your GCP project ID, and paths to the Airflow DAG and data folders (e.g. `/home/airflow/gcs/data`). To specify your shared variables, you can either
+The table below contains the built-in variables we're using for this architecture and configured in our Composer environment:
 
-* Store the variables as Cloud Composer environment variables [using Airflow's built-in `AIRFLOW_VAR_*` behavior](https://airflow.apache.org/docs/apache-airflow/stable/howto/variable.html#storing-variables-in-environment-variables). (Preferred)
-* or, use a single `shared_variables.json` file by creating it under
+Value  |  Template Syntax
+------- | --------
+GCP project of the Composer environment | `{{ var.value.gcp_project }}`
+GCS bucket of the Composer environment | `{{ var.value.composer_bucket }}`
+Airflow home directory. This is convenient when using `BashOperator` to save data to [local directories mapped into GCS paths](https://cloud.google.com/composer/docs/composer-2/cloud-storage). | `{{ var.value.airflow_home }}`
 
-```
-  [.dev|.test]/datasets/shared_variables.json
-```
-
-and inside the file, nest the variables under a common parent key. For example:
-
-```
-{
-  "shared": {
-    "composer_name": "test-pipelines-abcde1234",
-    "composer_bucket": "us-east4-test-pipelines-abcde1234-bucket",
-    "airflow_data_folder": "/home/airflow/gcs/data"
-  }
-}
-```
+**When a pipeline requires one of these variables, its associated template syntax must be used.** Users who are using this architecture to develop and manage pipelines in their own GCP project must have these set as [environment variables](https://cloud.google.com/composer/docs/composer-2/set-environment-variables) in their Cloud Composer environment.
 
 ### Dataset-specific variables
 
