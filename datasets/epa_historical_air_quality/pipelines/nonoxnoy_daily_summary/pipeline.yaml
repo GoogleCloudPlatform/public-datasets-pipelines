@@ -59,17 +59,17 @@ dag:
         image_pull_policy: "Always"
         image: "{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}"
         env_vars:
-          SOURCE_URL: "{{ var.json.epa_historical_air_quality.nonoxnoy_daily.source_url }}"
+          SOURCE_URL: "{{ var.json.epa_historical_air_quality.nonoxnoy_daily_summary.source_url }}"
           START_YEAR: "1990"
           SOURCE_FILE: "files/data.csv"
           TARGET_FILE: "files/data_output.csv"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.epa_historical_air_quality.dataset_id }}"
           TABLE_ID: "{{ var.json.epa_historical_air_quality.nonoxnoy_daily.table_id }}"
-          SCHEMA_PATH: "{{ var.json.epa_historical_air_quality.nonoxnoy_daily.schema_path }}"
-          CHUNKSIZE: "{{ var.json.epa_historical_air_quality.nonoxnoy_daily.chunk_size }}"
+          SCHEMA_PATH: "{{ var.json.epa_historical_air_quality.nonoxnoy_daily_summary.schema_path }}"
+          CHUNKSIZE: "{{ var.json.epa_historical_air_quality.nonoxnoy_daily_summary.chunk_size }}"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
-          TARGET_GCS_PATH: "{{ var.json.epa_historical_air_quality.nonoxnoy_daily.target_gcs_path }}"
+          TARGET_GCS_PATH: "{{ var.json.epa_historical_air_quality.nonoxnoy_daily_summary.target_gcs_path }}"
           PIPELINE_NAME: "epa_historical_air_quality - nonoxnoy_daily"
           INPUT_CSV_HEADERS: >-
             [ "state_code", "county_code", "site_num", "parameter_code", "poc",
