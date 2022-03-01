@@ -36,11 +36,11 @@ with DAG(
         project_id="{{ var.value.gcp_project }}",
         location="us-central1-c",
         body={
-            "name": "epa-hist-air-quality--co-daily",
-            "initial_node_count": 1,
+            "name": "epa-hist-air-quality",
+            "initial_node_count": 50,
             "network": "{{ var.value.vpc_network }}",
             "node_config": {
-                "machine_type": "e2-standard-8",
+                "machine_type": "e2-standard-16",
                 "oauth_scopes": [
                     "https://www.googleapis.com/auth/devstorage.read_write",
                     "https://www.googleapis.com/auth/cloud-platform",
@@ -57,7 +57,7 @@ with DAG(
         namespace="default",
         project_id="{{ var.value.gcp_project }}",
         location="us-central1-c",
-        cluster_name="epa-hist-air-quality--co-daily",
+        cluster_name="epa-hist-air-quality",
         image_pull_policy="Always",
         image="{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -74,7 +74,7 @@ with DAG(
             "TARGET_GCS_PATH": "{{ var.json.epa_historical_air_quality.co_daily_summary.target_gcs_path }}",
             "PIPELINE_NAME": "epa_historical_air_quality - co_daily_summary",
             "INPUT_CSV_HEADERS": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "sample_duration",\n  "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",\n  "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",\n  "method_code", "method_name", "local_site_name", "address", "state_name",\n  "county_name", "city_name", "cbsa_name", "date_of_last_change" ]',
-            "DATA_DTYPES": '{ "state_code": "str", "county_code": "str", "site_num": "str", "parameter_code": "int32", "poc": "int32",\n  "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "sample_duration": "str",\n  "pollutant_standard": "str", "date_local": "datetime64[ns]", "units_of_measure": "str", "event_type": "str", "observation_count": "int32",\n  "observation_percent": "float64", "arithmetic_mean": "float64", "first_max_value": "float64", "first_max_hour": "int32", "aqi": "str",\n  "method_code": "str", "method_name": "str", "local_site_name": "str", "address": "str", "state_name": "str",\n  "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "datetime64[ns]" }',
+            "DATA_DTYPES": '{ "state_code": "str", "county_code": "str", "site_num": "str", "parameter_code": "str", "poc": "int32",\n  "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "sample_duration": "str",\n  "pollutant_standard": "str", "date_local": "datetime64[ns]", "units_of_measure": "str", "event_type": "str", "observation_count": "int32",\n  "observation_percent": "float64", "arithmetic_mean": "float64", "first_max_value": "float64", "first_max_hour": "int32", "aqi": "str",\n  "method_code": "str", "method_name": "str", "local_site_name": "str", "address": "str", "state_name": "str",\n  "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "datetime64[ns]" }',
             "OUTPUT_CSV_HEADERS": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "sample_duration",\n  "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",\n  "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",\n  "method_code", "method_name", "local_site_name", "address", "state_name",\n  "county_name", "city_name", "cbsa_name", "date_of_last_change" ]',
         },
         resources={
@@ -87,7 +87,7 @@ with DAG(
         task_id="delete_cluster",
         project_id="{{ var.value.gcp_project }}",
         location="us-central1-c",
-        name="epa-hist-air-quality--co-daily",
+        name="epa-hist-air-quality",
     )
 
     create_cluster >> transform_csv_and_load_data >> delete_cluster

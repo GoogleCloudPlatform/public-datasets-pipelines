@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import datetime
-import fnmatch
 import json
 import logging
 import os
@@ -52,7 +51,7 @@ def main(
         dataset_id=dataset_id,
         table_name=table_id,
         start_year=start_year,
-        year_field_name='date_local',
+        year_field_name="date_local",
         source_url=source_url,
         dest_path=dest_path,
         schema_path=schema_path,
@@ -62,28 +61,28 @@ def main(
         output_headers=output_headers,
         data_dtypes=data_dtypes,
         chunksize=chunksize,
-        field_delimiter="|"
+        field_delimiter="|",
     )
     logging.info("Pipeline process completed")
 
 
 def execute_pipeline(
-        project_id: str,
-        dataset_id: str,
-        table_name: str,
-        start_year: str,
-        year_field_name: str,
-        source_url: str,
-        dest_path: str,
-        schema_path: str,
-        target_gcs_bucket: str,
-        target_gcs_path: str,
-        input_headers: typing.List[str],
-        output_headers: typing.List[str],
-        data_dtypes: dict,
-        chunksize: str,
-        field_delimiter: str
-    ) -> None:
+    project_id: str,
+    dataset_id: str,
+    table_name: str,
+    start_year: str,
+    year_field_name: str,
+    source_url: str,
+    dest_path: str,
+    schema_path: str,
+    target_gcs_bucket: str,
+    target_gcs_path: str,
+    input_headers: typing.List[str],
+    output_headers: typing.List[str],
+    data_dtypes: dict,
+    chunksize: str,
+    field_delimiter: str,
+) -> None:
     create_dest_table(
         project_id=project_id,
         dataset_id=dataset_id,
@@ -94,39 +93,39 @@ def execute_pipeline(
     end_year = datetime.datetime.today().year - 2
     for yr in range(start_year, end_year + 1, 1):
         process_year_data(
-                project_id = project_id,
-                dataset_id = dataset_id,
-                table_name = table_name,
-                year_field_name = year_field_name,
-                year = yr,
-                continue_on_error = False,
-                source_url = source_url,
-                dest_path = dest_path,
-                input_headers = input_headers,
-                output_headers = output_headers,
-                data_dtypes = data_dtypes,
-                chunksize = chunksize,
-                field_delimiter = field_delimiter
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_name=table_name,
+            year_field_name=year_field_name,
+            year=yr,
+            continue_on_error=False,
+            source_url=source_url,
+            dest_path=dest_path,
+            input_headers=input_headers,
+            output_headers=output_headers,
+            data_dtypes=data_dtypes,
+            chunksize=chunksize,
+            field_delimiter=field_delimiter,
         )
     st_year = datetime.datetime.today().year - 1
     end_year = datetime.datetime.today().year
     for yr in range(st_year, end_year + 1, 1):
         process_year_data(
-                project_id = project_id,
-                dataset_id = dataset_id,
-                table_name = table_name,
-                year_field_name = year_field_name,
-                year = yr,
-                continue_on_error = True,
-                source_url = source_url,
-                dest_path = dest_path,
-                input_headers = input_headers,
-                output_headers = output_headers,
-                data_dtypes = data_dtypes,
-                chunksize = chunksize,
-                field_delimiter = field_delimiter,
-                target_gcs_bucket = target_gcs_bucket,
-                target_gcs_path = target_gcs_path
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_name=table_name,
+            year_field_name=year_field_name,
+            year=yr,
+            continue_on_error=True,
+            source_url=source_url,
+            dest_path=dest_path,
+            input_headers=input_headers,
+            output_headers=output_headers,
+            data_dtypes=data_dtypes,
+            chunksize=chunksize,
+            field_delimiter=field_delimiter,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=target_gcs_path,
         )
 
 
@@ -146,21 +145,18 @@ def process_year_data(
     field_delimiter: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
-    remove_file: bool = True
+    remove_file: bool = True,
 ):
     logging.info(f"Processing year {year} data.")
-    if table_has_year_data(
-            project_id,
-            dataset_id,
-            table_name,
-            year_field_name,
-            year
-        ):
-            pass
+    if table_has_year_data(project_id, dataset_id, table_name, year_field_name, year):
+        pass
     else:
         src_url = source_url.replace("YEAR_ITERATOR", str(year))
-        source_file = dest_path + "/source_" + os.path.split(src_url)[1]
-        target_file = dest_path + "/target_" + os.path.split(src_url)[1].replace(".zip", ".csv")
+        url_file = os.path.split(src_url)[1]
+        url_file_csv = url_file.replace(".zip", ".csv")
+        source_file = f"{dest_path}/source_{url_file}"
+        source_csv_file = f"{dest_path}/{url_file_csv}"
+        target_file = f"{dest_path}/target_{url_file_csv}"
         file_exists = download_file_http(
             source_url=src_url,
             source_file=source_file,
@@ -168,25 +164,21 @@ def process_year_data(
         )
         if file_exists:
             unpack_file(infile=source_file, dest_path=dest_path, compression_type="zip")
-            if remove_file:
-                os.remove(source_file)
-            else:
-                pass
             process_source_file(
-                source_file = source_file,
-                target_file = target_file,
-                input_headers = input_headers,
-                output_headers = output_headers,
-                dtypes = data_dtypes,
-                chunksize = chunksize,
-                field_delimiter = field_delimiter,
+                source_file=source_file,
+                target_file=target_file,
+                input_headers=input_headers,
+                output_headers=output_headers,
+                dtypes=data_dtypes,
+                chunksize=chunksize,
+                field_delimiter=field_delimiter,
             )
             load_data_to_bq(
-                project_id = project_id,
-                dataset_id = dataset_id,
-                table_id = table_name,
-                file_path = target_file,
-                field_delimiter = field_delimiter
+                project_id=project_id,
+                dataset_id=dataset_id,
+                table_id=table_name,
+                file_path=target_file,
+                field_delimiter=field_delimiter,
             )
             if os.path.exists(target_file):
                 upload_file_to_gcs(
@@ -194,36 +186,31 @@ def process_year_data(
                     target_gcs_bucket=target_gcs_bucket,
                     target_gcs_path=target_gcs_path,
                 )
+            if remove_file:
+                os.remove(source_file)
+                os.remove(source_csv_file)
+                os.remove(target_file)
+            else:
+                pass
         else:
             pass
     logging.info(f"Processing year {year} data completed.")
 
 
 def table_has_year_data(
-    project_id: str,
-    dataset_id: str,
-    table_name: str,
-    year_field_name: str,
-    year: str
+    project_id: str, dataset_id: str, table_name: str, year_field_name: str, year: str
 ) -> bool:
-    if number_rows_in_table(
-        project_id,
-        dataset_id,
-        table_name,
-        year_field_name,
-        year
-    ) > 0:
+    if (
+        number_rows_in_table(project_id, dataset_id, table_name, year_field_name, year)
+        > 0
+    ):
         return True
     else:
         return False
 
 
 def number_rows_in_table(
-    project_id: str,
-    dataset_id: str,
-    table_name: str,
-    year_field_name: str,
-    year: str
+    project_id: str, dataset_id: str, table_name: str, year_field_name: str, year: str
 ) -> int:
     client = bigquery.Client(project=project_id)
     query = f"""
