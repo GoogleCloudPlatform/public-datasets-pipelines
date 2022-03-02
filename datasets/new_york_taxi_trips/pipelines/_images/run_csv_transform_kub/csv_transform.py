@@ -81,22 +81,22 @@ def execute_pipeline(
     for year_number in range(datetime.now().year, (datetime.now().year - 6), -1):
         target_file_name = str.replace(target_file, ".csv", f"_{year_number}.csv")
         process_year_data(
-            source_url,
-            int(year_number),
-            source_file,
-            target_file,
-            target_file_name,
-            project_id,
-            dataset_id,
-            table_id,
-            schema_path,
-            chunksize,
-            target_gcs_bucket,
-            target_gcs_path,
-            pipeline_name,
-            input_headers,
-            data_dtypes,
-            output_headers,
+            source_url = source_url,
+            year_number = int(year_number),
+            source_file = source_file,
+            target_file = target_file,
+            target_file_name = target_file_name,
+            project_id = project_id,
+            dataset_id = dataset_id,
+            table_id = table_id,
+            schema_path = schema_path,
+            chunksize = chunksize,
+            target_gcs_bucket = target_gcs_bucket,
+            target_gcs_path = target_gcs_path,
+            pipeline_name = pipeline_name,
+            input_headers = input_headers,
+            data_dtypes = data_dtypes,
+            output_headers = output_headers
         )
 
 
@@ -120,9 +120,9 @@ def process_year_data(
 ) -> None:
     logging.info(f"Processing year {year_number}")
     destination_table = f"{table_id}_{year_number}"
-    year_data_available = False
+    year_datafiles_available = False
     for month_number in range(1, 13):
-        month_data_available = process_month(
+        month_datafile_available = process_month(
             source_url,
             year_number,
             month_number,
@@ -135,11 +135,11 @@ def process_year_data(
             output_headers,
             pipeline_name,
         )
-        if month_data_available:
-            year_data_available = True
+        if month_datafile_available:
+            year_datafiles_available = True
         else:
             pass
-    if os.path.exists(target_file_name) and year_data_available:
+    if os.path.exists(target_file_name) and year_datafiles_available:
         upload_file_to_gcs(
             target_file_name,
             target_gcs_bucket,
@@ -242,7 +242,8 @@ def process_month(
     output_headers: typing.List[str],
     pipeline_name: str,
 ) -> None:
-    process_month = f"{year_number}-{month_number.zfill(2)}"
+    padded_month = month_number.zfill(2)
+    process_month = f"{year_number}-{padded_month}"
     logging.info(f"Processing {process_month} started")
     source_url_to_process = f"{source_url}{process_month}.csv"
     source_file_to_process = str(source_file).replace(".csv", f"_{process_month}.csv")
