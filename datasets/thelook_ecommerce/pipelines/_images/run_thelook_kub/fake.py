@@ -129,6 +129,8 @@ def generate_locations() -> typing.List[str]:
 SECONDS_IN_MINUTE = 60
 MINUTES_IN_HOUR = 60
 MINUTES_IN_DAY = 1440
+MIN_AGE = 12
+MAX_AGE = 71
 
 products = generate_products()
 logging.info("generating products helper dict")
@@ -393,6 +395,7 @@ class Users(DataUtil):
     first_name: str = dataclasses.field(init=False)
     last_name: str = dataclasses.field(init=False)
     email: str = dataclasses.field(init=False)
+    age: int = dataclasses.field(init=False)
     gender: str = dataclasses.field(init=False)
     state: str = dataclasses.field(init=False)
     street_address: str = dataclasses.field(init=False)
@@ -428,6 +431,7 @@ class Users(DataUtil):
         self.latitude = address.latitude
         self.longitude = address.longitude
         self.email = f"{self.first_name.lower()}{self.last_name.lower()}@{fake.safe_domain_name()}"
+        self.age = random.randrange(MIN_AGE, MAX_AGE)
         # weight newer users/orders
         choice = random.choices([0, 1], weights=[0.975, 0.025])[0]
         if choice == 0:
@@ -446,7 +450,7 @@ class Users(DataUtil):
                 orders.append(dataclasses.asdict(Order(user=self)))
 
     def __str__(self):
-        return f"{self.id}, {self.first_name}, {self.last_name}, {self.email}, {self.gender}, {self.state}, {self.street_address}, {self.postal_code}, {self.city}, {self.traffic_source}, {self.created_at}"
+        return f"{self.id}, {self.first_name}, {self.last_name}, {self.email}, {self.age}, {self.gender}, {self.state}, {self.street_address}, {self.postal_code}, {self.city}, {self.traffic_source}, {self.created_at}"
 
 
 @dataclasses.dataclass
