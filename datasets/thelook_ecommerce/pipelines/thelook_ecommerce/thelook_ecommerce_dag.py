@@ -187,6 +187,7 @@ with DAG(
             {"name": "first_name", "type": "STRING", "mode": "NULLABLE"},
             {"name": "last_name", "type": "STRING", "mode": "NULLABLE"},
             {"name": "email", "type": "STRING", "mode": "NULLABLE"},
+            {"name": "age", "type": "INTEGER", "mode": "NULLABLE"},
             {"name": "gender", "type": "STRING", "mode": "NULLABLE"},
             {"name": "state", "type": "STRING", "mode": "NULLABLE"},
             {"name": "street_address", "type": "STRING", "mode": "NULLABLE"},
