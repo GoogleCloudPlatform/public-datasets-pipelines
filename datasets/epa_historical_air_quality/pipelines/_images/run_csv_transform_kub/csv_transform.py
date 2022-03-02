@@ -34,6 +34,8 @@ def main(
     project_id: str,
     dataset_id: str,
     table_id: str,
+    year_field_name: str,
+    year_field_type: str,
     schema_path: str,
     chunksize: str,
     target_gcs_bucket: str,
@@ -50,8 +52,9 @@ def main(
         project_id=project_id,
         dataset_id=dataset_id,
         table_name=table_id,
+        year_field_name=year_field_name,
+        year_field_type=year_field_type,
         start_year=start_year,
-        year_field_name="date_local",
         source_url=source_url,
         dest_path=dest_path,
         schema_path=schema_path,
@@ -70,8 +73,9 @@ def execute_pipeline(
     project_id: str,
     dataset_id: str,
     table_name: str,
-    start_year: str,
     year_field_name: str,
+    year_field_type: str,
+    start_year: str,
     source_url: str,
     dest_path: str,
     schema_path: str,
@@ -97,6 +101,7 @@ def execute_pipeline(
             dataset_id=dataset_id,
             table_name=table_name,
             year_field_name=year_field_name,
+            year_field_type=year_field_type,
             year=yr,
             continue_on_error=False,
             source_url=source_url,
@@ -106,6 +111,8 @@ def execute_pipeline(
             data_dtypes=data_dtypes,
             chunksize=chunksize,
             field_delimiter=field_delimiter,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=target_gcs_path,
         )
     st_year = datetime.datetime.today().year - 1
     end_year = datetime.datetime.today().year
@@ -115,6 +122,7 @@ def execute_pipeline(
             dataset_id=dataset_id,
             table_name=table_name,
             year_field_name=year_field_name,
+            year_field_type=year_field_type,
             year=yr,
             continue_on_error=True,
             source_url=source_url,
@@ -134,6 +142,7 @@ def process_year_data(
     dataset_id: str,
     table_name: str,
     year_field_name: str,
+    year_field_type: str,
     year: str,
     continue_on_error: bool,
     source_url: str,
@@ -148,7 +157,10 @@ def process_year_data(
     remove_file: bool = True,
 ):
     logging.info(f"Processing year {year} data.")
-    if table_has_year_data(project_id, dataset_id, table_name, year_field_name, year):
+    table_has_data = table_has_year_data(
+        project_id, dataset_id, table_name, year_field_name, year_field_type, year
+    )
+    if table_has_data is True or table_has_data is None:
         pass
     else:
         src_url = source_url.replace("YEAR_ITERATOR", str(year))
@@ -198,31 +210,79 @@ def process_year_data(
 
 
 def table_has_year_data(
-    project_id: str, dataset_id: str, table_name: str, year_field_name: str, year: str
+    project_id: str,
+    dataset_id: str,
+    table_name: str,
+    year_field_name: str,
+    year_field_type: str,
+    year: str,
 ) -> bool:
-    if (
-        number_rows_in_table(project_id, dataset_id, table_name, year_field_name, year)
-        > 0
-    ):
+    number_rows = number_rows_in_table(
+        project_id, dataset_id, table_name, year_field_name, year_field_type, year
+    )
+    if number_rows > 0:
         return True
+    elif number_rows == -1:
+        return None
+    else:
+        return False
+
+
+def table_exists(project_id: str, dataset_id: str, table_name: str) -> bool:
+    client = bigquery.Client(project=project_id)
+    tables = client.list_tables(dataset_id)
+    found_table = False
+    for tbl in tables:
+        if tbl.table_id == table_name:
+            found_table = True
+    return found_table
+
+
+def field_exists(
+    project_id: str, dataset_id: str, table_name: str, field_name: str
+) -> bool:
+    if table_exists(project_id, dataset_id, table_name):
+        client = bigquery.Client(project=project_id)
+        table_ref = f"{dataset_id}.{table_name}"
+        tbl_schema = client.get_table(table_ref).schema
+        found_field = False
+        for field in tbl_schema:
+            if field.name == field_name:
+                found_field = True
+        return found_field
     else:
         return False
 
 
 def number_rows_in_table(
-    project_id: str, dataset_id: str, table_name: str, year_field_name: str, year: str
+    project_id: str,
+    dataset_id: str,
+    table_name: str,
+    year_field_name: str,
+    year_field_type: str,
+    year: str,
 ) -> int:
-    client = bigquery.Client(project=project_id)
-    query = f"""
-        SELECT count(1) AS number_of_rows
-        FROM {dataset_id}.{table_name}
-        WHERE FORMAT_DATE('%Y', {year_field_name}) = '{year}'
-    """
-    job_config = bigquery.QueryJobConfig()
-    query_job = client.query(query, job_config=job_config)
-    for row in query_job.result():
-        count_rows = row.number_of_rows
-    return int(count_rows)
+    check_field_exists = field_exists(
+        project_id, dataset_id, table_name, year_field_name
+    )
+    if check_field_exists:
+        client = bigquery.Client(project=project_id)
+        query = f"""
+            SELECT count(1) AS number_of_rows
+            FROM {dataset_id}.{table_name}
+            WHERE
+        """
+        if year_field_type == "DATETIME":
+            query = query + f" FORMAT_DATE('%Y', {year_field_name}) = '{year}'"
+        else:
+            query = query + f" {year_field_name} = {year}"
+        job_config = bigquery.QueryJobConfig()
+        query_job = client.query(query, job_config=job_config)
+        for row in query_job.result():
+            count_rows = row.number_of_rows
+        return int(count_rows)
+    else:
+        return -1
 
 
 def process_source_file(
@@ -512,6 +572,8 @@ if __name__ == "__main__":
         project_id=os.environ["PROJECT_ID"],
         dataset_id=os.environ["DATASET_ID"],
         table_id=os.environ["TABLE_ID"],
+        year_field_name=os.environ["YEAR_FIELD_NAME"],
+        year_field_type=os.environ["YEAR_FIELD_TYPE"],
         schema_path=os.environ["SCHEMA_PATH"],
         chunksize=os.environ["CHUNKSIZE"],
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],

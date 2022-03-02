@@ -68,6 +68,8 @@ with DAG(
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "{{ var.json.epa_historical_air_quality.dataset_id }}",
             "TABLE_ID": "{{ var.json.epa_historical_air_quality.pressure_hourly_summary.table_id }}",
+            "YEAR_FIELD_NAME": "date_local",
+            "YEAR_FIELD_TYPE": "DATETIME",
             "SCHEMA_PATH": "{{ var.json.epa_historical_air_quality.pressure_hourly_summary.schema_path }}",
             "CHUNKSIZE": "{{ var.json.epa_historical_air_quality.pressure_hourly_summary.chunk_size }}",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
@@ -83,11 +85,5 @@ with DAG(
             "request_ephemeral_storage": "12G",
         },
     )
-    delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
-        task_id="delete_cluster",
-        project_id="{{ var.value.gcp_project }}",
-        location="us-central1-c",
-        name="epa-hist-air-quality",
-    )
 
-    create_cluster >> transform_csv_and_load_data >> delete_cluster
+    create_cluster >> transform_csv_and_load_data
