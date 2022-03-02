@@ -19,28 +19,27 @@ resource "google_bigquery_table" "{{ tf_resource_name }}" {
   project    = var.project_id
   dataset_id = "{{ dataset_id }}"
   table_id   = "{{ table_id }}"
-
   {% if description -%}
     description = {{ description|tojson }}
-  {%- endif %}
+  {% endif -%}
   {% if time_partitioning -%}
     time_partitioning {
       {%- for key, val in time_partitioning.items() %}
         {{ key }} = {{ val|tojson }}
       {% endfor -%}
     }
-  {%- endif %}
+  {% endif -%}
   {% if clustering -%}
     clustering = {{ clustering|tojson }}
-  {%- endif %}
+  {% endif -%}
   {% if deletion_protection -%}
     deletion_protection = {{ deletion_protection|tojson }}
-  {%- endif %}
+  {% endif -%}
   {% if schema -%}
     schema = <<EOF
     {{ schema }}
     EOF
-  {%- endif %}
+  {% endif -%}
   depends_on = [
     google_bigquery_dataset.{{ dataset_id }}
   ]

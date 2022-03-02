@@ -56,7 +56,7 @@ def main(
         build_images(dataset_id, env)
 
     if all_pipelines:
-        for pipeline_dir in list_subdirs(DATASETS_PATH / dataset_id):
+        for pipeline_dir in list_subdirs(DATASETS_PATH / dataset_id / "pipelines"):
             generate_pipeline_dag(dataset_id, pipeline_dir.name, env)
     else:
         generate_pipeline_dag(dataset_id, pipeline_id, env)
@@ -65,7 +65,7 @@ def main(
 
 
 def generate_pipeline_dag(dataset_id: str, pipeline_id: str, env: str):
-    pipeline_dir = DATASETS_PATH / dataset_id / pipeline_id
+    pipeline_dir = DATASETS_PATH / dataset_id / "pipelines" / pipeline_id
     config = yaml.load((pipeline_dir / "pipeline.yaml").read_text())
 
     validate_airflow_version_existence_and_value(config)
@@ -206,10 +206,10 @@ def format_python_code(target_file: pathlib.Path):
 
 
 def print_airflow_variables(dataset_id: str, dag_contents: str, env: str):
-    var_regex = r"\{{2}\s*var.([a-zA-Z0-9_\.]*)?\s*\}{2}"
+    var_regex = r"\{{2}\s*var.json.([a-zA-Z0-9_\.]*)?\s*\}{2}"
     print(
         f"\nThe following Airflow variables must be set in"
-        f"\n\n  .{env}/datasets/{dataset_id}/{dataset_id}_variables.json"
+        f"\n\n  .{env}/datasets/{dataset_id}/pipelines/{dataset_id}_variables.json"
         "\n\nusing JSON dot notation:"
         "\n"
     )
@@ -225,8 +225,8 @@ def print_airflow_variables(dataset_id: str, dag_contents: str, env: str):
 
 
 def copy_files_to_dot_dir(dataset_id: str, pipeline_id: str, env_dir: pathlib.Path):
-    source_dir = PROJECT_ROOT / "datasets" / dataset_id / pipeline_id
-    target_dir = env_dir / "datasets" / dataset_id
+    source_dir = PROJECT_ROOT / "datasets" / dataset_id / "pipelines" / pipeline_id
+    target_dir = env_dir / "datasets" / dataset_id / "pipelines"
     target_dir.mkdir(parents=True, exist_ok=True)
     subprocess.check_call(
         ["cp", "-rf", str(source_dir), str(target_dir)], cwd=PROJECT_ROOT
@@ -234,7 +234,7 @@ def copy_files_to_dot_dir(dataset_id: str, pipeline_id: str, env_dir: pathlib.Pa
 
 
 def build_images(dataset_id: str, env: str):
-    parent_dir = DATASETS_PATH / dataset_id / "_images"
+    parent_dir = DATASETS_PATH / dataset_id / "pipelines" / "_images"
     if not parent_dir.exists():
         return
 
@@ -248,7 +248,7 @@ def build_images(dataset_id: str, env: str):
 def copy_image_files_to_dot_dir(
     dataset_id: str, parent_dir: pathlib.Path, env_dir: pathlib.Path
 ) -> typing.List[pathlib.Path]:
-    target_dir = env_dir / "datasets" / dataset_id
+    target_dir = env_dir / "datasets" / dataset_id / "pipelines"
     target_dir.mkdir(parents=True, exist_ok=True)
     subprocess.check_call(
         ["cp", "-rf", str(parent_dir), str(target_dir)], cwd=PROJECT_ROOT
