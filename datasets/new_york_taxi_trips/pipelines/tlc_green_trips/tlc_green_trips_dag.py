@@ -40,7 +40,7 @@ with DAG(
             "initial_node_count": 1,
             "network": "{{ var.value.vpc_network }}",
             "node_config": {
-                "machine_type": "e2-standard-8",
+                "machine_type": "e2-standard-16",
                 "oauth_scopes": [
                     "https://www.googleapis.com/auth/devstorage.read_write",
                     "https://www.googleapis.com/auth/cloud-platform",
@@ -78,16 +78,10 @@ with DAG(
             "OUTPUT_CSV_HEADERS": '[ "vendor_id", "pickup_datetime", "dropoff_datetime", "store_and_fwd_flag", "rate_code",\n  "passenger_count", "trip_distance", "fare_amount", "extra", "mta_tax",\n  "tip_amount", "tolls_amount", "ehail_fee", "total_amount", "payment_type",\n  "distance_between_service", "time_between_service", "trip_type", "imp_surcharge", "pickup_location_id",\n  "dropoff_location_id" ]',
         },
         resources={
-            "request_memory": "4G",
+            "request_memory": "12G",
             "request_cpu": "1",
-            "request_ephemeral_storage": "8G",
+            "request_ephemeral_storage": "16G",
         },
     )
-    delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
-        task_id="delete_cluster",
-        project_id="{{ var.value.gcp_project }}",
-        location="us-central1-c",
-        name="new-york-taxi-trips--tlc-green-trips",
-    )
 
-    create_cluster >> transform_csv_and_load_data >> delete_cluster
+    create_cluster >> transform_csv_and_load_data

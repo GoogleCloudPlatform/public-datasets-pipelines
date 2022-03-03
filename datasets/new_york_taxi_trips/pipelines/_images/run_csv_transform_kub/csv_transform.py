@@ -83,22 +83,22 @@ def execute_pipeline(
 ) -> None:
     for year_number in range(datetime.now().year, (datetime.now().year - 6), -1):
         process_year_data(
-            source_url = source_url,
-            year_number = int(year_number),
-            source_file = source_file,
-            target_file = target_file,
-            project_id = project_id,
-            dataset_id = dataset_id,
-            table_id = table_id,
-            date_field = date_field,
-            schema_path = schema_path,
-            chunksize = chunksize,
-            target_gcs_bucket = target_gcs_bucket,
-            target_gcs_path = target_gcs_path,
-            pipeline_name = pipeline_name,
-            input_headers = input_headers,
-            data_dtypes = data_dtypes,
-            output_headers = output_headers
+            source_url=source_url,
+            year_number=int(year_number),
+            source_file=source_file,
+            target_file=target_file,
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_id=table_id,
+            date_field=date_field,
+            schema_path=schema_path,
+            chunksize=chunksize,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=target_gcs_path,
+            pipeline_name=pipeline_name,
+            input_headers=input_headers,
+            data_dtypes=data_dtypes,
+            output_headers=output_headers,
         )
 
 
@@ -127,16 +127,14 @@ def process_year_data(
         process_year_month = f"{year_number}-{padded_month}"
         logging.info(f"Processing month {process_year_month}")
         month_data_already_loaded = table_has_month_data(
-            project_id,
-            dataset_id,
-            destination_table,
-            date_field,
-            month_number
+            project_id, dataset_id, destination_table, date_field, month_number
         )
         if month_data_already_loaded is True:
             logging.info(f"{process_year_month} data is already loaded. Skipping.")
         else:
-            target_file_name = str.replace(target_file, ".csv", f"_{year_number}-{month_number}.csv")
+            target_file_name = str.replace(
+                target_file, ".csv", f"_{year_number}-{month_number}.csv"
+            )
             process_month(
                 source_url=source_url,
                 year_number=year_number,
@@ -154,7 +152,7 @@ def process_year_data(
                 input_headers=input_headers,
                 data_dtypes=data_dtypes,
                 output_headers=output_headers,
-                pipeline_name=pipeline_name
+                pipeline_name=pipeline_name,
             )
     else:
         logging.info(
@@ -208,15 +206,9 @@ def field_exists(
 
 
 def number_rows_in_table(
-    project_id: str,
-    dataset_id: str,
-    table_name: str,
-    date_field: str,
-    month: int
+    project_id: str, dataset_id: str, table_name: str, date_field: str, month: int
 ) -> int:
-    check_field_exists = field_exists(
-        project_id, dataset_id, table_name, date_field
-    )
+    check_field_exists = field_exists(project_id, dataset_id, table_name, date_field)
     if check_field_exists:
         client = bigquery.Client(project=project_id)
         query = f"""
@@ -333,7 +325,9 @@ def process_month(
     padded_month = str(month_number).zfill(2)
     process_year_month = f"{year_number}-{padded_month}"
     source_url_to_process = f"{source_url}{process_year_month}.csv"
-    source_file_to_process = str(source_file).replace(".csv", f"_{process_year_month}.csv")
+    source_file_to_process = str(source_file).replace(
+        ".csv", f"_{process_year_month}.csv"
+    )
     successful_download = download_file(source_url_to_process, source_file_to_process)
     if successful_download:
         with pd.read_csv(
@@ -375,19 +369,21 @@ def process_month(
                 dataset_id=dataset_id,
                 table_id=table_id,
                 schema_filepath=schema_path,
-                bucket_name=target_gcs_bucket
+                bucket_name=target_gcs_bucket,
             )
         load_data_to_bq(
             project_id=project_id,
             dataset_id=dataset_id,
             table_id=table_id,
             file_path=target_file_name,
-            field_delimiter="|"
+            field_delimiter="|",
         )
         upload_file_to_gcs(
             file_path=target_file_name,
             target_gcs_bucket=target_gcs_bucket,
-            target_gcs_path=str(target_gcs_path).replace(".csv", f"_{process_year_month}.csv"),
+            target_gcs_path=str(target_gcs_path).replace(
+                ".csv", f"_{process_year_month}.csv"
+            ),
         )
     logging.info(f"Processing {process_year_month} completed")
 
