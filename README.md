@@ -21,15 +21,20 @@ We use Pipenv to make environment setup more deterministic and uniform across di
 With Pipenv installed, run the following command to install the dependencies:
 
 ```bash
-pipenv install --dev
+pipenv install --ignore-pipfile --dev
 ```
 
-This uses the `Pipfile.lock` found in the project root and installs all the development dependencies.
+This installs dependencies using the specific versions in the `Pipfile.lock` file (instead of the `Pipfile` file which is ignored via `--ignore-pipfile`).
 
 Finally, initialize the Airflow database:
 
 ```bash
 pipenv run airflow db init
+```
+
+To ensure you have a proper setup, run the tests:
+```
+$ pipenv run python -m pytest -v
 ```
 
 # Building Data Pipelines
