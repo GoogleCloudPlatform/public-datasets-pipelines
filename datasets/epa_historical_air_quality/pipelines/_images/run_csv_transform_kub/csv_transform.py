@@ -549,7 +549,7 @@ def upload_file_to_gcs(
 ) -> None:
     if os.path.exists(file_path):
         logging.info(
-            f"Uploading output file to gs://{target_gcs_bucket}/{target_gcs_path}"
+            f"Uploading output file {file_path} to gs://{target_gcs_bucket}/{target_gcs_path}"
         )
         storage_client = storage.Client()
         bucket = storage_client.bucket(target_gcs_bucket)
