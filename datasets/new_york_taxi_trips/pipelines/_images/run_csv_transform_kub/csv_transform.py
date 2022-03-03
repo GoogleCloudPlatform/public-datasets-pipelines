@@ -82,13 +82,11 @@ def execute_pipeline(
     output_headers: typing.List[str],
 ) -> None:
     for year_number in range(datetime.now().year, (datetime.now().year - 6), -1):
-        # target_file_name = str.replace(target_file, ".csv", f"_{year_number}.csv")
         process_year_data(
             source_url = source_url,
             year_number = int(year_number),
             source_file = source_file,
             target_file = target_file,
-            # target_file_name = target_file_name,
             project_id = project_id,
             dataset_id = dataset_id,
             table_id = table_id,
@@ -109,7 +107,6 @@ def process_year_data(
     year_number: int,
     source_file: str,
     target_file: str,
-    # target_file_name: str,
     project_id: str,
     dataset_id: str,
     table_id: str,
@@ -334,9 +331,9 @@ def process_month(
     pipeline_name: str,
 ) -> None:
     padded_month = str(month_number).zfill(2)
-    process_month = f"{year_number}-{padded_month}"
-    source_url_to_process = f"{source_url}{process_month}.csv"
-    source_file_to_process = str(source_file).replace(".csv", f"_{process_month}.csv")
+    process_year_month = f"{year_number}-{padded_month}"
+    source_url_to_process = f"{source_url}{process_year_month}.csv"
+    source_file_to_process = str(source_file).replace(".csv", f"_{process_year_month}.csv")
     successful_download = download_file(source_url_to_process, source_file_to_process)
     if successful_download:
         with pd.read_csv(
@@ -352,10 +349,10 @@ def process_month(
         ) as reader:
             for chunk_number, chunk in enumerate(reader):
                 logging.info(
-                    f"Processing chunk #{chunk_number} of file {process_month} started"
+                    f"Processing chunk #{chunk_number} of file {process_year_month} started"
                 )
                 target_file_batch = str(target_file).replace(
-                    ".csv", f"-{process_month}-{chunk_number}.csv"
+                    ".csv", f"-{process_year_month}-{chunk_number}.csv"
                 )
                 df = pd.DataFrame()
                 df = pd.concat([df, chunk])
@@ -369,9 +366,10 @@ def process_month(
                     pipeline_name,
                 )
                 logging.info(
-                    f"Processing chunk #{chunk_number} of file {process_month} completed"
+                    f"Processing chunk #{chunk_number} of file {process_year_month} completed"
                 )
-        if not table_exists(project_id, dataset_id, table_id): # Table doesn't exist
+        if not table_exists(project_id, dataset_id, table_id):
+            # Destination able doesn't exist
             create_dest_table(
                 project_id=project_id,
                 dataset_id=dataset_id,
@@ -389,10 +387,9 @@ def process_month(
         upload_file_to_gcs(
             file_path=target_file_name,
             target_gcs_bucket=target_gcs_bucket,
-            target_gcs_path=str(target_gcs_path).replace(".csv", f"_{process_month}.csv"),
+            target_gcs_path=str(target_gcs_path).replace(".csv", f"_{process_year_month}.csv"),
         )
-    logging.info(f"Processing {process_month} completed")
-    # return successful_download
+    logging.info(f"Processing {process_year_month} completed")
 
 
 def download_file(source_url: str, source_file: pathlib.Path) -> bool:
