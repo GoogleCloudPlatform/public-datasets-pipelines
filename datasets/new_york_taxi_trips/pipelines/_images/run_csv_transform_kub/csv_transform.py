@@ -176,7 +176,7 @@ def table_has_month_data(
     number_rows = number_rows_in_table(
         project_id, dataset_id, table_name, date_field, month
     )
-    if number_rows > 0:
+    if number_rows > 10000:
         return True
     elif number_rows == -1:
         return None
@@ -237,7 +237,11 @@ def number_rows_in_table(
 
 
 def load_data_to_bq(
-    project_id: str, dataset_id: str, table_id: str, file_path: str
+    project_id: str,
+    dataset_id: str,
+    table_id: str,
+    file_path: str,
+    field_delimiter: str,
 ) -> None:
     logging.info(
         f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} started"
@@ -246,6 +250,7 @@ def load_data_to_bq(
     table_ref = client.dataset(dataset_id).table(table_id)
     job_config = bigquery.LoadJobConfig()
     job_config.source_format = bigquery.SourceFormat.CSV
+    job_config.field_delimiter = field_delimiter
     job_config.skip_leading_rows = 1  # ignore the header
     job_config.autodetect = False
     with open(file_path, "rb") as source_file:
@@ -368,13 +373,19 @@ def process_month(
                 )
         if not table_exists(project_id, dataset_id, table_id): # Table doesn't exist
             create_dest_table(
-                project_id,
-                dataset_id,
-                table_id,
+                project_id=project_id,
+                dataset_id=dataset_id,
+                table_id=table_id,
                 schema_filepath=schema_path,
                 bucket_name=target_gcs_bucket
-                )
-        load_data_to_bq(project_id, dataset_id, table_id, target_file_name)
+            )
+        load_data_to_bq(
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_id=table_id,
+            file_path=target_file_name,
+            field_delimiter="|"
+        )
         upload_file_to_gcs(
             file_path=target_file_name,
             target_gcs_bucket=target_gcs_bucket,
