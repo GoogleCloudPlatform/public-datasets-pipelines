@@ -67,6 +67,7 @@ with DAG(
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "{{ var.json.new_york_taxi_trips.container_registry.green_trips_dataset_id }}",
             "TABLE_ID": "{{ var.json.new_york_taxi_trips.container_registry.green_trips_table_id }}",
+            "DATE_FIELD": "pickup_datetime",
             "SCHEMA_PATH": "{{ var.json.new_york_taxi_trips.container_registry.green_trips_schema_path }}",
             "CHUNKSIZE": "{{ var.json.new_york_taxi_trips.container_registry.green_trips_chunk_size }}",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",

@@ -36,7 +36,7 @@ with DAG(
         project_id="{{ var.value.gcp_project }}",
         location="us-central1-c",
         body={
-            "name": "new-york-taxi-trips--tlc-yellow-trips",
+            "name": "new-york-taxi-trips",
             "initial_node_count": 1,
             "network": "{{ var.value.vpc_network }}",
             "node_config": {
@@ -57,7 +57,7 @@ with DAG(
         namespace="default",
         project_id="{{ var.value.gcp_project }}",
         location="us-central1-c",
-        cluster_name="new-york-taxi-trips--tlc-yellow-trips",
+        cluster_name="new-york-taxi-trips",
         image_pull_policy="Always",
         image="{{ var.json.new_york_taxi_trips.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -81,7 +81,7 @@ with DAG(
         task_id="delete_cluster",
         project_id="{{ var.value.gcp_project }}",
         location="us-central1-c",
-        name="new-york-taxi-trips--tlc-yellow-trips",
+        name="new-york-taxi-trips",
     )
 
     create_cluster >> transform_csv_and_load_data >> delete_cluster
