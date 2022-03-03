@@ -127,8 +127,8 @@ def process_year_data(
     destination_table = f"{table_id}_{year_number}"
     for month_number in range(1, 13):
         padded_month = str(month_number).zfill(2)
-        process_month = f"{year_number}-{padded_month}"
-        logging.info(f"Processing month {process_month}")
+        process_year_month = f"{year_number}-{padded_month}"
+        logging.info(f"Processing month {process_year_month}")
         month_data_already_loaded = table_has_month_data(
             project_id,
             dataset_id,
@@ -137,37 +137,33 @@ def process_year_data(
             month_number
         )
         if month_data_already_loaded is True:
-            logging.info(f"{process_month} data is already loaded. Skipping.")
+            logging.info(f"{process_year_month} data is already loaded. Skipping.")
         else:
             target_file_name = str.replace(target_file, ".csv", f"_{year_number}-{month_number}.csv")
-            process_month()
-            #     source_url=source_url,
-                # year_number=year_number,
-                # month_number=month_number,
-                # source_file=source_file,
-                # target_file=target_file,
-                # project_id=project_id,
-                # dataset_id=dataset_id,
-                # table_id=destination_table,
-                # target_file_name=target_file_name,
-                # schema_path=schema_path,
-                # chunksize=chunksize,
-                # target_gcs_bucket=target_gcs_bucket,
-                # target_gcs_path=target_gcs_path,
-                # input_headers=input_headers,
-                # data_dtypes=data_dtypes,
-                # output_headers=output_headers,
-                # pipeline_name=pipeline_name
-            # )
+            process_month(
+                source_url=source_url,
+                year_number=year_number,
+                month_number=month_number,
+                source_file=source_file,
+                target_file=target_file,
+                project_id=project_id,
+                dataset_id=dataset_id,
+                table_id=destination_table,
+                target_file_name=target_file_name,
+                schema_path=schema_path,
+                chunksize=chunksize,
+                target_gcs_bucket=target_gcs_bucket,
+                target_gcs_path=target_gcs_path,
+                input_headers=input_headers,
+                data_dtypes=data_dtypes,
+                output_headers=output_headers,
+                pipeline_name=pipeline_name
+            )
     else:
         logging.info(
             f"Informational: The data file {target_file_name} was not generated because no data was available for year {year_number}.  Continuing."
         )
     logging.info(f"Processing year {year_number} completed")
-
-
-def process_month() -> None:
-    import pdb; pdb.set_trace()
 
 
 def table_has_month_data(
@@ -313,79 +309,78 @@ def create_table_schema(
     return schema
 
 
-# def process_month(
-#     # source_url: str,
-#     # year_number: int,
-#     # month_number: int,
-#     # source_file: str,
-#     # target_file: str,
-#     # project_id: str,
-#     # dataset_id: str,
-#     # table_id: str,
-#     # target_file_name: str,
-#     # schema_path: str,
-#     # chunksize: str,
-#     # target_gcs_bucket: str,
-#     # target_gcs_path: str,
-#     # input_headers: typing.List[str],
-#     # data_dtypes: dict,
-#     # output_headers: typing.List[str],
-#     # pipeline_name: str,
-# ) -> None:
-#     import pdb; pdb.set_trace()
-    # padded_month = str(month_number).zfill(2)
-    # process_month = f"{year_number}-{padded_month}"
-    # source_url_to_process = f"{source_url}{process_month}.csv"
-    # source_file_to_process = str(source_file).replace(".csv", f"_{process_month}.csv")
-    # successful_download = download_file(source_url_to_process, source_file_to_process)
-    # if successful_download:
-    #     with pd.read_csv(
-    #         source_file_to_process,
-    #         engine="python",
-    #         encoding="utf-8",
-    #         quotechar='"',
-    #         chunksize=int(chunksize),
-    #         sep=",",
-    #         names=input_headers,
-    #         skiprows=1,
-    #         dtype=data_dtypes,
-    #     ) as reader:
-    #         for chunk_number, chunk in enumerate(reader):
-    #             logging.info(
-    #                 f"Processing chunk #{chunk_number} of file {process_month} started"
-    #             )
-    #             target_file_batch = str(target_file).replace(
-    #                 ".csv", f"-{process_month}-{chunk_number}.csv"
-    #             )
-    #             df = pd.DataFrame()
-    #             df = pd.concat([df, chunk])
-    #             process_chunk(
-    #                 df,
-    #                 target_file_batch,
-    #                 target_file_name,
-    #                 month_number == 1 and chunk_number == 0,
-    #                 month_number == 1 and chunk_number == 0,
-    #                 output_headers,
-    #                 pipeline_name,
-    #             )
-    #             logging.info(
-    #                 f"Processing chunk #{chunk_number} of file {process_month} completed"
-    #             )
-    #     if not table_exists(project_id, dataset_id, table_id): # Table doesn't exist
-    #         create_dest_table(
-    #             project_id,
-    #             dataset_id,
-    #             table_id,
-    #             schema_filepath=schema_path,
-    #             bucket_name=target_gcs_bucket
-    #             )
-    #     load_data_to_bq(project_id, dataset_id, table_id, target_file_name)
-    #     upload_file_to_gcs(
-    #         file_path=target_file_name,
-    #         target_gcs_bucket=target_gcs_bucket,
-    #         target_gcs_path=str(target_gcs_path).replace(".csv", f"_{process_month}.csv"),
-    #     )
-    # logging.info(f"Processing {process_month} completed")
+def process_month(
+    source_url: str,
+    year_number: int,
+    month_number: int,
+    source_file: str,
+    target_file: str,
+    project_id: str,
+    dataset_id: str,
+    table_id: str,
+    target_file_name: str,
+    schema_path: str,
+    chunksize: str,
+    target_gcs_bucket: str,
+    target_gcs_path: str,
+    input_headers: typing.List[str],
+    data_dtypes: dict,
+    output_headers: typing.List[str],
+    pipeline_name: str,
+) -> None:
+    padded_month = str(month_number).zfill(2)
+    process_month = f"{year_number}-{padded_month}"
+    source_url_to_process = f"{source_url}{process_month}.csv"
+    source_file_to_process = str(source_file).replace(".csv", f"_{process_month}.csv")
+    successful_download = download_file(source_url_to_process, source_file_to_process)
+    if successful_download:
+        with pd.read_csv(
+            source_file_to_process,
+            engine="python",
+            encoding="utf-8",
+            quotechar='"',
+            chunksize=int(chunksize),
+            sep=",",
+            names=input_headers,
+            skiprows=1,
+            dtype=data_dtypes,
+        ) as reader:
+            for chunk_number, chunk in enumerate(reader):
+                logging.info(
+                    f"Processing chunk #{chunk_number} of file {process_month} started"
+                )
+                target_file_batch = str(target_file).replace(
+                    ".csv", f"-{process_month}-{chunk_number}.csv"
+                )
+                df = pd.DataFrame()
+                df = pd.concat([df, chunk])
+                process_chunk(
+                    df,
+                    target_file_batch,
+                    target_file_name,
+                    month_number == 1 and chunk_number == 0,
+                    month_number == 1 and chunk_number == 0,
+                    output_headers,
+                    pipeline_name,
+                )
+                logging.info(
+                    f"Processing chunk #{chunk_number} of file {process_month} completed"
+                )
+        if not table_exists(project_id, dataset_id, table_id): # Table doesn't exist
+            create_dest_table(
+                project_id,
+                dataset_id,
+                table_id,
+                schema_filepath=schema_path,
+                bucket_name=target_gcs_bucket
+                )
+        load_data_to_bq(project_id, dataset_id, table_id, target_file_name)
+        upload_file_to_gcs(
+            file_path=target_file_name,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=str(target_gcs_path).replace(".csv", f"_{process_month}.csv"),
+        )
+    logging.info(f"Processing {process_month} completed")
     # return successful_download
 
 
