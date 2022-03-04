@@ -154,10 +154,6 @@ def process_year_data(
                 output_headers=output_headers,
                 pipeline_name=pipeline_name,
             )
-    else:
-        logging.info(
-            f"Informational: The data file {target_file_name} was not generated because no data was available for year {year_number}.  Continuing."
-        )
     logging.info(f"Processing year {year_number} completed")
 
 
@@ -384,6 +380,10 @@ def process_month(
             target_gcs_path=str(target_gcs_path).replace(
                 ".csv", f"_{process_year_month}.csv"
             ),
+        )
+    else:
+        logging.info(
+            f"Informational: The data file {target_file_name} was not generated because no data was available for year {year_number}.  Continuing."
         )
     logging.info(f"Processing {process_year_month} completed")
 
