@@ -61,7 +61,8 @@ dag:
           SOURCE_URL: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_source_url }}"
           SOURCE_FILE: "files/data.csv"
           TARGET_FILE: "files/data_output.csv"
-          DATE_FIELD: "pickup_datetime"
+          DATA_FILE_YEAR_FIELD: "data_file_year"
+          DATA_FILE_MONTH_FIELD: "data_file_month"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_dataset_id }}"
           TABLE_ID: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_table_id }}"
@@ -98,6 +99,6 @@ dag:
             [ "vendor_id", "pickup_datetime", "dropoff_datetime", "passenger_count", "trip_distance",
               "rate_code", "store_and_fwd_flag", "payment_type", "fare_amount", "extra",
               "mta_tax", "tip_amount", "tolls_amount", "imp_surcharge", "total_amount",
-              "pickup_location_id", "dropoff_location_id" ]
+              "pickup_location_id", "dropoff_location_id", "data_file_year", "data_file_month" ]
   graph_paths:
     - "create_cluster >> transform_csv_and_load_data"

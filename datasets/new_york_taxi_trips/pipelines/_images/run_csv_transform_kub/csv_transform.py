@@ -32,7 +32,8 @@ def main(
     project_id: str,
     dataset_id: str,
     table_id: str,
-    date_field: str,
+    data_file_year_field: str,
+    data_file_month_field: str,
     schema_path: str,
     chunksize: str,
     target_gcs_bucket: str,
@@ -51,7 +52,8 @@ def main(
         project_id,
         dataset_id,
         table_id,
-        date_field,
+        data_file_year_field,
+        data_file_month_field,
         schema_path,
         chunksize,
         target_gcs_bucket,
@@ -71,7 +73,8 @@ def execute_pipeline(
     project_id: str,
     dataset_id: str,
     table_id: str,
-    date_field: str,
+    data_file_year_field: str,
+    data_file_month_field: str,
     schema_path: str,
     chunksize: str,
     target_gcs_bucket: str,
@@ -90,7 +93,8 @@ def execute_pipeline(
             project_id=project_id,
             dataset_id=dataset_id,
             table_id=table_id,
-            date_field=date_field,
+            data_file_year_field=data_file_year_field,
+            data_file_month_field=data_file_month_field,
             schema_path=schema_path,
             chunksize=chunksize,
             target_gcs_bucket=target_gcs_bucket,
@@ -110,7 +114,8 @@ def process_year_data(
     project_id: str,
     dataset_id: str,
     table_id: str,
-    date_field: str,
+    data_file_year_field: str,
+    data_file_month_field: str,
     schema_path: str,
     chunksize: str,
     target_gcs_bucket: str,
@@ -127,7 +132,13 @@ def process_year_data(
         process_year_month = f"{year_number}-{padded_month}"
         logging.info(f"Processing month {process_year_month}")
         month_data_already_loaded = table_has_month_data(
-            project_id, dataset_id, destination_table, date_field, month_number
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_name=destination_table,
+            data_file_year_field=data_file_year_field,
+            year_number=year_number,
+            data_file_month_field=data_file_month_field,
+            month_number=month_number,
         )
         if month_data_already_loaded is True:
             logging.info(f"{process_year_month} data is already loaded. Skipping.")
@@ -161,18 +172,32 @@ def table_has_month_data(
     project_id: str,
     dataset_id: str,
     table_name: str,
-    date_field: str,
-    month: int,
+    data_file_year_field: str,
+    year_number: int,
+    data_file_month_field: str,
+    month_number: int,
 ) -> bool:
-    number_rows = number_rows_in_table(
-        project_id, dataset_id, table_name, date_field, month
+    check_field_exists = field_exists(
+        project_id, dataset_id, table_name, data_file_month_field
     )
-    if number_rows > 10000:
-        return True
-    elif number_rows == -1:
-        return None
+    if check_field_exists:
+        client = bigquery.Client(project=project_id)
+        query = f"""
+            SELECT count(1) AS number_of_rows
+            FROM {dataset_id}.{table_name}
+            WHERE {data_file_year_field} = {year_number}
+              AND {data_file_month_field} = {month_number}
+        """
+        job_config = bigquery.QueryJobConfig()
+        query_job = client.query(query, job_config=job_config)
+        for row in query_job.result():
+            count_rows = row.number_of_rows
+        if int(count_rows) > 0:
+            return True
+        else:
+            return False
     else:
-        return False
+        return None
 
 
 def table_exists(project_id: str, dataset_id: str, table_name: str) -> bool:
@@ -199,26 +224,6 @@ def field_exists(
         return found_field
     else:
         return False
-
-
-def number_rows_in_table(
-    project_id: str, dataset_id: str, table_name: str, date_field: str, month: int
-) -> int:
-    check_field_exists = field_exists(project_id, dataset_id, table_name, date_field)
-    if check_field_exists:
-        client = bigquery.Client(project=project_id)
-        query = f"""
-            SELECT count(1) AS number_of_rows
-            FROM {dataset_id}.{table_name}
-            WHERE extract(month from {date_field}) = {month}
-        """
-        job_config = bigquery.QueryJobConfig()
-        query_job = client.query(query, job_config=job_config)
-        for row in query_job.result():
-            count_rows = row.number_of_rows
-        return int(count_rows)
-    else:
-        return -1
 
 
 def load_data_to_bq(
@@ -354,6 +359,8 @@ def process_month(
                     month_number == 1 and chunk_number == 0,
                     output_headers,
                     pipeline_name,
+                    year_number,
+                    month_number,
                 )
                 logging.info(
                     f"Processing chunk #{chunk_number} of file {process_year_month} completed"
@@ -416,10 +423,14 @@ def process_chunk(
     truncate_file: bool,
     output_headers: typing.List[str],
     pipeline_name: str,
+    year_number: int,
+    month_number: int,
 ) -> None:
     if pipeline_name == "tlc_green_trips":
         df["distance_between_service"] = ""
         df["time_between_service"] = ""
+    df["data_file_year"] = year_number
+    df["data_file_month"] = month_number
     df = format_date_time(df, "pickup_datetime", "strftime", "%Y-%m-%d %H:%M:%S")
     df = format_date_time(df, "dropoff_datetime", "strftime", "%Y-%m-%d %H:%M:%S")
     df = remove_null_rows(df)
@@ -512,7 +523,8 @@ if __name__ == "__main__":
         project_id=os.environ["PROJECT_ID"],
         dataset_id=os.environ["DATASET_ID"],
         table_id=os.environ["TABLE_ID"],
-        date_field=os.environ["DATE_FIELD"],
+        data_file_year_field=os.environ["DATA_FILE_YEAR_FIELD"],
+        data_file_month_field=os.environ["DATA_FILE_MONTH_FIELD"],
         schema_path=os.environ["SCHEMA_PATH"],
         chunksize=os.environ["CHUNKSIZE"],
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],

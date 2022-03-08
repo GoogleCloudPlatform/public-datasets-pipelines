@@ -100,5 +100,17 @@
         "type": "STRING",
         "description": "TLC Taxi Zone in which the taximeter was disengaged",
         "mode": "NULLABLE"
+    },
+    {
+        "name": "data_file_year",
+        "type": "INTEGER",
+        "description": "Datafile timestamp year value",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "data_file_month",
+        "type": "INTEGER",
+        "description": "Datafile timestamp month value",
+        "mode": "NULLABLE"
     }
 ]
