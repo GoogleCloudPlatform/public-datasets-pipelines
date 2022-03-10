@@ -68,3 +68,7 @@ resources:
     dataset_id: ml_datasets_uscentral1
     location: us-central1
     description: ~
+  - type: storage_bucket
+    name: ml-datasets
+    uniform_bucket_level_access: True
+    location: US
