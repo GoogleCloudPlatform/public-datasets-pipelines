@@ -16,15 +16,10 @@
 
 
 resource "google_bigquery_table" "google_political_ads_advertiser_geo_spend" {
-  project    = var.project_id
-  dataset_id = "google_political_ads"
-  table_id   = "advertiser_geo_spend"
-
+  project     = var.project_id
+  dataset_id  = "google_political_ads"
+  table_id    = "advertiser_geo_spend"
   description = "This file contains total US advertiser spend on political ads, per US state and the District of Columbia."
-
-
-
-
   depends_on = [
     google_bigquery_dataset.google_political_ads
   ]

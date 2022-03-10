@@ -16,15 +16,10 @@
 
 
 resource "google_bigquery_table" "google_political_ads_last_updated" {
-  project    = var.project_id
-  dataset_id = "google_political_ads"
-  table_id   = "last_updated"
-
+  project     = var.project_id
+  dataset_id  = "google_political_ads"
+  table_id    = "last_updated"
   description = "This table contains the information of the latest updated date for the Political Ads report. All dates provided are per UTC time zone."
-
-
-
-
   depends_on = [
     google_bigquery_dataset.google_political_ads
   ]

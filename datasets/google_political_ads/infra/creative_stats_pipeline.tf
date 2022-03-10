@@ -16,15 +16,10 @@
 
 
 resource "google_bigquery_table" "google_political_ads_creative_stats" {
-  project    = var.project_id
-  dataset_id = "google_political_ads"
-  table_id   = "creative_stats"
-
+  project     = var.project_id
+  dataset_id  = "google_political_ads"
+  table_id    = "creative_stats"
   description = "This table contains the information for election ads that have appeared on Google Ads Services. Ad-level targeting data was added to this file in April 2020. ad_id is referenced from: campaign_targeting.ads_list Data that was previously available in the `google_political_ads.campaign_targeting` table has been deprecated and removed in favor of this table."
-
-
-
-
   depends_on = [
     google_bigquery_dataset.google_political_ads
   ]

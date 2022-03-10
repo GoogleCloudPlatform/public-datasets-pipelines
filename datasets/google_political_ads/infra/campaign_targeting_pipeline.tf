@@ -16,15 +16,10 @@
 
 
 resource "google_bigquery_table" "google_political_ads_campaign_targeting" {
-  project    = var.project_id
-  dataset_id = "google_political_ads"
-  table_id   = "campaign_targeting"
-
+  project     = var.project_id
+  dataset_id  = "google_political_ads"
+  table_id    = "campaign_targeting"
   description = "This table was deprecated and ad-level targeting information was made available in the `google_political_ads.creative_stats` BigQuery table, effective April 2020. This table contains the information related to ad campaigns run by advertisers."
-
-
-
-
   depends_on = [
     google_bigquery_dataset.google_political_ads
   ]

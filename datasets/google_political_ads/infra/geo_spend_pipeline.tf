@@ -16,15 +16,10 @@
 
 
 resource "google_bigquery_table" "google_political_ads_geo_spend" {
-  project    = var.project_id
-  dataset_id = "google_political_ads"
-  table_id   = "geo_spend"
-
+  project     = var.project_id
+  dataset_id  = "google_political_ads"
+  table_id    = "geo_spend"
   description = "This table contains the information for how much is spent buying election ads on Google Ads Services. The data is aggregated by Congressional district. The primary key is state, congressional_district."
-
-
-
-
   depends_on = [
     google_bigquery_dataset.google_political_ads
   ]

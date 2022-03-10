@@ -16,15 +16,10 @@
 
 
 resource "google_bigquery_table" "google_political_ads_advertiser_weekly_spend" {
-  project    = var.project_id
-  dataset_id = "google_political_ads"
-  table_id   = "advertiser_weekly_spend"
-
+  project     = var.project_id
+  dataset_id  = "google_political_ads"
+  table_id    = "advertiser_weekly_spend"
   description = "This table contains the information for how much an advertiser spent on political ads during a given week. The table\u0027s primary key is advertiser_id, election_cycle, week_start_date"
-
-
-
-
   depends_on = [
     google_bigquery_dataset.google_political_ads
   ]

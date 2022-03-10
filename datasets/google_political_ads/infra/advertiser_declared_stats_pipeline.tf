@@ -16,15 +16,10 @@
 
 
 resource "google_bigquery_table" "google_political_ads_advertiser_declared_stats" {
-  project    = var.project_id
-  dataset_id = "google_political_ads"
-  table_id   = "advertiser_declared_stats"
-
+  project     = var.project_id
+  dataset_id  = "google_political_ads"
+  table_id    = "advertiser_declared_stats"
   description = "Certain California and New Zealand advertisers are required to submit additional data about themselves. The advertiser is responsible for the accuracy of this information, which Google has not confirmed. For California, this information is provided from our express notification process required for certain California advertisers, which is separate from our verification process. For New Zealand, this information is provided during our verification process."
-
-
-
-
   depends_on = [
     google_bigquery_dataset.google_political_ads
   ]
