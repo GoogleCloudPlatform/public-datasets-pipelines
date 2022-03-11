@@ -2,7 +2,7 @@ import pytest
 from testbook import testbook
 
 
-@pytest.mark.timeout(600)
+@pytest.mark.timeout(900)
 @testbook(
     "datasets/san_francisco_311/docs/tutorials/predict_weekly_calls/sf_311_weekly_calls_prediction.ipynb"
 )
