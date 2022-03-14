@@ -57,20 +57,22 @@ def main(
     logging.info("Transform: Rename columns... ")
     rename_headers(df, rename_mappings)
 
-    if pipeline_name == "tree_census_2015":
-        logging.info("Transform: Changing date time format... ")
-        df["created_at"] = df["created_at"].apply(
-            lambda x: datetime.datetime.strptime(x, "%m/%d/%Y")
-        )
-        df["created_at"] = df["created_at"].apply(
-            lambda x: datetime.datetime.strftime(x, "%Y-%m-%d")
-        )
+    # if pipeline_name == "tree_census_2015":
+    #     logging.info("Transform: Changing date time format... ")
+    #     df["created_at"] = df["created_at"].apply(
+    #         lambda x: datetime.datetime.strptime(x, "%m/%d/%Y")
+    #     )
+    #     df["created_at"] = df["created_at"].apply(
+    #         lambda x: datetime.datetime.strftime(x, "%Y-%m-%d")
+    #     )
 
     if pipeline_name == "tree_census_2005":
         logging.info("Transform: Trimming white spaces in headers... ")
         df = df.rename(columns=lambda x: x.strip())
+    else:
+        df = format_date_time(df, "created_at", "strptime", "%m/%d/%Y")
+        df = format_date_time(df, "created_at", "strftime", "%Y-%m-%d")
 
-    logging.info("Transform: Converting to integers..")
     convert_values_to_integer_string(df, integer_string_col)
 
     logging.info("Transform: Reordering headers..")
@@ -93,6 +95,26 @@ def main(
     )
 
 
+def format_date_time(
+    df: pd.DataFrame, field_name: str, str_pf_time: str, dt_format: str
+) -> pd.DataFrame:
+    if str_pf_time == "strptime":
+        logging.info(
+            f"Transform: Formatting datetime for field {field_name} from datetime to {dt_format}  "
+        )
+        df[field_name] = df[field_name].apply(
+            lambda x: datetime.datetime.strptime(x, dt_format)
+        )
+    else:
+        logging.info(
+            f"Transform: Formatting datetime for field {field_name} from {dt_format} to datetime "
+        )
+        df[field_name] = df[field_name].apply(
+            lambda x: datetime.datetime.strftime(x, dt_format)
+        )
+    return df
+
+
 def convert_to_integer_string(input: typing.Union[str, float]) -> str:
     if not input or (math.isnan(input)):
         return ""
@@ -103,6 +125,7 @@ def convert_to_integer_string(input: typing.Union[str, float]) -> str:
 def convert_values_to_integer_string(
     df: pd.DataFrame, integer_string_col: typing.List
 ) -> None:
+    logging.info("Transform: Converting to integers..")
     for cols in integer_string_col:
         df[cols] = df[cols].apply(convert_to_integer_string)
 

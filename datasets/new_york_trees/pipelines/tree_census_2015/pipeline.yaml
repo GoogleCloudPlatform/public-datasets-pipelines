@@ -50,11 +50,17 @@ dag:
           TARGET_GCS_PATH: "data/new_york_trees/tree_census_2015/data_output.csv"
           PIPELINE_NAME: "tree_census_2015"
           CSV_HEADERS: >-
-            ["tree_id","block_id","created_at","tree_dbh","stump_diam","curb_loc","status","health","spc_latin","spc_common","steward","guards","sidewalk","user_type","problems","root_stone","root_grate","root_other","trunk_wire","trnk_light","trnk_other","brch_light","brch_shoe","brch_other","address","zipcode","zip_city","cb_num","borocode","boroname","cncldist","st_assem","st_senate","nta","nta_name","boro_ct","state","latitude","longitude","x_sp","y_sp"]
+            ["tree_id","block_id","created_at","tree_dbh","stump_diam","curb_loc","status","health",
+            "spc_latin","spc_common","steward","guards","sidewalk","user_type","problems","root_stone",
+            "root_grate","root_other","trunk_wire","trnk_light","trnk_other","brch_light","brch_shoe",
+            "brch_other","address","zipcode","zip_city","cb_num","borocode","boroname","cncldist",
+            "st_assem","st_senate","nta","nta_name","boro_ct","state","latitude","longitude",
+            "x_sp","y_sp"]
           RENAME_MAPPINGS: >-
             {"postcode":"zipcode","community board":"cb_num","borough":"boroname"}
           INTEGER_STRING_COL: >-
-            ["tree_id", "block_id", "tree_dbh", "stump_diam", "zipcode", "cb_num","borocode","cncldist","st_assem","st_senate","boro_ct"]
+            ["tree_id", "block_id", "tree_dbh", "stump_diam", "zipcode", "cb_num","borocode",
+            "cncldist","st_assem","st_senate","boro_ct"]
 
         resources:
           request_memory: "3G"

@@ -50,11 +50,18 @@ dag:
           TARGET_GCS_PATH: "data/new_york_trees/tree_census_2005/data_output.csv"
           PIPELINE_NAME: "tree_census_2005"
           CSV_HEADERS: >-
-            ["objectid","cen_year","tree_dbh","tree_loc","pit_type","soil_lvl","status","spc_latin","spc_common","vert_other","vert_pgrd","vert_tgrd","vert_wall","horz_blck","horz_grate","horz_plant","horz_other","sidw_crack","sidw_raise","wire_htap","wire_prime","wire_2nd","wire_other","inf_canopy","inf_guard","inf_wires","inf_paving","inf_outlet","inf_shoes","inf_lights","inf_other","trunk_dmg","zipcode","zip_city","cb_num","borocode","boroname","cncldist","st_assem","st_senate","nta","nta_name","boro_ct","x_sp","y_sp","objectid_1","location_1","state","latitude","longitude","census_tract","bin","bbl","address"]
+            ["objectid","cen_year","tree_dbh","tree_loc","pit_type","soil_lvl","status","spc_latin",
+            "spc_common","vert_other","vert_pgrd","vert_tgrd","vert_wall","horz_blck","horz_grate",
+            "horz_plant","horz_other","sidw_crack","sidw_raise","wire_htap","wire_prime",
+            "wire_2nd","wire_other","inf_canopy","inf_guard","inf_wires","inf_paving","inf_outlet",
+            "inf_shoes","inf_lights","inf_other","trunk_dmg","zipcode","zip_city","cb_num","borocode",
+            "boroname","cncldist","st_assem","st_senate","nta","nta_name","boro_ct","x_sp","y_sp",
+            "objectid_1","location_1","state","latitude","longitude","census_tract","bin","bbl","address"]
           RENAME_MAPPINGS: >-
             {"OBJECTID":"objectid","Location 1":"location_1","census tract":"census_tract"}
           INTEGER_STRING_COL: >-
-            ["cb_num", "borocode", "cncldist", "st_assem", "st_senate", "boro_ct","x_sp","y_sp","objectid_1","census_tract","bin","bbl"]
+            ["cb_num", "borocode", "cncldist", "st_assem", "st_senate", "boro_ct","x_sp","y_sp",
+            "objectid_1","census_tract","bin","bbl"]
         resources:
           request_memory: "3G"
           request_cpu: "1"
