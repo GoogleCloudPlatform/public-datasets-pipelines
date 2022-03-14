@@ -59,14 +59,10 @@ def main(
         .astype(str)
         .apply(convert_datetime)
         .apply(lambda x: x[:2] + ":" + x[2:4] + ":" + x[4:6])
+        .apply(lambda x: datetime.datetime.strptime(x, "%H:%M:%S").time())
     )
     df["acq_time"] = df["acq_time"].apply(
         lambda x: datetime.datetime.strptime(x, "%H:%M:%S").time()
-    )
-
-    logging.info("Transform: Concatenating date and time... ")
-    df["acquisition_timestamp"] = (
-        df["acq_date"].astype(str) + " " + df["acq_time"].astype(str)
     )
 
     logging.info("Transform: Reordering headers..")
