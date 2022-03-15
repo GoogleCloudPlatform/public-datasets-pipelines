@@ -57,15 +57,6 @@ def main(
     logging.info("Transform: Rename columns... ")
     rename_headers(df, rename_mappings)
 
-    # if pipeline_name == "tree_census_2015":
-    #     logging.info("Transform: Changing date time format... ")
-    #     df["created_at"] = df["created_at"].apply(
-    #         lambda x: datetime.datetime.strptime(x, "%m/%d/%Y")
-    #     )
-    #     df["created_at"] = df["created_at"].apply(
-    #         lambda x: datetime.datetime.strftime(x, "%Y-%m-%d")
-    #     )
-
     if pipeline_name == "tree_census_2005":
         logging.info("Transform: Trimming white spaces in headers... ")
         df = df.rename(columns=lambda x: x.strip())
