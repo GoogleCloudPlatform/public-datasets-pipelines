@@ -35,35 +35,20 @@ def main(
     rename_mappings: dict,
     pipeline_name: str,
 ) -> None:
-
     logging.info(
         f"NASA wildfire{pipeline_name} process started at "
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
-
-    logging.info("Creating 'files' folder")
-    pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
-
-    logging.info(f"Downloading file from {source_url}...")
     download_file(source_url, source_file)
 
     logging.info("Reading file ...")
     df = pd.read_csv(str(source_file))
 
-    logging.info("Transform: Rename columns... ")
     rename_headers(df, rename_mappings)
-
-    logging.info("Transform: Changing date time format... ")
-    df["acq_time"] = (
-        df["acq_time"]
-        .astype(str)
-        .apply(convert_datetime)
-        .apply(lambda x: x[:2] + ":" + x[2:4] + ":" + x[4:6])
-        .apply(lambda x: datetime.datetime.strptime(x, "%H:%M:%S").time())
-    )
-    df["acq_time"] = df["acq_time"].apply(
-        lambda x: datetime.datetime.strptime(x, "%H:%M:%S").time()
-    )
+    change_type_str(df, "acq_time")
+    df["acq_time"] = convert_datetime(df["acq_time"])
+    change_date_time(df, "acq_time")
+    column_creation(df, "acquisition_timestamp")
 
     logging.info("Transform: Reordering headers..")
     df = df[headers]
@@ -80,21 +65,41 @@ def main(
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
     logging.info(
-        f"CFPB Complaints {pipeline_name} process completed at "
+        f"NASA Wildfire {pipeline_name} process completed at "
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
 
 
-def convert_datetime(x):
-    if len(x) == 1:
-        x = "000" + x + "00"
-    elif len(x) == 2:
-        x = "00" + x + "00"
-    elif len(x) == 3:
-        x = "0" + x + "00"
-    else:
-        x = x + "00"
-    return x
+def change_type_str(df: pd.DataFrame, x: str):
+    logging.info("Transform: Changing type to string... ")
+    df[x] = df[x].astype(str)
+
+
+def change_date_time(df: pd.DataFrame, y: str):
+    logging.info("Transform: Changing date time format... ")
+    df[y] = (
+        df[y]
+        .apply(lambda x: x[:2] + ":" + x[2:4] + ":" + x[4:6])
+        .apply(lambda x: datetime.datetime.strptime(x, "%H:%M:%S").time())
+    )
+
+
+def convert_datetime(i):
+    logging.info("Transform: Rename columns... ")
+    for x in i:
+        if len(x) == 1:
+            x = "000" + x + "00"
+        elif len(x) == 2:
+            x = "00" + x + "00"
+        elif len(x) == 3:
+            x = "0" + x + "00"
+        else:
+            x = x + "00"
+        return x
+
+
+def column_creation(df: pd.DataFrame, x: str):
+    df[x] = df["acq_date"].astype(str) + " " + df["acq_time"].astype(str)
 
 
 def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
@@ -106,6 +111,9 @@ def save_to_new_file(df: pd.DataFrame, file_path: str) -> None:
 
 
 def download_file(source_url: str, source_file: pathlib.Path) -> None:
+    logging.info("Creating 'files' folder")
+    pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
+    logging.info(f"Downloading file from {source_url}...")
     logging.info(f"Downloading {source_url} into {source_file}")
     r = requests.get(source_url, stream=True)
     if r.status_code == 200:
