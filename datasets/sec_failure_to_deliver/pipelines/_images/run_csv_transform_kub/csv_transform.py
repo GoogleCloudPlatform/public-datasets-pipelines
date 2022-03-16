@@ -57,7 +57,6 @@ def download_file(source_url: str, source_file: pathlib.Path) -> None:
 
 def concatenate_files(source_folder: str, source_file: str) -> None:
     logging.info("Concatenating files")
-    # all_csv_files = []
     file_number = 1
     for path, subdir, files in os.walk(source_folder + "/FTD"):
         for file in glob(os.path.join(path, "*.csv")):

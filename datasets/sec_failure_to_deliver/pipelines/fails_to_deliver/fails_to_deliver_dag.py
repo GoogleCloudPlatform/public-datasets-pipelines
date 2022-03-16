@@ -46,7 +46,7 @@ with DAG(
             "SOURCE_URL": "gs://pdp-feeds-staging/FTD/",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
-            "CHUNKSIZE": "2500000",
+            "CHUNKSIZE": "2000000",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/sec_failure_to_deliver/fails_to_deliver/data_output.csv",
             "INPUT_CSV_HEADERS": '["settlement_date","cusip","symbol","total_shares","company_name",\n "share_price"]',
