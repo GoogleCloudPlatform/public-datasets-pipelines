@@ -51,7 +51,7 @@ def save_to_new_file(df, file_path):
 
 
 def download_file(source_url: str, source_file: pathlib.Path) -> None:
-    logging.info(f"Downloading file {source_url}")
+    logging.info(f"Downloading files at {source_url}")
     subprocess.check_call(["gsutil", "-m", "cp", "-r", f"{source_url}", f"{source_file}"])
 
 
@@ -61,23 +61,6 @@ def concatenate_files(source_folder: str, source_file: str) -> None:
     file_number = 1
     for path, subdir, files in os.walk(source_folder + "/FTD"):
         for file in glob(os.path.join(path, "*.csv")):
-            # logging.info(f"{path} {subdir} {file}")
-            # #NB. f-strings cannot include backslashes
-            # cmd_list = [
-            #     # resolve newlines in quoted text
-            #     "sed -zi 's/\\n\\\"\\n/\\\"\\n/g' " + file,
-            #     "sed -zi 's/\\n\\\",,,,,\\n/\\\",,,,,\\n/g' " + file,
-            #     "sed -i '/^\\\",,,,,/d' " + file,
-            #     # remove NUL characters
-            #     "sed -i 's/\\x0//g' " + file,
-            #     # remove trailer text from source file
-            #     f'find {path} -type f -name "*.csv" -exec sed -i "/Trailer record count/d" {{}} +',
-            #     f'find {path} -type f -name "*.csv" -exec sed -i "/Trailer total quantity of shares/d" {{}} +',
-            # ]
-            # logging.info(f"Resolving source data issues on file {file}")
-            # for cmd in cmd_list:
-            #     logging.info("cmd: " + cmd)
-            #     subprocess.check_call([cmd], shell=True)
             resolve_source_data_issues(path, file)
             if file_number == 1:
                 append_file(file, source_file, True, True)
@@ -87,12 +70,11 @@ def concatenate_files(source_folder: str, source_file: str) -> None:
 
 
 def resolve_source_data_issues(path: str, file: str) -> None:
-    # NB. f-strings cannot include backslashes
     cmd_list = [
         # resolve newlines in quoted text
-        "sed -zi 's/\\n\\\"\\n/\\\"\\n/g' " + file,
-        "sed -zi 's/\\n\\\",,,,,\\n/\\\",,,,,\\n/g' " + file,
-        "sed -i '/^\\\",,,,,/d' " + file,
+        f"sed -zi 's/\\n\\\"\\n/\\\"\\n/g' {file}",
+        f"sed -zi 's/\\n\\\",,,,,\\n/\\\",,,,,\\n/g' {file}",
+        f"sed -i '/^\\\",,,,,/d'  {file}",
         # remove NUL characters
         "sed -i 's/\\x0//g' " + file,
         # remove trailer text from all source files under the source path recursively
