@@ -42,7 +42,9 @@ def main(
     source_folder = os.path.split(source_file)[0]
     download_file(source_url, source_folder)
     concatenate_files(source_folder, source_file)
-    process_data(source_file, target_file, chunksize, input_headers, data_dtypes, output_headers)
+    process_data(
+        source_file, target_file, chunksize, input_headers, data_dtypes, output_headers
+    )
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
 
@@ -52,7 +54,9 @@ def save_to_new_file(df, file_path):
 
 def download_file(source_url: str, source_file: pathlib.Path) -> None:
     logging.info(f"Downloading files at {source_url}")
-    subprocess.check_call(["gsutil", "-m", "cp", "-r", f"{source_url}", f"{source_file}"])
+    subprocess.check_call(
+        ["gsutil", "-m", "cp", "-r", f"{source_url}", f"{source_file}"]
+    )
 
 
 def concatenate_files(source_folder: str, source_file: str) -> None:
@@ -87,45 +91,43 @@ def resolve_source_data_issues(path: str, file: str) -> None:
 
 
 def process_data(
-            source_file: str,
-            target_file: str,
-            chunksize: str,
-            input_headers: typing.List[str],
-            data_dtypes: dict,
-            output_headers: typing.List[str],
-    ) -> None:
+    source_file: str,
+    target_file: str,
+    chunksize: str,
+    input_headers: typing.List[str],
+    data_dtypes: dict,
+    output_headers: typing.List[str],
+) -> None:
     logging.info(f"Processing {source_file} started")
     with pd.read_csv(
-            source_file,
-            engine="python",
-            encoding="utf-8",
-            quotechar='"',
-            chunksize=int(chunksize),
-            sep=",",
-            names=input_headers,
-            skiprows=1,
-            dtype=data_dtypes
+        source_file,
+        engine="python",
+        encoding="utf-8",
+        quotechar='"',
+        chunksize=int(chunksize),
+        sep=",",
+        names=input_headers,
+        skiprows=1,
+        dtype=data_dtypes,
     ) as reader:
-            for chunk_number, chunk in enumerate(reader):
-                logging.info(
-                    f"Processing chunk #{chunk_number} of file {source_file} started"
-                )
-                target_file_batch = str(target_file).replace(
-                    ".csv", f"-{chunk_number}.csv"
-                )
-                df = pd.DataFrame()
-                df = pd.concat([df, chunk])
-                process_chunk(
-                    df,
-                    target_file_batch,
-                    target_file,
-                    chunk_number == 0,
-                    chunk_number == 0,
-                    output_headers
-                )
-                logging.info(
-                    f"Processing chunk #{chunk_number} of file {source_file} completed"
-                )
+        for chunk_number, chunk in enumerate(reader):
+            logging.info(
+                f"Processing chunk #{chunk_number} of file {source_file} started"
+            )
+            target_file_batch = str(target_file).replace(".csv", f"-{chunk_number}.csv")
+            df = pd.DataFrame()
+            df = pd.concat([df, chunk])
+            process_chunk(
+                df,
+                target_file_batch,
+                target_file,
+                chunk_number == 0,
+                chunk_number == 0,
+                output_headers,
+            )
+            logging.info(
+                f"Processing chunk #{chunk_number} of file {source_file} completed"
+            )
 
 
 def process_chunk(
@@ -134,7 +136,7 @@ def process_chunk(
     target_file: str,
     include_header: bool,
     truncate_file: bool,
-    output_headers: typing.List[str]
+    output_headers: typing.List[str],
 ) -> None:
     logging.info(f"Processing Batch {target_file_batch} started")
     df = search_and_replace_values(df)
@@ -149,7 +151,7 @@ def append_file(
     target_file_path: str,
     include_header: bool,
     truncate_target_file: bool,
-    remove_source: bool = False
+    remove_source: bool = False,
 ) -> None:
     logging.info(
         f"Appending file {batch_file_path} to file {target_file_path} with include_header={include_header} and truncate_target_file={truncate_target_file}"
