@@ -41,7 +41,7 @@ def main(
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
     source_folder = os.path.split(source_file)[0]
     # download_file(source_url, source_folder)
-    # concatenate_files(source_folder, source_file)
+    concatenate_files(source_folder, source_file)
     process_data(source_file, target_file, chunksize, input_headers, data_dtypes, output_headers)
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
@@ -71,10 +71,12 @@ def concatenate_files(source_folder: str, source_file: str) -> None:
             # cmd = f"sed -zi 's/\\n\\\"/\\\"/g' {file}"
             # subprocess.check_call([cmd], shell=True)
             cmd_list = [
+                f"sed -zi 's/\n\"\n/\"\n/g' {file}",
+                f"sed -zi 's/\n\",,,,,\n/\",,,,,\n/g' {file}",
                 f'find {path} -type f -name "*.csv" -exec sed -i "/Trailer record count/d" {{}} +',
                 f'find {path} -type f -name "*.csv" -exec sed -i "/Trailer total quantity of shares/d" {{}} +',
-                f"sed -zi 's/\\n\\\"/\\\"/g' {file}"
             ]
+            logging.info(f"Resolving source data issues on file {file}")
             for cmd in cmd_list:
                 subprocess.check_call([cmd], shell=True)
             if file_number == 1:
