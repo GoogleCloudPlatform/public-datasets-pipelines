@@ -46,11 +46,18 @@ with DAG(
             "SOURCE_URL": "gs://pdp-feeds-staging/FTD/",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
+            "CHUNKSIZE": "2500000",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/sec_failure_to_deliver/fails_to_deliver/data_output.csv",
-            "CSV_HEADERS": '["settlement_date","cusip","symbol","total_shares","company_name","share_price"]',
+            "INPUT_CSV_HEADERS": '["settlement_date","cusip","symbol","total_shares","company_name",\n "share_price"]',
+            "DATA_DTYPES": '{ "settlement_date": "str",\n  "cusip": "str",\n  "symbol": "str",\n  "total_shares": "str",\n  "company_name": "str",\n  "share_price": "str"}',
+            "OUTPUT_CSV_HEADERS": '["settlement_date","cusip","symbol","total_shares","company_name",\n "share_price"]',
         },
-        resources={"limit_memory": "6G", "limit_cpu": "2"},
+        resources={
+            "request_memory": "8G",
+            "request_cpu": "2",
+            "request_ephemeral_storage": "12G",
+        },
     )
 
     # Task to load CSV data to a BigQuery table

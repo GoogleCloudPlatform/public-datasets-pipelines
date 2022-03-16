@@ -40,19 +40,9 @@ def main(
     logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
     source_folder = os.path.split(source_file)[0]
-    download_file(source_url, source_folder)
-    concatenate_files(source_folder, source_file)
+    # download_file(source_url, source_folder)
+    # concatenate_files(source_folder, source_file)
     process_data(source_file, target_file, chunksize, input_headers, data_dtypes, output_headers)
-    logging.info(f"Saving to output file.. {target_file}")
-    try:
-        save_to_new_file(df, file_path=str(target_file))
-    except Exception as e:
-        logging.error(f"Error saving output file: {e}.")
-    logging.info("..Done!")
-
-    logging.info(
-        f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
-    )
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
 
@@ -72,11 +62,27 @@ def concatenate_files(source_folder: str, source_file: str) -> None:
     for path, subdir, files in os.walk(source_folder + "/FTD"):
         for file in glob(os.path.join(path, "*.csv")):
             logging.info(f"{path} {subdir} {file}")
+            # # remove trailer text from source file
+            # cmd = f'find {path} -type f -name "*.csv" -exec sed -i "/Trailer record count/d" {{}} +'
+            # subprocess.check_call([cmd], shell=True)
+            # cmd = f'find {path} -type f -name "*.csv" -exec sed -i "/Trailer total quantity of shares/d" {{}} +'
+            # subprocess.check_call([cmd], shell=True)
+            # # resolve newlines in quoted text
+            # cmd = f"sed -zi 's/\\n\\\"/\\\"/g' {file}"
+            # subprocess.check_call([cmd], shell=True)
+            cmd_list = [
+                f'find {path} -type f -name "*.csv" -exec sed -i "/Trailer record count/d" {{}} +',
+                f'find {path} -type f -name "*.csv" -exec sed -i "/Trailer total quantity of shares/d" {{}} +',
+                f"sed -zi 's/\\n\\\"/\\\"/g' {file}"
+            ]
+            for cmd in cmd_list:
+                subprocess.check_call([cmd], shell=True)
             if file_number == 1:
                 append_file(file, source_file, True, True)
             else:
                 append_file(file, source_file, False, False)
             file_number = file_number + 1
+
 
 def process_data(
             source_file: str,
@@ -88,7 +94,7 @@ def process_data(
     ) -> None:
     logging.info(f"Processing {source_file} started")
     with pd.read_csv(
-        source_file,
+            source_file,
             engine="python",
             encoding="utf-8",
             quotechar='"',
@@ -116,7 +122,7 @@ def process_data(
                     output_headers
                 )
                 logging.info(
-                    f"Processing chunk #{chunk_number} of file {process_month} completed"
+                    f"Processing chunk #{chunk_number} of file {source_file} completed"
                 )
 
 
@@ -193,11 +199,21 @@ def reorder_headers(df: pd.DataFrame, headers: typing.List[str]) -> pd.DataFrame
     return df
 
 
-def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:
-    storage_client = storage.Client()
-    bucket = storage_client.bucket(gcs_bucket)
-    blob = bucket.blob(gcs_path)
-    blob.upload_from_filename(file_path)
+def upload_file_to_gcs(
+    file_path: pathlib.Path, target_gcs_bucket: str, target_gcs_path: str
+) -> None:
+    if os.path.exists(file_path):
+        logging.info(
+            f"Uploading output file to gs://{target_gcs_bucket}/{target_gcs_path}"
+        )
+        storage_client = storage.Client()
+        bucket = storage_client.bucket(target_gcs_bucket)
+        blob = bucket.blob(target_gcs_path)
+        blob.upload_from_filename(file_path)
+    else:
+        logging.info(
+            f"Cannot upload file to gs://{target_gcs_bucket}/{target_gcs_path} as it does not exist."
+        )
 
 
 if __name__ == "__main__":
