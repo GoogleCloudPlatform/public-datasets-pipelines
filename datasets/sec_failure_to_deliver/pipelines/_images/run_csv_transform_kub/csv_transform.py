@@ -40,7 +40,7 @@ def main(
     logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
     source_folder = os.path.split(source_file)[0]
-    # download_file(source_url, source_folder)
+    download_file(source_url, source_folder)
     concatenate_files(source_folder, source_file)
     process_data(source_file, target_file, chunksize, input_headers, data_dtypes, output_headers)
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
@@ -61,29 +61,48 @@ def concatenate_files(source_folder: str, source_file: str) -> None:
     file_number = 1
     for path, subdir, files in os.walk(source_folder + "/FTD"):
         for file in glob(os.path.join(path, "*.csv")):
-            logging.info(f"{path} {subdir} {file}")
-            # # remove trailer text from source file
-            # cmd = f'find {path} -type f -name "*.csv" -exec sed -i "/Trailer record count/d" {{}} +'
-            # subprocess.check_call([cmd], shell=True)
-            # cmd = f'find {path} -type f -name "*.csv" -exec sed -i "/Trailer total quantity of shares/d" {{}} +'
-            # subprocess.check_call([cmd], shell=True)
-            # # resolve newlines in quoted text
-            # cmd = f"sed -zi 's/\\n\\\"/\\\"/g' {file}"
-            # subprocess.check_call([cmd], shell=True)
-            cmd_list = [
-                f"sed -zi 's/\n\"\n/\"\n/g' {file}",
-                f"sed -zi 's/\n\",,,,,\n/\",,,,,\n/g' {file}",
-                f'find {path} -type f -name "*.csv" -exec sed -i "/Trailer record count/d" {{}} +',
-                f'find {path} -type f -name "*.csv" -exec sed -i "/Trailer total quantity of shares/d" {{}} +',
-            ]
-            logging.info(f"Resolving source data issues on file {file}")
-            for cmd in cmd_list:
-                subprocess.check_call([cmd], shell=True)
+            # logging.info(f"{path} {subdir} {file}")
+            # #NB. f-strings cannot include backslashes
+            # cmd_list = [
+            #     # resolve newlines in quoted text
+            #     "sed -zi 's/\\n\\\"\\n/\\\"\\n/g' " + file,
+            #     "sed -zi 's/\\n\\\",,,,,\\n/\\\",,,,,\\n/g' " + file,
+            #     "sed -i '/^\\\",,,,,/d' " + file,
+            #     # remove NUL characters
+            #     "sed -i 's/\\x0//g' " + file,
+            #     # remove trailer text from source file
+            #     f'find {path} -type f -name "*.csv" -exec sed -i "/Trailer record count/d" {{}} +',
+            #     f'find {path} -type f -name "*.csv" -exec sed -i "/Trailer total quantity of shares/d" {{}} +',
+            # ]
+            # logging.info(f"Resolving source data issues on file {file}")
+            # for cmd in cmd_list:
+            #     logging.info("cmd: " + cmd)
+            #     subprocess.check_call([cmd], shell=True)
+            resolve_source_data_issues(path, file)
             if file_number == 1:
                 append_file(file, source_file, True, True)
             else:
                 append_file(file, source_file, False, False)
             file_number = file_number + 1
+
+
+def resolve_source_data_issues(path: str, file: str) -> None:
+    # NB. f-strings cannot include backslashes
+    cmd_list = [
+        # resolve newlines in quoted text
+        "sed -zi 's/\\n\\\"\\n/\\\"\\n/g' " + file,
+        "sed -zi 's/\\n\\\",,,,,\\n/\\\",,,,,\\n/g' " + file,
+        "sed -i '/^\\\",,,,,/d' " + file,
+        # remove NUL characters
+        "sed -i 's/\\x0//g' " + file,
+        # remove trailer text from all source files under the source path recursively
+        f'find {path} -type f -name "*.csv" -exec sed -i "/Trailer record count/d" {{}} +',
+        f'find {path} -type f -name "*.csv" -exec sed -i "/Trailer total quantity of shares/d" {{}} +',
+    ]
+    logging.info(f"Resolving source data issues on file {file}")
+    for cmd in cmd_list:
+        logging.info("cmd: " + cmd)
+        subprocess.check_call([cmd], shell=True)
 
 
 def process_data(
