@@ -16,15 +16,10 @@
 
 
 resource "google_bigquery_table" "austin_bikeshare_bikeshare_stations" {
-  project    = var.project_id
-  dataset_id = "austin_bikeshare"
-  table_id   = "bikeshare_stations"
-
+  project     = var.project_id
+  dataset_id  = "austin_bikeshare"
+  table_id    = "bikeshare_stations"
   description = "Austin Bikeshare Stations table"
-
-
-
-
   depends_on = [
     google_bigquery_dataset.austin_bikeshare
   ]

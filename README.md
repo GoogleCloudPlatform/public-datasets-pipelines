@@ -34,7 +34,7 @@ pipenv run airflow db init
 
 To ensure you have a proper setup, run the tests:
 ```
-$ pipenv run python -m pytest -v
+pipenv run python -m pytest -v
 ```
 
 # Building Data Pipelines
@@ -84,7 +84,7 @@ Every YAML file supports a `resources` block. To use this, identify what Google 
 
 Run the following command from the project root:
 ```bash
-$ pipenv run python scripts/generate_terraform.py \
+pipenv run python scripts/generate_terraform.py \
     --dataset $DATASET \
     --gcp-project-id $GCP_PROJECT_ID \
     --region $REGION \
@@ -116,7 +116,7 @@ As a concrete example, the unit tests use a temporary `.test` directory as their
 Run the following command from the project root:
 
 ```bash
-$ pipenv run python scripts/generate_dag.py \
+pipenv run python scripts/generate_dag.py \
     --dataset $DATASET \
     --pipeline $PIPELINE \
     [--all-pipelines] \
@@ -224,7 +224,7 @@ This step requires a Cloud Composer environment up and running in your Google Cl
 To deploy the DAG and the variables to your Cloud Composer environment, use the command
 
 ```
-$ pipenv run python scripts/deploy_dag.py \
+pipenv run python scripts/deploy_dag.py \
   --dataset DATASET \
   [--pipeline PIPELINE] \
   --composer-env CLOUD_COMPOSER_ENVIRONMENT_NAME \
@@ -240,7 +240,7 @@ Specifying an argument to `--pipeline` is optional. By default, the script deplo
 Run the unit tests from the project root as follows:
 
 ```
-$ pipenv run python -m pytest -v
+pipenv run python -m pytest -v
 ```
 
 # YAML Config Reference

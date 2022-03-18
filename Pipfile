@@ -5,6 +5,10 @@ name = "pypi"
 
 [packages]
 beautifulsoup4 = "==4.9.3"
+gcloud = "*"
+"google.cloud.orchestration.airflow" = "*"
+gunicorn = "*"
+apache-airflow = "*"
 
 [dev-packages]
 apache-airflow = "==2.1.2"

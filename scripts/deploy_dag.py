@@ -19,6 +19,7 @@ import pathlib
 import subprocess
 import typing
 
+from google.cloud.orchestration.airflow import service_v1beta1
 from ruamel import yaml
 
 yaml = yaml.YAML(typ="safe")
@@ -32,15 +33,17 @@ DEFAULT_AIRFLOW_VERSION = 2
 class IncompatibilityError(Exception):
     pass
 
-
 def main(
     env_path: pathlib.Path,
     dataset_id: str,
     composer_env: str,
-    composer_bucket: str,
+    composer_bucket: None,
     composer_region: str,
     pipeline: str = None,
 ):
+    if composer_bucket is None:
+        composer_bucket=get_composer_bucket(env_path,composer_region,composer_env)
+    
     print("\n========== AIRFLOW VARIABLES ==========")
     copy_variables_to_airflow_data_folder(env_path, dataset_id, composer_bucket)
     import_variables_to_airflow_env(
@@ -72,6 +75,29 @@ def main(
             composer_bucket,
         )
 
+
+
+def get_composer_bucket(
+    env_path: pathlib.Path,
+    composer_region: str,
+    composer_env: str,
+):
+    # Create a client
+    client = service_v1beta1.EnvironmentsClient()
+
+    # Initialize request argument(s)
+    request = service_v1beta1.GetEnvironmentRequest(
+        name=f"projects/{env_path}/locations/{composer_region}/environments/{composer_env}"
+    )
+
+    # Make the request
+    response = client.get_environment(request=request)
+
+    composer_bucket = response.config.dag_gcs_prefix
+    # Handle the response
+    print(response.config.dag_gcs_prefix)
+
+# [END composer_v1beta1_generated_Environments_GetEnvironment_sync]
 
 def run_gsutil_cmd(args: typing.List[str], cwd: pathlib.Path):
     subprocess.check_call(["gsutil"] + args, cwd=cwd)
@@ -254,6 +280,8 @@ def check_airflow_version_compatibility(
         )
 
 
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Deploy DAGs and variables to an Airflow environment"
@@ -285,7 +313,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-b",
         "--composer-bucket",
-        required=True,
+        required=False,
         type=str,
         dest="composer_bucket",
         help="The Google Cloud Composer bucket name",
