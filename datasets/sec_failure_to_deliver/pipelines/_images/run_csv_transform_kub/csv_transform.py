@@ -156,24 +156,24 @@ def append_file(
     logging.info(
         f"Appending file {batch_file_path} to file {target_file_path} with include_header={include_header} and truncate_target_file={truncate_target_file}"
     )
-    data_file = open(batch_file_path, "r")
-    if truncate_target_file:
-        target_file = open(target_file_path, "w+").close()
-    target_file = open(target_file_path, "a+")
-    if not include_header:
-        logging.info(
-            f"Appending batch file {batch_file_path} to {target_file_path} without header"
-        )
-        next(data_file)
-    else:
-        logging.info(
-            f"Appending batch file {batch_file_path} to {target_file_path} with header"
-        )
-    target_file.write(data_file.read())
-    data_file.close()
-    target_file.close()
-    if os.path.exists(batch_file_path) and remove_source:
-        os.remove(batch_file_path)
+    with open(batch_file_path, "r") as data_file:
+        if truncate_target_file:
+            target_file = open(target_file_path, "w+").close()
+        with open(target_file_path, "a+") as target_file:
+            if not include_header:
+                logging.info(
+                    f"Appending batch file {batch_file_path} to {target_file_path} without header"
+                )
+                next(data_file)
+            else:
+                logging.info(
+                    f"Appending batch file {batch_file_path} to {target_file_path} with header"
+                )
+            target_file.write(data_file.read())
+            data_file.close()
+            target_file.close()
+            if os.path.exists(batch_file_path) and remove_source:
+                os.remove(batch_file_path)
 
 
 def search_and_replace_values(df: pd.DataFrame) -> pd.DataFrame:
