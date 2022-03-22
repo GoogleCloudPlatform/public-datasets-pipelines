@@ -59,14 +59,14 @@ with DAG(
         cluster_name="new-york--311-service-requests",
         namespace="default",
         image_pull_policy="Always",
-        image="{{ var.json.new_york.container_registry.run_csv_transform_kub_311_service_requests }}",
+        image="{{ var.json.new_york.container_registry.311_service_requests.run_csv_transform_kub }}",
         env_vars={
-            "SOURCE_URL": "https://data.cityofnewyork.us/api/views/erm2-nwe9/rows.csv",
+            "SOURCE_URL": "{{ var.json.new_york.container_registry.311_service_requests.source_url }}",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
-            "CHUNKSIZE": "500000",
+            "CHUNKSIZE": "{{ var.json.new_york.container_registry.311_service_requests.chunksize }}",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
-            "TARGET_GCS_PATH": "data/new_york/311_service_requests/data_output.csv",
+            "TARGET_GCS_PATH": "{{ var.json.new_york.container_registry.311_service_requests.target_path }}",
         },
         resources={"limit_memory": "16G", "limit_cpu": "3"},
     )
@@ -75,9 +75,11 @@ with DAG(
     load_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_to_bq",
         bucket="{{ var.value.composer_bucket }}",
-        source_objects=["data/new_york/311_service_requests/data_output.csv"],
+        source_objects=[
+            "{{ var.json.new_york.container_registry.311_service_requests.target_path }}"
+        ],
         source_format="CSV",
-        destination_project_dataset_table="new_york.311_service_requests",
+        destination_project_dataset_table="{{ var.json.new_york.container_registry.311_service_requests.destination_table }}",
         skip_leading_rows=1,
         allow_quoted_newlines=True,
         write_disposition="WRITE_TRUNCATE",

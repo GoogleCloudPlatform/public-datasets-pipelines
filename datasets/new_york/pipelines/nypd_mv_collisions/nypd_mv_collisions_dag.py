@@ -15,6 +15,7 @@
 
 from airflow import DAG
 from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.operators import kubernetes_engine
 from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
@@ -32,6 +33,23 @@ with DAG(
     catchup=False,
     default_view="graph",
 ) as dag:
+    create_cluster = kubernetes_engine.GKECreateClusterOperator(
+        task_id="create_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        body={
+            "name": "new-york--nypd-mv-collisions",
+            "initial_node_count": 1,
+            "network": "{{ var.value.vpc_network }}",
+            "node_config": {
+                "machine_type": "e2-standard-16",
+                "oauth_scopes": [
+                    "https://www.googleapis.com/auth/devstorage.read_write",
+                    "https://www.googleapis.com/auth/cloud-platform",
+                ],
+            },
+        },
+    )
 
     # Run CSV transform within kubernetes pod
     transform_csv = kubernetes_pod.KubernetesPodOperator(
@@ -40,15 +58,15 @@ with DAG(
         namespace="composer",
         service_account_name="datasets",
         image_pull_policy="Always",
-        image="{{ var.json.new_york.container_registry.run_csv_transform_kub_nypd_mv_collisions }}",
+        image="{{ var.json.new_york.container_registry.nypd_mv_collisions.run_csv_transform_kub }}",
         env_vars={
-            "SOURCE_URL": "https://nycopendata.socrata.com/api/views/h9gi-nx95/rows.csv",
+            "SOURCE_URL": "{{ var.json.new_york.container_registry.nypd_mv_collisions.source_url }}",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
-            "CHUNKSIZE": "150000",
+            "CHUNKSIZE": "{{ var.json.new_york.container_registry.nypd_mv_collisions.chunksize }}",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
-            "TARGET_GCS_PATH": "data/new_york/nypd_mv_collisions/data_output.csv",
-            "ENGLISH_PIPELINE_NAME": "New York - NYPD Motor Vehicle Collisions",
+            "TARGET_GCS_PATH": "{{ var.json.new_york.container_registry.nypd_mv_collisions.target_path }}",
+            "PIPELINE_NAME": "{{ var.json.new_york.container_registry.nypd_mv_collisions.pipeline_name }}",
             "SOURCE_DTYPES": '{\n  "CRASH DATE": "str",\n  "CRASH TIME": "str",\n  "BOROUGH": "str",\n  "ZIP CODE": "str",\n  "LATITUDE": "float64",\n  "LONGITUDE": "float64",\n  "LOCATION": "str",\n  "ON STREET NAME": "str",\n  "CROSS STREET NAME": "str",\n  "OFF STREET NAME": "str",\n  "NUMBER OF PERSONS INJURED": "str",\n  "NUMBER OF PERSONS KILLED" : "str",\n  "NUMBER OF PEDESTRIANS INJURED" : "str",\n  "NUMBER OF PEDESTRIANS KILLED" : "str",\n  "NUMBER OF CYCLIST INJURED" : "str",\n  "NUMBER OF CYCLIST KILLED" : "str",\n  "NUMBER OF MOTORIST INJURED" : "str",\n  "NUMBER OF MOTORIST KILLED" : "str",\n  "CONTRIBUTING FACTOR VEHICLE 1" : "str",\n  "CONTRIBUTING FACTOR VEHICLE 2" : "str",\n  "CONTRIBUTING FACTOR VEHICLE 3" : "str",\n  "CONTRIBUTING FACTOR VEHICLE 4" : "str",\n  "CONTRIBUTING FACTOR VEHICLE 5" : "str",\n  "COLLISION_ID": "int64",\n  "VEHICLE TYPE CODE 1" : "str",\n  "VEHICLE TYPE CODE 2" : "str",\n  "VEHICLE TYPE CODE 3" : "str",\n  "VEHICLE TYPE CODE 4" : "str",\n  "VEHICLE TYPE CODE 5": "str"\n}',
             "TRANSFORM_LIST": '[ "replace_regex", "add_crash_timestamp", "convert_date_format", "rename_headers", "resolve_datatypes", "reorder_headers" ]',
             "REGEX_LIST": '[\n  [ "OFF STREET NAME", "\\\\n", " " ]\n]',
@@ -64,9 +82,11 @@ with DAG(
     load_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_to_bq",
         bucket="{{ var.value.composer_bucket }}",
-        source_objects=["data/new_york/nypd_mv_collisions/data_output.csv"],
+        source_objects=[
+            "{{ var.json.new_york.container_registry.nypd_mv_collisions.target_path }}"
+        ],
         source_format="CSV",
-        destination_project_dataset_table="{{ var.json.new_york.container_registry.nypd_mv_collisions_destination_table }}",
+        destination_project_dataset_table="{{ var.json.new_york.container_registry.nypd_mv_collisions.destination_table }}",
         skip_leading_rows=1,
         allow_quoted_newlines=True,
         write_disposition="WRITE_TRUNCATE",

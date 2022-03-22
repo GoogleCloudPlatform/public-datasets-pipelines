@@ -41,7 +41,7 @@ with DAG(
             "initial_node_count": 1,
             "network": "{{ var.value.vpc_network }}",
             "node_config": {
-                "machine_type": "e2-small",
+                "machine_type": "e2-standard-16",
                 "oauth_scopes": [
                     "https://www.googleapis.com/auth/devstorage.read_write",
                     "https://www.googleapis.com/auth/cloud-platform",
@@ -59,15 +59,15 @@ with DAG(
         cluster_name="new-york--citibike-stations",
         namespace="default",
         image_pull_policy="Always",
-        image="{{ var.json.new_york.container_registry.run_csv_transform_kub_citibike_stations }}",
+        image="{{ var.json.new_york.container_registry.citibike_stations.run_csv_transform_kub }}",
         env_vars={
-            "SOURCE_URL_STATIONS_JSON": "https://gbfs.citibikenyc.com/gbfs/en/station_information",
-            "SOURCE_URL_STATUS_JSON": "https://gbfs.citibikenyc.com/gbfs/en/station_status",
+            "SOURCE_URL_STATIONS_JSON": "{{ var.json.new_york.container_registry.citibike_stations.source_url_stations }}",
+            "SOURCE_URL_STATUS_JSON": "{{ var.json.new_york.container_registry.citibike_stations.source_url_status }}",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
-            "CHUNKSIZE": "750000",
+            "CHUNKSIZE": "{{ var.json.new_york.container_registry.citibike_stations.chunksize }}",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
-            "TARGET_GCS_PATH": "data/new_york/citibike_stations/data_output.csv",
+            "TARGET_GCS_PATH": "{{ var.json.new_york.container_registry.citibike_stations.target_path }}",
         },
         resources={"limit_memory": "4G", "limit_cpu": "2"},
     )
@@ -76,9 +76,11 @@ with DAG(
     load_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_to_bq",
         bucket="{{ var.value.composer_bucket }}",
-        source_objects=["data/new_york/citibike_stations/data_output.csv"],
+        source_objects=[
+            "{{ var.json.new_york.container_registry.citibike_stations.target_path }}"
+        ],
         source_format="CSV",
-        destination_project_dataset_table="new_york.citibike_stations",
+        destination_project_dataset_table="{{ var.json.new_york.container_registry.citibike_stations.destination_table }}",
         skip_leading_rows=1,
         allow_quoted_newlines=True,
         write_disposition="WRITE_TRUNCATE",
