@@ -19,12 +19,6 @@ resource "google_bigquery_table" "new_york_citibike_stations" {
   project    = var.project_id
   dataset_id = "new_york"
   table_id   = "citibike_stations"
-
-
-
-
-
-
   depends_on = [
     google_bigquery_dataset.new_york
   ]

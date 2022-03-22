@@ -17,14 +17,12 @@ import json
 import logging
 import os
 import pathlib
-import traceback
 import typing
 
 import pandas as pd
 import requests
-from google.api_core.exceptions import BadRequest, NotFound
+from google.api_core.exceptions import NotFound
 from google.cloud import bigquery, storage
-from google.cloud.exceptions import NotFound
 
 
 def main(
@@ -42,7 +40,7 @@ def main(
     data_dtypes: typing.List[str],
     parse_dates: dict,
     rename_headers_list: dict,
-    output_headers_list: typing.List[str]
+    output_headers_list: typing.List[str],
 ) -> None:
     logging.info(f"{pipeline_name} process started")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
@@ -60,7 +58,8 @@ def main(
         data_dtypes=data_dtypes,
         parse_dates=parse_dates,
         rename_headers_list=rename_headers_list,
-        output_headers_list=output_headers_list)
+        output_headers_list=output_headers_list,
+    )
     logging.info(f"{pipeline_name} process completed")
 
 
@@ -78,12 +77,9 @@ def execute_pipeline(
     data_dtypes: typing.List[str],
     parse_dates: dict,
     rename_headers_list: dict,
-    output_headers_list: typing.List[str]
+    output_headers_list: typing.List[str],
 ) -> None:
-    download_file(
-        source_url,
-        source_file
-    )
+    download_file(source_url, source_file)
     process_source_file(
         source_file,
         target_file,
@@ -91,45 +87,45 @@ def execute_pipeline(
         data_dtypes,
         parse_dates,
         rename_headers_list,
-        output_headers_list
+        output_headers_list,
     )
     if os.path.exists(target_file):
         upload_file_to_gcs(
             file_path=target_file,
             target_gcs_bucket=target_gcs_bucket,
-            target_gcs_path=target_gcs_path
+            target_gcs_path=target_gcs_path,
         )
         table_exists = create_dest_table(
             project_id=project_id,
             dataset_id=dataset_id,
             table_id=destination_table,
             schema_filepath=schema_path,
-            bucket_name=target_gcs_bucket
+            bucket_name=target_gcs_bucket,
         )
         if table_exists:
             load_data_to_bq(
                 project_id=project_id,
                 dataset_id=dataset_id,
                 table_id=destination_table,
-                file_path=target_file
+                file_path=target_file,
             )
         else:
             error_msg = f"Error: Data was not loaded because the destination table {project_id}.{dataset_id}.{destination_table} does not exist and/or could not be created."
             raise ValueError(error_msg)
     else:
         logging.info(
-            f"Informational: The data file {target_file} was not generated because no data was available for year {year_number}.  Continuing."
+            f"Informational: The data file {target_file} was not generated because no data file was available.  Continuing."
         )
 
 
 def process_source_file(
-        source_file: str,
-        target_file: str,
-        chunksize: str,
-        data_dtypes: dict,
-        parse_dates_list: typing.List[str],
-        rename_headers_list: dict,
-        output_headers_list: typing.List[str]
+    source_file: str,
+    target_file: str,
+    chunksize: str,
+    data_dtypes: dict,
+    parse_dates_list: typing.List[str],
+    rename_headers_list: dict,
+    output_headers_list: typing.List[str],
 ) -> None:
     logging.info(f"Processing file {source_file}")
     with pd.read_csv(
@@ -149,21 +145,18 @@ def process_source_file(
             df = pd.DataFrame()
             df = pd.concat([df, chunk])
             process_chunk(
-                            df=df,
-                            target_file_batch=target_file_batch,
-                            target_file=target_file,
-                            skip_header=(not chunk_number == 0),
-                            rename_headers_list=rename_headers_list,
-                            parse_dates_list=parse_dates_list,
-                            reorder_headers_list=output_headers_list
-                        )
+                df=df,
+                target_file_batch=target_file_batch,
+                target_file=target_file,
+                skip_header=(not chunk_number == 0),
+                rename_headers_list=rename_headers_list,
+                parse_dates_list=parse_dates_list,
+                reorder_headers_list=output_headers_list,
+            )
 
 
 def load_data_to_bq(
-    project_id: str,
-    dataset_id: str,
-    table_id: str,
-    file_path: str
+    project_id: str, dataset_id: str, table_id: str, file_path: str
 ) -> None:
     logging.info(
         f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} started"
@@ -214,7 +207,9 @@ def create_dest_table(
             else:
                 file_name = os.path.split(schema_filepath)[1]
                 file_path = os.path.split(schema_filepath)[0]
-                logging.info(f"Error: Unable to create table {table_ref} because schema file {file_name} does not exist in location {file_path} in bucket {bucket_name}")
+                logging.info(
+                    f"Error: Unable to create table {table_ref} because schema file {file_name} does not exist in location {file_path} in bucket {bucket_name}"
+                )
                 table_exists = False
         except Exception as e:
             logging.info(f"Unable to create table. {e}")
@@ -222,10 +217,7 @@ def create_dest_table(
     return table_exists
 
 
-def check_gcs_file_exists(
-        file_path: str,
-        bucket_name: str
-) -> bool:
+def check_gcs_file_exists(file_path: str, bucket_name: str) -> bool:
     storage_client = storage.Client()
     bucket = storage_client.bucket(bucket_name)
     exists = storage.Blob(bucket=bucket, name=file_path).exists(storage_client)
@@ -283,13 +275,13 @@ def append_batch_file(
 
 
 def process_chunk(
-        df: pd.DataFrame,
-        target_file_batch: str,
-        target_file: str,
-        skip_header: bool,
-        rename_headers_list: dict,
-        parse_dates_list: typing.List[str],
-        reorder_headers_list: typing.List[str]
+    df: pd.DataFrame,
+    target_file_batch: str,
+    target_file: str,
+    skip_header: bool,
+    rename_headers_list: dict,
+    parse_dates_list: typing.List[str],
+    reorder_headers_list: typing.List[str],
 ) -> None:
     df = resolve_date_format(df, parse_dates_list)
     df = rename_headers(df, rename_headers_list)
@@ -307,11 +299,13 @@ def remove_null_rows(df: pd.DataFrame) -> pd.DataFrame:
 
 def reorder_headers(df: pd.DataFrame, headers: typing.List[str]) -> pd.DataFrame:
     logging.info("Reordering headers..")
-    df = df[ headers ]
+    df = df[headers]
     return df
 
 
-def resolve_date_format(df: pd.DataFrame, parse_dates: typing.List[str]) -> pd.DataFrame:
+def resolve_date_format(
+    df: pd.DataFrame, parse_dates: typing.List[str]
+) -> pd.DataFrame:
     for dt_fld in parse_dates:
         logging.info(f"Resolving date format in column {dt_fld}")
         df[dt_fld] = df[dt_fld].apply(convert_dt_format)
@@ -331,9 +325,7 @@ def convert_dt_format(dt_str: str) -> str:
         return str(dt_str)
 
 
-def rename_headers(df: pd.DataFrame,
-                   header_names: dict
-) -> pd.DataFrame:
+def rename_headers(df: pd.DataFrame, header_names: dict) -> pd.DataFrame:
     logging.info("Renaming Headers")
     df = df.rename(columns=header_names)
     return df
@@ -387,5 +379,5 @@ if __name__ == "__main__":
         data_dtypes=json.loads(os.environ["DATA_DTYPES"]),
         parse_dates=json.loads(os.environ["PARSE_DATES"]),
         rename_headers_list=json.loads(os.environ["RENAME_HEADERS"]),
-        output_headers_list=json.loads(os.environ["OUTPUT_CSV_HEADERS"])
+        output_headers_list=json.loads(os.environ["OUTPUT_CSV_HEADERS"]),
     )

@@ -15,19 +15,20 @@
  */
 
 
-resource "google_bigquery_table" "new_york_tree_census_1995" {
-  project    = var.project_id
-  dataset_id = "new_york"
-  table_id   = "tree_census_1995"
+resource "google_bigquery_table" "new_york_nypd_mv_collisions" {
+  project     = var.project_id
+  dataset_id  = "new_york"
+  table_id    = "nypd_mv_collisions"
+  description = "NYPD Motor Vehicle Collisions"
   depends_on = [
     google_bigquery_dataset.new_york
   ]
 }
 
-output "bigquery_table-new_york_tree_census_1995-table_id" {
-  value = google_bigquery_table.new_york_tree_census_1995.table_id
+output "bigquery_table-new_york_nypd_mv_collisions-table_id" {
+  value = google_bigquery_table.new_york_nypd_mv_collisions.table_id
 }
 
-output "bigquery_table-new_york_tree_census_1995-id" {
-  value = google_bigquery_table.new_york_tree_census_1995.id
+output "bigquery_table-new_york_nypd_mv_collisions-id" {
+  value = google_bigquery_table.new_york_nypd_mv_collisions.id
 }
