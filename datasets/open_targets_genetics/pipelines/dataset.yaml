@@ -26,5 +26,5 @@ resources:
     location: US
 
   - type: bigquery_dataset
-    dataset_id: genetics
+    dataset_id: open_targets_genetics
     description: Open-Targets-Genetics dataset

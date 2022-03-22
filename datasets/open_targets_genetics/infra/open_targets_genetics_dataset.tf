@@ -31,12 +31,12 @@ output "storage_bucket-open-targets-genetics-name" {
   value = google_storage_bucket.open-targets-genetics.name
 }
 
-resource "google_bigquery_dataset" "genetics" {
-  dataset_id  = "genetics"
+resource "google_bigquery_dataset" "open_targets_genetics" {
+  dataset_id  = "open_targets_genetics"
   project     = var.project_id
   description = "Open-Targets-Genetics dataset"
 }
 
-output "bigquery_dataset-genetics-dataset_id" {
-  value = google_bigquery_dataset.genetics.dataset_id
+output "bigquery_dataset-open_targets_genetics-dataset_id" {
+  value = google_bigquery_dataset.open_targets_genetics.dataset_id
 }
