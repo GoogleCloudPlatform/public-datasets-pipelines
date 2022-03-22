@@ -22,9 +22,9 @@ import typing
 
 import pandas as pd
 import requests
+from google.api_core.exceptions import BadRequest, NotFound
 from google.cloud import bigquery, storage
 from google.cloud.exceptions import NotFound
-from google.api_core.exceptions import BadRequest, NotFound
 
 
 def main(
