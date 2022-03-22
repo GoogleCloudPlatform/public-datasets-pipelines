@@ -14,7 +14,7 @@
 
 
 from airflow import DAG
-from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.operators import kubernetes_engine
 from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
@@ -32,13 +32,32 @@ with DAG(
     catchup=False,
     default_view="graph",
 ) as dag:
+    create_cluster = kubernetes_engine.GKECreateClusterOperator(
+        task_id="create_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        body={
+            "name": "new-york--tree-census-1995",
+            "initial_node_count": 1,
+            "network": "{{ var.value.vpc_network }}",
+            "node_config": {
+                "machine_type": "e2-small",
+                "oauth_scopes": [
+                    "https://www.googleapis.com/auth/devstorage.read_write",
+                    "https://www.googleapis.com/auth/cloud-platform",
+                ],
+            },
+        },
+    )
 
     # Run CSV transform within kubernetes pod
-    transform_csv = kubernetes_pod.KubernetesPodOperator(
+    transform_csv = kubernetes_engine.GKEStartPodOperator(
         task_id="transform_csv",
         name="tree_census_1995",
-        namespace="composer",
-        service_account_name="datasets",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="new-york--tree-census-1995",
+        namespace="default",
         image_pull_policy="Always",
         image="{{ var.json.new_york.container_registry.run_csv_transform_kub_tree_census_1995 }}",
         env_vars={
@@ -92,5 +111,11 @@ with DAG(
             {"name": "location", "type": "STRING", "mode": "NULLABLE"},
         ],
     )
+    delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
+        task_id="delete_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        name="new-york--tree-census-1995",
+    )
 
-    transform_csv >> load_to_bq
+    create_cluster >> transform_csv >> load_to_bq >> delete_cluster

@@ -255,10 +255,7 @@ def save_to_new_file(df: pd.DataFrame, file_path: str) -> None:
 
 
 def append_batch_file(
-    batch_file_path: str,
-    target_file_path: str,
-    skip_header: bool,
-    truncate_file: bool
+    batch_file_path: str, target_file_path: str, skip_header: bool, truncate_file: bool
 ) -> None:
     with open(batch_file_path, "r") as data_file:
         if truncate_file:
@@ -270,7 +267,9 @@ def append_batch_file(
                 )
                 next(data_file)
             else:
-                logging.info(f"Appending batch file {batch_file_path} to {target_file_path}")
+                logging.info(
+                    f"Appending batch file {batch_file_path} to {target_file_path}"
+                )
             target_file.write(data_file.read())
             data_file.close()
             target_file.close()

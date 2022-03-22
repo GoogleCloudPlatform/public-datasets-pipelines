@@ -16,88 +16,118 @@ import datetime
 import logging
 import os
 import pathlib
+import typing
 
 import numpy as np
 import pandas as pd
 import requests
-from google.cloud import storage
+from google.cloud import storage, bigquery
 
 
 def main(
+    pipeline_name: str,
     source_url: str,
     source_file: pathlib.Path,
     target_file: pathlib.Path,
     chunksize: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
+    schema_path: str,
+    data_dtypes: typing.List[str],
+    parse_dates: dict,
+    rename_headers_list: dict,
+    output_headers_list: typing.List[str]
 ) -> None:
-
-    logging.info("New York 311 Service Requests process started")
-
+    logging.info(f"{pipeline_name} process started")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
-    download_file(source_url, source_file)
+    execute_pipeline(
+        source_url=source_url,
+        source_file=source_file,
+        target_file=target_file,
+        chunksize=chunksize,
+        target_gcs_bucket=target_gcs_bucket,
+        target_gcs_path=target_gcs_path,
+        schema_path=schema_path,
+        data_dtypes=data_dtypes,
+        parse_dates=parse_dates,
+        rename_headers_list=rename_headers_list,
+        output_headers=output_headers_list)
+    logging.info(f"{pipeline_name} process completed")
 
-    chunksz = int(chunksize)
 
-    dtypes = {
-        "Unique Key": np.int_,
-        "Created Date": np.str_,
-        "Closed Date": np.str_,
-        "Agency": np.str_,
-        "Agency Name": np.str_,
-        "Complaint Type": np.str_,
-        "Descriptor": np.str_,
-        "Location Type": np.str_,
-        "Incident Zip": np.str_,
-        "Incident Address": np.str_,
-        "Street Name": np.str_,
-        "Cross Street 1": np.str_,
-        "Cross Street 2": np.str_,
-        "Intersection Street 1": np.str_,
-        "Intersection Street 2": np.str_,
-        "Address Type": np.str_,
-        "City": np.str_,
-        "Landmark": np.str_,
-        "Facility Type": np.str_,
-        "Status": np.str_,
-        "Due Date": np.str_,
-        "Resolution Description": np.str_,
-        "Resolution Action Updated Date": np.str_,
-        "Community Board": np.str_,
-        "BBL": np.str_,
-        "Borough": np.str_,
-        "X Coordinate (State Plane)": np.str_,
-        "Y Coordinate (State Plane)": np.str_,
-        "Open Data Channel Type": np.str_,
-        "Park Facility Name": np.str_,
-        "Park Borough": np.str_,
-        "Vehicle Type": np.str_,
-        "Taxi Company Borough": np.str_,
-        "Taxi Pick Up Location": np.str_,
-        "Bridge Highway Name": np.str_,
-        "Bridge Highway Direction": np.str_,
-        "Road Ramp": np.str_,
-        "Bridge Highway Segment": np.str_,
-        "Latitude": np.float64,
-        "Longitude": np.float64,
-        "Location": np.str_,
-    }
-    parse_dates = [
-        "Created Date",
-        "Closed Date",
-        "Due Date",
-        "Resolution Action Updated Date",
-    ]
+def execute_pipeline(
+    source_url: str,
+    source_file: pathlib.Path,
+    target_file: pathlib.Path,
+    chunksize: str,
+    target_gcs_bucket: str,
+    target_gcs_path: str,
+    project_id: str,
+    dataset_id: str,
+    destination_table: str,
+    schema_path: str,
+    data_dtypes: typing.List[str],
+    parse_dates: dict,
+    rename_headers_list: dict,
+    output_headers_list: typing.List[str]
+) -> None:
+    download_file(
+        source_url,
+        source_file
+    )
+    process_source_file(
+        source_file,
+        target_file,
+        chunksize,
+        data_dtypes,
+        parse_dates,
+        rename_headers_list,
+        output_headers_list
+    )
+    if os.path.exists(target_file):
+        upload_file_to_gcs(
+            target_file=target_file,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=target_gcs_path
+        )
+        create_dest_table(
+            project_id=project_id,
+            dataset_id=dataset_id,
+            destination_table=destination_table,
+            schema_path=schema_path,
+            target_gcs_bucket=target_gcs_bucket
+        )
+        load_data_to_bq(
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_id=destination_table,
+            target_file=target_file
+        )
+    else:
+        logging.info(
+            f"Informational: The data file {target_file} was not generated because no data was available for year {year_number}.  Continuing."
+        )
 
-    logging.info(f"Opening batch file {source_file}")
+
+
+def process_source_file(
+        source_file: str,
+        target_file: str,
+        chunksize: str,
+        data_dtypes: dict,
+        parse_dates_list: typing.list[str],
+        rename_headers_list: dict,
+        output_headers_list: typing.list[str]
+) -> None:
+    logging.info(f"Processing file {source_file}")
     with pd.read_csv(
         source_file,
         engine="python",
         encoding="utf-8",
         quotechar='"',
-        chunksize=chunksz,
-        dtype=dtypes,
-        parse_dates=parse_dates,
+        chunksize=int(chunksize),
+        dtype=data_dtypes,
+        parse_dates=parse_dates_list,
     ) as reader:
         for chunk_number, chunk in enumerate(reader):
             logging.info(f"Processing batch {chunk_number}")
@@ -106,11 +136,93 @@ def main(
             )
             df = pd.DataFrame()
             df = pd.concat([df, chunk])
-            process_chunk(df, target_file_batch, target_file, (not chunk_number == 0))
+            process_chunk(
+                            df=df,
+                            target_file_batch=target_file_batch,
+                            target_file=target_file,
+                            skip_header=(not chunk_number == 0),
+                            rename_headers_list=rename_headers_list,
+                            parse_dates_list=parse_dates_list,
+                            reorder_headers_list=output_headers_list
+                        )
 
-    upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
-    logging.info("New York - 311 Service Requests process completed")
+def load_data_to_bq(
+    project_id: str, dataset_id: str, table_id: str, file_path: str
+) -> None:
+    logging.info(
+        f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} started"
+    )
+    client = bigquery.Client(project=project_id)
+    table_ref = client.dataset(dataset_id).table(table_id)
+    job_config = bigquery.LoadJobConfig()
+    job_config.source_format = bigquery.SourceFormat.CSV
+    job_config.field_delimiter = "|"
+    job_config.skip_leading_rows = 1  # ignore the header
+    job_config.autodetect = False
+    with open(file_path, "rb") as source_file:
+        job = client.load_table_from_file(source_file, table_ref, job_config=job_config)
+    job.result()
+    logging.info(
+        f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} completed"
+    )
+
+
+def create_dest_table(
+    project_id: str,
+    dataset_id: str,
+    table_id: str,
+    schema_filepath: list,
+    bucket_name: str,
+) -> bool:
+    table_ref = f"{project_id}.{dataset_id}.{table_id}"
+    logging.info(f"Attempting to create table {table_ref} if it doesn't already exist")
+    client = bigquery.Client()
+    success = False
+    try:
+        table_exists_id = client.get_table(table_ref).table_id
+        logging.info(f"Table {table_exists_id} currently exists.")
+        success = True
+    except NotFound:
+        logging.info(
+            (
+                f"Table {table_ref} currently does not exist.  Attempting to create table."
+            )
+        )
+        schema = create_table_schema([], bucket_name, schema_filepath)
+        table = bigquery.Table(table_ref, schema=schema)
+        client.create_table(table)
+        print(f"Table {table_ref} was created".format(table_id))
+        success = True
+    return success
+
+
+def create_table_schema(
+    schema_structure: list, bucket_name: str = "", schema_filepath: str = ""
+) -> list:
+    logging.info(f"Defining table schema... {bucket_name} ... {schema_filepath}")
+    schema = []
+    if not (schema_filepath):
+        schema_struct = schema_structure
+    else:
+        storage_client = storage.Client()
+        bucket = storage_client.get_bucket(bucket_name)
+        blob = bucket.blob(schema_filepath)
+        schema_struct = json.loads(blob.download_as_string(client=None))
+    for schema_field in schema_struct:
+        fld_name = schema_field["name"]
+        fld_type = schema_field["type"]
+        try:
+            fld_descr = schema_field["description"]
+        except KeyError:
+            fld_descr = ""
+        fld_mode = schema_field["mode"]
+        schema.append(
+            bigquery.SchemaField(
+                name=fld_name, field_type=fld_type, mode=fld_mode, description=fld_descr
+            )
+        )
+    return schema
 
 
 def append_batch_file(
@@ -136,83 +248,43 @@ def append_batch_file(
 
 
 def process_chunk(
-    df: pd.DataFrame, target_file_batch: str, target_file: str, skip_header: bool
+        df: pd.DataFrame,
+        target_file_batch: str,
+        target_file: str,
+        skip_header: bool,
+        rename_headers_list: dict,
+        parse_dates_list: typing.list[str],
+        reorder_headers_list: typing.list[str]
 ) -> None:
-    df = rename_headers(df)
-    logging.info("Remove rows with empty keys")
-    df = df[df["unique_key"] != ""]
-    df = resolve_date_format(df)
-    df = reorder_headers(df)
+    df = rename_headers(df, rename_headers_list)
+    df = remove_null_rows(df)
+    df = resolve_date_format(df, parse_dates_list)
+    df = reorder_headers(df, reorder_headers_list)
     save_to_new_file(df, file_path=str(target_file_batch))
     append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
 
 
-def reorder_headers(df: pd.DataFrame) -> pd.DataFrame:
-    logging.info("Reordering headers..")
-    df = df[
-        [
-            "unique_key",
-            "created_date",
-            "closed_date",
-            "agency",
-            "agency_name",
-            "complaint_type",
-            "descriptor",
-            "location_type",
-            "incident_zip",
-            "incident_address",
-            "street_name",
-            "cross_street_1",
-            "cross_street_2",
-            "intersection_street_1",
-            "intersection_street_2",
-            "address_type",
-            "city",
-            "landmark",
-            "facility_type",
-            "status",
-            "due_date",
-            "resolution_description",
-            "resolution_action_updated_date",
-            "community_board",
-            "borough",
-            "x_coordinate",
-            "y_coordinate",
-            "park_facility_name",
-            "park_borough",
-            "bbl",
-            "open_data_channel_type",
-            "vehicle_type",
-            "taxi_company_borough",
-            "taxi_pickup_location",
-            "bridge_highway_name",
-            "bridge_highway_direction",
-            "road_ramp",
-            "bridge_highway_segment",
-            "latitude",
-            "longitude",
-            "location",
-        ]
-    ]
+def remove_null_rows(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Removing rows with empty keys")
+    df = df[df["unique_key"] != ""]
     return df
 
 
-def resolve_date_format(df: pd.DataFrame) -> pd.DataFrame:
+def reorder_headers(df: pd.DataFrame, headers: typing.list[str]) -> pd.DataFrame:
+    logging.info("Reordering headers..")
+    df = df[ headers ]
+    return df
+
+
+def resolve_date_format(df: pd.DataFrame, parse_dates: typing.list[str]) -> pd.DataFrame:
     logging.info("Resolve Date Format")
-    date_fields = [
-        "created_date",
-        "closed_date",
-        "due_date",
-        "resolution_action_updated_date",
-    ]
-
-    for dt_fld in date_fields:
+    for dt_fld in parse_dates:
         df[dt_fld] = df[dt_fld].apply(convert_dt_format)
-
     return df
 
 
 def convert_dt_format(dt_str: str) -> str:
+    logging.info(f"Converting column {dt_str} format")
     if not dt_str or str(dt_str).lower() == "nan" or str(dt_str).lower() == "nat":
         return ""
     elif (
@@ -225,60 +297,17 @@ def convert_dt_format(dt_str: str) -> str:
         return str(dt_str)
 
 
-def rename_headers(df: pd.DataFrame) -> pd.DataFrame:
+def rename_headers(df: pd.DataFrame,
+                   header_names: dict
+) -> pd.DataFrame:
     logging.info("Renaming Headers")
-    header_names = {
-        "Unique Key": "unique_key",
-        "Created Date": "created_date",
-        "Closed Date": "closed_date",
-        "Agency": "agency",
-        "Agency Name": "agency_name",
-        "Complaint Type": "complaint_type",
-        "Descriptor": "descriptor",
-        "Location Type": "location_type",
-        "Incident Zip": "incident_zip",
-        "Incident Address": "incident_address",
-        "Street Name": "street_name",
-        "Cross Street 1": "cross_street_1",
-        "Cross Street 2": "cross_street_2",
-        "Intersection Street 1": "intersection_street_1",
-        "Intersection Street 2": "intersection_street_2",
-        "Address Type": "address_type",
-        "City": "city",
-        "Landmark": "landmark",
-        "Facility Type": "facility_type",
-        "Status": "status",
-        "Due Date": "due_date",
-        "Resolution Description": "resolution_description",
-        "Resolution Action Updated Date": "resolution_action_updated_date",
-        "Community Board": "community_board",
-        "Open Data Channel Type": "open_data_channel_type",
-        "Borough": "borough",
-        "X Coordinate (State Plane)": "x_coordinate",
-        "Y Coordinate (State Plane)": "y_coordinate",
-        "Park Facility Name": "park_facility_name",
-        "Park Borough": "park_borough",
-        "Vehicle Type": "vehicle_type",
-        "Taxi Company Borough": "taxi_company_borough",
-        "Taxi Pick Up Location": "taxi_pickup_location",
-        "Bridge Highway Name": "bridge_highway_name",
-        "Bridge Highway Direction": "bridge_highway_direction",
-        "Road Ramp": "road_ramp",
-        "Bridge Highway Segment": "bridge_highway_segment",
-        "Latitude": "latitude",
-        "Longitude": "longitude",
-        "Location": "location",
-        "BBL": "bbl",
-    }
-
     df = df.rename(columns=header_names)
-
     return df
 
 
-def save_to_new_file(df: pd.DataFrame, file_path: str) -> None:
+def save_to_new_file(df: pd.DataFrame, file_path: str, sep: str = "|") -> None:
     logging.info(f"Saving data to target file.. {file_path} ...")
-    df.to_csv(file_path, index=False)
+    df.to_csv(file_path, index=False, seperator=sep)
 
 
 def download_file(source_url: str, source_file: pathlib.Path) -> None:
@@ -289,22 +318,37 @@ def download_file(source_url: str, source_file: pathlib.Path) -> None:
             f.write(chunk)
 
 
-def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:
-    logging.info(f"Uploading output file to.. gs://{gcs_bucket}/{gcs_path}")
-    storage_client = storage.Client()
-    bucket = storage_client.bucket(gcs_bucket)
-    blob = bucket.blob(gcs_path)
-    blob.upload_from_filename(file_path)
+def upload_file_to_gcs(
+    file_path: pathlib.Path, target_gcs_bucket: str, target_gcs_path: str
+) -> None:
+    if os.path.exists(file_path):
+        logging.info(
+            f"Uploading output file to gs://{target_gcs_bucket}/{target_gcs_path}"
+        )
+        storage_client = storage.Client()
+        bucket = storage_client.bucket(target_gcs_bucket)
+        blob = bucket.blob(target_gcs_path)
+        blob.upload_from_filename(file_path)
+    else:
+        logging.info(
+            f"Cannot upload file to gs://{target_gcs_bucket}/{target_gcs_path} as it does not exist."
+        )
 
 
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
 
     main(
+        pipeline_name=os.environ["PIPELINE_NAME"],
         source_url=os.environ["SOURCE_URL"],
+        chunksize=os.environ["CHUNKSIZE"],
         source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
-        chunksize=os.environ["CHUNKSIZE"],
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
+        schema_path=os.environ["SCHEMA_PATH"],
+        data_dtypes=json.loads(os.environ["DATA_DTYPES"]),
+        parse_dates=json.loads(os.environ["PARSE_DATES"]),
+        rename_headers_list=json.loads(os.environ["RENAME_HEADERS"]),
+        output_headers_list=json.loads(os.environ["OUTPUT_CSV_HEADERS"])
     )
