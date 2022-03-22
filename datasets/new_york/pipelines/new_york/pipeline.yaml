@@ -66,6 +66,9 @@ dag:
           CHUNKSIZE: "{{ var.json.new_york.container_registry.311_service_requests.chunksize }}"
           SOURCE_FILE: "files/data.csv"
           TARGET_FILE: "files/data_output.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "{{ var.json.new_york.container_registry.311_service_requests.dataset_id }}"
+          TABLE_ID: "{{ var.json.new_york.container_registry.311_service_requests.table_id }}"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "{{ var.json.new_york.container_registry.311_service_requests.target_path }}"
           SCHEMA_PATH: "{{ var.json.new_york.container_registry.311_service_requests.schema_path }}"
@@ -206,7 +209,7 @@ dag:
               "bridge_highway_segment",
               "latitude",
               "longitude",
-              "location",
+              "location"
             ]
         resources:
           limit_memory: "16G"

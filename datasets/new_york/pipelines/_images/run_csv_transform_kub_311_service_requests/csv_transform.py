@@ -13,12 +13,12 @@
 # limitations under the License.
 
 import datetime
+import json
 import logging
 import os
 import pathlib
 import typing
 
-import numpy as np
 import pandas as pd
 import requests
 from google.cloud import storage, bigquery
@@ -29,6 +29,9 @@ def main(
     source_url: str,
     source_file: pathlib.Path,
     target_file: pathlib.Path,
+    project_id: str,
+    dataset_id: str,
+    table_id: str,
     chunksize: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
@@ -44,6 +47,9 @@ def main(
         source_url=source_url,
         source_file=source_file,
         target_file=target_file,
+        project_id=project_id,
+        dataset_id=dataset_id,
+        destination_table=table_id,
         chunksize=chunksize,
         target_gcs_bucket=target_gcs_bucket,
         target_gcs_path=target_gcs_path,
@@ -51,7 +57,7 @@ def main(
         data_dtypes=data_dtypes,
         parse_dates=parse_dates,
         rename_headers_list=rename_headers_list,
-        output_headers=output_headers_list)
+        output_headers_list=output_headers_list)
     logging.info(f"{pipeline_name} process completed")
 
 
@@ -59,12 +65,12 @@ def execute_pipeline(
     source_url: str,
     source_file: pathlib.Path,
     target_file: pathlib.Path,
-    chunksize: str,
-    target_gcs_bucket: str,
-    target_gcs_path: str,
     project_id: str,
     dataset_id: str,
     destination_table: str,
+    chunksize: str,
+    target_gcs_bucket: str,
+    target_gcs_path: str,
     schema_path: str,
     data_dtypes: typing.List[str],
     parse_dates: dict,
@@ -115,9 +121,9 @@ def process_source_file(
         target_file: str,
         chunksize: str,
         data_dtypes: dict,
-        parse_dates_list: typing.list[str],
+        parse_dates_list: typing.List[str],
         rename_headers_list: dict,
-        output_headers_list: typing.list[str]
+        output_headers_list: typing.List[str]
 ) -> None:
     logging.info(f"Processing file {source_file}")
     with pd.read_csv(
@@ -253,8 +259,8 @@ def process_chunk(
         target_file: str,
         skip_header: bool,
         rename_headers_list: dict,
-        parse_dates_list: typing.list[str],
-        reorder_headers_list: typing.list[str]
+        parse_dates_list: typing.List[str],
+        reorder_headers_list: typing.List[str]
 ) -> None:
     df = rename_headers(df, rename_headers_list)
     df = remove_null_rows(df)
@@ -270,13 +276,13 @@ def remove_null_rows(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def reorder_headers(df: pd.DataFrame, headers: typing.list[str]) -> pd.DataFrame:
+def reorder_headers(df: pd.DataFrame, headers: typing.List[str]) -> pd.DataFrame:
     logging.info("Reordering headers..")
     df = df[ headers ]
     return df
 
 
-def resolve_date_format(df: pd.DataFrame, parse_dates: typing.list[str]) -> pd.DataFrame:
+def resolve_date_format(df: pd.DataFrame, parse_dates: typing.List[str]) -> pd.DataFrame:
     logging.info("Resolve Date Format")
     for dt_fld in parse_dates:
         df[dt_fld] = df[dt_fld].apply(convert_dt_format)
@@ -311,7 +317,7 @@ def save_to_new_file(df: pd.DataFrame, file_path: str, sep: str = "|") -> None:
 
 
 def download_file(source_url: str, source_file: pathlib.Path) -> None:
-    logging.info(f"Downloading file {source_url}")
+    logging.info(f"Downloading file {source_url} to {source_file}")
     r = requests.get(source_url, stream=True)
     with open(source_file, "wb") as f:
         for chunk in r:
@@ -344,6 +350,9 @@ if __name__ == "__main__":
         chunksize=os.environ["CHUNKSIZE"],
         source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
+        project_id=os.environ["PROJECT_ID"],
+        dataset_id=os.environ["DATASET_ID"],
+        table_id=os.environ["TABLE_ID"],
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
         schema_path=os.environ["SCHEMA_PATH"],
