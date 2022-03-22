@@ -17,11 +17,14 @@ import json
 import logging
 import os
 import pathlib
+import traceback
 import typing
 
 import pandas as pd
 import requests
-from google.cloud import storage, bigquery
+from google.cloud import bigquery, storage
+from google.cloud.exceptions import NotFound
+from google.api_core.exceptions import BadRequest, NotFound
 
 
 def main(
@@ -92,28 +95,31 @@ def execute_pipeline(
     )
     if os.path.exists(target_file):
         upload_file_to_gcs(
-            target_file=target_file,
+            file_path=target_file,
             target_gcs_bucket=target_gcs_bucket,
             target_gcs_path=target_gcs_path
         )
-        create_dest_table(
-            project_id=project_id,
-            dataset_id=dataset_id,
-            destination_table=destination_table,
-            schema_path=schema_path,
-            target_gcs_bucket=target_gcs_bucket
-        )
-        load_data_to_bq(
+        table_exists = create_dest_table(
             project_id=project_id,
             dataset_id=dataset_id,
             table_id=destination_table,
-            target_file=target_file
+            schema_filepath=schema_path,
+            bucket_name=target_gcs_bucket
         )
+        if table_exists:
+            load_data_to_bq(
+                project_id=project_id,
+                dataset_id=dataset_id,
+                table_id=destination_table,
+                file_path=target_file
+            )
+        else:
+            error_msg = f"Error: Data was not loaded because the destination table {project_id}.{dataset_id}.{destination_table} does not exist and/or could not be created."
+            raise ValueError(error_msg)
     else:
         logging.info(
             f"Informational: The data file {target_file} was not generated because no data was available for year {year_number}.  Continuing."
         )
-
 
 
 def process_source_file(
@@ -154,7 +160,10 @@ def process_source_file(
 
 
 def load_data_to_bq(
-    project_id: str, dataset_id: str, table_id: str, file_path: str
+    project_id: str,
+    dataset_id: str,
+    table_id: str,
+    file_path: str
 ) -> None:
     logging.info(
         f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} started"
@@ -184,23 +193,43 @@ def create_dest_table(
     table_ref = f"{project_id}.{dataset_id}.{table_id}"
     logging.info(f"Attempting to create table {table_ref} if it doesn't already exist")
     client = bigquery.Client()
-    success = False
+    table_exists = False
     try:
         table_exists_id = client.get_table(table_ref).table_id
         logging.info(f"Table {table_exists_id} currently exists.")
-        success = True
+        table_exists = True
     except NotFound:
         logging.info(
             (
                 f"Table {table_ref} currently does not exist.  Attempting to create table."
             )
         )
-        schema = create_table_schema([], bucket_name, schema_filepath)
-        table = bigquery.Table(table_ref, schema=schema)
-        client.create_table(table)
-        print(f"Table {table_ref} was created".format(table_id))
-        success = True
-    return success
+        try:
+            if check_gcs_file_exists(schema_filepath, bucket_name):
+                schema = create_table_schema([], bucket_name, schema_filepath)
+                table = bigquery.Table(table_ref, schema=schema)
+                client.create_table(table)
+                print(f"Table {table_ref} was created".format(table_id))
+                table_exists = True
+            else:
+                file_name = os.path.split(schema_filepath)[1]
+                file_path = os.path.split(schema_filepath)[0]
+                logging.info(f"Error: Unable to create table {table_ref} because schema file {file_name} does not exist in location {file_path} in bucket {bucket_name}")
+                table_exists = False
+        except Exception as e:
+            logging.info(f"Unable to create table. {e}")
+            table_exists = False
+    return table_exists
+
+
+def check_gcs_file_exists(
+        file_path: str,
+        bucket_name: str
+) -> bool:
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(bucket_name)
+    exists = storage.Blob(bucket=bucket, name=file_path).exists(storage_client)
+    return exists
 
 
 def create_table_schema(
@@ -262,9 +291,9 @@ def process_chunk(
         parse_dates_list: typing.List[str],
         reorder_headers_list: typing.List[str]
 ) -> None:
+    df = resolve_date_format(df, parse_dates_list)
     df = rename_headers(df, rename_headers_list)
     df = remove_null_rows(df)
-    df = resolve_date_format(df, parse_dates_list)
     df = reorder_headers(df, reorder_headers_list)
     save_to_new_file(df, file_path=str(target_file_batch))
     append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
@@ -283,14 +312,13 @@ def reorder_headers(df: pd.DataFrame, headers: typing.List[str]) -> pd.DataFrame
 
 
 def resolve_date_format(df: pd.DataFrame, parse_dates: typing.List[str]) -> pd.DataFrame:
-    logging.info("Resolve Date Format")
     for dt_fld in parse_dates:
+        logging.info(f"Resolving date format in column {dt_fld}")
         df[dt_fld] = df[dt_fld].apply(convert_dt_format)
     return df
 
 
 def convert_dt_format(dt_str: str) -> str:
-    logging.info(f"Converting column {dt_str} format")
     if not dt_str or str(dt_str).lower() == "nan" or str(dt_str).lower() == "nat":
         return ""
     elif (
@@ -313,7 +341,7 @@ def rename_headers(df: pd.DataFrame,
 
 def save_to_new_file(df: pd.DataFrame, file_path: str, sep: str = "|") -> None:
     logging.info(f"Saving data to target file.. {file_path} ...")
-    df.to_csv(file_path, index=False, seperator=sep)
+    df.to_csv(file_path, index=False, sep=sep)
 
 
 def download_file(source_url: str, source_file: pathlib.Path) -> None:
