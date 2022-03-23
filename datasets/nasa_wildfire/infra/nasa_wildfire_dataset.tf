@@ -24,19 +24,3 @@ resource "google_bigquery_dataset" "nasa_wildfire" {
 output "bigquery_dataset-nasa_wildfire-dataset_id" {
   value = google_bigquery_dataset.nasa_wildfire.dataset_id
 }
-
-resource "google_storage_bucket" "nasa-wildfire" {
-  name                        = "${var.bucket_name_prefix}-nasa-wildfire"
-  force_destroy               = true
-  location                    = "US"
-  uniform_bucket_level_access = true
-  lifecycle {
-    ignore_changes = [
-      logging,
-    ]
-  }
-}
-
-output "storage_bucket-nasa-wildfire-name" {
-  value = google_storage_bucket.nasa-wildfire.name
-}

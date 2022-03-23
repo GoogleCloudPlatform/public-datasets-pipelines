@@ -23,7 +23,3 @@ resources:
   - type: bigquery_dataset
     dataset_id: nasa_wildfire
     description: Past Week dataset
-  - type: storage_bucket
-    name: nasa-wildfire
-    uniform_bucket_level_access: True
-    location: US
