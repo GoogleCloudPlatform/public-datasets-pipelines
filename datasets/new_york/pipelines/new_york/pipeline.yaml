@@ -241,7 +241,36 @@ dag:
           SCHEMA_PATH: "{{ var.json.new_york.container_registry.citibike_stations.schema_path }}"
           DATA_DTYPES: >-
             {
-              "Unique Key": "int",
+              "rental_uris": "str",
+              "lat": "float64",
+              "eightd_station_services": "str",
+              "legacy_id_x": "int64",
+              "short_name": "str",
+              "external_id": "str",
+              "station_id": "int64",
+              "rental_methods": "str",
+              "station_type": "str",
+              "short_name": "str",
+              "eightd_has_key_dispenser": "bool",
+              "electric_bike_surcharge_waiver": "bool",
+              "lon": "float64",
+              "has_kiosk": "bool",
+              "capacity": "int64",
+              "region_id": "int64",
+              "is_installed": "bool",
+              "num_docks_available": "int64",
+              "num_docks_disabled": "int64",
+              "num_bikes_disabled": "int64",
+              "num_bikes_available": "int64",
+              "station_status": "str",
+              "last_reported": "int64",
+              "eightd_has_available_keys": "bool",
+              "num_ebikes_available": "int64",
+              "is_returning": "int64",
+              "is_renting": "int64",
+              "legacy_id_y": "int64",
+              "valet": "int64",
+              "eightd_active_station_services": "str"
             }
           RENAME_HEADERS_LIST: >-
             {
@@ -268,6 +297,39 @@ dag:
           NORMALIZE_DATA_LIST: >-
             [
               "rental_methods"
+            ]
+          INPUT_CSV_HEADERS: >-
+            [
+              "rental_uris",
+              "lat",
+              "eightd_station_services",
+              "legacy_id_x",
+              "short_name",
+              "external_id",
+              "station_id",
+              "rental_methods",
+              "station_type",
+              "short_name",
+              "eightd_has_key_dispenser",
+              "electric_bike_surcharge_waiver",
+              "lon",
+              "has_kiosk",
+              "capacity",
+              "region_id",
+              "is_installed",
+              "num_docks_available",
+              "num_docks_disabled",
+              "num_bikes_disabled",
+              "num_bikes_available",
+              "station_status",
+              "last_reported",
+              "eightd_has_available_keys",
+              "num_ebikes_available",
+              "is_returning",
+              "is_renting",
+              "legacy_id_y",
+              "valet",
+              "eightd_active_station_services"
             ]
           OUTPUT_CSV_HEADERS: >-
             [
@@ -457,5 +519,5 @@ dag:
         name: new-york
 
   graph_paths:
-    - "create_cluster >> transform_csv_311_service_requests >> delete_cluster"
-  #  - "create_cluster >> [transform_csv_nypd_mv_collisions, transform_csv_ny_citibike_stations, transform_csv_ny_tree_census_1995] >> transform_csv_311_service_requests] >> delete_cluster"
+    - "create_cluster >> [transform_csv_ny_citibike_stations] >> delete_cluster"
+    #  - "create_cluster >> [transform_csv_nypd_mv_collisions, transform_csv_ny_citibike_stations, transform_csv_ny_tree_census_1995] >> transform_csv_311_service_requests >> delete_cluster"

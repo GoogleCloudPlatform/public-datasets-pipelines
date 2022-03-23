@@ -24,6 +24,7 @@ import requests
 from google.api_core.exceptions import NotFound
 from google.cloud import bigquery, storage
 
+
 def main(
     pipeline_name: str,
     source_url_stations_json: str,
@@ -43,7 +44,7 @@ def main(
     datetime_fieldlist: typing.List[str],
     resolve_datatypes_list: dict,
     normalize_data_list: typing.List[str],
-    boolean_datapoints_list: typing.List[str]
+    boolean_datapoints_list: typing.List[str],
 ) -> None:
     logging.info(f"{pipeline_name} process started")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
@@ -65,7 +66,7 @@ def main(
         datetime_fieldlist=datetime_fieldlist,
         resolve_datatypes_list=resolve_datatypes_list,
         normalize_data_list=normalize_data_list,
-        boolean_datapoints_list=boolean_datapoints_list
+        boolean_datapoints_list=boolean_datapoints_list,
     )
     logging.info(f"{pipeline_name} process completed")
 
@@ -88,12 +89,12 @@ def execute_pipeline(
     datetime_fieldlist: typing.List[str],
     resolve_datatypes_list: dict,
     normalize_data_list: typing.List[str],
-    boolean_datapoints_list: typing.List[str]
+    boolean_datapoints_list: typing.List[str],
 ) -> None:
     download_and_merge_source_files(
         source_url_stations_json=source_url_stations_json,
         source_url_status_json=source_url_status_json,
-        source_file=source_file
+        source_file=source_file,
     )
     process_source_file(
         source_file=source_file,
@@ -105,8 +106,7 @@ def execute_pipeline(
         datetime_fieldlist=datetime_fieldlist,
         resolve_datatypes_list=resolve_datatypes_list,
         normalize_data_list=normalize_data_list,
-        boolean_datapoints_list=boolean_datapoints_list
-
+        boolean_datapoints_list=boolean_datapoints_list,
     )
     if os.path.exists(target_file):
         upload_file_to_gcs(
@@ -244,7 +244,7 @@ def process_source_file(
     datetime_fieldlist: typing.List[str],
     resolve_datatypes_list: dict,
     normalize_data_list: typing.List[str],
-    boolean_datapoints_list: typing.List[str]
+    boolean_datapoints_list: typing.List[str],
 ) -> None:
     logging.info(f"Processing source file {source_file}")
     with pd.read_csv(
@@ -253,8 +253,8 @@ def process_source_file(
         encoding="utf-8",
         quotechar='"',
         chunksize=int(chunksize),
-        sep=",",
-        dtype=data_dtypes
+        sep="|",
+        dtype=data_dtypes,
     ) as reader:
         for chunk_number, chunk in enumerate(reader):
             target_file_batch = str(target_file).replace(
@@ -272,7 +272,7 @@ def process_source_file(
                 datetime_fieldlist=datetime_fieldlist,
                 resolve_datatypes_list=resolve_datatypes_list,
                 normalize_data_list=normalize_data_list,
-                boolean_datapoints_list=boolean_datapoints_list
+                boolean_datapoints_list=boolean_datapoints_list,
             )
 
 
@@ -320,9 +320,9 @@ def download_file_json(
     df.to_csv(source_file_csv, index=False)
 
 
-def save_to_new_file(df, file_path) -> None:
-    logging.info(f"Saving to output file.. {file_path}")
-    df.to_csv(file_path, index=False)
+def save_to_new_file(df: pd.DataFrame, file_path: str, sep: str = "|") -> None:
+    logging.info(f"Saving data to target file.. {file_path} ...")
+    df.to_csv(file_path, index=False, sep=sep)
 
 
 def process_chunk(
@@ -335,7 +335,7 @@ def process_chunk(
     datetime_fieldlist: typing.List[str],
     resolve_datatypes_list: dict,
     normalize_data_list: typing.List[str],
-    boolean_datapoints_list: typing.List[str]
+    boolean_datapoints_list: typing.List[str],
 ) -> None:
     logging.info(f"Processing batch file {target_file_batch}")
     df = convert_datetime_from_int(df, datetime_fieldlist)
@@ -343,23 +343,22 @@ def process_chunk(
         df,
         resolve_datatypes_list=resolve_datatypes_list,
         normalize_data_list=normalize_data_list,
-        boolean_datapoints_list=boolean_datapoints_list
-)
+        boolean_datapoints_list=boolean_datapoints_list,
+    )
     df = rename_headers(df, rename_headers_list)
     df = reorder_headers(df, output_headers_list)
     save_to_new_file(df, file_path=str(target_file_batch))
     append_batch_file(
-        target_file_batch=target_file_batch,
-        target_file=target_file,
+        batch_file_path=target_file_batch,
+        target_file_path=target_file,
         skip_header=skip_header,
-        truncate_file=not (skip_header)
+        truncate_file=not (skip_header),
     )
     logging.info(f"Processing batch file {target_file_batch} completed")
 
 
 def convert_datetime_from_int(
-    df: pd.DataFrame,
-    datetime_columns_list: typing.List[str]
+    df: pd.DataFrame, datetime_columns_list: typing.List[str]
 ) -> pd.DataFrame:
     for column in datetime_columns_list:
         logging.info(f"Converting Datetime column {column}")
@@ -375,7 +374,7 @@ def clean_data_points(
     df: pd.DataFrame,
     resolve_datatypes_list: dict,
     normalize_data_list: typing.List[str],
-    boolean_datapoints_list: typing.List[str]
+    boolean_datapoints_list: typing.List[str],
 ) -> pd.DataFrame:
     df = resolve_datatypes(df, resolve_datatypes_list)
     df = normalize_data(df, normalize_data_list)
@@ -383,19 +382,15 @@ def clean_data_points(
     return df
 
 
-def resolve_datatypes(
-    df: pd.DataFrame,
-    resolve_datatypes_list: dict
-) -> pd.DataFrame:
+def resolve_datatypes(df: pd.DataFrame, resolve_datatypes_list: dict) -> pd.DataFrame:
     for column, datatype in resolve_datatypes_list.items():
-        logging.info("Resolving datatype for column {column} to {datatype}")
+        logging.info(f"Resolving datatype for column {column} to {datatype}")
         df[column] = df[column].astype(datatype)
     return df
 
 
 def normalize_data(
-    df: pd.DataFrame,
-    normalize_data_list: typing.List[str]
+    df: pd.DataFrame, normalize_data_list: typing.List[str]
 ) -> pd.DataFrame:
     for column in normalize_data_list:
         logging.info(f"Normalizing data in column {column}")
@@ -409,8 +404,7 @@ def normalize_data(
 
 
 def resolve_boolean_datapoints(
-    df: pd.DataFrame,
-    boolean_datapoints_list: typing.List[str]
+    df: pd.DataFrame, boolean_datapoints_list: typing.List[str]
 ) -> pd.DataFrame:
     for column in boolean_datapoints_list:
         logging.info(f"Resolving boolean datapoints in column {column}")
@@ -418,17 +412,13 @@ def resolve_boolean_datapoints(
     return df
 
 
-def rename_headers(
-    df: pd.DataFrame,
-    rename_headers_list: dict
-) -> pd.DataFrame:
+def rename_headers(df: pd.DataFrame, rename_headers_list: dict) -> pd.DataFrame:
     df.rename(columns=rename_headers_list, inplace=True)
     return df
 
 
 def reorder_headers(
-    df: pd.DataFrame,
-    output_headers_list: typing.List[str]
+    df: pd.DataFrame, output_headers_list: typing.List[str]
 ) -> pd.DataFrame:
     logging.info("Re-ordering Headers")
     df = df[output_headers_list]
@@ -448,7 +438,9 @@ def append_batch_file(
                 )
                 next(data_file)
             else:
-                logging.info(f"Appending batch file {batch_file_path} to {target_file_path}")
+                logging.info(
+                    f"Appending batch file {batch_file_path} to {target_file_path}"
+                )
             target_file.write(data_file.read())
             data_file.close()
             target_file.close()
@@ -457,9 +449,7 @@ def append_batch_file(
 
 
 def upload_file_to_gcs(
-    file_path: pathlib.Path,
-    target_gcs_bucket: str,
-    target_gcs_path: str
+    file_path: pathlib.Path, target_gcs_bucket: str, target_gcs_path: str
 ) -> None:
     if os.path.exists(file_path):
         logging.info(
@@ -479,6 +469,7 @@ if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
 
     main(
+        pipeline_name=os.environ["PIPELINE_NAME"],
         source_url_stations_json=os.environ["SOURCE_URL_STATIONS_JSON"],
         source_url_status_json=os.environ["SOURCE_URL_STATUS_JSON"],
         chunksize=os.environ["CHUNKSIZE"],
