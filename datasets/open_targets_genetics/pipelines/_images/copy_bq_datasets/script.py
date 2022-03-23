@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# import json
+import json
 import logging
 import operator
 import os
@@ -36,12 +36,12 @@ def main(
     source_project_id: str,
     target_project_id: str,
     service_account: str,
-    source_dataset_name: str,
-    target_dataset_name: str,
+    dataset_name: str,
+    dataset_versions: typing.List[str],
     timeout: int,
 ):
     client = bigquery_datatransfer_v1.DataTransferServiceClient()
-    transfer_config_prefix = f"{source_dataset_name}-copy"
+    transfer_config_prefix = f"{dataset_name}-copy"
     transfer_configs = client.list_transfer_configs(
         request=bigquery_datatransfer_v1.types.ListTransferConfigsRequest(
             parent=f"projects/{target_project_id}"
@@ -55,29 +55,33 @@ def main(
     ]
 
     _running_configs = []
-    dataset_id = f"{source_dataset_name}"
-    target_dataset_id = f"{target_dataset_name}"
-    display_name = f"{transfer_config_prefix}-{source_dataset_name}"
+    for version in dataset_versions:
+        dataset_id = f"{version}"
+        display_name = f"{transfer_config_prefix}-{version}"
+        import pdb
 
-    # import pdb; pdb.set_trace()
+        pdb.set_trace()
 
-    _config = next(
-        (config for config in existing_configs if config.display_name == display_name),
-        None,
-    )
-    if not _config:
-        _config = create_transfer_config(
-            client,
-            source_project_id,
-            target_project_id,
-            dataset_id,
-            target_dataset_id,
-            display_name,
-            service_account,
+        _config = next(
+            (
+                config
+                for config in existing_configs
+                if config.display_name == display_name
+            ),
+            None,
         )
+        if not _config:
+            _config = create_transfer_config(
+                client,
+                source_project_id,
+                target_project_id,
+                dataset_id,
+                display_name,
+                service_account,
+            )
 
-    trigger_config(client, _config)
-    _running_configs.append(_config)
+        trigger_config(client, _config)
+        _running_configs.append(_config)
 
     wait_for_completion(client, _running_configs, timeout)
 
@@ -120,12 +124,11 @@ def create_transfer_config(
     source_project_id: str,
     target_project_id: str,
     dataset_id: str,
-    target_dataset_id: str,
     display_name: str,
     service_account: str,
 ) -> bigquery_datatransfer_v1.types.TransferConfig:
     transfer_config = bigquery_datatransfer_v1.TransferConfig(
-        destination_dataset_id=f"{target_dataset_id}",
+        destination_dataset_id=f"open_targets_{dataset_id}",
         display_name=display_name,
         data_source_id="cross_region_copy",
         dataset_region="US",
@@ -143,7 +146,7 @@ def create_transfer_config(
         transfer_config=transfer_config,
         service_account_name=service_account,
     )
-    # import pdb; pdb.set_trace()
+
     return client.create_transfer_config(request=request)
 
 
@@ -176,7 +179,7 @@ if __name__ == "__main__":
         source_project_id=os.environ["SOURCE_PROJECT_ID"],
         target_project_id=os.environ["TARGET_PROJECT_ID"],
         service_account=os.environ["SERVICE_ACCOUNT"],
-        source_dataset_name=os.environ["SOURCE_DATASET_NAME"],
-        target_dataset_name=os.environ["TARGET_DATASET_NAME"],
+        dataset_name=os.environ["DATASET_NAME"],
+        dataset_versions=json.loads(os.environ["DATASET_VERSIONS"]),
         timeout=int(os.getenv("TIMEOUT", 1200)),
     )
