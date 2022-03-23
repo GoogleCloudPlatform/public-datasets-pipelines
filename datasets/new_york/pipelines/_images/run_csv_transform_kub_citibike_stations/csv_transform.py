@@ -279,31 +279,24 @@ def process_source_file(
 def download_and_merge_source_files(
     source_url_stations_json: str, source_url_status_json: str, source_file: str
 ) -> None:
-
     source_file_stations_csv = str(source_file).replace(".csv", "") + "_stations.csv"
     source_file_stations_json = str(source_file).replace(".csv", "") + "_stations"
     source_file_status_csv = str(source_file).replace(".csv", "") + "_status.csv"
     source_file_status_json = str(source_file).replace(".csv", "") + "_status"
-
     download_file_json(
         source_url_stations_json, source_file_stations_json, source_file_stations_csv
     )
-
     download_file_json(
         source_url_status_json, source_file_status_json, source_file_status_csv
     )
-
     df_stations = pd.read_csv(
         source_file_stations_csv, engine="python", encoding="utf-8", quotechar='"'
     )
-
     df_status = pd.read_csv(
         source_file_status_csv, engine="python", encoding="utf-8", quotechar='"'
     )
-
     logging.info("Merging files")
     df = df_stations.merge(df_status, left_on="station_id", right_on="station_id")
-
     save_to_new_file(df, source_file)
 
 
