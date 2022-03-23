@@ -31,12 +31,12 @@ output "storage_bucket-open-targets-name" {
   value = google_storage_bucket.open-targets.name
 }
 
-resource "google_bigquery_dataset" "platform" {
-  dataset_id  = "platform"
+resource "google_bigquery_dataset" "open_targets_platform" {
+  dataset_id  = "open_targets_platform"
   project     = var.project_id
   description = "Open-Targets dataset"
 }
 
-output "bigquery_dataset-platform-dataset_id" {
-  value = google_bigquery_dataset.platform.dataset_id
+output "bigquery_dataset-open_targets_platform-dataset_id" {
+  value = google_bigquery_dataset.open_targets_platform.dataset_id
 }

@@ -57,6 +57,7 @@ def main(
     _running_configs = []
     for version in dataset_versions:
         dataset_id = f"{version}"
+        # import pdb; pdb.set_trace()
         display_name = f"{transfer_config_prefix}-{version}"
 
         _config = next(
@@ -125,7 +126,7 @@ def create_transfer_config(
     service_account: str,
 ) -> bigquery_datatransfer_v1.types.TransferConfig:
     transfer_config = bigquery_datatransfer_v1.TransferConfig(
-        destination_dataset_id=f"{dataset_id}",
+        destination_dataset_id=f"open_targets_{dataset_id}",
         display_name=display_name,
         data_source_id="cross_region_copy",
         dataset_region="US",
