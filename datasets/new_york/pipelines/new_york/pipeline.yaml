@@ -56,22 +56,21 @@ dag:
         project_id: "{{ var.value.gcp_project }}"
         location: "us-central1-c"
         cluster_name: new-york
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "default"
         image_pull_policy: "Always"
-        image: "{{ var.json.new_york.container_registry.311_service_requests.run_csv_transform_kub }}"
+        image: "gcr.io/bigquery-public-data-dev/new_york__run_csv_transform_kub_311_service_requests:latest"
         env_vars:
-          PIPELINE_NAME: "{{ var.json.new_york.container_registry.311_service_requests.pipeline_name }}"
-          SOURCE_URL: "{{ var.json.new_york.container_registry.311_service_requests.source_url }}"
-          CHUNKSIZE: "{{ var.json.new_york.container_registry.311_service_requests.chunksize }}"
+          PIPELINE_NAME: "New York - 311 Service Requests"
+          SOURCE_URL: "https://data.cityofnewyork.us/api/views/erm2-nwe9/rows.csv"
+          CHUNKSIZE: "500000"
           SOURCE_FILE: "files/data.csv"
           TARGET_FILE: "files/data_output.csv"
           PROJECT_ID: "{{ var.value.gcp_project }}"
-          DATASET_ID: "{{ var.json.new_york.container_registry.311_service_requests.dataset_id }}"
-          TABLE_ID: "{{ var.json.new_york.container_registry.311_service_requests.table_id }}"
+          DATASET_ID: "new_york_311"
+          TABLE_ID: "311_service_requests"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
-          TARGET_GCS_PATH: "{{ var.json.new_york.container_registry.311_service_requests.target_path }}"
-          SCHEMA_PATH: "{{ var.json.new_york.container_registry.311_service_requests.schema_path }}"
+          TARGET_GCS_PATH: "data/new_york/311_service_requests/data_output.csv"
+          SCHEMA_PATH: "data/new_york/schema/311_service_requests_schema.json"
           DATA_DTYPES: >-
             {
               "Unique Key": "int",
@@ -212,9 +211,9 @@ dag:
               "location"
             ]
         resources:
-          limit_memory: "16G"
+          limit_memory: "8G"
           limit_cpu: "3"
-          request_ephemeral_storage: "32G"
+          request_ephemeral_storage: "12G"
 
     # - operator: "GKEStartPodOperator"
     #   description: "Run New York NYPD MV Collisions Pipeline"
