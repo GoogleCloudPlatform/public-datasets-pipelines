@@ -60,17 +60,17 @@ dag:
         image_pull_policy: "Always"
         image: "gcr.io/bigquery-public-data-dev/new_york__run_csv_transform_kub_311_service_requests:latest"
         env_vars:
-          PIPELINE_NAME: "New York - 311 Service Requests"
-          SOURCE_URL: "https://data.cityofnewyork.us/api/views/erm2-nwe9/rows.csv"
-          CHUNKSIZE: "500000"
+          PIPELINE_NAME: "{{ var.json.new_york.container_registry.311_service_requests.pipeline_name }}"
+          SOURCE_URL: "{{ var.json.new_york.container_registry.311_service_requests.source_url }}"
+          CHUNKSIZE: "{{ var.json.new_york.container_registry.311_service_requests.chunksize }}"
           SOURCE_FILE: "files/data.csv"
           TARGET_FILE: "files/data_output.csv"
           PROJECT_ID: "{{ var.value.gcp_project }}"
-          DATASET_ID: "new_york_311"
-          TABLE_ID: "311_service_requests"
+          DATASET_ID: "{{ var.json.new_york.container_registry.311_service_requests.dataset_id }}"
+          TABLE_ID: "{{ var.json.new_york.container_registry.311_service_requests.table_id }}"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
-          TARGET_GCS_PATH: "data/new_york/311_service_requests/data_output.csv"
-          SCHEMA_PATH: "data/new_york/schema/311_service_requests_schema.json"
+          TARGET_GCS_PATH: "{{ var.json.new_york.container_registry.311_service_requests.target_path }}"
+          SCHEMA_PATH: "{{ var.json.new_york.container_registry.311_service_requests.schema_path }}"
           DATA_DTYPES: >-
             {
               "Unique Key": "int",
