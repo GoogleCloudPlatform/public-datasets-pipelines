@@ -44,7 +44,7 @@ with DAG(
             "SOURCE_PROJECT_ID": "{{ var.json.open_targets_genetics.source_project_id }}",
             "TARGET_PROJECT_ID": "{{ var.json.open_targets_genetics.target_project_id }}",
             "SERVICE_ACCOUNT": "{{ var.json.open_targets_genetics.service_account }}",
-            "DATASET_NAME": "open_targets",
+            "DATASET_NAME": "open_targets_genetics",
             "DATASET_VERSIONS": '["genetics"]',
         },
         resources={

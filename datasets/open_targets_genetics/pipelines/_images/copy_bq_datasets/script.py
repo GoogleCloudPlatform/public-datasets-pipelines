@@ -58,9 +58,6 @@ def main(
     for version in dataset_versions:
         dataset_id = f"{version}"
         display_name = f"{transfer_config_prefix}-{version}"
-        import pdb
-
-        pdb.set_trace()
 
         _config = next(
             (

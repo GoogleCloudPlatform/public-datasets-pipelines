@@ -20,10 +20,10 @@ dataset:
   terms_of_use: ~
 resources:
 
-  - type: storage_bucket
-    name: "open-targets-genetics"
-    uniform_bucket_level_access: True
-    location: US
+  # - type: storage_bucket
+  #   name: "open-targets-genetics"
+  #   uniform_bucket_level_access: True
+  #   location: US
 
   - type: bigquery_dataset
     dataset_id: open_targets_genetics
