@@ -79,7 +79,7 @@ def execute_pipeline(
     rename_headers_list: dict,
     output_headers_list: typing.List[str],
 ) -> None:
-    download_file(source_url, source_file)
+    # download_file(source_url, source_file)
     process_source_file(
         source_file,
         target_file,
@@ -156,7 +156,10 @@ def process_source_file(
 
 
 def load_data_to_bq(
-    project_id: str, dataset_id: str, table_id: str, file_path: str
+    project_id: str,
+    dataset_id: str,
+    table_id: str,
+    file_path: str
 ) -> None:
     logging.info(
         f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} started"
@@ -217,7 +220,10 @@ def create_dest_table(
     return table_exists
 
 
-def check_gcs_file_exists(file_path: str, bucket_name: str) -> bool:
+def check_gcs_file_exists(
+    file_path: str,
+    bucket_name: str
+) -> bool:
     storage_client = storage.Client()
     bucket = storage_client.bucket(bucket_name)
     exists = storage.Blob(bucket=bucket, name=file_path).exists(storage_client)
@@ -225,7 +231,9 @@ def check_gcs_file_exists(file_path: str, bucket_name: str) -> bool:
 
 
 def create_table_schema(
-    schema_structure: list, bucket_name: str = "", schema_filepath: str = ""
+    schema_structure: list,
+    bucket_name: str = "",
+    schema_filepath: str = ""
 ) -> list:
     logging.info(f"Defining table schema... {bucket_name} ... {schema_filepath}")
     schema = []
@@ -253,25 +261,29 @@ def create_table_schema(
 
 
 def append_batch_file(
-    batch_file_path: str, target_file_path: str, skip_header: bool, truncate_file: bool
+    batch_file_path: str,
+    target_file_path: str,
+    skip_header: bool,
+    truncate_file: bool
 ) -> None:
-    data_file = open(batch_file_path, "r")
-    if truncate_file:
-        target_file = open(target_file_path, "w+").close()
-        logging.info("file truncated")
-    target_file = open(target_file_path, "a+")
-    if skip_header:
-        logging.info(
-            f"Appending batch file {batch_file_path} to {target_file_path} with skip header"
-        )
-        next(data_file)
-    else:
-        logging.info(f"Appending batch file {batch_file_path} to {target_file_path}")
-    target_file.write(data_file.read())
-    data_file.close()
-    target_file.close()
-    if os.path.exists(batch_file_path):
-        os.remove(batch_file_path)
+    with open(batch_file_path, "r") as data_file:
+        if truncate_file:
+            target_file = open(target_file_path, "w+").close()
+        with open(target_file_path, "a+") as target_file:
+            if skip_header:
+                logging.info(
+                    f"Appending batch file {batch_file_path} to {target_file_path} with skip header"
+                )
+                next(data_file)
+            else:
+                logging.info(
+                    f"Appending batch file {batch_file_path} to {target_file_path}"
+                )
+            target_file.write(data_file.read())
+            data_file.close()
+            target_file.close()
+            if os.path.exists(batch_file_path):
+                os.remove(batch_file_path)
 
 
 def process_chunk(
@@ -285,7 +297,7 @@ def process_chunk(
 ) -> None:
     df = resolve_date_format(df, parse_dates_list)
     df = rename_headers(df, rename_headers_list)
-    df = remove_null_rows(df)
+    df = remove_null_rows(df, )
     df = reorder_headers(df, reorder_headers_list)
     save_to_new_file(df, file_path=str(target_file_batch))
     append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
@@ -304,7 +316,8 @@ def reorder_headers(df: pd.DataFrame, headers: typing.List[str]) -> pd.DataFrame
 
 
 def resolve_date_format(
-    df: pd.DataFrame, parse_dates: typing.List[str]
+    df: pd.DataFrame,
+    parse_dates: typing.List[str]
 ) -> pd.DataFrame:
     for dt_fld in parse_dates:
         logging.info(f"Resolving date format in column {dt_fld}")
@@ -325,27 +338,42 @@ def convert_dt_format(dt_str: str) -> str:
         return str(dt_str)
 
 
-def rename_headers(df: pd.DataFrame, header_names: dict) -> pd.DataFrame:
+def rename_headers(
+    df: pd.DataFrame,
+    header_names: dict
+) -> pd.DataFrame:
     logging.info("Renaming Headers")
     df = df.rename(columns=header_names)
     return df
 
 
-def save_to_new_file(df: pd.DataFrame, file_path: str, sep: str = "|") -> None:
+def save_to_new_file(
+    df: pd.DataFrame,
+    file_path: str,
+    sep: str = "|"
+) -> None:
     logging.info(f"Saving data to target file.. {file_path} ...")
     df.to_csv(file_path, index=False, sep=sep)
 
 
-def download_file(source_url: str, source_file: pathlib.Path) -> None:
-    logging.info(f"Downloading file {source_url} to {source_file}")
+def download_file(
+    source_url: str,
+    source_file: pathlib.Path
+) -> None:
+    logging.info(f"Downloading {source_url} to {source_file}")
     r = requests.get(source_url, stream=True)
-    with open(source_file, "wb") as f:
-        for chunk in r:
-            f.write(chunk)
+    if r.status_code == 200:
+        with open(source_file, "wb") as f:
+            for chunk in r:
+                f.write(chunk)
+    else:
+        logging.error(f"Couldn't download {source_url}: {r.text}")
 
 
 def upload_file_to_gcs(
-    file_path: pathlib.Path, target_gcs_bucket: str, target_gcs_path: str
+    file_path: pathlib.Path,
+    target_gcs_bucket: str,
+    target_gcs_path: str
 ) -> None:
     if os.path.exists(file_path):
         logging.info(
