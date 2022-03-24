@@ -309,6 +309,7 @@ def test_script_with_pipeline_arg_deploys_only_that_pipeline(
 
     deploy_dag.check_airflow_version_compatibility.assert_called_once()
 
+
 def test_script_with_pipeline_arg_deploys_without_gcs_bucket_param(
     dataset_path: pathlib.Path,
     pipeline_path: pathlib.Path,

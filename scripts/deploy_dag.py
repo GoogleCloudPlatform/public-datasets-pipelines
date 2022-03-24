@@ -33,6 +33,7 @@ DEFAULT_AIRFLOW_VERSION = 2
 class IncompatibilityError(Exception):
     pass
 
+
 def main(
     env_path: pathlib.Path,
     dataset_id: str,
@@ -42,8 +43,8 @@ def main(
     pipeline: str = None,
 ):
     if composer_bucket is None:
-        composer_bucket=get_composer_bucket(env_path,composer_region,composer_env)
-    
+        composer_bucket = get_composer_bucket(env_path, composer_region, composer_env)
+
     print("\n========== AIRFLOW VARIABLES ==========")
     copy_variables_to_airflow_data_folder(env_path, dataset_id, composer_bucket)
     import_variables_to_airflow_env(
@@ -76,7 +77,6 @@ def main(
         )
 
 
-
 def get_composer_bucket(
     env_path: pathlib.Path,
     composer_region: str,
@@ -97,7 +97,9 @@ def get_composer_bucket(
     # Handle the response
     print(response.config.dag_gcs_prefix)
 
+
 # [END composer_v1beta1_generated_Environments_GetEnvironment_sync]
+
 
 def run_gsutil_cmd(args: typing.List[str], cwd: pathlib.Path):
     subprocess.check_call(["gsutil"] + args, cwd=cwd)
@@ -278,8 +280,6 @@ def check_airflow_version_compatibility(
             f"The DAG {pipeline_path.name} uses Airflow 2, but"
             " you are deploying to an Airflow 1.x environment."
         )
-
-
 
 
 if __name__ == "__main__":
