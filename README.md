@@ -228,7 +228,7 @@ pipenv run python scripts/deploy_dag.py \
   --dataset DATASET \
   [--pipeline PIPELINE] \
   --composer-env CLOUD_COMPOSER_ENVIRONMENT_NAME \
-  --composer-bucket CLOUD_COMPOSER_BUCKET \
+  [--composer-bucket CLOUD_COMPOSER_BUCKET] \
   --composer-region CLOUD_COMPOSER_REGION \
   --env ENV
 ```
