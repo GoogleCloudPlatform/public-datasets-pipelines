@@ -106,6 +106,7 @@ def execute_pipeline(
                 dataset_id=dataset_id,
                 table_id=destination_table,
                 file_path=target_file,
+                truncate_table=True
             )
         else:
             error_msg = f"Error: Data was not loaded because the destination table {project_id}.{dataset_id}.{destination_table} does not exist and/or could not be created."
@@ -172,7 +173,8 @@ def load_data_to_bq(
     project_id: str,
     dataset_id: str,
     table_id: str,
-    file_path: str
+    file_path: str,
+    truncate_table: bool
 ) -> None:
     logging.info(
         f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} started"
@@ -182,6 +184,10 @@ def load_data_to_bq(
     job_config = bigquery.LoadJobConfig()
     job_config.source_format = bigquery.SourceFormat.CSV
     job_config.field_delimiter = "|"
+    if truncate_table:
+        job_config.write_disposition = "WRITE_TRUNCATE"
+    else:
+        job_config.write_disposition = "WRITE_APPEND"
     job_config.skip_leading_rows = 1  # ignore the header
     job_config.autodetect = False
     with open(file_path, "rb") as source_file:
