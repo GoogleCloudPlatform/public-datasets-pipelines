@@ -48,172 +48,176 @@ dag:
               - https://www.googleapis.com/auth/devstorage.read_write
               - https://www.googleapis.com/auth/cloud-platform
 
-    # - operator: "GKEStartPodOperator"
-    #   description: "Run New York 311 Service Requests Pipeline"
-    #   args:
-    #     task_id: "transform_csv_311_service_requests"
-    #     name: "311_service_requests"
-    #     project_id: "{{ var.value.gcp_project }}"
-    #     location: "us-central1-c"
-    #     cluster_name: new-york
-    #     namespace: "default"
-    #     image_pull_policy: "Always"
-    #     image: "gcr.io/bigquery-public-data-dev/new_york__run_csv_transform_kub_311_service_requests:latest"
-    #     env_vars:
-    #       PIPELINE_NAME: "{{ var.json.new_york.container_registry.311_service_requests.pipeline_name }}"
-    #       SOURCE_URL: "{{ var.json.new_york.container_registry.311_service_requests.source_url }}"
-    #       CHUNKSIZE: "{{ var.json.new_york.container_registry.311_service_requests.chunksize }}"
-    #       SOURCE_FILE: "files/data.csv"
-    #       TARGET_FILE: "files/data_output.csv"
-    #       PROJECT_ID: "{{ var.value.gcp_project }}"
-    #       DATASET_ID: "{{ var.json.new_york.container_registry.311_service_requests.dataset_id }}"
-    #       TABLE_ID: "{{ var.json.new_york.container_registry.311_service_requests.destination_table }}"
-    #       TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
-    #       TARGET_GCS_PATH: "{{ var.json.new_york.container_registry.311_service_requests.target_path }}"
-    #       SCHEMA_PATH: "{{ var.json.new_york.container_registry.311_service_requests.schema_path }}"
-    #       DATA_DTYPES: >-
-    #         {
-    #           "Unique Key": "int",
-    #           "Created Date": "str",
-    #           "Closed Date": "str",
-    #           "Agency": "str",
-    #           "Agency Name": "str",
-    #           "Complaint Type": "str",
-    #           "Descriptor": "str",
-    #           "Location Type": "str",
-    #           "Incident Zip": "str",
-    #           "Incident Address": "str",
-    #           "Street Name": "str",
-    #           "Cross Street 1": "str",
-    #           "Cross Street 2": "str",
-    #           "Intersection Street 1": "str",
-    #           "Intersection Street 2": "str",
-    #           "Address Type": "str",
-    #           "City": "str",
-    #           "Landmark": "str",
-    #           "Facility Type": "str",
-    #           "Status": "str",
-    #           "Due Date": "str",
-    #           "Resolution Description": "str",
-    #           "Resolution Action Updated Date": "str",
-    #           "Community Board": "str",
-    #           "BBL": "str",
-    #           "Borough": "str",
-    #           "X Coordinate (State Plane)": "str",
-    #           "Y Coordinate (State Plane)": "str",
-    #           "Open Data Channel Type": "str",
-    #           "Park Facility Name": "str",
-    #           "Park Borough": "str",
-    #           "Vehicle Type": "str",
-    #           "Taxi Company Borough": "str",
-    #           "Taxi Pick Up Location": "str",
-    #           "Bridge Highway Name": "str",
-    #           "Bridge Highway Direction": "str",
-    #           "Road Ramp": "str",
-    #           "Bridge Highway Segment": "str",
-    #           "Latitude": "float64",
-    #           "Longitude": "float64",
-    #           "Location": "str"
-    #         }
-    #       PARSE_DATES: >-
-    #         [
-    #           "Created Date",
-    #           "Closed Date",
-    #           "Due Date",
-    #           "Resolution Action Updated Date"
-    #         ]
-    #       RENAME_HEADERS: >-
-    #         {
-    #           "Unique Key": "unique_key",
-    #           "Created Date": "created_date",
-    #           "Closed Date": "closed_date",
-    #           "Agency": "agency",
-    #           "Agency Name": "agency_name",
-    #           "Complaint Type": "complaint_type",
-    #           "Descriptor": "descriptor",
-    #           "Location Type": "location_type",
-    #           "Incident Zip": "incident_zip",
-    #           "Incident Address": "incident_address",
-    #           "Street Name": "street_name",
-    #           "Cross Street 1": "cross_street_1",
-    #           "Cross Street 2": "cross_street_2",
-    #           "Intersection Street 1": "intersection_street_1",
-    #           "Intersection Street 2": "intersection_street_2",
-    #           "Address Type": "address_type",
-    #           "City": "city",
-    #           "Landmark": "landmark",
-    #           "Facility Type": "facility_type",
-    #           "Status": "status",
-    #           "Due Date": "due_date",
-    #           "Resolution Description": "resolution_description",
-    #           "Resolution Action Updated Date": "resolution_action_updated_date",
-    #           "Community Board": "community_board",
-    #           "Open Data Channel Type": "open_data_channel_type",
-    #           "Borough": "borough",
-    #           "X Coordinate (State Plane)": "x_coordinate",
-    #           "Y Coordinate (State Plane)": "y_coordinate",
-    #           "Park Facility Name": "park_facility_name",
-    #           "Park Borough": "park_borough",
-    #           "Vehicle Type": "vehicle_type",
-    #           "Taxi Company Borough": "taxi_company_borough",
-    #           "Taxi Pick Up Location": "taxi_pickup_location",
-    #           "Bridge Highway Name": "bridge_highway_name",
-    #           "Bridge Highway Direction": "bridge_highway_direction",
-    #           "Road Ramp": "road_ramp",
-    #           "Bridge Highway Segment": "bridge_highway_segment",
-    #           "Latitude": "latitude",
-    #           "Longitude": "longitude",
-    #           "Location": "location",
-    #           "BBL": "bbl"
-    #         }
-    #       OUTPUT_CSV_HEADERS: >-
-    #         [
-    #           "unique_key",
-    #           "created_date",
-    #           "closed_date",
-    #           "agency",
-    #           "agency_name",
-    #           "complaint_type",
-    #           "descriptor",
-    #           "location_type",
-    #           "incident_zip",
-    #           "incident_address",
-    #           "street_name",
-    #           "cross_street_1",
-    #           "cross_street_2",
-    #           "intersection_street_1",
-    #           "intersection_street_2",
-    #           "address_type",
-    #           "city",
-    #           "landmark",
-    #           "facility_type",
-    #           "status",
-    #           "due_date",
-    #           "resolution_description",
-    #           "resolution_action_updated_date",
-    #           "community_board",
-    #           "borough",
-    #           "x_coordinate",
-    #           "y_coordinate",
-    #           "park_facility_name",
-    #           "park_borough",
-    #           "bbl",
-    #           "open_data_channel_type",
-    #           "vehicle_type",
-    #           "taxi_company_borough",
-    #           "taxi_pickup_location",
-    #           "bridge_highway_name",
-    #           "bridge_highway_direction",
-    #           "road_ramp",
-    #           "bridge_highway_segment",
-    #           "latitude",
-    #           "longitude",
-    #           "location"
-    #         ]
-    #     resources:
-    #       limit_memory: "12G"
-    #       limit_cpu: "3"
-    #       request_ephemeral_storage: "16G"
+    - operator: "GKEStartPodOperator"
+      description: "Run New York 311 Service Requests Pipeline"
+      args:
+        task_id: "transform_csv_ny_311_service_requests"
+        name: "311_service_requests"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: new-york
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "gcr.io/bigquery-public-data-dev/new_york__run_csv_transform_kub_311_service_requests:latest"
+        env_vars:
+          PIPELINE_NAME: "{{ var.json.new_york.container_registry.311_service_requests.pipeline_name }}"
+          SOURCE_URL: "{{ var.json.new_york.container_registry.311_service_requests.source_url }}"
+          CHUNKSIZE: "{{ var.json.new_york.container_registry.311_service_requests.chunksize }}"
+          SOURCE_FILE: "files/data_{{ var.json.new_york.container_registry.311_service_requests.dataset_id }}_{{ var.json.new_york.container_registry.311_service_requests.destination_table }}.csv"
+          TARGET_FILE: "files/data_output_{{ var.json.new_york.container_registry.311_service_requests.dataset_id }}_{{ var.json.new_york.container_registry.311_service_requests.destination_table }}.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "{{ var.json.new_york.container_registry.311_service_requests.dataset_id }}"
+          TABLE_ID: "{{ var.json.new_york.container_registry.311_service_requests.destination_table }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "{{ var.json.new_york.container_registry.311_service_requests.target_path }}"
+          SCHEMA_PATH: "{{ var.json.new_york.container_registry.311_service_requests.schema_path }}"
+          DATA_DTYPES: >-
+            {
+              "Unique Key": "int",
+              "Created Date": "str",
+              "Closed Date": "str",
+              "Agency": "str",
+              "Agency Name": "str",
+              "Complaint Type": "str",
+              "Descriptor": "str",
+              "Location Type": "str",
+              "Incident Zip": "str",
+              "Incident Address": "str",
+              "Street Name": "str",
+              "Cross Street 1": "str",
+              "Cross Street 2": "str",
+              "Intersection Street 1": "str",
+              "Intersection Street 2": "str",
+              "Address Type": "str",
+              "City": "str",
+              "Landmark": "str",
+              "Facility Type": "str",
+              "Status": "str",
+              "Due Date": "str",
+              "Resolution Description": "str",
+              "Resolution Action Updated Date": "str",
+              "Community Board": "str",
+              "BBL": "str",
+              "Borough": "str",
+              "X Coordinate (State Plane)": "str",
+              "Y Coordinate (State Plane)": "str",
+              "Open Data Channel Type": "str",
+              "Park Facility Name": "str",
+              "Park Borough": "str",
+              "Vehicle Type": "str",
+              "Taxi Company Borough": "str",
+              "Taxi Pick Up Location": "str",
+              "Bridge Highway Name": "str",
+              "Bridge Highway Direction": "str",
+              "Road Ramp": "str",
+              "Bridge Highway Segment": "str",
+              "Latitude": "float64",
+              "Longitude": "float64",
+              "Location": "str"
+            }
+          PARSE_DATES: >-
+            [
+              "Created Date",
+              "Closed Date",
+              "Due Date",
+              "Resolution Action Updated Date"
+            ]
+          NULL_ROWS_LIST: >-
+            [
+              "unique_key"
+            ]
+          RENAME_HEADERS: >-
+            {
+              "Unique Key": "unique_key",
+              "Created Date": "created_date",
+              "Closed Date": "closed_date",
+              "Agency": "agency",
+              "Agency Name": "agency_name",
+              "Complaint Type": "complaint_type",
+              "Descriptor": "descriptor",
+              "Location Type": "location_type",
+              "Incident Zip": "incident_zip",
+              "Incident Address": "incident_address",
+              "Street Name": "street_name",
+              "Cross Street 1": "cross_street_1",
+              "Cross Street 2": "cross_street_2",
+              "Intersection Street 1": "intersection_street_1",
+              "Intersection Street 2": "intersection_street_2",
+              "Address Type": "address_type",
+              "City": "city",
+              "Landmark": "landmark",
+              "Facility Type": "facility_type",
+              "Status": "status",
+              "Due Date": "due_date",
+              "Resolution Description": "resolution_description",
+              "Resolution Action Updated Date": "resolution_action_updated_date",
+              "Community Board": "community_board",
+              "Open Data Channel Type": "open_data_channel_type",
+              "Borough": "borough",
+              "X Coordinate (State Plane)": "x_coordinate",
+              "Y Coordinate (State Plane)": "y_coordinate",
+              "Park Facility Name": "park_facility_name",
+              "Park Borough": "park_borough",
+              "Vehicle Type": "vehicle_type",
+              "Taxi Company Borough": "taxi_company_borough",
+              "Taxi Pick Up Location": "taxi_pickup_location",
+              "Bridge Highway Name": "bridge_highway_name",
+              "Bridge Highway Direction": "bridge_highway_direction",
+              "Road Ramp": "road_ramp",
+              "Bridge Highway Segment": "bridge_highway_segment",
+              "Latitude": "latitude",
+              "Longitude": "longitude",
+              "Location": "location",
+              "BBL": "bbl"
+            }
+          OUTPUT_CSV_HEADERS: >-
+            [
+              "unique_key",
+              "created_date",
+              "closed_date",
+              "agency",
+              "agency_name",
+              "complaint_type",
+              "descriptor",
+              "location_type",
+              "incident_zip",
+              "incident_address",
+              "street_name",
+              "cross_street_1",
+              "cross_street_2",
+              "intersection_street_1",
+              "intersection_street_2",
+              "address_type",
+              "city",
+              "landmark",
+              "facility_type",
+              "status",
+              "due_date",
+              "resolution_description",
+              "resolution_action_updated_date",
+              "community_board",
+              "borough",
+              "x_coordinate",
+              "y_coordinate",
+              "park_facility_name",
+              "park_borough",
+              "bbl",
+              "open_data_channel_type",
+              "vehicle_type",
+              "taxi_company_borough",
+              "taxi_pickup_location",
+              "bridge_highway_name",
+              "bridge_highway_direction",
+              "road_ramp",
+              "bridge_highway_segment",
+              "latitude",
+              "longitude",
+              "location"
+            ]
+        resources:
+          limit_memory: "12G"
+          limit_cpu: "3"
+          request_ephemeral_storage: "16G"
 
     # - operator: "GKEStartPodOperator"
     #   description: "Run New York Citibike Stations Pipeline"
@@ -231,8 +235,8 @@ dag:
     #       SOURCE_URL_STATIONS_JSON: "{{ var.json.new_york.container_registry.citibike_stations.source_url_stations }}"
     #       SOURCE_URL_STATUS_JSON: "{{ var.json.new_york.container_registry.citibike_stations.source_url_status }}"
     #       CHUNKSIZE: "{{ var.json.new_york.container_registry.citibike_stations.chunksize }}"
-    #       SOURCE_FILE: "files/data.csv"
-    #       TARGET_FILE: "files/data_output.csv"
+    #       SOURCE_FILE: "files/data_{{ var.json.new_york.container_registry.citibike_stations.dataset_id }}_{{ var.json.new_york.container_registry.citibike_stations.destination_table }}.csv"
+    #       TARGET_FILE: "files/data_output_{{ var.json.new_york.container_registry.citibike_stations.dataset_id }}_{{ var.json.new_york.container_registry.citibike_stations.destination_table }}.csv"
     #       PROJECT_ID: "{{ var.value.gcp_project }}"
     #       DATASET_ID: "{{ var.json.new_york.container_registry.citibike_stations.dataset_id }}"
     #       TABLE_ID: "{{ var.json.new_york.container_registry.citibike_stations.destination_table }}"
@@ -371,8 +375,8 @@ dag:
     #       PIPELINE_NAME: "{{ var.json.new_york.container_registry.nypd_mv_collisions.pipeline_name }}"
     #       SOURCE_URL: "{{ var.json.new_york.container_registry.nypd_mv_collisions.source_url }}"
     #       CHUNKSIZE: "{{ var.json.new_york.container_registry.nypd_mv_collisions.chunksize }}"
-    #       SOURCE_FILE: "files/data.csv"
-    #       TARGET_FILE: "files/data_output.csv"
+    #       SOURCE_FILE: "files/data_{{ var.json.new_york.container_registry.nypd_mv_collisions.dataset_id }}_{{ var.json.new_york.container_registry.nypd_mv_collisions.destination_table }}.csv"
+    #       TARGET_FILE: "files/data_output_{{ var.json.new_york.container_registry.nypd_mv_collisions.dataset_id }}_{{ var.json.new_york.container_registry.nypd_mv_collisions.destination_table }}.csv"
     #       PROJECT_ID: "{{ var.value.gcp_project }}"
     #       DATASET_ID: "{{ var.json.new_york.container_registry.nypd_mv_collisions.dataset_id }}"
     #       TABLE_ID: "{{ var.json.new_york.container_registry.nypd_mv_collisions.destination_table }}"
@@ -501,96 +505,96 @@ dag:
     #       limit_memory: "8G"
     #       limit_cpu: "3"
 
-    - operator: "GKEStartPodOperator"
-      description: "Run New York Tree Census 1995 Pipeline"
-      args:
-        task_id: "transform_csv_ny_tree_census_1995"
-        name: "tree_census_1995"
-        project_id: "{{ var.value.gcp_project }}"
-        location: "us-central1-c"
-        cluster_name: new-york
-        namespace: "default"
-        image_pull_policy: "Always"
-        image: "{{ var.json.new_york.container_registry.tree_census_1995.run_csv_transform_kub }}"
-        env_vars:
-          PIPELINE_NAME: "{{ var.json.new_york.container_registry.tree_census_1995.pipeline_name }}"
-          SOURCE_URL: "{{ var.json.new_york.container_registry.tree_census_1995.source_url }}"
-          CHUNKSIZE: "{{ var.json.new_york.container_registry.tree_census_1995.chunksize }}"
-          SOURCE_FILE: "files/data.csv"
-          TARGET_FILE: "files/data_output.csv"
-          PROJECT_ID: "{{ var.value.gcp_project }}"
-          DATASET_ID: "{{ var.json.new_york.container_registry.tree_census_1995.dataset_id }}"
-          TABLE_ID: "{{ var.json.new_york.container_registry.tree_census_1995.destination_table }}"
-          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
-          TARGET_GCS_PATH: "{{ var.json.new_york.container_registry.tree_census_1995.target_path }}"
-          SCHEMA_PATH: "{{ var.json.new_york.container_registry.tree_census_1995.schema_path }}"
-          RENAME_HEADERS_LIST: >-
-            {
-              "RecordId": "recordid",
-              "Address": "address",
-              "House_Number": "house_number",
-              "Street": "street",
-              "Postcode_Original": "zip_original",
-              "Community Board_Original": "cb_original",
-              "Site": "site",
-              "Species": "species",
-              "Diameter": "diameter",
-              "Condition": "status",
-              "Wires": "wires",
-              "Sidewalk_Condition": "sidewalk_condition",
-              "Support_Structure": "support_structure",
-              "Borough": "borough",
-              "X": "x",
-              "Y": "y",
-              "Longitude": "longitude",
-              "Latitude": "latitude",
-              "CB_New": "cb_new",
-              "Zip_New": "zip_new",
-              "CensusTract_2010": "censustract_2010",
-              "CensusBlock_2010": "censusblock_2010",
-              "NTA_2010": "nta_2010",
-              "SegmentID": "segmentid",
-              "Spc_Common": "spc_common",
-              "Spc_Latin": "spc_latin",
-              "Location": "location",
-            }
-          REMOVE_WHITESPACE_LIST: >-
-            [
-              "spc_latin"
-            ]
-          REORDER_HEADERS_LIST: >-
-            [
-              "recordid",
-              "address",
-              "house_number",
-              "street",
-              "zip_original",
-              "cb_original",
-              "site",
-              "species",
-              "diameter",
-              "status",
-              "wires",
-              "sidewalk_condition",
-              "support_structure",
-              "borough",
-              "x",
-              "y",
-              "longitude",
-              "latitude",
-              "cb_new",
-              "zip_new",
-              "censustract_2010",
-              "censusblock_2010",
-              "nta_2010",
-              "segmentid",
-              "spc_common",
-              "spc_latin",
-              "location",
-            ]
-        resources:
-          limit_memory: "8G"
-          limit_cpu: "3"
+    # - operator: "GKEStartPodOperator"
+    #   description: "Run New York Tree Census 1995 Pipeline"
+    #   args:
+    #     task_id: "transform_csv_ny_tree_census_1995"
+    #     name: "tree_census_1995"
+    #     project_id: "{{ var.value.gcp_project }}"
+    #     location: "us-central1-c"
+    #     cluster_name: new-york
+    #     namespace: "default"
+    #     image_pull_policy: "Always"
+    #     image: "{{ var.json.new_york.container_registry.tree_census_1995.run_csv_transform_kub }}"
+    #     env_vars:
+    #       PIPELINE_NAME: "{{ var.json.new_york.container_registry.tree_census_1995.pipeline_name }}"
+    #       SOURCE_URL: "{{ var.json.new_york.container_registry.tree_census_1995.source_url }}"
+    #       CHUNKSIZE: "{{ var.json.new_york.container_registry.tree_census_1995.chunksize }}"
+    #       SOURCE_FILE: "files/data_{{ var.json.new_york.container_registry.tree_census_1995.dataset_id }}_{{ var.json.new_york.container_registry.tree_census_1995.destination_table }}.csv"
+    #       TARGET_FILE: "files/data_output_{{ var.json.new_york.container_registry.tree_census_1995.dataset_id }}_{{ var.json.new_york.container_registry.tree_census_1995.destination_table }}.csv"
+    #       PROJECT_ID: "{{ var.value.gcp_project }}"
+    #       DATASET_ID: "{{ var.json.new_york.container_registry.tree_census_1995.dataset_id }}"
+    #       TABLE_ID: "{{ var.json.new_york.container_registry.tree_census_1995.destination_table }}"
+    #       TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+    #       TARGET_GCS_PATH: "{{ var.json.new_york.container_registry.tree_census_1995.target_path }}"
+    #       SCHEMA_PATH: "{{ var.json.new_york.container_registry.tree_census_1995.schema_path }}"
+    #       RENAME_HEADERS_LIST: >-
+    #         {
+    #           "RecordId": "recordid",
+    #           "Address": "address",
+    #           "House_Number": "house_number",
+    #           "Street": "street",
+    #           "Postcode_Original": "zip_original",
+    #           "Community Board_Original": "cb_original",
+    #           "Site": "site",
+    #           "Species": "species",
+    #           "Diameter": "diameter",
+    #           "Condition": "status",
+    #           "Wires": "wires",
+    #           "Sidewalk_Condition": "sidewalk_condition",
+    #           "Support_Structure": "support_structure",
+    #           "Borough": "borough",
+    #           "X": "x",
+    #           "Y": "y",
+    #           "Longitude": "longitude",
+    #           "Latitude": "latitude",
+    #           "CB_New": "cb_new",
+    #           "Zip_New": "zip_new",
+    #           "CensusTract_2010": "censustract_2010",
+    #           "CensusBlock_2010": "censusblock_2010",
+    #           "NTA_2010": "nta_2010",
+    #           "SegmentID": "segmentid",
+    #           "Spc_Common": "spc_common",
+    #           "Spc_Latin": "spc_latin",
+    #           "Location": "location"
+    #         }
+    #       REMOVE_WHITESPACE_LIST: >-
+    #         [
+    #           "spc_latin"
+    #         ]
+    #       REORDER_HEADERS_LIST: >-
+    #         [
+    #           "recordid",
+    #           "address",
+    #           "house_number",
+    #           "street",
+    #           "zip_original",
+    #           "cb_original",
+    #           "site",
+    #           "species",
+    #           "diameter",
+    #           "status",
+    #           "wires",
+    #           "sidewalk_condition",
+    #           "support_structure",
+    #           "borough",
+    #           "x",
+    #           "y",
+    #           "longitude",
+    #           "latitude",
+    #           "cb_new",
+    #           "zip_new",
+    #           "censustract_2010",
+    #           "censusblock_2010",
+    #           "nta_2010",
+    #           "segmentid",
+    #           "spc_common",
+    #           "spc_latin",
+    #           "location"
+    #         ]
+    #     resources:
+    #       limit_memory: "8G"
+    #       limit_cpu: "3"
 
     - operator: "GKEDeleteClusterOperator"
       args:
@@ -600,5 +604,5 @@ dag:
         name: new-york
 
   graph_paths:
-    - "create_cluster >> [transform_csv_nypd_mv_collisions] >> delete_cluster"
-    #  - "create_cluster >> [transform_csv_nypd_mv_collisions, transform_csv_ny_citibike_stations, transform_csv_ny_tree_census_1995] >> transform_csv_311_service_requests >> delete_cluster"
+    # - "create_cluster >> [transform_csv_nypd_mv_collisions, transform_csv_ny_citibike_stations, transform_csv_ny_tree_census_1995] >> transform_csv_ny_311_service_requests >> delete_cluster"
+    - "create_cluster >> transform_csv_ny_311_service_requests >> delete_cluster"

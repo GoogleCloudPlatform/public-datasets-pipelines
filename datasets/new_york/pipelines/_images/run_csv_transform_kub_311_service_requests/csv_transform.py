@@ -38,6 +38,7 @@ def main(
     target_gcs_path: str,
     schema_path: str,
     data_dtypes: typing.List[str],
+    null_rows_list: typing.List[str],
     parse_dates: dict,
     rename_headers_list: dict,
     output_headers_list: typing.List[str],
@@ -56,6 +57,7 @@ def main(
         target_gcs_path=target_gcs_path,
         schema_path=schema_path,
         data_dtypes=data_dtypes,
+        null_rows_list=null_rows_list,
         parse_dates=parse_dates,
         rename_headers_list=rename_headers_list,
         output_headers_list=output_headers_list,
@@ -76,16 +78,18 @@ def execute_pipeline(
     schema_path: str,
     data_dtypes: typing.List[str],
     parse_dates: dict,
+    null_rows_list: typing.List[str],
     rename_headers_list: dict,
     output_headers_list: typing.List[str],
 ) -> None:
-    # download_file(source_url, source_file)
+    download_file(source_url, source_file)
     process_source_file(
         source_file,
         target_file,
         chunksize,
         data_dtypes,
         parse_dates,
+        null_rows_list,
         rename_headers_list,
         output_headers_list,
     )
@@ -124,6 +128,7 @@ def process_source_file(
     chunksize: str,
     data_dtypes: dict,
     parse_dates_list: typing.List[str],
+    null_rows_list: typing.List[str],
     rename_headers_list: dict,
     output_headers_list: typing.List[str],
 ) -> None:
@@ -135,7 +140,7 @@ def process_source_file(
         quotechar='"',
         chunksize=int(chunksize),
         dtype=data_dtypes,
-        parse_dates=parse_dates_list,
+        parse_dates=parse_dates_list
     ) as reader:
         for chunk_number, chunk in enumerate(reader):
             logging.info(f"Processing batch {chunk_number}")
@@ -150,6 +155,7 @@ def process_source_file(
                 target_file=target_file,
                 skip_header=(not chunk_number == 0),
                 rename_headers_list=rename_headers_list,
+                null_rows_list=null_rows_list,
                 parse_dates_list=parse_dates_list,
                 reorder_headers_list=output_headers_list,
             )
@@ -292,26 +298,34 @@ def process_chunk(
     target_file: str,
     skip_header: bool,
     rename_headers_list: dict,
+    null_rows_list: typing.List[str],
     parse_dates_list: typing.List[str],
     reorder_headers_list: typing.List[str],
 ) -> None:
     df = resolve_date_format(df, parse_dates_list)
     df = rename_headers(df, rename_headers_list)
-    df = remove_null_rows(df, )
+    df = remove_null_rows(df, null_rows_list)
     df = reorder_headers(df, reorder_headers_list)
     save_to_new_file(df, file_path=str(target_file_batch))
     append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
 
 
-def remove_null_rows(df: pd.DataFrame) -> pd.DataFrame:
+def remove_null_rows(
+    df: pd.DataFrame,
+    null_rows_list: typing.List[str]
+) -> pd.DataFrame:
     logging.info("Removing rows with empty keys")
-    df = df[df["unique_key"] != ""]
+    for column in null_rows_list:
+        df = df[df[column] != ""]
     return df
 
 
-def reorder_headers(df: pd.DataFrame, headers: typing.List[str]) -> pd.DataFrame:
+def reorder_headers(
+    df: pd.DataFrame,
+    output_headers: typing.List[str]
+) -> pd.DataFrame:
     logging.info("Reordering headers..")
-    df = df[headers]
+    df = df[output_headers]
     return df
 
 
@@ -319,17 +333,20 @@ def resolve_date_format(
     df: pd.DataFrame,
     parse_dates: typing.List[str]
 ) -> pd.DataFrame:
+    logging.info(df.dtypes)
     for dt_fld in parse_dates:
         logging.info(f"Resolving date format in column {dt_fld}")
         df[dt_fld] = df[dt_fld].apply(convert_dt_format)
     return df
 
 
-def convert_dt_format(dt_str: str) -> str:
+def convert_dt_format(
+    dt_str: str
+) -> str:
     if not dt_str or str(dt_str).lower() == "nan" or str(dt_str).lower() == "nat":
         return ""
     elif (
-        dt_str.strip()[2] == "/"
+        str(dt_str).strip()[2] == "/"
     ):  # if there is a '/' in 3rd position, then we have a date format mm/dd/yyyy
         return datetime.datetime.strptime(dt_str, "%m/%d/%Y %H:%M:%S %p").strftime(
             "%Y-%m-%d %H:%M:%S"
@@ -405,6 +422,7 @@ if __name__ == "__main__":
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
         schema_path=os.environ["SCHEMA_PATH"],
         data_dtypes=json.loads(os.environ["DATA_DTYPES"]),
+        null_rows_list=json.loads(os.environ["NULL_ROWS_LIST"]),
         parse_dates=json.loads(os.environ["PARSE_DATES"]),
         rename_headers_list=json.loads(os.environ["RENAME_HEADERS"]),
         output_headers_list=json.loads(os.environ["OUTPUT_CSV_HEADERS"]),
