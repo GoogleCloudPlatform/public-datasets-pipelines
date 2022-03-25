@@ -38,7 +38,7 @@ def main(
     schema_path: str,
     rename_headers_list: dict,
     remove_whitespace_list: typing.List[str],
-    reorder_headers_list: typing.List[str]
+    reorder_headers_list: typing.List[str],
 ) -> None:
     logging.info(f"{pipeline_name} process started")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
@@ -55,7 +55,7 @@ def main(
         schema_path=schema_path,
         rename_headers_list=rename_headers_list,
         remove_whitespace_list=remove_whitespace_list,
-        reorder_headers_list=reorder_headers_list
+        reorder_headers_list=reorder_headers_list,
     )
     logging.info(f"{pipeline_name} process completed")
 
@@ -73,19 +73,16 @@ def execute_pipeline(
     schema_path: str,
     rename_headers_list: dict,
     remove_whitespace_list: typing.List[str],
-    reorder_headers_list: typing.List[str]
+    reorder_headers_list: typing.List[str],
 ) -> None:
-    download_file(
-        source_url=source_url,
-        source_file=source_file
-    )
+    download_file(source_url=source_url, source_file=source_file)
     process_source_file(
         source_file=source_file,
         target_file=target_file,
         chunksize=chunksize,
         rename_headers_list=rename_headers_list,
         remove_whitespace_list=remove_whitespace_list,
-        reorder_headers_list=reorder_headers_list
+        reorder_headers_list=reorder_headers_list,
     )
     if os.path.exists(target_file):
         upload_file_to_gcs(
@@ -106,7 +103,7 @@ def execute_pipeline(
                 dataset_id=dataset_id,
                 table_id=destination_table,
                 file_path=target_file,
-                truncate_table=True
+                truncate_table=True,
             )
         else:
             error_msg = f"Error: Data was not loaded because the destination table {project_id}.{dataset_id}.{destination_table} does not exist and/or could not be created."
@@ -123,7 +120,7 @@ def process_source_file(
     target_file: pathlib.Path,
     rename_headers_list: dict,
     remove_whitespace_list: typing.List[str],
-    reorder_headers_list: typing.List[str]
+    reorder_headers_list: typing.List[str],
 ) -> None:
     logging.info(f"Processing source file {source_file}")
     with pd.read_csv(
@@ -147,7 +144,7 @@ def process_source_file(
                 skip_header=(not chunk_number == 0),
                 rename_headers_list=rename_headers_list,
                 remove_whitespace_list=remove_whitespace_list,
-                reorder_headers_list=reorder_headers_list
+                reorder_headers_list=reorder_headers_list,
             )
 
 
@@ -158,7 +155,7 @@ def process_chunk(
     skip_header: bool,
     rename_headers_list: dict,
     remove_whitespace_list: typing.List[str],
-    reorder_headers_list: typing.List[str]
+    reorder_headers_list: typing.List[str],
 ) -> None:
     logging.info(f"Processing batch file {target_file_batch}")
     df = rename_headers(df, rename_headers_list)
@@ -174,7 +171,7 @@ def load_data_to_bq(
     dataset_id: str,
     table_id: str,
     file_path: str,
-    truncate_table: bool
+    truncate_table: bool,
 ) -> None:
     logging.info(
         f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} started"
@@ -239,10 +236,7 @@ def create_dest_table(
     return table_exists
 
 
-def check_gcs_file_exists(
-        file_path: str,
-        bucket_name: str
-) -> bool:
+def check_gcs_file_exists(file_path: str, bucket_name: str) -> bool:
     storage_client = storage.Client()
     bucket = storage_client.bucket(bucket_name)
     exists = storage.Blob(bucket=bucket, name=file_path).exists(storage_client)
@@ -250,9 +244,7 @@ def check_gcs_file_exists(
 
 
 def create_table_schema(
-    schema_structure: list,
-    bucket_name: str = "",
-    schema_filepath: str = ""
+    schema_structure: list, bucket_name: str = "", schema_filepath: str = ""
 ) -> list:
     logging.info(f"Defining table schema... {bucket_name} ... {schema_filepath}")
     schema = []
@@ -279,18 +271,14 @@ def create_table_schema(
     return schema
 
 
-def rename_headers(
-    df: pd.DataFrame,
-    rename_headers_list: dict
-) -> pd.DataFrame:
+def rename_headers(df: pd.DataFrame, rename_headers_list: dict) -> pd.DataFrame:
     logging.info("Renaming headers..")
     df.rename(columns=rename_headers_list, inplace=True)
     return df
 
 
 def remove_whitespace(
-    df: pd.DataFrame,
-    remove_whitespace_list: typing.List[str]
+    df: pd.DataFrame, remove_whitespace_list: typing.List[str]
 ) -> pd.DataFrame:
     for column in remove_whitespace_list:
         logging.info(f"Removing whitespace in column {column}..")
@@ -299,28 +287,20 @@ def remove_whitespace(
 
 
 def reorder_headers(
-        df: pd.DataFrame,
-        reorder_headers_list: typing.List[str]
+    df: pd.DataFrame, reorder_headers_list: typing.List[str]
 ) -> pd.DataFrame:
     logging.info("Reordering headers..")
     df = df[reorder_headers_list]
     return df
 
 
-def save_to_new_file(
-    df: pd.DataFrame,
-    file_path: str,
-    sep: str = "|"
-) -> None:
+def save_to_new_file(df: pd.DataFrame, file_path: str, sep: str = "|") -> None:
     logging.info(f"Saving data to target file.. {file_path} ...")
     df.to_csv(file_path, index=False, sep=sep)
 
 
 def append_batch_file(
-    batch_file_path: str,
-    target_file_path: str,
-    skip_header: bool,
-    truncate_file: bool
+    batch_file_path: str, target_file_path: str, skip_header: bool, truncate_file: bool
 ) -> None:
     with open(batch_file_path, "r") as data_file:
         if truncate_file:
@@ -342,10 +322,7 @@ def append_batch_file(
                 os.remove(batch_file_path)
 
 
-def download_file(
-    source_url: str,
-    source_file: pathlib.Path
-) -> None:
+def download_file(source_url: str, source_file: pathlib.Path) -> None:
     logging.info(f"Downloading {source_url} to {source_file}")
     r = requests.get(source_url, stream=True)
     if r.status_code == 200:
@@ -357,9 +334,7 @@ def download_file(
 
 
 def upload_file_to_gcs(
-    file_path: pathlib.Path,
-    target_gcs_bucket: str,
-    target_gcs_path: str
+    file_path: pathlib.Path, target_gcs_bucket: str, target_gcs_path: str
 ) -> None:
     if os.path.exists(file_path):
         logging.info(
@@ -392,5 +367,5 @@ if __name__ == "__main__":
         schema_path=os.environ["SCHEMA_PATH"],
         rename_headers_list=json.loads(os.environ["RENAME_HEADERS_LIST"]),
         remove_whitespace_list=json.loads(os.environ["REMOVE_WHITESPACE_LIST"]),
-        reorder_headers_list=json.loads(os.environ["REORDER_HEADERS_LIST"])
+        reorder_headers_list=json.loads(os.environ["REORDER_HEADERS_LIST"]),
     )

@@ -66,7 +66,7 @@ def main(
         rename_headers_list=rename_headers_list,
         regex_list=regex_list,
         crash_field_list=crash_field_list,
-        date_format_list=date_format_list
+        date_format_list=date_format_list,
     )
     logging.info(f"{pipeline_name} process completed")
 
@@ -124,7 +124,7 @@ def execute_pipeline(
                 dataset_id=dataset_id,
                 table_id=destination_table,
                 file_path=target_file,
-                truncate_table=True
+                truncate_table=True,
             )
         else:
             error_msg = f"Error: Data was not loaded because the destination table {project_id}.{dataset_id}.{destination_table} does not exist and/or could not be created."
@@ -140,7 +140,7 @@ def load_data_to_bq(
     dataset_id: str,
     table_id: str,
     file_path: str,
-    truncate_table: bool
+    truncate_table: bool,
 ) -> None:
     logging.info(
         f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} started"
@@ -323,19 +323,13 @@ def process_chunk(
     logging.info(f"Processing batch file {target_file_batch} completed")
 
 
-def resolve_datatypes(
-    df: pd.DataFrame,
-    resolve_datatypes_list: dict
-) -> pd.DataFrame:
+def resolve_datatypes(df: pd.DataFrame, resolve_datatypes_list: dict) -> pd.DataFrame:
     logging.info("Resolving column datatypes")
     df = df.astype(resolve_datatypes_list, errors="ignore")
     return df
 
 
-def reorder_headers(
-    df: pd.DataFrame,
-    headers_list: list
-) -> pd.DataFrame:
+def reorder_headers(df: pd.DataFrame, headers_list: list) -> pd.DataFrame:
     logging.info("Reordering Headers")
     df = df[headers_list]
     return df
@@ -348,10 +342,7 @@ def rename_headers(df: pd.DataFrame, header_list: dict) -> pd.DataFrame:
     return df
 
 
-def replace_regex(
-    df: pd.DataFrame,
-    regex_list: dict
-) -> pd.DataFrame:
+def replace_regex(df: pd.DataFrame, regex_list: dict) -> pd.DataFrame:
     for regex_item in regex_list:
         field_name = regex_item[0]
         search_expr = regex_item[1]
@@ -365,10 +356,7 @@ def replace_regex(
     return df
 
 
-def resolve_date_format(
-    df: pd.DataFrame,
-    date_fields: list = []
-) -> pd.DataFrame:
+def resolve_date_format(df: pd.DataFrame, date_fields: list = []) -> pd.DataFrame:
     for dt_fld in date_fields:
         field_name = dt_fld[0]
         logging.info(f"Resolving date format in column {field_name}")
@@ -381,9 +369,7 @@ def resolve_date_format(
 
 
 def convert_dt_format(
-    dt_str: str,
-    from_format: str,
-    to_format: str = "%Y-%m-%d %H:%M:%S"
+    dt_str: str, from_format: str, to_format: str = "%Y-%m-%d %H:%M:%S"
 ) -> str:
     if not dt_str or str(dt_str).lower() == "nan" or str(dt_str).lower() == "nat":
         dt_str = ""
@@ -409,10 +395,7 @@ def convert_dt_format(
 
 
 def add_crash_timestamp(
-    df: pd.DataFrame,
-    new_crash_field: str,
-    crash_date_field: str,
-    crash_time_field: str
+    df: pd.DataFrame, new_crash_field: str, crash_date_field: str, crash_time_field: str
 ) -> pd.DataFrame:
     logging.info(
         f"add_crash_timestamp '{new_crash_field}' '{crash_date_field}' '{crash_time_field}'"
@@ -427,21 +410,14 @@ def add_crash_timestamp(
     return df
 
 
-def crash_timestamp(
-    crash_date: str,
-    crash_time: str
-) -> str:
+def crash_timestamp(crash_date: str, crash_time: str) -> str:
     # if crash time format is H:MM then convert to HH:MM:SS
     if len(crash_time) == 4:
         crash_time = f"0{crash_time}:00"
     return f"{crash_date} {crash_time}"
 
 
-def save_to_new_file(
-    df: pd.DataFrame,
-    file_path: str,
-    sep: str = "|"
-) -> None:
+def save_to_new_file(df: pd.DataFrame, file_path: str, sep: str = "|") -> None:
     logging.info(f"Saving data to target file.. {file_path} ...")
     df.to_csv(file_path, index=False, sep=sep)
 
@@ -469,10 +445,7 @@ def append_batch_file(
                 os.remove(batch_file_path)
 
 
-def download_file(
-    source_url: str,
-    source_file: pathlib.Path
-) -> None:
+def download_file(source_url: str, source_file: pathlib.Path) -> None:
     logging.info(f"Downloading {source_url} to {source_file}")
     r = requests.get(source_url, stream=True)
     if r.status_code == 200:
@@ -484,9 +457,7 @@ def download_file(
 
 
 def upload_file_to_gcs(
-    file_path: pathlib.Path,
-    target_gcs_bucket: str,
-    target_gcs_path: str
+    file_path: pathlib.Path, target_gcs_bucket: str, target_gcs_path: str
 ) -> None:
     if os.path.exists(file_path):
         logging.info(

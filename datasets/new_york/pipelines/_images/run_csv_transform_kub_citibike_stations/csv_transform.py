@@ -127,7 +127,7 @@ def execute_pipeline(
                 dataset_id=dataset_id,
                 table_id=destination_table,
                 file_path=target_file,
-                truncate_table=True
+                truncate_table=True,
             )
         else:
             error_msg = f"Error: Data was not loaded because the destination table {project_id}.{dataset_id}.{destination_table} does not exist and/or could not be created."
@@ -143,7 +143,7 @@ def load_data_to_bq(
     dataset_id: str,
     table_id: str,
     file_path: str,
-    truncate_table: bool
+    truncate_table: bool,
 ) -> None:
     logging.info(
         f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} started"

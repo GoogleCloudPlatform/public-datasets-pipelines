@@ -112,7 +112,7 @@ def execute_pipeline(
                 dataset_id=dataset_id,
                 table_id=destination_table,
                 file_path=target_file,
-                truncate_table=True
+                truncate_table=True,
             )
         else:
             error_msg = f"Error: Data was not loaded because the destination table {project_id}.{dataset_id}.{destination_table} does not exist and/or could not be created."
@@ -141,7 +141,7 @@ def process_source_file(
         quotechar='"',
         chunksize=int(chunksize),
         dtype=data_dtypes,
-        parse_dates=parse_dates_list
+        parse_dates=parse_dates_list,
     ) as reader:
         for chunk_number, chunk in enumerate(reader):
             logging.info(f"Processing batch {chunk_number}")
@@ -167,7 +167,7 @@ def load_data_to_bq(
     dataset_id: str,
     table_id: str,
     file_path: str,
-    truncate_table: bool
+    truncate_table: bool,
 ) -> None:
     logging.info(
         f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} started"
@@ -232,10 +232,7 @@ def create_dest_table(
     return table_exists
 
 
-def check_gcs_file_exists(
-    file_path: str,
-    bucket_name: str
-) -> bool:
+def check_gcs_file_exists(file_path: str, bucket_name: str) -> bool:
     storage_client = storage.Client()
     bucket = storage_client.bucket(bucket_name)
     exists = storage.Blob(bucket=bucket, name=file_path).exists(storage_client)
@@ -243,9 +240,7 @@ def check_gcs_file_exists(
 
 
 def create_table_schema(
-    schema_structure: list,
-    bucket_name: str = "",
-    schema_filepath: str = ""
+    schema_structure: list, bucket_name: str = "", schema_filepath: str = ""
 ) -> list:
     logging.info(f"Defining table schema... {bucket_name} ... {schema_filepath}")
     schema = []
@@ -273,10 +268,7 @@ def create_table_schema(
 
 
 def append_batch_file(
-    batch_file_path: str,
-    target_file_path: str,
-    skip_header: bool,
-    truncate_file: bool
+    batch_file_path: str, target_file_path: str, skip_header: bool, truncate_file: bool
 ) -> None:
     with open(batch_file_path, "r") as data_file:
         if truncate_file:
@@ -317,8 +309,7 @@ def process_chunk(
 
 
 def remove_null_rows(
-    df: pd.DataFrame,
-    null_rows_list: typing.List[str]
+    df: pd.DataFrame, null_rows_list: typing.List[str]
 ) -> pd.DataFrame:
     logging.info("Removing rows with empty keys")
     for column in null_rows_list:
@@ -326,18 +317,14 @@ def remove_null_rows(
     return df
 
 
-def reorder_headers(
-    df: pd.DataFrame,
-    output_headers: typing.List[str]
-) -> pd.DataFrame:
+def reorder_headers(df: pd.DataFrame, output_headers: typing.List[str]) -> pd.DataFrame:
     logging.info("Reordering headers..")
     df = df[output_headers]
     return df
 
 
 def resolve_date_format(
-    df: pd.DataFrame,
-    parse_dates: typing.List[str]
+    df: pd.DataFrame, parse_dates: typing.List[str]
 ) -> pd.DataFrame:
     logging.info(df.dtypes)
     for dt_fld in parse_dates:
@@ -346,9 +333,7 @@ def resolve_date_format(
     return df
 
 
-def convert_dt_format(
-    dt_str: str
-) -> str:
+def convert_dt_format(dt_str: str) -> str:
     if not dt_str or str(dt_str).lower() == "nan" or str(dt_str).lower() == "nat":
         return ""
     elif (
@@ -361,28 +346,18 @@ def convert_dt_format(
         return str(dt_str)
 
 
-def rename_headers(
-    df: pd.DataFrame,
-    header_names: dict
-) -> pd.DataFrame:
+def rename_headers(df: pd.DataFrame, header_names: dict) -> pd.DataFrame:
     logging.info("Renaming Headers")
     df = df.rename(columns=header_names)
     return df
 
 
-def save_to_new_file(
-    df: pd.DataFrame,
-    file_path: str,
-    sep: str = "|"
-) -> None:
+def save_to_new_file(df: pd.DataFrame, file_path: str, sep: str = "|") -> None:
     logging.info(f"Saving data to target file.. {file_path} ...")
     df.to_csv(file_path, index=False, sep=sep)
 
 
-def download_file(
-    source_url: str,
-    source_file: pathlib.Path
-) -> None:
+def download_file(source_url: str, source_file: pathlib.Path) -> None:
     logging.info(f"Downloading {source_url} to {source_file}")
     r = requests.get(source_url, stream=True)
     if r.status_code == 200:
@@ -394,9 +369,7 @@ def download_file(
 
 
 def upload_file_to_gcs(
-    file_path: pathlib.Path,
-    target_gcs_bucket: str,
-    target_gcs_path: str
+    file_path: pathlib.Path, target_gcs_bucket: str, target_gcs_path: str
 ) -> None:
     if os.path.exists(file_path):
         logging.info(
