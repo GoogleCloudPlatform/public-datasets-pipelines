@@ -228,7 +228,11 @@ def table_has_year_data(
         return False
 
 
-def table_exists(project_id: str, dataset_id: str, table_name: str) -> bool:
+def table_exists(
+    project_id: str,
+    dataset_id: str,
+    table_name: str
+) -> bool:
     client = bigquery.Client(project=project_id)
     tables = client.list_tables(dataset_id)
     found_table = False
@@ -239,7 +243,10 @@ def table_exists(project_id: str, dataset_id: str, table_name: str) -> bool:
 
 
 def field_exists(
-    project_id: str, dataset_id: str, table_name: str, field_name: str
+    project_id: str,
+    dataset_id: str,
+    table_name: str,
+    field_name: str
 ) -> bool:
     if table_exists(project_id, dataset_id, table_name):
         client = bigquery.Client(project=project_id)
@@ -331,6 +338,7 @@ def load_data_to_bq(
     table_id: str,
     file_path: str,
     field_delimiter: str,
+    truncate_table: bool
 ) -> None:
     logging.info(
         f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} delim={field_delimiter} started"
@@ -340,6 +348,10 @@ def load_data_to_bq(
     job_config = bigquery.LoadJobConfig()
     job_config.source_format = bigquery.SourceFormat.CSV
     job_config.field_delimiter = field_delimiter
+    if truncate_table:
+        job_config.write_disposition = "WRITE_TRUNCATE"
+    else:
+        job_config.write_disposition = "WRITE_APPEND"
     job_config.skip_leading_rows = 1
     job_config.autodetect = False
     with open(file_path, "rb") as source_file:
@@ -353,7 +365,9 @@ def load_data_to_bq(
 
 
 def download_file_http(
-    source_url: str, source_file: pathlib.Path, continue_on_error: bool = False
+    source_url: str,
+    source_file: pathlib.Path,
+    continue_on_error: bool = False
 ) -> bool:
     logging.info(f"Downloading {source_url} to {source_file}")
     try:
@@ -384,7 +398,11 @@ def download_file_http(
         return False
 
 
-def unpack_file(infile: str, dest_path: str, compression_type: str = "zip") -> None:
+def unpack_file(
+    infile: str,
+    dest_path: str,
+    compression_type: str = "zip"
+) -> None:
     if os.path.exists(infile):
         if compression_type == "zip":
             logging.info(f"Unpacking {infile} to {dest_path}")
@@ -409,27 +427,51 @@ def create_dest_table(
     table_ref = f"{project_id}.{dataset_id}.{table_id}"
     logging.info(f"Attempting to create table {table_ref} if it doesn't already exist")
     client = bigquery.Client()
-    success = False
+    table_exists = False
     try:
         table_exists_id = client.get_table(table_ref).table_id
         logging.info(f"Table {table_exists_id} currently exists.")
-        success = True
+        table_exists = True
     except NotFound:
         logging.info(
             (
                 f"Table {table_ref} currently does not exist.  Attempting to create table."
             )
         )
-        schema = create_table_schema([], bucket_name, schema_filepath)
-        table = bigquery.Table(table_ref, schema=schema)
-        client.create_table(table)
-        print(f"Table {table_ref} was created".format(table_id))
-        success = True
-    return success
+        try:
+            if check_gcs_file_exists(schema_filepath, bucket_name):
+                schema = create_table_schema([], bucket_name, schema_filepath)
+                table = bigquery.Table(table_ref, schema=schema)
+                client.create_table(table)
+                print(f"Table {table_ref} was created".format(table_id))
+                table_exists = True
+            else:
+                file_name = os.path.split(schema_filepath)[1]
+                file_path = os.path.split(schema_filepath)[0]
+                logging.info(
+                    f"Error: Unable to create table {table_ref} because schema file {file_name} does not exist in location {file_path} in bucket {bucket_name}"
+                )
+                table_exists = False
+        except Exception as e:
+            logging.info(f"Unable to create table. {e}")
+            table_exists = False
+    return table_exists
+
+
+def check_gcs_file_exists(
+    file_path: str,
+    bucket_name: str
+) -> bool:
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(bucket_name)
+    exists = storage.Blob(bucket=bucket, name=file_path).exists(storage_client)
+    return exists
 
 
 def create_table_schema(
-    schema_structure: list, bucket_name: str = "", schema_filepath: str = ""
+    schema_structure: list,
+    bucket_name: str = "",
+    schema_filepath: str = ""
 ) -> list:
     logging.info(f"Defining table schema... {bucket_name} ... {schema_filepath}")
     schema = []
@@ -466,19 +508,30 @@ def process_chunk(
     output_headers: typing.List[str],
 ) -> None:
     df = resolve_date_format(df, "%Y-%m-%d %H:%M")
-    df = df[output_headers]
+    df = reorder_headers(df, output_headers)
     save_to_new_file(df=df, file_path=str(target_file_batch), sep=field_delimiter)
     append_batch_file(
         batch_file_path=target_file_batch,
         target_file_path=target_file,
         include_header=include_header,
         truncate_target_file=truncate_file,
+        truncate_table=True
     )
     logging.info(f"Processing Batch {target_file_batch} completed")
 
 
-def resolve_date_format(df: pd.DataFrame, from_format: str) -> pd.DataFrame:
-    logging.info("Resolving Date Format")
+def reorder_headers(
+    df: pd.DataFrame,
+    output_headers: typing.List[str]
+) -> pd.DataFrame:
+    logging.info("Reordering headers..")
+    df = df[output_headers]
+    return df
+
+def resolve_date_format(
+    df: pd.DataFrame,
+    from_format: str
+) -> pd.DataFrame:
     for col in df.columns:
         if df[col].dtype == "datetime64[ns]":
             logging.info(f"Resolving datetime on {col}")
@@ -486,7 +539,10 @@ def resolve_date_format(df: pd.DataFrame, from_format: str) -> pd.DataFrame:
     return df
 
 
-def convert_dt_format(dt_str: str, from_format: str) -> str:
+def convert_dt_format(
+    dt_str: str,
+    from_format: str
+) -> str:
     if not dt_str or str(dt_str).lower() == "nan" or str(dt_str).lower() == "nat":
         rtnval = ""
     elif len(dt_str.strip()) == 10:
@@ -510,7 +566,11 @@ def convert_dt_format(dt_str: str, from_format: str) -> str:
     return rtnval
 
 
-def save_to_new_file(df, file_path, sep="|") -> None:
+def save_to_new_file(
+    df: pd.DataFrame,
+    file_path: str,
+    sep: str = "|"
+) -> None:
     logging.info(f"Saving to file {file_path} separator='{sep}'")
     df.to_csv(file_path, sep=sep, index=False)
 
@@ -524,28 +584,30 @@ def append_batch_file(
     logging.info(
         f"Appending file {batch_file_path} to file {target_file_path} with include_header={include_header} and truncate_target_file={truncate_target_file}"
     )
-    data_file = open(batch_file_path, "r")
-    if truncate_target_file:
-        target_file = open(target_file_path, "w+").close()
-    target_file = open(target_file_path, "a+")
-    if not include_header:
-        logging.info(
-            f"Appending batch file {batch_file_path} to {target_file_path} without header"
-        )
-        next(data_file)
-    else:
-        logging.info(
-            f"Appending batch file {batch_file_path} to {target_file_path} with header"
-        )
-    target_file.write(data_file.read())
-    data_file.close()
-    target_file.close()
-    if os.path.exists(batch_file_path):
-        os.remove(batch_file_path)
+    with open(batch_file_path, "r") as data_file:
+        if truncate_target_file:
+            target_file = open(target_file_path, "w+").close()
+        with open(target_file_path, "a+") as target_file:
+            if not include_header:
+                logging.info(
+                    f"Appending batch file {batch_file_path} to {target_file_path} without header"
+                )
+                next(data_file)
+            else:
+                logging.info(
+                    f"Appending batch file {batch_file_path} to {target_file_path} with header"
+                )
+            target_file.write(data_file.read())
+            data_file.close()
+            target_file.close()
+            if os.path.exists(batch_file_path):
+                os.remove(batch_file_path)
 
 
 def upload_file_to_gcs(
-    file_path: pathlib.Path, target_gcs_bucket: str, target_gcs_path: str
+    file_path: pathlib.Path,
+    target_gcs_bucket: str,
+    target_gcs_path: str
 ) -> None:
     if os.path.exists(file_path):
         logging.info(
