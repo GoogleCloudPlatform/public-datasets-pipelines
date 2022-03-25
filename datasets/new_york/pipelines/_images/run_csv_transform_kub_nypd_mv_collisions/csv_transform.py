@@ -337,8 +337,7 @@ def reorder_headers(df: pd.DataFrame, headers_list: list) -> pd.DataFrame:
 
 def rename_headers(df: pd.DataFrame, header_list: dict) -> pd.DataFrame:
     logging.info("Renaming Headers")
-    header_names = header_list
-    df.rename(columns=header_names, inplace=True)
+    df.rename(columns=header_list, inplace=True)
     return df
 
 
@@ -439,8 +438,6 @@ def append_batch_file(
                     f"Appending batch file {batch_file_path} to {target_file_path}"
                 )
             target_file.write(data_file.read())
-            data_file.close()
-            target_file.close()
             if os.path.exists(batch_file_path):
                 os.remove(batch_file_path)
 

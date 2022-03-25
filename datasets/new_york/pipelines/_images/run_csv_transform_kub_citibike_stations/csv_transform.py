@@ -444,8 +444,6 @@ def append_batch_file(
                     f"Appending batch file {batch_file_path} to {target_file_path}"
                 )
             target_file.write(data_file.read())
-            data_file.close()
-            target_file.close()
             if os.path.exists(batch_file_path):
                 os.remove(batch_file_path)
 
