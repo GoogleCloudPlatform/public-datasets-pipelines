@@ -40,7 +40,7 @@ dag:
         location: "us-central1-c"
         body:
           name: new-york
-          initial_node_count: 1
+          initial_node_count: 2
           network: "{{ var.value.vpc_network }}"
           node_config:
             machine_type: e2-standard-16
@@ -215,9 +215,8 @@ dag:
               "location"
             ]
         resources:
-          limit_memory: "12G"
+          request_ephemeral_storage: "60G"
           limit_cpu: "3"
-          request_ephemeral_storage: "16G"
 
     - operator: "GKEStartPodOperator"
       description: "Run New York Citibike Stations Pipeline"
@@ -357,7 +356,7 @@ dag:
               "last_reported"
             ]
         resources:
-          limit_memory: "8G"
+          request_ephemeral_storage: "16G"
           limit_cpu: "3"
 
     - operator: "GKEStartPodOperator"
@@ -502,7 +501,7 @@ dag:
               "zip_code"
             ]
         resources:
-          limit_memory: "8G"
+          request_ephemeral_storage: "16G"
           limit_cpu: "3"
 
     - operator: "GKEStartPodOperator"
@@ -593,7 +592,7 @@ dag:
               "location"
             ]
         resources:
-          limit_memory: "8G"
+          request_ephemeral_storage: "16G"
           limit_cpu: "3"
 
     - operator: "GKEDeleteClusterOperator"
@@ -604,4 +603,4 @@ dag:
         name: new-york
 
   graph_paths:
-    - "create_cluster >> [transform_csv_nypd_mv_collisions, transform_csv_ny_citibike_stations, transform_csv_ny_tree_census_1995] >> transform_csv_ny_311_service_requests >> delete_cluster"
+    - "create_cluster >> [transform_csv_nypd_mv_collisions, transform_csv_ny_citibike_stations, transform_csv_ny_tree_census_1995, transform_csv_ny_311_service_requests ] >> delete_cluster"
