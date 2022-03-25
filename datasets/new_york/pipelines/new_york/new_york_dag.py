@@ -192,4 +192,5 @@ with DAG(
         transform_csv_nypd_mv_collisions,
         transform_csv_ny_citibike_stations,
         transform_csv_ny_tree_census_1995,
-    ] >> transform_csv_ny_311_service_requests >> delete_cluster
+    ] >> transform_csv_ny_311_service_requests
+    transform_csv_ny_311_service_requests >> delete_cluster
