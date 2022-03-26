@@ -324,7 +324,6 @@ def reorder_headers(df: pd.DataFrame, output_headers: typing.List[str]) -> pd.Da
 def resolve_date_format(
     df: pd.DataFrame, parse_dates: typing.List[str]
 ) -> pd.DataFrame:
-    logging.info(df.dtypes)
     for dt_fld in parse_dates:
         logging.info(f"Resolving date format in column {dt_fld}")
         df[dt_fld] = df[dt_fld].apply(convert_dt_format)
