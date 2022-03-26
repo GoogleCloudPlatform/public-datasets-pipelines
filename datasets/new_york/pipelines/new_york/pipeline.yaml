@@ -215,7 +215,7 @@ dag:
               "location"
             ]
         resources:
-          request_ephemeral_storage: "60G"
+          request_ephemeral_storage: "32G"
           limit_cpu: "3"
 
     - operator: "GKEStartPodOperator"
