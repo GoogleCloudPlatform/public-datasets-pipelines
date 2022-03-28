@@ -228,11 +228,7 @@ def table_has_year_data(
         return False
 
 
-def table_exists(
-    project_id: str,
-    dataset_id: str,
-    table_name: str
-) -> bool:
+def table_exists(project_id: str, dataset_id: str, table_name: str) -> bool:
     client = bigquery.Client(project=project_id)
     tables = client.list_tables(dataset_id)
     found_table = False
@@ -243,10 +239,7 @@ def table_exists(
 
 
 def field_exists(
-    project_id: str,
-    dataset_id: str,
-    table_name: str,
-    field_name: str
+    project_id: str, dataset_id: str, table_name: str, field_name: str
 ) -> bool:
     if table_exists(project_id, dataset_id, table_name):
         client = bigquery.Client(project=project_id)
@@ -338,7 +331,7 @@ def load_data_to_bq(
     table_id: str,
     file_path: str,
     field_delimiter: str,
-    truncate_table: bool
+    truncate_table: bool,
 ) -> None:
     logging.info(
         f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} delim={field_delimiter} started"
@@ -365,9 +358,7 @@ def load_data_to_bq(
 
 
 def download_file_http(
-    source_url: str,
-    source_file: pathlib.Path,
-    continue_on_error: bool = False
+    source_url: str, source_file: pathlib.Path, continue_on_error: bool = False
 ) -> bool:
     logging.info(f"Downloading {source_url} to {source_file}")
     try:
@@ -398,11 +389,7 @@ def download_file_http(
         return False
 
 
-def unpack_file(
-    infile: str,
-    dest_path: str,
-    compression_type: str = "zip"
-) -> None:
+def unpack_file(infile: str, dest_path: str, compression_type: str = "zip") -> None:
     if os.path.exists(infile):
         if compression_type == "zip":
             logging.info(f"Unpacking {infile} to {dest_path}")
@@ -458,10 +445,7 @@ def create_dest_table(
     return table_exists
 
 
-def check_gcs_file_exists(
-    file_path: str,
-    bucket_name: str
-) -> bool:
+def check_gcs_file_exists(file_path: str, bucket_name: str) -> bool:
     storage_client = storage.Client()
     bucket = storage_client.bucket(bucket_name)
     exists = storage.Blob(bucket=bucket, name=file_path).exists(storage_client)
@@ -469,9 +453,7 @@ def check_gcs_file_exists(
 
 
 def create_table_schema(
-    schema_structure: list,
-    bucket_name: str = "",
-    schema_filepath: str = ""
+    schema_structure: list, bucket_name: str = "", schema_filepath: str = ""
 ) -> list:
     logging.info(f"Defining table schema... {bucket_name} ... {schema_filepath}")
     schema = []
@@ -515,23 +497,18 @@ def process_chunk(
         target_file_path=target_file,
         include_header=include_header,
         truncate_target_file=truncate_file,
-        truncate_table=True
+        truncate_table=True,
     )
     logging.info(f"Processing Batch {target_file_batch} completed")
 
 
-def reorder_headers(
-    df: pd.DataFrame,
-    output_headers: typing.List[str]
-) -> pd.DataFrame:
+def reorder_headers(df: pd.DataFrame, output_headers: typing.List[str]) -> pd.DataFrame:
     logging.info("Reordering headers..")
     df = df[output_headers]
     return df
 
-def resolve_date_format(
-    df: pd.DataFrame,
-    from_format: str
-) -> pd.DataFrame:
+
+def resolve_date_format(df: pd.DataFrame, from_format: str) -> pd.DataFrame:
     for col in df.columns:
         if df[col].dtype == "datetime64[ns]":
             logging.info(f"Resolving datetime on {col}")
@@ -539,10 +516,7 @@ def resolve_date_format(
     return df
 
 
-def convert_dt_format(
-    dt_str: str,
-    from_format: str
-) -> str:
+def convert_dt_format(dt_str: str, from_format: str) -> str:
     if not dt_str or str(dt_str).lower() == "nan" or str(dt_str).lower() == "nat":
         rtnval = ""
     elif len(dt_str.strip()) == 10:
@@ -566,11 +540,7 @@ def convert_dt_format(
     return rtnval
 
 
-def save_to_new_file(
-    df: pd.DataFrame,
-    file_path: str,
-    sep: str = "|"
-) -> None:
+def save_to_new_file(df: pd.DataFrame, file_path: str, sep: str = "|") -> None:
     logging.info(f"Saving to file {file_path} separator='{sep}'")
     df.to_csv(file_path, sep=sep, index=False)
 
@@ -605,9 +575,7 @@ def append_batch_file(
 
 
 def upload_file_to_gcs(
-    file_path: pathlib.Path,
-    target_gcs_bucket: str,
-    target_gcs_path: str
+    file_path: pathlib.Path, target_gcs_bucket: str, target_gcs_path: str
 ) -> None:
     if os.path.exists(file_path):
         logging.info(
