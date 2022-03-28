@@ -95,7 +95,7 @@ def get_composer_bucket(
 
     composer_bucket = response.config.dag_gcs_prefix
     # Handle the response
-    print(response.config.dag_gcs_prefix)
+    print(composer_bucket)
 
 
 # [END composer_v1beta1_generated_Environments_GetEnvironment_sync]

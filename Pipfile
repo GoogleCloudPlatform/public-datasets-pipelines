@@ -6,9 +6,7 @@ name = "pypi"
 [packages]
 beautifulsoup4 = "==4.9.3"
 gcloud = "*"
-"google.cloud.orchestration.airflow" = "*"
-gunicorn = "*"
-apache-airflow = "*"
+
 
 [dev-packages]
 apache-airflow = "==2.1.2"
@@ -20,6 +18,9 @@ apache-beam = "2.32.0"
 black = "==21.5b1"
 flake8 = "==3.9.2"
 flask-openid = "==1.3.0"
+google-auth = "2.6.0"
+google.cloud.orchestration.airflow = "1.3.0"
+gunicorn = "20.1.0"
 isort = "*"
 kubernetes = "*"
 pandas-gbq = "==0.14.1"
