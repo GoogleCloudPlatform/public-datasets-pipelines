@@ -179,32 +179,32 @@ def create_dest_table(
     client = bigquery.Client()
     table_exists = False
     try:
-        table_exists_id = client.get_table(table_ref).table_id
+        table = client.get_table(table_ref)
+        table_exists_id = table.table_id
         logging.info(f"Table {table_exists_id} currently exists.")
-        table_exists = True
     except NotFound:
+        table = None
+    if not table:
         logging.info(
             (
                 f"Table {table_ref} currently does not exist.  Attempting to create table."
             )
         )
-        try:
-            if check_gcs_file_exists(schema_filepath, bucket_name):
-                schema = create_table_schema([], bucket_name, schema_filepath)
-                table = bigquery.Table(table_ref, schema=schema)
-                client.create_table(table)
-                print(f"Table {table_ref} was created".format(table_id))
-                table_exists = True
-            else:
-                file_name = os.path.split(schema_filepath)[1]
-                file_path = os.path.split(schema_filepath)[0]
-                logging.info(
-                    f"Error: Unable to create table {table_ref} because schema file {file_name} does not exist in location {file_path} in bucket {bucket_name}"
-                )
-                table_exists = False
-        except Exception as e:
-            logging.info(f"Unable to create table. {e}")
+        if check_gcs_file_exists(schema_filepath, bucket_name):
+            schema = create_table_schema([], bucket_name, schema_filepath)
+            table = bigquery.Table(table_ref, schema=schema)
+            client.create_table(table)
+            print(f"Table {table_ref} was created".format(table_id))
+            table_exists = True
+        else:
+            file_name = os.path.split(schema_filepath)[1]
+            file_path = os.path.split(schema_filepath)[0]
+            logging.info(
+                f"Error: Unable to create table {table_ref} because schema file {file_name} does not exist in location {file_path} in bucket {bucket_name}"
+            )
             table_exists = False
+    else:
+        table_exists = True
     return table_exists
 
 
@@ -396,6 +396,8 @@ def normalize_data(
 ) -> pd.DataFrame:
     for column in normalize_data_list:
         logging.info(f"Normalizing data in column {column}")
+        # Data is in list format in this column.
+        # Therefore remove square brackets and single quotes
         df[column] = (
             str(pd.Series(df[column])[0])
             .replace("[", "")
@@ -423,8 +425,7 @@ def reorder_headers(
     df: pd.DataFrame, output_headers_list: typing.List[str]
 ) -> pd.DataFrame:
     logging.info("Re-ordering Headers")
-    df = df[output_headers_list]
-    return df
+    return df[output_headers_list]
 
 
 def append_batch_file(

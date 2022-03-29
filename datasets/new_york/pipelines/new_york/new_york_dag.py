@@ -37,7 +37,7 @@ with DAG(
         location="us-central1-c",
         body={
             "name": "new-york",
-            "initial_node_count": 2,
+            "initial_node_count": 4,
             "network": "{{ var.value.vpc_network }}",
             "node_config": {
                 "machine_type": "e2-standard-16",
