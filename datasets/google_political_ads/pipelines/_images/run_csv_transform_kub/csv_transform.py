@@ -14,75 +14,92 @@
 
 
 import datetime
-import fnmatch
 import json
 import logging
-import math
 import os
 import pathlib
 import typing
 from zipfile import ZipFile
 
 import pandas as pd
-import requests
 from google.cloud import storage
+
+SPEND_RANGE_COLUMNS = [
+    "spend_range_max_usd",
+    "spend_range_max_eur",
+    "spend_range_max_inr",
+    "spend_range_max_bgn",
+    "spend_range_max_hrk",
+    "spend_range_max_czk",
+    "spend_range_max_dkk",
+    "spend_range_max_huf",
+    "spend_range_max_pln",
+    "spend_range_max_ron",
+    "spend_range_max_gbp",
+    "spend_range_max_sek",
+    "spend_range_max_nzd",
+]
+
+NUMERIC_COLUMNS = [
+    "spend_usd",
+    "spend_eur",
+    "spend_inr",
+    "spend_bgn",
+    "spend_hrk",
+    "spend_czk",
+    "spend_dkk",
+    "spend_huf",
+    "spend_pln",
+    "spend_ron",
+    "spend_gbp",
+    "spend_sek",
+    "spend_nzd",
+]
 
 
 def main(
-    source_url: str,
-    source_file: pathlib.Path,
-    source_csv_name: str,
+    source_bucket: str,
+    source_object: str,
+    zip_file: pathlib.Path,
+    csv_file: str,
     target_file: pathlib.Path,
     target_gcs_bucket: str,
     target_gcs_path: str,
     headers: typing.List[str],
     rename_mappings: dict,
-    pipeline_name: str,
+    table_name: str,
 ) -> None:
 
     logging.info(
-        f"google political ads {pipeline_name} process started at "
+        f"google political ads {table_name} process started at "
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
 
     logging.info("creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
 
-    logging.info(f"Downloading file {source_url}")
-    download_file(source_url, source_file)
+    logging.info(f"Downloading file gs://{source_bucket}/{source_object}")
+    download_blob(source_bucket, source_object, zip_file)
 
-    logging.info(f"Opening file {source_file}")
-    df = read_csv_file(source_file, source_csv_name)
+    logging.info(f"Opening file {zip_file}")
+    df = read_csv_file(zip_file, csv_file)
 
-    logging.info(f"Transforming.. {source_file}")
+    logging.info(f"Transforming.. {csv_file}")
 
-    logging.info(f"Transform: Rename columns for {pipeline_name}..")
+    logging.info(f"Transform: Rename columns for {table_name}..")
     rename_headers(df, rename_mappings)
 
-    if pipeline_name == "creative_stats":
-        logging.info(f"Transform: converting to integer for {pipeline_name}..")
-        df["spend_range_max_usd"] = df["spend_range_max_usd"].apply(convert_to_int)
-        df["spend_range_max_eur"] = df["spend_range_max_eur"].apply(convert_to_int)
-        df["spend_range_max_inr"] = df["spend_range_max_inr"].apply(convert_to_int)
-        df["spend_range_max_bgn"] = df["spend_range_max_bgn"].apply(convert_to_int)
-        df["spend_range_max_hrk"] = df["spend_range_max_hrk"].apply(convert_to_int)
-        df["spend_range_max_czk"] = df["spend_range_max_czk"].apply(convert_to_int)
-        df["spend_range_max_dkk"] = df["spend_range_max_dkk"].apply(convert_to_int)
-        df["spend_range_max_huf"] = df["spend_range_max_huf"].apply(convert_to_int)
-        df["spend_range_max_pln"] = df["spend_range_max_pln"].apply(convert_to_int)
-        df["spend_range_max_ron"] = df["spend_range_max_ron"].apply(convert_to_int)
-        df["spend_range_max_gbp"] = df["spend_range_max_gbp"].apply(convert_to_int)
-        df["spend_range_max_sek"] = df["spend_range_max_sek"].apply(convert_to_int)
-        df["spend_range_max_nzd"] = df["spend_range_max_nzd"].apply(convert_to_int)
-    else:
-        df = df
+    if table_name == "creative_stats":
+        logging.info(f"Transform: converting to integer for {table_name}..")
+        for col in SPEND_RANGE_COLUMNS:
+            df = convert_to_int(df, col)
 
-    logging.info(f"Transform: Reordering headers for {pipeline_name}.. ")
+    logging.info(f"Transform: Reordering headers for {table_name}.. ")
     df = df[headers]
 
     logging.info(f"Saving to output file.. {target_file}")
     try:
-        save_to_new_file(df, file_path=str(target_file))
+        save_to_new_file(df, str(target_file), table_name)
     except Exception as e:
         logging.error(f"Error saving output file: {e}.")
 
@@ -92,66 +109,60 @@ def main(
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
     logging.info(
-        f"Google Political Ads {pipeline_name} process completed at "
+        f"Google Political Ads {table_name} process completed at "
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
 
 
-def save_to_new_file(df: pd.DataFrame, file_path: str) -> None:
-    df.to_csv(file_path, index=False)
+def save_to_new_file(df: pd.DataFrame, file_path: str, table_name: str) -> None:
+    if table_name != "creative_stats" and "spend_usd" in df:
+        for column in NUMERIC_COLUMNS:
+            df[column] = pd.to_numeric(df[column]).astype(int)
+    df.to_csv(file_path, index=False, chunksize=10000)
 
 
 def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:
     storage_client = storage.Client()
     bucket = storage_client.bucket(gcs_bucket)
-    blob = bucket.blob(gcs_path)
+    blob = bucket.blob(gcs_path, chunk_size=1000 * (2 ** 18))
     blob.upload_from_filename(file_path)
 
 
-def download_file(source_url: str, source_file: pathlib.Path) -> None:
-    logging.info(f"Downloading {source_url} into {source_file}")
-    r = requests.get(source_url, stream=True)
-    if r.status_code == 200:
-        with open(source_file, "wb") as f:
-            for chunk in r:
-                f.write(chunk)
-    else:
-        logging.error(f"Couldn't download {source_url}: {r.text}")
+def download_blob(bucket, object, target_file):
+    """Downloads a blob from the bucket."""
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(bucket)
+    blob = bucket.blob(object)
+    blob.download_to_filename(target_file)
 
 
 def read_csv_file(source_file: pathlib.Path, source_csv_name: str) -> pd.DataFrame:
     with ZipFile(source_file) as zipfiles:
-        file_list = zipfiles.namelist()
-        csv_files = fnmatch.filter(file_list, source_csv_name)
-        data = [pd.read_csv(zipfiles.open(file_name)) for file_name in csv_files]
-    df = pd.concat(data)
-    return df
+        return pd.read_csv(zipfiles.open(source_csv_name), dtype=object)
 
 
 def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
     df.rename(columns=rename_mappings, inplace=True)
 
 
-def convert_to_int(input: str) -> str:
-    str_val = ""
-    if input == "" or (math.isnan(input)):
-        str_val = ""
-    else:
-        str_val = str(int(round(input, 0)))
-    return str_val
+def convert_to_int(df: pd.DataFrame, column_name: str) -> pd.DataFrame:
+    df[column_name] = df[column_name].fillna(0)
+    df[column_name] = df[column_name].astype(int)
+    return df
 
 
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
 
     main(
-        source_url=os.environ["SOURCE_URL"],
-        source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
-        source_csv_name=os.environ["FILE_NAME"],
+        source_bucket=os.environ["SOURCE_GCS_BUCKET"],
+        source_object=os.environ["SOURCE_GCS_OBJECT"],
+        zip_file=pathlib.Path(os.environ["ZIP_FILE"]).expanduser(),
+        csv_file=os.environ["CSV_FILE"],
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
         headers=json.loads(os.environ["CSV_HEADERS"]),
         rename_mappings=json.loads(os.environ["RENAME_MAPPINGS"]),
-        pipeline_name=os.environ["PIPELINE_NAME"],
+        table_name=os.environ["TABLE_NAME"],
     )
