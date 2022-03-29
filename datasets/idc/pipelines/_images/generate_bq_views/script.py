@@ -15,60 +15,103 @@
 import json
 import logging
 import os
-import pathlib
 import typing
 
+import google.api_core
+import google.auth
+import google.auth.impersonated_credentials
 from google.cloud import bigquery
+
+BQ_OAUTH_SCOPE = "https://www.googleapis.com/auth/bigquery"
 
 
 def main(
-    queries_dir: pathlib.Path,
-    gcp_project: str,
-    dataset_name: str,
-    dataset_versions: typing.List[str],
-    current_version: str,
+    source_project: str,
+    target_project: str,
+    bq_datasets: typing.List[str],
+    service_account: str,
 ):
-    client = bigquery.Client()
-    for version in dataset_versions:
-        sql_files = [f for f in (queries_dir / version).iterdir() if f.suffix == ".sql"]
-        for sql_file in sql_files:
-            query = load_query(
-                sql_file=sql_file,
-                gcp_project=gcp_project,
-                dataset=f"{dataset_name}_{version}",
-                current_version=current_version,
+    default_creds, pid = google.auth.default()
+    print(f"Obtained default credentials for the project {pid}")
+    credentials = google.auth.impersonated_credentials.Credentials(
+        source_credentials=default_creds,
+        target_principal=service_account,
+        target_scopes=[BQ_OAUTH_SCOPE],
+    )
+
+    client = bigquery.Client(credentials=credentials)
+    for dataset in bq_datasets:
+        logging.info(f"Generating views for {dataset}..")
+        tables = client.list_tables(f"{source_project}.{dataset}")
+
+        source_views = []
+        for table in tables:
+            if table.table_type == "TABLE":
+                continue
+            source_view = client.get_table(
+                f"{source_project}.{dataset}.{table.table_id}"
             )
+            create_or_update_view(client, source_view, target_project)
+            source_views.append(table.table_id)
 
-            client.query(query)
+        sync_views(client, dataset, source_views, target_project)
 
 
-def load_query(
-    sql_file: pathlib.Path, gcp_project: str, dataset: str, current_version: str
-) -> str:
-    query = sql_file.read_text()
-
-    # Replace template variables
-    query = query.replace("PROJECT", gcp_project)
-    query = query.replace("DATASET", dataset)
-    query = query.replace("CURRENT_VERSION", current_version)
-    query = f"""
-        CREATE OR REPLACE VIEW
-            `{gcp_project}.{dataset}.{sql_file.stem}`
-        AS (
-            {query}
+def create_or_update_view(
+    client: bigquery.Client, source_view: bigquery.Table, target_project: str
+) -> None:
+    try:
+        target_view = client.get_table(
+            f"{target_project}.{source_view.dataset_id}.{source_view.table_id}"
         )
-    """
+    except google.api_core.exceptions.NotFound:
+        target_view = None
 
-    return query
+    _view = bigquery.Table(
+        f"{target_project}.{source_view.dataset_id}.{source_view.table_id}"
+    )
+    _view.description = source_view.description
+    _view.view_query = source_view.view_query
+
+    # Create the view if it doesn't exist. Otherwise, update it.
+    if not target_view:
+        view = client.create_table(_view)
+        logging.info(f"View {view.full_table_id} successfully created.")
+    else:
+        view = client.update_table(_view, ["view_query", "description"])
+        logging.info(f"View {view.full_table_id} successfully updated.")
+
+
+def sync_views(
+    client: bigquery.Client,
+    dataset: str,
+    source_views: typing.List[str],
+    target_project: str,
+) -> None:
+    """Syncs views between source and target BQ datasets.
+
+    If a view exists in the target dataset but not in the source dataset, that
+    view must be deleted from the target dataset.
+    """
+    target_tables = client.list_tables(f"{target_project}.{dataset}")
+    for target_table in target_tables:
+        if not target_table.table_type == "VIEW":
+            continue
+        if target_table.table_id not in source_views:
+            logging.info(
+                f"Extra view {target_project}.{dataset}.{target_table.table_id} will be deleted."
+            )
+            client.delete_table(
+                f"{target_project}.{dataset}.{target_table.table_id}", not_found_ok=True
+            )
 
 
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
 
     main(
-        queries_dir=pathlib.Path(os.environ["QUERIES_DIR"]).expanduser(),
-        gcp_project=os.environ["GCP_PROJECT"],
-        dataset_name=os.environ["DATASET_NAME"],
-        dataset_versions=json.loads(os.environ["DATASET_VERSIONS"]),
-        current_version=os.environ["CURRENT_VERSION"],
+        source_project=os.environ["SOURCE_PROJECT_ID"],
+        target_project=os.environ["TARGET_PROJECT_ID"],
+        bq_datasets=json.loads(os.environ["BQ_DATASETS"]),
+        service_account=os.environ["SERVICE_ACCOUNT"],
     )
