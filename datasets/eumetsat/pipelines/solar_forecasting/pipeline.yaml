@@ -1,0 +1,33 @@
+resources: ~
+
+dag:
+  airflow_version: 2
+  initialize:
+    dag_id: solar_forecasting
+    default_args:
+      owner: "Google"
+      depends_on_past: False
+      start_date: '2022-01-19'
+    max_active_runs: 1
+    schedule_interval: "@once"
+    catchup: False
+    default_view: graph
+
+  tasks:
+    - operator: "CloudDataTransferServiceGCSToGCSOperator"
+      description: "Task to run a GCS to GCS operation using Google resources"
+      args:
+        task_id: copy_gcs_bucket
+        timeout: 43200  # 12 hours
+        retries: 0
+        wait: True
+        project_id: bigquery-public-data
+        source_bucket: "{{ var.json.eumetsat.solar_forecasting.source_bucket }}"
+        object_conditions:
+          includePrefixes:
+            - satellite/EUMETSAT/SEVIRI_RSS/v3/eumetsat_seviri_hrv_uk.zarr
+        destination_bucket: "{{ var.json.eumetsat.solar_forecasting.destination_bucket }}"
+        google_impersonation_chain: "{{ var.json.eumetsat.solar_forecasting.service_account }}"
+
+  graph_paths:
+    - "copy_gcs_bucket"
