@@ -24,14 +24,3 @@ resource "google_bigquery_dataset" "sec_failure_to_deliver" {
 output "bigquery_dataset-sec_failure_to_deliver-dataset_id" {
   value = google_bigquery_dataset.sec_failure_to_deliver.dataset_id
 }
-
-resource "google_storage_bucket" "sec-failure-to-deliver" {
-  name                        = "${var.bucket_name_prefix}-sec-failure-to-deliver"
-  force_destroy               = true
-  location                    = "US"
-  uniform_bucket_level_access = true
-}
-
-output "storage_bucket-sec-failure-to-deliver-name" {
-  value = google_storage_bucket.sec-failure-to-deliver.name
-}

@@ -16,15 +16,10 @@
 
 
 resource "google_bigquery_table" "sec_failure_to_deliver_fails_to_deliver" {
-  project    = var.project_id
-  dataset_id = "sec_failure_to_deliver"
-  table_id   = "fails_to_deliver"
-
+  project     = var.project_id
+  dataset_id  = "sec_failure_to_deliver"
+  table_id    = "fails_to_deliver"
   description = "fails_to_deliver Dataset"
-
-
-
-
   depends_on = [
     google_bigquery_dataset.sec_failure_to_deliver
   ]

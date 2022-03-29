@@ -22,7 +22,3 @@ resources:
   - type: bigquery_dataset
     dataset_id: sec_failure_to_deliver
     description: sec_failure_to_deliver datasets
-  - type: storage_bucket
-    name: sec-failure-to-deliver
-    uniform_bucket_level_access: True
-    location: US
