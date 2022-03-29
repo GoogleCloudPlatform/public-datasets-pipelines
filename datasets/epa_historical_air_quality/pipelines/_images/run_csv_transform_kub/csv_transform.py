@@ -30,7 +30,7 @@ def main(
     source_url: str,
     start_year: int,
     source_file: pathlib.Path,
-    target_file: pathlib.Path,
+    # target_file: pathlib.Path,
     project_id: str,
     dataset_id: str,
     table_id: str,
@@ -45,7 +45,7 @@ def main(
     data_dtypes: dict,
     output_headers: typing.List[str],
 ) -> None:
-    logging.info("Pipeline process started")
+    logging.info(f"{pipeline_name} process started")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
     dest_path = os.path.split(source_file)[0]
     execute_pipeline(
@@ -66,7 +66,7 @@ def main(
         chunksize=chunksize,
         field_delimiter="|",
     )
-    logging.info("Pipeline process completed")
+    logging.info(f"{pipeline_name} process completed")
 
 
 def execute_pipeline(
@@ -160,7 +160,7 @@ def process_year_data(
     table_has_data = table_has_year_data(
         project_id, dataset_id, table_name, year_field_name, year_field_type, year
     )
-    if table_has_data is True or table_has_data is None:
+    if table_has_data or table_has_data is None:
         pass
     else:
         src_url = source_url.replace("YEAR_ITERATOR", str(year))
@@ -191,6 +191,7 @@ def process_year_data(
                 table_id=table_name,
                 file_path=target_file,
                 field_delimiter=field_delimiter,
+                truncate_table=False
             )
             if os.path.exists(target_file):
                 upload_file_to_gcs(
@@ -331,7 +332,7 @@ def load_data_to_bq(
     table_id: str,
     file_path: str,
     field_delimiter: str,
-    truncate_table: bool,
+    truncate_table: bool
 ) -> None:
     logging.info(
         f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} delim={field_delimiter} started"
@@ -496,8 +497,7 @@ def process_chunk(
         batch_file_path=target_file_batch,
         target_file_path=target_file,
         include_header=include_header,
-        truncate_target_file=truncate_file,
-        truncate_table=True,
+        truncate_target_file=truncate_file
     )
     logging.info(f"Processing Batch {target_file_batch} completed")
 
@@ -549,7 +549,7 @@ def append_batch_file(
     batch_file_path: str,
     target_file_path: str,
     include_header: bool,
-    truncate_target_file: bool,
+    truncate_target_file: bool
 ) -> None:
     logging.info(
         f"Appending file {batch_file_path} to file {target_file_path} with include_header={include_header} and truncate_target_file={truncate_target_file}"
@@ -598,7 +598,6 @@ if __name__ == "__main__":
         source_url=os.environ["SOURCE_URL"],
         start_year=int(os.environ["START_YEAR"]),
         source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
-        target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
         project_id=os.environ["PROJECT_ID"],
         dataset_id=os.environ["DATASET_ID"],
         table_id=os.environ["TABLE_ID"],
