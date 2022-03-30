@@ -124,7 +124,7 @@ def save_to_new_file(df: pd.DataFrame, file_path: str, table_name: str) -> None:
 def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:
     storage_client = storage.Client()
     bucket = storage_client.bucket(gcs_bucket)
-    blob = bucket.blob(gcs_path, chunk_size=1000 * (2 ** 18))
+    blob = bucket.blob(gcs_path, chunk_size=1000 * pow(2, 18))
     blob.upload_from_filename(file_path)
 
 
