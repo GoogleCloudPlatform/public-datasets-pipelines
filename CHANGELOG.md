@@ -1,5 +1,43 @@
 # Changelog
 
+## [3.0.0](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v2.8.0...v3.0.0) (2022-03-24)
+
+
+### ⚠ BREAKING CHANGES
+
+* Reorganize pipelines and infra files into their respective folders (#292)
+
+### Features
+
+* Reorganize pipelines and infra files into their respective folders ([#292](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/292)) ([7408d44](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/7408d4439715907fef63dccc31df51b838e365da))
+* Upgrade some pipelines to Airflow 2 and explicitly set pod storage ([#283](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/283)) ([cbc3278](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/cbc3278cbc5cde0ead7f20a475d8b76818658a2e))
+
+
+### Datasets
+
+* Onboard Broad Genome References dataset ([#316](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/316)) ([4f1f6db](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/4f1f6db5122554355312268acd777924ed43f248))
+* Onboard Imaging Data Commons (IDC) v7 dataset ([#287](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/287)) ([dfda5d9](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/dfda5d99e244e7111a8ae9bb5bb361b11046e829))
+* Onboard ML dataset ([#276](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/276)) ([48e51af](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/48e51af09bdb5204afbbc1dddb0651dac86c544d))
+* Onboard Travel Sustainability dataset ([#280](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/280)) ([8e9731a](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/8e9731a190701452d6fc71f5c58353a0197057d1))
+* Onboard Travel Sustainability dataset (schema update) ([#298](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/298)) ([7a13daa](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/7a13daa3a0bd229d86258a775f7388e2e8d7641e))
+* Onboarding TheLook E-Commerce dataset ([#294](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/294)) ([15f663a](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/15f663a12edbb6b316c369795ff31ae7f3719336))
+* Revise Google Political Ads due to new dataset version ([#317](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/317)) ([6ffb0d0](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/6ffb0d0d17aacfc8d72ec3ee55840b51568fdb14))
+* Update "location" to GEOGRAPHY type for `datasets/google_trends` schema ([#297](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/297)) ([9d9d3bd](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/9d9d3bd567525eef8cc083ac107321b79dcffaf1))
+
+
+### Docs
+
+* Docs: Add SF 311 example ([#310](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/310)) ([844a7fb](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/844a7fb5b0045c8d2fdc24a3221140f8546d9cd1))
+* Docs: Add a query snippet to calculate the monthly average bike trips for `san_francisco_bikeshare` ([#284](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/284)) ([7a009f6](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/7a009f6ba3b188b4e12cae4afc626d7ae06c212a))
+* Docs: Added a template for tutorials ([#299](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/299)) ([ae23d4b](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/ae23d4bf4e3692e55eda255802cad88290660081))
+* Docs: SF 311 Calls - Predicting the number of calls per category using LSTM ([#293](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/293)) ([88637ca](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/88637cab72125498cdf03d348c05ee15792b3c4a))
+
+
+### Bug Fixes
+
+* Allow other JSON files to be checked in (such as `schema.json`) ([#281](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/281)) ([2c94b79](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/2c94b79b69046fb8f9c824581393228923da5442))
+* Update and fix `city_health_dashboard` dataset ([#285](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/285)) ([4767fed](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/4767fed68e681e8ad9d43e198a716c62d1578e03))
+
 ## [2.8.0](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v2.7.0...v2.8.0) (2022-01-27)
 
 
