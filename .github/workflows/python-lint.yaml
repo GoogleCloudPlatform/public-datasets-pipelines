@@ -12,7 +12,7 @@ jobs:
           python -m pip install flake8 isort nbqa
       - uses: psf/black@stable
         with:
-          args: ". --check"
+          options: "--check"
           version: "22.3.0"
       - name: Run Flake8 Linter
         run: flake8
