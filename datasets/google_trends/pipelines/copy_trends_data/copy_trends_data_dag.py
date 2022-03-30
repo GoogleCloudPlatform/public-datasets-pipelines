@@ -45,7 +45,7 @@ with DAG(
             "SOURCE_BQ_DATASET": "{{ var.json.google_trends.source_bq_dataset }}",
             "TARGET_PROJECT_ID": "{{ var.json.google_trends.target_project_id }}",
             "TARGET_BQ_DATASET": "{{ var.json.google_trends.target_bq_dataset }}",
-            "EXPECTED_TABLES": '["top_terms", "top_rising_terms", "top_terms_international", "top_rising_terms_international"]',
+            "EXPECTED_TABLES": '["top_terms", "top_rising_terms", "international_top_terms", "international_top_rising_terms"]',
             "SERVICE_ACCOUNT": "{{ var.json.google_trends.service_account }}",
         },
         resources={"request_memory": "128M", "request_cpu": "200m"},
