@@ -13,7 +13,7 @@ jobs:
       - uses: psf/black@stable
         with:
           args: ". --check"
-          version: "21.5b1"
+          version: "22.3.0"
       - name: Run Flake8 Linter
         run: flake8
       - name: Run isort
