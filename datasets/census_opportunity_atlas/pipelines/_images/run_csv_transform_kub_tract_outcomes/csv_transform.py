@@ -25,7 +25,7 @@ def main(
     source_file: pathlib.Path,
     source_file_unzipped: str,
     target_file: pathlib.Path,
-    chunksize: str,
+    # chunksize: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
     english_pipeline_name: str,
@@ -71,9 +71,7 @@ if __name__ == "__main__":
     main(
         source_url=os.environ["SOURCE_URL"],
         source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
-        source_file_unzipped=pathlib.Path(
-            os.environ["SOURCE_FILE_UNZIPPED"]
-        ).expanduser(),
+        source_file_unzipped=pathlib.Path(os.environ["SOURCE_FILE_UNZIPPED"]).expanduser(),
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
         chunksize=os.environ["CHUNKSIZE"],
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],

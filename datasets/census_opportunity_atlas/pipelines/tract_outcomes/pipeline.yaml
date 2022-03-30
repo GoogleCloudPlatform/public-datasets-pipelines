@@ -14,11 +14,9 @@
 
 ---
 resources:
-
   - type: bigquery_table
     table_id: "tract_outcomes"
     description: "tract_outcomesspc"
-
 dag:
   airflow_version: 2
   initialize:
@@ -31,53 +29,38 @@ dag:
     schedule_interval: "@daily"
     catchup: False
     default_view: graph
-
   tasks:
-
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod"
-
       args:
-
         task_id: "transform_csv"
         name: "tract_outcomes"
         namespace: "default"
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                    - key: cloud.google.com/gke-nodepool
-                      operator: In
-                      values:
-                        - "pool-e2-standard-4"
         image_pull_policy: "Always"
         image: "{{ var.json.census_opportunity_atlas.container_registry.run_csv_transform_kub_tract_outcomes }}"
         env_vars:
           SOURCE_URL: "https://opportunityinsights.org/wp-content/uploads/2018/10/tract_outcomes.zip"
-          SOURCE_FILE: "files/data.csv"
+          SOURCE_FILE: "files/data_tract_outcomes.csv"
           SOURCE_FILE_UNZIPPED: "files/tract_outcomes_early.csv"
-          TARGET_FILE: "files/data_output.csv"
+          TARGET_FILE: "files/data_output_tract_outcomes.csv"
           CHUNKSIZE: "50000"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
-          TARGET_GCS_PATH: "data/census_opportunity_atlas/tract_outcomes/files/data_output.csv"
-          ENGLISH_PIPELINE_NAME: "Census Opportunity Atlas - Tract Outcomes"
+          TARGET_GCS_PATH: "{{ var.json.census_opportunity_atlas.container_registry.tract_outcomes.target_gcs_path }}"
+          PIPELINE_NAME: "Census Opportunity Atlas - Tract Outcomes"
           resources:
           limit_memory: "4G"
           limit_cpu: "1"
-
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
       args:
         task_id: "load_to_bq"
         bucket: "{{ var.value.composer_bucket }}"
-        source_objects: ["data/census_opportunity_atlas/tract_outcomes/files/data_output.csv"]
+        source_objects: ["{{ var.json.census_opportunity_atlas.container_registry.tract_outcomes.target_gcs_path }}"]
         schema_object: "data/census_opportunity_atlas/tract_outcomes/schema.json"
         source_format: "CSV"
-        destination_project_dataset_table: "{{ var.json.census_opportunity_atlas.container_registry.tract_outcomes_destination_table }}"
+        destination_project_dataset_table: "{{ var.json.census_opportunity_atlas.container_registry.tract_outcomes.destination_table }}"
         skip_leading_rows: 1
         allow_quoted_newlines: True
         write_disposition: "WRITE_TRUNCATE"
-
   graph_paths:
     - "transform_csv >> load_to_bq"
