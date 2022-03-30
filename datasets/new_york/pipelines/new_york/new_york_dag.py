@@ -58,7 +58,7 @@ with DAG(
         cluster_name="new-york",
         namespace="default",
         image_pull_policy="Always",
-        image="gcr.io/bigquery-public-data-dev/new_york__run_csv_transform_kub_311_service_requests:latest",
+        image="{{ var.json.new_york.container_registry.ny_311_service_requests.run_csv_transform_kub }}",
         env_vars={
             "PIPELINE_NAME": "{{ var.json.new_york.container_registry.ny_311_service_requests.pipeline_name }}",
             "SOURCE_URL": "{{ var.json.new_york.container_registry.ny_311_service_requests.source_url }}",
