@@ -191,7 +191,7 @@ def process_year_data(
                 table_id=table_name,
                 file_path=target_file,
                 field_delimiter=field_delimiter,
-                truncate_table=False
+                truncate_table=False,
             )
             if os.path.exists(target_file):
                 upload_file_to_gcs(
@@ -332,7 +332,7 @@ def load_data_to_bq(
     table_id: str,
     file_path: str,
     field_delimiter: str,
-    truncate_table: bool
+    truncate_table: bool,
 ) -> None:
     logging.info(
         f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} delim={field_delimiter} started"
@@ -497,7 +497,7 @@ def process_chunk(
         batch_file_path=target_file_batch,
         target_file_path=target_file,
         include_header=include_header,
-        truncate_target_file=truncate_file
+        truncate_target_file=truncate_file,
     )
     logging.info(f"Processing Batch {target_file_batch} completed")
 
@@ -549,7 +549,7 @@ def append_batch_file(
     batch_file_path: str,
     target_file_path: str,
     include_header: bool,
-    truncate_target_file: bool
+    truncate_target_file: bool,
 ) -> None:
     logging.info(
         f"Appending file {batch_file_path} to file {target_file_path} with include_header={include_header} and truncate_target_file={truncate_target_file}"
