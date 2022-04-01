@@ -38,14 +38,12 @@ def main(
     target_gcs_bucket: str,
     target_gcs_path: str,
     input_headers: typing.List[str],
-    data_dtypes: dict,
     rename_mappings: dict,
 ) -> None:
     logging.info(f"{pipeline_name} process started")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
     execute_pipeline(
         source_url=source_url,
-        pipeline_name=pipeline_name,
         source_file=source_file,
         source_file_unzipped=source_file_unzipped,
         target_file=target_file,
@@ -57,7 +55,6 @@ def main(
         target_gcs_bucket=target_gcs_bucket,
         target_gcs_path=target_gcs_path,
         input_headers=input_headers,
-        data_dtypes=data_dtypes,
         rename_mappings=rename_mappings
     )
     logging.info(f"{pipeline_name} process completed")
@@ -65,7 +62,6 @@ def main(
 
 def execute_pipeline(
     source_url: str,
-    pipeline_name: str,
     source_file: pathlib.Path,
     source_file_unzipped: str,
     target_file: pathlib.Path,
@@ -77,26 +73,28 @@ def execute_pipeline(
     target_gcs_bucket: str,
     target_gcs_path: str,
     input_headers: typing.List[str],
-    data_dtypes: dict,
     rename_mappings: dict,
 ) -> None:
-    if pipeline_name == "tract_outcomes":
+    if destination_table == "tract_outcomes":
         source_zipfile = str.replace(str(source_file), ".csv", ".zip")
         source_file_path = source_file.parent
-        download_file(source_url, source_zipfile)
-        zip_decompress(source_zipfile, source_file_path, True)
+        download_file(
+            source_url=source_url,
+            source_file=source_zipfile
+        )
+        zip_decompress(
+            infile=source_zipfile,
+            topath=source_file_path,
+            remove_zipfile=True
+        )
         os.rename(source_file_unzipped, target_file)
     else:
         download_file(source_url, source_file)
-        # df = pd.read_csv(str(source_file))
-        # df = rename_headers(df, rename_mappings)
-        # save_to_new_file(df, file_path=str(target_file), sep=",")
         process_source_file(
             source_file=source_file,
             target_file=target_file,
             chunksize=chunksize,
             input_headers=input_headers,
-            data_dtypes=data_dtypes,
             rename_mappings=rename_mappings
         )
     if os.path.exists(target_file):
@@ -113,13 +111,24 @@ def execute_pipeline(
             bucket_name=target_gcs_bucket,
         )
         if table_exists:
-            load_data_to_bq(
-                project_id=project_id,
-                dataset_id=dataset_id,
-                table_id=destination_table,
-                file_path=target_file,
-                truncate_table=True,
-            )
+            if destination_table == "tract_outcomes":
+                load_data_to_bq(
+                    project_id=project_id,
+                    dataset_id=dataset_id,
+                    table_id=destination_table,
+                    file_path=target_file,
+                    truncate_table=True,
+                    field_delimiter=","
+                )
+            else:
+                load_data_to_bq(
+                    project_id=project_id,
+                    dataset_id=dataset_id,
+                    table_id=destination_table,
+                    file_path=target_file,
+                    truncate_table=True,
+                    field_delimiter="|"
+                )
         else:
             error_msg = f"Error: Data was not loaded because the destination table {project_id}.{dataset_id}.{destination_table} does not exist and/or could not be created."
             raise ValueError(error_msg)
@@ -134,7 +143,6 @@ def process_source_file(
     target_file: str,
     chunksize: str,
     input_headers: typing.List[str],
-    data_dtypes: dict,
     rename_mappings: dict,
 ) -> None:
     logging.info(f"Opening source file {source_file}")
@@ -147,7 +155,6 @@ def process_source_file(
         sep=",",  # data column separator, typically ","
         header=0,  # use when the data file does not contain a header
         names=input_headers,
-        # dtype=data_dtypes,
         keep_default_na=True,
         na_values=[" "],
     ) as reader:
@@ -202,7 +209,7 @@ def append_batch_file(
 
 
 def download_file(source_url: str, source_file: pathlib.Path) -> None:
-    logging.info(f"Downloading file {source_url}")
+    logging.info(f"Downloading file {source_url} to {source_file}")
     r = requests.get(source_url, stream=True)
     with open(source_file, "wb") as f:
         for chunk in r:
@@ -229,6 +236,7 @@ def load_data_to_bq(
     table_id: str,
     file_path: str,
     truncate_table: bool,
+    field_delimiter: str = "|"
 ) -> None:
     logging.info(
         f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} started"
@@ -237,7 +245,7 @@ def load_data_to_bq(
     table_ref = client.dataset(dataset_id).table(table_id)
     job_config = bigquery.LoadJobConfig()
     job_config.source_format = bigquery.SourceFormat.CSV
-    job_config.field_delimiter = "|"
+    job_config.field_delimiter = field_delimiter
     if truncate_table:
         job_config.write_disposition = "WRITE_TRUNCATE"
     else:
