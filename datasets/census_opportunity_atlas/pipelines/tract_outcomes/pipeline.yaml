@@ -40,27 +40,18 @@ dag:
         image: "{{ var.json.census_opportunity_atlas.container_registry.run_csv_transform_kub_tract_outcomes }}"
         env_vars:
           SOURCE_URL: "https://opportunityinsights.org/wp-content/uploads/2018/10/tract_outcomes.zip"
+          PIPELINE_NAME: "Census Opportunity Atlas - Tract Outcomes"
           SOURCE_FILE: "files/data_tract_outcomes.csv"
           SOURCE_FILE_UNZIPPED: "files/tract_outcomes_early.csv"
           TARGET_FILE: "files/data_output_tract_outcomes.csv"
-          CHUNKSIZE: "50000"
+          CHUNKSIZE: "10000"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "{{ var.json.census_opportunity_atlas.container_registry.tract_outcomes.target_gcs_path }}"
-          PIPELINE_NAME: "Census Opportunity Atlas - Tract Outcomes"
-          resources:
-          limit_memory: "4G"
+          INPUT_CSV_HEADERS: [""]
+          DATA_DTYPES: {"":""}
+          RENAME_MAPPINGS: {"":""}
+        resources:
+          request_ephemeral_storage: "8G"
           limit_cpu: "1"
-    - operator: "GoogleCloudStorageToBigQueryOperator"
-      description: "Task to load CSV data to a BigQuery table"
-      args:
-        task_id: "load_to_bq"
-        bucket: "{{ var.value.composer_bucket }}"
-        source_objects: ["{{ var.json.census_opportunity_atlas.container_registry.tract_outcomes.target_gcs_path }}"]
-        schema_object: "data/census_opportunity_atlas/tract_outcomes/schema.json"
-        source_format: "CSV"
-        destination_project_dataset_table: "{{ var.json.census_opportunity_atlas.container_registry.tract_outcomes.destination_table }}"
-        skip_leading_rows: 1
-        allow_quoted_newlines: True
-        write_disposition: "WRITE_TRUNCATE"
   graph_paths:
     - "transform_csv >> load_to_bq"

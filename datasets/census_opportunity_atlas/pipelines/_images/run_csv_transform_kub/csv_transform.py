@@ -15,49 +15,70 @@ import json
 import logging
 import os
 import pathlib
+import typing
 from zipfile import ZipFile
 
 import pandas as pd
 import requests
-from google.cloud import storage
+from google.api_core.exceptions import NotFound
+from google.cloud import bigquery, storage
 
 
 def main(
     source_url: str,
+    pipeline_name: str,
     source_file: pathlib.Path,
     source_file_unzipped: str,
     target_file: pathlib.Path,
-    # chunksize: str,
+    project_id: str,
+    dataset_id: str,
+    table_id: str,
+    schema_path: str,
+    chunksize: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
+    input_headers: typing.List[str],
+    data_dtypes: dict,
     rename_mappings: dict,
-    pipeline_name: str,
 ) -> None:
     logging.info(f"{pipeline_name} process started")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
     execute_pipeline(
-        source_url,
-        source_file,
-        source_file_unzipped,
-        target_file,
-        target_gcs_bucket,
-        target_gcs_path,
-        rename_mappings,
-        pipeline_name
+        source_url=source_url,
+        pipeline_name=pipeline_name,
+        source_file=source_file,
+        source_file_unzipped=source_file_unzipped,
+        target_file=target_file,
+        project_id=project_id,
+        dataset_id=dataset_id,
+        destination_table=table_id,
+        schema_path=schema_path,
+        chunksize=chunksize,
+        target_gcs_bucket=target_gcs_bucket,
+        target_gcs_path=target_gcs_path,
+        input_headers=input_headers,
+        data_dtypes=data_dtypes,
+        rename_mappings=rename_mappings
     )
     logging.info(f"{pipeline_name} process completed")
 
 
 def execute_pipeline(
     source_url: str,
+    pipeline_name: str,
     source_file: pathlib.Path,
     source_file_unzipped: str,
     target_file: pathlib.Path,
-    # chunksize: str,
+    project_id: str,
+    dataset_id: str,
+    destination_table: str,
+    schema_path: str,
+    chunksize: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
+    input_headers: typing.List[str],
+    data_dtypes: dict,
     rename_mappings: dict,
-    pipeline_name: str,
 ) -> None:
     if pipeline_name == "tract_outcomes":
         source_zipfile = str.replace(str(source_file), ".csv", ".zip")
@@ -70,11 +91,51 @@ def execute_pipeline(
         # df = pd.read_csv(str(source_file))
         # df = rename_headers(df, rename_mappings)
         # save_to_new_file(df, file_path=str(target_file), sep=",")
-    upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
+        process_source_file(
+            source_file=source_file,
+            target_file=target_file,
+            chunksize=chunksize,
+            input_headers=input_headers,
+            data_dtypes=data_dtypes,
+            rename_mappings=rename_mappings
+        )
+    if os.path.exists(target_file):
+        upload_file_to_gcs(
+            file_path=target_file,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=target_gcs_path,
+        )
+        table_exists = create_dest_table(
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_id=destination_table,
+            schema_filepath=schema_path,
+            bucket_name=target_gcs_bucket,
+        )
+        if table_exists:
+            load_data_to_bq(
+                project_id=project_id,
+                dataset_id=dataset_id,
+                table_id=destination_table,
+                file_path=target_file,
+                truncate_table=True,
+            )
+        else:
+            error_msg = f"Error: Data was not loaded because the destination table {project_id}.{dataset_id}.{destination_table} does not exist and/or could not be created."
+            raise ValueError(error_msg)
+    else:
+        logging.info(
+            f"Informational: The data file {target_file} was not generated because no data file was available.  Continuing."
+        )
 
 
 def process_source_file(
-
+    source_file: str,
+    target_file: str,
+    chunksize: str,
+    input_headers: typing.List[str],
+    data_dtypes: dict,
+    rename_mappings: dict,
 ) -> None:
     logging.info(f"Opening source file {source_file}")
     with pd.read_csv(
@@ -82,9 +143,13 @@ def process_source_file(
         engine="python",
         encoding="utf-8",
         quotechar='"',
-        sep=",",
-        dtype=source_dtypes,
-        chunksize=int(chunksize),
+        chunksize=int(chunksize),  # size of batch data, in no. of records
+        sep=",",  # data column separator, typically ","
+        header=0,  # use when the data file does not contain a header
+        names=input_headers,
+        # dtype=data_dtypes,
+        keep_default_na=True,
+        na_values=[" "],
     ) as reader:
         for chunk_number, chunk in enumerate(reader):
             target_file_batch = str(target_file).replace(
@@ -97,13 +162,7 @@ def process_source_file(
                 target_file_batch=target_file_batch,
                 target_file=target_file,
                 skip_header=(not chunk_number == 0),
-                resolve_datatypes_list=resolve_datatypes_list,
-                transform_list=transform_list,
-                reorder_headers_list=reorder_headers_list,
-                rename_headers_list=rename_headers_list,
-                regex_list=regex_list,
-                crash_field_list=crash_field_list,
-                date_format_list=date_format_list,
+                rename_headers_list=rename_mappings,
             )
 
 
@@ -112,36 +171,11 @@ def process_chunk(
     target_file_batch: str,
     target_file: str,
     skip_header: bool,
-    resolve_datatypes_list: dict,
-    transform_list: list,
-    reorder_headers_list: list,
-    rename_headers_list: list,
-    regex_list: list,
-    crash_field_list: list,
-    date_format_list: list,
+    rename_headers_list: list
 ) -> None:
     logging.info(f"Processing batch file {target_file_batch}")
-    for transform in transform_list:
-        if transform == "replace_regex":
-            df = replace_regex(df, regex_list)
-        elif transform == "add_crash_timestamp":
-            for fld in crash_field_list:
-                new_crash_field = fld[0]
-                crash_date_field = fld[1]
-                crash_time_field = fld[2]
-                df[new_crash_field] = ""
-                df = add_crash_timestamp(
-                    df, new_crash_field, crash_date_field, crash_time_field
-                )
-        elif transform == "convert_date_format":
-            df = resolve_date_format(df, date_format_list)
-        elif transform == "resolve_datatypes":
-            df = resolve_datatypes(df, resolve_datatypes_list)
-        elif transform == "rename_headers":
-            df = rename_headers(df, rename_headers_list)
-        elif transform == "reorder_headers":
-            df = reorder_headers(df, reorder_headers_list)
-    save_to_new_file(df, file_path=str(target_file_batch))
+    df = rename_headers(df, rename_headers_list)
+    save_to_new_file(df, file_path=str(target_file_batch), sep="|")
     append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
     logging.info(f"Processing batch file {target_file_batch} completed")
 
@@ -299,12 +333,22 @@ def save_to_new_file(df: pd.DataFrame, file_path: str, sep: str = "|") -> None:
     df.to_csv(file_path, float_format="%.0f", index=False, sep=sep)
 
 
-def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:
-    logging.info("Uploading to GCS {gcs_bucket} in {gcs_path}")
-    storage_client = storage.Client()
-    bucket = storage_client.bucket(gcs_bucket)
-    blob = bucket.blob(gcs_path)
-    blob.upload_from_filename(file_path)
+def upload_file_to_gcs(
+    file_path: pathlib.Path, target_gcs_bucket: str, target_gcs_path: str
+) -> None:
+    if os.path.exists(file_path):
+        logging.info(
+            f"Uploading output file to gs://{target_gcs_bucket}/{target_gcs_path}"
+        )
+        storage_client = storage.Client()
+        bucket = storage_client.bucket(target_gcs_bucket)
+        blob = bucket.blob(target_gcs_path)
+        blob.upload_from_filename(file_path)
+    else:
+        logging.info(
+            f"Cannot upload file to gs://{target_gcs_bucket}/{target_gcs_path} as it does not exist."
+        )
+
 
 
 if __name__ == "__main__":
@@ -312,11 +356,18 @@ if __name__ == "__main__":
 
     main(
         source_url=os.environ["SOURCE_URL"],
+        pipeline_name=os.environ["PIPELINE_NAME"],
         source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
         source_file_unzipped=pathlib.Path(os.environ["SOURCE_FILE_UNZIPPED"]).expanduser(),
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
+        project_id=os.environ["PROJECT_ID"],
+        dataset_id=os.environ["DATASET_ID"],
+        table_id=os.environ["TABLE_ID"],
+        schema_path=os.environ["SCHEMA_PATH"],
         chunksize=os.environ["CHUNKSIZE"],
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
-        pipeline_name=os.environ["PIPELINE_NAME"],
+        input_headers=json.loads(os.environ["INPUT_CSV_HEADERS"]),
+        data_dtypes=json.loads(os.environ["DATA_DTYPES"]),
+        rename_mappings=json.loads(os.environ["RENAME_MAPPINGS"])
     )

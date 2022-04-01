@@ -44,28 +44,97 @@ dag:
           SOURCE_URL: "https://opportunityinsights.org/wp-content/uploads/2018/10/tract_covariates.csv"
           PIPELINE_NAME: "tract_covariates"
           SOURCE_FILE: "files/data_tract_covariates.csv"
+          SOURCE_FILE_UNZIPPED: ""
           TARGET_FILE: "files/data_output_tract_covariates.csv"
+          CHUNKSIZE: "50000"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "{{ var.json.census_opportunity_atlas.container_registry.tract_covariates.dataset_id }}"
+          TABLE_ID: "{{ var.json.census_opportunity_atlas.container_registry.tract_covariates.destination_table }}"
+          SCHEMA_PATH: "{{ var.json.census_opportunity_atlas.container_registry.tract_covariates.schema_path }}"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "{{ var.json.census_opportunity_atlas.container_registry.tract_covariates.target_gcs_path }}"
-          CSV_HEADERS: >-
+          INPUT_CSV_HEADERS: >-
             [
-              "state","county","tract","cz","czname",
-              "hhinc_mean2000","mean_commutetime2000",
-              "frac_coll_plus2000","frac_coll_plus2010",
-              "foreign_share2010","med_hhinc1990",
-              "med_hhinc2016","popdensity2000",
-              "poor_share2010","poor_share2000",
-              "poor_share1990","share_white2010","share_black2010",
-              "share_hisp2010","share_asian2010","share_black2000",
-              "share_white2000","share_hisp2000","share_asian2000",
-              "gsmn_math_g3_2013","rent_twobed2015",
-              "singleparent_share2010","singleparent_share1990",
-              "singleparent_share2000","traveltime15_2010",
-              "emp2000","mail_return_rate2010","ln_wage_growth_hs_grad",
-              obs_total_5mi_2015","jobs_highpay_5mi_2015",
-              "popdensity2010","ann_avg_job_growth_2004_2013",
+              "state",
+              "county",
+              "tract",
+              "cz",
+              "czname",
+              "hhinc_mean2000",
+              "mean_commutetime2000",
+              "frac_coll_plus2000",
+              "frac_coll_plus2010",
+              "foreign_share2010",
+              "med_hhinc1990",
+              "med_hhinc2016",
+              "popdensity2000",
+              "poor_share2010",
+              "poor_share2000",
+              "poor_share1990",
+              "share_white2010",
+              "share_black2010",
+              "share_hisp2010",
+              "share_asian2010",
+              "share_black2000",
+              "share_white2000",
+              "share_hisp2000",
+              "share_asian2000",
+              "gsmn_math_g3_2013",
+              "rent_twobed2015",
+              "singleparent_share2010",
+              "singleparent_share1990",
+              "singleparent_share2000",
+              "traveltime15_2010",
+              "emp2000",
+              "mail_return_rate2010",
+              "ln_wage_growth_hs_grad",
+              "obs_total_5mi_2015",
+              "jobs_highpay_5mi_2015",
+              "popdensity2010",
+              "ann_avg_job_growth_2004_2013",
               "job_density_2013"
             ]
+          DATA_DTYPES: >-
+            {
+              "state": "int",
+              "county": "int",
+              "tract": "int",
+              "cz": "int",
+              "czname": "str",
+              "hhinc_mean2000": "float",
+              "mean_commutetime2000": "float",
+              "frac_coll_plus2000": "float",
+              "frac_coll_plus2010": "float",
+              "foreign_share2010": "float",
+              "med_hhinc1990": "float",
+              "med_hhinc2016": "int",
+              "popdensity2000": "float",
+              "poor_share2010": "float",
+              "poor_share2000": "float",
+              "poor_share1990": "float",
+              "share_white2010": "float",
+              "share_black2010": "float",
+              "share_hisp2010": "float",
+              "share_asian2010": "float",
+              "share_black2000": "float",
+              "share_white2000": "float",
+              "share_hisp2000": "float",
+              "share_asian2000": "float",
+              "gsmn_math_g3_2013": "float",
+              "rent_twobed2015": "int",
+              "singleparent_share2010": "float",
+              "singleparent_share1990": "float",
+              "singleparent_share2000": "float",
+              "traveltime15_2010": "float",
+              "emp2000": "float",
+              "mail_return_rate2010": "float",
+              "ln_wage_growth_hs_grad": "float",
+              "jobs_total_5mi_2015": "int",
+              "jobs_highpay_5mi_2015": "int",
+              "popdensity2010": "float",
+              "ann_avg_job_growth_2004_2013": "float",
+              "job_density_2013": "FLOAT"
+            }
           RENAME_MAPPINGS: >-
             {
               "state": "state",
@@ -110,130 +179,5 @@ dag:
         resources:
           request_ephemeral_storage: "8G"
           request_cpu: "1"
-    - operator: "GoogleCloudStorageToBigQueryOperator"
-      description: "Task to load CSV data to a BigQuery table"
-      args:
-        task_id: "load_to_bq"
-        bucket: "{{ var.value.composer_bucket }}"
-        source_objects: ["{{ var.json.census_opportunity_atlas.container_registry.tract_covariates.target_gcs_path }}"]
-        source_format: "CSV"
-        destination_project_dataset_table: "{{ var.json.census_opportunity_atlas.container_registry.tract_covariates.destination_table }}"
-        skip_leading_rows: 1
-        write_disposition: "WRITE_TRUNCATE"
-        schema_fields:
-          - name: "state"
-            type: "INTEGER"
-            mode: "NULLABLE"
-          - name: "county"
-            type: "INTEGER"
-            mode: "NULLABLE"
-          - name: "tract"
-            type: "INTEGER"
-            mode: "NULLABLE"
-          - name: "cz"
-            type: "INTEGER"
-            mode: "NULLABLE"
-          - name: "czname"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "hhinc_mean2000"
-            type: "FLOAT"
-            mode: "NULLABLE"
-          - name: "mean_commutetime2000"
-            type: "FLOAT"
-            mode: "NULLABLE"
-          - name: "frac_coll_plus2000"
-            type: "FLOAT"
-            mode: "NULLABLE"
-          - name: "frac_coll_plus2010"
-            type: "FLOAT"
-            mode: "NULLABLE"
-          - name: "foreign_share2010"
-            type: "FLOAT"
-            mode: "NULLABLE"
-          - name: "med_hhinc1990"
-            type: "FLOAT"
-            mode: "NULLABLE"
-          - name: "med_hhinc2016"
-            type: "INTEGER"
-            mode: "NULLABLE"
-          - name: "popdensity2000"
-            type: "FLOAT"
-            mode: "NULLABLE"
-          - name: "poor_share2010"
-            type: "FLOAT"
-            mode: "NULLABLE"
-          - name: "poor_share2000"
-            type: "FLOAT"
-            mode: "NULLABLE"
-          - name: "poor_share1990"
-            type: "FLOAT"
-            mode: "NULLABLE"
-          - name: "share_white2010"
-            type: "FLOAT"
-            mode: "NULLABLE"
-          - name: "share_black2010"
-            type: "FLOAT"
-            mode: "NULLABLE"
-          - name: "share_hisp2010"
-            type: "FLOAT"
-            mode: "NULLABLE"
-          - name: "share_asian2010"
-            type: "FLOAT"
-            mode: "NULLABLE"
-          - name: "share_black2000"
-            type: "FLOAT"
-            mode: "NULLABLE"
-          - name: "share_white2000"
-            type: "FLOAT"
-            mode: "NULLABLE"
-          - name: "share_hisp2000"
-            type: "FLOAT"
-            mode: "NULLABLE"
-          - name: "share_asian2000"
-            type: "FLOAT"
-            mode: "NULLABLE"
-          - name: "gsmn_math_g3_2013"
-            type: "FLOAT"
-            mode: "NULLABLE"
-          - name: "rent_twobed2015"
-            type: "INTEGER"
-            mode: "NULLABLE"
-          - name: "singleparent_share2010"
-            type: "FLOAT"
-            mode: "NULLABLE"
-          - name: "singleparent_share1990"
-            type: "FLOAT"
-            mode: "NULLABLE"
-          - name: "singleparent_share2000"
-            type: "FLOAT"
-            mode: "NULLABLE"
-          - name: "traveltime15_2010"
-            type: "FLOAT"
-            mode: "NULLABLE"
-          - name: "emp2000"
-            type: "FLOAT"
-            mode: "NULLABLE"
-          - name: "mail_return_rate2010"
-            type: "FLOAT"
-            mode: "NULLABLE"
-          - name: "ln_wage_growth_hs_grad"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "jobs_total_5mi_2015"
-            type: "INTEGER"
-            mode: "NULLABLE"
-          - name: "jobs_highpay_5mi_2015"
-            type: "INTEGER"
-            mode: "NULLABLE"
-          - name: "popdensity2010"
-            type: "FLOAT"
-            mode: "NULLABLE"
-          - name: "ann_avg_job_growth_2004_2013"
-            type: "FLOAT"
-            mode: "NULLABLE"
-          - name: "job_density_2013"
-            type: "FLOAT"
-            mode: "NULLABLE"
   graph_paths:
     - "transform_csv >> load_to_bq"
