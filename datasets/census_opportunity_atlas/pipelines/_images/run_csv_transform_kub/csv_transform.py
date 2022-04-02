@@ -55,7 +55,7 @@ def main(
         target_gcs_bucket=target_gcs_bucket,
         target_gcs_path=target_gcs_path,
         input_headers=input_headers,
-        rename_mappings=rename_mappings
+        rename_mappings=rename_mappings,
     )
     logging.info(f"{pipeline_name} process completed")
 
@@ -78,14 +78,9 @@ def execute_pipeline(
     if destination_table == "tract_outcomes":
         source_zipfile = str.replace(str(source_file), ".csv", ".zip")
         source_file_path = source_file.parent
-        download_file(
-            source_url=source_url,
-            source_file=source_zipfile
-        )
+        download_file(source_url=source_url, source_file=source_zipfile)
         zip_decompress(
-            infile=source_zipfile,
-            topath=source_file_path,
-            remove_zipfile=True
+            infile=source_zipfile, topath=source_file_path, remove_zipfile=True
         )
         os.rename(source_file_unzipped, target_file)
     else:
@@ -95,7 +90,7 @@ def execute_pipeline(
             target_file=target_file,
             chunksize=chunksize,
             input_headers=input_headers,
-            rename_mappings=rename_mappings
+            rename_mappings=rename_mappings,
         )
     if os.path.exists(target_file):
         upload_file_to_gcs(
@@ -118,7 +113,7 @@ def execute_pipeline(
                     table_id=destination_table,
                     file_path=target_file,
                     truncate_table=True,
-                    field_delimiter=","
+                    field_delimiter=",",
                 )
             else:
                 load_data_to_bq(
@@ -127,7 +122,7 @@ def execute_pipeline(
                     table_id=destination_table,
                     file_path=target_file,
                     truncate_table=True,
-                    field_delimiter="|"
+                    field_delimiter="|",
                 )
         else:
             error_msg = f"Error: Data was not loaded because the destination table {project_id}.{dataset_id}.{destination_table} does not exist and/or could not be created."
@@ -178,7 +173,7 @@ def process_chunk(
     target_file_batch: str,
     target_file: str,
     skip_header: bool,
-    rename_headers_list: list
+    rename_headers_list: list,
 ) -> None:
     logging.info(f"Processing batch file {target_file_batch}")
     df = rename_headers(df, rename_headers_list)
@@ -236,7 +231,7 @@ def load_data_to_bq(
     table_id: str,
     file_path: str,
     truncate_table: bool,
-    field_delimiter: str = "|"
+    field_delimiter: str = "|",
 ) -> None:
     logging.info(
         f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} started"
@@ -358,7 +353,6 @@ def upload_file_to_gcs(
         )
 
 
-
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
 
@@ -366,7 +360,9 @@ if __name__ == "__main__":
         source_url=os.environ["SOURCE_URL"],
         pipeline_name=os.environ["PIPELINE_NAME"],
         source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
-        source_file_unzipped=pathlib.Path(os.environ["SOURCE_FILE_UNZIPPED"]).expanduser(),
+        source_file_unzipped=pathlib.Path(
+            os.environ["SOURCE_FILE_UNZIPPED"]
+        ).expanduser(),
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
         project_id=os.environ["PROJECT_ID"],
         dataset_id=os.environ["DATASET_ID"],
@@ -376,6 +372,5 @@ if __name__ == "__main__":
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
         input_headers=json.loads(os.environ["INPUT_CSV_HEADERS"]),
-        data_dtypes=json.loads(os.environ["DATA_DTYPES"]),
-        rename_mappings=json.loads(os.environ["RENAME_MAPPINGS"])
+        rename_mappings=json.loads(os.environ["RENAME_MAPPINGS"]),
     )
