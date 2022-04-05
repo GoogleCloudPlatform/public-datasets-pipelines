@@ -1,0 +1,313 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+resources:
+  - type: bigquery_table
+    table_id: "311_service_requests"
+    description: "san_francisco_etl_process"
+dag:
+  airflow_version: 2
+  initialize:
+    dag_id: san_francisco
+    default_args:
+      owner: "Google"
+      depends_on_past: False
+      start_date: '2021-03-01'
+    max_active_runs: 1
+    schedule_interval: "@daily"
+    catchup: False
+    default_view: graph
+  tasks:
+    - operator: "GKECreateClusterOperator"
+      args:
+        task_id: "create_cluster"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        body:
+          name: san-francisco
+          initial_node_count: 4
+          network: "{{ var.value.vpc_network }}"
+          node_config:
+            machine_type: e2-standard-16
+            oauth_scopes:
+              - https://www.googleapis.com/auth/devstorage.read_write
+              - https://www.googleapis.com/auth/cloud-platform
+    - operator: "GKEStartPodOperator"
+      description: "Run New York 311 Service Requests Pipeline"
+      args:
+        task_id: "sf_311_service_requests"
+        name: "sf_311_service_requests"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: san-francisco
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "{{ var.json.san_francisco.sf_311_service_requests.pipeline_name }}"
+          SOURCE_URL: "https://data.sfgov.org/api/views/vw6y-z8j6/rows.csv"
+          CHUNKSIZE: "{{ var.json.new_york.container_registry.sf_311_service_requests.chunksize }}"
+          SOURCE_FILE: "files/data.csv"
+          TARGET_FILE: "files/data_output.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "{{ var.json.new_york.container_registry.sf_311_service_requests.dataset_id }}"
+          TABLE_ID: "{{ var.json.new_york.container_registry.sf_311_service_requests.destination_table }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "{{ var.json.new_york.container_registry.sf_311_service_requests.target_gcs_path }}",
+          SCHEMA_PATH: "{{ var.json.new_york.container_registry.sf_311_service_requests.schema_path }}"
+          RENAME_HEADERS_LIST: >-
+            {
+              "CaseID": "unique_key",
+              "Opened": "created_date",
+              "Closed": "closed_date",
+              "Updated": "resolution_action_updated_date",
+              "Status": "status",
+              "Status Notes": "status_notes",
+              "Responsible Agency": "agency_name",
+              "Category": "category",
+              "Request Type": "complaint_type",
+              "Request Details": "descriptor",
+              "Address": "incident_address",
+              "Supervisor District": "supervisor_district",
+              "Neighborhood": "neighborhood",
+              "Point": "location",
+              "Source": "source",
+              "Media URL": "media_url",
+              "Latitude": "latitude",
+              "Longitude": "longitude",
+              "Police District": "police_district"
+            }
+          EMPTY_KEY_LIST: >-
+            [
+              "unique_key"
+            ]
+          RESOLVE_DATATYPES_LIST: >-
+            {
+              "supervisor_district": "Int64"
+            }
+          REMOVE_PAREN_LIST: >-
+            [
+              "latitude",
+              "longitude"
+            ]
+          STRIP_WHITESPACE_LIST: >-
+            [
+              "incident_address"
+            ]
+          DATE_FORMAT_LIST: >-
+            [
+              "created_date",
+              "closed_date",
+              "resolution_action_updated_date"
+            ]
+          REORDER_HEADERS_LIST: >-
+            [
+                "unique_key",
+                "created_date",
+                "closed_date",
+                "resolution_action_updated_date",
+                "status",
+                "status_notes",
+                "agency_name",
+                "category",
+                "complaint_type",
+                "descriptor",
+                "incident_address",
+                "supervisor_district",
+                "neighborhood",
+                "location",
+                "source",
+                "media_url",
+                "latitude",
+                "longitude",
+                "police_district"
+            ]
+        resources:
+          limit_memory: "8G"
+          limit_cpu: "3"
+    - operator: "GKEStartPodOperator"
+      description: "Run San Francisco Bikeshare Stations Pipeline"
+      args:
+        task_id: "sf_bikeshare_stations"
+        name: "bikeshare_stations"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: san-francisco
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.san_francisco.container_registry.sf_311_service_requests.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "https://gbfs.baywheels.com/gbfs/fr/station_information"
+          SOURCE_FILE: "files/data.csv"
+          TARGET_FILE: "files/data_output.csv"
+          CHUNKSIZE: "750000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/san_francisco_bikeshare_stations/bikeshare_stations/data_output.csv"
+          RENAME_HEADERS_LIST: >-
+            {
+              "data.stations.station_id": "station_id",
+              "data.stations.name": "name",
+              "data.stations.short_name": "short_name",
+              "data.stations.lat": "lat",
+              "data.stations.lon": "lon",
+              "data.stations.region_id": "region_id",
+              "data.stations.rental_methods": "rental_methods",
+              "data.stations.capacity": "capacity",
+              "data.stations.eightd_has_key_dispenser": "eightd_has_key_dispenser",
+              "data.stations.has_kiosk": "has_kiosk",
+              "data.stations.external_id": "external_id"
+            }
+          EMPTY_KEY_LIST: >-
+            [
+              "station_id",
+              "name",
+              "lat",
+              "lon"
+            ]
+          GEN_LOCATION_LIST: >-
+            {
+              "station_geom": [ "lon", "lat" ]
+            }
+          RESOLVE_DATATYPES_LIST: >-
+            {
+              "region_id": "Int64"
+            }
+          REMOVE_PAREN_LIST: >-
+            [
+              "latitude",
+              "longitude"
+            ]
+          STRIP_WHITESPACE_LIST: >-
+            [
+              "incident_address"
+            ]
+          DATE_FORMAT_LIST: >-
+            [
+              "created_date",
+              "closed_date",
+              "resolution_action_updated_date"
+            ]
+          REORDER_HEADERS_LIST: >-
+            [
+              "station_id",
+              "name",
+              "short_name",
+              "lat",
+              "lon",
+              "region_id",
+              "rental_methods",
+              "capacity",
+              "external_id",
+              "eightd_has_key_dispenser",
+              "has_kiosk",
+              "station_geom"
+            ]
+        resources:
+          limit_memory: "8G"
+          limit_cpu: "3"
+
+    - operator: "GoogleCloudStorageToBigQueryOperator"
+      description: "Task to load CSV data to a BigQuery table"
+
+      args:
+        task_id: "load_to_bq"
+        bucket: "{{ var.value.composer_bucket }}"
+        source_objects: ["data/san_francisco_311_service_requests/311_service_requests/data_output.csv"]
+        source_format: "CSV"
+        destination_project_dataset_table: "san_francisco_311_service_requests.311_service_requests"
+        skip_leading_rows: 1
+        allow_quoted_newlines: True
+        write_disposition: "WRITE_TRUNCATE"
+        schema_fields:
+          - name: "unique_key"
+            type: "INTEGER"
+            description: "Unique case id"
+            mode: "REQUIRED"
+          - name: "created_date"
+            type: "TIMESTAMP"
+            description: "The date and time when the service request was made"
+            mode: "NULLABLE"
+          - name: "closed_date"
+            type: "TIMESTAMP"
+            description: "The date and time when the service request was closed"
+            mode: "NULLABLE"
+          - name: "resolution_action_updated_date"
+            type: "TIMESTAMP"
+            description: "The date and time when the service request was last modified. For requests with status=closed, this will be the date the request was closed"
+            mode: "NULLABLE"
+          - name: "status"
+            type: "STRING"
+            description: "The current status of the service request."
+            mode: "NULLABLE"
+          - name: "status_notes"
+            type: "STRING"
+            description: "Explanation of why status was changed to current state or more details on current status than conveyed with status alone"
+            mode: "NULLABLE"
+          - name: "agency_name"
+            type: "STRING"
+            description: "The agency responsible for fulfilling or otherwise addressing the service request."
+            mode: "NULLABLE"
+          - name: "category"
+            type: "STRING"
+            description: "The Human readable name of the specific service request type (service_name)"
+            mode: "NULLABLE"
+          - name: "complaint_type"
+            type: "STRING"
+            description: "More specific description of the problem related to the Category"
+            mode: "NULLABLE"
+          - name: "descriptor"
+            type: "STRING"
+            description: "More specific description of the problem related to the Request Type"
+            mode: "NULLABLE"
+          - name: "incident_address"
+            type: "STRING"
+            description: "Human readable address or description of location"
+            mode: "NULLABLE"
+          - name: "supervisor_district"
+            type: "INTEGER"
+            description: ""
+            mode: "NULLABLE"
+          - name: "neighborhood"
+            type: "STRING"
+            description: ""
+            mode: "NULLABLE"
+          - name: "location"
+            type: "STRING"
+            description: "Latitude and longitude using the (WGS84) projection."
+            mode: "NULLABLE"
+          - name: "source"
+            type: "STRING"
+            description: "How the service request was made"
+            mode: "NULLABLE"
+          - name: "media_url"
+            type: "STRING"
+            description: "Website URL"
+            mode: "NULLABLE"
+          - name: "latitude"
+            type: "FLOAT"
+            description: "Latitude using the (WGS84) projection."
+            mode: "NULLABLE"
+          - name: "longitude"
+            type: "FLOAT"
+            description: "Longitude using the (WGS84) projection."
+            mode: "NULLABLE"
+          - name: "police_district"
+            type: "STRING"
+            description: ""
+            mode: "NULLABLE"
+
+
+  graph_paths:
+    - "transform_csv >> load_to_bq"
