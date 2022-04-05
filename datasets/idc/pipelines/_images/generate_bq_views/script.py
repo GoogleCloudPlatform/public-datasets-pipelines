@@ -51,14 +51,17 @@ def main(
             source_view = client.get_table(
                 f"{source_project}.{dataset}.{table.table_id}"
             )
-            create_or_update_view(client, source_view, target_project)
+            create_or_update_view(client, source_view, source_project, target_project)
             source_views.append(table.table_id)
 
         sync_views(client, dataset, source_views, target_project)
 
 
 def create_or_update_view(
-    client: bigquery.Client, source_view: bigquery.Table, target_project: str
+    client: bigquery.Client,
+    source_view: bigquery.Table,
+    source_project: str,
+    target_project: str,
 ) -> None:
     try:
         target_view = client.get_table(
@@ -71,7 +74,7 @@ def create_or_update_view(
         f"{target_project}.{source_view.dataset_id}.{source_view.table_id}"
     )
     _view.description = source_view.description
-    _view.view_query = source_view.view_query
+    _view.view_query = source_view.view_query.replace(source_project, target_project)
 
     # Create the view if it doesn't exist. Otherwise, update it.
     if not target_view:
