@@ -1,0 +1,87 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+resources:
+
+  - type: bigquery_table
+    table_id: the_general_index
+    description: "The General Index"
+
+dag:
+  airflow_version: 2
+  initialize:
+    dag_id: the_general_index
+    default_args:
+      owner: "Google"
+      depends_on_past: False
+      start_date: '2021-03-01'
+    max_active_runs: 1
+    schedule_interval: "@weekly"
+    catchup: False
+    default_view: graph
+
+  tasks:
+    - operator: "GKECreateClusterOperator"
+      args:
+        task_id: "create_cluster"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        body:
+          name: the-general-index
+          initial_node_count: 1
+          network: "{{ var.value.vpc_network }}"
+          node_config:
+            machine_type: e2-standard-16
+            oauth_scopes:
+              - https://www.googleapis.com/auth/devstorage.read_write
+              - https://www.googleapis.com/auth/cloud-platform
+
+    - operator: "GKEStartPodOperator"
+      description: "Run The General Index Pipeline"
+      args:
+        task_id: "transform_csv"
+        name: "the_general_index"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: the-general-index
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.the_general_index.container_registry.the_general_index__run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "{{ var.json.the_general_index.pipeline_name }}"
+          SOURCE_URL: "{{ var.json.new_york.the_general_index.source_url }}"
+          CHUNKSIZE: "{{ var.json.the_general_index.chunksize }}"
+          SOURCE_FILE: "files/data.csv"
+          TARGET_FILE: "files/data_output.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "{{ var.json.the_general_index.dataset_id }}"
+          TABLE_ID: "{{ var.json.the_general_index.destination_table }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "{{ var.json.the_general_index.target_path }}"
+          SCHEMA_PATH: "{{ var.json.the_general_index.schema_path }}"
+        resources:
+          request_ephemeral_storage: "32G"
+          limit_cpu: "3"
+
+
+    - operator: "GKEDeleteClusterOperator"
+      args:
+        task_id: "delete_cluster"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        name: the_general_index
+
+  graph_paths:
+    - "create_cluster >> transform_csv >> delete_cluster"
