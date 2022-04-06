@@ -14,9 +14,98 @@
 
 ---
 resources:
-
   - type: bigquery_table
     table_id: "annual_summaries"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "co_daily_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "co_hourly_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "hap_daily_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "hap_hourly_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "lead_daily_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "no2_daily_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "no2_hourly_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "nonoxnoy_daily_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "nonoxnoy_hourly_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "ozone_daily_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "ozone_hourly_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "pm10_daily_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "pm10_hourly_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "pm25_frm_hourly_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "pm25_nonfrm_daily_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "pm25_nonfrm_hourly_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "pm25_speciation_daily_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "pm25_speciation_hourly_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "pressure_daily_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "pressure_hourly_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "rh_and_dp_daily_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "rh_and_dp_hourly_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "so2_daily_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "so2_hourly_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "temperature_daily_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "temperature_hourly_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "voc_daily_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "voc_hourly_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "wind_daily_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "wind_hourly_summary"
     description: "epaspc"
 
 dag:
