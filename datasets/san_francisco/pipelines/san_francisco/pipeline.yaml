@@ -104,7 +104,8 @@ dag:
             ]
           STRIP_NEWLINES_LIST: >-
             [
-              "status_notes"
+              "status_notes",
+              "descriptor"
             ]
           STRIP_WHITESPACE_LIST: >-
             [

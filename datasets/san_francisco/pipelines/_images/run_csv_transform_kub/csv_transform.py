@@ -439,7 +439,8 @@ def strip_newlines(
 ) -> pd.DataFrame:
     for ws_fld in strip_newlines_list:
         logging.info(f"Stripping newlines in column {ws_fld}")
-        df[ws_fld] = df[ws_fld].str.replace('\n', '', regex=True)
+        df[ws_fld] = df[ws_fld].str.replace(r'\n', '', regex=True)
+        df[ws_fld] = df[ws_fld].str.replace(r'\r', '', regex=True)
     return df
 
 
