@@ -57,16 +57,16 @@ dag:
         image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
         env_vars:
           PIPELINE_NAME: "{{ var.json.san_francisco.sf_311_service_requests.pipeline_name }}"
-          SOURCE_URL: "https://data.sfgov.org/api/views/vw6y-z8j6/rows.csv"
-          CHUNKSIZE: "{{ var.json.new_york.container_registry.sf_311_service_requests.chunksize }}"
+          SOURCE_URL: "{{ var.json.san_francisco.sf_311_service_requests.source_url }}"
+          CHUNKSIZE: "{{ var.json.san_francisco.sf_311_service_requests.chunksize }}"
           SOURCE_FILE: "files/data.csv"
           TARGET_FILE: "files/data_output.csv"
           PROJECT_ID: "{{ var.value.gcp_project }}"
-          DATASET_ID: "{{ var.json.new_york.container_registry.sf_311_service_requests.dataset_id }}"
-          TABLE_ID: "{{ var.json.new_york.container_registry.sf_311_service_requests.destination_table }}"
+          DATASET_ID: "{{ var.json.san_francisco.sf_311_service_requests.dataset_id }}"
+          TABLE_ID: "{{ var.json.san_francisco.sf_311_service_requests.destination_table }}"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
-          TARGET_GCS_PATH: "{{ var.json.new_york.container_registry.sf_311_service_requests.target_gcs_path }}",
-          SCHEMA_PATH: "{{ var.json.new_york.container_registry.sf_311_service_requests.schema_path }}"
+          TARGET_GCS_PATH: "{{ var.json.san_francisco.sf_311_service_requests.target_gcs_path }}"
+          SCHEMA_PATH: "{{ var.json.san_francisco.sf_311_service_requests.schema_path }}"
           RENAME_HEADERS_LIST: >-
             {
               "CaseID": "unique_key",

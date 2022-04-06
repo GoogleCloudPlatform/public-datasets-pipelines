@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import datetime
 import json
 import logging
 import os
@@ -44,7 +45,7 @@ def main(
     remove_paren_list: typing.List[str],
     strip_whitespace_list: typing.List[str],
     date_format_list: typing.List[str],
-    reorder_headers_list: typing.List[str]
+    reorder_headers_list: typing.List[str],
 ) -> None:
 
     logging.info(f"{pipeline_name} process started")
@@ -68,7 +69,7 @@ def main(
         remove_paren_list=remove_paren_list,
         strip_whitespace_list=strip_whitespace_list,
         date_format_list=date_format_list,
-        reorder_headers_list=reorder_headers_list
+        reorder_headers_list=reorder_headers_list,
     )
     logging.info(f"{pipeline_name} process completed")
 
@@ -92,7 +93,7 @@ def execute_pipeline(
     remove_paren_list: typing.List[str],
     strip_whitespace_list: typing.List[str],
     date_format_list: typing.List[str],
-    reorder_headers_list: typing.List[str]
+    reorder_headers_list: typing.List[str],
 ) -> None:
     # if destination_table == "bikeshare_stations":
     #     source_url_json = f"{source_url}.json"
@@ -102,50 +103,50 @@ def execute_pipeline(
     #     )
     # else:
     #     download_file(source_url, source_file)
-    process_source_file(
-        source_file=source_file,
-        target_file=target_file,
-        chunksize=chunksize,
-        input_headers=input_headers,
-        destination_table=destination_table,
-        rename_headers_list=rename_headers_list,
-        empty_key_list=empty_key_list,
-        gen_location_list=gen_location_list,
-        resolve_datatypes_list=resolve_datatypes_list,
-        remove_paren_list=remove_paren_list,
-        strip_whitespace_list=strip_whitespace_list,
-        date_format_list=date_format_list,
-        reorder_headers_list=reorder_headers_list
-    )
-    # if os.path.exists(target_file):
-    #     upload_file_to_gcs(
-    #         file_path=target_file,
-    #         target_gcs_bucket=target_gcs_bucket,
-    #         target_gcs_path=target_gcs_path,
-    #     )
-    #     table_exists = create_dest_table(
-    #         project_id=project_id,
-    #         dataset_id=dataset_id,
-    #         table_id=destination_table,
-    #         schema_filepath=schema_path,
-    #         bucket_name=target_gcs_bucket,
-    #     )
-    #     if table_exists:
-    #             load_data_to_bq(
-    #                 project_id=project_id,
-    #                 dataset_id=dataset_id,
-    #                 table_id=destination_table,
-    #                 file_path=target_file,
-    #                 truncate_table=True,
-    #                 field_delimiter=",",
-    #             )
-    #     else:
-    #         error_msg = f"Error: Data was not loaded because the destination table {project_id}.{dataset_id}.{destination_table} does not exist and/or could not be created."
-    #         raise ValueError(error_msg)
-    # else:
-    #     logging.info(
-    #         f"Informational: The data file {target_file} was not generated because no data file was available.  Continuing."
-    #     )
+    # process_source_file(
+    #     source_file=source_file,
+    #     target_file=target_file,
+    #     chunksize=chunksize,
+    #     input_headers=input_headers,
+    #     destination_table=destination_table,
+    #     rename_headers_list=rename_headers_list,
+    #     empty_key_list=empty_key_list,
+    #     gen_location_list=gen_location_list,
+    #     resolve_datatypes_list=resolve_datatypes_list,
+    #     remove_paren_list=remove_paren_list,
+    #     strip_whitespace_list=strip_whitespace_list,
+    #     date_format_list=date_format_list,
+    #     reorder_headers_list=reorder_headers_list,
+    # )
+    if os.path.exists(target_file):
+        upload_file_to_gcs(
+            file_path=target_file,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=target_gcs_path,
+        )
+        table_exists = create_dest_table(
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_id=destination_table,
+            schema_filepath=schema_path,
+            bucket_name=target_gcs_bucket,
+        )
+        if table_exists:
+                load_data_to_bq(
+                    project_id=project_id,
+                    dataset_id=dataset_id,
+                    table_id=destination_table,
+                    file_path=target_file,
+                    truncate_table=True,
+                    field_delimiter=",",
+                )
+        else:
+            error_msg = f"Error: Data was not loaded because the destination table {project_id}.{dataset_id}.{destination_table} does not exist and/or could not be created."
+            raise ValueError(error_msg)
+    else:
+        logging.info(
+            f"Informational: The data file {target_file} was not generated because no data file was available.  Continuing."
+        )
 
 
 def process_source_file(
@@ -161,7 +162,7 @@ def process_source_file(
     remove_paren_list: typing.List[str],
     strip_whitespace_list: typing.List[str],
     date_format_list: typing.List[str],
-    reorder_headers_list: typing.List[str]
+    reorder_headers_list: typing.List[str],
 ) -> None:
     logging.info(f"Opening source file {source_file}")
     with pd.read_csv(
@@ -171,8 +172,8 @@ def process_source_file(
         quotechar='"',
         chunksize=int(chunksize),  # size of batch data, in no. of records
         sep=",",  # data column separator, typically ","
-        header=0,  # use when the data file does not contain a header
-        names=input_headers,
+        # header=1,  # use when the data file does not contain a header
+        # names=input_headers,
         keep_default_na=True,
         na_values=[" "],
     ) as reader:
@@ -195,7 +196,7 @@ def process_source_file(
                 remove_paren_list=remove_paren_list,
                 strip_whitespace_list=strip_whitespace_list,
                 date_format_list=date_format_list,
-                reorder_headers_list=reorder_headers_list
+                reorder_headers_list=reorder_headers_list,
             )
 
 
@@ -212,11 +213,11 @@ def process_chunk(
     remove_paren_list: typing.List[str],
     strip_whitespace_list: typing.List[str],
     date_format_list: typing.List[str],
-    reorder_headers_list: typing.List[str]
+    reorder_headers_list: typing.List[str],
 ) -> None:
     logging.info(f"Processing batch file {target_file_batch}")
     if destination_table == "311_service_requests":
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
         df = rename_headers(df, rename_headers_list)
         df = remove_empty_key_rows(df, empty_key_list)
         df = resolve_datatypes(df, resolve_datatypes_list)
@@ -247,7 +248,7 @@ def download_file_json(
     source_url: str,
     source_file_json: pathlib.Path,
     source_file_csv: pathlib.Path,
-    subnode_name: str
+    subnode_name: str,
 ) -> None:
     logging.info(f"Downloading file {source_url}.json.")
     r = requests.get(source_url + ".json", stream=True)
@@ -266,7 +267,7 @@ def load_data_to_bq(
     table_id: str,
     file_path: str,
     truncate_table: bool,
-    field_delimiter: str = "|"
+    field_delimiter: str = "|",
 ) -> None:
     logging.info(
         f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} started"
@@ -366,17 +367,13 @@ def create_table_schema(
     return schema
 
 
-def rename_headers(
-    df: pd.DataFrame,
-    rename_headers_list: dict
-) -> pd.DataFrame:
+def rename_headers(df: pd.DataFrame, rename_headers_list: dict) -> pd.DataFrame:
     df.rename(columns=rename_headers_list, inplace=True)
     return df
 
 
 def remove_empty_key_rows(
-    df: pd.DataFrame,
-    empty_key_list: typing.List[str]
+    df: pd.DataFrame, empty_key_list: typing.List[str]
 ) -> pd.DataFrame:
     logging.info("Removing rows with empty keys")
     for key_field in empty_key_list:
@@ -384,10 +381,7 @@ def remove_empty_key_rows(
     return df
 
 
-def resolve_datatypes(
-    df: pd.DataFrame,
-    resolve_datatypes_list: dict
-) -> pd.DataFrame:
+def resolve_datatypes(df: pd.DataFrame, resolve_datatypes_list: dict) -> pd.DataFrame:
     logging.info("Resolving datatypes")
     for key, value in resolve_datatypes_list.items():
         df[key] = df[key].astype(value)
@@ -395,8 +389,7 @@ def resolve_datatypes(
 
 
 def remove_parenthesis_long_lat(
-    df: pd.DataFrame,
-    remove_paren_list: typing.List[str]
+    df: pd.DataFrame, remove_paren_list: typing.List[str]
 ) -> pd.DataFrame:
     logging.info("Removing parenthesis from geographic fields")
     for paren_fld in remove_paren_list:
@@ -405,10 +398,7 @@ def remove_parenthesis_long_lat(
     return df
 
 
-def generate_location(
-    df: pd.DataFrame,
-    gen_location_list: dict
-) -> pd.DataFrame:
+def generate_location(df: pd.DataFrame, gen_location_list: dict) -> pd.DataFrame:
     logging.info("Generating location data")
     #     df["station_geom"] = (
     #         "POINT("
@@ -429,8 +419,7 @@ def generate_location(
 
 
 def strip_whitespace(
-    df: pd.DataFrame,
-    strip_whitespace_list: typing.List[str]
+    df: pd.DataFrame, strip_whitespace_list: typing.List[str]
 ) -> pd.DataFrame:
     logging.info("Stripping whitespace")
     for ws_fld in strip_whitespace_list:
@@ -439,8 +428,7 @@ def strip_whitespace(
 
 
 def resolve_date_format(
-    df: pd.DataFrame,
-    date_format_list: typing.List[str]
+    df: pd.DataFrame, date_format_list: typing.List[str]
 ) -> pd.DataFrame:
     logging.info("Resolving date formats")
     for dt_fld in date_format_list:
@@ -468,20 +456,13 @@ def reorder_headers(
     return df[output_headers_list]
 
 
-def save_to_new_file(
-    df: pd.DataFrame,
-    file_path: str,
-    sep: str = "|"
-) -> None:
+def save_to_new_file(df: pd.DataFrame, file_path: str, sep: str = "|") -> None:
     logging.info(f"Saving data to target file.. {file_path} ...")
     df.to_csv(file_path, index=False, sep=sep)
 
 
 def append_batch_file(
-    batch_file_path: str,
-    target_file_path: str,
-    skip_header: bool,
-    truncate_file: bool
+    batch_file_path: str, target_file_path: str, skip_header: bool, truncate_file: bool
 ) -> None:
     with open(batch_file_path, "r") as data_file:
         if truncate_file:
@@ -537,9 +518,13 @@ if __name__ == "__main__":
         rename_headers_list=json.loads(os.environ.get("RENAME_HEADERS_LIST", r"[]")),
         empty_key_list=json.loads(os.environ.get("EMPTY_KEY_LIST", r"[]")),
         gen_location_list=json.loads(os.environ.get("GEN_LOCATION_LIST", r"{}")),
-        resolve_datatypes_list=json.loads(os.environ.get("RESOLVE_DATATYPES_LIST", r"{}")),
+        resolve_datatypes_list=json.loads(
+            os.environ.get("RESOLVE_DATATYPES_LIST", r"{}")
+        ),
         remove_paren_list=json.loads(os.environ.get("REMOVE_PAREN_LIST", r"[]")),
-        strip_whitespace_list=json.loads(os.environ.get("STRIP_WHITESPACE_LIST", r"[]")),
+        strip_whitespace_list=json.loads(
+            os.environ.get("STRIP_WHITESPACE_LIST", r"[]")
+        ),
         date_format_list=json.loads(os.environ.get("DATE_FORMAT_LIST", r"[]")),
-        reorder_headers_list=json.loads(os.environ.get("REORDER_HEADERS_LIST", r"[]"))
+        reorder_headers_list=json.loads(os.environ.get("REORDER_HEADERS_LIST", r"[]")),
     )
