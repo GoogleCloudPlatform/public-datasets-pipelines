@@ -71,6 +71,54 @@ dag:
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "{{ var.json.the_general_index.target_path }}"
           SCHEMA_PATH: "{{ var.json.the_general_index.schema_path }}"
+          INPUT_CSV_HEADERS: >-
+            [
+              "dkey",
+              "raw_id",
+              "meta_key",
+              "doc_doi",
+              "meta_doi",
+              "doi",
+              "doi_flag",
+              "isbn",
+              "journal",
+              "doc_title",
+              "meta_title",
+              "title",
+              "doc_pub_date",
+              "meta_pub_date",
+              "pub_date",
+              "doc_author",
+              "meta_author",
+              "author"
+              "doc_size"
+              "insert_date"
+              "multi_row_flag"
+            ]
+          DATA_DTYPES: >-
+            {
+              "dkey": "str",
+              "raw_id": "int64",
+              "meta_key": "str",
+              "doc_doi": "str",
+              "meta_doi": "str",
+              "doi": "str",
+              "doi_flag": "str",
+              "isbn": "str",
+              "journal": "str",
+              "doc_title": "str",
+              "meta_title": "str",
+              "title": "str",
+              "doc_pub_date": "str",
+              "meta_pub_date": "str",
+              "pub_date": "str",
+              "doc_author": "str",
+              "meta_author": "str",
+              "author": "str",
+              "doc_size": "int64",
+              "insert_date": "str",
+              "multi_row_flag": "str"
+            }
         resources:
           request_ephemeral_storage: "32G"
           limit_cpu: "3"

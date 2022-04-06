@@ -37,6 +37,8 @@ def main(
     chunksize: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
+    input_headers: str,
+    data_dtypes: dict,
 ) -> None:
 
     logging.info(f"{pipeline_name} process started")
@@ -52,6 +54,8 @@ def main(
         chunksize=chunksize,
         target_gcs_bucket=target_gcs_bucket,
         target_gcs_path=target_gcs_path,
+        input_headers=input_headers,
+        data_dtypes=data_dtypes,
     )
     logging.info(f"{pipeline_name} process completed")
 
@@ -67,57 +71,81 @@ def execute_pipeline(
     chunksize: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
+    input_headers: str,
+    data_dtypes: dict,
 ) -> None:
     # download_file(source_url, source_file)
+    # remove_header_footer(
+    #     source_file=source_file,
+    #     header_rows=58,
+    #     footer_rows=7
+    # )
     process_source_file(
         source_file=source_file,
         target_file=target_file,
         chunksize=chunksize,
         destination_table=destination_table,
+        input_headers=input_headers,
+        data_dtypes=data_dtypes,
     )
-    if os.path.exists(target_file):
-        upload_file_to_gcs(
-            file_path=target_file,
-            target_gcs_bucket=target_gcs_bucket,
-            target_gcs_path=target_gcs_path,
-        )
-        table_exists = create_dest_table(
-            project_id=project_id,
-            dataset_id=dataset_id,
-            table_id=destination_table,
-            schema_filepath=schema_path,
-            bucket_name=target_gcs_bucket,
-        )
-        if table_exists:
-            load_data_to_bq(
-                project_id=project_id,
-                dataset_id=dataset_id,
-                table_id=destination_table,
-                file_path=target_file,
-                truncate_table=True,
-                field_delimiter="|",
-            )
-        else:
-            error_msg = f"Error: Data was not loaded because the destination table {project_id}.{dataset_id}.{destination_table} does not exist and/or could not be created."
-            raise ValueError(error_msg)
-    else:
-        logging.info(
-            f"Informational: The data file {target_file} was not generated because no data file was available.  Continuing."
-        )
+    # if os.path.exists(target_file):
+    #     upload_file_to_gcs(
+    #         file_path=target_file,
+    #         target_gcs_bucket=target_gcs_bucket,
+    #         target_gcs_path=target_gcs_path,
+    #     )
+    #     table_exists = create_dest_table(
+    #         project_id=project_id,
+    #         dataset_id=dataset_id,
+    #         table_id=destination_table,
+    #         schema_filepath=schema_path,
+    #         bucket_name=target_gcs_bucket,
+    #     )
+    #     if table_exists:
+    #         load_data_to_bq(
+    #             project_id=project_id,
+    #             dataset_id=dataset_id,
+    #             table_id=destination_table,
+    #             file_path=target_file,
+    #             truncate_table=True,
+    #             field_delimiter="|",
+    #         )
+    #     else:
+    #         error_msg = f"Error: Data was not loaded because the destination table {project_id}.{dataset_id}.{destination_table} does not exist and/or could not be created."
+    #         raise ValueError(error_msg)
+    # else:
+    #     logging.info(
+    #         f"Informational: The data file {target_file} was not generated because no data file was available.  Continuing."
+    #     )
+
+
+def remove_header_footer(source_file: str, header_rows: int, footer_rows: int) -> None:
+    logging.info(f"Removing header and footer from {source_file}")
+    os.system(f"sed -i '1,{header_rows}d' {source_file} ")
+    os.system(
+        f'sed -i "$(( $(wc -l <{source_file})-{footer_rows}+1 )),$ d" {source_file}'
+    )
 
 
 def process_source_file(
-    source_file: str, target_file: str, chunksize: str, destination_table: str
+    source_file: str,
+    target_file: str,
+    chunksize: str,
+    destination_table: str,
+    input_headers: str,
+    data_dtypes: dict,
 ) -> None:
     logging.info(f"Opening source file {source_file}")
     with pd.read_csv(
         source_file,
         engine="python",
         encoding="utf-8",
-        skiprows=58,
-        skipfooter=7,
+        # skiprows=58,
+        # skipfooter=7,
         quotechar='"',
-        header=0,
+        # header=0,
+        names=input_headers,
+        dtype=data_dtypes,
         chunksize=int(chunksize),  # size of batch data, in no. of records
         sep="\t",  # data column separator, typically ","
         keep_default_na=True,
@@ -420,4 +448,6 @@ if __name__ == "__main__":
         dataset_id=os.environ["DATASET_ID"],
         table_id=os.environ["TABLE_ID"],
         schema_path=os.environ["SCHEMA_PATH"],
+        input_headers=json.loads(os.environ["INPUT_CSV_HEADERS"]),
+        data_dtypes=json.loads(os.environ["DATA_DTYPES"]),
     )
