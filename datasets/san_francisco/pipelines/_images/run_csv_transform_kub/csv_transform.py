@@ -43,6 +43,7 @@ def main(
     gen_location_list: dict,
     resolve_datatypes_list: dict,
     remove_paren_list: typing.List[str],
+    strip_newlines_list: typing.List[str],
     strip_whitespace_list: typing.List[str],
     date_format_list: typing.List[str],
     reorder_headers_list: typing.List[str],
@@ -67,6 +68,7 @@ def main(
         gen_location_list=gen_location_list,
         resolve_datatypes_list=resolve_datatypes_list,
         remove_paren_list=remove_paren_list,
+        strip_newlines_list=strip_newlines_list,
         strip_whitespace_list=strip_whitespace_list,
         date_format_list=date_format_list,
         reorder_headers_list=reorder_headers_list,
@@ -91,6 +93,7 @@ def execute_pipeline(
     gen_location_list: dict,
     resolve_datatypes_list: dict,
     remove_paren_list: typing.List[str],
+    strip_newlines_list: typing.List[str],
     strip_whitespace_list: typing.List[str],
     date_format_list: typing.List[str],
     reorder_headers_list: typing.List[str],
@@ -103,27 +106,28 @@ def execute_pipeline(
     #     )
     # else:
     #     download_file(source_url, source_file)
-    # process_source_file(
-    #     source_file=source_file,
-    #     target_file=target_file,
-    #     chunksize=chunksize,
-    #     input_headers=input_headers,
-    #     destination_table=destination_table,
-    #     rename_headers_list=rename_headers_list,
-    #     empty_key_list=empty_key_list,
-    #     gen_location_list=gen_location_list,
-    #     resolve_datatypes_list=resolve_datatypes_list,
-    #     remove_paren_list=remove_paren_list,
-    #     strip_whitespace_list=strip_whitespace_list,
-    #     date_format_list=date_format_list,
-    #     reorder_headers_list=reorder_headers_list,
-    # )
+    process_source_file(
+        source_file=source_file,
+        target_file=target_file,
+        chunksize=chunksize,
+        input_headers=input_headers,
+        destination_table=destination_table,
+        rename_headers_list=rename_headers_list,
+        empty_key_list=empty_key_list,
+        gen_location_list=gen_location_list,
+        resolve_datatypes_list=resolve_datatypes_list,
+        remove_paren_list=remove_paren_list,
+        strip_newlines_list=strip_newlines_list,
+        strip_whitespace_list=strip_whitespace_list,
+        date_format_list=date_format_list,
+        reorder_headers_list=reorder_headers_list,
+    )
     if os.path.exists(target_file):
-        upload_file_to_gcs(
-            file_path=target_file,
-            target_gcs_bucket=target_gcs_bucket,
-            target_gcs_path=target_gcs_path,
-        )
+        # upload_file_to_gcs(
+        #     file_path=target_file,
+        #     target_gcs_bucket=target_gcs_bucket,
+        #     target_gcs_path=target_gcs_path,
+        # )
         table_exists = create_dest_table(
             project_id=project_id,
             dataset_id=dataset_id,
@@ -138,7 +142,7 @@ def execute_pipeline(
                     table_id=destination_table,
                     file_path=target_file,
                     truncate_table=True,
-                    field_delimiter=",",
+                    field_delimiter="|",
                 )
         else:
             error_msg = f"Error: Data was not loaded because the destination table {project_id}.{dataset_id}.{destination_table} does not exist and/or could not be created."
@@ -160,6 +164,7 @@ def process_source_file(
     gen_location_list: dict,
     resolve_datatypes_list: dict,
     remove_paren_list: typing.List[str],
+    strip_newlines_list: typing.List[str],
     strip_whitespace_list: typing.List[str],
     date_format_list: typing.List[str],
     reorder_headers_list: typing.List[str],
@@ -194,6 +199,7 @@ def process_source_file(
                 gen_location_list=gen_location_list,
                 resolve_datatypes_list=resolve_datatypes_list,
                 remove_paren_list=remove_paren_list,
+                strip_newlines_list=strip_newlines_list,
                 strip_whitespace_list=strip_whitespace_list,
                 date_format_list=date_format_list,
                 reorder_headers_list=reorder_headers_list,
@@ -212,17 +218,18 @@ def process_chunk(
     resolve_datatypes_list: dict,
     remove_paren_list: typing.List[str],
     strip_whitespace_list: typing.List[str],
+    strip_newlines_list: typing.List[str],
     date_format_list: typing.List[str],
     reorder_headers_list: typing.List[str],
 ) -> None:
     logging.info(f"Processing batch file {target_file_batch}")
     if destination_table == "311_service_requests":
-        # import pdb; pdb.set_trace()
         df = rename_headers(df, rename_headers_list)
         df = remove_empty_key_rows(df, empty_key_list)
         df = resolve_datatypes(df, resolve_datatypes_list)
         df = remove_parenthesis_long_lat(df, remove_paren_list)
         df = strip_whitespace(df, strip_whitespace_list)
+        df = strip_newlines(df, strip_newlines_list)
         df = resolve_date_format(df, date_format_list)
         df = reorder_headers(df, reorder_headers_list)
     if destination_table == "bikeshare_stations":
@@ -421,9 +428,18 @@ def generate_location(df: pd.DataFrame, gen_location_list: dict) -> pd.DataFrame
 def strip_whitespace(
     df: pd.DataFrame, strip_whitespace_list: typing.List[str]
 ) -> pd.DataFrame:
-    logging.info("Stripping whitespace")
     for ws_fld in strip_whitespace_list:
+        logging.info(f"Stripping whitespaces in column {ws_fld}")
         df[ws_fld] = df[ws_fld].apply(lambda x: str(x).strip())
+    return df
+
+
+def strip_newlines(
+    df: pd.DataFrame, strip_newlines_list: typing.List[str]
+) -> pd.DataFrame:
+    for ws_fld in strip_newlines_list:
+        logging.info(f"Stripping newlines in column {ws_fld}")
+        df[ws_fld] = df[ws_fld].str.replace('\n', '', regex=True)
     return df
 
 
@@ -522,6 +538,9 @@ if __name__ == "__main__":
             os.environ.get("RESOLVE_DATATYPES_LIST", r"{}")
         ),
         remove_paren_list=json.loads(os.environ.get("REMOVE_PAREN_LIST", r"[]")),
+        strip_newlines_list=json.loads(
+            os.environ.get("STRIP_NEWLINES_LIST", r"[]")
+        ),
         strip_whitespace_list=json.loads(
             os.environ.get("STRIP_WHITESPACE_LIST", r"[]")
         ),

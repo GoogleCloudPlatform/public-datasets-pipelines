@@ -102,6 +102,10 @@ dag:
               "latitude",
               "longitude"
             ]
+          STRIP_NEWLINES_LIST: >-
+            [
+              "status_notes"
+            ]
           STRIP_WHITESPACE_LIST: >-
             [
               "incident_address"
