@@ -100,7 +100,9 @@ def execute_pipeline(
 ) -> None:
     if destination_table == "bikeshare_station_info":
         source_url_json = f"{source_url}.json"
-        source_file_stations_json = str(source_file).replace(".csv", "") + "_stations.json"
+        source_file_stations_json = (
+            str(source_file).replace(".csv", "") + "_stations.json"
+        )
         download_file_json(
             source_url_json, source_file_stations_json, source_file, "stations"
         )
@@ -138,17 +140,17 @@ def execute_pipeline(
             table_id=destination_table,
             schema_filepath=schema_path,
             bucket_name=target_gcs_bucket,
-            drop_table=drop_table
+            drop_table=drop_table,
         )
         if table_exists:
-                load_data_to_bq(
-                    project_id=project_id,
-                    dataset_id=dataset_id,
-                    table_id=destination_table,
-                    file_path=target_file,
-                    truncate_table=True,
-                    field_delimiter="|",
-                )
+            load_data_to_bq(
+                project_id=project_id,
+                dataset_id=dataset_id,
+                table_id=destination_table,
+                file_path=target_file,
+                truncate_table=True,
+                field_delimiter="|",
+            )
         else:
             error_msg = f"Error: Data was not loaded because the destination table {project_id}.{dataset_id}.{destination_table} does not exist and/or could not be created."
             raise ValueError(error_msg)
@@ -309,7 +311,7 @@ def create_dest_table(
     table_id: str,
     schema_filepath: list,
     bucket_name: str,
-    drop_table: bool = False
+    drop_table: bool = False,
 ) -> bool:
     table_ref = f"{project_id}.{dataset_id}.{table_id}"
     logging.info(f"Attempting to create table {table_ref} if it doesn't already exist")
@@ -441,8 +443,8 @@ def strip_newlines(
 ) -> pd.DataFrame:
     for ws_fld in strip_newlines_list:
         logging.info(f"Stripping newlines in column {ws_fld}")
-        df[ws_fld] = df[ws_fld].str.replace(r'\n', '', regex=True)
-        df[ws_fld] = df[ws_fld].str.replace(r'\r', '', regex=True)
+        df[ws_fld] = df[ws_fld].str.replace(r"\n", "", regex=True)
+        df[ws_fld] = df[ws_fld].str.replace(r"\r", "", regex=True)
     return df
 
 
@@ -541,9 +543,7 @@ if __name__ == "__main__":
             os.environ.get("RESOLVE_DATATYPES_LIST", r"{}")
         ),
         remove_paren_list=json.loads(os.environ.get("REMOVE_PAREN_LIST", r"[]")),
-        strip_newlines_list=json.loads(
-            os.environ.get("STRIP_NEWLINES_LIST", r"[]")
-        ),
+        strip_newlines_list=json.loads(os.environ.get("STRIP_NEWLINES_LIST", r"[]")),
         strip_whitespace_list=json.loads(
             os.environ.get("STRIP_WHITESPACE_LIST", r"[]")
         ),
