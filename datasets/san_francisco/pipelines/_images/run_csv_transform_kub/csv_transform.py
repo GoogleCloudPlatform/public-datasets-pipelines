@@ -98,14 +98,14 @@ def execute_pipeline(
     date_format_list: typing.List[str],
     reorder_headers_list: typing.List[str],
 ) -> None:
-    # if destination_table == "bikeshare_stations":
-    #     source_url_json = f"{source_url}.json"
-    #     source_file_stations_json = str(source_file).replace(".csv", "") + "_stations.json"
-    #     download_file_json(
-    #         source_url_json, source_file_stations_json, source_file
-    #     )
-    # else:
-    #     download_file(source_url, source_file)
+    if destination_table == "bikeshare_station_info":
+        source_url_json = f"{source_url}.json"
+        source_file_stations_json = str(source_file).replace(".csv", "") + "_stations.json"
+        download_file_json(
+            source_url_json, source_file_stations_json, source_file, "stations"
+        )
+    elif destination_table == "311_service_requests":
+        download_file(source_url, source_file)
     process_source_file(
         source_file=source_file,
         target_file=target_file,
@@ -128,12 +128,17 @@ def execute_pipeline(
         #     target_gcs_bucket=target_gcs_bucket,
         #     target_gcs_path=target_gcs_path,
         # )
+        if destination_table == "bikeshare_station_info":
+            drop_table = True
+        else:
+            drop_table = False
         table_exists = create_dest_table(
             project_id=project_id,
             dataset_id=dataset_id,
             table_id=destination_table,
             schema_filepath=schema_path,
             bucket_name=target_gcs_bucket,
+            drop_table=drop_table
         )
         if table_exists:
                 load_data_to_bq(
@@ -232,7 +237,7 @@ def process_chunk(
         df = strip_newlines(df, strip_newlines_list)
         df = resolve_date_format(df, date_format_list)
         df = reorder_headers(df, reorder_headers_list)
-    if destination_table == "bikeshare_stations":
+    if destination_table == "bikeshare_station_info":
         df = rename_headers(df, rename_headers_list)
         df = remove_empty_key_rows(df, empty_key_list)
         df = generate_location(df, gen_location_list)
@@ -258,14 +263,14 @@ def download_file_json(
     subnode_name: str,
 ) -> None:
     logging.info(f"Downloading file {source_url}.json.")
-    r = requests.get(source_url + ".json", stream=True)
-    with open(source_file_json + ".json", "wb") as f:
+    r = requests.get(source_url, stream=True)
+    with open(f"{source_file_json}.json", "wb") as f:
         for chunk in r:
             f.write(chunk)
-    # df = pd.read_json(source_file_json + ".json")["data"]["stations"]
-    df = pd.read_json(source_file_json + ".json")["data"][subnode_name]
+    df = pd.read_json(f"{source_file_json}.json")["data"][subnode_name]
     df = pd.DataFrame(df)
     df.to_csv(source_file_csv, index=False)
+    # import pdb; pdb.set_trace()
 
 
 def load_data_to_bq(
@@ -304,6 +309,7 @@ def create_dest_table(
     table_id: str,
     schema_filepath: list,
     bucket_name: str,
+    drop_table: bool = False
 ) -> bool:
     table_ref = f"{project_id}.{dataset_id}.{table_id}"
     logging.info(f"Attempting to create table {table_ref} if it doesn't already exist")
@@ -313,6 +319,10 @@ def create_dest_table(
         table = client.get_table(table_ref)
         table_exists_id = table.table_id
         logging.info(f"Table {table_exists_id} currently exists.")
+        if drop_table:
+            logging.info("Dropping existing table")
+            client.delete_table(table)
+            table = None
     except NotFound:
         table = None
     if not table:
@@ -406,20 +416,12 @@ def remove_parenthesis_long_lat(
 
 
 def generate_location(df: pd.DataFrame, gen_location_list: dict) -> pd.DataFrame:
-    logging.info("Generating location data")
-    #     df["station_geom"] = (
-    #         "POINT("
-    #         + df["lon"][:].astype("string")
-    #         + " "
-    #         + df["lat"][:].astype("string")
-    #         + ")"
-    #     )
-    for key, value in gen_location_list:
+    for key, values in gen_location_list.items():
         df[key] = (
             "POINT("
-            + df[value[0]][:].astype("string")
+            + df[values[0]][:].astype("string")
             + " "
-            + df[value[1]][:].astype("string")
+            + df[values[1]][:].astype("string")
             + ")"
         )
     return df
