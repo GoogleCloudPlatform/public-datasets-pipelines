@@ -13,9 +13,8 @@
 # limitations under the License.
 
 
-from airflow.providers.google.cloud.operators import kubernetes_engine
 from airflow import DAG
-
+from airflow.providers.google.cloud.operators import kubernetes_engine
 
 default_args = {
     "owner": "Google",
