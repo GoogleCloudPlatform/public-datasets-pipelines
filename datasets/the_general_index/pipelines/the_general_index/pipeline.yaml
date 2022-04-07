@@ -71,6 +71,8 @@ dag:
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "{{ var.json.the_general_index.target_path }}"
           SCHEMA_PATH: "{{ var.json.the_general_index.schema_path }}"
+          SOURCE_FILE_HEADER_ROWS: "58"
+          SOURCE_FILE_FOOTER_ROWS: "7"
           INPUT_CSV_HEADERS: >-
             [
               "dkey",
@@ -90,15 +92,15 @@ dag:
               "pub_date",
               "doc_author",
               "meta_author",
-              "author"
-              "doc_size"
-              "insert_date"
+              "author",
+              "doc_size",
+              "insert_date",
               "multi_row_flag"
             ]
           DATA_DTYPES: >-
             {
               "dkey": "str",
-              "raw_id": "int64",
+              "raw_id": "str",
               "meta_key": "str",
               "doc_doi": "str",
               "meta_doi": "str",
@@ -115,10 +117,37 @@ dag:
               "doc_author": "str",
               "meta_author": "str",
               "author": "str",
-              "doc_size": "int64",
+              "doc_size": "str",
               "insert_date": "str",
               "multi_row_flag": "str"
             }
+          DATETIME_LIST: >-
+            [ 
+              "insert_date" 
+            ] 
+          NULL_STRING_LIST: >-
+            [
+              "dkey",
+              "meta_key",
+              "doc_doi",
+              "meta_doi",
+              "doi",
+              "doi_flag",
+              "isbn",
+              "journal",
+              "doc_title",
+              "meta_title",
+              "title",
+              "doc_pub_date",
+              "meta_pub_date",
+              "pub_date",
+              "doc_author",
+              "meta_author",
+              "author",
+              "insert_date",
+              "multi_row_flag"
+            ]
+
         resources:
           request_ephemeral_storage: "32G"
           limit_cpu: "3"

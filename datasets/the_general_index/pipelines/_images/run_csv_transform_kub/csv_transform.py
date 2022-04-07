@@ -34,11 +34,15 @@ def main(
     dataset_id: str,
     table_id: str,
     schema_path: str,
+    source_file_header_rows: str,
+    source_file_footer_rows: str,
     chunksize: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
     input_headers: str,
     data_dtypes: dict,
+    datetime_list: typing.List[str],
+    null_string_list: typing.List[str],
 ) -> None:
 
     logging.info(f"{pipeline_name} process started")
@@ -51,11 +55,15 @@ def main(
         dataset_id=dataset_id,
         destination_table=table_id,
         schema_path=schema_path,
+        source_file_header_rows=source_file_header_rows,
+        source_file_footer_rows=source_file_footer_rows,
         chunksize=chunksize,
         target_gcs_bucket=target_gcs_bucket,
         target_gcs_path=target_gcs_path,
         input_headers=input_headers,
         data_dtypes=data_dtypes,
+        datetime_list=datetime_list,
+        null_string_list=null_string_list,
     )
     logging.info(f"{pipeline_name} process completed")
 
@@ -68,17 +76,21 @@ def execute_pipeline(
     dataset_id: str,
     destination_table: str,
     schema_path: str,
+    source_file_header_rows: str,
+    source_file_footer_rows: str,
     chunksize: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
     input_headers: str,
     data_dtypes: dict,
+    datetime_list: typing.List[str],
+    null_string_list: typing.List[str],
 ) -> None:
     # download_file(source_url, source_file)
     # remove_header_footer(
     #     source_file=source_file,
-    #     header_rows=58,
-    #     footer_rows=7
+    #     header_rows=int(source_file_header_rows),
+    #     footer_rows=int(source_file_footer_rows)
     # )
     process_source_file(
         source_file=source_file,
@@ -87,36 +99,39 @@ def execute_pipeline(
         destination_table=destination_table,
         input_headers=input_headers,
         data_dtypes=data_dtypes,
+        datetime_list=datetime_list,
+        null_string_list=null_string_list,
+        source_url=source_url,
     )
-    # if os.path.exists(target_file):
-    #     upload_file_to_gcs(
-    #         file_path=target_file,
-    #         target_gcs_bucket=target_gcs_bucket,
-    #         target_gcs_path=target_gcs_path,
-    #     )
-    #     table_exists = create_dest_table(
-    #         project_id=project_id,
-    #         dataset_id=dataset_id,
-    #         table_id=destination_table,
-    #         schema_filepath=schema_path,
-    #         bucket_name=target_gcs_bucket,
-    #     )
-    #     if table_exists:
-    #         load_data_to_bq(
-    #             project_id=project_id,
-    #             dataset_id=dataset_id,
-    #             table_id=destination_table,
-    #             file_path=target_file,
-    #             truncate_table=True,
-    #             field_delimiter="|",
-    #         )
-    #     else:
-    #         error_msg = f"Error: Data was not loaded because the destination table {project_id}.{dataset_id}.{destination_table} does not exist and/or could not be created."
-    #         raise ValueError(error_msg)
-    # else:
-    #     logging.info(
-    #         f"Informational: The data file {target_file} was not generated because no data file was available.  Continuing."
-    #     )
+    if os.path.exists(target_file):
+        upload_file_to_gcs(
+            file_path=target_file,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=target_gcs_path,
+        )
+        table_exists = create_dest_table(
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_id=destination_table,
+            schema_filepath=schema_path,
+            bucket_name=target_gcs_bucket,
+        )
+        if table_exists:
+            load_data_to_bq(
+                project_id=project_id,
+                dataset_id=dataset_id,
+                table_id=destination_table,
+                file_path=target_file,
+                truncate_table=True,
+                field_delimiter="|",
+            )
+        else:
+            error_msg = f"Error: Data was not loaded because the destination table {project_id}.{dataset_id}.{destination_table} does not exist and/or could not be created."
+            raise ValueError(error_msg)
+    else:
+        logging.info(
+            f"Informational: The data file {target_file} was not generated because no data file was available.  Continuing."
+        )
 
 
 def remove_header_footer(source_file: str, header_rows: int, footer_rows: int) -> None:
@@ -134,16 +149,16 @@ def process_source_file(
     destination_table: str,
     input_headers: str,
     data_dtypes: dict,
+    datetime_list: typing.List[str],
+    null_string_list: typing.List[str],
+    source_url: str,
 ) -> None:
     logging.info(f"Opening source file {source_file}")
     with pd.read_csv(
         source_file,
         engine="python",
         encoding="utf-8",
-        # skiprows=58,
-        # skipfooter=7,
         quotechar='"',
-        # header=0,
         names=input_headers,
         dtype=data_dtypes,
         chunksize=int(chunksize),  # size of batch data, in no. of records
@@ -157,15 +172,16 @@ def process_source_file(
             )
             df = pd.DataFrame()
             df = pd.concat([df, chunk])
-            import pdb
-
-            pdb.set_trace()
             process_chunk(
                 df=df,
                 target_file_batch=target_file_batch,
                 target_file=target_file,
                 skip_header=(not chunk_number == 0),
                 destination_table=destination_table,
+                datetime_list=datetime_list,
+                null_string_list=null_string_list,
+                source_file=source_file,
+                source_url=source_url,
             )
 
 
@@ -175,17 +191,45 @@ def process_chunk(
     target_file: str,
     skip_header: bool,
     destination_table: str,
+    datetime_list: typing.List[str],
+    null_string_list: typing.List[str],
+    source_file: str,
+    source_url: str,
 ) -> None:
     logging.info(f"Processing batch file {target_file_batch}")
     # Transforms are implemented here...
-    # df = rename_headers(df, rename_headers_list)
-    # df = remove_empty_key_rows(df, empty_key_list)
-    # df = generate_location(df, gen_location_list)
-    # df = resolve_datatypes(df, resolve_datatypes_list)
-    # df = reorder_headers(df, reorder_headers_list)
+    df = remove_null_strings(df, null_string_list)
+    df = add_metadata_columns(df, source_file, source_url)
+    # df = resolve_date_format(df, datetime_list)
+    # df = convert_datetime(df, datetime_list)
     save_to_new_file(df, file_path=str(target_file_batch), sep="|")
     append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
     logging.info(f"Processing batch file {target_file_batch} completed")
+
+
+def add_metadata_columns(
+    df: pd.DataFrame, source_file: str, source_url: str
+) -> pd.DataFrame:
+    df["etl_timestamp"] = datetime.datetime.now()
+    df["source_file"] = os.path.split(source_file)[1]
+    df["source_url"] = source_url
+    return df
+
+
+def convert_datetime(df: pd.DataFrame, datetime_list: typing.List[str]) -> pd.DataFrame:
+    for column in datetime_list:
+        logging.info(f"Converting column {column} to datetime")
+        df[column] = pd.to_datetime(df[column])
+    return df
+
+
+def remove_null_strings(
+    df: pd.DataFrame, null_string_list: typing.List[str]
+) -> pd.DataFrame:
+    for column in null_string_list:
+        logging.info(f"Removing null strings from column {column}")
+        df[column] = df[column].str.replace("\\N", "", regex=False)
+    return df
 
 
 def download_file(source_url: str, source_file: pathlib.Path) -> None:
@@ -202,6 +246,7 @@ def load_data_to_bq(
     table_id: str,
     file_path: str,
     truncate_table: bool,
+    field_delimiter: str = "|",
 ) -> None:
     logging.info(
         f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} started"
@@ -210,7 +255,7 @@ def load_data_to_bq(
     table_ref = client.dataset(dataset_id).table(table_id)
     job_config = bigquery.LoadJobConfig()
     job_config.source_format = bigquery.SourceFormat.CSV
-    job_config.field_delimiter = "|"
+    job_config.field_delimiter = field_delimiter
     if truncate_table:
         job_config.write_disposition = "WRITE_TRUNCATE"
     else:
@@ -448,6 +493,10 @@ if __name__ == "__main__":
         dataset_id=os.environ["DATASET_ID"],
         table_id=os.environ["TABLE_ID"],
         schema_path=os.environ["SCHEMA_PATH"],
+        source_file_header_rows=os.environ["SOURCE_FILE_HEADER_ROWS"],
+        source_file_footer_rows=os.environ["SOURCE_FILE_FOOTER_ROWS"],
         input_headers=json.loads(os.environ["INPUT_CSV_HEADERS"]),
         data_dtypes=json.loads(os.environ["DATA_DTYPES"]),
+        datetime_list=json.loads(os.environ["DATETIME_LIST"]),
+        null_string_list=json.loads(os.environ["NULL_STRING_LIST"]),
     )
