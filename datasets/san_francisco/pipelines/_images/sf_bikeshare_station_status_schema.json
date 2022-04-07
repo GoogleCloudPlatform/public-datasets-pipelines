@@ -1,0 +1,68 @@
+[
+    {
+        "name": "station_id",
+        "type": "STRING",
+        "description": "Unique identifier of a station",
+        "mode": "REQUIRED"
+    },
+    {
+        "name": "num_bikes_available",
+        "type": "INTEGER",
+        "description": "Number of bikes available for rental",
+        "mode": "REQUIRED"
+    },
+    {
+        "name": "num_bikes_disabled",
+        "type": "INTEGER",
+        "description": "Number of disabled bikes at the station. Vendors who do not want to publicize the number of disabled bikes or docks in their system can opt to omit station capacity (in station_information), num_bikes_disabled and num_docks_disabled. If station capacity is published then broken docks/bikes can be inferred (though not specifically whether the decreased capacity is a broken bike or dock)",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "num_docks_available",
+        "type": "INTEGER",
+        "description": "Number of docks accepting bike returns",
+        "mode": "REQUIRED"
+    },
+    {
+        "name": "num_docks_disabled",
+        "type": "INTEGER",
+        "description": "Number of empty but disabled dock points at the station. This value remains as part of the spec as it is possibly useful during development",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "is_installed",
+        "type": "BOOLEAN",
+        "description": "1/0 boolean - is the station currently on the street",
+        "mode": "REQUIRED"
+    },
+    {
+        "name": "is_renting",
+        "type": "BOOLEAN",
+        "description": "1/0 boolean - is the station currently renting bikes (even if the station is empty, if it is set to allow rentals this value should be 1)",
+        "mode": "REQUIRED"
+    },
+    {
+        "name": "is_returning",
+        "type": "BOOLEAN",
+        "description": "1/0 boolean - is the station accepting bike returns (if a station is full but would allow a return if it was not full then this value should be 1)",
+        "mode": "REQUIRED"
+    },
+    {
+        "name": "last_reported",
+        "type": "INTEGER",
+        "description": "Integer POSIX timestamp indicating the last time this station reported its status to the backend",
+        "mode": "REQUIRED"
+    },
+    {
+        "name": "num_ebikes_available",
+        "type": "INTEGER",
+        "description": "",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "eightd_has_available_keys",
+        "type": "BOOLEAN",
+        "description": "",
+        "mode": "NULLABLE"
+    }
+]

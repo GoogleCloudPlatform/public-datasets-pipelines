@@ -100,11 +100,19 @@ def execute_pipeline(
 ) -> None:
     if destination_table == "bikeshare_station_info":
         source_url_json = f"{source_url}.json"
-        source_file_stations_json = (
+        source_file_json = (
             str(source_file).replace(".csv", "") + "_stations.json"
         )
         download_file_json(
-            source_url_json, source_file_stations_json, source_file, "stations"
+            source_url_json, source_file_json, source_file, "stations"
+        )
+    elif destination_table == "bikeshare_status":
+        source_url_json = f"{source_url}.json"
+        source_file_json = (
+            str(source_file).replace(".csv", "") + "_status.json"
+        )
+        download_file_json(
+            source_url_json, source_file_json, source_file, "stations"
         )
     elif destination_table == "311_service_requests":
         download_file(source_url, source_file)
@@ -130,7 +138,8 @@ def execute_pipeline(
         #     target_gcs_bucket=target_gcs_bucket,
         #     target_gcs_path=target_gcs_path,
         # )
-        if destination_table == "bikeshare_station_info":
+        if destination_table == "bikeshare_station_info" \
+            or destination_table == "bikeshare_station_status":
             drop_table = True
         else:
             drop_table = False
@@ -239,12 +248,18 @@ def process_chunk(
         df = strip_newlines(df, strip_newlines_list)
         df = resolve_date_format(df, date_format_list)
         df = reorder_headers(df, reorder_headers_list)
-    if destination_table == "bikeshare_station_info":
+    elif destination_table == "bikeshare_station_info":
         df = rename_headers(df, rename_headers_list)
         df = remove_empty_key_rows(df, empty_key_list)
         df = generate_location(df, gen_location_list)
         df = resolve_datatypes(df, resolve_datatypes_list)
         df = reorder_headers(df, reorder_headers_list)
+    elif destination_table == "bikeshare_station_status":
+        df = rename_headers(df, rename_headers_list)
+        df = remove_empty_key_rows(df, empty_key_list)
+        df = reorder_headers(df, reorder_headers_list)
+    else:
+        pass
     save_to_new_file(df, file_path=str(target_file_batch), sep="|")
     append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
     logging.info(f"Processing batch file {target_file_batch} completed")
