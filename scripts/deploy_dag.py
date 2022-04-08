@@ -16,9 +16,9 @@
 import argparse
 import json
 import pathlib
+import re
 import subprocess
 import typing
-import re
 
 from google.cloud.orchestration.airflow import service_v1beta1
 from ruamel import yaml
@@ -78,7 +78,10 @@ def main(
         )
 
 
-def get_project_name():
+def get_composer_bucket(
+    composer_env: str,
+    composer_region: str,
+):
     project_sub = subprocess.check_output(
         [
             "gcloud",
@@ -92,15 +95,6 @@ def get_project_name():
 
     project_id = str(project_sub).split('"')[1]
 
-    return project_id
-
-
-def get_composer_bucket(
-    composer_env: str,
-    composer_region: str,
-):
-    project_id = get_project_name()
-
     # Create a client
     client = service_v1beta1.EnvironmentsClient()
 
@@ -112,7 +106,7 @@ def get_composer_bucket(
     # Make the request
     response = client.get_environment(request=request)
 
-    gcs_pattern = re.compile("^gs:\/\/(.*)\/")
+    gcs_pattern = re.compile(r"^gs:\/\/(.*)\/")
 
     composer_bucket = gcs_pattern.match(response.config.dag_gcs_prefix)[1]
 
@@ -301,7 +295,7 @@ def check_airflow_version_compatibility(
         )
 
 
-""" if __name__ == "__main__":
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Deploy DAGs and variables to an Airflow environment"
     )
@@ -378,4 +372,3 @@ def check_airflow_version_compatibility(
         composer_bucket=args.composer_bucket,
         composer_region=args.composer_region,
     )
- """

@@ -333,7 +333,6 @@ def test_script_with_pipeline_arg_deploys_without_gcs_bucket_param(
     mocker.patch("scripts.deploy_dag.copy_custom_callables_to_airflow_dags_folder")
     mocker.patch("scripts.deploy_dag.copy_generated_dag_to_airflow_dags_folder")
     mocker.patch("scripts.deploy_dag.check_airflow_version_compatibility")
-    mocker.patch("scripts.deploy_dag.get_project_id")
     mocker.patch("scripts.deploy_dag.get_composer_bucket")
 
     deploy_dag.main(
@@ -344,7 +343,6 @@ def test_script_with_pipeline_arg_deploys_without_gcs_bucket_param(
         composer_bucket=None,
         composer_region="test-region",
     )
-    deploy_dag.get_project_id.asset_called_once()
     deploy_dag.get_composer_bucket.assert_called_once()
     deploy_dag.check_airflow_version_compatibility.assert_called_once()
 
@@ -362,24 +360,6 @@ def test_script_without_local_flag_requires_cloud_composer_args(env: str):
                 env,
                 "--composer-bucket",
                 "us-east4-composer-env-bucket",
-                "--composer-region",
-                "us-east4",
-            ],
-            cwd=deploy_dag.PROJECT_ROOT,
-        )
-
-    with pytest.raises(subprocess.CalledProcessError):
-        # No --composer-bucket parameter
-        subprocess.check_call(
-            [
-                "python",
-                "scripts/deploy_dag.py",
-                "--dataset",
-                "some_test_dataset",
-                "--env",
-                env,
-                "--composer-env",
-                "test-composer-env",
                 "--composer-region",
                 "us-east4",
             ],
