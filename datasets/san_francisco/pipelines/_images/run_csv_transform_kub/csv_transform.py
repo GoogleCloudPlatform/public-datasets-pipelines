@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import datetime
 import fnmatch
 import json
 import logging
@@ -23,8 +22,6 @@ import shutil
 import typing
 import zipfile as zip
 
-
-import numpy as np
 import pandas as pd
 import requests
 from google.api_core.exceptions import NotFound
@@ -128,26 +125,19 @@ def execute_pipeline(
     date_format_list: typing.List[str],
     reorder_headers_list: typing.List[str],
 ) -> None:
+    if (
+        destination_table == "311_service_requests"
+        or destination_table == "film_locations"
+    ):
+        download_file(source_url, source_file)
     if destination_table == "bikeshare_station_info":
         source_url_json = f"{source_url}.json"
-        source_file_json = (
-            str(source_file).replace(".csv", "") + "_stations.json"
-        )
-        download_file_json(
-            source_url_json, source_file_json, source_file, "stations"
-        )
+        source_file_json = str(source_file).replace(".csv", "") + "_stations.json"
+        download_file_json(source_url_json, source_file_json, source_file, "stations")
     elif destination_table == "bikeshare_status":
         source_url_json = f"{source_url}.json"
-        source_file_json = (
-            str(source_file).replace(".csv", "") + "_status.json"
-        )
-        download_file_json(
-            source_url_json, source_file_json, source_file, "stations"
-        )
-    elif destination_table == "311_service_requests":
-        download_file(source_url, source_file)
-    else:
-        pass
+        source_file_json = str(source_file).replace(".csv", "") + "_status.json"
+        download_file_json(source_url_json, source_file_json, source_file, "stations")
     if destination_table == "bikeshare_trips":
         dest_path = os.path.split(source_file)[0]
         download_url_files_from_list(source_url_list, dest_path)
@@ -168,7 +158,7 @@ def execute_pipeline(
             strip_whitespace_list=strip_whitespace_list,
             date_format_list=date_format_list,
             reorder_headers_list=reorder_headers_list,
-            header_row_ordinal=None
+            header_row_ordinal=None,
         )
         process_source_file(
             source_file=str(source_file).replace(".csv", "_tripdata.csv"),
@@ -186,7 +176,7 @@ def execute_pipeline(
             strip_whitespace_list=strip_whitespace_list,
             date_format_list=date_format_list,
             reorder_headers_list=reorder_headers_list,
-            header_row_ordinal=None
+            header_row_ordinal=None,
         )
         handle_tripdata(
             target_file=target_file,
@@ -194,7 +184,7 @@ def execute_pipeline(
             rename_headers_list=rename_headers_list,
             reorder_headers_list=reorder_headers_list,
             target_gcs_bucket=target_gcs_bucket,
-            target_gcs_path=target_gcs_path
+            target_gcs_path=target_gcs_path,
         )
     else:
         process_source_file(
@@ -213,7 +203,7 @@ def execute_pipeline(
             strip_whitespace_list=strip_whitespace_list,
             date_format_list=date_format_list,
             reorder_headers_list=reorder_headers_list,
-            header_row_ordinal="0"
+            header_row_ordinal="0",
         )
     if os.path.exists(target_file):
         upload_file_to_gcs(
@@ -257,7 +247,7 @@ def handle_tripdata(
     rename_headers_list: dict,
     reorder_headers_list: typing.List[str],
     target_gcs_bucket: str,
-    target_gcs_path: str
+    target_gcs_path: str,
 ) -> pd.DataFrame:
     logging.info("Compiling target file by merging source data")
     trip_data_filepath = str(target_file).replace(".csv", "_trip_data.csv")
@@ -292,26 +282,13 @@ def handle_tripdata(
         lambda x: str(x.subscription_type)
         if not str(x.subscriber_type)
         else str(x.subscriber_type),
-        axis=1
+        axis=1,
     )
     df = df.drop(columns=["subscriber_type"])
-    df = resolve_datatypes(
-        df=df,
-        resolve_datatypes_list=resolve_datatypes_list
-    )
-    df = rename_headers(
-        df=df,
-        rename_headers_list=rename_headers_list
-    )
-    df = reorder_headers(
-        df=df,
-        output_headers_list=reorder_headers_list
-    )
-    save_to_new_file(
-        df=df,
-        file_path=target_file,
-        sep="|"
-    )
+    df = resolve_datatypes(df=df, resolve_datatypes_list=resolve_datatypes_list)
+    df = rename_headers(df=df, rename_headers_list=rename_headers_list)
+    df = reorder_headers(df=df, output_headers_list=reorder_headers_list)
+    save_to_new_file(df=df, file_path=target_file, sep="|")
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
 
@@ -326,10 +303,7 @@ def listdirs(rootdir: str) -> list:
     return rtn_list
 
 
-def download_url_files_from_list(
-    url_list: typing.List[str],
-    dest_path: str
-) -> None:
+def download_url_files_from_list(url_list: typing.List[str], dest_path: str) -> None:
     for url in url_list:
         dest_file = dest_path + "/" + os.path.split(url)[1]
         download_file_http(url, dest_file)
@@ -352,10 +326,7 @@ def download_file_http(source_url: str, source_file: pathlib.Path) -> None:
 def unpack_file(infile: str, dest_path: str, compression_type: str = "zip") -> None:
     if compression_type == "zip":
         logging.info(f"Unpacking {infile} to {dest_path}")
-        zip_decompress(
-            infile=infile,
-            dest_path=dest_path
-        )
+        zip_decompress(infile=infile, dest_path=dest_path)
     else:
         logging.info(
             f"{infile} ignored as it is not compressed or is of unknown compression"
@@ -429,12 +400,11 @@ def process_source_file(
     date_format_list: typing.List[str],
     reorder_headers_list: typing.List[str],
     header_row_ordinal: str = "0",
-    field_separator: str = ","
+    field_separator: str = ",",
 ) -> None:
     logging.info(f"Opening source file {source_file}")
 
-    if header_row_ordinal is None \
-        or header_row_ordinal == "None":
+    if header_row_ordinal is None or header_row_ordinal == "None":
         with pd.read_csv(
             source_file,
             engine="python",
@@ -549,14 +519,12 @@ def process_chunk(
         if str(target_file).find("_tripdata.csv") > -1:
             # df = resolve_date_format(df, "%Y/%m/%d %H:%M:%S.%f", date_fields)
             df = resolve_date_format(df, date_format_list, "%Y/%m/%d %H:%M:%S.%f")
-            df = generate_location(
-                df,
-                gen_location_list
-            )
+            df = generate_location(df, gen_location_list)
         df = add_key(df)
     elif destination_table == "film_locations":
         df = rename_headers(df, rename_headers_list)
         df = strip_whitespace(df, strip_whitespace_list)
+        df = strip_newlines(df, strip_newlines_list)
         df = reorder_headers(df, reorder_headers_list)
     else:
         pass
@@ -780,7 +748,7 @@ def strip_newlines(
 def resolve_date_format(
     df: pd.DataFrame,
     date_format_list: typing.List[str],
-    from_format: str = "%Y-%m-%d %H:%M:%S"
+    from_format: str = "%Y-%m-%d %H:%M:%S",
 ) -> pd.DataFrame:
     logging.info("Resolving date formats")
     for dt_fld in date_format_list:
@@ -789,11 +757,14 @@ def resolve_date_format(
 
 
 def convert_dt_format(dt_str: str) -> str:
-    if not dt_str or str(dt_str).lower() == "nan" or \
-        str(dt_str).lower() == "nat":
+    if not dt_str or str(dt_str).lower() == "nan" or str(dt_str).lower() == "nat":
         return ""
     else:
-        return str(pd.to_datetime(dt_str, format='"%Y-%m-%d %H:%M:%S"', infer_datetime_format=True))
+        return str(
+            pd.to_datetime(
+                dt_str, format='"%Y-%m-%d %H:%M:%S"', infer_datetime_format=True
+            )
+        )
 
 
 def reorder_headers(
@@ -870,7 +841,9 @@ if __name__ == "__main__":
         trip_data_dtypes=json.loads(os.environ.get("TRIP_DATA_DTYPES", r"{}")),
         tripdata_names=json.loads(os.environ.get("TRIPDATA_NAMES", r"[]")),
         tripdata_dtypes=json.loads(os.environ.get("TRIPDATA_DTYPES", r"{}")),
-        rename_headers_tripdata=json.loads(os.environ.get("RENAME_HEADERS_TRIPDATA", r"{}")),
+        rename_headers_tripdata=json.loads(
+            os.environ.get("RENAME_HEADERS_TRIPDATA", r"{}")
+        ),
         empty_key_list=json.loads(os.environ.get("EMPTY_KEY_LIST", r"[]")),
         gen_location_list=json.loads(os.environ.get("GEN_LOCATION_LIST", r"{}")),
         resolve_datatypes_list=json.loads(

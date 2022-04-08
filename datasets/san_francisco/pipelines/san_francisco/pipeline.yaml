@@ -524,6 +524,11 @@ dag:
               "director",
               "actor_2"
             ]
+          STRIP_NEWLINES_LIST: >-
+            [
+              "production_company",
+              "fun_facts"
+            ]
           REORDER_HEADERS_LIST: >-
             [
               "title",
