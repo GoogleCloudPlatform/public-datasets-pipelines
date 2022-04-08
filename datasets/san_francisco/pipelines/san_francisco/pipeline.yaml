@@ -59,8 +59,8 @@ dag:
           PIPELINE_NAME: "{{ var.json.san_francisco.sf_311_service_requests.pipeline_name }}"
           SOURCE_URL: "{{ var.json.san_francisco.sf_311_service_requests.source_url }}"
           CHUNKSIZE: "{{ var.json.san_francisco.sf_311_service_requests.chunksize }}"
-          SOURCE_FILE: "files/data.csv"
-          TARGET_FILE: "files/data_output.csv"
+          SOURCE_FILE: "{{ var.json.san_francisco.sf_311_service_requests.source_file }}"
+          TARGET_FILE: "{{ var.json.san_francisco.sf_311_service_requests.target_file }}"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.san_francisco.sf_311_service_requests.dataset_id }}"
           TABLE_ID: "{{ var.json.san_francisco.sf_311_service_requests.destination_table }}"
@@ -158,8 +158,8 @@ dag:
           PIPELINE_NAME: "{{ var.json.san_francisco.sf_citibike_stations.pipeline_name }}"
           SOURCE_URL: "{{ var.json.san_francisco.sf_citibike_stations.source_url }}"
           CHUNKSIZE: "{{ var.json.san_francisco.sf_citibike_stations.chunksize }}"
-          SOURCE_FILE: "files/data.csv"
-          TARGET_FILE: "files/data_output.csv"
+          SOURCE_FILE: "{{ var.json.san_francisco.sf_citibike_stations.source_file }}"
+          TARGET_FILE: "{{ var.json.san_francisco.sf_citibike_stations.target_file }}"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.san_francisco.sf_citibike_stations.dataset_id }}"
           TABLE_ID: "{{ var.json.san_francisco.sf_citibike_stations.destination_table }}"
@@ -244,8 +244,8 @@ dag:
           PIPELINE_NAME: "{{ var.json.san_francisco.sf_bikeshare_status.pipeline_name }}"
           SOURCE_URL: "{{ var.json.san_francisco.sf_bikeshare_status.source_url }}"
           CHUNKSIZE: "{{ var.json.san_francisco.sf_bikeshare_status.chunksize }}"
-          SOURCE_FILE: "files/data.csv"
-          TARGET_FILE: "files/data_output.csv"
+          SOURCE_FILE: "{{ var.json.san_francisco.sf_bikeshare_status.source_file }}"
+          TARGET_FILE: "{{ var.json.san_francisco.sf_bikeshare_status.target_file }}"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.san_francisco.sf_bikeshare_status.dataset_id }}"
           TABLE_ID: "{{ var.json.san_francisco.sf_bikeshare_status.destination_table }}"
@@ -295,7 +295,7 @@ dag:
           limit_memory: "8G"
           limit_cpu: "3"
     - operator: "GKEStartPodOperator"
-      description: "Run New York 311 Service Requests Pipeline"
+      description: "Run San Francisco Bikeshare Trips Pipeline"
       args:
         task_id: "sf_bikeshare_trips"
         name: "sf_bikeshare_trips"
@@ -317,8 +317,8 @@ dag:
             "https://s3.amazonaws.com/babs-open-data/babs_open_data_year_2.zip",
             "https://s3.amazonaws.com/babs-open-data/babs_open_data_year_3.zip"
           CHUNKSIZE: "{{ var.json.san_francisco.sf_bikeshare_trips.chunksize }}"
-          SOURCE_FILE: "files/data.csv"
-          TARGET_FILE: "files/data_output.csv"
+          SOURCE_FILE: "{{ var.json.san_francisco.sf_bikeshare_trips.source_file }}"
+          TARGET_FILE: "{{ var.json.san_francisco.sf_bikeshare_trips.target_file }}"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.san_francisco.sf_bikeshare_trips.dataset_id }}"
           TABLE_ID: "{{ var.json.san_francisco.sf_bikeshare_trips.destination_table }}"
@@ -476,6 +476,67 @@ dag:
               "bike_share_for_all_trip",
               "start_station_geom",
               "end_station_geom"
+            ]
+        resources:
+          limit_memory: "8G"
+          limit_cpu: "3"
+    - operator: "GKEStartPodOperator"
+      description: "Run San Francisco Film Locations Pipeline"
+      args:
+        task_id: "sf_film_locations"
+        name: "sf_film_locations"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: san-francisco
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "{{ var.json.san_francisco.sf_film_locations.pipeline_name }}"
+          SOURCE_URL: "https://s3.amazonaws.com/babs-open-data/babs_open_data_year_3.zip"
+          CHUNKSIZE: "{{ var.json.san_francisco.sf_film_locations.chunksize }}"
+          SOURCE_FILE: "{{ var.json.san_francisco.sf_film_locations.source_file }}"
+          TARGET_FILE: "{{ var.json.san_francisco.sf_film_locations.target_file }}"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "{{ var.json.san_francisco.sf_film_locations.dataset_id }}"
+          TABLE_ID: "{{ var.json.san_francisco.sf_film_locations.destination_table }}"
+          DROP_DEST_TABLE: "{{ var.json.san_francisco.sf_film_locations.drop_dest_table }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "{{ var.json.san_francisco.sf_film_locations.target_gcs_path }}"
+          SCHEMA_PATH: "{{ var.json.san_francisco.sf_film_locations.schema_path }}"
+          RENAME_HEADERS_LIST: >-
+            {
+              "Title": "title",
+              "Release Year": "release_year",
+              "Locations": "locations",
+              "Fun Facts": "fun_facts",
+              "Production Company": "production_company",
+              "Distributor": "distributor",
+              "Director": "director",
+              "Writer": "writer",
+              "Actor 1": "actor_1",
+              "Actor 2": "actor_2",
+              "Actor 3": "actor_3"
+            }
+          STRIP_WHITESPACE_LIST: >-
+            [
+              "distributor",
+              "director",
+              "actor_2"
+            ]
+          REORDER_HEADERS_LIST: >-
+            [
+              "title",
+              "release_year",
+              "locations",
+              "fun_facts",
+              "production_company",
+              "distributor",
+              "director",
+              "writer",
+              "actor_1",
+              "actor_2",
+              "actor_3"
             ]
         resources:
           limit_memory: "8G"

@@ -554,6 +554,10 @@ def process_chunk(
                 gen_location_list
             )
         df = add_key(df)
+    elif destination_table == "film_locations":
+        df = rename_headers(df, rename_headers_list)
+        df = strip_whitespace(df, strip_whitespace_list)
+        df = reorder_headers(df, reorder_headers_list)
     else:
         pass
     save_to_new_file(df, file_path=str(target_file_batch), sep="|")
