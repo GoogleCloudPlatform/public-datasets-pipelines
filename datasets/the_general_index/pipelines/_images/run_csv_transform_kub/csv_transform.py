@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -86,12 +86,12 @@ def execute_pipeline(
     datetime_list: typing.List[str],
     null_string_list: typing.List[str],
 ) -> None:
-    # download_file(source_url, source_file)
-    # remove_header_footer(
-    #     source_file=source_file,
-    #     header_rows=int(source_file_header_rows),
-    #     footer_rows=int(source_file_footer_rows)
-    # )
+    download_file(source_url, source_file)
+    remove_header_footer(
+        source_file=source_file,
+        header_rows=int(source_file_header_rows),
+        footer_rows=int(source_file_footer_rows),
+    )
     process_source_file(
         source_file=source_file,
         target_file=target_file,
@@ -190,18 +190,13 @@ def process_chunk(
     target_file_batch: str,
     target_file: str,
     skip_header: bool,
-    destination_table: str,
-    datetime_list: typing.List[str],
     null_string_list: typing.List[str],
     source_file: str,
     source_url: str,
 ) -> None:
     logging.info(f"Processing batch file {target_file_batch}")
-    # Transforms are implemented here...
     df = remove_null_strings(df, null_string_list)
     df = add_metadata_columns(df, source_file, source_url)
-    # df = resolve_date_format(df, datetime_list)
-    # df = convert_datetime(df, datetime_list)
     save_to_new_file(df, file_path=str(target_file_batch), sep="|")
     append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
     logging.info(f"Processing batch file {target_file_batch} completed")
@@ -213,13 +208,6 @@ def add_metadata_columns(
     df["etl_timestamp"] = datetime.datetime.now()
     df["source_file"] = os.path.split(source_file)[1]
     df["source_url"] = source_url
-    return df
-
-
-def convert_datetime(df: pd.DataFrame, datetime_list: typing.List[str]) -> pd.DataFrame:
-    for column in datetime_list:
-        logging.info(f"Converting column {column} to datetime")
-        df[column] = pd.to_datetime(df[column])
     return df
 
 
@@ -344,95 +332,6 @@ def create_table_schema(
             )
         )
     return schema
-
-
-def rename_headers(df: pd.DataFrame, rename_headers_list: dict) -> pd.DataFrame:
-    df.rename(columns=rename_headers_list, inplace=True)
-    return df
-
-
-def remove_empty_key_rows(
-    df: pd.DataFrame, empty_key_list: typing.List[str]
-) -> pd.DataFrame:
-    logging.info("Removing rows with empty keys")
-    for key_field in empty_key_list:
-        df = df[df[key_field] != ""]
-    return df
-
-
-def resolve_datatypes(df: pd.DataFrame, resolve_datatypes_list: dict) -> pd.DataFrame:
-    logging.info("Resolving datatypes")
-    for key, value in resolve_datatypes_list.items():
-        df[key] = df[key].astype(value)
-    return df
-
-
-def remove_parenthesis_long_lat(
-    df: pd.DataFrame, remove_paren_list: typing.List[str]
-) -> pd.DataFrame:
-    logging.info("Removing parenthesis from geographic fields")
-    for paren_fld in remove_paren_list:
-        df[paren_fld].replace("(", "", regex=False, inplace=True)
-        df[paren_fld].replace(")", "", regex=False, inplace=True)
-    return df
-
-
-def generate_location(df: pd.DataFrame, gen_location_list: dict) -> pd.DataFrame:
-    logging.info("Generating location data")
-    #     df["station_geom"] = (
-    #         "POINT("
-    #         + df["lon"][:].astype("string")
-    #         + " "
-    #         + df["lat"][:].astype("string")
-    #         + ")"
-    #     )
-    for key, value in gen_location_list:
-        df[key] = (
-            "POINT("
-            + df[value[0]][:].astype("string")
-            + " "
-            + df[value[1]][:].astype("string")
-            + ")"
-        )
-    return df
-
-
-def strip_whitespace(
-    df: pd.DataFrame, strip_whitespace_list: typing.List[str]
-) -> pd.DataFrame:
-    logging.info("Stripping whitespace")
-    for ws_fld in strip_whitespace_list:
-        df[ws_fld] = df[ws_fld].apply(lambda x: str(x).strip())
-    return df
-
-
-def resolve_date_format(
-    df: pd.DataFrame, date_format_list: typing.List[str]
-) -> pd.DataFrame:
-    logging.info("Resolving date formats")
-    for dt_fld in date_format_list:
-        df[dt_fld] = df[dt_fld].apply(convert_dt_format)
-    return df
-
-
-def convert_dt_format(dt_str: str) -> str:
-    if not dt_str or str(dt_str).lower() == "nan" or str(dt_str).lower() == "nat":
-        return ""
-    elif (
-        dt_str.strip()[2] == "/"
-    ):  # if there is a '/' in 3rd position, then we have a date format mm/dd/yyyy
-        return datetime.datetime.strptime(dt_str, "%m/%d/%Y %H:%M:%S %p").strftime(
-            "%Y-%m-%d %H:%M:%S"
-        )
-    else:
-        return str(dt_str)
-
-
-def reorder_headers(
-    df: pd.DataFrame, output_headers_list: typing.List[str]
-) -> pd.DataFrame:
-    logging.info("Re-ordering Headers")
-    return df[output_headers_list]
 
 
 def save_to_new_file(df: pd.DataFrame, file_path: str, sep: str = "|") -> None:

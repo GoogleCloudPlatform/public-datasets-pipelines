@@ -128,6 +128,7 @@ dag:
           NULL_STRING_LIST: >-
             [
               "dkey",
+              "raw_id",
               "meta_key",
               "doc_doi",
               "meta_doi",
@@ -144,6 +145,7 @@ dag:
               "doc_author",
               "meta_author",
               "author",
+              "doc_size",
               "insert_date",
               "multi_row_flag"
             ]
