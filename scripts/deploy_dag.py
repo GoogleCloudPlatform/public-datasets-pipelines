@@ -78,9 +78,8 @@ def main(
         )
 
 
-def get_project_name(
-):
-    project_sub=subprocess.check_output(
+def get_project_name():
+    project_sub = subprocess.check_output(
         [
             "gcloud",
             "config",
@@ -100,7 +99,7 @@ def get_composer_bucket(
     composer_env: str,
     composer_region: str,
 ):
-    project_id=get_project_name()
+    project_id = get_project_name()
 
     # Create a client
     client = service_v1beta1.EnvironmentsClient()
@@ -113,10 +112,10 @@ def get_composer_bucket(
     # Make the request
     response = client.get_environment(request=request)
 
-    gcs_pattern=re.compile('^gs:\/\/(.*)\/')
+    gcs_pattern = re.compile("^gs:\/\/(.*)\/")
 
     composer_bucket = gcs_pattern.match(response.config.dag_gcs_prefix)[1]
-   
+
     # Handle the response
     return composer_bucket
 
