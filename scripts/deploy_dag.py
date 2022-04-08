@@ -16,9 +16,11 @@
 import argparse
 import json
 import pathlib
+import re
 import subprocess
 import typing
 
+from google.cloud.orchestration.airflow import service_v1beta1
 from ruamel import yaml
 
 yaml = yaml.YAML(typ="safe")
@@ -37,10 +39,13 @@ def main(
     env_path: pathlib.Path,
     dataset_id: str,
     composer_env: str,
-    composer_bucket: str,
+    composer_bucket: None,
     composer_region: str,
     pipeline: str = None,
 ):
+    if composer_bucket is None:
+        composer_bucket = get_composer_bucket(composer_env, composer_region)
+
     print("\n========== AIRFLOW VARIABLES ==========")
     copy_variables_to_airflow_data_folder(env_path, dataset_id, composer_bucket)
     import_variables_to_airflow_env(
@@ -71,6 +76,42 @@ def main(
             pipeline_path.name,
             composer_bucket,
         )
+
+
+def get_composer_bucket(
+    composer_env: str,
+    composer_region: str,
+):
+    project_sub = subprocess.check_output(
+        [
+            "gcloud",
+            "config",
+            "get-value",
+            "project",
+            "--format",
+            "json",
+        ],
+    )
+
+    project_id = str(project_sub).split('"')[1]
+
+    # Create a client
+    client = service_v1beta1.EnvironmentsClient()
+
+    # Initialize request argument(s)
+    request = service_v1beta1.GetEnvironmentRequest(
+        name=f"projects/{project_id}/locations/{composer_region}/environments/{composer_env}"
+    )
+
+    # Make the request
+    response = client.get_environment(request=request)
+
+    gcs_pattern = re.compile(r"^gs:\/\/(.*)\/")
+
+    composer_bucket = gcs_pattern.match(response.config.dag_gcs_prefix)[1]
+
+    # Handle the response
+    return composer_bucket
 
 
 def run_gsutil_cmd(args: typing.List[str], cwd: pathlib.Path):
@@ -285,7 +326,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-b",
         "--composer-bucket",
-        required=True,
+        required=False,
         type=str,
         dest="composer_bucket",
         help="The Google Cloud Composer bucket name",

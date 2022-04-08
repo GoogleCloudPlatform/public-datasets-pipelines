@@ -310,6 +310,43 @@ def test_script_with_pipeline_arg_deploys_only_that_pipeline(
     deploy_dag.check_airflow_version_compatibility.assert_called_once()
 
 
+def test_script_with_pipeline_arg_deploys_without_gcs_bucket_param(
+    dataset_path: pathlib.Path,
+    pipeline_path: pathlib.Path,
+    pipeline_path_2: pathlib.Path,
+    env: str,
+    mocker,
+):
+    setup_dag_and_variables(
+        dataset_path,
+        pipeline_path,
+        env,
+        f"{dataset_path.name}_variables.json",
+    )
+
+    airflow_version = 2
+    mocker.patch("scripts.deploy_dag.copy_variables_to_airflow_data_folder")
+    mocker.patch("scripts.deploy_dag.import_variables_to_airflow_env")
+    mocker.patch(
+        "scripts.deploy_dag.composer_airflow_version", return_value=airflow_version
+    )
+    mocker.patch("scripts.deploy_dag.copy_custom_callables_to_airflow_dags_folder")
+    mocker.patch("scripts.deploy_dag.copy_generated_dag_to_airflow_dags_folder")
+    mocker.patch("scripts.deploy_dag.check_airflow_version_compatibility")
+    mocker.patch("scripts.deploy_dag.get_composer_bucket")
+
+    deploy_dag.main(
+        env_path=ENV_PATH,
+        dataset_id=dataset_path.name,
+        pipeline=pipeline_path_2.name,
+        composer_env="test-env",
+        composer_bucket=None,
+        composer_region="test-region",
+    )
+    deploy_dag.get_composer_bucket.assert_called_once()
+    deploy_dag.check_airflow_version_compatibility.assert_called_once()
+
+
 def test_script_without_local_flag_requires_cloud_composer_args(env: str):
     with pytest.raises(subprocess.CalledProcessError):
         # No --composer-env parameter
@@ -323,24 +360,6 @@ def test_script_without_local_flag_requires_cloud_composer_args(env: str):
                 env,
                 "--composer-bucket",
                 "us-east4-composer-env-bucket",
-                "--composer-region",
-                "us-east4",
-            ],
-            cwd=deploy_dag.PROJECT_ROOT,
-        )
-
-    with pytest.raises(subprocess.CalledProcessError):
-        # No --composer-bucket parameter
-        subprocess.check_call(
-            [
-                "python",
-                "scripts/deploy_dag.py",
-                "--dataset",
-                "some_test_dataset",
-                "--env",
-                env,
-                "--composer-env",
-                "test-composer-env",
                 "--composer-region",
                 "us-east4",
             ],
