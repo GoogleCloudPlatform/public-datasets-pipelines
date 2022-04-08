@@ -18,6 +18,7 @@ import json
 import pathlib
 import subprocess
 import typing
+import re
 
 from google.cloud.orchestration.airflow import service_v1beta1
 from ruamel import yaml
@@ -43,7 +44,7 @@ def main(
     pipeline: str = None,
 ):
     if composer_bucket is None:
-        composer_bucket = get_composer_bucket(env_path, composer_region, composer_env)
+        composer_bucket = get_composer_bucket(composer_env, composer_region)
 
     print("\n========== AIRFLOW VARIABLES ==========")
     copy_variables_to_airflow_data_folder(env_path, dataset_id, composer_bucket)
@@ -77,28 +78,47 @@ def main(
         )
 
 
-def get_composer_bucket(
-    env_path: pathlib.Path,
-    composer_region: str,
-    composer_env: str,
+def get_project_name(
 ):
+    project_sub=subprocess.check_output(
+        [
+            "gcloud",
+            "config",
+            "get-value",
+            "project",
+            "--format",
+            "json",
+        ],
+    )
+
+    project_id = str(project_sub).split('"')[1]
+
+    return project_id
+
+
+def get_composer_bucket(
+    composer_env: str,
+    composer_region: str,
+):
+    project_id=get_project_name()
+
     # Create a client
     client = service_v1beta1.EnvironmentsClient()
 
     # Initialize request argument(s)
     request = service_v1beta1.GetEnvironmentRequest(
-        name=f"projects/{env_path}/locations/{composer_region}/environments/{composer_env}"
+        name=f"projects/{project_id}/locations/{composer_region}/environments/{composer_env}"
     )
 
     # Make the request
     response = client.get_environment(request=request)
 
-    composer_bucket = response.config.dag_gcs_prefix
+    gcs_pattern=re.compile('^gs:\/\/(.*)\/')
+
+    composer_bucket = gcs_pattern.match(response.config.dag_gcs_prefix)[1]
+   
     # Handle the response
-    print(composer_bucket)
-
-
-# [END composer_v1beta1_generated_Environments_GetEnvironment_sync]
+    return composer_bucket
 
 
 def run_gsutil_cmd(args: typing.List[str], cwd: pathlib.Path):
@@ -282,7 +302,7 @@ def check_airflow_version_compatibility(
         )
 
 
-if __name__ == "__main__":
+""" if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Deploy DAGs and variables to an Airflow environment"
     )
@@ -359,3 +379,4 @@ if __name__ == "__main__":
         composer_bucket=args.composer_bucket,
         composer_region=args.composer_region,
     )
+ """

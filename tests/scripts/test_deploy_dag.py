@@ -333,6 +333,7 @@ def test_script_with_pipeline_arg_deploys_without_gcs_bucket_param(
     mocker.patch("scripts.deploy_dag.copy_custom_callables_to_airflow_dags_folder")
     mocker.patch("scripts.deploy_dag.copy_generated_dag_to_airflow_dags_folder")
     mocker.patch("scripts.deploy_dag.check_airflow_version_compatibility")
+    mocker.patch("scripts.deploy_dag.get_project_id")
     mocker.patch("scripts.deploy_dag.get_composer_bucket")
 
     deploy_dag.main(
@@ -343,6 +344,7 @@ def test_script_with_pipeline_arg_deploys_without_gcs_bucket_param(
         composer_bucket=None,
         composer_region="test-region",
     )
+    deploy_dag.get_project_id.asset_called_once()
     deploy_dag.get_composer_bucket.assert_called_once()
     deploy_dag.check_airflow_version_compatibility.assert_called_once()
 
