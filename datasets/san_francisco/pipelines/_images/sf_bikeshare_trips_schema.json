@@ -1,0 +1,128 @@
+[
+	{
+		"name": "trip_id",
+		"type": "STRING",
+        "mode": "REQUIRED",
+		"description": "Numeric ID of bike trip"
+    },
+	{
+		"name": "duration_sec",
+		"type": "INTEGER",
+		"mode": "NULLABLE",
+		"description": "Time of trip in seconds"
+    },
+	{
+		"name": "start_date",
+		"type": "TIMESTAMP",
+		"mode": "NULLABLE",
+		"description": "Start date of trip with date and time, in PST"
+    },
+	{
+		"name": "start_station_name",
+		"type": "STRING",
+		"mode": "NULLABLE",
+		"description": "Station name of start station"
+    },
+	{
+		"name": "start_station_id",
+		"type": "INTEGER",
+		"mode": "NULLABLE",
+		"description": "Numeric reference for start station"
+    },
+	{
+		"name": "end_date",
+		"type": "TIMESTAMP",
+		"mode": "NULLABLE",
+		"description": "End date of trip with date and time, in PST"
+    },
+	{
+		"name": "end_station_name",
+		"type": "STRING",
+		"mode": "NULLABLE",
+		"description": "Station name for end station"
+    },
+	{
+		"name": "end_station_id",
+		"type": "INTEGER",
+		"mode": "NULLABLE",
+		"description": "Numeric reference for end station"
+    },
+	{
+		"name": "bike_number",
+		"type": "INTEGER",
+		"mode": "NULLABLE",
+		"description": "ID of bike used"
+    },
+	{
+		"name": "zip_code",
+		"type": "STRING",
+		"mode": "NULLABLE",
+		"description": "Home zip code of subscriber (customers can choose to manually enter zip at kiosk however data is unreliable)"
+    },
+	{
+		"name": "subscriber_type",
+		"type": "STRING",
+		"mode": "NULLABLE",
+		"description": "Subscriber = annual or 30-day member; Customer = 24-hour or 3-day member"
+	},
+	{
+		"name": "subscription_type",
+		"type": "STRING",
+		"mode": "NULLABLE",
+		"description": ""
+	},
+	{
+		"name": "start_station_latitude",
+		"type": "FLOAT",
+		"mode": "NULLABLE",
+		"description": ""
+	},
+	{
+		"name": "start_station_longitude",
+		"type": "FLOAT",
+		"mode": "NULLABLE",
+		"description": ""
+	},
+	{
+		"name": "end_station_latitude",
+		"type": "FLOAT",
+		"mode": "NULLABLE",
+		"description": ""
+	},
+	{
+		"name": "end_station_longitude",
+		"type": "FLOAT",
+		"mode": "NULLABLE",
+		"description": ""
+	},
+	{
+		"name": "member_birth_year",
+		"type": "INTEGER",
+		"mode": "NULLABLE",
+		"description": ""
+	},
+	{
+		"name": "member_gender",
+		"type": "STRING",
+		"mode": "NULLABLE",
+		"description": ""
+	},
+	{
+		"name": "bike_share_for_all_trip",
+		"type": "STRING",
+		"mode": "NULLABLE",
+		"description": ""
+	},
+	{
+		"name": "start_station_geom",
+		"type": "GEOGRAPHY",
+		"mode": "NULLABLE",
+		"description": ""
+	},
+	{
+		"name": "end_station_geom",
+		"type": "GEOGRAPHY",
+		"mode": "NULLABLE",
+		"description": ""
+    }
+]

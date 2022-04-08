@@ -171,8 +171,8 @@ def execute_pipeline(
             source_file=str(source_file).replace(".csv", "_tripdata.csv"),
             target_file=str(target_file).replace(".csv", "_tripdata.csv"),
             chunksize=int(chunksize),
-            input_headers=trip_data_names,
-            data_dtypes=trip_data_dtypes,
+            input_headers=tripdata_names,
+            data_dtypes=tripdata_dtypes,
             destination_table=destination_table,
             rename_headers_list=rename_headers_list,
             empty_key_list=empty_key_list,
@@ -185,9 +185,13 @@ def execute_pipeline(
             reorder_headers_list=reorder_headers_list,
             header_row_ordinal=None
         )
-        df = handle_tripdata(
+        handle_tripdata(
             target_file=target_file,
-            resolve_datatypes_list=resolve_datatypes_list
+            resolve_datatypes_list=resolve_datatypes_list,
+            rename_headers_list=rename_headers_list,
+            reorder_headers_list=reorder_headers_list,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=target_gcs_path
         )
     else:
         process_source_file(
@@ -209,11 +213,11 @@ def execute_pipeline(
             header_row_ordinal="0"
         )
     if os.path.exists(target_file):
-        # upload_file_to_gcs(
-        #     file_path=target_file,
-        #     target_gcs_bucket=target_gcs_bucket,
-        #     target_gcs_path=target_gcs_path,
-        # )
+        upload_file_to_gcs(
+            file_path=target_file,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=target_gcs_path,
+        )
         if destination_table == "bikeshare_station_info" \
             or destination_table == "bikeshare_station_status":
             drop_table = True
@@ -249,8 +253,11 @@ def handle_tripdata(
     target_file: str,
     resolve_datatypes_list: dict,
     rename_headers_list: dict,
-    reorder_headers_list: typing.List[str]
+    reorder_headers_list: typing.List[str],
+    target_gcs_bucket: str,
+    target_gcs_path: str
 ) -> pd.DataFrame:
+    logging.info("Compiling target file by merging source data")
     trip_data_filepath = str(target_file).replace(".csv", "_trip_data.csv")
     logging.info(f"Opening {trip_data_filepath}")
     df_trip_data = pd.read_csv(
@@ -299,11 +306,30 @@ def handle_tripdata(
         df=df,
         output_headers_list=reorder_headers_list
     )
-    return df
+    save_to_new_file(
+        df=df,
+        file_path=target_file,
+        sep="|"
+    )
+    upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
-def download_url_files_from_list(url_list: str, dest_path: str):
-    for url in url_list.split(","):
-        url = url.replace('"', "").strip()
+
+def listdirs(rootdir: str) -> list:
+    rtn_list = []
+    for file in os.listdir(rootdir):
+        d = os.path.join(rootdir, file)
+        if os.path.isdir(d):
+            rtn_list.append(d)
+            for elem in listdirs(d):
+                rtn_list.append(elem)
+    return rtn_list
+
+
+def download_url_files_from_list(
+    url_list: typing.List[str],
+    dest_path: str
+) -> None:
+    for url in url_list:
         dest_file = dest_path + "/" + os.path.split(url)[1]
         download_file_http(url, dest_file)
         if (
@@ -344,7 +370,7 @@ def zip_decompress(infile: str, dest_path: str) -> None:
 
 def stage_input_files(dest_dir: str, target_file_path: str) -> None:
     logging.info("Staging input files")
-    for src_dir in storage.listdirs(dest_dir):
+    for src_dir in listdirs(dest_dir):
         logging.info("-------------------------------------------------------------")
         pool_files(src_dir, dest_dir, "tripdata.csv")
         pool_files(src_dir, dest_dir, "trip_data.csv")
@@ -401,9 +427,11 @@ def process_source_file(
     strip_whitespace_list: typing.List[str],
     date_format_list: typing.List[str],
     reorder_headers_list: typing.List[str],
-    header_row_ordinal: str = 0
+    header_row_ordinal: str = "0",
+    field_separator: str = ","
 ) -> None:
     logging.info(f"Opening source file {source_file}")
+
     if header_row_ordinal is None \
         or header_row_ordinal == "None":
         with pd.read_csv(
@@ -412,8 +440,7 @@ def process_source_file(
             encoding="utf-8",
             quotechar='"',
             chunksize=int(chunksize),  # size of batch data, in no. of records
-            sep=",",  # data column separator, typically ","
-            header=header,  # use when the data file does not contain a header
+            sep=field_separator,  # data column separator, typically ","
             names=input_headers,
             dtype=data_dtypes,
             keep_default_na=True,
@@ -449,9 +476,8 @@ def process_source_file(
             encoding="utf-8",
             quotechar='"',
             chunksize=int(chunksize),  # size of batch data, in no. of records
-            sep=",",  # data column separator, typically ","
+            sep=field_separator,  # data column separator, typically ","
             header=header,  # use when the data file does not contain a header
-            # names=input_headers,
             keep_default_na=True,
             na_values=[" "],
         ) as reader:
@@ -515,28 +541,16 @@ def process_chunk(
         df = rename_headers(df, rename_headers_list)
         df = remove_empty_key_rows(df, empty_key_list)
         df = reorder_headers(df, reorder_headers_list)
-    elif destination_table == "bikeshare_station_status":
+    elif destination_table == "bikeshare_trips":
         if str(target_file).find("_trip_data.csv") > -1:
-            date_fields = [
-                "start_date",
-                "end_date",
-            ]
-            df = resolve_date_format(df, "%m/%d/%Y %H:%M", date_fields)
+            # df = resolve_date_format(df, "%m/%d/%Y %H:%M", date_fields)
+            df = resolve_date_format(df, date_format_list, "%m/%d/%Y %H:%M")
         if str(target_file).find("_tripdata.csv") > -1:
-            # df = rename_headers_tripdata(df)
-            date_fields = [
-                "start_date",
-                "end_date",
-            ]
-            df = resolve_date_format(df, "%Y/%m/%d %H:%M:%S.%f", date_fields)
+            # df = resolve_date_format(df, "%Y/%m/%d %H:%M:%S.%f", date_fields)
+            df = resolve_date_format(df, date_format_list, "%Y/%m/%d %H:%M:%S.%f")
             df = generate_location(
                 df,
-                "start_station_geom",
-                "start_station_longitude",
-                "start_station_latitude",
-            )
-            df = generate_location(
-                df, "end_station_geom", "end_station_longitude", "end_station_latitude"
+                gen_location_list
             )
         df = add_key(df)
     else:
@@ -759,7 +773,9 @@ def strip_newlines(
 
 
 def resolve_date_format(
-    df: pd.DataFrame, date_format_list: typing.List[str]
+    df: pd.DataFrame,
+    date_format_list: typing.List[str],
+    from_format: str = "%Y-%m-%d %H:%M:%S"
 ) -> pd.DataFrame:
     logging.info("Resolving date formats")
     for dt_fld in date_format_list:
@@ -768,16 +784,11 @@ def resolve_date_format(
 
 
 def convert_dt_format(dt_str: str) -> str:
-    if not dt_str or str(dt_str).lower() == "nan" or str(dt_str).lower() == "nat":
+    if not dt_str or str(dt_str).lower() == "nan" or \
+        str(dt_str).lower() == "nat":
         return ""
-    elif (
-        dt_str.strip()[2] == "/"
-    ):  # if there is a '/' in 3rd position, then we have a date format mm/dd/yyyy
-        return datetime.datetime.strptime(dt_str, "%m/%d/%Y %H:%M:%S %p").strftime(
-            "%Y-%m-%d %H:%M:%S"
-        )
     else:
-        return str(dt_str)
+        return str(pd.to_datetime(dt_str, format='"%Y-%m-%d %H:%M:%S"', infer_datetime_format=True))
 
 
 def reorder_headers(
@@ -835,7 +846,7 @@ if __name__ == "__main__":
 
     main(
         source_url=os.environ.get("SOURCE_URL", ""),
-        source_url_list=os.environ.get("SOURCE_URL_LIST", r"[]"),
+        source_url_list=json.loads(os.environ.get("SOURCE_URL_LIST", r"[]")),
         pipeline_name=os.environ.get("PIPELINE_NAME", ""),
         source_file=pathlib.Path(os.environ.get("SOURCE_FILE", "")).expanduser(),
         target_file=pathlib.Path(os.environ.get("TARGET_FILE", "")).expanduser(),
