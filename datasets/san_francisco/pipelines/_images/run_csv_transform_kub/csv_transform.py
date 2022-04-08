@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,12 +13,18 @@
 # limitations under the License.
 
 import datetime
+import fnmatch
 import json
 import logging
 import os
 import pathlib
+import re
+import shutil
 import typing
+import zipfile as zip
 
+
+import numpy as np
 import pandas as pd
 import requests
 from google.api_core.exceptions import NotFound
@@ -27,6 +33,7 @@ from google.cloud import bigquery, storage
 
 def main(
     source_url: str,
+    source_url_list: typing.List[str],
     pipeline_name: str,
     source_file: pathlib.Path,
     target_file: pathlib.Path,
@@ -38,7 +45,13 @@ def main(
     target_gcs_bucket: str,
     target_gcs_path: str,
     input_headers: typing.List[str],
-    rename_headers_list: typing.List[str],
+    data_dtypes: dict,
+    trip_data_names: typing.List[str],
+    trip_data_dtypes: dict,
+    tripdata_names: typing.List[str],
+    tripdata_dtypes: dict,
+    rename_headers_tripdata: dict,
+    rename_headers_list: dict,
     empty_key_list: typing.List[str],
     gen_location_list: dict,
     resolve_datatypes_list: dict,
@@ -53,6 +66,7 @@ def main(
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
     execute_pipeline(
         source_url=source_url,
+        source_url_list=source_url_list,
         source_file=source_file,
         target_file=target_file,
         project_id=project_id,
@@ -63,6 +77,12 @@ def main(
         target_gcs_bucket=target_gcs_bucket,
         target_gcs_path=target_gcs_path,
         input_headers=input_headers,
+        data_dtypes=data_dtypes,
+        trip_data_names=trip_data_names,
+        trip_data_dtypes=trip_data_dtypes,
+        tripdata_names=tripdata_names,
+        tripdata_dtypes=tripdata_dtypes,
+        rename_headers_tripdata=rename_headers_tripdata,
         rename_headers_list=rename_headers_list,
         empty_key_list=empty_key_list,
         gen_location_list=gen_location_list,
@@ -78,6 +98,7 @@ def main(
 
 def execute_pipeline(
     source_url: str,
+    source_url_list: typing.List[str],
     source_file: pathlib.Path,
     target_file: pathlib.Path,
     project_id: str,
@@ -88,6 +109,12 @@ def execute_pipeline(
     target_gcs_bucket: str,
     target_gcs_path: str,
     input_headers: typing.List[str],
+    data_dtypes: dict,
+    trip_data_names: typing.List[str],
+    trip_data_dtypes: dict,
+    tripdata_names: typing.List[str],
+    tripdata_dtypes: dict,
+    rename_headers_tripdata: dict,
     rename_headers_list: typing.List[str],
     empty_key_list: typing.List[str],
     gen_location_list: dict,
@@ -116,22 +143,71 @@ def execute_pipeline(
         )
     elif destination_table == "311_service_requests":
         download_file(source_url, source_file)
-    process_source_file(
-        source_file=source_file,
-        target_file=target_file,
-        chunksize=chunksize,
-        input_headers=input_headers,
-        destination_table=destination_table,
-        rename_headers_list=rename_headers_list,
-        empty_key_list=empty_key_list,
-        gen_location_list=gen_location_list,
-        resolve_datatypes_list=resolve_datatypes_list,
-        remove_paren_list=remove_paren_list,
-        strip_newlines_list=strip_newlines_list,
-        strip_whitespace_list=strip_whitespace_list,
-        date_format_list=date_format_list,
-        reorder_headers_list=reorder_headers_list,
-    )
+    else:
+        pass
+    if destination_table == "bikeshare_trips":
+        dest_path = os.path.split(source_file)[0]
+        download_url_files_from_list(source_url_list, dest_path)
+        stage_input_files(dest_path, source_file)
+        process_source_file(
+            source_file=str(source_file).replace(".csv", "_trip_data.csv"),
+            target_file=str(target_file).replace(".csv", "_trip_data.csv"),
+            chunksize=int(chunksize),
+            input_headers=trip_data_names,
+            data_dtypes=trip_data_dtypes,
+            destination_table=destination_table,
+            rename_headers_list=rename_headers_list,
+            empty_key_list=empty_key_list,
+            gen_location_list=gen_location_list,
+            resolve_datatypes_list=resolve_datatypes_list,
+            remove_paren_list=remove_paren_list,
+            strip_newlines_list=strip_newlines_list,
+            strip_whitespace_list=strip_whitespace_list,
+            date_format_list=date_format_list,
+            reorder_headers_list=reorder_headers_list,
+            header_row_ordinal=None
+        )
+        process_source_file(
+            source_file=str(source_file).replace(".csv", "_tripdata.csv"),
+            target_file=str(target_file).replace(".csv", "_tripdata.csv"),
+            chunksize=int(chunksize),
+            input_headers=trip_data_names,
+            data_dtypes=trip_data_dtypes,
+            destination_table=destination_table,
+            rename_headers_list=rename_headers_list,
+            empty_key_list=empty_key_list,
+            gen_location_list=gen_location_list,
+            resolve_datatypes_list=resolve_datatypes_list,
+            remove_paren_list=remove_paren_list,
+            strip_newlines_list=strip_newlines_list,
+            strip_whitespace_list=strip_whitespace_list,
+            date_format_list=date_format_list,
+            reorder_headers_list=reorder_headers_list,
+            header_row_ordinal=None
+        )
+        df = handle_tripdata(
+            target_file=target_file,
+            resolve_datatypes_list=resolve_datatypes_list
+        )
+    else:
+        process_source_file(
+            source_file=source_file,
+            target_file=target_file,
+            chunksize=chunksize,
+            input_headers=input_headers,
+            data_dtypes=data_dtypes,
+            destination_table=destination_table,
+            rename_headers_list=rename_headers_list,
+            empty_key_list=empty_key_list,
+            gen_location_list=gen_location_list,
+            resolve_datatypes_list=resolve_datatypes_list,
+            remove_paren_list=remove_paren_list,
+            strip_newlines_list=strip_newlines_list,
+            strip_whitespace_list=strip_whitespace_list,
+            date_format_list=date_format_list,
+            reorder_headers_list=reorder_headers_list,
+            header_row_ordinal="0"
+        )
     if os.path.exists(target_file):
         # upload_file_to_gcs(
         #     file_path=target_file,
@@ -169,11 +245,152 @@ def execute_pipeline(
         )
 
 
+def handle_tripdata(
+    target_file: str,
+    resolve_datatypes_list: dict,
+    rename_headers_list: dict,
+    reorder_headers_list: typing.List[str]
+) -> pd.DataFrame:
+    trip_data_filepath = str(target_file).replace(".csv", "_trip_data.csv")
+    logging.info(f"Opening {trip_data_filepath}")
+    df_trip_data = pd.read_csv(
+        trip_data_filepath,
+        engine="python",
+        encoding="utf-8",
+        quotechar='"',  # string separator, typically double-quotes
+        sep="|",  # data column separator, typically ","
+    )
+    tripdata_filepath = str(target_file).replace(".csv", "_tripdata.csv")
+    logging.info(f"Opening {tripdata_filepath}")
+    df_tripdata = pd.read_csv(
+        tripdata_filepath,
+        engine="python",
+        encoding="utf-8",
+        quotechar='"',  # string separator, typically double-quotes
+        sep="|",  # data column separator, typically ","
+    )
+    df_tripdata.drop_duplicates(
+        subset=["key_val"], keep="last", inplace=True, ignore_index=False
+    )
+    df_tripdata["trip_id"] = df_tripdata["key_val"].str.replace("-", "")
+    df_tripdata.set_index("key", inplace=True)
+    df_trip_data.drop_duplicates(
+        subset=["key_val"], keep="last", inplace=True, ignore_index=False
+    )
+    df_trip_data.set_index("key", inplace=True)
+    df = df_trip_data.append(df_tripdata, sort=True)
+    df["subscriber_type_new"] = df.apply(
+        lambda x: str(x.subscription_type)
+        if not str(x.subscriber_type)
+        else str(x.subscriber_type),
+        axis=1
+    )
+    df = df.drop(columns=["subscriber_type"])
+    # df["member_birth_year"] = df["member_birth_year"].fillna(0).astype(int)
+    df = resolve_datatypes(
+        df=df,
+        resolve_datatypes_list=resolve_datatypes_list
+    )
+    df = rename_headers(
+        df=df,
+        rename_headers_list=rename_headers_list
+    )
+    df = reorder_headers(
+        df=df,
+        output_headers_list=reorder_headers_list
+    )
+    return df
+
+def download_url_files_from_list(url_list: str, dest_path: str):
+    for url in url_list.split(","):
+        url = url.replace('"', "").strip()
+        dest_file = dest_path + "/" + os.path.split(url)[1]
+        download_file_http(url, dest_file)
+        if (
+            url.find(".zip") > -1 or url.find(".gz") > -1 or url.find(".tar") > -1
+        ) and (url.find("http") == 0 or url.find("gs:") == 0):
+            unpack_file(dest_file, dest_path)
+        else:
+            logging.info(f"Parsing {dest_file} for decompression")
+
+
+def download_file_http(source_url: str, source_file: pathlib.Path) -> None:
+    logging.info(f"Downloading {source_url} to {source_file}")
+    src_file = requests.get(source_url, stream=True)
+    with open(source_file, "wb") as f:
+        for chunk in src_file:
+            f.write(chunk)
+
+
+def unpack_file(infile: str, dest_path: str, compression_type: str = "zip") -> None:
+    if compression_type == "zip":
+        logging.info(f"Unpacking {infile} to {dest_path}")
+        zip_decompress(
+            infile=infile,
+            dest_path=dest_path
+        )
+    else:
+        logging.info(
+            f"{infile} ignored as it is not compressed or is of unknown compression"
+        )
+
+
+def zip_decompress(infile: str, dest_path: str) -> None:
+    logging.info(f"Unpacking {infile} to {dest_path}")
+    with zip.ZipFile(infile, mode="r") as zipf:
+        zipf.extractall(dest_path)
+        zipf.close()
+
+
+def stage_input_files(dest_dir: str, target_file_path: str) -> None:
+    logging.info("Staging input files")
+    for src_dir in storage.listdirs(dest_dir):
+        logging.info("-------------------------------------------------------------")
+        pool_files(src_dir, dest_dir, "tripdata.csv")
+        pool_files(src_dir, dest_dir, "trip_data.csv")
+    concatenate_files(target_file_path, dest_dir, "tripdata.csv")
+    concatenate_files(target_file_path, dest_dir, "trip_data.csv")
+
+
+def pool_files(src_dir: str, dest_dir: str, file_group_wildcard: str):
+    logging.info(f"Pooling files *{file_group_wildcard}")
+    if len(fnmatch.filter(os.listdir(src_dir), "*" + file_group_wildcard)) > 0:
+        for src_file in fnmatch.filter(os.listdir(src_dir), "*" + file_group_wildcard):
+            logging.info(f"Copying {src_dir}/{src_file} -> {dest_dir}/{src_file}")
+            shutil.copyfile(f"{src_dir}/{src_file}", f"{dest_dir}/{src_file}")
+
+
+def concatenate_files(
+    target_file_path: str, dest_path: str, file_group_wildcard: str
+) -> None:
+    target_file_dir = os.path.split(str(target_file_path))[0]
+    target_file_path = str(target_file_path).replace(".csv", "_" + file_group_wildcard)
+    logging.info(f"Concatenating files {target_file_dir}/*{file_group_wildcard}")
+    if os.path.isfile(target_file_path):
+        os.unlink(target_file_path)
+    for src_file_path in sorted(
+        fnmatch.filter(os.listdir(dest_path), "*" + file_group_wildcard)
+    ):
+        src_file_path = dest_path + "/" + src_file_path
+        with open(src_file_path, "r") as src_file:
+            with open(target_file_path, "a+") as target_file:
+                next(src_file)
+                logging.info(
+                    f"Reading from file {src_file_path}, writing to file {target_file_path}"
+                )
+                for line in src_file:
+                    line = (
+                        os.path.split(src_file_path)[1] + "," + line
+                    )  # include the file source
+                    target_file.write(line)
+
+
 def process_source_file(
     source_file: str,
     target_file: str,
     chunksize: str,
     input_headers: typing.List[str],
+    data_dtypes: dict,
     destination_table: str,
     rename_headers_list: typing.List[str],
     empty_key_list: typing.List[str],
@@ -184,42 +401,82 @@ def process_source_file(
     strip_whitespace_list: typing.List[str],
     date_format_list: typing.List[str],
     reorder_headers_list: typing.List[str],
+    header_row_ordinal: str = 0
 ) -> None:
     logging.info(f"Opening source file {source_file}")
-    with pd.read_csv(
-        source_file,
-        engine="python",
-        encoding="utf-8",
-        quotechar='"',
-        chunksize=int(chunksize),  # size of batch data, in no. of records
-        sep=",",  # data column separator, typically ","
-        # header=1,  # use when the data file does not contain a header
-        # names=input_headers,
-        keep_default_na=True,
-        na_values=[" "],
-    ) as reader:
-        for chunk_number, chunk in enumerate(reader):
-            target_file_batch = str(target_file).replace(
-                ".csv", "-" + str(chunk_number) + ".csv"
-            )
-            df = pd.DataFrame()
-            df = pd.concat([df, chunk])
-            process_chunk(
-                df=df,
-                target_file_batch=target_file_batch,
-                target_file=target_file,
-                skip_header=(not chunk_number == 0),
-                destination_table=destination_table,
-                rename_headers_list=rename_headers_list,
-                empty_key_list=empty_key_list,
-                gen_location_list=gen_location_list,
-                resolve_datatypes_list=resolve_datatypes_list,
-                remove_paren_list=remove_paren_list,
-                strip_newlines_list=strip_newlines_list,
-                strip_whitespace_list=strip_whitespace_list,
-                date_format_list=date_format_list,
-                reorder_headers_list=reorder_headers_list,
-            )
+    if header_row_ordinal is None \
+        or header_row_ordinal == "None":
+        with pd.read_csv(
+            source_file,
+            engine="python",
+            encoding="utf-8",
+            quotechar='"',
+            chunksize=int(chunksize),  # size of batch data, in no. of records
+            sep=",",  # data column separator, typically ","
+            header=header,  # use when the data file does not contain a header
+            names=input_headers,
+            dtype=data_dtypes,
+            keep_default_na=True,
+            na_values=[" "],
+        ) as reader:
+            for chunk_number, chunk in enumerate(reader):
+                target_file_batch = str(target_file).replace(
+                    ".csv", "-" + str(chunk_number) + ".csv"
+                )
+                df = pd.DataFrame()
+                df = pd.concat([df, chunk])
+                process_chunk(
+                    df=df,
+                    target_file_batch=target_file_batch,
+                    target_file=target_file,
+                    skip_header=(not chunk_number == 0),
+                    destination_table=destination_table,
+                    rename_headers_list=rename_headers_list,
+                    empty_key_list=empty_key_list,
+                    gen_location_list=gen_location_list,
+                    resolve_datatypes_list=resolve_datatypes_list,
+                    remove_paren_list=remove_paren_list,
+                    strip_newlines_list=strip_newlines_list,
+                    strip_whitespace_list=strip_whitespace_list,
+                    date_format_list=date_format_list,
+                    reorder_headers_list=reorder_headers_list,
+                )
+    else:
+        header = int(header_row_ordinal)
+        with pd.read_csv(
+            source_file,
+            engine="python",
+            encoding="utf-8",
+            quotechar='"',
+            chunksize=int(chunksize),  # size of batch data, in no. of records
+            sep=",",  # data column separator, typically ","
+            header=header,  # use when the data file does not contain a header
+            # names=input_headers,
+            keep_default_na=True,
+            na_values=[" "],
+        ) as reader:
+            for chunk_number, chunk in enumerate(reader):
+                target_file_batch = str(target_file).replace(
+                    ".csv", "-" + str(chunk_number) + ".csv"
+                )
+                df = pd.DataFrame()
+                df = pd.concat([df, chunk])
+                process_chunk(
+                    df=df,
+                    target_file_batch=target_file_batch,
+                    target_file=target_file,
+                    skip_header=(not chunk_number == 0),
+                    destination_table=destination_table,
+                    rename_headers_list=rename_headers_list,
+                    empty_key_list=empty_key_list,
+                    gen_location_list=gen_location_list,
+                    resolve_datatypes_list=resolve_datatypes_list,
+                    remove_paren_list=remove_paren_list,
+                    strip_newlines_list=strip_newlines_list,
+                    strip_whitespace_list=strip_whitespace_list,
+                    date_format_list=date_format_list,
+                    reorder_headers_list=reorder_headers_list,
+                )
 
 
 def process_chunk(
@@ -258,11 +515,47 @@ def process_chunk(
         df = rename_headers(df, rename_headers_list)
         df = remove_empty_key_rows(df, empty_key_list)
         df = reorder_headers(df, reorder_headers_list)
+    elif destination_table == "bikeshare_station_status":
+        if str(target_file).find("_trip_data.csv") > -1:
+            date_fields = [
+                "start_date",
+                "end_date",
+            ]
+            df = resolve_date_format(df, "%m/%d/%Y %H:%M", date_fields)
+        if str(target_file).find("_tripdata.csv") > -1:
+            # df = rename_headers_tripdata(df)
+            date_fields = [
+                "start_date",
+                "end_date",
+            ]
+            df = resolve_date_format(df, "%Y/%m/%d %H:%M:%S.%f", date_fields)
+            df = generate_location(
+                df,
+                "start_station_geom",
+                "start_station_longitude",
+                "start_station_latitude",
+            )
+            df = generate_location(
+                df, "end_station_geom", "end_station_longitude", "end_station_latitude"
+            )
+        df = add_key(df)
     else:
         pass
     save_to_new_file(df, file_path=str(target_file_batch), sep="|")
     append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
     logging.info(f"Processing batch file {target_file_batch} completed")
+
+
+def add_key(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Adding key column")
+    df["start_date_str"] = df["start_date"].apply(
+        lambda x: re.sub("[^0-9.]", "", str(x))
+    )
+    df["key"] = df.apply(
+        lambda x: str(x.start_date_str) + "-" + str(x.bike_number), axis=1
+    )
+    df["key_val"] = df["key"].replace("-", "")
+    return df
 
 
 def download_file(source_url: str, source_file: pathlib.Path) -> None:
@@ -287,7 +580,6 @@ def download_file_json(
     df = pd.read_json(f"{source_file_json}.json")["data"][subnode_name]
     df = pd.DataFrame(df)
     df.to_csv(source_file_csv, index=False)
-    # import pdb; pdb.set_trace()
 
 
 def load_data_to_bq(
@@ -418,7 +710,10 @@ def remove_empty_key_rows(
 def resolve_datatypes(df: pd.DataFrame, resolve_datatypes_list: dict) -> pd.DataFrame:
     logging.info("Resolving datatypes")
     for key, value in resolve_datatypes_list.items():
-        df[key] = df[key].astype(value)
+        if str.lower(value[0:2]) == "int":
+            df[key] = df[key].fillna(0).astype(value)
+        else:
+            df[key] = df[key].astype(value)
     return df
 
 
@@ -540,6 +835,7 @@ if __name__ == "__main__":
 
     main(
         source_url=os.environ.get("SOURCE_URL", ""),
+        source_url_list=os.environ.get("SOURCE_URL_LIST", r"[]"),
         pipeline_name=os.environ.get("PIPELINE_NAME", ""),
         source_file=pathlib.Path(os.environ.get("SOURCE_FILE", "")).expanduser(),
         target_file=pathlib.Path(os.environ.get("TARGET_FILE", "")).expanduser(),
@@ -551,7 +847,13 @@ if __name__ == "__main__":
         target_gcs_bucket=os.environ.get("TARGET_GCS_BUCKET", ""),
         target_gcs_path=os.environ.get("TARGET_GCS_PATH", ""),
         input_headers=json.loads(os.environ.get("INPUT_CSV_HEADERS", r"[]")),
-        rename_headers_list=json.loads(os.environ.get("RENAME_HEADERS_LIST", r"[]")),
+        data_dtypes=json.loads(os.environ.get("DATA_DTYPES", r"{}")),
+        rename_headers_list=json.loads(os.environ.get("RENAME_HEADERS_LIST", r"{}")),
+        trip_data_names=json.loads(os.environ.get("TRIP_DATA_NAMES", r"[]")),
+        trip_data_dtypes=json.loads(os.environ.get("TRIP_DATA_DTYPES", r"{}")),
+        tripdata_names=json.loads(os.environ.get("TRIPDATA_NAMES", r"[]")),
+        tripdata_dtypes=json.loads(os.environ.get("TRIPDATA_DTYPES", r"{}")),
+        rename_headers_tripdata=json.loads(os.environ.get("RENAME_HEADERS_TRIPDATA", r"{}")),
         empty_key_list=json.loads(os.environ.get("EMPTY_KEY_LIST", r"[]")),
         gen_location_list=json.loads(os.environ.get("GEN_LOCATION_LIST", r"{}")),
         resolve_datatypes_list=json.loads(

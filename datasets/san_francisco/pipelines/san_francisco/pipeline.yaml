@@ -291,6 +291,205 @@ dag:
         resources:
           limit_memory: "8G"
           limit_cpu: "3"
+    - operator: "GKEStartPodOperator"
+      description: "Run New York 311 Service Requests Pipeline"
+      args:
+        task_id: "sf_bikeshare_trips"
+        name: "sf_bikeshare_trips"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: san-francisco
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "{{ var.json.san_francisco.sf_bikeshare_trips.pipeline_name }}"
+          SOURCE_URL_LIST: |
+            "https://s3.amazonaws.com/fordgobike-data/201803-fordgobike-tripdata.csv.zip",
+            "https://s3.amazonaws.com/fordgobike-data/201804-fordgobike-tripdata.csv.zip",
+            "https://s3.amazonaws.com/fordgobike-data/201802-fordgobike-tripdata.csv.zip",
+            "https://s3.amazonaws.com/fordgobike-data/201801-fordgobike-tripdata.csv.zip",
+            "https://s3.amazonaws.com/fordgobike-data/2017-fordgobike-tripdata.csv",
+            "https://s3.amazonaws.com/babs-open-data/babs_open_data_year_1.zip",
+            "https://s3.amazonaws.com/babs-open-data/babs_open_data_year_2.zip",
+            "https://s3.amazonaws.com/babs-open-data/babs_open_data_year_3.zip"
+          CHUNKSIZE: "{{ var.json.san_francisco.sf_bikeshare_trips.chunksize }}"
+          SOURCE_FILE: "files/data.csv"
+          TARGET_FILE: "files/data_output.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "{{ var.json.san_francisco.sf_bikeshare_trips.dataset_id }}"
+          TABLE_ID: "{{ var.json.san_francisco.sf_bikeshare_trips.destination_table }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "{{ var.json.san_francisco.sf_bikeshare_trips.target_gcs_path }}"
+          SCHEMA_PATH: "{{ var.json.san_francisco.sf_bikeshare_trips.schema_path }}"
+          TRIP_DATA_NAMES: >-
+            [
+              "source_file",
+              "trip_id",
+              "duration_sec",
+              "start_date",
+              "start_station_name",
+              "start_station_terminal",
+              "end_date",
+              "end_station_name",
+              "end_station_terminal",
+              "bike_number",
+              "subscription_type",
+              "zip_code"
+            ]
+          TRIP_DATA_DTYPES: >-
+            {
+              "source_file": "str",
+              "trip_id": "int",
+              "duration_sec": "int",
+              "start_date": "str",
+              "start_station_name": "str",
+              "start_station_terminal": "int",
+              "end_date": "str",
+              "end_station_name": "str",
+              "end_station_terminal": "str",
+              "bike_number": "int",
+              "subscription_type": "str",
+              "zip_code": "str"
+            }
+          TRIPDATA_NAMES: >-
+            [
+              "source_file",
+              "duration_sec",
+              "start_date",
+              "end_date",
+              "start_station_terminal",
+              "start_station_name",
+              "start_station_latitude",
+              "start_station_longitude",
+              "end_station_terminal",
+              "end_station_name",
+              "end_station_latitude",
+              "end_station_longitude",
+              "bike_number",
+              "subscriber_type",
+              "member_birth_year",
+              "member_gender",
+              "bike_share_for_all_trip"
+            ]
+          TRIPDATA_DTYPES: >-
+            {
+                "source_file": "str",
+                "duration_sec": "int",
+                "start_date": "str",
+                "end_date": "str",
+                "start_station_terminal": "int",
+                "start_station_name": "str",
+                "start_station_latitude": "float",
+                "start_station_longitude": "float",
+                "end_station_terminal": "int",
+                "end_station_name": "str",
+                "end_station_latitude": "float",
+                "end_station_longitude": "float",
+                "bike_number": "int",
+                "subscriber_type": "str",
+                "member_birth_year": "str",
+                "member_gender": "str",
+                "bike_share_for_all_trip": "str"
+            }
+          RENAME_HEADERS_TRIPDATA: >-
+            {
+              "duration_sec": "Duration",
+              "start_time": "Start Date",
+              "start_station_name": "Start Station",
+              "start_station_id": "Start Terminal",
+              "end_time": "End Date",
+              "end_station_name": "End Station",
+              "end_station_id": "End Terminal",
+              "bike_id": "Bike #",
+              "user_type": "Subscription Type",
+              "start_station_latitude": "start_station_latitude",
+              "start_station_longitude": "start_station_longitude",
+              "end_station_latitude": "end_station_latitude",
+              "end_station_longitude": "end_station_longitude",
+              "member_birth_year": "member_birth_year",
+              "member_gender": "member_gender",
+              "bike_share_for_all_trip": "bike_share_for_all_trip"
+            }
+          RENAME_HEADERS_LIST: >-
+            {
+              "trip_id": "trip_id",
+              "duration_sec": "duration_sec",
+              "start_date": "start_date",
+              "start_station_name": "start_station_name",
+              "start_station_terminal": "start_station_id",
+              "end_date": "end_date",
+              "end_station_name": "end_station_name",
+              "end_station_terminal": "end_station_id",
+              "bike_number": "bike_number",
+              "zip_code": "zip_code",
+              "subscriber_type_new": "subscriber_type",
+              "subscription_type": "subscription_type",
+              "start_station_latitude": "start_station_latitude",
+              "start_station_longitude": "start_station_longitude",
+              "end_station_latitude": "end_station_latitude",
+              "end_station_longitude": "end_station_longitude",
+              "member_birth_year": "member_birth_year",
+              "member_gender": "member_gender",
+              "bike_share_for_all_trip": "bike_share_for_all_trip",
+              "start_station_geom": "start_station_geom",
+              "end_station_geom": "end_station_geom"
+            }
+          # EMPTY_KEY_LIST: >-
+          #   [
+          #     "unique_key"
+          #   ]
+          RESOLVE_DATATYPES_LIST: >-
+            {
+              "member_birth_year": "Int64"
+            }
+          # REMOVE_PAREN_LIST: >-
+          #   [
+          #     "latitude",
+          #     "longitude"
+          #   ]
+          # STRIP_NEWLINES_LIST: >-
+          #   [
+          #     "status_notes",
+          #     "descriptor"
+          #   ]
+          # STRIP_WHITESPACE_LIST: >-
+          #   [
+          #     "incident_address"
+          #   ]
+          DATE_FORMAT_LIST: >-
+            [
+              "created_date",
+              "closed_date",
+              "resolution_action_updated_date"
+            ]
+          REORDER_HEADERS_LIST: >-
+            [
+              "trip_id",
+              "duration_sec",
+              "start_date",
+              "start_station_name",
+              "start_station_id",
+              "end_date",
+              "end_station_name",
+              "end_station_id",
+              "bike_number",
+              "zip_code",
+              "subscriber_type",
+              "subscription_type",
+              "start_station_latitude",
+              "start_station_longitude",
+              "end_station_latitude",
+              "end_station_longitude",
+              "member_birth_year",
+              "member_gender",
+              "bike_share_for_all_trip",
+              "start_station_geom",
+              "end_station_geom"
+            ]
+        resources:
+          limit_memory: "8G"
+          limit_cpu: "3"
     - operator: "GKEDeleteClusterOperator"
       args:
         task_id: "delete_cluster"
