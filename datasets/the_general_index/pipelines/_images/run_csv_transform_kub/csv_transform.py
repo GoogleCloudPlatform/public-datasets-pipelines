@@ -18,6 +18,8 @@ import logging
 import os
 import pathlib
 import typing
+import zipfile as zip
+from urllib.parse import urlparse
 
 import pandas as pd
 import requests
@@ -86,7 +88,13 @@ def execute_pipeline(
     datetime_list: typing.List[str],
     null_string_list: typing.List[str],
 ) -> None:
-    download_file(source_url, source_file)
+    # download_file(source_url, source_file)
+    source_file_path = os.path.split(source_file)[0]
+    source_url_file = os.path.basename(urlparse(source_url).path)
+    source_file_zipfile = f"{source_file_path}/{source_url_file}"
+    unpack_file(source_file_zipfile, os.path.split(source_file_zipfile)[0], "zip")
+    source_file_zipfile_csv = str.replace(source_file_zipfile, ".zip", "")
+    os.rename(source_file_zipfile_csv, source_file)
     remove_header_footer(
         source_file=source_file,
         header_rows=int(source_file_header_rows),
@@ -132,6 +140,23 @@ def execute_pipeline(
         logging.info(
             f"Informational: The data file {target_file} was not generated because no data file was available.  Continuing."
         )
+
+
+def unpack_file(infile: str, dest_path: str, compression_type: str = "zip") -> None:
+    if compression_type == "zip":
+        logging.info(f"Unpacking {infile} to {dest_path}")
+        zip_decompress(infile=infile, dest_path=dest_path)
+    else:
+        logging.info(
+            f"{infile} ignored as it is not compressed or is of unknown compression"
+        )
+
+
+def zip_decompress(infile: str, dest_path: str) -> None:
+    logging.info(f"Unpacking {infile} to {dest_path}")
+    with zip.ZipFile(infile, mode="r") as zipf:
+        zipf.extractall(dest_path)
+        zipf.close()
 
 
 def remove_header_footer(source_file: str, header_rows: int, footer_rows: int) -> None:
