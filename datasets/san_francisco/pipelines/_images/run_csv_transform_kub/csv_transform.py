@@ -40,6 +40,7 @@ def main(
     project_id: str,
     dataset_id: str,
     table_id: str,
+    drop_dest_table: str,
     schema_path: str,
     chunksize: str,
     target_gcs_bucket: str,
@@ -72,6 +73,7 @@ def main(
         project_id=project_id,
         dataset_id=dataset_id,
         destination_table=table_id,
+        drop_dest_table=drop_dest_table,
         schema_path=schema_path,
         chunksize=chunksize,
         target_gcs_bucket=target_gcs_bucket,
@@ -104,6 +106,7 @@ def execute_pipeline(
     project_id: str,
     dataset_id: str,
     destination_table: str,
+    drop_dest_table: str,
     schema_path: str,
     chunksize: str,
     target_gcs_bucket: str,
@@ -174,7 +177,7 @@ def execute_pipeline(
             input_headers=tripdata_names,
             data_dtypes=tripdata_dtypes,
             destination_table=destination_table,
-            rename_headers_list=rename_headers_list,
+            rename_headers_list=rename_headers_tripdata,
             empty_key_list=empty_key_list,
             gen_location_list=gen_location_list,
             resolve_datatypes_list=resolve_datatypes_list,
@@ -218,8 +221,7 @@ def execute_pipeline(
             target_gcs_bucket=target_gcs_bucket,
             target_gcs_path=target_gcs_path,
         )
-        if destination_table == "bikeshare_station_info" \
-            or destination_table == "bikeshare_station_status":
+        if drop_dest_table == "Y":
             drop_table = True
         else:
             drop_table = False
@@ -293,7 +295,6 @@ def handle_tripdata(
         axis=1
     )
     df = df.drop(columns=["subscriber_type"])
-    # df["member_birth_year"] = df["member_birth_year"].fillna(0).astype(int)
     df = resolve_datatypes(
         df=df,
         resolve_datatypes_list=resolve_datatypes_list
@@ -854,6 +855,7 @@ if __name__ == "__main__":
         project_id=os.environ.get("PROJECT_ID", ""),
         dataset_id=os.environ.get("DATASET_ID", ""),
         table_id=os.environ.get("TABLE_ID", ""),
+        drop_dest_table=os.environ.get("DROP_DEST_TABLE", "N"),
         schema_path=os.environ.get("SCHEMA_PATH", ""),
         target_gcs_bucket=os.environ.get("TARGET_GCS_BUCKET", ""),
         target_gcs_path=os.environ.get("TARGET_GCS_PATH", ""),
