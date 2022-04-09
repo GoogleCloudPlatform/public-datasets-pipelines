@@ -61,8 +61,6 @@ def main(
     else:
         generate_pipeline_dag(dataset_id, pipeline_id, env)
 
-    generate_shared_variables_file(env)
-
 
 def generate_pipeline_dag(dataset_id: str, pipeline_id: str, env: str):
     pipeline_dir = DATASETS_PATH / dataset_id / "pipelines" / pipeline_id
@@ -83,7 +81,8 @@ def generate_pipeline_dag(dataset_id: str, pipeline_id: str, env: str):
         PROJECT_ROOT / f".{env}",
     )
 
-    print_airflow_variables(dataset_id, dag_contents, env)
+    airflow_var = check_airflow_variables(dataset_id, dag_contents, env)
+    generate_dataset_variables_file(env, dataset_id, airflow_var)
 
 
 def generate_dag(config: dict, dataset_id: str) -> str:
@@ -134,13 +133,16 @@ def generate_task_contents(task: dict, airflow_version: str) -> str:
     )
 
 
-def generate_shared_variables_file(env: str) -> None:
-    shared_variables_file = pathlib.Path(
-        PROJECT_ROOT / f".{env}" / "datasets" / "shared_variables.json"
+def generate_dataset_variables_file(env: str, dataset_id: str, var_json: dict) -> None:
+    dataset_variables_file = pathlib.Path(
+        PROJECT_ROOT / f".{env}" / "datasets" / f"{dataset_id}_variables.json"
     )
-    if not shared_variables_file.exists():
-        shared_variables_file.touch()
-        shared_variables_file.write_text("{}", encoding="utf-8")
+    if not dataset_variables_file.exists():
+        dataset_variables_file.touch()
+        dataset_variables_file.write_text(var_json, encoding="utf-8")
+
+    if dataset_variables_file.exists():
+        dataset_variables_file.write_text(var_json, encoding="utf-8")
 
 
 def dag_init(config: dict) -> dict:
@@ -205,14 +207,17 @@ def format_python_code(target_file: pathlib.Path):
     subprocess.check_call(["isort", "--profile", "black", "."], cwd=PROJECT_ROOT)
 
 
-def print_airflow_variables(dataset_id: str, dag_contents: str, env: str):
+def check_airflow_variables(dataset_id: str, dag_contents: str, env: str):
     var_regex = r"\{{2}\s*var.json.([a-zA-Z0-9_\.]*)?\s*\}{2}"
     print(
-        f"\nThe following Airflow variables must be set in"
+        f"\nChecking for missing Airflow variables. File will output in"
         f"\n\n  .{env}/datasets/{dataset_id}/pipelines/{dataset_id}_variables.json"
         "\n\nusing JSON dot notation:"
+        "\n------------------------------------------------------------------------------"
         "\n"
     )
+    var_json = {dataset_id: {}}
+
     for var in sorted(
         list(set(re.findall(var_regex, dag_contents))), key=lambda v: v.count(".")
     ):
@@ -221,7 +226,60 @@ def print_airflow_variables(dataset_id: str, dag_contents: str, env: str):
         elif var.startswith("value."):
             var = var.replace("value.", "", 1)
         print(f"  - {var}")
-    print()
+        missing_var = var.split(".")[1]
+        user_input = input(f"Airflow Variable Missing | {missing_var} value: ")
+        valid_input = validate_user_input(missing_var, user_input)
+        var_json[dataset_id][missing_var] = valid_input
+
+    print(f"\n{dataset_id} Variables file:")
+    print(f"\n{json.dumps(var_json, indent = 4)}")
+    confirm_input = input(
+        f"\nTo confirm type 'lgtm'. To edit a value, type the variable name: "
+    )
+    var_json = validate_confirmation_input(var_json, dataset_id, confirm_input)
+    return json.dumps(var_json)
+
+
+def validate_user_input(missing_var: str, user_input: str):
+    docker_img_regex = f"(?:gcr.io\/)[a-z\-]*(\/)[a-z\_]*"  # need to update this regex
+    while True:
+        if (
+            missing_var == "docker_image"
+            and re.match(docker_img_regex, user_input) is None
+        ):
+            print(
+                f"\nInvalid Input | {missing_var} format should be 'gcr.io/GCP_PROJECT/IMAGE_REPO_NAME'"
+            )
+            user_input = input(f"Airflow Variable Missing | {missing_var} value: ")
+        return user_input
+
+
+def validate_confirmation_input(var_json: dict, dataset_id: str, user_input: str):
+    while True:
+        if user_input == "lgtm":
+            return var_json
+        if valid_key_existence(var_json, dataset_id, user_input):
+            updated_val = input(f"Update Airflow Variable | {user_input} value: ")
+            confirm_updated_val = validate_user_input(user_input, updated_val)
+            var_json[dataset_id][user_input] = confirm_updated_val
+            print(f"\n{dataset_id} Variables file:")
+            print(f"\n{json.dumps(var_json, indent = 4)}")
+            user_input = input(
+                f"\nTo confirm type 'lgtm'. To edit a value, type the variable name: "
+            )
+        else:
+            print(f"\n{json.dumps(var_json, indent = 4)}")
+            user_input = input(
+                "\nInvalid Key | Please enter the right key or 'lgtm' to cancel edit: "
+            )
+
+
+def valid_key_existence(var_json: dict, dataset_id: str, user_input: str):
+    if user_input in var_json[dataset_id].keys():
+        return True
+    else:
+        print(f"\nKey does not exist in {dataset_id} Variable file")
+        return False
 
 
 def copy_files_to_dot_dir(dataset_id: str, pipeline_id: str, env_dir: pathlib.Path):
