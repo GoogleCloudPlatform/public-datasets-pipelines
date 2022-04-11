@@ -34,6 +34,6 @@ jobs:
       - name: Install dependencies
         run: poetry install --only pipelines
       - name: Initialize Airflow
-        run: pipenv run airflow db init
+        run: poetry run airflow db init
       - name: Run tests
         run: poetry run python -m pytest -v tests
