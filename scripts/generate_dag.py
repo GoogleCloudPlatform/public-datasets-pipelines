@@ -201,7 +201,9 @@ def write_to_file(contents: str, filepath: pathlib.Path):
 
 
 def format_python_code(target_file: pathlib.Path):
-    subprocess.Popen(f"black -q {target_file}", stdout=subprocess.PIPE, shell=True)
+    subprocess.Popen(
+        f"black -q {target_file}", stdout=subprocess.PIPE, shell=True
+    ).wait()
     subprocess.check_call(["isort", "--profile", "black", "."], cwd=PROJECT_ROOT)
 
 
