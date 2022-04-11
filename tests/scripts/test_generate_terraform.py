@@ -13,12 +13,14 @@
 # limitations under the License.
 
 
+import json
 import pathlib
 import random
 import re
 import shutil
 import subprocess
 import tempfile
+import uuid
 
 import pytest
 from ruamel import yaml
@@ -687,6 +689,197 @@ def test_pipeline_tf_contains_optional_properties_when_specified(
         assert re.search(r"time_partitioning\s+\{", result.group(1))
         assert re.search(r"clustering\s+\=", result.group(1))
         assert re.search(r"deletion_protection\s+\=", result.group(1))
+
+
+def test_infra_vars_are_in_tfvars_file(
+    dataset_path,
+    pipeline_path,
+    env,
+):
+    set_dataset_ids_in_config_files(dataset_path, pipeline_path)
+
+    # Creates a .env.test.yaml file in the dataset folder and sets its contents
+    env_vars = {
+        "infra": {
+            "project_id": f"test-{uuid.uuid4()}",
+            "region": "test_region",
+            "env": env,
+        }
+    }
+    with open(dataset_path / f".vars.{env}.yaml", "w") as f:
+        json.dump(env_vars, f, ensure_ascii=True)
+
+    generate_terraform.main(
+        dataset_path.name,
+        "",
+        "",
+        "",
+        "",
+        env,
+        "",
+        "",
+    )
+
+    tfvars_file = ENV_DATASETS_PATH / dataset_path.name / "infra" / "terraform.tfvars"
+    assert tfvars_file.exists()
+
+    for key, val in env_vars["infra"].items():
+        # Matches the following expressions in the *.tfvars file
+        #
+        # key         = "value"
+        # another_key = "another value"
+        regexp = key + r"\s+= \"" + val + r"\""
+        assert re.search(regexp, tfvars_file.read_text())
+
+
+def test_infra_vars_generates_gcs_buckets_with_iam_policies(
+    dataset_path,
+    pipeline_path,
+    env,
+):
+    set_dataset_ids_in_config_files(dataset_path, pipeline_path)
+
+    test_bucket = f"bucket-{uuid.uuid4()}"
+
+    # Replace bucket name in dataset.yaml
+    dataset_config = yaml.load(dataset_path / "pipelines" / "dataset.yaml")
+    for resource in dataset_config["resources"]:
+        if resource["type"] == "storage_bucket":
+            resource["name"] = test_bucket
+
+    yaml.dump(dataset_config, dataset_path / "pipelines" / "dataset.yaml")
+
+    # Creates a .env.test.yaml file in the dataset folder and sets its contents
+    env_vars = {
+        "infra": {
+            "project_id": f"test-{uuid.uuid4()}",
+            "region": "test_region",
+            "env": env,
+            "iam_policies": {
+                "storage_buckets": {
+                    test_bucket: [
+                        {
+                            "role": "roles/storage.objectViewer",
+                            "members": ["test-user@google.com"],
+                        }
+                    ]
+                }
+            },
+        }
+    }
+    yaml.dump(env_vars, dataset_path / f".vars.{env}.yaml")
+
+    generate_terraform.main(
+        dataset_path.name,
+        "",
+        "",
+        "",
+        "",
+        env,
+        "",
+        "",
+    )
+
+    dataset_tf_file = dataset_path / "infra" / f"{dataset_path.name}_dataset.tf"
+    assert dataset_tf_file.exists()
+
+    regex_data_iam_block = (
+        r"data \"google_iam_policy\" \"storage_bucket__" + test_bucket + r"\" \{"
+    )
+    assert re.search(regex_data_iam_block, dataset_tf_file.read_text())
+
+    regex_resource_iam_block = (
+        r"resource \"google_storage_bucket_iam_policy\" \"" + test_bucket + r"\" \{"
+    )
+    assert re.search(regex_resource_iam_block, dataset_tf_file.read_text())
+
+
+def test_infra_vars_generates_bq_datasets_with_iam_policies(
+    dataset_path,
+    pipeline_path,
+    env,
+):
+    set_dataset_ids_in_config_files(dataset_path, pipeline_path)
+
+    bq_dataset = f"bq-dataset-{uuid.uuid4()}"
+
+    # Replace bucket name in dataset.yaml
+    dataset_config = yaml.load(dataset_path / "pipelines" / "dataset.yaml")
+    for resource in dataset_config["resources"]:
+        if resource["type"] == "bigquery_dataset":
+            resource["dataset_id"] = bq_dataset
+
+    yaml.dump(dataset_config, dataset_path / "pipelines" / "dataset.yaml")
+
+    # Creates a .env.test.yaml file in the dataset folder and sets its contents
+    env_vars = {
+        "infra": {
+            "project_id": f"test-{uuid.uuid4()}",
+            "region": "test_region",
+            "env": env,
+            "iam_policies": {
+                "bigquery_datasets": {
+                    bq_dataset: [
+                        {
+                            "role": "roles/storage.objectViewer",
+                            "members": ["test-user@google.com"],
+                        }
+                    ]
+                }
+            },
+        }
+    }
+    yaml.dump(env_vars, dataset_path / f".vars.{env}.yaml")
+
+    generate_terraform.main(dataset_path.name, "", "", "", "", env, "", "")
+
+    dataset_tf_file = dataset_path / "infra" / f"{dataset_path.name}_dataset.tf"
+    assert dataset_tf_file.exists()
+
+    regex_data_iam_block = (
+        r"data \"google_iam_policy\" \"bq_ds__" + bq_dataset + r"\" \{"
+    )
+    assert re.search(regex_data_iam_block, dataset_tf_file.read_text())
+
+    regex_resource_iam_block = (
+        r"resource \"google_bigquery_dataset_iam_policy\" \"" + bq_dataset + r"\" \{"
+    )
+    assert re.search(regex_resource_iam_block, dataset_tf_file.read_text())
+
+
+def test_infra_vars_without_iam_policies_generate_tf_without_iam_policies(
+    dataset_path,
+    pipeline_path,
+    env,
+):
+    set_dataset_ids_in_config_files(dataset_path, pipeline_path)
+
+    test_bucket = f"bucket-{uuid.uuid4()}"
+
+    # Replace bucket name in dataset.yaml
+    dataset_config = yaml.load(dataset_path / "pipelines" / "dataset.yaml")
+    for resource in dataset_config["resources"]:
+        if resource["type"] == "storage_bucket":
+            resource["name"] = test_bucket
+
+    yaml.dump(dataset_config, dataset_path / "pipelines" / "dataset.yaml")
+
+    # Creates a .env.test.yaml file in the dataset folder and sets its contents
+    env_vars = {
+        "infra": {
+            "project_id": f"test-{uuid.uuid4()}",
+            "region": "test_region",
+            "env": env,
+        }
+    }
+    yaml.dump(env_vars, dataset_path / f".vars.{env}.yaml")
+
+    generate_terraform.main(dataset_path.name, "", "", "", "", env, "", "")
+
+    dataset_tf_file = dataset_path / "infra" / f"{dataset_path.name}_dataset.tf"
+    assert dataset_tf_file.exists()
+
+    assert not re.search("google_iam_policy", dataset_tf_file.read_text())
 
 
 def test_pipeline_tf_has_no_optional_properties_when_unspecified(
