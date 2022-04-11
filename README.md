@@ -7,34 +7,35 @@ Cloud-native, data pipeline architecture for onboarding public datasets to [Data
 ![public-datasets-pipelines](images/architecture.png)
 
 # Requirements
-- Python `>=3.6.10,<3.9`. We currently use `3.8`. For more info, see the [Cloud Composer version list](https://cloud.google.com/composer/docs/concepts/versioning/composer-versions).
-- Familiarity with [Apache Airflow](https://airflow.apache.org/docs/apache-airflow/stable/concepts/index.html) (`>=v2.1.0`)
-- [pipenv](https://pipenv-fork.readthedocs.io/en/latest/install.html#installing-pipenv) for creating similar Python environments via `Pipfile.lock`
+- Python `>=3.8,<3.10`. We currently use `3.8`. For more info, see the [Cloud Composer version list](https://cloud.google.com/composer/docs/concepts/versioning/composer-versions).
+- Familiarity with [Apache Airflow](https://airflow.apache.org/docs/apache-airflow/stable/concepts/index.html) (`>=v2.1.4`)
+- [poetry](https://github.com/python-poetry/poetry) for installing and managing dependencies
 - [gcloud](https://cloud.google.com/sdk/gcloud) command-line tool with Google Cloud Platform credentials configured. Instructions can be found [here](https://cloud.google.com/sdk/docs/initializing).
 - [Terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli) `>=v0.15.1`
-- [Google Cloud Composer](https://cloud.google.com/composer/docs/concepts/overview) environment running [Apache Airflow](https://airflow.apache.org/docs/apache-airflow/stable/concepts.html) `>=2.1.0` and Cloud Composer `>=2.0.0`. To create a new Cloud Composer environment, see [this guide](https://cloud.google.com/composer/docs/how-to/managing/creating).
+- [Google Cloud Composer](https://cloud.google.com/composer/docs/concepts/overview) environment running [Apache Airflow](https://airflow.apache.org/docs/apache-airflow/stable/concepts.html) `>=2.1.0` and Cloud Composer `>=2.0`. To create a new Cloud Composer environment, see [this guide](https://cloud.google.com/composer/docs/how-to/managing/creating).
 
 # Environment Setup
 
-We use Pipenv to make environment setup more deterministic and uniform across different machines. If you haven't done so, install Pipenv using these [instructions](https://pipenv-fork.readthedocs.io/en/latest/install.html#installing-pipenv).
+We use [Poetry](https://github.com/python-poetry/poetry) to make environment setup more deterministic and uniform across different machines. If you haven't done so, install Poetry using these [instructions](https://python-poetry.org/docs/master/#installation). We recommend using poetry's official installer.
 
-With Pipenv installed, run the following command to install the dependencies:
+Once Poetry is installed, run one of the following commands depending on your use case:
 
+For data pipeline development
 ```bash
-pipenv install --ignore-pipfile --dev
+poetry install --only pipelines
 ```
 
-This installs dependencies using the specific versions in the `Pipfile.lock` file (instead of the `Pipfile` file which is ignored via `--ignore-pipfile`).
+This installs dependencies using the specific versions in the `poetry.lock` file.
 
 Finally, initialize the Airflow database:
 
 ```bash
-pipenv run airflow db init
+poetry run airflow db init
 ```
 
 To ensure you have a proper setup, run the tests:
 ```
-pipenv run python -m pytest -v
+poetry run python -m pytest -v tests
 ```
 
 # Building Data Pipelines
@@ -84,7 +85,7 @@ Every YAML file supports a `resources` block. To use this, identify what Google 
 
 Run the following command from the project root:
 ```bash
-pipenv run python scripts/generate_terraform.py \
+poetry run python scripts/generate_terraform.py \
     --dataset $DATASET \
     --gcp-project-id $GCP_PROJECT_ID \
     --region $REGION \
@@ -116,7 +117,7 @@ As a concrete example, the unit tests use a temporary `.test` directory as their
 Run the following command from the project root:
 
 ```bash
-pipenv run python scripts/generate_dag.py \
+poetry run python scripts/generate_dag.py \
     --dataset $DATASET \
     --pipeline $PIPELINE \
     [--all-pipelines] \
@@ -224,7 +225,7 @@ This step requires a Cloud Composer environment up and running in your Google Cl
 To deploy the DAG and the variables to your Cloud Composer environment, use the command
 
 ```
-pipenv run python scripts/deploy_dag.py \
+poetry run python scripts/deploy_dag.py \
   --dataset DATASET \
   [--pipeline PIPELINE] \
   --composer-env CLOUD_COMPOSER_ENVIRONMENT_NAME \
@@ -240,7 +241,7 @@ Specifying an argument to `--pipeline` is optional. By default, the script deplo
 Run the unit tests from the project root as follows:
 
 ```
-pipenv run python -m pytest -v
+poetry run python -m pytest -v
 ```
 
 # YAML Config Reference
