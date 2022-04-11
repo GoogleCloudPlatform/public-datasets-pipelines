@@ -15,20 +15,20 @@
  */
 
 
-resource "google_bigquery_table" "census_bureau_acs_cbsa_2019_5yr" {
+resource "google_bigquery_table" "census_bureau_acs_cbsa_2020_5yr" {
   project     = var.project_id
   dataset_id  = "census_bureau_acs"
-  table_id    = "cbsa_2019_5yr"
-  description = "CBSA 2019 5 years report table"
+  table_id    = "cbsa_2020_5yr"
+  description = "CBSA 2020 5 years report table"
   depends_on = [
     google_bigquery_dataset.census_bureau_acs
   ]
 }
 
-output "bigquery_table-census_bureau_acs_cbsa_2019_5yr-table_id" {
-  value = google_bigquery_table.census_bureau_acs_cbsa_2019_5yr.table_id
+output "bigquery_table-census_bureau_acs_cbsa_2020_5yr-table_id" {
+  value = google_bigquery_table.census_bureau_acs_cbsa_2020_5yr.table_id
 }
 
-output "bigquery_table-census_bureau_acs_cbsa_2019_5yr-id" {
-  value = google_bigquery_table.census_bureau_acs_cbsa_2019_5yr.id
+output "bigquery_table-census_bureau_acs_cbsa_2020_5yr-id" {
+  value = google_bigquery_table.census_bureau_acs_cbsa_2020_5yr.id
 }

@@ -16,15 +16,10 @@
 
 
 resource "google_bigquery_table" "census_bureau_acs_schooldistrictelementary_2019_5yr" {
-  project    = var.project_id
-  dataset_id = "census_bureau_acs"
-  table_id   = "schooldistrictelementary_2019_5yr"
-
+  project     = var.project_id
+  dataset_id  = "census_bureau_acs"
+  table_id    = "schooldistrictelementary_2019_5yr"
   description = "School district elementary 2019 5 years report table"
-
-
-
-
   depends_on = [
     google_bigquery_dataset.census_bureau_acs
   ]
