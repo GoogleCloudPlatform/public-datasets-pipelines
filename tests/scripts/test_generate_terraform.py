@@ -13,7 +13,6 @@
 # limitations under the License.
 
 
-import json
 import pathlib
 import random
 import re
@@ -706,8 +705,7 @@ def test_infra_vars_are_in_tfvars_file(
             "env": env,
         }
     }
-    with open(dataset_path / f".vars.{env}.yaml", "w") as f:
-        json.dump(env_vars, f, ensure_ascii=True)
+    yaml.dump(env_vars, dataset_path / f".vars.{env}.yaml")
 
     generate_terraform.main(
         dataset_path.name,

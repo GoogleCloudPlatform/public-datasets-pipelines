@@ -61,8 +61,6 @@ def main(
     else:
         generate_pipeline_dag(dataset_id, pipeline_id, env)
 
-    generate_shared_variables_file(env)
-
 
 def generate_pipeline_dag(dataset_id: str, pipeline_id: str, env: str):
     pipeline_dir = DATASETS_PATH / dataset_id / "pipelines" / pipeline_id
@@ -132,15 +130,6 @@ def generate_task_contents(task: dict, airflow_version: str) -> str:
         **task,
         namespaced_operator=AIRFLOW_IMPORTS[airflow_version][task["operator"]]["class"],
     )
-
-
-def generate_shared_variables_file(env: str) -> None:
-    shared_variables_file = pathlib.Path(
-        PROJECT_ROOT / f".{env}" / "datasets" / "shared_variables.json"
-    )
-    if not shared_variables_file.exists():
-        shared_variables_file.touch()
-        shared_variables_file.write_text("{}", encoding="utf-8")
 
 
 def dag_init(config: dict) -> dict:
