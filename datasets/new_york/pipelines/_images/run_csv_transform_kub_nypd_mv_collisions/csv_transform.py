@@ -28,20 +28,23 @@ from google.cloud import bigquery, storage
 def main(
     pipeline_name: str,
     source_url: str,
+    chunksize: str,
     source_file: pathlib.Path,
     target_file: pathlib.Path,
     project_id: str,
     dataset_id: str,
     table_id: str,
-    chunksize: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
+    data_dtypes: dict,
     schema_path: str,
-    data_dtypes: typing.List[str],
-    null_rows_list: typing.List[str],
-    parse_dates: dict,
+    transform_list: typing.List[str],
+    resolve_datatypes_list: dict,
+    reorder_headers_list: typing.List[str],
     rename_headers_list: dict,
-    output_headers_list: typing.List[str],
+    regex_list: typing.List[typing.List],
+    crash_field_list: typing.List[typing.List],
+    date_format_list: typing.List[typing.List],
 ) -> None:
     logging.info(f"{pipeline_name} process started")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
@@ -49,18 +52,21 @@ def main(
         source_url=source_url,
         source_file=source_file,
         target_file=target_file,
+        chunksize=chunksize,
         project_id=project_id,
         dataset_id=dataset_id,
         destination_table=table_id,
-        chunksize=chunksize,
         target_gcs_bucket=target_gcs_bucket,
         target_gcs_path=target_gcs_path,
-        schema_path=schema_path,
         data_dtypes=data_dtypes,
-        null_rows_list=null_rows_list,
-        parse_dates=parse_dates,
+        schema_path=schema_path,
+        resolve_datatypes_list=resolve_datatypes_list,
+        transform_list=transform_list,
+        reorder_headers_list=reorder_headers_list,
         rename_headers_list=rename_headers_list,
-        output_headers_list=output_headers_list,
+        regex_list=regex_list,
+        crash_field_list=crash_field_list,
+        date_format_list=date_format_list,
     )
     logging.info(f"{pipeline_name} process completed")
 
@@ -69,29 +75,35 @@ def execute_pipeline(
     source_url: str,
     source_file: pathlib.Path,
     target_file: pathlib.Path,
+    chunksize: str,
     project_id: str,
     dataset_id: str,
     destination_table: str,
-    chunksize: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
+    data_dtypes: dict,
     schema_path: str,
-    data_dtypes: typing.List[str],
-    parse_dates: dict,
-    null_rows_list: typing.List[str],
+    resolve_datatypes_list: dict,
+    transform_list: typing.List[str],
+    reorder_headers_list: typing.List[str],
     rename_headers_list: dict,
-    output_headers_list: typing.List[str],
+    regex_list: typing.List[typing.List],
+    crash_field_list: typing.List[typing.List],
+    date_format_list: typing.List[typing.List],
 ) -> None:
     download_file(source_url, source_file)
     process_source_file(
-        source_file,
-        target_file,
-        chunksize,
-        data_dtypes,
-        parse_dates,
-        null_rows_list,
-        rename_headers_list,
-        output_headers_list,
+        source_file=source_file,
+        target_file=target_file,
+        chunksize=chunksize,
+        source_dtypes=data_dtypes,
+        resolve_datatypes_list=resolve_datatypes_list,
+        transform_list=transform_list,
+        reorder_headers_list=reorder_headers_list,
+        rename_headers_list=rename_headers_list,
+        regex_list=regex_list,
+        crash_field_list=crash_field_list,
+        date_format_list=date_format_list,
     )
     if os.path.exists(target_file):
         upload_file_to_gcs(
@@ -121,45 +133,6 @@ def execute_pipeline(
         logging.info(
             f"Informational: The data file {target_file} was not generated because no data file was available.  Continuing."
         )
-
-
-def process_source_file(
-    source_file: str,
-    target_file: str,
-    chunksize: str,
-    data_dtypes: dict,
-    parse_dates_list: typing.List[str],
-    null_rows_list: typing.List[str],
-    rename_headers_list: dict,
-    output_headers_list: typing.List[str],
-) -> None:
-    logging.info(f"Processing file {source_file}")
-    with pd.read_csv(
-        source_file,
-        engine="python",
-        encoding="utf-8",
-        quotechar='"',
-        chunksize=int(chunksize),
-        dtype=data_dtypes,
-        parse_dates=parse_dates_list,
-    ) as reader:
-        for chunk_number, chunk in enumerate(reader):
-            logging.info(f"Processing batch {chunk_number}")
-            target_file_batch = str(target_file).replace(
-                ".csv", "-" + str(chunk_number) + ".csv"
-            )
-            df = pd.DataFrame()
-            df = pd.concat([df, chunk])
-            process_chunk(
-                df=df,
-                target_file_batch=target_file_batch,
-                target_file=target_file,
-                skip_header=(not chunk_number == 0),
-                rename_headers_list=rename_headers_list,
-                null_rows_list=null_rows_list,
-                parse_dates_list=parse_dates_list,
-                reorder_headers_list=output_headers_list,
-            )
 
 
 def load_data_to_bq(
@@ -267,6 +240,185 @@ def create_table_schema(
     return schema
 
 
+def process_source_file(
+    source_file: pathlib.Path,
+    target_file: pathlib.Path,
+    chunksize: str,
+    source_dtypes: dict,
+    resolve_datatypes_list: dict,
+    transform_list: typing.List[str],
+    reorder_headers_list: typing.List[str],
+    rename_headers_list: dict,
+    regex_list: typing.List[typing.List],
+    crash_field_list: typing.List[typing.List],
+    date_format_list: typing.List[typing.List],
+) -> None:
+    logging.info(f"Opening source file {source_file}")
+    with pd.read_csv(
+        source_file,
+        engine="python",
+        encoding="utf-8",
+        quotechar='"',
+        sep=",",
+        dtype=source_dtypes,
+        chunksize=int(chunksize),
+    ) as reader:
+        for chunk_number, chunk in enumerate(reader):
+            target_file_batch = str(target_file).replace(
+                ".csv", "-" + str(chunk_number) + ".csv"
+            )
+            df = pd.DataFrame()
+            df = pd.concat([df, chunk])
+            process_chunk(
+                df=df,
+                target_file_batch=target_file_batch,
+                target_file=target_file,
+                skip_header=(not chunk_number == 0),
+                resolve_datatypes_list=resolve_datatypes_list,
+                transform_list=transform_list,
+                reorder_headers_list=reorder_headers_list,
+                rename_headers_list=rename_headers_list,
+                regex_list=regex_list,
+                crash_field_list=crash_field_list,
+                date_format_list=date_format_list,
+            )
+
+
+def process_chunk(
+    df: pd.DataFrame,
+    target_file_batch: str,
+    target_file: str,
+    skip_header: bool,
+    resolve_datatypes_list: dict,
+    transform_list: list,
+    reorder_headers_list: list,
+    rename_headers_list: list,
+    regex_list: list,
+    crash_field_list: list,
+    date_format_list: list,
+) -> None:
+    logging.info(f"Processing batch file {target_file_batch}")
+    for transform in transform_list:
+        if transform == "replace_regex":
+            df = replace_regex(df, regex_list)
+        elif transform == "add_crash_timestamp":
+            for fld in crash_field_list:
+                new_crash_field = fld[0]
+                crash_date_field = fld[1]
+                crash_time_field = fld[2]
+                df[new_crash_field] = ""
+                df = add_crash_timestamp(
+                    df, new_crash_field, crash_date_field, crash_time_field
+                )
+        elif transform == "convert_date_format":
+            df = resolve_date_format(df, date_format_list)
+        elif transform == "resolve_datatypes":
+            df = resolve_datatypes(df, resolve_datatypes_list)
+        elif transform == "rename_headers":
+            df = rename_headers(df, rename_headers_list)
+        elif transform == "reorder_headers":
+            df = reorder_headers(df, reorder_headers_list)
+    save_to_new_file(df, file_path=str(target_file_batch))
+    append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
+    logging.info(f"Processing batch file {target_file_batch} completed")
+
+
+def resolve_datatypes(df: pd.DataFrame, resolve_datatypes_list: dict) -> pd.DataFrame:
+    logging.info("Resolving column datatypes")
+    return df.astype(resolve_datatypes_list, errors="ignore")
+
+
+def reorder_headers(df: pd.DataFrame, headers_list: list) -> pd.DataFrame:
+    logging.info("Reordering Headers")
+    return df[headers_list]
+
+
+def rename_headers(df: pd.DataFrame, header_list: dict) -> pd.DataFrame:
+    logging.info("Renaming Headers")
+    df.rename(columns=header_list, inplace=True)
+    return df
+
+
+def replace_regex(df: pd.DataFrame, regex_list: dict) -> pd.DataFrame:
+    for regex_item in regex_list:
+        field_name = regex_item[0]
+        search_expr = regex_item[1]
+        replace_expr = regex_item[2]
+        logging.info(
+            f"Replacing data via regex on field {field_name} '{field_name}' '{search_expr}' '{replace_expr}'"
+        )
+        df[field_name] = df[field_name].replace(
+            r"" + search_expr, replace_expr, regex=True
+        )
+    return df
+
+
+def resolve_date_format(df: pd.DataFrame, date_fields: list = []) -> pd.DataFrame:
+    for dt_fld in date_fields:
+        field_name = dt_fld[0]
+        logging.info(f"Resolving date format in column {field_name}")
+        from_format = dt_fld[1]
+        to_format = dt_fld[2]
+        df[field_name] = df[field_name].apply(
+            lambda x: convert_dt_format(str(x), from_format, to_format)
+        )
+    return df
+
+
+def convert_dt_format(
+    dt_str: str, from_format: str, to_format: str = "%Y-%m-%d %H:%M:%S"
+) -> str:
+    if not dt_str or str(dt_str).lower() == "nan" or str(dt_str).lower() == "nat":
+        dt_str = ""
+        return dt_str
+    else:
+        if from_format == "%Y%m%d":
+            year = dt_str[0:4]
+            month = dt_str[4:6]
+            day = dt_str[6:8]
+            dt_str = f"{year}-{month}-{day} 00:00:00"
+            from_format = "%Y-%m-%d %H:%M:%S"
+        elif len(dt_str.strip().split(" ")[1]) == 8:
+            # if format of time portion is 00:00:00 then use 00:00 format
+            dt_str = dt_str[:-3]
+        elif (len(dt_str.strip().split("-")[0]) == 4) and (
+            len(from_format.strip().split("/")[0]) == 2
+        ):
+            # if the format of the date portion of the data is in YYYY-MM-DD format
+            # and from_format is in MM-DD-YYYY then resolve this by modifying the from_format
+            # to use the YYYY-MM-DD.  This resolves mixed date formats in files
+            from_format = "%Y-%m-%d " + from_format.strip().split(" ")[1]
+        return datetime.datetime.strptime(dt_str, from_format).strftime(to_format)
+
+
+def add_crash_timestamp(
+    df: pd.DataFrame, new_crash_field: str, crash_date_field: str, crash_time_field: str
+) -> pd.DataFrame:
+    logging.info(
+        f"add_crash_timestamp '{new_crash_field}' '{crash_date_field}' '{crash_time_field}'"
+    )
+    df[new_crash_field] = df.apply(
+        lambda x, crash_date_field, crash_time_field: crash_timestamp(
+            x["" + crash_date_field], x["" + crash_time_field]
+        ),
+        args=[crash_date_field, crash_time_field],
+        axis=1,
+    )
+    return df
+
+
+def crash_timestamp(crash_date: str, crash_time: str) -> str:
+    # if crash time format is H:MM then convert to HH:MM:SS
+    if len(crash_time) == 4:
+        crash_time = f"0{crash_time}:00"
+    return f"{crash_date} {crash_time}"
+
+
+def save_to_new_file(df: pd.DataFrame, file_path: str, sep: str = "|") -> None:
+    logging.info(f"Saving data to target file.. {file_path} ...")
+    df.to_csv(file_path, index=False, sep=sep)
+
+
 def append_batch_file(
     batch_file_path: str, target_file_path: str, skip_header: bool, truncate_file: bool
 ) -> None:
@@ -286,71 +438,6 @@ def append_batch_file(
             target_file.write(data_file.read())
             if os.path.exists(batch_file_path):
                 os.remove(batch_file_path)
-
-
-def process_chunk(
-    df: pd.DataFrame,
-    target_file_batch: str,
-    target_file: str,
-    skip_header: bool,
-    rename_headers_list: dict,
-    null_rows_list: typing.List[str],
-    parse_dates_list: typing.List[str],
-    reorder_headers_list: typing.List[str],
-) -> None:
-    df = resolve_date_format(df, parse_dates_list)
-    df = rename_headers(df, rename_headers_list)
-    df = remove_null_rows(df, null_rows_list)
-    df = reorder_headers(df, reorder_headers_list)
-    save_to_new_file(df, file_path=str(target_file_batch))
-    append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
-
-
-def remove_null_rows(
-    df: pd.DataFrame, null_rows_list: typing.List[str]
-) -> pd.DataFrame:
-    logging.info("Removing rows with empty keys")
-    for column in null_rows_list:
-        df = df[df[column] != ""]
-    return df
-
-
-def reorder_headers(df: pd.DataFrame, output_headers: typing.List[str]) -> pd.DataFrame:
-    logging.info("Reordering headers..")
-    return df[output_headers]
-
-
-def resolve_date_format(
-    df: pd.DataFrame, parse_dates: typing.List[str]
-) -> pd.DataFrame:
-    for dt_fld in parse_dates:
-        logging.info(f"Resolving date format in column {dt_fld}")
-        df[dt_fld] = df[dt_fld].apply(convert_dt_format)
-    return df
-
-
-def convert_dt_format(dt_str: str) -> str:
-    if not dt_str or str(dt_str).lower() == "nan" or str(dt_str).lower() == "nat":
-        return ""
-    elif (
-        str(dt_str).strip()[2] == "/"
-    ):  # if there is a '/' in 3rd position, then we have a date format mm/dd/yyyy
-        return datetime.datetime.strptime(dt_str, "%m/%d/%Y %H:%M:%S %p").strftime(
-            "%Y-%m-%d %H:%M:%S"
-        )
-    else:
-        return str(dt_str)
-
-
-def rename_headers(df: pd.DataFrame, header_names: dict) -> pd.DataFrame:
-    logging.info("Renaming Headers")
-    df = df.rename(columns=header_names)
-    return df
-
-
-def save_to_new_file(df: pd.DataFrame, file_path: str, sep: str = "|") -> None:
-    logging.info(f"Saving data to target file.. {file_path} ...")
-    df.to_csv(file_path, index=False, sep=sep)
 
 
 def download_file(source_url: str, source_file: pathlib.Path) -> None:
@@ -395,10 +482,13 @@ if __name__ == "__main__":
         table_id=os.environ["TABLE_ID"],
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
-        schema_path=os.environ["SCHEMA_PATH"],
         data_dtypes=json.loads(os.environ["DATA_DTYPES"]),
-        null_rows_list=json.loads(os.environ["NULL_ROWS_LIST"]),
-        parse_dates=json.loads(os.environ["PARSE_DATES"]),
-        rename_headers_list=json.loads(os.environ["RENAME_HEADERS"]),
-        output_headers_list=json.loads(os.environ["OUTPUT_CSV_HEADERS"]),
+        schema_path=os.environ["SCHEMA_PATH"],
+        resolve_datatypes_list=json.loads(os.environ["RESOLVE_DATATYPES_LIST"]),
+        transform_list=json.loads(os.environ["TRANSFORM_LIST"]),
+        reorder_headers_list=json.loads(os.environ["REORDER_HEADERS_LIST"]),
+        rename_headers_list=json.loads(os.environ["RENAME_HEADERS_LIST"]),
+        regex_list=json.loads(os.environ["REGEX_LIST"]),
+        crash_field_list=json.loads(os.environ["CRASH_FIELD_LIST"]),
+        date_format_list=json.loads(os.environ["DATE_FORMAT_LIST"]),
     )
