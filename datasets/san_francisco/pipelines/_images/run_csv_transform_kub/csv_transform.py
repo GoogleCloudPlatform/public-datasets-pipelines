@@ -128,6 +128,7 @@ def execute_pipeline(
     if (
         destination_table == "311_service_requests"
         or destination_table == "film_locations"
+        or destination_table == "sffd_service_calls"
     ):
         download_file(source_url, source_file)
     if destination_table == "bikeshare_station_info":
@@ -403,7 +404,6 @@ def process_source_file(
     field_separator: str = ",",
 ) -> None:
     logging.info(f"Opening source file {source_file}")
-
     if header_row_ordinal is None or header_row_ordinal == "None":
         with pd.read_csv(
             source_file,
@@ -502,6 +502,14 @@ def process_chunk(
         df = strip_newlines(df, strip_newlines_list)
         df = resolve_date_format(df, date_format_list)
         df = reorder_headers(df, reorder_headers_list)
+    elif destination_table == "sffd_service_calls":
+        df = rename_headers(df, rename_headers_list)
+        df = strip_whitespace(df, strip_whitespace_list)
+        df = strip_newlines(df, strip_newlines_list)
+        df = extract_latitude_from_geom(df, "location_geom", "latitude")
+        df = extract_longitude_from_geom(df, "location_geom", "longitude")
+        df = resolve_date_format(df, date_format_list)
+        df = reorder_headers(df, reorder_headers_list)
     elif destination_table == "bikeshare_station_info":
         df = rename_headers(df, rename_headers_list)
         df = remove_empty_key_rows(df, empty_key_list)
@@ -514,11 +522,9 @@ def process_chunk(
         df = reorder_headers(df, reorder_headers_list)
     elif destination_table == "bikeshare_trips":
         if str(target_file).find("_trip_data.csv") > -1:
-            # df = resolve_date_format(df, "%m/%d/%Y %H:%M", date_fields)
-            df = resolve_date_format(df, date_format_list, "%m/%d/%Y %H:%M")
+            df = resolve_date_format(df, date_format_list)
         if str(target_file).find("_tripdata.csv") > -1:
-            # df = resolve_date_format(df, "%Y/%m/%d %H:%M:%S.%f", date_fields)
-            df = resolve_date_format(df, date_format_list, "%Y/%m/%d %H:%M:%S.%f")
+            df = resolve_date_format(df, date_format_list)
             df = generate_location(df, gen_location_list)
         df = add_key(df)
     elif destination_table == "film_locations":
@@ -681,7 +687,9 @@ def create_table_schema(
 
 
 def rename_headers(df: pd.DataFrame, rename_headers_list: dict) -> pd.DataFrame:
-    df.rename(columns=rename_headers_list, inplace=True)
+    logging.info("Renaming Headers")
+    # df.rename(columns=rename_headers_list, inplace=True)
+    df = df.rename(columns=rename_headers_list)
     return df
 
 
@@ -714,8 +722,38 @@ def remove_parenthesis_long_lat(
     return df
 
 
+def extract_longitude_from_geom(
+    df: pd.DataFrame,
+    geom_field_name: str,
+    lon_field_name: str,
+) -> str:
+    logging.info(f"Extracting longitude field {lon_field_name} from {geom_field_name}")
+    df[lon_field_name] = df[geom_field_name].apply(
+        lambda x: str(x).replace("POINT (", "").replace(")", "").split(" ", 1)[0]
+        if str(x) != ""
+        else "POINT (  )"
+    )
+    return df
+
+
+def extract_latitude_from_geom(
+    df: pd.DataFrame,
+    geom_field_name: str,
+    lat_field_name: str,
+) -> str:
+    logging.info(f"Extracting latitude field {lat_field_name} from {geom_field_name}")
+    df[lat_field_name] = df[geom_field_name].apply(
+        lambda x: str(x).replace("POINT (", "").replace(")", "").split(" ", 1)[-1]
+        if str(x) != ""
+        else "POINT (  )"
+    )
+    return df
+
+
 def generate_location(df: pd.DataFrame, gen_location_list: dict) -> pd.DataFrame:
+    logging.info("Generating location data")
     for key, values in gen_location_list.items():
+        logging.info(f"Generating location data for field {key}")
         df[key] = (
             "POINT("
             + df[values[0]][:].astype("string")
@@ -748,10 +786,10 @@ def strip_newlines(
 def resolve_date_format(
     df: pd.DataFrame,
     date_format_list: typing.List[str],
-    from_format: str = "%Y-%m-%d %H:%M:%S",
 ) -> pd.DataFrame:
     logging.info("Resolving date formats")
     for dt_fld in date_format_list:
+        logging.info(f"Resolving date formats in field {dt_fld}")
         df[dt_fld] = df[dt_fld].apply(convert_dt_format)
     return df
 

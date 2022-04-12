@@ -493,7 +493,7 @@ dag:
         image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
         env_vars:
           PIPELINE_NAME: "{{ var.json.san_francisco.sf_film_locations.pipeline_name }}"
-          SOURCE_URL: "https://s3.amazonaws.com/babs-open-data/babs_open_data_year_3.zip"
+          SOURCE_URL: "{{ var.json.san_francisco.sf_film_locations.source_url }}"
           CHUNKSIZE: "{{ var.json.san_francisco.sf_film_locations.chunksize }}"
           SOURCE_FILE: "{{ var.json.san_francisco.sf_film_locations.source_file }}"
           TARGET_FILE: "{{ var.json.san_francisco.sf_film_locations.target_file }}"
@@ -542,6 +542,122 @@ dag:
               "actor_1",
               "actor_2",
               "actor_3"
+            ]
+        resources:
+          limit_memory: "8G"
+          limit_cpu: "3"
+    - operator: "GKEStartPodOperator"
+      description: "Run San Francisco Fire Department Service Calls Pipeline"
+      args:
+        task_id: "sffd_service_calls"
+        name: "sffd_service_calls"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: san-francisco
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "{{ var.json.san_francisco.sffd_service_calls.pipeline_name }}"
+          SOURCE_URL: "{{ var.json.san_francisco.sffd_service_calls.source_url }}"
+          CHUNKSIZE: "{{ var.json.san_francisco.sffd_service_calls.chunksize }}"
+          SOURCE_FILE: "{{ var.json.san_francisco.sffd_service_calls.source_file }}"
+          TARGET_FILE: "{{ var.json.san_francisco.sffd_service_calls.target_file }}"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "{{ var.json.san_francisco.sffd_service_calls.dataset_id }}"
+          TABLE_ID: "{{ var.json.san_francisco.sffd_service_calls.destination_table }}"
+          DROP_DEST_TABLE: "{{ var.json.san_francisco.sffd_service_calls.drop_dest_table }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "{{ var.json.san_francisco.sffd_service_calls.target_gcs_path }}"
+          SCHEMA_PATH: "{{ var.json.san_francisco.sffd_service_calls.schema_path }}"
+          RENAME_HEADERS_LIST: >-
+            {
+              "Call Number": "call_number",
+              "Unit ID": "unit_id",
+              "Incident Number": "incident_number",
+              "Call Type": "call_type",
+              "Call Date": "call_date",
+              "Watch Date": "watch_date",
+              "Received DtTm": "received_timestamp",
+              "Entry DtTm": "entry_timestamp",
+              "Dispatch DtTm": "dispatch_timestamp",
+              "Response DtTm": "response_timestamp",
+              "On Scene DtTm": "on_scene_timestamp",
+              "Transport DtTm": "transport_timestamp",
+              "Hospital DtTm": "hospital_timestamp",
+              "Call Final Disposition": "call_final_disposition",
+              "Available DtTm": "available_timestamp",
+              "Address": "address",
+              "City": "city",
+              "Zipcode of Incident": "zipcode_of_incident",
+              "Battalion": "battalion",
+              "Station Area": "station_area",
+              "Box": "box",
+              "Original Priority": "original_priority",
+              "Priority": "priority",
+              "Final Priority": "final_priority",
+              "ALS Unit": "als_unit",
+              "Call Type Group": "call_type_group",
+              "Number of Alarms": "number_of_alarms",
+              "Unit Type": "unit_type",
+              "Unit sequence in call dispatch": "unit_sequence_in_call_dispatch",
+              "Fire Prevention District": "fire_prevention_district",
+              "Supervisor District": "supervisor_district",
+              "Neighborhooods - Analysis Boundaries": "neighborhood_name",
+              "RowID": "row_id",
+              "case_location": "location_geom"
+            }
+          DATE_FORMAT_LIST: >-
+            [
+              "call_date",
+              "watch_date",
+              "available_timestamp",
+              "dispatch_timestamp",
+              "entry_timestamp",
+              "on_scene_timestamp",
+              "received_timestamp",
+              "response_timestamp",
+              "transport_timestamp",
+              "hospital_timestamp"
+            ]
+          REORDER_HEADERS_LIST: >-
+            [
+              "call_number",
+              "unit_id",
+              "incident_number",
+              "call_type",
+              "call_date",
+              "watch_date",
+              "received_timestamp",
+              "entry_timestamp",
+              "dispatch_timestamp",
+              "response_timestamp",
+              "on_scene_timestamp",
+              "transport_timestamp",
+              "hospital_timestamp",
+              "call_final_disposition",
+              "available_timestamp",
+              "address",
+              "city",
+              "zipcode_of_incident",
+              "battalion",
+              "station_area",
+              "box",
+              "original_priority",
+              "priority",
+              "final_priority",
+              "als_unit",
+              "call_type_group",
+              "number_of_alarms",
+              "unit_type",
+              "unit_sequence_in_call_dispatch",
+              "fire_prevention_district",
+              "supervisor_district",
+              "row_id",
+              "latitude",
+              "longitude",
+              "neighborhood_name",
+              "location_geom"
             ]
         resources:
           limit_memory: "8G"
