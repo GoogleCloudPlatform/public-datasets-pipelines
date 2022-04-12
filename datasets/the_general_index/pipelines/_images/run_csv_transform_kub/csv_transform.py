@@ -19,7 +19,6 @@ import os
 import pathlib
 import typing
 import zipfile as zip
-from urllib.parse import urlparse
 
 import pandas as pd
 import requests
@@ -89,22 +88,22 @@ def execute_pipeline(
     null_string_list: typing.List[str],
 ) -> None:
     # download_file(source_url, source_file)
-    source_file_path = os.path.split(source_file)[0]
-    source_url_file = os.path.basename(urlparse(source_url).path)
-    source_file_zipfile = f"{source_file_path}/{source_url_file}"
-    unpack_file(source_file_zipfile, os.path.split(source_file_zipfile)[0], "zip")
-    source_file_zipfile_csv = str.replace(source_file_zipfile, ".zip", "")
-    os.rename(source_file_zipfile_csv, source_file)
-    remove_header_footer(
-        source_file=source_file,
-        header_rows=int(source_file_header_rows),
-        footer_rows=int(source_file_footer_rows),
-    )
+    # source_file_path = os.path.split(source_file)[0]
+    # source_url_file = os.path.basename(urlparse(source_url).path)
+    # source_file_zipfile = f"{source_file_path}/{source_url_file}"
+    # unpack_file(source_file_zipfile, os.path.split(source_file_zipfile)[0], "zip")
+    # source_file_zipfile_csv = str.replace(source_file_zipfile, ".zip", "")
+    # os.rename(source_file_zipfile_csv, source_file)
+    # remove_header_footer(
+    #     source_file=source_file,
+    #     header_rows=int(source_file_header_rows),
+    #     footer_rows=int(source_file_footer_rows),
+    # )
+    replace_double_quotes(source_file=source_file, replacement_char="'")
     process_source_file(
         source_file=source_file,
         target_file=target_file,
         chunksize=chunksize,
-        destination_table=destination_table,
         input_headers=input_headers,
         data_dtypes=data_dtypes,
         datetime_list=datetime_list,
@@ -167,11 +166,16 @@ def remove_header_footer(source_file: str, header_rows: int, footer_rows: int) -
     )
 
 
+def replace_double_quotes(source_file: str, replacement_char: str) -> None:
+    cmd = f'sed -i "s/\\"/\'/g" {source_file} '
+    logging.info(cmd)
+    os.system(cmd)
+
+
 def process_source_file(
     source_file: str,
     target_file: str,
     chunksize: str,
-    destination_table: str,
     input_headers: str,
     data_dtypes: dict,
     datetime_list: typing.List[str],
@@ -202,7 +206,6 @@ def process_source_file(
                 target_file_batch=target_file_batch,
                 target_file=target_file,
                 skip_header=(not chunk_number == 0),
-                destination_table=destination_table,
                 datetime_list=datetime_list,
                 null_string_list=null_string_list,
                 source_file=source_file,
@@ -215,6 +218,7 @@ def process_chunk(
     target_file_batch: str,
     target_file: str,
     skip_header: bool,
+    datetime_list: typing.List[str],
     null_string_list: typing.List[str],
     source_file: str,
     source_url: str,
@@ -222,6 +226,7 @@ def process_chunk(
     logging.info(f"Processing batch file {target_file_batch}")
     df = remove_null_strings(df, null_string_list)
     df = add_metadata_columns(df, source_file, source_url)
+    df = resolve_date_format(df, datetime_list)
     save_to_new_file(df, file_path=str(target_file_batch), sep="|")
     append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
     logging.info(f"Processing batch file {target_file_batch} completed")
@@ -243,6 +248,27 @@ def remove_null_strings(
         logging.info(f"Removing null strings from column {column}")
         df[column] = df[column].str.replace("\\N", "", regex=False)
     return df
+
+
+def resolve_date_format(
+    df: pd.DataFrame,
+    date_format_list: typing.List[str],
+) -> pd.DataFrame:
+    logging.info("Resolving date formats")
+    for dt_fld in date_format_list:
+        df[dt_fld] = df[dt_fld].apply(convert_dt_format)
+    return df
+
+
+def convert_dt_format(dt_str: str) -> str:
+    if not dt_str or str(dt_str).lower() == "nan" or str(dt_str).lower() == "nat":
+        return ""
+    else:
+        return str(
+            pd.to_datetime(
+                dt_str, format='"%Y-%m-%d %H:%M:%S"', infer_datetime_format=True
+            )
+        )
 
 
 def download_file(source_url: str, source_file: pathlib.Path) -> None:
