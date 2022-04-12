@@ -16,9 +16,12 @@ terraform.tfstate
 # airflow cache
 tmp
 
-# env or editor config
+# python env or editor config
 .python-version
 .vscode
+
+# env variables files
+.vars.*.yaml
 
 # generated files and folders
 .dev
