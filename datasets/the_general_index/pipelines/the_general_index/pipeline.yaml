@@ -51,7 +51,7 @@ dag:
     - operator: "GKEStartPodOperator"
       description: "Run The General Index Pipeline"
       args:
-        task_id: "transform_csv"
+        task_id: "transform_csv_dump_0"
         name: "the_general_index"
         project_id: "{{ var.value.gcp_project }}"
         location: "us-central1-c"
@@ -149,10 +149,1570 @@ dag:
               "insert_date",
               "multi_row_flag"
             ]
-
+      resources:
+          request_ephemeral_storage: "32G"
+          limit_cpu: "3"
+    - operator: "GKEStartPodOperator"
+      description: "Run The General Index Pipeline"
+      args:
+        task_id: "transform_csv_dump_1"
+        name: "the_general_index"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: the-general-index
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.the_general_index.container_registry.the_general_index__run_csv_transform_kub }}"
+        env_vars:
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          CHUNKSIZE: "{{ var.json.the_general_index.chunksize }}"
+          DATASET_ID: "{{ var.json.the_general_index.dump_1.dataset_id }}"
+          TABLE_ID: "{{ var.json.the_general_index.destination_table }}"
+          SCHEMA_PATH: "{{ var.json.the_general_index.schema_path }}"
+          SOURCE_FILE_HEADER_ROWS: "{{ var.json.the_general_index.source_file_header_rows }}"
+          SOURCE_FILE_FOOTER_ROWS: "{{ var.json.the_general_index.source_file_footer_rows }}"
+          PIPELINE_NAME: "{{ var.json.the_general_index.pipeline_name }}"
+          SOURCE_URL: "{{ var.json.the_general_index.dump_1.source_url }}"
+          SOURCE_FILE: "{{ var.json.the_general_index.dump_1.source_file }}"
+          TARGET_FILE: "{{ var.json.the_general_index.dump_1.target_url }}"
+          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_1.target_path }}"
+          INPUT_CSV_HEADERS: >-
+            [
+              "dkey",
+              "raw_id",
+              "meta_key",
+              "doc_doi",
+              "meta_doi",
+              "doi",
+              "doi_flag",
+              "isbn",
+              "journal",
+              "doc_title",
+              "meta_title",
+              "title",
+              "doc_pub_date",
+              "meta_pub_date",
+              "pub_date",
+              "doc_author",
+              "meta_author",
+              "author",
+              "doc_size",
+              "insert_date",
+              "multi_row_flag"
+            ]
+          DATA_DTYPES: >-
+            {
+              "dkey": "str",
+              "raw_id": "str",
+              "meta_key": "str",
+              "doc_doi": "str",
+              "meta_doi": "str",
+              "doi": "str",
+              "doi_flag": "str",
+              "isbn": "str",
+              "journal": "str",
+              "doc_title": "str",
+              "meta_title": "str",
+              "title": "str",
+              "doc_pub_date": "str",
+              "meta_pub_date": "str",
+              "pub_date": "str",
+              "doc_author": "str",
+              "meta_author": "str",
+              "author": "str",
+              "doc_size": "str",
+              "insert_date": "str",
+              "multi_row_flag": "str"
+            }
+          DATETIME_LIST: >-
+            [ 
+              "insert_date" 
+            ] 
+          NULL_STRING_LIST: >-
+            [
+              "dkey",
+              "raw_id",
+              "meta_key",
+              "doc_doi",
+              "meta_doi",
+              "doi",
+              "doi_flag",
+              "isbn",
+              "journal",
+              "doc_title",
+              "meta_title",
+              "title",
+              "doc_pub_date",
+              "meta_pub_date",
+              "pub_date",
+              "doc_author",
+              "meta_author",
+              "author",
+              "doc_size",
+              "insert_date",
+              "multi_row_flag"
+            ]
+      resources:
+          request_ephemeral_storage: "32G"
+          limit_cpu: "3"
+    - operator: "GKEStartPodOperator"
+      description: "Run The General Index Pipeline"
+      args:
+        task_id: "transform_csv_dump_2"
+        name: "the_general_index"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: the-general-index
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.the_general_index.container_registry.the_general_index__run_csv_transform_kub }}"
+        env_vars:
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          CHUNKSIZE: "{{ var.json.the_general_index.chunksize }}"
+          DATASET_ID: "{{ var.json.the_general_index.dump_2.dataset_id }}"
+          TABLE_ID: "{{ var.json.the_general_index.destination_table }}"
+          SCHEMA_PATH: "{{ var.json.the_general_index.schema_path }}"
+          SOURCE_FILE_HEADER_ROWS: "{{ var.json.the_general_index.source_file_header_rows }}"
+          SOURCE_FILE_FOOTER_ROWS: "{{ var.json.the_general_index.source_file_footer_rows }}"
+          PIPELINE_NAME: "{{ var.json.the_general_index.pipeline_name }}"
+          SOURCE_URL: "{{ var.json.the_general_index.dump_2.source_url }}"
+          SOURCE_FILE: "{{ var.json.the_general_index.dump_2.source_file }}"
+          TARGET_FILE: "{{ var.json.the_general_index.dump_2.target_url }}"
+          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_2.target_path }}"
+          INPUT_CSV_HEADERS: >-
+            [
+              "dkey",
+              "raw_id",
+              "meta_key",
+              "doc_doi",
+              "meta_doi",
+              "doi",
+              "doi_flag",
+              "isbn",
+              "journal",
+              "doc_title",
+              "meta_title",
+              "title",
+              "doc_pub_date",
+              "meta_pub_date",
+              "pub_date",
+              "doc_author",
+              "meta_author",
+              "author",
+              "doc_size",
+              "insert_date",
+              "multi_row_flag"
+            ]
+          DATA_DTYPES: >-
+            {
+              "dkey": "str",
+              "raw_id": "str",
+              "meta_key": "str",
+              "doc_doi": "str",
+              "meta_doi": "str",
+              "doi": "str",
+              "doi_flag": "str",
+              "isbn": "str",
+              "journal": "str",
+              "doc_title": "str",
+              "meta_title": "str",
+              "title": "str",
+              "doc_pub_date": "str",
+              "meta_pub_date": "str",
+              "pub_date": "str",
+              "doc_author": "str",
+              "meta_author": "str",
+              "author": "str",
+              "doc_size": "str",
+              "insert_date": "str",
+              "multi_row_flag": "str"
+            }
+          DATETIME_LIST: >-
+            [ 
+              "insert_date" 
+            ] 
+          NULL_STRING_LIST: >-
+            [
+              "dkey",
+              "raw_id",
+              "meta_key",
+              "doc_doi",
+              "meta_doi",
+              "doi",
+              "doi_flag",
+              "isbn",
+              "journal",
+              "doc_title",
+              "meta_title",
+              "title",
+              "doc_pub_date",
+              "meta_pub_date",
+              "pub_date",
+              "doc_author",
+              "meta_author",
+              "author",
+              "doc_size",
+              "insert_date",
+              "multi_row_flag"
+            ]
         resources:
           request_ephemeral_storage: "32G"
           limit_cpu: "3"
+    - operator: "GKEStartPodOperator"
+      description: "Run The General Index Pipeline"
+      args:
+        task_id: "transform_csv_dump_3"
+        name: "the_general_index"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: the-general-index
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.the_general_index.container_registry.the_general_index__run_csv_transform_kub }}"
+        env_vars:
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          CHUNKSIZE: "{{ var.json.the_general_index.chunksize }}"
+          DATASET_ID: "{{ var.json.the_general_index.dump_3.dataset_id }}"
+          TABLE_ID: "{{ var.json.the_general_index.destination_table }}"
+          SCHEMA_PATH: "{{ var.json.the_general_index.schema_path }}"
+          SOURCE_FILE_HEADER_ROWS: "{{ var.json.the_general_index.source_file_header_rows }}"
+          SOURCE_FILE_FOOTER_ROWS: "{{ var.json.the_general_index.source_file_footer_rows }}"
+          PIPELINE_NAME: "{{ var.json.the_general_index.pipeline_name }}"
+          SOURCE_URL: "{{ var.json.the_general_index.dump_3.source_url }}"
+          SOURCE_FILE: "{{ var.json.the_general_index.dump_3.source_file }}"
+          TARGET_FILE: "{{ var.json.the_general_index.dump_3.target_url }}"
+          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_3.target_path }}"
+          INPUT_CSV_HEADERS: >-
+            [
+              "dkey",
+              "raw_id",
+              "meta_key",
+              "doc_doi",
+              "meta_doi",
+              "doi",
+              "doi_flag",
+              "isbn",
+              "journal",
+              "doc_title",
+              "meta_title",
+              "title",
+              "doc_pub_date",
+              "meta_pub_date",
+              "pub_date",
+              "doc_author",
+              "meta_author",
+              "author",
+              "doc_size",
+              "insert_date",
+              "multi_row_flag"
+            ]
+          DATA_DTYPES: >-
+            {
+              "dkey": "str",
+              "raw_id": "str",
+              "meta_key": "str",
+              "doc_doi": "str",
+              "meta_doi": "str",
+              "doi": "str",
+              "doi_flag": "str",
+              "isbn": "str",
+              "journal": "str",
+              "doc_title": "str",
+              "meta_title": "str",
+              "title": "str",
+              "doc_pub_date": "str",
+              "meta_pub_date": "str",
+              "pub_date": "str",
+              "doc_author": "str",
+              "meta_author": "str",
+              "author": "str",
+              "doc_size": "str",
+              "insert_date": "str",
+              "multi_row_flag": "str"
+            }
+          DATETIME_LIST: >-
+            [ 
+              "insert_date" 
+            ] 
+          NULL_STRING_LIST: >-
+            [
+              "dkey",
+              "raw_id",
+              "meta_key",
+              "doc_doi",
+              "meta_doi",
+              "doi",
+              "doi_flag",
+              "isbn",
+              "journal",
+              "doc_title",
+              "meta_title",
+              "title",
+              "doc_pub_date",
+              "meta_pub_date",
+              "pub_date",
+              "doc_author",
+              "meta_author",
+              "author",
+              "doc_size",
+              "insert_date",
+              "multi_row_flag"
+            ]
+        resources:
+          request_ephemeral_storage: "32G"
+          limit_cpu: "3"
+    - operator: "GKEStartPodOperator"
+      description: "Run The General Index Pipeline"
+      args:
+        task_id: "transform_csv_dump_4"
+        name: "the_general_index"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: the-general-index
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.the_general_index.container_registry.the_general_index__run_csv_transform_kub }}"
+        env_vars:
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          CHUNKSIZE: "{{ var.json.the_general_index.chunksize }}"
+          DATASET_ID: "{{ var.json.the_general_index.dump_4.dataset_id }}"
+          TABLE_ID: "{{ var.json.the_general_index.destination_table }}"
+          SCHEMA_PATH: "{{ var.json.the_general_index.schema_path }}"
+          SOURCE_FILE_HEADER_ROWS: "{{ var.json.the_general_index.source_file_header_rows }}"
+          SOURCE_FILE_FOOTER_ROWS: "{{ var.json.the_general_index.source_file_footer_rows }}"
+          PIPELINE_NAME: "{{ var.json.the_general_index.pipeline_name }}"
+          SOURCE_URL: "{{ var.json.the_general_index.dump_4.source_url }}"
+          SOURCE_FILE: "{{ var.json.the_general_index.dump_4.source_file }}"
+          TARGET_FILE: "{{ var.json.the_general_index.dump_4.target_url }}"
+          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_4.target_path }}"
+          INPUT_CSV_HEADERS: >-
+            [
+              "dkey",
+              "raw_id",
+              "meta_key",
+              "doc_doi",
+              "meta_doi",
+              "doi",
+              "doi_flag",
+              "isbn",
+              "journal",
+              "doc_title",
+              "meta_title",
+              "title",
+              "doc_pub_date",
+              "meta_pub_date",
+              "pub_date",
+              "doc_author",
+              "meta_author",
+              "author",
+              "doc_size",
+              "insert_date",
+              "multi_row_flag"
+            ]
+          DATA_DTYPES: >-
+            {
+              "dkey": "str",
+              "raw_id": "str",
+              "meta_key": "str",
+              "doc_doi": "str",
+              "meta_doi": "str",
+              "doi": "str",
+              "doi_flag": "str",
+              "isbn": "str",
+              "journal": "str",
+              "doc_title": "str",
+              "meta_title": "str",
+              "title": "str",
+              "doc_pub_date": "str",
+              "meta_pub_date": "str",
+              "pub_date": "str",
+              "doc_author": "str",
+              "meta_author": "str",
+              "author": "str",
+              "doc_size": "str",
+              "insert_date": "str",
+              "multi_row_flag": "str"
+            }
+          DATETIME_LIST: >-
+            [ 
+              "insert_date" 
+            ] 
+          NULL_STRING_LIST: >-
+            [
+              "dkey",
+              "raw_id",
+              "meta_key",
+              "doc_doi",
+              "meta_doi",
+              "doi",
+              "doi_flag",
+              "isbn",
+              "journal",
+              "doc_title",
+              "meta_title",
+              "title",
+              "doc_pub_date",
+              "meta_pub_date",
+              "pub_date",
+              "doc_author",
+              "meta_author",
+              "author",
+              "doc_size",
+              "insert_date",
+              "multi_row_flag"
+            ]
+        resources:
+          request_ephemeral_storage: "32G"
+          limit_cpu: "3"
+    - operator: "GKEStartPodOperator"
+      description: "Run The General Index Pipeline"
+      args:
+        task_id: "transform_csv_dump_5"
+        name: "the_general_index"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: the-general-index
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.the_general_index.container_registry.the_general_index__run_csv_transform_kub }}"
+        env_vars:
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          CHUNKSIZE: "{{ var.json.the_general_index.chunksize }}"
+          DATASET_ID: "{{ var.json.the_general_index.dump_5.dataset_id }}"
+          TABLE_ID: "{{ var.json.the_general_index.destination_table }}"
+          SCHEMA_PATH: "{{ var.json.the_general_index.schema_path }}"
+          SOURCE_FILE_HEADER_ROWS: "{{ var.json.the_general_index.source_file_header_rows }}"
+          SOURCE_FILE_FOOTER_ROWS: "{{ var.json.the_general_index.source_file_footer_rows }}"
+          PIPELINE_NAME: "{{ var.json.the_general_index.pipeline_name }}"
+          SOURCE_URL: "{{ var.json.the_general_index.dump_5.source_url }}"
+          SOURCE_FILE: "{{ var.json.the_general_index.dump_5.source_file }}"
+          TARGET_FILE: "{{ var.json.the_general_index.dump_5.target_url }}"
+          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_5.target_path }}"
+          INPUT_CSV_HEADERS: >-
+            [
+              "dkey",
+              "raw_id",
+              "meta_key",
+              "doc_doi",
+              "meta_doi",
+              "doi",
+              "doi_flag",
+              "isbn",
+              "journal",
+              "doc_title",
+              "meta_title",
+              "title",
+              "doc_pub_date",
+              "meta_pub_date",
+              "pub_date",
+              "doc_author",
+              "meta_author",
+              "author",
+              "doc_size",
+              "insert_date",
+              "multi_row_flag"
+            ]
+          DATA_DTYPES: >-
+            {
+              "dkey": "str",
+              "raw_id": "str",
+              "meta_key": "str",
+              "doc_doi": "str",
+              "meta_doi": "str",
+              "doi": "str",
+              "doi_flag": "str",
+              "isbn": "str",
+              "journal": "str",
+              "doc_title": "str",
+              "meta_title": "str",
+              "title": "str",
+              "doc_pub_date": "str",
+              "meta_pub_date": "str",
+              "pub_date": "str",
+              "doc_author": "str",
+              "meta_author": "str",
+              "author": "str",
+              "doc_size": "str",
+              "insert_date": "str",
+              "multi_row_flag": "str"
+            }
+          DATETIME_LIST: >-
+            [ 
+              "insert_date" 
+            ] 
+          NULL_STRING_LIST: >-
+            [
+              "dkey",
+              "raw_id",
+              "meta_key",
+              "doc_doi",
+              "meta_doi",
+              "doi",
+              "doi_flag",
+              "isbn",
+              "journal",
+              "doc_title",
+              "meta_title",
+              "title",
+              "doc_pub_date",
+              "meta_pub_date",
+              "pub_date",
+              "doc_author",
+              "meta_author",
+              "author",
+              "doc_size",
+              "insert_date",
+              "multi_row_flag"
+            ]
+        resources:
+          request_ephemeral_storage: "32G"
+          limit_cpu: "3"
+    - operator: "GKEStartPodOperator"
+      description: "Run The General Index Pipeline"
+      args:
+        task_id: "transform_csv_dump_6"
+        name: "the_general_index"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: the-general-index
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.the_general_index.container_registry.the_general_index__run_csv_transform_kub }}"
+        env_vars:
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          CHUNKSIZE: "{{ var.json.the_general_index.chunksize }}"
+          DATASET_ID: "{{ var.json.the_general_index.dump_6.dataset_id }}"
+          TABLE_ID: "{{ var.json.the_general_index.destination_table }}"
+          SCHEMA_PATH: "{{ var.json.the_general_index.schema_path }}"
+          SOURCE_FILE_HEADER_ROWS: "{{ var.json.the_general_index.source_file_header_rows }}"
+          SOURCE_FILE_FOOTER_ROWS: "{{ var.json.the_general_index.source_file_footer_rows }}"
+          PIPELINE_NAME: "{{ var.json.the_general_index.pipeline_name }}"
+          SOURCE_URL: "{{ var.json.the_general_index.dump_6.source_url }}"
+          SOURCE_FILE: "{{ var.json.the_general_index.dump_6.source_file }}"
+          TARGET_FILE: "{{ var.json.the_general_index.dump_6.target_url }}"
+          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_6.target_path }}"
+          INPUT_CSV_HEADERS: >-
+            [
+              "dkey",
+              "raw_id",
+              "meta_key",
+              "doc_doi",
+              "meta_doi",
+              "doi",
+              "doi_flag",
+              "isbn",
+              "journal",
+              "doc_title",
+              "meta_title",
+              "title",
+              "doc_pub_date",
+              "meta_pub_date",
+              "pub_date",
+              "doc_author",
+              "meta_author",
+              "author",
+              "doc_size",
+              "insert_date",
+              "multi_row_flag"
+            ]
+          DATA_DTYPES: >-
+            {
+              "dkey": "str",
+              "raw_id": "str",
+              "meta_key": "str",
+              "doc_doi": "str",
+              "meta_doi": "str",
+              "doi": "str",
+              "doi_flag": "str",
+              "isbn": "str",
+              "journal": "str",
+              "doc_title": "str",
+              "meta_title": "str",
+              "title": "str",
+              "doc_pub_date": "str",
+              "meta_pub_date": "str",
+              "pub_date": "str",
+              "doc_author": "str",
+              "meta_author": "str",
+              "author": "str",
+              "doc_size": "str",
+              "insert_date": "str",
+              "multi_row_flag": "str"
+            }
+          DATETIME_LIST: >-
+            [ 
+              "insert_date" 
+            ] 
+          NULL_STRING_LIST: >-
+            [
+              "dkey",
+              "raw_id",
+              "meta_key",
+              "doc_doi",
+              "meta_doi",
+              "doi",
+              "doi_flag",
+              "isbn",
+              "journal",
+              "doc_title",
+              "meta_title",
+              "title",
+              "doc_pub_date",
+              "meta_pub_date",
+              "pub_date",
+              "doc_author",
+              "meta_author",
+              "author",
+              "doc_size",
+              "insert_date",
+              "multi_row_flag"
+            ]
+        resources:
+          request_ephemeral_storage: "32G"
+          limit_cpu: "3"
+    - operator: "GKEStartPodOperator"
+      description: "Run The General Index Pipeline"
+      args:
+        task_id: "transform_csv_dump_7"
+        name: "the_general_index"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: the-general-index
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.the_general_index.container_registry.the_general_index__run_csv_transform_kub }}"
+        env_vars:
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          CHUNKSIZE: "{{ var.json.the_general_index.chunksize }}"
+          DATASET_ID: "{{ var.json.the_general_index.dump_7.dataset_id }}"
+          TABLE_ID: "{{ var.json.the_general_index.destination_table }}"
+          SCHEMA_PATH: "{{ var.json.the_general_index.schema_path }}"
+          SOURCE_FILE_HEADER_ROWS: "{{ var.json.the_general_index.source_file_header_rows }}"
+          SOURCE_FILE_FOOTER_ROWS: "{{ var.json.the_general_index.source_file_footer_rows }}"
+          PIPELINE_NAME: "{{ var.json.the_general_index.pipeline_name }}"
+          SOURCE_URL: "{{ var.json.the_general_index.dump_7.source_url }}"
+          SOURCE_FILE: "{{ var.json.the_general_index.dump_7.source_file }}"
+          TARGET_FILE: "{{ var.json.the_general_index.dump_7.target_url }}"
+          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_7.target_path }}"
+          INPUT_CSV_HEADERS: >-
+            [
+              "dkey",
+              "raw_id",
+              "meta_key",
+              "doc_doi",
+              "meta_doi",
+              "doi",
+              "doi_flag",
+              "isbn",
+              "journal",
+              "doc_title",
+              "meta_title",
+              "title",
+              "doc_pub_date",
+              "meta_pub_date",
+              "pub_date",
+              "doc_author",
+              "meta_author",
+              "author",
+              "doc_size",
+              "insert_date",
+              "multi_row_flag"
+            ]
+          DATA_DTYPES: >-
+            {
+              "dkey": "str",
+              "raw_id": "str",
+              "meta_key": "str",
+              "doc_doi": "str",
+              "meta_doi": "str",
+              "doi": "str",
+              "doi_flag": "str",
+              "isbn": "str",
+              "journal": "str",
+              "doc_title": "str",
+              "meta_title": "str",
+              "title": "str",
+              "doc_pub_date": "str",
+              "meta_pub_date": "str",
+              "pub_date": "str",
+              "doc_author": "str",
+              "meta_author": "str",
+              "author": "str",
+              "doc_size": "str",
+              "insert_date": "str",
+              "multi_row_flag": "str"
+            }
+          DATETIME_LIST: >-
+            [ 
+              "insert_date" 
+            ] 
+          NULL_STRING_LIST: >-
+            [
+              "dkey",
+              "raw_id",
+              "meta_key",
+              "doc_doi",
+              "meta_doi",
+              "doi",
+              "doi_flag",
+              "isbn",
+              "journal",
+              "doc_title",
+              "meta_title",
+              "title",
+              "doc_pub_date",
+              "meta_pub_date",
+              "pub_date",
+              "doc_author",
+              "meta_author",
+              "author",
+              "doc_size",
+              "insert_date",
+              "multi_row_flag"
+            ]
+        resources:
+          request_ephemeral_storage: "32G"
+          limit_cpu: "3"
+    - operator: "GKEStartPodOperator"
+      description: "Run The General Index Pipeline"
+      args:
+        task_id: "transform_csv_dump_8"
+        name: "the_general_index"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: the-general-index
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.the_general_index.container_registry.the_general_index__run_csv_transform_kub }}"
+        env_vars:
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          CHUNKSIZE: "{{ var.json.the_general_index.chunksize }}"
+          DATASET_ID: "{{ var.json.the_general_index.dump_8.dataset_id }}"
+          TABLE_ID: "{{ var.json.the_general_index.destination_table }}"
+          SCHEMA_PATH: "{{ var.json.the_general_index.schema_path }}"
+          SOURCE_FILE_HEADER_ROWS: "{{ var.json.the_general_index.source_file_header_rows }}"
+          SOURCE_FILE_FOOTER_ROWS: "{{ var.json.the_general_index.source_file_footer_rows }}"
+          PIPELINE_NAME: "{{ var.json.the_general_index.pipeline_name }}"
+          SOURCE_URL: "{{ var.json.the_general_index.dump_8.source_url }}"
+          SOURCE_FILE: "{{ var.json.the_general_index.dump_8.source_file }}"
+          TARGET_FILE: "{{ var.json.the_general_index.dump_8.target_url }}"
+          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_8.target_path }}"
+          INPUT_CSV_HEADERS: >-
+            [
+              "dkey",
+              "raw_id",
+              "meta_key",
+              "doc_doi",
+              "meta_doi",
+              "doi",
+              "doi_flag",
+              "isbn",
+              "journal",
+              "doc_title",
+              "meta_title",
+              "title",
+              "doc_pub_date",
+              "meta_pub_date",
+              "pub_date",
+              "doc_author",
+              "meta_author",
+              "author",
+              "doc_size",
+              "insert_date",
+              "multi_row_flag"
+            ]
+          DATA_DTYPES: >-
+            {
+              "dkey": "str",
+              "raw_id": "str",
+              "meta_key": "str",
+              "doc_doi": "str",
+              "meta_doi": "str",
+              "doi": "str",
+              "doi_flag": "str",
+              "isbn": "str",
+              "journal": "str",
+              "doc_title": "str",
+              "meta_title": "str",
+              "title": "str",
+              "doc_pub_date": "str",
+              "meta_pub_date": "str",
+              "pub_date": "str",
+              "doc_author": "str",
+              "meta_author": "str",
+              "author": "str",
+              "doc_size": "str",
+              "insert_date": "str",
+              "multi_row_flag": "str"
+            }
+          DATETIME_LIST: >-
+            [ 
+              "insert_date" 
+            ] 
+          NULL_STRING_LIST: >-
+            [
+              "dkey",
+              "raw_id",
+              "meta_key",
+              "doc_doi",
+              "meta_doi",
+              "doi",
+              "doi_flag",
+              "isbn",
+              "journal",
+              "doc_title",
+              "meta_title",
+              "title",
+              "doc_pub_date",
+              "meta_pub_date",
+              "pub_date",
+              "doc_author",
+              "meta_author",
+              "author",
+              "doc_size",
+              "insert_date",
+              "multi_row_flag"
+            ]
+        resources:
+          request_ephemeral_storage: "32G"
+          limit_cpu: "3"
+    - operator: "GKEStartPodOperator"
+      description: "Run The General Index Pipeline"
+      args:
+        task_id: "transform_csv_dump_9"
+        name: "the_general_index"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: the-general-index
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.the_general_index.container_registry.the_general_index__run_csv_transform_kub }}"
+        env_vars:
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          CHUNKSIZE: "{{ var.json.the_general_index.chunksize }}"
+          DATASET_ID: "{{ var.json.the_general_index.dump_9.dataset_id }}"
+          TABLE_ID: "{{ var.json.the_general_index.destination_table }}"
+          SCHEMA_PATH: "{{ var.json.the_general_index.schema_path }}"
+          SOURCE_FILE_HEADER_ROWS: "{{ var.json.the_general_index.source_file_header_rows }}"
+          SOURCE_FILE_FOOTER_ROWS: "{{ var.json.the_general_index.source_file_footer_rows }}"
+          PIPELINE_NAME: "{{ var.json.the_general_index.pipeline_name }}"
+          SOURCE_URL: "{{ var.json.the_general_index.dump_9.source_url }}"
+          SOURCE_FILE: "{{ var.json.the_general_index.dump_9.source_file }}"
+          TARGET_FILE: "{{ var.json.the_general_index.dump_9.target_url }}"
+          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_9.target_path }}"
+          INPUT_CSV_HEADERS: >-
+            [
+              "dkey",
+              "raw_id",
+              "meta_key",
+              "doc_doi",
+              "meta_doi",
+              "doi",
+              "doi_flag",
+              "isbn",
+              "journal",
+              "doc_title",
+              "meta_title",
+              "title",
+              "doc_pub_date",
+              "meta_pub_date",
+              "pub_date",
+              "doc_author",
+              "meta_author",
+              "author",
+              "doc_size",
+              "insert_date",
+              "multi_row_flag"
+            ]
+          DATA_DTYPES: >-
+            {
+              "dkey": "str",
+              "raw_id": "str",
+              "meta_key": "str",
+              "doc_doi": "str",
+              "meta_doi": "str",
+              "doi": "str",
+              "doi_flag": "str",
+              "isbn": "str",
+              "journal": "str",
+              "doc_title": "str",
+              "meta_title": "str",
+              "title": "str",
+              "doc_pub_date": "str",
+              "meta_pub_date": "str",
+              "pub_date": "str",
+              "doc_author": "str",
+              "meta_author": "str",
+              "author": "str",
+              "doc_size": "str",
+              "insert_date": "str",
+              "multi_row_flag": "str"
+            }
+          DATETIME_LIST: >-
+            [ 
+              "insert_date" 
+            ] 
+          NULL_STRING_LIST: >-
+            [
+              "dkey",
+              "raw_id",
+              "meta_key",
+              "doc_doi",
+              "meta_doi",
+              "doi",
+              "doi_flag",
+              "isbn",
+              "journal",
+              "doc_title",
+              "meta_title",
+              "title",
+              "doc_pub_date",
+              "meta_pub_date",
+              "pub_date",
+              "doc_author",
+              "meta_author",
+              "author",
+              "doc_size",
+              "insert_date",
+              "multi_row_flag"
+            ]
+        resources:
+          request_ephemeral_storage: "32G"
+          limit_cpu: "3"
+    - operator: "GKEStartPodOperator"
+      description: "Run The General Index Pipeline"
+      args:
+        task_id: "transform_csv_dump_a"
+        name: "the_general_index"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: the-general-index
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.the_general_index.container_registry.the_general_index__run_csv_transform_kub }}"
+        env_vars:
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          CHUNKSIZE: "{{ var.json.the_general_index.chunksize }}"
+          DATASET_ID: "{{ var.json.the_general_index.dump_a.dataset_id }}"
+          TABLE_ID: "{{ var.json.the_general_index.destination_table }}"
+          SCHEMA_PATH: "{{ var.json.the_general_index.schema_path }}"
+          SOURCE_FILE_HEADER_ROWS: "{{ var.json.the_general_index.source_file_header_rows }}"
+          SOURCE_FILE_FOOTER_ROWS: "{{ var.json.the_general_index.source_file_footer_rows }}"
+          PIPELINE_NAME: "{{ var.json.the_general_index.pipeline_name }}"
+          SOURCE_URL: "{{ var.json.the_general_index.dump_a.source_url }}"
+          SOURCE_FILE: "{{ var.json.the_general_index.dump_a.source_file }}"
+          TARGET_FILE: "{{ var.json.the_general_index.dump_a.target_url }}"
+          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_a.target_path }}"
+          INPUT_CSV_HEADERS: >-
+            [
+              "dkey",
+              "raw_id",
+              "meta_key",
+              "doc_doi",
+              "meta_doi",
+              "doi",
+              "doi_flag",
+              "isbn",
+              "journal",
+              "doc_title",
+              "meta_title",
+              "title",
+              "doc_pub_date",
+              "meta_pub_date",
+              "pub_date",
+              "doc_author",
+              "meta_author",
+              "author",
+              "doc_size",
+              "insert_date",
+              "multi_row_flag"
+            ]
+          DATA_DTYPES: >-
+            {
+              "dkey": "str",
+              "raw_id": "str",
+              "meta_key": "str",
+              "doc_doi": "str",
+              "meta_doi": "str",
+              "doi": "str",
+              "doi_flag": "str",
+              "isbn": "str",
+              "journal": "str",
+              "doc_title": "str",
+              "meta_title": "str",
+              "title": "str",
+              "doc_pub_date": "str",
+              "meta_pub_date": "str",
+              "pub_date": "str",
+              "doc_author": "str",
+              "meta_author": "str",
+              "author": "str",
+              "doc_size": "str",
+              "insert_date": "str",
+              "multi_row_flag": "str"
+            }
+          DATETIME_LIST: >-
+            [ 
+              "insert_date" 
+            ] 
+          NULL_STRING_LIST: >-
+            [
+              "dkey",
+              "raw_id",
+              "meta_key",
+              "doc_doi",
+              "meta_doi",
+              "doi",
+              "doi_flag",
+              "isbn",
+              "journal",
+              "doc_title",
+              "meta_title",
+              "title",
+              "doc_pub_date",
+              "meta_pub_date",
+              "pub_date",
+              "doc_author",
+              "meta_author",
+              "author",
+              "doc_size",
+              "insert_date",
+              "multi_row_flag"
+            ]
+        resources:
+          request_ephemeral_storage: "32G"
+          limit_cpu: "3"
+    - operator: "GKEStartPodOperator"
+      description: "Run The General Index Pipeline"
+      args:
+        task_id: "transform_csv_dump_b"
+        name: "the_general_index"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: the-general-index
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.the_general_index.container_registry.the_general_index__run_csv_transform_kub }}"
+        env_vars:
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          CHUNKSIZE: "{{ var.json.the_general_index.chunksize }}"
+          DATASET_ID: "{{ var.json.the_general_index.dump_b.dataset_id }}"
+          TABLE_ID: "{{ var.json.the_general_index.destination_table }}"
+          SCHEMA_PATH: "{{ var.json.the_general_index.schema_path }}"
+          SOURCE_FILE_HEADER_ROWS: "{{ var.json.the_general_index.source_file_header_rows }}"
+          SOURCE_FILE_FOOTER_ROWS: "{{ var.json.the_general_index.source_file_footer_rows }}"
+          PIPELINE_NAME: "{{ var.json.the_general_index.pipeline_name }}"
+          SOURCE_URL: "{{ var.json.the_general_index.dump_b.source_url }}"
+          SOURCE_FILE: "{{ var.json.the_general_index.dump_b.source_file }}"
+          TARGET_FILE: "{{ var.json.the_general_index.dump_b.target_url }}"
+          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_b.target_path }}"
+          INPUT_CSV_HEADERS: >-
+            [
+              "dkey",
+              "raw_id",
+              "meta_key",
+              "doc_doi",
+              "meta_doi",
+              "doi",
+              "doi_flag",
+              "isbn",
+              "journal",
+              "doc_title",
+              "meta_title",
+              "title",
+              "doc_pub_date",
+              "meta_pub_date",
+              "pub_date",
+              "doc_author",
+              "meta_author",
+              "author",
+              "doc_size",
+              "insert_date",
+              "multi_row_flag"
+            ]
+          DATA_DTYPES: >-
+            {
+              "dkey": "str",
+              "raw_id": "str",
+              "meta_key": "str",
+              "doc_doi": "str",
+              "meta_doi": "str",
+              "doi": "str",
+              "doi_flag": "str",
+              "isbn": "str",
+              "journal": "str",
+              "doc_title": "str",
+              "meta_title": "str",
+              "title": "str",
+              "doc_pub_date": "str",
+              "meta_pub_date": "str",
+              "pub_date": "str",
+              "doc_author": "str",
+              "meta_author": "str",
+              "author": "str",
+              "doc_size": "str",
+              "insert_date": "str",
+              "multi_row_flag": "str"
+            }
+          DATETIME_LIST: >-
+            [ 
+              "insert_date" 
+            ] 
+          NULL_STRING_LIST: >-
+            [
+              "dkey",
+              "raw_id",
+              "meta_key",
+              "doc_doi",
+              "meta_doi",
+              "doi",
+              "doi_flag",
+              "isbn",
+              "journal",
+              "doc_title",
+              "meta_title",
+              "title",
+              "doc_pub_date",
+              "meta_pub_date",
+              "pub_date",
+              "doc_author",
+              "meta_author",
+              "author",
+              "doc_size",
+              "insert_date",
+              "multi_row_flag"
+            ]
+        resources:
+          request_ephemeral_storage: "32G"
+          limit_cpu: "3"
+    - operator: "GKEStartPodOperator"
+      description: "Run The General Index Pipeline"
+      args:
+        task_id: "transform_csv_dump_c"
+        name: "the_general_index"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: the-general-index
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.the_general_index.container_registry.the_general_index__run_csv_transform_kub }}"
+        env_vars:
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          CHUNKSIZE: "{{ var.json.the_general_index.chunksize }}"
+          DATASET_ID: "{{ var.json.the_general_index.dump_c.dataset_id }}"
+          TABLE_ID: "{{ var.json.the_general_index.destination_table }}"
+          SCHEMA_PATH: "{{ var.json.the_general_index.schema_path }}"
+          SOURCE_FILE_HEADER_ROWS: "{{ var.json.the_general_index.source_file_header_rows }}"
+          SOURCE_FILE_FOOTER_ROWS: "{{ var.json.the_general_index.source_file_footer_rows }}"
+          PIPELINE_NAME: "{{ var.json.the_general_index.pipeline_name }}"
+          SOURCE_URL: "{{ var.json.the_general_index.dump_c.source_url }}"
+          SOURCE_FILE: "{{ var.json.the_general_index.dump_c.source_file }}"
+          TARGET_FILE: "{{ var.json.the_general_index.dump_c.target_url }}"
+          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_c.target_path }}"
+          INPUT_CSV_HEADERS: >-
+            [
+              "dkey",
+              "raw_id",
+              "meta_key",
+              "doc_doi",
+              "meta_doi",
+              "doi",
+              "doi_flag",
+              "isbn",
+              "journal",
+              "doc_title",
+              "meta_title",
+              "title",
+              "doc_pub_date",
+              "meta_pub_date",
+              "pub_date",
+              "doc_author",
+              "meta_author",
+              "author",
+              "doc_size",
+              "insert_date",
+              "multi_row_flag"
+            ]
+          DATA_DTYPES: >-
+            {
+              "dkey": "str",
+              "raw_id": "str",
+              "meta_key": "str",
+              "doc_doi": "str",
+              "meta_doi": "str",
+              "doi": "str",
+              "doi_flag": "str",
+              "isbn": "str",
+              "journal": "str",
+              "doc_title": "str",
+              "meta_title": "str",
+              "title": "str",
+              "doc_pub_date": "str",
+              "meta_pub_date": "str",
+              "pub_date": "str",
+              "doc_author": "str",
+              "meta_author": "str",
+              "author": "str",
+              "doc_size": "str",
+              "insert_date": "str",
+              "multi_row_flag": "str"
+            }
+          DATETIME_LIST: >-
+            [ 
+              "insert_date" 
+            ] 
+          NULL_STRING_LIST: >-
+            [
+              "dkey",
+              "raw_id",
+              "meta_key",
+              "doc_doi",
+              "meta_doi",
+              "doi",
+              "doi_flag",
+              "isbn",
+              "journal",
+              "doc_title",
+              "meta_title",
+              "title",
+              "doc_pub_date",
+              "meta_pub_date",
+              "pub_date",
+              "doc_author",
+              "meta_author",
+              "author",
+              "doc_size",
+              "insert_date",
+              "multi_row_flag"
+            ]
+        resources:
+          request_ephemeral_storage: "32G"
+          limit_cpu: "3"
+    - operator: "GKEStartPodOperator"
+      description: "Run The General Index Pipeline"
+      args:
+        task_id: "transform_csv_dump_d"
+        name: "the_general_index"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: the-general-index
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.the_general_index.container_registry.the_general_index__run_csv_transform_kub }}"
+        env_vars:
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          CHUNKSIZE: "{{ var.json.the_general_index.chunksize }}"
+          DATASET_ID: "{{ var.json.the_general_index.dump_d.dataset_id }}"
+          TABLE_ID: "{{ var.json.the_general_index.destination_table }}"
+          SCHEMA_PATH: "{{ var.json.the_general_index.schema_path }}"
+          SOURCE_FILE_HEADER_ROWS: "{{ var.json.the_general_index.source_file_header_rows }}"
+          SOURCE_FILE_FOOTER_ROWS: "{{ var.json.the_general_index.source_file_footer_rows }}"
+          PIPELINE_NAME: "{{ var.json.the_general_index.pipeline_name }}"
+          SOURCE_URL: "{{ var.json.the_general_index.dump_d.source_url }}"
+          SOURCE_FILE: "{{ var.json.the_general_index.dump_d.source_file }}"
+          TARGET_FILE: "{{ var.json.the_general_index.dump_d.target_url }}"
+          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_d.target_path }}"
+          INPUT_CSV_HEADERS: >-
+            [
+              "dkey",
+              "raw_id",
+              "meta_key",
+              "doc_doi",
+              "meta_doi",
+              "doi",
+              "doi_flag",
+              "isbn",
+              "journal",
+              "doc_title",
+              "meta_title",
+              "title",
+              "doc_pub_date",
+              "meta_pub_date",
+              "pub_date",
+              "doc_author",
+              "meta_author",
+              "author",
+              "doc_size",
+              "insert_date",
+              "multi_row_flag"
+            ]
+          DATA_DTYPES: >-
+            {
+              "dkey": "str",
+              "raw_id": "str",
+              "meta_key": "str",
+              "doc_doi": "str",
+              "meta_doi": "str",
+              "doi": "str",
+              "doi_flag": "str",
+              "isbn": "str",
+              "journal": "str",
+              "doc_title": "str",
+              "meta_title": "str",
+              "title": "str",
+              "doc_pub_date": "str",
+              "meta_pub_date": "str",
+              "pub_date": "str",
+              "doc_author": "str",
+              "meta_author": "str",
+              "author": "str",
+              "doc_size": "str",
+              "insert_date": "str",
+              "multi_row_flag": "str"
+            }
+          DATETIME_LIST: >-
+            [ 
+              "insert_date" 
+            ] 
+          NULL_STRING_LIST: >-
+            [
+              "dkey",
+              "raw_id",
+              "meta_key",
+              "doc_doi",
+              "meta_doi",
+              "doi",
+              "doi_flag",
+              "isbn",
+              "journal",
+              "doc_title",
+              "meta_title",
+              "title",
+              "doc_pub_date",
+              "meta_pub_date",
+              "pub_date",
+              "doc_author",
+              "meta_author",
+              "author",
+              "doc_size",
+              "insert_date",
+              "multi_row_flag"
+            ]
+        resources:
+          request_ephemeral_storage: "32G"
+          limit_cpu: "3"
+    - operator: "GKEStartPodOperator"
+      description: "Run The General Index Pipeline"
+      args:
+        task_id: "transform_csv_dump_e"
+        name: "the_general_index"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: the-general-index
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.the_general_index.container_registry.the_general_index__run_csv_transform_kub }}"
+        env_vars:
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          CHUNKSIZE: "{{ var.json.the_general_index.chunksize }}"
+          DATASET_ID: "{{ var.json.the_general_index.dump_e.dataset_id }}"
+          TABLE_ID: "{{ var.json.the_general_index.destination_table }}"
+          SCHEMA_PATH: "{{ var.json.the_general_index.schema_path }}"
+          SOURCE_FILE_HEADER_ROWS: "{{ var.json.the_general_index.source_file_header_rows }}"
+          SOURCE_FILE_FOOTER_ROWS: "{{ var.json.the_general_index.source_file_footer_rows }}"
+          PIPELINE_NAME: "{{ var.json.the_general_index.pipeline_name }}"
+          SOURCE_URL: "{{ var.json.the_general_index.dump_e.source_url }}"
+          SOURCE_FILE: "{{ var.json.the_general_index.dump_e.source_file }}"
+          TARGET_FILE: "{{ var.json.the_general_index.dump_e.target_url }}"
+          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_e.target_path }}"
+          INPUT_CSV_HEADERS: >-
+            [
+              "dkey",
+              "raw_id",
+              "meta_key",
+              "doc_doi",
+              "meta_doi",
+              "doi",
+              "doi_flag",
+              "isbn",
+              "journal",
+              "doc_title",
+              "meta_title",
+              "title",
+              "doc_pub_date",
+              "meta_pub_date",
+              "pub_date",
+              "doc_author",
+              "meta_author",
+              "author",
+              "doc_size",
+              "insert_date",
+              "multi_row_flag"
+            ]
+          DATA_DTYPES: >-
+            {
+              "dkey": "str",
+              "raw_id": "str",
+              "meta_key": "str",
+              "doc_doi": "str",
+              "meta_doi": "str",
+              "doi": "str",
+              "doi_flag": "str",
+              "isbn": "str",
+              "journal": "str",
+              "doc_title": "str",
+              "meta_title": "str",
+              "title": "str",
+              "doc_pub_date": "str",
+              "meta_pub_date": "str",
+              "pub_date": "str",
+              "doc_author": "str",
+              "meta_author": "str",
+              "author": "str",
+              "doc_size": "str",
+              "insert_date": "str",
+              "multi_row_flag": "str"
+            }
+          DATETIME_LIST: >-
+            [ 
+              "insert_date" 
+            ] 
+          NULL_STRING_LIST: >-
+            [
+              "dkey",
+              "raw_id",
+              "meta_key",
+              "doc_doi",
+              "meta_doi",
+              "doi",
+              "doi_flag",
+              "isbn",
+              "journal",
+              "doc_title",
+              "meta_title",
+              "title",
+              "doc_pub_date",
+              "meta_pub_date",
+              "pub_date",
+              "doc_author",
+              "meta_author",
+              "author",
+              "doc_size",
+              "insert_date",
+              "multi_row_flag"
+            ]
+        resources:
+          request_ephemeral_storage: "32G"
+          limit_cpu: "3"
+    - operator: "GKEStartPodOperator"
+      description: "Run The General Index Pipeline"
+      args:
+        task_id: "transform_csv_dump_f"
+        name: "the_general_index"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: the-general-index
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.the_general_index.container_registry.the_general_index__run_csv_transform_kub }}"
+        env_vars:
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          CHUNKSIZE: "{{ var.json.the_general_index.chunksize }}"
+          DATASET_ID: "{{ var.json.the_general_index.dump_f.dataset_id }}"
+          TABLE_ID: "{{ var.json.the_general_index.destination_table }}"
+          SCHEMA_PATH: "{{ var.json.the_general_index.schema_path }}"
+          SOURCE_FILE_HEADER_ROWS: "{{ var.json.the_general_index.source_file_header_rows }}"
+          SOURCE_FILE_FOOTER_ROWS: "{{ var.json.the_general_index.source_file_footer_rows }}"
+          PIPELINE_NAME: "{{ var.json.the_general_index.pipeline_name }}"
+          SOURCE_URL: "{{ var.json.the_general_index.dump_f.source_url }}"
+          SOURCE_FILE: "{{ var.json.the_general_index.dump_f.source_file }}"
+          TARGET_FILE: "{{ var.json.the_general_index.dump_f.target_url }}"
+          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_f.target_path }}"
+          INPUT_CSV_HEADERS: >-
+            [
+              "dkey",
+              "raw_id",
+              "meta_key",
+              "doc_doi",
+              "meta_doi",
+              "doi",
+              "doi_flag",
+              "isbn",
+              "journal",
+              "doc_title",
+              "meta_title",
+              "title",
+              "doc_pub_date",
+              "meta_pub_date",
+              "pub_date",
+              "doc_author",
+              "meta_author",
+              "author",
+              "doc_size",
+              "insert_date",
+              "multi_row_flag"
+            ]
+          DATA_DTYPES: >-
+            {
+              "dkey": "str",
+              "raw_id": "str",
+              "meta_key": "str",
+              "doc_doi": "str",
+              "meta_doi": "str",
+              "doi": "str",
+              "doi_flag": "str",
+              "isbn": "str",
+              "journal": "str",
+              "doc_title": "str",
+              "meta_title": "str",
+              "title": "str",
+              "doc_pub_date": "str",
+              "meta_pub_date": "str",
+              "pub_date": "str",
+              "doc_author": "str",
+              "meta_author": "str",
+              "author": "str",
+              "doc_size": "str",
+              "insert_date": "str",
+              "multi_row_flag": "str"
+            }
+          DATETIME_LIST: >-
+            [ 
+              "insert_date" 
+            ] 
+          NULL_STRING_LIST: >-
+            [
+              "dkey",
+              "raw_id",
+              "meta_key",
+              "doc_doi",
+              "meta_doi",
+              "doi",
+              "doi_flag",
+              "isbn",
+              "journal",
+              "doc_title",
+              "meta_title",
+              "title",
+              "doc_pub_date",
+              "meta_pub_date",
+              "pub_date",
+              "doc_author",
+              "meta_author",
+              "author",
+              "doc_size",
+              "insert_date",
+              "multi_row_flag"
+            ]
+        resources:
+          request_ephemeral_storage: "32G"
+          limit_cpu: "3"
+
 
 
     - operator: "GKEDeleteClusterOperator"
