@@ -1,0 +1,210 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+resources:
+
+  - type: bigquery_table
+    table_id: hospital_general_info
+    description: "CMS Medicare Hospital General Info"
+
+dag:
+  airflow_version: 2
+  initialize:
+    dag_id: hospital_general_info
+    default_args:
+      owner: "Google"
+      depends_on_past: False
+      start_date: '2021-03-01'
+    max_active_runs: 1
+    schedule_interval: "@once"
+    catchup: False
+    default_view: graph
+
+  tasks:
+
+    - operator: "KubernetesPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "hospital_info_transform_csv"
+        startup_timeout_seconds: 600
+        name: "cms_medicare_hospital_general_info"
+        namespace: "composer"
+        service_account_name: "datasets"
+        image_pull_policy: "Always"
+        image: "{{ var.json.cms_medicare.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "https://data.cms.gov/provider-data/sites/default/files/resources/092256becd267d9eeccf73bf7d16c46b_1623902717/Hospital_General_Information.csv"
+          SOURCE_FILE: "files/data.csv"
+          TARGET_FILE: "files/data_output.csv"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/cms_medicare/hospital_general_info/data_output.csv"
+          CSV_HEADERS: >-
+           ["provider_id","hospital_name","address","city","state","zip_code","county_name","phone_number","hospital_type","hospital_ownership","emergency_services","meets_criteria_for_promoting_interoperability_of_ehrs","hospital_overall_rating","hospital_overall_rating_footnote","mortality_group_measure_count","facility_mortaility_measures_count","mortality_measures_better_count","mortality_measures_no_different_count","mortality_measures_worse_count","mortaility_group_footnote","safety_measures_count","facility_care_safety_measures_count","safety_measures_better_count","safety_measures_no_different_count","safety_measures_worse_count","safety_group_footnote","readmission_measures_count","facility_readmission_measures_count","readmission_measures_better_count","readmission_measures_no_different_count","readmission_measures_worse_count","readmission_measures_footnote","patient_experience_measures_count","facility_patient_experience_measures_count","patient_experience_measures_footnote","timely_and_effective_care_measures_count","facility_timely_and_effective_care_measures_count","timely_and_effective_care_measures_footnote"]
+          RENAME_MAPPINGS: >-
+           {"Facility ID": "provider_id","Facility Name": "hospital_name","Address": "address","City": "city","State": "state","ZIP Code": "zip_code","County Name": "county_name","Phone Number": "phone_number","Hospital Type": "hospital_type","Hospital Ownership": "hospital_ownership","Emergency Services": "emergency_services","Meets criteria for promoting interoperability of EHRs": "meets_criteria_for_promoting_interoperability_of_ehrs","Hospital overall rating": "hospital_overall_rating","Hospital overall rating footnote": "hospital_overall_rating_footnote","MORT Group Measure Count": "mortality_group_measure_count","Count of Facility MORT Measures": "facility_mortaility_measures_count","Count of MORT Measures Better": "mortality_measures_better_count","Count of MORT Measures No Different": "mortality_measures_no_different_count","Count of MORT Measures Worse": "mortality_measures_worse_count","MORT Group Footnote": "mortaility_group_footnote","Safety Group Measure Count": "safety_measures_count","Count of Facility Safety Measures": "facility_care_safety_measures_count","Count of Safety Measures Better": "safety_measures_better_count","Count of Safety Measures No Different": "safety_measures_no_different_count","Count of Safety Measures Worse": "safety_measures_worse_count","Safety Group Footnote": "safety_group_footnote","READM Group Measure Count": "readmission_measures_count","Count of Facility READM Measures": "facility_readmission_measures_count","Count of READM Measures Better": "readmission_measures_better_count","Count of READM Measures No Different": "readmission_measures_no_different_count","Count of READM Measures Worse": "readmission_measures_worse_count","READM Group Footnote": "readmission_measures_footnote","Pt Exp Group Measure Count": "patient_experience_measures_count","Count of Facility Pt Exp Measures": "facility_patient_experience_measures_count","Pt Exp Group Footnote": "patient_experience_measures_footnote","TE Group Measure Count": "timely_and_effective_care_measures_count","Count of Facility TE Measures": "facility_timely_and_effective_care_measures_count","TE Group Footnote": "timely_and_effective_care_measures_footnote"}
+          PIPELINE_NAME: "hospital_general_info"
+
+    - operator: "GoogleCloudStorageToBigQueryOperator"
+      description: "Task to load CSV data to a BigQuery table"
+      args:
+        task_id: "load_hospital_info_to_bq"
+        bucket: "{{ var.value.composer_bucket }}"
+        source_objects: ["data/cms_medicare/hospital_general_info/data_output.csv"]
+        source_format: "CSV"
+        destination_project_dataset_table: "cms_medicare.hospital_general_info"
+        skip_leading_rows: 1
+        write_disposition: "WRITE_TRUNCATE"
+        schema_fields:
+          - name: "provider_id"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "hospital_name"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "address"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "city"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "state"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "zip_code"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "county_name"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "phone_number"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "hospital_type"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "hospital_ownership"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "emergency_services"
+            type: "BOOLEAN"
+            mode: "NULLABLE"
+          - name: "meets_criteria_for_promoting_interoperability_of_ehrs"
+            type: "BOOLEAN"
+            mode: "NULLABLE"
+          - name: "hospital_overall_rating"
+            type: "STRING"
+            mode: "NULLABLE"
+          - name: "hospital_overall_rating_footnote"
+            type: "STRING"
+            mode: "NULLABLE"
+          - description: "Count of measures included in the Mortality measure group"
+            name: "mortality_group_measure_count"
+            type: "STRING"
+            mode: "NULLABLE"
+          - description: "Number of Mortality measures used in the hospital’s overall star rating"
+            name: "facility_mortaility_measures_count"
+            type: "STRING"
+            mode: "NULLABLE"
+          - description: "Number of Mortality measures that are no different than the national value"
+            name: "mortality_measures_better_count"
+            type: "STRING"
+            mode: "NULLABLE"
+          - description: "Number of Mortality measures used in the hospital’s overall star rating"
+            name: "mortality_measures_no_different_count"
+            type: "STRING"
+            mode: "NULLABLE"
+          - description: "Number of Mortality measures that are worse than the national value"
+            name: "mortality_measures_worse_count"
+            type: "STRING"
+            mode: "NULLABLE"
+          - description: "Footnote about Mortality measures"
+            name: "mortaility_group_footnote"
+            type: "STRING"
+            mode: "NULLABLE"
+          - description: "Count of measures included in the Safety of Care measure group"
+            name: "safety_measures_count"
+            type: "STRING"
+            mode: "NULLABLE"
+          - description: "Number of Safety of care measures used in the hospital’s overall star rating"
+            name: "facility_care_safety_measures_count"
+            type: "STRING"
+            mode: "NULLABLE"
+          - description: "Number of Safety of care measures that are no different than the national value"
+            name: "safety_measures_better_count"
+            type: "STRING"
+            mode: "NULLABLE"
+          - description: "Number of Safety of care measures that are better than the national value"
+            name: "safety_measures_no_different_count"
+            type: "STRING"
+            mode: "NULLABLE"
+          - description: "Number of Safety of care measures that are worse than the national value"
+            name: "safety_measures_worse_count"
+            type: "STRING"
+            mode: "NULLABLE"
+          - description: "Footnote about Safety of care measures"
+            name: "safety_group_footnote"
+            type: "STRING"
+            mode: "NULLABLE"
+          - description: "Count of measures included in the Readmission measure group"
+            name: "readmission_measures_count"
+            type: "STRING"
+            mode: "NULLABLE"
+          - description: "Number of Readmission measures used in the hospital’s overall star rating"
+            name: "facility_readmission_measures_count"
+            type: "STRING"
+            mode: "NULLABLE"
+          - description: "Number of Readmission measures that are better than the national value"
+            name: "readmission_measures_better_count"
+            type: "STRING"
+            mode: "NULLABLE"
+          - description: "Number of Readmission measures that are no different than the national value"
+            name: "readmission_measures_no_different_count"
+            type: "STRING"
+            mode: "NULLABLE"
+          - description: "Number of Readmission measures that are worse than the national value"
+            name: "readmission_measures_worse_count"
+            type: "STRING"
+            mode: "NULLABLE"
+          - description: "Footnote about Readmission measures"
+            name: "readmission_measures_footnote"
+            type: "STRING"
+            mode: "NULLABLE"
+          - description: "Count of measures included in the Patient experience measure group"
+            name: "patient_experience_measures_count"
+            type: "STRING"
+            mode: "NULLABLE"
+          - description: "Number of Patient experience measures used in the hospital’s overall star rating"
+            name: "facility_patient_experience_measures_count"
+            type: "STRING"
+            mode: "NULLABLE"
+          - description: "Footnote about Patient experience measures"
+            name: "patient_experience_measures_footnote"
+            type: "STRING"
+            mode: "NULLABLE"
+          - description: "Count of measures included in the Timely and effective care measure group"
+            name: "timely_and_effective_care_measures_count"
+            type: "STRING"
+            mode: "NULLABLE"
+          - description: "Number of Timely and effective care measures used in the hospital’s overall star rating"
+            name: "facility_timely_and_effective_care_measures_count"
+            type: "STRING"
+            mode: "NULLABLE"
+          - description: "Footnote about Timely and effective care measures"
+            name: "timely_and_effective_care_measures_footnote"
+            type: "STRING"
+            mode: "NULLABLE"
+
+  graph_paths:
+    - "hospital_info_transform_csv >> load_hospital_info_to_bq"

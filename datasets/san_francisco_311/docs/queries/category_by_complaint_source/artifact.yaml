@@ -1,0 +1,5 @@
+artifact:
+  title: Analyze most prevelant category by complaint source of issue
+  description: In this tutorial we analyze the most likely category corresponding to each complaint source from all 311 reports in San Francisco.
+  vertical: government
+  tier: free
