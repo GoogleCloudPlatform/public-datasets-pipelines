@@ -101,6 +101,27 @@ def get_composer_bucket(
 # [END composer_v1beta1_generated_Environments_GetEnvironment_sync]
 
 
+def copy_variables_to_airflow_data_folder(
+    env_path: pathlib.Path,
+    dataset_id: str,
+    composer_bucket: str = None,
+):
+    """
+    [remote]
+    gsutil cp {DATASET_ID}_variables.json gs://{COMPOSER_BUCKET}/data/variables/{filename}...
+    cd .{ENV}/datasets or .{ENV}/datasets/{dataset_id}
+    """
+    cwd = env_path / "datasets" / dataset_id / "pipelines"
+    filename = f"{dataset_id}_variables.json"
+    gcs_uri = f"gs://{composer_bucket}/data/variables/{filename}"
+    print(
+        "\nCopying variables JSON file into Cloud Composer data folder\n\n"
+        f"  Source:\n  {cwd / filename}\n\n"
+        f"  Destination:\n  {gcs_uri}\n"
+    )
+    run_gsutil_cmd(["cp", filename, gcs_uri], cwd=cwd)
+
+
 def run_gsutil_cmd(args: typing.List[str], cwd: pathlib.Path):
     subprocess.check_call(["gsutil"] + args, cwd=cwd)
 
