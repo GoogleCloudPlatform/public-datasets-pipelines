@@ -16,6 +16,7 @@
 import argparse
 import json
 import pathlib
+import re
 import subprocess
 import typing
 
@@ -44,6 +45,9 @@ def main(
 ):
     if composer_bucket is None:
         composer_bucket = get_composer_bucket(env_path, composer_region, composer_env)
+
+    # Do the check if the directory exists then make the call to the copy_schema_function
+    # if(cwd.is_dir() and sorted(cwd.rglob(schema_file_dir_pattern))):
 
     print("\n========== AIRFLOW VARIABLES ==========")
     copy_variables_to_airflow_data_folder(env_path, dataset_id, composer_bucket)
@@ -146,6 +150,38 @@ def copy_variables_to_airflow_data_folder(
     )
     run_gsutil_cmd(["cp", filename, gcs_uri], cwd=cwd)
 
+
+def copy_schema_to_composer_data_folder(
+    dataset_id: str,
+    composer_bucket: str = None,
+    pipeline: str = None,
+):
+    cwd = DATASETS_PATH / dataset_id / "pipelines" / pipeline / "data"
+    gcs_uri = f"gs://{composer_bucket}/data/{dataset_id}/pipeline/{pipeline}/data"
+    schema_file_dir_pattern = "*.json"
+    schema_file_dir = []
+
+    if(cwd.is_dir() and sorted(cwd.rglob(schema_file_dir_pattern))):
+        schema_file_dir = sorted(cwd.rglob(schema_file_dir_pattern))
+        """
+        [remote]
+        gsutil cp *.json gs://{composer_bucket}/data/{dataset_id}/pipeline/{pipeline}
+        cd .{ENV}/datasets/{dataset_id}/data
+        """
+        print("\nCopying files from local data folder into Cloud Composer data folder\n")                
+        print("  Source:\n")
+        for x in schema_file_dir:
+            schema_file_names = str(x)
+            print("  " + str(x) + "\n")
+
+        print("  Destination:\n")
+        for y in schema_file_dir:
+            schema_file_names = str(y)
+            print("  " + gcs_uri + "/" + schema_file_names.split('/data/')[1] + "\n")
+       
+        run_gsutil_cmd(["cp", schema_file_dir_pattern , gcs_uri], cwd=cwd)
+
+#copy_schema_to_composer_data_folder("austin_bikeshare","us-central1-composer-demo-5e589749-bucket","bikeshare_stations")
 
 def run_cloud_composer_vars_import(
     composer_env: str,
@@ -302,7 +338,7 @@ def check_airflow_version_compatibility(
             " you are deploying to an Airflow 1.x environment."
         )
 
-
+""" 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Deploy DAGs and variables to an Airflow environment"
@@ -380,3 +416,4 @@ if __name__ == "__main__":
         composer_bucket=args.composer_bucket,
         composer_region=args.composer_region,
     )
+ """
