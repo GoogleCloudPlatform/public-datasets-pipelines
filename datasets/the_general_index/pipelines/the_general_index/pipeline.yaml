@@ -40,7 +40,7 @@ dag:
         location: "us-central1-c"
         body:
           name: the-general-index
-          initial_node_count: 18
+          initial_node_count: 4
           network: "{{ var.value.vpc_network }}"
           node_config:
             machine_type: e2-standard-16

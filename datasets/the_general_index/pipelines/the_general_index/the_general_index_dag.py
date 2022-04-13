@@ -37,7 +37,7 @@ with DAG(
         location="us-central1-c",
         body={
             "name": "the-general-index",
-            "initial_node_count": 1,
+            "initial_node_count": 4,
             "network": "{{ var.value.vpc_network }}",
             "node_config": {
                 "machine_type": "e2-standard-16",
@@ -140,7 +140,7 @@ with DAG(
             "DATETIME_LIST": '[ \n  "insert_date" \n] ',
             "NULL_STRING_LIST": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
         },
-        resources={"request_ephemeral_storage": "32G", "limit_cpu": "3"},
+        resources={"request_ephemeral_storage": "12G", "limit_cpu": "3"},
     )
 
     # Run The General Index Pipeline
@@ -172,7 +172,7 @@ with DAG(
             "DATETIME_LIST": '[ \n  "insert_date" \n] ',
             "NULL_STRING_LIST": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
         },
-        resources={"request_ephemeral_storage": "32G", "limit_cpu": "3"},
+        resources={"request_ephemeral_storage": "12G", "limit_cpu": "3"},
     )
 
     # Run The General Index Pipeline
@@ -204,7 +204,7 @@ with DAG(
             "DATETIME_LIST": '[ \n  "insert_date" \n] ',
             "NULL_STRING_LIST": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
         },
-        resources={"request_ephemeral_storage": "32G", "limit_cpu": "3"},
+        resources={"request_ephemeral_storage": "12G", "limit_cpu": "3"},
     )
 
     # Run The General Index Pipeline
@@ -236,7 +236,7 @@ with DAG(
             "DATETIME_LIST": '[ \n  "insert_date" \n] ',
             "NULL_STRING_LIST": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
         },
-        resources={"request_ephemeral_storage": "32G", "limit_cpu": "3"},
+        resources={"request_ephemeral_storage": "12G", "limit_cpu": "3"},
     )
 
     # Run The General Index Pipeline
@@ -268,7 +268,7 @@ with DAG(
             "DATETIME_LIST": '[ \n  "insert_date" \n] ',
             "NULL_STRING_LIST": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
         },
-        resources={"request_ephemeral_storage": "32G", "limit_cpu": "3"},
+        resources={"request_ephemeral_storage": "12G", "limit_cpu": "3"},
     )
 
     # Run The General Index Pipeline
@@ -300,7 +300,7 @@ with DAG(
             "DATETIME_LIST": '[ \n  "insert_date" \n] ',
             "NULL_STRING_LIST": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
         },
-        resources={"request_ephemeral_storage": "32G", "limit_cpu": "3"},
+        resources={"request_ephemeral_storage": "12G", "limit_cpu": "3"},
     )
 
     # Run The General Index Pipeline
@@ -332,7 +332,7 @@ with DAG(
             "DATETIME_LIST": '[ \n  "insert_date" \n] ',
             "NULL_STRING_LIST": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
         },
-        resources={"request_ephemeral_storage": "32G", "limit_cpu": "3"},
+        resources={"request_ephemeral_storage": "12G", "limit_cpu": "3"},
     )
 
     # Run The General Index Pipeline
@@ -364,7 +364,7 @@ with DAG(
             "DATETIME_LIST": '[ \n  "insert_date" \n] ',
             "NULL_STRING_LIST": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
         },
-        resources={"request_ephemeral_storage": "32G", "limit_cpu": "3"},
+        resources={"request_ephemeral_storage": "12G", "limit_cpu": "3"},
     )
 
     # Run The General Index Pipeline
@@ -396,7 +396,7 @@ with DAG(
             "DATETIME_LIST": '[ \n  "insert_date" \n] ',
             "NULL_STRING_LIST": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
         },
-        resources={"request_ephemeral_storage": "32G", "limit_cpu": "3"},
+        resources={"request_ephemeral_storage": "12G", "limit_cpu": "3"},
     )
 
     # Run The General Index Pipeline
@@ -428,7 +428,7 @@ with DAG(
             "DATETIME_LIST": '[ \n  "insert_date" \n] ',
             "NULL_STRING_LIST": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
         },
-        resources={"request_ephemeral_storage": "32G", "limit_cpu": "3"},
+        resources={"request_ephemeral_storage": "12G", "limit_cpu": "3"},
     )
 
     # Run The General Index Pipeline
@@ -460,7 +460,7 @@ with DAG(
             "DATETIME_LIST": '[ \n  "insert_date" \n] ',
             "NULL_STRING_LIST": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
         },
-        resources={"request_ephemeral_storage": "32G", "limit_cpu": "3"},
+        resources={"request_ephemeral_storage": "12G", "limit_cpu": "3"},
     )
 
     # Run The General Index Pipeline
@@ -492,7 +492,7 @@ with DAG(
             "DATETIME_LIST": '[ \n  "insert_date" \n] ',
             "NULL_STRING_LIST": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
         },
-        resources={"request_ephemeral_storage": "32G", "limit_cpu": "3"},
+        resources={"request_ephemeral_storage": "12G", "limit_cpu": "3"},
     )
 
     # Run The General Index Pipeline
@@ -524,7 +524,7 @@ with DAG(
             "DATETIME_LIST": '[ \n  "insert_date" \n] ',
             "NULL_STRING_LIST": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
         },
-        resources={"request_ephemeral_storage": "32G", "limit_cpu": "3"},
+        resources={"request_ephemeral_storage": "12G", "limit_cpu": "3"},
     )
 
     # Run The General Index Pipeline
@@ -556,7 +556,7 @@ with DAG(
             "DATETIME_LIST": '[ \n  "insert_date" \n] ',
             "NULL_STRING_LIST": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
         },
-        resources={"request_ephemeral_storage": "32G", "limit_cpu": "3"},
+        resources={"request_ephemeral_storage": "12G", "limit_cpu": "3"},
     )
     delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
         task_id="delete_cluster",
