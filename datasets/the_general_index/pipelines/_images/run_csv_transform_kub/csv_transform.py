@@ -19,6 +19,7 @@ import os
 import pathlib
 import typing
 import zipfile as zip
+from urllib import urlparse
 
 import pandas as pd
 import requests
@@ -87,18 +88,18 @@ def execute_pipeline(
     datetime_list: typing.List[str],
     null_string_list: typing.List[str],
 ) -> None:
-    # download_file(source_url, source_file)
-    # source_file_path = os.path.split(source_file)[0]
-    # source_url_file = os.path.basename(urlparse(source_url).path)
-    # source_file_zipfile = f"{source_file_path}/{source_url_file}"
-    # unpack_file(source_file_zipfile, os.path.split(source_file_zipfile)[0], "zip")
-    # source_file_zipfile_csv = str.replace(source_file_zipfile, ".zip", "")
-    # os.rename(source_file_zipfile_csv, source_file)
-    # remove_header_footer(
-    #     source_file=source_file,
-    #     header_rows=int(source_file_header_rows),
-    #     footer_rows=int(source_file_footer_rows),
-    # )
+    download_file(source_url, source_file)
+    source_file_path = os.path.split(source_file)[0]
+    source_url_file = os.path.basename(urlparse(source_url).path)
+    source_file_zipfile = f"{source_file_path}/{source_url_file}"
+    unpack_file(source_file_zipfile, os.path.split(source_file_zipfile)[0], "zip")
+    source_file_zipfile_csv = str.replace(source_file_zipfile, ".zip", "")
+    os.rename(source_file_zipfile_csv, source_file)
+    remove_header_footer(
+        source_file=source_file,
+        header_rows=int(source_file_header_rows),
+        footer_rows=int(source_file_footer_rows),
+    )
     replace_double_quotes(source_file=source_file, replacement_char="'")
     process_source_file(
         source_file=source_file,
@@ -124,6 +125,12 @@ def execute_pipeline(
             bucket_name=target_gcs_bucket,
         )
         if table_exists:
+            delete_source_file_data_from_bq(
+                project_id=project_id,
+                dataset_id=dataset_id,
+                table_id=destination_table,
+                source_url=source_url,
+            )
             load_data_to_bq(
                 project_id=project_id,
                 dataset_id=dataset_id,
@@ -355,6 +362,30 @@ def check_gcs_file_exists(file_path: str, bucket_name: str) -> bool:
     bucket = storage_client.bucket(bucket_name)
     exists = storage.Blob(bucket=bucket, name=file_path).exists(storage_client)
     return exists
+
+
+def delete_source_file_data_from_bq(
+    project_id: str, dataset_id: str, table_id: str, source_url: str
+) -> None:
+    logging.info(
+        f"Deleting data from {project_id}.{dataset_id}.{table_id} where source_url = '{source_url}'"
+    )
+    client = bigquery.Client()
+    query = f"""
+        DELETE
+        FROM {project_id}.{dataset_id}.{table_id}
+        WHERE source_url = '@source_url'
+    """
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("project_id", "STRING", project_id),
+            bigquery.ScalarQueryParameter("dataset_id", "STRING", dataset_id),
+            bigquery.ScalarQueryParameter("table_id", "STRING", table_id),
+            bigquery.ScalarQueryParameter("source_url", "STRING", source_url),
+        ]
+    )
+    query_job = client.query(query, job_config=job_config)  # Make an API request.
+    query_job.result()
 
 
 def create_table_schema(

@@ -13,13 +13,13 @@
 # limitations under the License.
 
 dataset:
-  name: un_sdg
-  friendly_name: un_sdg
-  description: UN SDG dataset
+  name: the_general_index
+  friendly_name: the_general_index
+  description: The General Index dataset
   dataset_sources: ~
   terms_of_use: ~
 
 resources:
   - type: bigquery_dataset
-    dataset_id: un_sdg
+    dataset_id: the_general_index
     description: Indicators dataset
