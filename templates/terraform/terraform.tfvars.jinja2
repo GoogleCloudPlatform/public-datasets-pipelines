@@ -16,5 +16,9 @@
 
 
 {% for name, val in tf_vars.items() -%}
-    {{name}}="{{ val }}"
+    {% if name == "iam_policies" -%}
+        {{name}}={{ val|tojson }}
+    {% else -%}
+        {{name}}="{{ val }}"
+    {% endif -%}
 {% endfor -%}

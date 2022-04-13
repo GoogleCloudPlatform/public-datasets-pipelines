@@ -29,13 +29,13 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install pipenv
-        run: pip install pipenv
+      - name: Install poetry
+        run: curl -sSL https://install.python-poetry.org | python3 - --preview
       - name: Install dependencies
-        run: pipenv install --ignore-pipfile --dev
+        run: $HOME/.local/bin/poetry install --only pipelines
       - name: Initialize Airflow
-        run: pipenv run airflow db init
+        run: poetry run airflow db init
       - name: Setup Airflow 1.10 pipeline YAML config
         run: cp samples/pipeline.airflow1.yaml samples/pipeline.yaml
       - name: Run tests
-        run: pipenv run python -m pytest -v
+        run: poetry run python -m pytest -v tests
