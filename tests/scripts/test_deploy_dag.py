@@ -313,7 +313,6 @@ def test_script_with_pipeline_arg_deploys_only_that_pipeline(
 def test_script_with_pipeline_arg_deploys_without_gcs_bucket_param(
     dataset_path: pathlib.Path,
     pipeline_path: pathlib.Path,
-    pipeline_path_2: pathlib.Path,
     env: str,
     mocker,
 ):
@@ -338,7 +337,7 @@ def test_script_with_pipeline_arg_deploys_without_gcs_bucket_param(
     deploy_dag.main(
         env_path=ENV_PATH,
         dataset_id=dataset_path.name,
-        pipeline=pipeline_path_2.name,
+        pipeline=pipeline_path.name,
         composer_env="test-env",
         composer_bucket=None,
         composer_region="test-region",
