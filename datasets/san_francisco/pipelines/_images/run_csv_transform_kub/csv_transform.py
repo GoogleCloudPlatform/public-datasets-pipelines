@@ -39,6 +39,7 @@ def main(
     table_id: str,
     drop_dest_table: str,
     schema_path: str,
+    header_row_ordinal: str,
     chunksize: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
@@ -73,6 +74,7 @@ def main(
         drop_dest_table=drop_dest_table,
         schema_path=schema_path,
         chunksize=chunksize,
+        header_row_ordinal=header_row_ordinal,
         target_gcs_bucket=target_gcs_bucket,
         target_gcs_path=target_gcs_path,
         input_headers=input_headers,
@@ -106,6 +108,7 @@ def execute_pipeline(
     drop_dest_table: str,
     schema_path: str,
     chunksize: str,
+    header_row_ordinal: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
     input_headers: typing.List[str],
@@ -129,6 +132,7 @@ def execute_pipeline(
         destination_table == "311_service_requests"
         or destination_table == "film_locations"
         or destination_table == "sffd_service_calls"
+        or destination_table == "street_trees"
     ):
         download_file(source_url, source_file)
     if destination_table == "bikeshare_station_info":
@@ -192,6 +196,7 @@ def execute_pipeline(
             source_file=source_file,
             target_file=target_file,
             chunksize=chunksize,
+            header_row_ordinal=header_row_ordinal,
             input_headers=input_headers,
             data_dtypes=data_dtypes,
             destination_table=destination_table,
@@ -204,7 +209,6 @@ def execute_pipeline(
             strip_whitespace_list=strip_whitespace_list,
             date_format_list=date_format_list,
             reorder_headers_list=reorder_headers_list,
-            header_row_ordinal="0",
         )
     if os.path.exists(target_file):
         upload_file_to_gcs(
@@ -441,39 +445,75 @@ def process_source_file(
                 )
     else:
         header = int(header_row_ordinal)
-        with pd.read_csv(
-            source_file,
-            engine="python",
-            encoding="utf-8",
-            quotechar='"',
-            chunksize=int(chunksize),  # size of batch data, in no. of records
-            sep=field_separator,  # data column separator, typically ","
-            header=header,  # use when the data file does not contain a header
-            keep_default_na=True,
-            na_values=[" "],
-        ) as reader:
-            for chunk_number, chunk in enumerate(reader):
-                target_file_batch = str(target_file).replace(
-                    ".csv", "-" + str(chunk_number) + ".csv"
-                )
-                df = pd.DataFrame()
-                df = pd.concat([df, chunk])
-                process_chunk(
-                    df=df,
-                    target_file_batch=target_file_batch,
-                    target_file=target_file,
-                    skip_header=(not chunk_number == 0),
-                    destination_table=destination_table,
-                    rename_headers_list=rename_headers_list,
-                    empty_key_list=empty_key_list,
-                    gen_location_list=gen_location_list,
-                    resolve_datatypes_list=resolve_datatypes_list,
-                    remove_paren_list=remove_paren_list,
-                    strip_newlines_list=strip_newlines_list,
-                    strip_whitespace_list=strip_whitespace_list,
-                    date_format_list=date_format_list,
-                    reorder_headers_list=reorder_headers_list,
-                )
+        if data_dtypes != "[]":
+            with pd.read_csv(
+                source_file,
+                engine="python",
+                encoding="utf-8",
+                quotechar='"',
+                chunksize=int(chunksize),  # size of batch data, in no. of records
+                sep=field_separator,  # data column separator, typically ","
+                header=header,  # use when the data file does not contain a header
+                dtype=data_dtypes,
+                keep_default_na=True,
+                na_values=[" "],
+            ) as reader:
+                for chunk_number, chunk in enumerate(reader):
+                    target_file_batch = str(target_file).replace(
+                        ".csv", "-" + str(chunk_number) + ".csv"
+                    )
+                    df = pd.DataFrame()
+                    df = pd.concat([df, chunk])
+                    process_chunk(
+                        df=df,
+                        target_file_batch=target_file_batch,
+                        target_file=target_file,
+                        skip_header=(not chunk_number == 0),
+                        destination_table=destination_table,
+                        rename_headers_list=rename_headers_list,
+                        empty_key_list=empty_key_list,
+                        gen_location_list=gen_location_list,
+                        resolve_datatypes_list=resolve_datatypes_list,
+                        remove_paren_list=remove_paren_list,
+                        strip_newlines_list=strip_newlines_list,
+                        strip_whitespace_list=strip_whitespace_list,
+                        date_format_list=date_format_list,
+                        reorder_headers_list=reorder_headers_list,
+                    )
+        else:
+            with pd.read_csv(
+                source_file,
+                engine="python",
+                encoding="utf-8",
+                quotechar='"',
+                chunksize=int(chunksize),  # size of batch data, in no. of records
+                sep=field_separator,  # data column separator, typically ","
+                header=header,  # use when the data file does not contain a header
+                keep_default_na=True,
+                na_values=[" "],
+            ) as reader:
+                for chunk_number, chunk in enumerate(reader):
+                    target_file_batch = str(target_file).replace(
+                        ".csv", "-" + str(chunk_number) + ".csv"
+                    )
+                    df = pd.DataFrame()
+                    df = pd.concat([df, chunk])
+                    process_chunk(
+                        df=df,
+                        target_file_batch=target_file_batch,
+                        target_file=target_file,
+                        skip_header=(not chunk_number == 0),
+                        destination_table=destination_table,
+                        rename_headers_list=rename_headers_list,
+                        empty_key_list=empty_key_list,
+                        gen_location_list=gen_location_list,
+                        resolve_datatypes_list=resolve_datatypes_list,
+                        remove_paren_list=remove_paren_list,
+                        strip_newlines_list=strip_newlines_list,
+                        strip_whitespace_list=strip_whitespace_list,
+                        date_format_list=date_format_list,
+                        reorder_headers_list=reorder_headers_list,
+                    )
 
 
 def process_chunk(
@@ -508,6 +548,11 @@ def process_chunk(
         df = strip_newlines(df, strip_newlines_list)
         df = extract_latitude_from_geom(df, "location_geom", "latitude")
         df = extract_longitude_from_geom(df, "location_geom", "longitude")
+        df = resolve_date_format(df, date_format_list)
+        df = reorder_headers(df, reorder_headers_list)
+    elif destination_table == "street_trees":
+        df = rename_headers(df, rename_headers_list)
+        df = remove_empty_key_rows(df, empty_key_list)
         df = resolve_date_format(df, date_format_list)
         df = reorder_headers(df, reorder_headers_list)
     elif destination_table == "bikeshare_station_info":
@@ -878,6 +923,7 @@ if __name__ == "__main__":
         table_id=os.environ.get("TABLE_ID", ""),
         drop_dest_table=os.environ.get("DROP_DEST_TABLE", "N"),
         schema_path=os.environ.get("SCHEMA_PATH", ""),
+        header_row_ordinal=os.environ.get("HEADER_ROW_ORDINAL", "None"),
         target_gcs_bucket=os.environ.get("TARGET_GCS_BUCKET", ""),
         target_gcs_path=os.environ.get("TARGET_GCS_PATH", ""),
         input_headers=json.loads(os.environ.get("INPUT_CSV_HEADERS", r"[]")),
