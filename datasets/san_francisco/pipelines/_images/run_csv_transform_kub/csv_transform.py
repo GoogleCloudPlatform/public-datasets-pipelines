@@ -56,7 +56,7 @@ def main(
     remove_paren_list: typing.List[str],
     strip_newlines_list: typing.List[str],
     strip_whitespace_list: typing.List[str],
-    date_format_list: typing.List[str],
+    date_format_list: dict,
     reorder_headers_list: typing.List[str],
 ) -> None:
 
@@ -122,7 +122,7 @@ def execute_pipeline(
     remove_paren_list: typing.List[str],
     strip_newlines_list: typing.List[str],
     strip_whitespace_list: typing.List[str],
-    date_format_list: typing.List[str],
+    date_format_list: dict,
     reorder_headers_list: typing.List[str],
 ) -> None:
     if (
@@ -398,7 +398,7 @@ def process_source_file(
     remove_paren_list: typing.List[str],
     strip_newlines_list: typing.List[str],
     strip_whitespace_list: typing.List[str],
-    date_format_list: typing.List[str],
+    date_format_list: dict,
     reorder_headers_list: typing.List[str],
     header_row_ordinal: str = "0",
     field_separator: str = ",",
@@ -489,7 +489,7 @@ def process_chunk(
     remove_paren_list: typing.List[str],
     strip_whitespace_list: typing.List[str],
     strip_newlines_list: typing.List[str],
-    date_format_list: typing.List[str],
+    date_format_list: dict,
     reorder_headers_list: typing.List[str],
 ) -> None:
     logging.info(f"Processing batch file {target_file_batch}")
@@ -688,7 +688,6 @@ def create_table_schema(
 
 def rename_headers(df: pd.DataFrame, rename_headers_list: dict) -> pd.DataFrame:
     logging.info("Renaming Headers")
-    # df.rename(columns=rename_headers_list, inplace=True)
     df = df.rename(columns=rename_headers_list)
     return df
 
@@ -785,24 +784,33 @@ def strip_newlines(
 
 def resolve_date_format(
     df: pd.DataFrame,
-    date_format_list: typing.List[str],
+    date_format_list: dict,
 ) -> pd.DataFrame:
     logging.info("Resolving date formats")
-    for dt_fld in date_format_list:
+    for dt_fld, to_format in date_format_list.items():
         logging.info(f"Resolving date formats in field {dt_fld}")
-        df[dt_fld] = df[dt_fld].apply(convert_dt_format)
+        df[dt_fld] = df[dt_fld].apply(convert_dt_format, to_format=to_format)
     return df
 
 
-def convert_dt_format(dt_str: str) -> str:
+def convert_dt_format(dt_str: str, to_format: str = '"%Y-%m-%d %H:%M:%S"') -> str:
     if not dt_str or str(dt_str).lower() == "nan" or str(dt_str).lower() == "nat":
         return ""
     else:
-        return str(
-            pd.to_datetime(
-                dt_str, format='"%Y-%m-%d %H:%M:%S"', infer_datetime_format=True
+        if to_format.find(" ") > 0:
+            # Date and Time
+            return str(
+                pd.to_datetime(
+                    dt_str, format=f"{to_format}", infer_datetime_format=True
+                )
             )
-        )
+        else:
+            # Date Only
+            return str(
+                pd.to_datetime(
+                    dt_str, format=f"{to_format}", infer_datetime_format=True
+                ).date()
+            )
 
 
 def reorder_headers(

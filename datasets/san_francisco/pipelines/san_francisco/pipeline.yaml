@@ -113,11 +113,11 @@ dag:
               "incident_address"
             ]
           DATE_FORMAT_LIST: >-
-            [
-              "created_date",
-              "closed_date",
-              "resolution_action_updated_date"
-            ]
+            {
+              "created_date": "%Y-%m-%d %H:%M:%S",
+              "closed_date": "%Y-%m-%d %H:%M:%S",
+              "resolution_action_updated_date": "%Y-%m-%d %H:%M:%S"
+            }
           REORDER_HEADERS_LIST: >-
             [
                 "unique_key",
@@ -206,11 +206,11 @@ dag:
               "incident_address"
             ]
           DATE_FORMAT_LIST: >-
-            [
-              "created_date",
-              "closed_date",
-              "resolution_action_updated_date"
-            ]
+            {
+              "created_date": "%Y-%m-%d %H:%M:%S",
+              "closed_date": "%Y-%m-%d %H:%M:%S",
+              "resolution_action_updated_date": "%Y-%m-%d %H:%M:%S"
+            }
           REORDER_HEADERS_LIST: >-
             [
               "station_id",
@@ -444,10 +444,10 @@ dag:
               "member_birth_year": "Int64"
             }
           DATE_FORMAT_LIST: >-
-            [
-              "start_date",
-              "end_date"
-            ]
+            {
+              "start_date": "%Y-%m-%d %H:%M:%S",
+              "end_date": "%Y-%m-%d %H:%M:%S"
+            }
           GEN_LOCATION_LIST: >-
             {
               "start_station_geom": [ "start_station_longitude", "start_station_latitude" ],
@@ -570,6 +570,81 @@ dag:
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "{{ var.json.san_francisco.sffd_service_calls.target_gcs_path }}"
           SCHEMA_PATH: "{{ var.json.san_francisco.sffd_service_calls.schema_path }}"
+          HEADER_ROW_ORDINAL: "None"
+          INPUT_CSV_HEADERS: >-
+            [
+              "Call Number",
+              "Unit ID",
+              "Incident Number",
+              "Call Type",
+              "Call Date",
+              "Watch Date",
+              "Received DtTm",
+              "Entry DtTm",
+              "Dispatch DtTm",
+              "Response DtTm",
+              "On Scene DtTm",
+              "Transport DtTm",
+              "Hospital DtTm",
+              "Call Final Disposition",
+              "Available DtTm",
+              "Address",
+              "City",
+              "Zipcode of Incident",
+              "Battalion",
+              "Station Area",
+              "Box",
+              "Original Priority",
+              "Priority",
+              "Final Priority",
+              "ALS Unit",
+              "Call Type Group",
+              "Number of Alarms",
+              "Unit Type",
+              "Unit sequence in call dispatch",
+              "Fire Prevention District",
+              "Supervisor District",
+              "Neighborhooods - Analysis Boundaries",
+              "RowID",
+              "case_location"
+            ]
+          DATA_DTYPES: >-
+            {
+              "Call Number": "int64",
+              "Unit ID": "str",
+              "Incident Number": "int64",
+              "Call Type": "str",
+              "Call Date": "str",
+              "Watch Date": "str",
+              "Received DtTm": "str",
+              "Entry DtTm": "str",
+              "Dispatch DtTm": "str",
+              "Response DtTm": "str",
+              "On Scene DtTm": "str",
+              "Transport DtTm": "str",
+              "Hospital DtTm": "str",
+              "Call Final Disposition": "str",
+              "Available DtTm": "str",
+              "Address": "str",
+              "City": "str",
+              "Zipcode of Incident": "str",
+              "Battalion": "str",
+              "Station Area": "str",
+              "Box": "str",
+              "Original Priority": "str",
+              "Priority": "str",
+              "Final Priority": "int64",
+              "ALS Unit": "str",
+              "Call Type Group": "str",
+              "Number of Alarms": "str",
+              "Unit Type": "str",
+              "Unit sequence in call dispatch": "str",
+              "Fire Prevention District": "str",
+              "Supervisor District": "str",
+              "Neighborhooods - Analysis Boundaries": "str",
+              "RowID": "str",
+              "case_location": "str"
+            }
           RENAME_HEADERS_LIST: >-
             {
               "Call Number": "call_number",
@@ -608,18 +683,18 @@ dag:
               "case_location": "location_geom"
             }
           DATE_FORMAT_LIST: >-
-            [
-              "call_date",
-              "watch_date",
-              "available_timestamp",
-              "dispatch_timestamp",
-              "entry_timestamp",
-              "on_scene_timestamp",
-              "received_timestamp",
-              "response_timestamp",
-              "transport_timestamp",
-              "hospital_timestamp"
-            ]
+            {
+              "call_date": "%Y-%m-%d",
+              "watch_date": "%Y-%m-%d",
+              "available_timestamp": "%Y-%m-%d %H:%M:%S",
+              "dispatch_timestamp": "%Y-%m-%d %H:%M:%S",
+              "entry_timestamp": "%Y-%m-%d %H:%M:%S",
+              "on_scene_timestamp": "%Y-%m-%d %H:%M:%S",
+              "received_timestamp": "%Y-%m-%d %H:%M:%S",
+              "response_timestamp": "%Y-%m-%d %H:%M:%S",
+              "transport_timestamp": "%Y-%m-%d %H:%M:%S",
+              "hospital_timestamp": "%Y-%m-%d %H:%M:%S"
+            }
           REORDER_HEADERS_LIST: >-
             [
               "call_number",
