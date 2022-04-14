@@ -135,11 +135,11 @@ def execute_pipeline(
         or destination_table == "street_trees"
     ):
         download_file(source_url, source_file)
-    if destination_table == "bikeshare_station_info":
+    elif destination_table == "bikeshare_station_info":
         source_url_json = f"{source_url}.json"
         source_file_json = str(source_file).replace(".csv", "") + "_stations.json"
         download_file_json(source_url_json, source_file_json, source_file, "stations")
-    elif destination_table == "bikeshare_status":
+    elif destination_table == "bikeshare_station_status":
         source_url_json = f"{source_url}.json"
         source_file_json = str(source_file).replace(".csv", "") + "_status.json"
         download_file_json(source_url_json, source_file_json, source_file, "stations")
