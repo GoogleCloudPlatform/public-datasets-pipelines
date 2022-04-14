@@ -24,7 +24,3 @@ resources:
   - type: bigquery_dataset
     dataset_id: new_york_taxi_trips
     description: "TLC Green trips 2018 dataset"
-  - type: storage_bucket
-    name: new-york-taxi-trips
-    uniform_bucket_level_access: True
-    location: US

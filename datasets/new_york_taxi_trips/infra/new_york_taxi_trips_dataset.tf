@@ -18,25 +18,9 @@
 resource "google_bigquery_dataset" "new_york_taxi_trips" {
   dataset_id  = "new_york_taxi_trips"
   project     = var.project_id
-  description = "TLC Green trips dataset"
+  description = "TLC Green trips 2018 dataset"
 }
 
 output "bigquery_dataset-new_york_taxi_trips-dataset_id" {
   value = google_bigquery_dataset.new_york_taxi_trips.dataset_id
-}
-
-resource "google_storage_bucket" "new-york-taxi-trips" {
-  name                        = "${var.bucket_name_prefix}-new-york-taxi-trips"
-  force_destroy               = true
-  location                    = "US"
-  uniform_bucket_level_access = true
-  lifecycle {
-    ignore_changes = [
-      logging,
-    ]
-  }
-}
-
-output "storage_bucket-new-york-taxi-trips-name" {
-  value = google_storage_bucket.new-york-taxi-trips.name
 }

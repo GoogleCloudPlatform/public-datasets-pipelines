@@ -140,7 +140,7 @@ def process_year_data(
             data_file_month_field=data_file_month_field,
             month_number=month_number,
         )
-        if month_data_already_loaded is True:
+        if month_data_already_loaded:
             logging.info(f"{process_year_month} data is already loaded. Skipping.")
         else:
             target_file_name = str.replace(
