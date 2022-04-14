@@ -88,10 +88,10 @@ def execute_pipeline(
     datetime_list: typing.List[str],
     null_string_list: typing.List[str],
 ) -> None:
-    download_file(source_url, source_file)
     source_file_path = os.path.split(source_file)[0]
     source_url_file = os.path.basename(urlparse(source_url).path)
     source_file_zipfile = f"{source_file_path}/{source_url_file}"
+    download_file(source_url, source_file_zipfile)
     unpack_file(source_file_zipfile, os.path.split(source_file_zipfile)[0], "zip")
     source_file_zipfile_csv = str.replace(source_file_zipfile, ".zip", "")
     os.rename(source_file_zipfile_csv, source_file)
@@ -159,7 +159,6 @@ def unpack_file(infile: str, dest_path: str, compression_type: str = "zip") -> N
 
 
 def zip_decompress(infile: str, dest_path: str) -> None:
-    logging.info(f"Unpacking {infile} to {dest_path}")
     with zip.ZipFile(infile, mode="r") as zipf:
         zipf.extractall(dest_path)
         zipf.close()
