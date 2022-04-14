@@ -37,7 +37,7 @@ with DAG(
         location="us-central1-c",
         body={
             "name": "san-francisco",
-            "initial_node_count": 6,
+            "initial_node_count": 4,
             "network": "{{ var.value.vpc_network }}",
             "node_config": {
                 "machine_type": "e2-standard-16",
@@ -95,18 +95,18 @@ with DAG(
         image_pull_policy="Always",
         image="{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}",
         env_vars={
-            "PIPELINE_NAME": "{{ var.json.san_francisco.sf_citibike_stations.pipeline_name }}",
-            "SOURCE_URL": "{{ var.json.san_francisco.sf_citibike_stations.source_url }}",
-            "CHUNKSIZE": "{{ var.json.san_francisco.sf_citibike_stations.chunksize }}",
-            "SOURCE_FILE": "{{ var.json.san_francisco.sf_citibike_stations.source_file }}",
-            "TARGET_FILE": "{{ var.json.san_francisco.sf_citibike_stations.target_file }}",
+            "PIPELINE_NAME": "{{ var.json.san_francisco.sf_bikeshare_stations.pipeline_name }}",
+            "SOURCE_URL": "{{ var.json.san_francisco.sf_bikeshare_stations.source_url }}",
+            "CHUNKSIZE": "{{ var.json.san_francisco.sf_bikeshare_stations.chunksize }}",
+            "SOURCE_FILE": "{{ var.json.san_francisco.sf_bikeshare_stations.source_file }}",
+            "TARGET_FILE": "{{ var.json.san_francisco.sf_bikeshare_stations.target_file }}",
             "PROJECT_ID": "{{ var.value.gcp_project }}",
-            "DATASET_ID": "{{ var.json.san_francisco.sf_citibike_stations.dataset_id }}",
-            "TABLE_ID": "{{ var.json.san_francisco.sf_citibike_stations.destination_table }}",
+            "DATASET_ID": "{{ var.json.san_francisco.sf_bikeshare_stations.dataset_id }}",
+            "TABLE_ID": "{{ var.json.san_francisco.sf_bikeshare_stations.destination_table }}",
             "DROP_DEST_TABLE": "{{ var.json.san_francisco.sf_bikeshare_stations.drop_dest_table }}",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
-            "TARGET_GCS_PATH": "{{ var.json.san_francisco.sf_citibike_stations.target_gcs_path }}",
-            "SCHEMA_PATH": "{{ var.json.san_francisco.sf_citibike_stations.schema_path }}",
+            "TARGET_GCS_PATH": "{{ var.json.san_francisco.sf_bikeshare_stations.target_gcs_path }}",
+            "SCHEMA_PATH": "{{ var.json.san_francisco.sf_bikeshare_stations.schema_path }}",
             "RENAME_HEADERS_LIST": '{\n  "data.stations.station_id": "station_id",\n  "data.stations.name": "name",\n  "data.stations.short_name": "short_name",\n  "data.stations.lat": "lat",\n  "data.stations.lon": "lon",\n  "data.stations.region_id": "region_id",\n  "data.stations.rental_methods": "rental_methods",\n  "data.stations.capacity": "capacity",\n  "data.stations.eightd_has_key_dispenser": "eightd_has_key_dispenser",\n  "data.stations.has_kiosk": "has_kiosk",\n  "data.stations.external_id": "external_id"\n}',
             "EMPTY_KEY_LIST": '[\n  "station_id",\n  "name",\n  "lat",\n  "lon"\n]',
             "GEN_LOCATION_LIST": '{\n  "station_geom": [ "lon", "lat" ]\n}',
@@ -144,7 +144,7 @@ with DAG(
             "SCHEMA_PATH": "{{ var.json.san_francisco.sf_bikeshare_status.schema_path }}",
             "RENAME_HEADERS_LIST": '{\n  "data.stations.eightd_has_available_keys": "eightd_has_available_keys",\n  "data.stations.is_installed": "is_installed",\n  "data.stations.is_renting": "is_renting",\n  "data.stations.is_returning": "is_returning",\n  "data.stations.last_reported": "last_reported",\n  "data.stations.num_bikes_available": "num_bikes_available",\n  "data.stations.num_bikes_disabled": "num_bikes_disabled",\n  "data.stations.num_docks_available": "num_docks_available",\n  "data.stations.num_docks_disabled": "num_docks_disabled",\n  "data.stations.num_ebikes_available": "num_ebikes_available",\n  "data.stations.station_id": "station_id"\n}',
             "EMPTY_KEY_LIST": '[\n  "station_id",\n  "num_bikes_available",\n  "num_docks_available",\n  "is_installed",\n  "is_renting",\n  "is_returning",\n  "last_reported"\n]',
-            "REORDER_HEADERS_LIST": '[\n  "station_id",\n  "num_bikes_available",\n  "num_bikes_disabled",\n  "num_docks_available",\n  "num_docks_disabled",\n  "is_installed",\n  "is_renting",\n  "is_returning",\n  "last_reported",\n  "num_ebikes_available",\n  "eightd_has_available_keys",\n]',
+            "REORDER_HEADERS_LIST": '[\n  "station_id",\n  "num_bikes_available",\n  "num_bikes_disabled",\n  "num_docks_available",\n  "num_docks_disabled",\n  "is_installed",\n  "is_renting",\n  "is_returning",\n  "last_reported",\n  "num_ebikes_available",\n  "eightd_has_available_keys"\n]',
         },
         resources={"limit_memory": "8G", "limit_cpu": "3"},
     )
@@ -161,7 +161,7 @@ with DAG(
         image="{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}",
         env_vars={
             "PIPELINE_NAME": "{{ var.json.san_francisco.sf_bikeshare_trips.pipeline_name }}",
-            "SOURCE_URL_LIST": '"https://s3.amazonaws.com/fordgobike-data/201803-fordgobike-tripdata.csv.zip",\n"https://s3.amazonaws.com/fordgobike-data/201804-fordgobike-tripdata.csv.zip",\n"https://s3.amazonaws.com/fordgobike-data/201802-fordgobike-tripdata.csv.zip",\n"https://s3.amazonaws.com/fordgobike-data/201801-fordgobike-tripdata.csv.zip",\n"https://s3.amazonaws.com/fordgobike-data/2017-fordgobike-tripdata.csv",\n"https://s3.amazonaws.com/babs-open-data/babs_open_data_year_1.zip",\n"https://s3.amazonaws.com/babs-open-data/babs_open_data_year_2.zip",\n"https://s3.amazonaws.com/babs-open-data/babs_open_data_year_3.zip"\n',
+            "SOURCE_URL_LIST": '[\n  "https://s3.amazonaws.com/fordgobike-data/201803-fordgobike-tripdata.csv.zip",\n  "https://s3.amazonaws.com/fordgobike-data/201804-fordgobike-tripdata.csv.zip",\n  "https://s3.amazonaws.com/fordgobike-data/201802-fordgobike-tripdata.csv.zip",\n  "https://s3.amazonaws.com/fordgobike-data/201801-fordgobike-tripdata.csv.zip",\n  "https://s3.amazonaws.com/fordgobike-data/2017-fordgobike-tripdata.csv",\n  "https://s3.amazonaws.com/babs-open-data/babs_open_data_year_1.zip",\n  "https://s3.amazonaws.com/babs-open-data/babs_open_data_year_2.zip",\n  "https://s3.amazonaws.com/babs-open-data/babs_open_data_year_3.zip"\n]',
             "CHUNKSIZE": "{{ var.json.san_francisco.sf_bikeshare_trips.chunksize }}",
             "SOURCE_FILE": "{{ var.json.san_francisco.sf_bikeshare_trips.source_file }}",
             "TARGET_FILE": "{{ var.json.san_francisco.sf_bikeshare_trips.target_file }}",
@@ -290,16 +290,4 @@ with DAG(
         name="san-francisco",
     )
 
-    (
-        create_cluster
-        >> [
-            sf_311_service_requests,
-            sf_bikeshare_stations,
-            sf_bikeshare_status,
-            sf_bikeshare_trips,
-            sf_film_locations,
-            sffd_service_calls,
-            sf_street_trees,
-        ]
-        >> delete_cluster
-    )
+    create_cluster >> sf_311_service_requests >> delete_cluster
