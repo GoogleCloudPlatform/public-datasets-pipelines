@@ -19,6 +19,7 @@ import pathlib
 import re
 import subprocess
 import typing
+import re
 
 from google.cloud.orchestration.airflow import service_v1beta1
 from ruamel import yaml
@@ -151,6 +152,7 @@ def copy_variables_to_airflow_data_folder(
     run_gsutil_cmd(["cp", filename, gcs_uri], cwd=cwd)
 
 
+<<<<<<< Updated upstream
 def copy_schema_to_composer_data_folder(
     dataset_id: str,
     composer_bucket: str = None,
@@ -158,6 +160,15 @@ def copy_schema_to_composer_data_folder(
 ):
     cwd = DATASETS_PATH / dataset_id / "pipelines" / pipeline / "data"
     gcs_uri = f"gs://{composer_bucket}/data/{dataset_id}/pipeline/{pipeline}/data"
+=======
+def copy_schema_to_airflow_data_folder(
+    env_path: pathlib.Path,
+    dataset_id: str,
+    composer_bucket: str = None,
+):
+    cwd = DATASETS_PATH / dataset_id / "data"
+    gcs_uri = f"gs://{composer_bucket}/data"
+>>>>>>> Stashed changes
     schema_file_dir_pattern = "*.json"
     schema_file_dir = []
 
@@ -165,10 +176,17 @@ def copy_schema_to_composer_data_folder(
         schema_file_dir = sorted(cwd.rglob(schema_file_dir_pattern))
         """
         [remote]
+<<<<<<< Updated upstream
         gsutil cp *.json gs://{composer_bucket}/data/{dataset_id}/pipeline/{pipeline}
         cd .{ENV}/datasets/{dataset_id}/data
         """
         print("\nCopying files from local data folder into Cloud Composer data folder\n")                
+=======
+        gsutil cp *.json gs://{composer_bucket}/data
+        cd .{ENV}/datasets/{dataset_id}/data
+        """
+        print("\nCopying schema JSON file into Cloud Composer schema folder\n")                
+>>>>>>> Stashed changes
         print("  Source:\n")
         for x in schema_file_dir:
             schema_file_names = str(x)
@@ -181,7 +199,11 @@ def copy_schema_to_composer_data_folder(
        
         run_gsutil_cmd(["cp", schema_file_dir_pattern , gcs_uri], cwd=cwd)
 
+<<<<<<< Updated upstream
 #copy_schema_to_composer_data_folder("austin_bikeshare","us-central1-composer-demo-5e589749-bucket","bikeshare_stations")
+=======
+#copy_schema_to_airflow_data_folder("test","america_health_rankings","us-central1-composer-demo-5e589749-bucket")
+>>>>>>> Stashed changes
 
 def run_cloud_composer_vars_import(
     composer_env: str,
@@ -338,8 +360,13 @@ def check_airflow_version_compatibility(
             " you are deploying to an Airflow 1.x environment."
         )
 
+<<<<<<< Updated upstream
 """ 
 if __name__ == "__main__":
+=======
+
+""" if __name__ == "__main__":
+>>>>>>> Stashed changes
     parser = argparse.ArgumentParser(
         description="Deploy DAGs and variables to an Airflow environment"
     )
