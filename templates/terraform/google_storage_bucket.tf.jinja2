@@ -31,6 +31,23 @@ resource "google_storage_bucket" "{{ name }}" {
   }
 }
 
+{% if iam_policies -%}
+data "google_iam_policy" "storage_bucket__{{ name }}" {
+  dynamic "binding" {
+    for_each = var.iam_policies["storage_buckets"]["{{ name }}"]
+    content {
+      role = binding.value["role"]
+      members = binding.value["members"]
+    }
+  }
+}
+
+resource "google_storage_bucket_iam_policy" "{{ name }}" {
+  bucket = google_storage_bucket.{{ name }}.name
+  policy_data = data.google_iam_policy.storage_bucket__{{ name }}.policy_data
+}
+{% endif -%}
+
 output "storage_bucket-{{ name }}-name" {
   value = google_storage_bucket.{{ name }}.name
 }
