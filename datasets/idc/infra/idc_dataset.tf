@@ -101,6 +101,16 @@ output "bigquery_dataset-idc_v7-dataset_id" {
   value = google_bigquery_dataset.idc_v7.dataset_id
 }
 
+resource "google_bigquery_dataset" "idc_v8" {
+  dataset_id  = "idc_v8"
+  project     = var.project_id
+  description = "Imaging Data Commons (IDC) - The Cancer Imaging Archive (TCIA) v8 data"
+}
+
+output "bigquery_dataset-idc_v8-dataset_id" {
+  value = google_bigquery_dataset.idc_v8.dataset_id
+}
+
 resource "google_bigquery_dataset" "idc_current" {
   dataset_id  = "idc_current"
   project     = var.project_id
