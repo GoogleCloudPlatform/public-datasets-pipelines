@@ -16,7 +16,6 @@
 import argparse
 import json
 import pathlib
-import re
 import subprocess
 import typing
 import re
@@ -49,6 +48,7 @@ def main(
 
     # Do the check if the directory exists then make the call to the copy_schema_function
     # if(cwd.is_dir() and sorted(cwd.rglob(schema_file_dir_pattern))):
+
 
     print("\n========== AIRFLOW VARIABLES ==========")
     copy_variables_to_airflow_data_folder(env_path, dataset_id, composer_bucket)
@@ -106,27 +106,6 @@ def get_composer_bucket(
 # [END composer_v1beta1_generated_Environments_GetEnvironment_sync]
 
 
-def copy_variables_to_airflow_data_folder(
-    env_path: pathlib.Path,
-    dataset_id: str,
-    composer_bucket: str = None,
-):
-    """
-    [remote]
-    gsutil cp {DATASET_ID}_variables.json gs://{COMPOSER_BUCKET}/data/variables/{filename}...
-    cd .{ENV}/datasets or .{ENV}/datasets/{dataset_id}
-    """
-    cwd = env_path / "datasets" / dataset_id / "pipelines"
-    filename = f"{dataset_id}_variables.json"
-    gcs_uri = f"gs://{composer_bucket}/data/variables/{filename}"
-    print(
-        "\nCopying variables JSON file into Cloud Composer data folder\n\n"
-        f"  Source:\n  {cwd / filename}\n\n"
-        f"  Destination:\n  {gcs_uri}\n"
-    )
-    run_gsutil_cmd(["cp", filename, gcs_uri], cwd=cwd)
-
-
 def run_gsutil_cmd(args: typing.List[str], cwd: pathlib.Path):
     subprocess.check_call(["gsutil"] + args, cwd=cwd)
 
@@ -152,15 +131,6 @@ def copy_variables_to_airflow_data_folder(
     run_gsutil_cmd(["cp", filename, gcs_uri], cwd=cwd)
 
 
-<<<<<<< Updated upstream
-def copy_schema_to_composer_data_folder(
-    dataset_id: str,
-    composer_bucket: str = None,
-    pipeline: str = None,
-):
-    cwd = DATASETS_PATH / dataset_id / "pipelines" / pipeline / "data"
-    gcs_uri = f"gs://{composer_bucket}/data/{dataset_id}/pipeline/{pipeline}/data"
-=======
 def copy_schema_to_airflow_data_folder(
     env_path: pathlib.Path,
     dataset_id: str,
@@ -168,7 +138,6 @@ def copy_schema_to_airflow_data_folder(
 ):
     cwd = DATASETS_PATH / dataset_id / "data"
     gcs_uri = f"gs://{composer_bucket}/data"
->>>>>>> Stashed changes
     schema_file_dir_pattern = "*.json"
     schema_file_dir = []
 
@@ -176,17 +145,10 @@ def copy_schema_to_airflow_data_folder(
         schema_file_dir = sorted(cwd.rglob(schema_file_dir_pattern))
         """
         [remote]
-<<<<<<< Updated upstream
-        gsutil cp *.json gs://{composer_bucket}/data/{dataset_id}/pipeline/{pipeline}
-        cd .{ENV}/datasets/{dataset_id}/data
-        """
-        print("\nCopying files from local data folder into Cloud Composer data folder\n")                
-=======
         gsutil cp *.json gs://{composer_bucket}/data
         cd .{ENV}/datasets/{dataset_id}/data
         """
         print("\nCopying schema JSON file into Cloud Composer schema folder\n")                
->>>>>>> Stashed changes
         print("  Source:\n")
         for x in schema_file_dir:
             schema_file_names = str(x)
@@ -199,11 +161,7 @@ def copy_schema_to_airflow_data_folder(
        
         run_gsutil_cmd(["cp", schema_file_dir_pattern , gcs_uri], cwd=cwd)
 
-<<<<<<< Updated upstream
-#copy_schema_to_composer_data_folder("austin_bikeshare","us-central1-composer-demo-5e589749-bucket","bikeshare_stations")
-=======
 #copy_schema_to_airflow_data_folder("test","america_health_rankings","us-central1-composer-demo-5e589749-bucket")
->>>>>>> Stashed changes
 
 def run_cloud_composer_vars_import(
     composer_env: str,
@@ -360,13 +318,8 @@ def check_airflow_version_compatibility(
             " you are deploying to an Airflow 1.x environment."
         )
 
-<<<<<<< Updated upstream
-""" 
-if __name__ == "__main__":
-=======
 
 """ if __name__ == "__main__":
->>>>>>> Stashed changes
     parser = argparse.ArgumentParser(
         description="Deploy DAGs and variables to an Airflow environment"
     )
