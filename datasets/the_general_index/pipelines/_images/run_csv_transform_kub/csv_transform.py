@@ -19,7 +19,7 @@ import os
 import pathlib
 import typing
 import zipfile as zip
-from urllib import urlparse
+from urllib.parse import urlparse
 
 import pandas as pd
 import requests

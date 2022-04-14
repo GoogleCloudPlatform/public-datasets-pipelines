@@ -58,21 +58,21 @@ dag:
         cluster_name: the-general-index
         namespace: "default"
         image_pull_policy: "Always"
-        image: "{{ var.json.the_general_index.container_registry.the_general_index__run_csv_transform_kub }}"
+        image: "{{ var.json.the_general_index.container_registry.run_csv_transform_kub }}"
         env_vars:
           PROJECT_ID: "{{ var.value.gcp_project }}"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           CHUNKSIZE: "{{ var.json.the_general_index.chunksize }}"
-          DATASET_ID: "{{ var.json.the_general_index.dump_0.dataset_id }}"
+          DATASET_ID: "{{ var.json.the_general_index.dataset_id }}"
           TABLE_ID: "{{ var.json.the_general_index.destination_table }}"
           SCHEMA_PATH: "{{ var.json.the_general_index.schema_path }}"
           SOURCE_FILE_HEADER_ROWS: "{{ var.json.the_general_index.source_file_header_rows }}"
           SOURCE_FILE_FOOTER_ROWS: "{{ var.json.the_general_index.source_file_footer_rows }}"
-          PIPELINE_NAME: "{{ var.json.the_general_index.pipeline_name }}"
+          PIPELINE_NAME: "{{ var.json.the_general_index.dump_0.pipeline_name }}"
           SOURCE_URL: "{{ var.json.the_general_index.dump_0.source_url }}"
           SOURCE_FILE: "{{ var.json.the_general_index.dump_0.source_file }}"
-          TARGET_FILE: "{{ var.json.the_general_index.dump_0.target_url }}"
-          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_0.target_path }}"
+          TARGET_FILE: "{{ var.json.the_general_index.dump_0.target_file }}"
+          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_0.target_gcs_path }}"
           INPUT_CSV_HEADERS: >-
             [
               "dkey",
@@ -162,21 +162,21 @@ dag:
         cluster_name: the-general-index
         namespace: "default"
         image_pull_policy: "Always"
-        image: "{{ var.json.the_general_index.container_registry.the_general_index__run_csv_transform_kub }}"
+        image: "{{ var.json.the_general_index.container_registry.run_csv_transform_kub }}"
         env_vars:
           PROJECT_ID: "{{ var.value.gcp_project }}"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           CHUNKSIZE: "{{ var.json.the_general_index.chunksize }}"
-          DATASET_ID: "{{ var.json.the_general_index.dump_1.dataset_id }}"
+          DATASET_ID: "{{ var.json.the_general_index.dataset_id }}"
           TABLE_ID: "{{ var.json.the_general_index.destination_table }}"
           SCHEMA_PATH: "{{ var.json.the_general_index.schema_path }}"
           SOURCE_FILE_HEADER_ROWS: "{{ var.json.the_general_index.source_file_header_rows }}"
           SOURCE_FILE_FOOTER_ROWS: "{{ var.json.the_general_index.source_file_footer_rows }}"
-          PIPELINE_NAME: "{{ var.json.the_general_index.pipeline_name }}"
+          PIPELINE_NAME: "{{ var.json.the_general_index.dump_1.pipeline_name }}"
           SOURCE_URL: "{{ var.json.the_general_index.dump_1.source_url }}"
           SOURCE_FILE: "{{ var.json.the_general_index.dump_1.source_file }}"
-          TARGET_FILE: "{{ var.json.the_general_index.dump_1.target_url }}"
-          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_1.target_path }}"
+          TARGET_FILE: "{{ var.json.the_general_index.dump_1.target_file }}"
+          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_1.target_gcs_path }}"
           INPUT_CSV_HEADERS: >-
             [
               "dkey",
@@ -266,21 +266,21 @@ dag:
         cluster_name: the-general-index
         namespace: "default"
         image_pull_policy: "Always"
-        image: "{{ var.json.the_general_index.container_registry.the_general_index__run_csv_transform_kub }}"
+        image: "{{ var.json.the_general_index.container_registry.run_csv_transform_kub }}"
         env_vars:
           PROJECT_ID: "{{ var.value.gcp_project }}"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           CHUNKSIZE: "{{ var.json.the_general_index.chunksize }}"
-          DATASET_ID: "{{ var.json.the_general_index.dump_2.dataset_id }}"
+          DATASET_ID: "{{ var.json.the_general_index.dataset_id }}"
           TABLE_ID: "{{ var.json.the_general_index.destination_table }}"
           SCHEMA_PATH: "{{ var.json.the_general_index.schema_path }}"
           SOURCE_FILE_HEADER_ROWS: "{{ var.json.the_general_index.source_file_header_rows }}"
           SOURCE_FILE_FOOTER_ROWS: "{{ var.json.the_general_index.source_file_footer_rows }}"
-          PIPELINE_NAME: "{{ var.json.the_general_index.pipeline_name }}"
+          PIPELINE_NAME: "{{ var.json.the_general_index.dump_2.pipeline_name }}"
           SOURCE_URL: "{{ var.json.the_general_index.dump_2.source_url }}"
           SOURCE_FILE: "{{ var.json.the_general_index.dump_2.source_file }}"
-          TARGET_FILE: "{{ var.json.the_general_index.dump_2.target_url }}"
-          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_2.target_path }}"
+          TARGET_FILE: "{{ var.json.the_general_index.dump_2.target_file }}"
+          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_2.target_gcs_path }}"
           INPUT_CSV_HEADERS: >-
             [
               "dkey",
@@ -370,21 +370,21 @@ dag:
         cluster_name: the-general-index
         namespace: "default"
         image_pull_policy: "Always"
-        image: "{{ var.json.the_general_index.container_registry.the_general_index__run_csv_transform_kub }}"
+        image: "{{ var.json.the_general_index.container_registry.run_csv_transform_kub }}"
         env_vars:
           PROJECT_ID: "{{ var.value.gcp_project }}"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           CHUNKSIZE: "{{ var.json.the_general_index.chunksize }}"
-          DATASET_ID: "{{ var.json.the_general_index.dump_3.dataset_id }}"
+          DATASET_ID: "{{ var.json.the_general_index.dataset_id }}"
           TABLE_ID: "{{ var.json.the_general_index.destination_table }}"
           SCHEMA_PATH: "{{ var.json.the_general_index.schema_path }}"
           SOURCE_FILE_HEADER_ROWS: "{{ var.json.the_general_index.source_file_header_rows }}"
           SOURCE_FILE_FOOTER_ROWS: "{{ var.json.the_general_index.source_file_footer_rows }}"
-          PIPELINE_NAME: "{{ var.json.the_general_index.pipeline_name }}"
+          PIPELINE_NAME: "{{ var.json.the_general_index.dump_3.pipeline_name }}"
           SOURCE_URL: "{{ var.json.the_general_index.dump_3.source_url }}"
           SOURCE_FILE: "{{ var.json.the_general_index.dump_3.source_file }}"
-          TARGET_FILE: "{{ var.json.the_general_index.dump_3.target_url }}"
-          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_3.target_path }}"
+          TARGET_FILE: "{{ var.json.the_general_index.dump_3.target_file }}"
+          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_3.target_gcs_path }}"
           INPUT_CSV_HEADERS: >-
             [
               "dkey",
@@ -474,21 +474,21 @@ dag:
         cluster_name: the-general-index
         namespace: "default"
         image_pull_policy: "Always"
-        image: "{{ var.json.the_general_index.container_registry.the_general_index__run_csv_transform_kub }}"
+        image: "{{ var.json.the_general_index.container_registry.run_csv_transform_kub }}"
         env_vars:
           PROJECT_ID: "{{ var.value.gcp_project }}"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           CHUNKSIZE: "{{ var.json.the_general_index.chunksize }}"
-          DATASET_ID: "{{ var.json.the_general_index.dump_4.dataset_id }}"
+          DATASET_ID: "{{ var.json.the_general_index.dataset_id }}"
           TABLE_ID: "{{ var.json.the_general_index.destination_table }}"
           SCHEMA_PATH: "{{ var.json.the_general_index.schema_path }}"
           SOURCE_FILE_HEADER_ROWS: "{{ var.json.the_general_index.source_file_header_rows }}"
           SOURCE_FILE_FOOTER_ROWS: "{{ var.json.the_general_index.source_file_footer_rows }}"
-          PIPELINE_NAME: "{{ var.json.the_general_index.pipeline_name }}"
+          PIPELINE_NAME: "{{ var.json.the_general_index.dump_4.pipeline_name }}"
           SOURCE_URL: "{{ var.json.the_general_index.dump_4.source_url }}"
           SOURCE_FILE: "{{ var.json.the_general_index.dump_4.source_file }}"
-          TARGET_FILE: "{{ var.json.the_general_index.dump_4.target_url }}"
-          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_4.target_path }}"
+          TARGET_FILE: "{{ var.json.the_general_index.dump_4.target_file }}"
+          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_4.target_gcs_path }}"
           INPUT_CSV_HEADERS: >-
             [
               "dkey",
@@ -578,21 +578,21 @@ dag:
         cluster_name: the-general-index
         namespace: "default"
         image_pull_policy: "Always"
-        image: "{{ var.json.the_general_index.container_registry.the_general_index__run_csv_transform_kub }}"
+        image: "{{ var.json.the_general_index.container_registry.run_csv_transform_kub }}"
         env_vars:
           PROJECT_ID: "{{ var.value.gcp_project }}"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           CHUNKSIZE: "{{ var.json.the_general_index.chunksize }}"
-          DATASET_ID: "{{ var.json.the_general_index.dump_5.dataset_id }}"
+          DATASET_ID: "{{ var.json.the_general_index.dataset_id }}"
           TABLE_ID: "{{ var.json.the_general_index.destination_table }}"
           SCHEMA_PATH: "{{ var.json.the_general_index.schema_path }}"
           SOURCE_FILE_HEADER_ROWS: "{{ var.json.the_general_index.source_file_header_rows }}"
           SOURCE_FILE_FOOTER_ROWS: "{{ var.json.the_general_index.source_file_footer_rows }}"
-          PIPELINE_NAME: "{{ var.json.the_general_index.pipeline_name }}"
+          PIPELINE_NAME: "{{ var.json.the_general_index.dump_5.pipeline_name }}"
           SOURCE_URL: "{{ var.json.the_general_index.dump_5.source_url }}"
           SOURCE_FILE: "{{ var.json.the_general_index.dump_5.source_file }}"
-          TARGET_FILE: "{{ var.json.the_general_index.dump_5.target_url }}"
-          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_5.target_path }}"
+          TARGET_FILE: "{{ var.json.the_general_index.dump_5.target_file }}"
+          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_5.target_gcs_path }}"
           INPUT_CSV_HEADERS: >-
             [
               "dkey",
@@ -682,21 +682,21 @@ dag:
         cluster_name: the-general-index
         namespace: "default"
         image_pull_policy: "Always"
-        image: "{{ var.json.the_general_index.container_registry.the_general_index__run_csv_transform_kub }}"
+        image: "{{ var.json.the_general_index.container_registry.run_csv_transform_kub }}"
         env_vars:
           PROJECT_ID: "{{ var.value.gcp_project }}"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           CHUNKSIZE: "{{ var.json.the_general_index.chunksize }}"
-          DATASET_ID: "{{ var.json.the_general_index.dump_6.dataset_id }}"
+          DATASET_ID: "{{ var.json.the_general_index.dataset_id }}"
           TABLE_ID: "{{ var.json.the_general_index.destination_table }}"
           SCHEMA_PATH: "{{ var.json.the_general_index.schema_path }}"
           SOURCE_FILE_HEADER_ROWS: "{{ var.json.the_general_index.source_file_header_rows }}"
           SOURCE_FILE_FOOTER_ROWS: "{{ var.json.the_general_index.source_file_footer_rows }}"
-          PIPELINE_NAME: "{{ var.json.the_general_index.pipeline_name }}"
+          PIPELINE_NAME: "{{ var.json.the_general_index.dump_6.pipeline_name }}"
           SOURCE_URL: "{{ var.json.the_general_index.dump_6.source_url }}"
           SOURCE_FILE: "{{ var.json.the_general_index.dump_6.source_file }}"
-          TARGET_FILE: "{{ var.json.the_general_index.dump_6.target_url }}"
-          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_6.target_path }}"
+          TARGET_FILE: "{{ var.json.the_general_index.dump_6.target_file }}"
+          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_6.target_gcs_path }}"
           INPUT_CSV_HEADERS: >-
             [
               "dkey",
@@ -786,21 +786,21 @@ dag:
         cluster_name: the-general-index
         namespace: "default"
         image_pull_policy: "Always"
-        image: "{{ var.json.the_general_index.container_registry.the_general_index__run_csv_transform_kub }}"
+        image: "{{ var.json.the_general_index.container_registry.run_csv_transform_kub }}"
         env_vars:
           PROJECT_ID: "{{ var.value.gcp_project }}"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           CHUNKSIZE: "{{ var.json.the_general_index.chunksize }}"
-          DATASET_ID: "{{ var.json.the_general_index.dump_7.dataset_id }}"
+          DATASET_ID: "{{ var.json.the_general_index.dataset_id }}"
           TABLE_ID: "{{ var.json.the_general_index.destination_table }}"
           SCHEMA_PATH: "{{ var.json.the_general_index.schema_path }}"
           SOURCE_FILE_HEADER_ROWS: "{{ var.json.the_general_index.source_file_header_rows }}"
           SOURCE_FILE_FOOTER_ROWS: "{{ var.json.the_general_index.source_file_footer_rows }}"
-          PIPELINE_NAME: "{{ var.json.the_general_index.pipeline_name }}"
+          PIPELINE_NAME: "{{ var.json.the_general_index.dump_7.pipeline_name }}"
           SOURCE_URL: "{{ var.json.the_general_index.dump_7.source_url }}"
           SOURCE_FILE: "{{ var.json.the_general_index.dump_7.source_file }}"
-          TARGET_FILE: "{{ var.json.the_general_index.dump_7.target_url }}"
-          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_7.target_path }}"
+          TARGET_FILE: "{{ var.json.the_general_index.dump_7.target_file }}"
+          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_7.target_gcs_path }}"
           INPUT_CSV_HEADERS: >-
             [
               "dkey",
@@ -890,21 +890,21 @@ dag:
         cluster_name: the-general-index
         namespace: "default"
         image_pull_policy: "Always"
-        image: "{{ var.json.the_general_index.container_registry.the_general_index__run_csv_transform_kub }}"
+        image: "{{ var.json.the_general_index.container_registry.run_csv_transform_kub }}"
         env_vars:
           PROJECT_ID: "{{ var.value.gcp_project }}"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           CHUNKSIZE: "{{ var.json.the_general_index.chunksize }}"
-          DATASET_ID: "{{ var.json.the_general_index.dump_8.dataset_id }}"
+          DATASET_ID: "{{ var.json.the_general_index.dataset_id }}"
           TABLE_ID: "{{ var.json.the_general_index.destination_table }}"
           SCHEMA_PATH: "{{ var.json.the_general_index.schema_path }}"
           SOURCE_FILE_HEADER_ROWS: "{{ var.json.the_general_index.source_file_header_rows }}"
           SOURCE_FILE_FOOTER_ROWS: "{{ var.json.the_general_index.source_file_footer_rows }}"
-          PIPELINE_NAME: "{{ var.json.the_general_index.pipeline_name }}"
+          PIPELINE_NAME: "{{ var.json.the_general_index.dump_8.pipeline_name }}"
           SOURCE_URL: "{{ var.json.the_general_index.dump_8.source_url }}"
           SOURCE_FILE: "{{ var.json.the_general_index.dump_8.source_file }}"
-          TARGET_FILE: "{{ var.json.the_general_index.dump_8.target_url }}"
-          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_8.target_path }}"
+          TARGET_FILE: "{{ var.json.the_general_index.dump_8.target_file }}"
+          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_8.target_gcs_path }}"
           INPUT_CSV_HEADERS: >-
             [
               "dkey",
@@ -994,21 +994,21 @@ dag:
         cluster_name: the-general-index
         namespace: "default"
         image_pull_policy: "Always"
-        image: "{{ var.json.the_general_index.container_registry.the_general_index__run_csv_transform_kub }}"
+        image: "{{ var.json.the_general_index.container_registry.run_csv_transform_kub }}"
         env_vars:
           PROJECT_ID: "{{ var.value.gcp_project }}"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           CHUNKSIZE: "{{ var.json.the_general_index.chunksize }}"
-          DATASET_ID: "{{ var.json.the_general_index.dump_9.dataset_id }}"
+          DATASET_ID: "{{ var.json.the_general_index.dataset_id }}"
           TABLE_ID: "{{ var.json.the_general_index.destination_table }}"
           SCHEMA_PATH: "{{ var.json.the_general_index.schema_path }}"
           SOURCE_FILE_HEADER_ROWS: "{{ var.json.the_general_index.source_file_header_rows }}"
           SOURCE_FILE_FOOTER_ROWS: "{{ var.json.the_general_index.source_file_footer_rows }}"
-          PIPELINE_NAME: "{{ var.json.the_general_index.pipeline_name }}"
+          PIPELINE_NAME: "{{ var.json.the_general_index.dump_9.pipeline_name }}"
           SOURCE_URL: "{{ var.json.the_general_index.dump_9.source_url }}"
           SOURCE_FILE: "{{ var.json.the_general_index.dump_9.source_file }}"
-          TARGET_FILE: "{{ var.json.the_general_index.dump_9.target_url }}"
-          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_9.target_path }}"
+          TARGET_FILE: "{{ var.json.the_general_index.dump_9.target_file }}"
+          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_9.target_gcs_path }}"
           INPUT_CSV_HEADERS: >-
             [
               "dkey",
@@ -1098,21 +1098,21 @@ dag:
         cluster_name: the-general-index
         namespace: "default"
         image_pull_policy: "Always"
-        image: "{{ var.json.the_general_index.container_registry.the_general_index__run_csv_transform_kub }}"
+        image: "{{ var.json.the_general_index.container_registry.run_csv_transform_kub }}"
         env_vars:
           PROJECT_ID: "{{ var.value.gcp_project }}"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           CHUNKSIZE: "{{ var.json.the_general_index.chunksize }}"
-          DATASET_ID: "{{ var.json.the_general_index.dump_a.dataset_id }}"
+          DATASET_ID: "{{ var.json.the_general_index.dataset_id }}"
           TABLE_ID: "{{ var.json.the_general_index.destination_table }}"
           SCHEMA_PATH: "{{ var.json.the_general_index.schema_path }}"
           SOURCE_FILE_HEADER_ROWS: "{{ var.json.the_general_index.source_file_header_rows }}"
           SOURCE_FILE_FOOTER_ROWS: "{{ var.json.the_general_index.source_file_footer_rows }}"
-          PIPELINE_NAME: "{{ var.json.the_general_index.pipeline_name }}"
+          PIPELINE_NAME: "{{ var.json.the_general_index.dump_a.pipeline_name }}"
           SOURCE_URL: "{{ var.json.the_general_index.dump_a.source_url }}"
           SOURCE_FILE: "{{ var.json.the_general_index.dump_a.source_file }}"
-          TARGET_FILE: "{{ var.json.the_general_index.dump_a.target_url }}"
-          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_a.target_path }}"
+          TARGET_FILE: "{{ var.json.the_general_index.dump_a.target_file }}"
+          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_a.target_gcs_path }}"
           INPUT_CSV_HEADERS: >-
             [
               "dkey",
@@ -1202,21 +1202,21 @@ dag:
         cluster_name: the-general-index
         namespace: "default"
         image_pull_policy: "Always"
-        image: "{{ var.json.the_general_index.container_registry.the_general_index__run_csv_transform_kub }}"
+        image: "{{ var.json.the_general_index.container_registry.run_csv_transform_kub }}"
         env_vars:
           PROJECT_ID: "{{ var.value.gcp_project }}"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           CHUNKSIZE: "{{ var.json.the_general_index.chunksize }}"
-          DATASET_ID: "{{ var.json.the_general_index.dump_b.dataset_id }}"
+          DATASET_ID: "{{ var.json.the_general_index.dataset_id }}"
           TABLE_ID: "{{ var.json.the_general_index.destination_table }}"
           SCHEMA_PATH: "{{ var.json.the_general_index.schema_path }}"
           SOURCE_FILE_HEADER_ROWS: "{{ var.json.the_general_index.source_file_header_rows }}"
           SOURCE_FILE_FOOTER_ROWS: "{{ var.json.the_general_index.source_file_footer_rows }}"
-          PIPELINE_NAME: "{{ var.json.the_general_index.pipeline_name }}"
+          PIPELINE_NAME: "{{ var.json.the_general_index.dump_b.pipeline_name }}"
           SOURCE_URL: "{{ var.json.the_general_index.dump_b.source_url }}"
           SOURCE_FILE: "{{ var.json.the_general_index.dump_b.source_file }}"
-          TARGET_FILE: "{{ var.json.the_general_index.dump_b.target_url }}"
-          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_b.target_path }}"
+          TARGET_FILE: "{{ var.json.the_general_index.dump_b.target_file }}"
+          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_b.target_gcs_path }}"
           INPUT_CSV_HEADERS: >-
             [
               "dkey",
@@ -1306,21 +1306,21 @@ dag:
         cluster_name: the-general-index
         namespace: "default"
         image_pull_policy: "Always"
-        image: "{{ var.json.the_general_index.container_registry.the_general_index__run_csv_transform_kub }}"
+        image: "{{ var.json.the_general_index.container_registry.run_csv_transform_kub }}"
         env_vars:
           PROJECT_ID: "{{ var.value.gcp_project }}"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           CHUNKSIZE: "{{ var.json.the_general_index.chunksize }}"
-          DATASET_ID: "{{ var.json.the_general_index.dump_c.dataset_id }}"
+          DATASET_ID: "{{ var.json.the_general_index.dataset_id }}"
           TABLE_ID: "{{ var.json.the_general_index.destination_table }}"
           SCHEMA_PATH: "{{ var.json.the_general_index.schema_path }}"
           SOURCE_FILE_HEADER_ROWS: "{{ var.json.the_general_index.source_file_header_rows }}"
           SOURCE_FILE_FOOTER_ROWS: "{{ var.json.the_general_index.source_file_footer_rows }}"
-          PIPELINE_NAME: "{{ var.json.the_general_index.pipeline_name }}"
+          PIPELINE_NAME: "{{ var.json.the_general_index.dump_c.pipeline_name }}"
           SOURCE_URL: "{{ var.json.the_general_index.dump_c.source_url }}"
           SOURCE_FILE: "{{ var.json.the_general_index.dump_c.source_file }}"
-          TARGET_FILE: "{{ var.json.the_general_index.dump_c.target_url }}"
-          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_c.target_path }}"
+          TARGET_FILE: "{{ var.json.the_general_index.dump_c.target_file }}"
+          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_c.target_gcs_path }}"
           INPUT_CSV_HEADERS: >-
             [
               "dkey",
@@ -1410,21 +1410,21 @@ dag:
         cluster_name: the-general-index
         namespace: "default"
         image_pull_policy: "Always"
-        image: "{{ var.json.the_general_index.container_registry.the_general_index__run_csv_transform_kub }}"
+        image: "{{ var.json.the_general_index.container_registry.run_csv_transform_kub }}"
         env_vars:
           PROJECT_ID: "{{ var.value.gcp_project }}"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           CHUNKSIZE: "{{ var.json.the_general_index.chunksize }}"
-          DATASET_ID: "{{ var.json.the_general_index.dump_d.dataset_id }}"
+          DATASET_ID: "{{ var.json.the_general_index.dataset_id }}"
           TABLE_ID: "{{ var.json.the_general_index.destination_table }}"
           SCHEMA_PATH: "{{ var.json.the_general_index.schema_path }}"
           SOURCE_FILE_HEADER_ROWS: "{{ var.json.the_general_index.source_file_header_rows }}"
           SOURCE_FILE_FOOTER_ROWS: "{{ var.json.the_general_index.source_file_footer_rows }}"
-          PIPELINE_NAME: "{{ var.json.the_general_index.pipeline_name }}"
+          PIPELINE_NAME: "{{ var.json.the_general_index.dump_d.pipeline_name }}"
           SOURCE_URL: "{{ var.json.the_general_index.dump_d.source_url }}"
           SOURCE_FILE: "{{ var.json.the_general_index.dump_d.source_file }}"
-          TARGET_FILE: "{{ var.json.the_general_index.dump_d.target_url }}"
-          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_d.target_path }}"
+          TARGET_FILE: "{{ var.json.the_general_index.dump_d.target_file }}"
+          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_d.target_gcs_path }}"
           INPUT_CSV_HEADERS: >-
             [
               "dkey",
@@ -1514,21 +1514,21 @@ dag:
         cluster_name: the-general-index
         namespace: "default"
         image_pull_policy: "Always"
-        image: "{{ var.json.the_general_index.container_registry.the_general_index__run_csv_transform_kub }}"
+        image: "{{ var.json.the_general_index.container_registry.run_csv_transform_kub }}"
         env_vars:
           PROJECT_ID: "{{ var.value.gcp_project }}"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           CHUNKSIZE: "{{ var.json.the_general_index.chunksize }}"
-          DATASET_ID: "{{ var.json.the_general_index.dump_e.dataset_id }}"
+          DATASET_ID: "{{ var.json.the_general_index.dataset_id }}"
           TABLE_ID: "{{ var.json.the_general_index.destination_table }}"
           SCHEMA_PATH: "{{ var.json.the_general_index.schema_path }}"
           SOURCE_FILE_HEADER_ROWS: "{{ var.json.the_general_index.source_file_header_rows }}"
           SOURCE_FILE_FOOTER_ROWS: "{{ var.json.the_general_index.source_file_footer_rows }}"
-          PIPELINE_NAME: "{{ var.json.the_general_index.pipeline_name }}"
+          PIPELINE_NAME: "{{ var.json.the_general_index.dump_e.pipeline_name }}"
           SOURCE_URL: "{{ var.json.the_general_index.dump_e.source_url }}"
           SOURCE_FILE: "{{ var.json.the_general_index.dump_e.source_file }}"
-          TARGET_FILE: "{{ var.json.the_general_index.dump_e.target_url }}"
-          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_e.target_path }}"
+          TARGET_FILE: "{{ var.json.the_general_index.dump_e.target_file }}"
+          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_e.target_gcs_path }}"
           INPUT_CSV_HEADERS: >-
             [
               "dkey",
@@ -1618,21 +1618,21 @@ dag:
         cluster_name: the-general-index
         namespace: "default"
         image_pull_policy: "Always"
-        image: "{{ var.json.the_general_index.container_registry.the_general_index__run_csv_transform_kub }}"
+        image: "{{ var.json.the_general_index.container_registry.run_csv_transform_kub }}"
         env_vars:
           PROJECT_ID: "{{ var.value.gcp_project }}"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           CHUNKSIZE: "{{ var.json.the_general_index.chunksize }}"
-          DATASET_ID: "{{ var.json.the_general_index.dump_f.dataset_id }}"
+          DATASET_ID: "{{ var.json.the_general_index.dataset_id }}"
           TABLE_ID: "{{ var.json.the_general_index.destination_table }}"
           SCHEMA_PATH: "{{ var.json.the_general_index.schema_path }}"
           SOURCE_FILE_HEADER_ROWS: "{{ var.json.the_general_index.source_file_header_rows }}"
           SOURCE_FILE_FOOTER_ROWS: "{{ var.json.the_general_index.source_file_footer_rows }}"
-          PIPELINE_NAME: "{{ var.json.the_general_index.pipeline_name }}"
+          PIPELINE_NAME: "{{ var.json.the_general_index.dump_f.pipeline_name }}"
           SOURCE_URL: "{{ var.json.the_general_index.dump_f.source_url }}"
           SOURCE_FILE: "{{ var.json.the_general_index.dump_f.source_file }}"
-          TARGET_FILE: "{{ var.json.the_general_index.dump_f.target_url }}"
-          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_f.target_path }}"
+          TARGET_FILE: "{{ var.json.the_general_index.dump_f.target_file }}"
+          TARGET_GCS_PATH: "{{ var.json.the_general_index.dump_f.target_gcs_path }}"
           INPUT_CSV_HEADERS: >-
             [
               "dkey",
