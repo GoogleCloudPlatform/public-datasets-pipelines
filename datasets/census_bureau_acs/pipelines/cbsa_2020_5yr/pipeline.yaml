@@ -815,4 +815,4 @@ dag:
             mode: "nullable"
 
   graph_paths:
-    - "cbsa_2020_5yr_transform_csv >> load_cbsa_2020_5yr_to_bq"        
+    - "cbsa_2020_5yr_transform_csv >> load_cbsa_2020_5yr_to_bq"
