@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import csv
 import datetime
 import json
 import logging
@@ -91,9 +92,9 @@ def execute_pipeline(
     source_file_path = os.path.split(source_file)[0]
     source_url_file = os.path.basename(urlparse(source_url).path)
     source_file_zipfile = f"{source_file_path}/{source_url_file}"
+    source_file_zipfile_csv = str.replace(source_file_zipfile, ".zip", "")
     download_file(source_url, source_file_zipfile)
     unpack_file(source_file_zipfile, os.path.split(source_file_zipfile)[0], "zip")
-    source_file_zipfile_csv = str.replace(source_file_zipfile, ".zip", "")
     os.rename(source_file_zipfile_csv, source_file)
     remove_header_footer(
         source_file=source_file,
@@ -136,7 +137,7 @@ def execute_pipeline(
                 dataset_id=dataset_id,
                 table_id=destination_table,
                 file_path=target_file,
-                truncate_table=True,
+                truncate_table=False,
                 field_delimiter="|",
             )
         else:
@@ -189,34 +190,75 @@ def process_source_file(
     source_url: str,
 ) -> None:
     logging.info(f"Opening source file {source_file}")
-    with pd.read_csv(
-        source_file,
-        engine="python",
-        encoding="utf-8",
-        quotechar='"',
-        names=input_headers,
-        dtype=data_dtypes,
-        chunksize=int(chunksize),  # size of batch data, in no. of records
-        sep="\t",  # data column separator, typically ","
-        keep_default_na=True,
-        na_values=[" "],
-    ) as reader:
-        for chunk_number, chunk in enumerate(reader):
-            target_file_batch = str(target_file).replace(
-                ".csv", "-" + str(chunk_number) + ".csv"
+    csv.field_size_limit(512 << 10)
+    csv.register_dialect("TabDialect", quotechar='"', delimiter="\t", strict=True)
+    with open(source_file) as reader:
+        data = []
+        chunk_number = 1
+        for index, line in enumerate(csv.reader(reader, "TabDialect"), 0):
+            data.append(line)
+            if index % int(chunksize) == 0 and index > 0:
+                process_dataframe_chunk(
+                    data,
+                    input_headers,
+                    data_dtypes,
+                    target_file,
+                    chunk_number,
+                    datetime_list,
+                    null_string_list,
+                    source_file,
+                    source_url,
+                )
+                data = []
+                chunk_number += 1
+
+        if index % int(chunksize) != 0 and index > 0:
+            process_dataframe_chunk(
+                data,
+                input_headers,
+                data_dtypes,
+                target_file,
+                chunk_number,
+                datetime_list,
+                null_string_list,
+                source_file,
+                source_url,
             )
-            df = pd.DataFrame()
-            df = pd.concat([df, chunk])
-            process_chunk(
-                df=df,
-                target_file_batch=target_file_batch,
-                target_file=target_file,
-                skip_header=(not chunk_number == 0),
-                datetime_list=datetime_list,
-                null_string_list=null_string_list,
-                source_file=source_file,
-                source_url=source_url,
-            )
+
+
+def process_dataframe_chunk(
+    data: typing.List[str],
+    input_headers: typing.List[str],
+    data_dtypes: dict,
+    target_file: str,
+    chunk_number: int,
+    datetime_list: typing.List[str],
+    null_string_list: typing.List[str],
+    source_file: str,
+    source_url: str,
+) -> None:
+    df = pd.DataFrame(data, columns=input_headers)
+    set_df_datatypes(df, data_dtypes)
+    target_file_batch = str(target_file).replace(
+        ".csv", "-" + str(chunk_number) + ".csv"
+    )
+    process_chunk(
+        df=df,
+        target_file_batch=target_file_batch,
+        target_file=target_file,
+        skip_header=(not chunk_number == 1),
+        datetime_list=datetime_list,
+        null_string_list=null_string_list,
+        source_file=source_file,
+        source_url=source_url,
+    )
+
+
+def set_df_datatypes(df: pd.DataFrame, data_dtypes: dict) -> pd.DataFrame:
+    logging.info("Setting data types")
+    for key, item in data_dtypes.items():
+        df[key] = df[key].astype(item)
+    return df
 
 
 def process_chunk(
@@ -369,21 +411,13 @@ def delete_source_file_data_from_bq(
     logging.info(
         f"Deleting data from {project_id}.{dataset_id}.{table_id} where source_url = '{source_url}'"
     )
-    client = bigquery.Client()
-    query = f"""
+    client = bigquery.Client(project=project_id)
+    query_delete = f"""
         DELETE
         FROM {project_id}.{dataset_id}.{table_id}
-        WHERE source_url = '@source_url'
+        WHERE source_url = '{source_url}'
     """
-    job_config = bigquery.QueryJobConfig(
-        query_parameters=[
-            bigquery.ScalarQueryParameter("project_id", "STRING", project_id),
-            bigquery.ScalarQueryParameter("dataset_id", "STRING", dataset_id),
-            bigquery.ScalarQueryParameter("table_id", "STRING", table_id),
-            bigquery.ScalarQueryParameter("source_url", "STRING", source_url),
-        ]
-    )
-    query_job = client.query(query, job_config=job_config)  # Make an API request.
+    query_job = client.query(query_delete)  # Make an API request.
     query_job.result()
 
 
