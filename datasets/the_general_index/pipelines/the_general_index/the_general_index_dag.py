@@ -551,21 +551,25 @@ with DAG(
         name="the_general_index",
     )
 
-    create_cluster >> [
-        transform_csv_dump_0,
-        transform_csv_dump_1,
-        transform_csv_dump_2,
-        transform_csv_dump_3,
-        transform_csv_dump_4,
-        transform_csv_dump_5,
-        transform_csv_dump_6,
-        transform_csv_dump_7,
-        transform_csv_dump_8,
-        transform_csv_dump_9,
-        transform_csv_dump_a,
-        transform_csv_dump_b,
-        transform_csv_dump_c,
-        transform_csv_dump_d,
-        transform_csv_dump_e,
-        transform_csv_dump_f,
-    ] >> delete_cluster
+    (
+        create_cluster
+        >> [
+            transform_csv_dump_0,
+            transform_csv_dump_1,
+            transform_csv_dump_2,
+            transform_csv_dump_3,
+            transform_csv_dump_4,
+            transform_csv_dump_5,
+            transform_csv_dump_6,
+            transform_csv_dump_7,
+            transform_csv_dump_8,
+            transform_csv_dump_9,
+            transform_csv_dump_a,
+            transform_csv_dump_b,
+            transform_csv_dump_c,
+            transform_csv_dump_d,
+            transform_csv_dump_e,
+            transform_csv_dump_f,
+        ]
+        >> delete_cluster
+    )
