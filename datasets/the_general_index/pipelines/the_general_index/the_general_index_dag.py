@@ -75,7 +75,7 @@ with DAG(
             "TARGET_GCS_PATH": "{{ var.json.the_general_index.dump_0.target_gcs_path }}",
             "INPUT_CSV_HEADERS": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
             "DATA_DTYPES": '{\n  "dkey": "str",\n  "raw_id": "str",\n  "meta_key": "str",\n  "doc_doi": "str",\n  "meta_doi": "str",\n  "doi": "str",\n  "doi_flag": "str",\n  "isbn": "str",\n  "journal": "str",\n  "doc_title": "str",\n  "meta_title": "str",\n  "title": "str",\n  "doc_pub_date": "str",\n  "meta_pub_date": "str",\n  "pub_date": "str",\n  "doc_author": "str",\n  "meta_author": "str",\n  "author": "str",\n  "doc_size": "str",\n  "insert_date": "str",\n  "multi_row_flag": "str"\n}',
-            "DATETIME_LIST": '[ \n  "insert_date" \n] ',
+            "DATETIME_LIST": '[\n  "insert_date"\n]',
             "NULL_STRING_LIST": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
         },
     )
@@ -106,7 +106,7 @@ with DAG(
             "TARGET_GCS_PATH": "{{ var.json.the_general_index.dump_1.target_gcs_path }}",
             "INPUT_CSV_HEADERS": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
             "DATA_DTYPES": '{\n  "dkey": "str",\n  "raw_id": "str",\n  "meta_key": "str",\n  "doc_doi": "str",\n  "meta_doi": "str",\n  "doi": "str",\n  "doi_flag": "str",\n  "isbn": "str",\n  "journal": "str",\n  "doc_title": "str",\n  "meta_title": "str",\n  "title": "str",\n  "doc_pub_date": "str",\n  "meta_pub_date": "str",\n  "pub_date": "str",\n  "doc_author": "str",\n  "meta_author": "str",\n  "author": "str",\n  "doc_size": "str",\n  "insert_date": "str",\n  "multi_row_flag": "str"\n}',
-            "DATETIME_LIST": '[ \n  "insert_date" \n] ',
+            "DATETIME_LIST": '[\n  "insert_date"\n]',
             "NULL_STRING_LIST": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
         },
     )
@@ -137,10 +137,9 @@ with DAG(
             "TARGET_GCS_PATH": "{{ var.json.the_general_index.dump_2.target_gcs_path }}",
             "INPUT_CSV_HEADERS": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
             "DATA_DTYPES": '{\n  "dkey": "str",\n  "raw_id": "str",\n  "meta_key": "str",\n  "doc_doi": "str",\n  "meta_doi": "str",\n  "doi": "str",\n  "doi_flag": "str",\n  "isbn": "str",\n  "journal": "str",\n  "doc_title": "str",\n  "meta_title": "str",\n  "title": "str",\n  "doc_pub_date": "str",\n  "meta_pub_date": "str",\n  "pub_date": "str",\n  "doc_author": "str",\n  "meta_author": "str",\n  "author": "str",\n  "doc_size": "str",\n  "insert_date": "str",\n  "multi_row_flag": "str"\n}',
-            "DATETIME_LIST": '[ \n  "insert_date" \n] ',
+            "DATETIME_LIST": '[\n  "insert_date"\n]',
             "NULL_STRING_LIST": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
         },
-        resources={"request_ephemeral_storage": "12G", "limit_cpu": "3"},
     )
 
     # Run The General Index Pipeline
@@ -169,10 +168,9 @@ with DAG(
             "TARGET_GCS_PATH": "{{ var.json.the_general_index.dump_3.target_gcs_path }}",
             "INPUT_CSV_HEADERS": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
             "DATA_DTYPES": '{\n  "dkey": "str",\n  "raw_id": "str",\n  "meta_key": "str",\n  "doc_doi": "str",\n  "meta_doi": "str",\n  "doi": "str",\n  "doi_flag": "str",\n  "isbn": "str",\n  "journal": "str",\n  "doc_title": "str",\n  "meta_title": "str",\n  "title": "str",\n  "doc_pub_date": "str",\n  "meta_pub_date": "str",\n  "pub_date": "str",\n  "doc_author": "str",\n  "meta_author": "str",\n  "author": "str",\n  "doc_size": "str",\n  "insert_date": "str",\n  "multi_row_flag": "str"\n}',
-            "DATETIME_LIST": '[ \n  "insert_date" \n] ',
+            "DATETIME_LIST": '[\n  "insert_date"\n]',
             "NULL_STRING_LIST": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
         },
-        resources={"request_ephemeral_storage": "12G", "limit_cpu": "3"},
     )
 
     # Run The General Index Pipeline
@@ -201,10 +199,9 @@ with DAG(
             "TARGET_GCS_PATH": "{{ var.json.the_general_index.dump_4.target_gcs_path }}",
             "INPUT_CSV_HEADERS": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
             "DATA_DTYPES": '{\n  "dkey": "str",\n  "raw_id": "str",\n  "meta_key": "str",\n  "doc_doi": "str",\n  "meta_doi": "str",\n  "doi": "str",\n  "doi_flag": "str",\n  "isbn": "str",\n  "journal": "str",\n  "doc_title": "str",\n  "meta_title": "str",\n  "title": "str",\n  "doc_pub_date": "str",\n  "meta_pub_date": "str",\n  "pub_date": "str",\n  "doc_author": "str",\n  "meta_author": "str",\n  "author": "str",\n  "doc_size": "str",\n  "insert_date": "str",\n  "multi_row_flag": "str"\n}',
-            "DATETIME_LIST": '[ \n  "insert_date" \n] ',
+            "DATETIME_LIST": '[\n  "insert_date"\n]',
             "NULL_STRING_LIST": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
         },
-        resources={"request_ephemeral_storage": "12G", "limit_cpu": "3"},
     )
 
     # Run The General Index Pipeline
@@ -233,10 +230,9 @@ with DAG(
             "TARGET_GCS_PATH": "{{ var.json.the_general_index.dump_5.target_gcs_path }}",
             "INPUT_CSV_HEADERS": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
             "DATA_DTYPES": '{\n  "dkey": "str",\n  "raw_id": "str",\n  "meta_key": "str",\n  "doc_doi": "str",\n  "meta_doi": "str",\n  "doi": "str",\n  "doi_flag": "str",\n  "isbn": "str",\n  "journal": "str",\n  "doc_title": "str",\n  "meta_title": "str",\n  "title": "str",\n  "doc_pub_date": "str",\n  "meta_pub_date": "str",\n  "pub_date": "str",\n  "doc_author": "str",\n  "meta_author": "str",\n  "author": "str",\n  "doc_size": "str",\n  "insert_date": "str",\n  "multi_row_flag": "str"\n}',
-            "DATETIME_LIST": '[ \n  "insert_date" \n] ',
+            "DATETIME_LIST": '[\n  "insert_date"\n]',
             "NULL_STRING_LIST": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
         },
-        resources={"request_ephemeral_storage": "12G", "limit_cpu": "3"},
     )
 
     # Run The General Index Pipeline
@@ -265,10 +261,9 @@ with DAG(
             "TARGET_GCS_PATH": "{{ var.json.the_general_index.dump_6.target_gcs_path }}",
             "INPUT_CSV_HEADERS": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
             "DATA_DTYPES": '{\n  "dkey": "str",\n  "raw_id": "str",\n  "meta_key": "str",\n  "doc_doi": "str",\n  "meta_doi": "str",\n  "doi": "str",\n  "doi_flag": "str",\n  "isbn": "str",\n  "journal": "str",\n  "doc_title": "str",\n  "meta_title": "str",\n  "title": "str",\n  "doc_pub_date": "str",\n  "meta_pub_date": "str",\n  "pub_date": "str",\n  "doc_author": "str",\n  "meta_author": "str",\n  "author": "str",\n  "doc_size": "str",\n  "insert_date": "str",\n  "multi_row_flag": "str"\n}',
-            "DATETIME_LIST": '[ \n  "insert_date" \n] ',
+            "DATETIME_LIST": '[\n  "insert_date"\n]',
             "NULL_STRING_LIST": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
         },
-        resources={"request_ephemeral_storage": "12G", "limit_cpu": "3"},
     )
 
     # Run The General Index Pipeline
@@ -297,10 +292,9 @@ with DAG(
             "TARGET_GCS_PATH": "{{ var.json.the_general_index.dump_7.target_gcs_path }}",
             "INPUT_CSV_HEADERS": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
             "DATA_DTYPES": '{\n  "dkey": "str",\n  "raw_id": "str",\n  "meta_key": "str",\n  "doc_doi": "str",\n  "meta_doi": "str",\n  "doi": "str",\n  "doi_flag": "str",\n  "isbn": "str",\n  "journal": "str",\n  "doc_title": "str",\n  "meta_title": "str",\n  "title": "str",\n  "doc_pub_date": "str",\n  "meta_pub_date": "str",\n  "pub_date": "str",\n  "doc_author": "str",\n  "meta_author": "str",\n  "author": "str",\n  "doc_size": "str",\n  "insert_date": "str",\n  "multi_row_flag": "str"\n}',
-            "DATETIME_LIST": '[ \n  "insert_date" \n] ',
+            "DATETIME_LIST": '[\n  "insert_date"\n]',
             "NULL_STRING_LIST": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
         },
-        resources={"request_ephemeral_storage": "12G", "limit_cpu": "3"},
     )
 
     # Run The General Index Pipeline
@@ -329,10 +323,9 @@ with DAG(
             "TARGET_GCS_PATH": "{{ var.json.the_general_index.dump_8.target_gcs_path }}",
             "INPUT_CSV_HEADERS": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
             "DATA_DTYPES": '{\n  "dkey": "str",\n  "raw_id": "str",\n  "meta_key": "str",\n  "doc_doi": "str",\n  "meta_doi": "str",\n  "doi": "str",\n  "doi_flag": "str",\n  "isbn": "str",\n  "journal": "str",\n  "doc_title": "str",\n  "meta_title": "str",\n  "title": "str",\n  "doc_pub_date": "str",\n  "meta_pub_date": "str",\n  "pub_date": "str",\n  "doc_author": "str",\n  "meta_author": "str",\n  "author": "str",\n  "doc_size": "str",\n  "insert_date": "str",\n  "multi_row_flag": "str"\n}',
-            "DATETIME_LIST": '[ \n  "insert_date" \n] ',
+            "DATETIME_LIST": '[\n  "insert_date"\n]',
             "NULL_STRING_LIST": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
         },
-        resources={"request_ephemeral_storage": "12G", "limit_cpu": "3"},
     )
 
     # Run The General Index Pipeline
@@ -361,10 +354,9 @@ with DAG(
             "TARGET_GCS_PATH": "{{ var.json.the_general_index.dump_9.target_gcs_path }}",
             "INPUT_CSV_HEADERS": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
             "DATA_DTYPES": '{\n  "dkey": "str",\n  "raw_id": "str",\n  "meta_key": "str",\n  "doc_doi": "str",\n  "meta_doi": "str",\n  "doi": "str",\n  "doi_flag": "str",\n  "isbn": "str",\n  "journal": "str",\n  "doc_title": "str",\n  "meta_title": "str",\n  "title": "str",\n  "doc_pub_date": "str",\n  "meta_pub_date": "str",\n  "pub_date": "str",\n  "doc_author": "str",\n  "meta_author": "str",\n  "author": "str",\n  "doc_size": "str",\n  "insert_date": "str",\n  "multi_row_flag": "str"\n}',
-            "DATETIME_LIST": '[ \n  "insert_date" \n] ',
+            "DATETIME_LIST": '[\n  "insert_date"\n]',
             "NULL_STRING_LIST": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
         },
-        resources={"request_ephemeral_storage": "12G", "limit_cpu": "3"},
     )
 
     # Run The General Index Pipeline
@@ -393,10 +385,9 @@ with DAG(
             "TARGET_GCS_PATH": "{{ var.json.the_general_index.dump_a.target_gcs_path }}",
             "INPUT_CSV_HEADERS": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
             "DATA_DTYPES": '{\n  "dkey": "str",\n  "raw_id": "str",\n  "meta_key": "str",\n  "doc_doi": "str",\n  "meta_doi": "str",\n  "doi": "str",\n  "doi_flag": "str",\n  "isbn": "str",\n  "journal": "str",\n  "doc_title": "str",\n  "meta_title": "str",\n  "title": "str",\n  "doc_pub_date": "str",\n  "meta_pub_date": "str",\n  "pub_date": "str",\n  "doc_author": "str",\n  "meta_author": "str",\n  "author": "str",\n  "doc_size": "str",\n  "insert_date": "str",\n  "multi_row_flag": "str"\n}',
-            "DATETIME_LIST": '[ \n  "insert_date" \n] ',
+            "DATETIME_LIST": '[\n  "insert_date"\n]',
             "NULL_STRING_LIST": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
         },
-        resources={"request_ephemeral_storage": "12G", "limit_cpu": "3"},
     )
 
     # Run The General Index Pipeline
@@ -425,10 +416,9 @@ with DAG(
             "TARGET_GCS_PATH": "{{ var.json.the_general_index.dump_b.target_gcs_path }}",
             "INPUT_CSV_HEADERS": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
             "DATA_DTYPES": '{\n  "dkey": "str",\n  "raw_id": "str",\n  "meta_key": "str",\n  "doc_doi": "str",\n  "meta_doi": "str",\n  "doi": "str",\n  "doi_flag": "str",\n  "isbn": "str",\n  "journal": "str",\n  "doc_title": "str",\n  "meta_title": "str",\n  "title": "str",\n  "doc_pub_date": "str",\n  "meta_pub_date": "str",\n  "pub_date": "str",\n  "doc_author": "str",\n  "meta_author": "str",\n  "author": "str",\n  "doc_size": "str",\n  "insert_date": "str",\n  "multi_row_flag": "str"\n}',
-            "DATETIME_LIST": '[ \n  "insert_date" \n] ',
+            "DATETIME_LIST": '[\n  "insert_date"\n]',
             "NULL_STRING_LIST": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
         },
-        resources={"request_ephemeral_storage": "12G", "limit_cpu": "3"},
     )
 
     # Run The General Index Pipeline
@@ -457,10 +447,9 @@ with DAG(
             "TARGET_GCS_PATH": "{{ var.json.the_general_index.dump_c.target_gcs_path }}",
             "INPUT_CSV_HEADERS": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
             "DATA_DTYPES": '{\n  "dkey": "str",\n  "raw_id": "str",\n  "meta_key": "str",\n  "doc_doi": "str",\n  "meta_doi": "str",\n  "doi": "str",\n  "doi_flag": "str",\n  "isbn": "str",\n  "journal": "str",\n  "doc_title": "str",\n  "meta_title": "str",\n  "title": "str",\n  "doc_pub_date": "str",\n  "meta_pub_date": "str",\n  "pub_date": "str",\n  "doc_author": "str",\n  "meta_author": "str",\n  "author": "str",\n  "doc_size": "str",\n  "insert_date": "str",\n  "multi_row_flag": "str"\n}',
-            "DATETIME_LIST": '[ \n  "insert_date" \n] ',
+            "DATETIME_LIST": '[\n  "insert_date"\n]',
             "NULL_STRING_LIST": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
         },
-        resources={"request_ephemeral_storage": "12G", "limit_cpu": "3"},
     )
 
     # Run The General Index Pipeline
@@ -489,10 +478,9 @@ with DAG(
             "TARGET_GCS_PATH": "{{ var.json.the_general_index.dump_d.target_gcs_path }}",
             "INPUT_CSV_HEADERS": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
             "DATA_DTYPES": '{\n  "dkey": "str",\n  "raw_id": "str",\n  "meta_key": "str",\n  "doc_doi": "str",\n  "meta_doi": "str",\n  "doi": "str",\n  "doi_flag": "str",\n  "isbn": "str",\n  "journal": "str",\n  "doc_title": "str",\n  "meta_title": "str",\n  "title": "str",\n  "doc_pub_date": "str",\n  "meta_pub_date": "str",\n  "pub_date": "str",\n  "doc_author": "str",\n  "meta_author": "str",\n  "author": "str",\n  "doc_size": "str",\n  "insert_date": "str",\n  "multi_row_flag": "str"\n}',
-            "DATETIME_LIST": '[ \n  "insert_date" \n] ',
+            "DATETIME_LIST": '[\n  "insert_date"\n]',
             "NULL_STRING_LIST": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
         },
-        resources={"request_ephemeral_storage": "12G", "limit_cpu": "3"},
     )
 
     # Run The General Index Pipeline
@@ -521,10 +509,9 @@ with DAG(
             "TARGET_GCS_PATH": "{{ var.json.the_general_index.dump_e.target_gcs_path }}",
             "INPUT_CSV_HEADERS": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
             "DATA_DTYPES": '{\n  "dkey": "str",\n  "raw_id": "str",\n  "meta_key": "str",\n  "doc_doi": "str",\n  "meta_doi": "str",\n  "doi": "str",\n  "doi_flag": "str",\n  "isbn": "str",\n  "journal": "str",\n  "doc_title": "str",\n  "meta_title": "str",\n  "title": "str",\n  "doc_pub_date": "str",\n  "meta_pub_date": "str",\n  "pub_date": "str",\n  "doc_author": "str",\n  "meta_author": "str",\n  "author": "str",\n  "doc_size": "str",\n  "insert_date": "str",\n  "multi_row_flag": "str"\n}',
-            "DATETIME_LIST": '[ \n  "insert_date" \n] ',
+            "DATETIME_LIST": '[\n  "insert_date"\n]',
             "NULL_STRING_LIST": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
         },
-        resources={"request_ephemeral_storage": "12G", "limit_cpu": "3"},
     )
 
     # Run The General Index Pipeline
@@ -553,10 +540,9 @@ with DAG(
             "TARGET_GCS_PATH": "{{ var.json.the_general_index.dump_f.target_gcs_path }}",
             "INPUT_CSV_HEADERS": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
             "DATA_DTYPES": '{\n  "dkey": "str",\n  "raw_id": "str",\n  "meta_key": "str",\n  "doc_doi": "str",\n  "meta_doi": "str",\n  "doi": "str",\n  "doi_flag": "str",\n  "isbn": "str",\n  "journal": "str",\n  "doc_title": "str",\n  "meta_title": "str",\n  "title": "str",\n  "doc_pub_date": "str",\n  "meta_pub_date": "str",\n  "pub_date": "str",\n  "doc_author": "str",\n  "meta_author": "str",\n  "author": "str",\n  "doc_size": "str",\n  "insert_date": "str",\n  "multi_row_flag": "str"\n}',
-            "DATETIME_LIST": '[ \n  "insert_date" \n] ',
+            "DATETIME_LIST": '[\n  "insert_date"\n]',
             "NULL_STRING_LIST": '[\n  "dkey",\n  "raw_id",\n  "meta_key",\n  "doc_doi",\n  "meta_doi",\n  "doi",\n  "doi_flag",\n  "isbn",\n  "journal",\n  "doc_title",\n  "meta_title",\n  "title",\n  "doc_pub_date",\n  "meta_pub_date",\n  "pub_date",\n  "doc_author",\n  "meta_author",\n  "author",\n  "doc_size",\n  "insert_date",\n  "multi_row_flag"\n]',
         },
-        resources={"request_ephemeral_storage": "12G", "limit_cpu": "3"},
     )
     delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
         task_id="delete_cluster",

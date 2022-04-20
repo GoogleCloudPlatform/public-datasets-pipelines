@@ -122,9 +122,9 @@ dag:
               "multi_row_flag": "str"
             }
           DATETIME_LIST: >-
-            [ 
-              "insert_date" 
-            ] 
+            [
+              "insert_date"
+            ]
           NULL_STRING_LIST: >-
             [
               "dkey",
@@ -150,8 +150,8 @@ dag:
               "multi_row_flag"
             ]
       resources:
-          request_ephemeral_storage: "12G"
-          limit_cpu: "3"
+        request_ephemeral_storage: "12G"
+        limit_cpu: "3"
     - operator: "GKEStartPodOperator"
       description: "Run The General Index Pipeline"
       args:
@@ -226,9 +226,9 @@ dag:
               "multi_row_flag": "str"
             }
           DATETIME_LIST: >-
-            [ 
-              "insert_date" 
-            ] 
+            [
+              "insert_date"
+            ]
           NULL_STRING_LIST: >-
             [
               "dkey",
@@ -254,8 +254,8 @@ dag:
               "multi_row_flag"
             ]
       resources:
-          request_ephemeral_storage: "12G"
-          limit_cpu: "3"
+        request_ephemeral_storage: "12G"
+        limit_cpu: "3"
     - operator: "GKEStartPodOperator"
       description: "Run The General Index Pipeline"
       args:
@@ -330,9 +330,9 @@ dag:
               "multi_row_flag": "str"
             }
           DATETIME_LIST: >-
-            [ 
-              "insert_date" 
-            ] 
+            [
+              "insert_date"
+            ]
           NULL_STRING_LIST: >-
             [
               "dkey",
@@ -357,9 +357,9 @@ dag:
               "insert_date",
               "multi_row_flag"
             ]
-        resources:
-          request_ephemeral_storage: "12G"
-          limit_cpu: "3"
+      resources:
+        request_ephemeral_storage: "12G"
+        limit_cpu: "3"
     - operator: "GKEStartPodOperator"
       description: "Run The General Index Pipeline"
       args:
@@ -434,9 +434,9 @@ dag:
               "multi_row_flag": "str"
             }
           DATETIME_LIST: >-
-            [ 
-              "insert_date" 
-            ] 
+            [
+              "insert_date"
+            ]
           NULL_STRING_LIST: >-
             [
               "dkey",
@@ -461,9 +461,9 @@ dag:
               "insert_date",
               "multi_row_flag"
             ]
-        resources:
-          request_ephemeral_storage: "12G"
-          limit_cpu: "3"
+      resources:
+        request_ephemeral_storage: "12G"
+        limit_cpu: "3"
     - operator: "GKEStartPodOperator"
       description: "Run The General Index Pipeline"
       args:
@@ -538,9 +538,9 @@ dag:
               "multi_row_flag": "str"
             }
           DATETIME_LIST: >-
-            [ 
-              "insert_date" 
-            ] 
+            [
+              "insert_date"
+            ]
           NULL_STRING_LIST: >-
             [
               "dkey",
@@ -565,9 +565,9 @@ dag:
               "insert_date",
               "multi_row_flag"
             ]
-        resources:
-          request_ephemeral_storage: "12G"
-          limit_cpu: "3"
+      resources:
+        request_ephemeral_storage: "12G"
+        limit_cpu: "3"
     - operator: "GKEStartPodOperator"
       description: "Run The General Index Pipeline"
       args:
@@ -642,9 +642,9 @@ dag:
               "multi_row_flag": "str"
             }
           DATETIME_LIST: >-
-            [ 
-              "insert_date" 
-            ] 
+            [
+              "insert_date"
+            ]
           NULL_STRING_LIST: >-
             [
               "dkey",
@@ -669,9 +669,9 @@ dag:
               "insert_date",
               "multi_row_flag"
             ]
-        resources:
-          request_ephemeral_storage: "12G"
-          limit_cpu: "3"
+      resources:
+        request_ephemeral_storage: "12G"
+        limit_cpu: "3"
     - operator: "GKEStartPodOperator"
       description: "Run The General Index Pipeline"
       args:
@@ -746,9 +746,9 @@ dag:
               "multi_row_flag": "str"
             }
           DATETIME_LIST: >-
-            [ 
-              "insert_date" 
-            ] 
+            [
+              "insert_date"
+            ]
           NULL_STRING_LIST: >-
             [
               "dkey",
@@ -773,9 +773,9 @@ dag:
               "insert_date",
               "multi_row_flag"
             ]
-        resources:
-          request_ephemeral_storage: "12G"
-          limit_cpu: "3"
+      resources:
+        request_ephemeral_storage: "12G"
+        limit_cpu: "3"
     - operator: "GKEStartPodOperator"
       description: "Run The General Index Pipeline"
       args:
@@ -850,9 +850,9 @@ dag:
               "multi_row_flag": "str"
             }
           DATETIME_LIST: >-
-            [ 
-              "insert_date" 
-            ] 
+            [
+              "insert_date"
+            ]
           NULL_STRING_LIST: >-
             [
               "dkey",
@@ -877,9 +877,9 @@ dag:
               "insert_date",
               "multi_row_flag"
             ]
-        resources:
-          request_ephemeral_storage: "12G"
-          limit_cpu: "3"
+      resources:
+        request_ephemeral_storage: "12G"
+        limit_cpu: "3"
     - operator: "GKEStartPodOperator"
       description: "Run The General Index Pipeline"
       args:
@@ -954,9 +954,9 @@ dag:
               "multi_row_flag": "str"
             }
           DATETIME_LIST: >-
-            [ 
-              "insert_date" 
-            ] 
+            [
+              "insert_date"
+            ]
           NULL_STRING_LIST: >-
             [
               "dkey",
@@ -981,9 +981,9 @@ dag:
               "insert_date",
               "multi_row_flag"
             ]
-        resources:
-          request_ephemeral_storage: "12G"
-          limit_cpu: "3"
+      resources:
+        request_ephemeral_storage: "12G"
+        limit_cpu: "3"
     - operator: "GKEStartPodOperator"
       description: "Run The General Index Pipeline"
       args:
@@ -1058,9 +1058,9 @@ dag:
               "multi_row_flag": "str"
             }
           DATETIME_LIST: >-
-            [ 
-              "insert_date" 
-            ] 
+            [
+              "insert_date"
+            ]
           NULL_STRING_LIST: >-
             [
               "dkey",
@@ -1085,9 +1085,9 @@ dag:
               "insert_date",
               "multi_row_flag"
             ]
-        resources:
-          request_ephemeral_storage: "12G"
-          limit_cpu: "3"
+      resources:
+        request_ephemeral_storage: "12G"
+        limit_cpu: "3"
     - operator: "GKEStartPodOperator"
       description: "Run The General Index Pipeline"
       args:
@@ -1162,9 +1162,9 @@ dag:
               "multi_row_flag": "str"
             }
           DATETIME_LIST: >-
-            [ 
-              "insert_date" 
-            ] 
+            [
+              "insert_date"
+            ]
           NULL_STRING_LIST: >-
             [
               "dkey",
@@ -1189,9 +1189,9 @@ dag:
               "insert_date",
               "multi_row_flag"
             ]
-        resources:
-          request_ephemeral_storage: "12G"
-          limit_cpu: "3"
+      resources:
+        request_ephemeral_storage: "12G"
+        limit_cpu: "3"
     - operator: "GKEStartPodOperator"
       description: "Run The General Index Pipeline"
       args:
@@ -1266,9 +1266,9 @@ dag:
               "multi_row_flag": "str"
             }
           DATETIME_LIST: >-
-            [ 
-              "insert_date" 
-            ] 
+            [
+              "insert_date"
+            ]
           NULL_STRING_LIST: >-
             [
               "dkey",
@@ -1293,9 +1293,9 @@ dag:
               "insert_date",
               "multi_row_flag"
             ]
-        resources:
-          request_ephemeral_storage: "12G"
-          limit_cpu: "3"
+      resources:
+        request_ephemeral_storage: "12G"
+        limit_cpu: "3"
     - operator: "GKEStartPodOperator"
       description: "Run The General Index Pipeline"
       args:
@@ -1370,9 +1370,9 @@ dag:
               "multi_row_flag": "str"
             }
           DATETIME_LIST: >-
-            [ 
-              "insert_date" 
-            ] 
+            [
+              "insert_date"
+            ]
           NULL_STRING_LIST: >-
             [
               "dkey",
@@ -1397,9 +1397,9 @@ dag:
               "insert_date",
               "multi_row_flag"
             ]
-        resources:
-          request_ephemeral_storage: "12G"
-          limit_cpu: "3"
+      resources:
+        request_ephemeral_storage: "12G"
+        limit_cpu: "3"
     - operator: "GKEStartPodOperator"
       description: "Run The General Index Pipeline"
       args:
@@ -1474,9 +1474,9 @@ dag:
               "multi_row_flag": "str"
             }
           DATETIME_LIST: >-
-            [ 
-              "insert_date" 
-            ] 
+            [
+              "insert_date"
+            ]
           NULL_STRING_LIST: >-
             [
               "dkey",
@@ -1501,9 +1501,9 @@ dag:
               "insert_date",
               "multi_row_flag"
             ]
-        resources:
-          request_ephemeral_storage: "12G"
-          limit_cpu: "3"
+      resources:
+        request_ephemeral_storage: "12G"
+        limit_cpu: "3"
     - operator: "GKEStartPodOperator"
       description: "Run The General Index Pipeline"
       args:
@@ -1578,9 +1578,9 @@ dag:
               "multi_row_flag": "str"
             }
           DATETIME_LIST: >-
-            [ 
-              "insert_date" 
-            ] 
+            [
+              "insert_date"
+            ]
           NULL_STRING_LIST: >-
             [
               "dkey",
@@ -1605,9 +1605,9 @@ dag:
               "insert_date",
               "multi_row_flag"
             ]
-        resources:
-          request_ephemeral_storage: "12G"
-          limit_cpu: "3"
+      resources:
+        request_ephemeral_storage: "12G"
+        limit_cpu: "3"
     - operator: "GKEStartPodOperator"
       description: "Run The General Index Pipeline"
       args:
@@ -1682,9 +1682,9 @@ dag:
               "multi_row_flag": "str"
             }
           DATETIME_LIST: >-
-            [ 
-              "insert_date" 
-            ] 
+            [
+              "insert_date"
+            ]
           NULL_STRING_LIST: >-
             [
               "dkey",
@@ -1709,9 +1709,9 @@ dag:
               "insert_date",
               "multi_row_flag"
             ]
-        resources:
-          request_ephemeral_storage: "12G"
-          limit_cpu: "3"
+      resources:
+        request_ephemeral_storage: "12G"
+        limit_cpu: "3"
     - operator: "GKEDeleteClusterOperator"
       args:
         task_id: "delete_cluster"
