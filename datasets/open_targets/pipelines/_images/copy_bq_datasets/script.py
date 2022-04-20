@@ -37,7 +37,8 @@ def main(
     target_project_id: str,
     service_account: str,
     dataset_name: str,
-    dataset_versions: typing.List[str],
+    source_dataset_name: str,
+    target_dataset_name: str,
     timeout: int,
 ):
     client = bigquery_datatransfer_v1.DataTransferServiceClient()
@@ -55,30 +56,26 @@ def main(
     ]
 
     _running_configs = []
-    for version in dataset_versions:
-        dataset_id = f"{version}"
-        display_name = f"{transfer_config_prefix}-{version}"
+    # for version in dataset_versions:
+    dataset_id = f"{source_dataset_name}"
+    display_name = f"{transfer_config_prefix}-{source_dataset_name}"
 
-        _config = next(
-            (
-                config
-                for config in existing_configs
-                if config.display_name == display_name
-            ),
-            None,
+    _config = next(
+        (config for config in existing_configs if config.display_name == display_name),
+        None,
+    )
+    if not _config:
+        _config = create_transfer_config(
+            client,
+            source_project_id,
+            target_project_id,
+            dataset_id,
+            display_name,
+            service_account,
         )
-        if not _config:
-            _config = create_transfer_config(
-                client,
-                source_project_id,
-                target_project_id,
-                dataset_id,
-                display_name,
-                service_account,
-            )
 
-        trigger_config(client, _config)
-        _running_configs.append(_config)
+    trigger_config(client, _config)
+    _running_configs.append(_config)
 
     wait_for_completion(client, _running_configs, timeout)
 
