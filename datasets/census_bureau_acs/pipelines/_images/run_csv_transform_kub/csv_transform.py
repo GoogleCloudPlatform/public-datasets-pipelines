@@ -23,7 +23,7 @@ import numpy as np
 import pandas as pd
 import requests
 from google.api_core.exceptions import NotFound
-from google.cloud import storage, bigquery
+from google.cloud import bigquery, storage
 
 
 def main(
@@ -51,8 +51,8 @@ def main(
     logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
     execute_pipeline(
-        group_id_file="group_ids.json",
-        state_code_file="state_codes.json",
+        group_id_file=group_id_file,
+        state_code_file=state_code_file,
         report_level=report_level,
         year_report=year_report,
         api_naming_convention=api_naming_convention,
@@ -292,13 +292,14 @@ def extract_data_and_convert_to_df_national_level(
         source_url_new = str3.replace("~api_naming_convention~", api_naming_convention)
         try:
             r = requests.get(source_url_new, stream=True)
-            logging.info(f"Source url : {source_url_new}")
-            logging.info(f"status code : {r.status_code}")
             if r.status_code == 200:
                 text = r.json()
                 frame = load_nested_list_into_df_without_headers(text)
                 frame["KPI_Name"] = key
                 list_temp.append(frame)
+            else:
+                logging.info(f"Source url : {source_url_new}")
+                logging.info(f"status code : {r.status_code}")
         except OSError as e:
             logging.info(f"error : {e}")
             pass
@@ -332,13 +333,14 @@ def extract_data_and_convert_to_df_state_level(
             source_url_new = str4.replace("~state_code~", sc)
             try:
                 r = requests.get(source_url_new, stream=True)
-                logging.info(f"Source url : {source_url_new}")
-                logging.info(f"status code : {r.status_code}")
                 if r.status_code == 200:
                     text = r.json()
                     frame = load_nested_list_into_df_without_headers(text)
                     frame["KPI_Name"] = key
                     list_temp.append(frame)
+                else:
+                    logging.info(f"Source url : {source_url_new}")
+                    logging.info(f"status code : {r.status_code}")
             except OSError as e:
                 logging.info(f"error : {e}")
                 pass
