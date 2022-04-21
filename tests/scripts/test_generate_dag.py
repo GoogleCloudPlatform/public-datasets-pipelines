@@ -51,23 +51,15 @@ def dataset_path() -> typing.Iterator[pathlib.Path]:
 
 @pytest.fixture
 def pipeline_path(dataset_path, suffix="_pipeline") -> typing.Iterator[pathlib.Path]:
-    with tempfile.TemporaryDirectory(dir=dataset_path, suffix=suffix) as dir_path:
+    pipelines_dir = dataset_path / "pipelines"
+    pipelines_dir.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(dir=pipelines_dir, suffix=suffix) as dir_path:
         yield pathlib.Path(dir_path)
-
-
-@pytest.fixture(autouse=True)
-def cleanup_shared_variables():
-    shared_variables_file = ENV_DATASETS_PATH / "shared_variables.json"
-    if shared_variables_file.exists():
-        shared_variables_file.unlink()
-    yield
-    if shared_variables_file.exists():
-        shared_variables_file.unlink()
 
 
 def generate_image_files(dataset_path: pathlib.Path, num_containers: int = 1):
     for i in range(num_containers):
-        target_dir = dataset_path / "_images" / f"test_image_{i+1}"
+        target_dir = dataset_path / "pipelines" / "_images" / f"test_image_{i+1}"
         target_dir.mkdir(parents=True, exist_ok=True)
         (target_dir / "Dockerfile").touch()
 
@@ -75,18 +67,22 @@ def generate_image_files(dataset_path: pathlib.Path, num_containers: int = 1):
 def copy_config_files_and_set_tmp_folder_names_as_ids(
     dataset_path: pathlib.Path, pipeline_path: pathlib.Path
 ):
-    shutil.copyfile(SAMPLE_YAML_PATHS["dataset"], dataset_path / "dataset.yaml")
+    shutil.copyfile(
+        SAMPLE_YAML_PATHS["dataset"], dataset_path / "pipelines" / "dataset.yaml"
+    )
     shutil.copyfile(SAMPLE_YAML_PATHS["pipeline"], pipeline_path / "pipeline.yaml")
 
-    dataset_config = yaml.load(dataset_path / "dataset.yaml")
+    dataset_config = yaml.load(dataset_path / "pipelines" / "dataset.yaml")
     dataset_yaml_str = (
-        (dataset_path / "dataset.yaml")
+        (dataset_path / "pipelines" / "dataset.yaml")
         .read_text()
         .replace(
             f"name: {dataset_config['dataset']['name']}", f"name: {dataset_path.name}"
         )
     )
-    generate_dag.write_to_file(dataset_yaml_str, dataset_path / "dataset.yaml")
+    generate_dag.write_to_file(
+        dataset_yaml_str, dataset_path / "pipelines" / "dataset.yaml"
+    )
 
     pipeline_config = yaml.load(pipeline_path / "pipeline.yaml")
     pipeline_yaml_str = (
@@ -119,7 +115,7 @@ def test_main_generates_dag_files(
 
     for path_prefix in (
         pipeline_path,
-        ENV_DATASETS_PATH / dataset_path.name / pipeline_path.name,
+        ENV_DATASETS_PATH / dataset_path.name / "pipelines" / pipeline_path.name,
     ):
         assert (path_prefix / f"{pipeline_path.name}_dag.py").exists()
 
@@ -133,7 +129,7 @@ def test_main_copies_pipeline_yaml_file(
 
     for path_prefix in (
         pipeline_path,
-        ENV_DATASETS_PATH / dataset_path.name / pipeline_path.name,
+        ENV_DATASETS_PATH / dataset_path.name / "pipelines" / pipeline_path.name,
     ):
         assert (path_prefix / "pipeline.yaml").exists()
 
@@ -142,50 +138,17 @@ def test_main_copies_custom_dir_if_it_exists(
     dataset_path: pathlib.Path, pipeline_path: pathlib.Path, env: str
 ):
     copy_config_files_and_set_tmp_folder_names_as_ids(dataset_path, pipeline_path)
-    custom_path = dataset_path / pipeline_path.name / "custom"
+    custom_path = dataset_path / "pipelines" / pipeline_path.name / "custom"
     custom_path.mkdir(parents=True, exist_ok=True)
 
     generate_dag.main(dataset_path.name, pipeline_path.name, env)
 
     for path_prefix in (
         pipeline_path,
-        ENV_DATASETS_PATH / dataset_path.name / pipeline_path.name,
+        ENV_DATASETS_PATH / dataset_path.name / "pipelines" / pipeline_path.name,
     ):
         assert (path_prefix / "custom").exists()
         assert (path_prefix / "custom").is_dir()
-
-
-def test_main_creates_shared_variables_file_if_it_doesnt_exist(
-    dataset_path: pathlib.Path, pipeline_path: pathlib.Path, env: str
-):
-    copy_config_files_and_set_tmp_folder_names_as_ids(dataset_path, pipeline_path)
-    assert not (ENV_DATASETS_PATH / "shared_variables.json").exists()
-
-    generate_dag.main(dataset_path.name, pipeline_path.name, env)
-
-    assert (ENV_DATASETS_PATH / "shared_variables.json").exists()
-    assert not (ENV_DATASETS_PATH / "shared_variables.json").is_dir()
-
-
-def test_main_does_not_modify_existing_shared_variables_file(
-    dataset_path: pathlib.Path, pipeline_path: pathlib.Path, env: str
-):
-    copy_config_files_and_set_tmp_folder_names_as_ids(dataset_path, pipeline_path)
-
-    # Create .test/datasets dir that'll contain the existing shared_variables.json file
-    ENV_DATASETS_PATH.mkdir(parents=True, exist_ok=True)
-    shared_variables_file = ENV_DATASETS_PATH / "shared_variables.json"
-    assert not shared_variables_file.exists()
-
-    # Create a non-empty shared variables file
-    airflow_vars = {"key": "value"}
-    shared_variables_file.touch()
-    shared_variables_file.write_text(json.dumps(airflow_vars), encoding="utf-8")
-
-    generate_dag.main(dataset_path.name, pipeline_path.name, env)
-
-    assert shared_variables_file.exists()
-    assert json.loads(shared_variables_file.read_text()) == airflow_vars
 
 
 def test_main_raises_an_error_when_airflow_version_is_not_specified(
@@ -230,7 +193,7 @@ def test_main_uses_airflow_operators_based_on_airflow_version_specified_in_the_c
 
     for path_prefix in (
         pipeline_path,
-        ENV_DATASETS_PATH / dataset_path.name / pipeline_path.name,
+        ENV_DATASETS_PATH / dataset_path.name / "pipelines" / pipeline_path.name,
     ):
         assert (path_prefix / f"{pipeline_path.name}_dag.py").exists()
 
@@ -259,13 +222,13 @@ def test_main_only_depends_on_pipeline_yaml(
 ):
     shutil.copyfile(SAMPLE_YAML_PATHS["pipeline"], pipeline_path / "pipeline.yaml")
 
-    assert not (dataset_path / "dataset.yaml").exists()
+    assert not (dataset_path / "pipelines" / "dataset.yaml").exists()
 
     generate_dag.main(dataset_path.name, pipeline_path.name, env)
 
     for path_prefix in (
         pipeline_path,
-        ENV_DATASETS_PATH / dataset_path.name / pipeline_path.name,
+        ENV_DATASETS_PATH / dataset_path.name / "pipelines" / pipeline_path.name,
     ):
         assert (path_prefix / f"{pipeline_path.name}_dag.py").exists()
 
@@ -318,7 +281,7 @@ def test_generated_dag_file_loads_properly_in_python(
 
     for cwd in (
         pipeline_path,
-        ENV_DATASETS_PATH / dataset_path.name / pipeline_path.name,
+        ENV_DATASETS_PATH / dataset_path.name / "pipelines" / pipeline_path.name,
     ):
         subprocess.check_call(["python", dag_filename], cwd=cwd)
 
@@ -334,7 +297,7 @@ def test_generated_dag_files_contain_license_headers(
 
     for path_prefix in (
         pipeline_path,
-        ENV_DATASETS_PATH / dataset_path.name / pipeline_path.name,
+        ENV_DATASETS_PATH / dataset_path.name / "pipelines" / pipeline_path.name,
     ):
         assert (path_prefix / f"{pipeline_path.name}_dag.py").read_text().count(
             license_header
@@ -392,9 +355,13 @@ def test_build_images_copies_image_files_to_env_dir(
     mocker.patch("scripts.generate_dag.build_and_push_image")
     generate_dag.main(dataset_path.name, pipeline_path.name, env)
 
-    for image_dir in (dataset_path / "_images").iterdir():
+    for image_dir in (dataset_path / "pipelines" / "_images").iterdir():
         copied_image_dir = (
-            ENV_DATASETS_PATH / dataset_path.name / "_images" / image_dir.name
+            ENV_DATASETS_PATH
+            / dataset_path.name
+            / "pipelines"
+            / "_images"
+            / image_dir.name
         )
         assert copied_image_dir.exists()
         assert copied_image_dir.is_dir()

@@ -9,11 +9,14 @@ jobs:
         uses: actions/setup-python@v2
       - name: Install dependencies
         run:
-          python -m pip install flake8 isort
-      - uses: psf/black@20.8b1
+          python -m pip install flake8 isort nbqa
+      - uses: psf/black@stable
         with:
-          args: ". --check"
+          options: "--check"
+          version: "22.3.0"
       - name: Run Flake8 Linter
         run: flake8
       - name: Run isort
         run: isort --check-only --profile black --diff .
+      - name: Run flake8 on notebooks
+        run: nbqa flake8 .
