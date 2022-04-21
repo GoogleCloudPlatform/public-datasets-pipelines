@@ -15,22 +15,6 @@
  */
 
 
-resource "google_storage_bucket" "open-targets" {
-  name                        = "${var.bucket_name_prefix}-open-targets"
-  force_destroy               = true
-  location                    = "US"
-  uniform_bucket_level_access = true
-  lifecycle {
-    ignore_changes = [
-      logging,
-    ]
-  }
-}
-
-output "storage_bucket-open-targets-name" {
-  value = google_storage_bucket.open-targets.name
-}
-
 resource "google_bigquery_dataset" "open_targets_platform" {
   dataset_id  = "open_targets_platform"
   project     = var.project_id

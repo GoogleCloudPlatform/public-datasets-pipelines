@@ -44,8 +44,9 @@ with DAG(
             "SOURCE_PROJECT_ID": "{{ var.json.open_targets.source_project_id }}",
             "TARGET_PROJECT_ID": "{{ var.json.open_targets.target_project_id }}",
             "SERVICE_ACCOUNT": "{{ var.json.open_targets.service_account }}",
-            "DATASET_NAME": "open_targets",
-            "DATASET_VERSIONS": '["platform"]',
+            "DATASET_NAME": "{{ var.json.open_targets.dataset_name }}",
+            "SOURCE_DATASET_NAME": "{{ var.json.open_targets.source_dataset_name }}",
+            "TARGET_DATASET_NAME": "{{ var.json.open_targets.target_dataset_name }}",
         },
         resources={
             "request_memory": "128M",

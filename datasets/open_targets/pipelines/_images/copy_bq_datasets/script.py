@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
 import logging
 import operator
 import os
@@ -56,7 +55,6 @@ def main(
     ]
 
     _running_configs = []
-    # for version in dataset_versions:
     dataset_id = f"{source_dataset_name}"
     display_name = f"{transfer_config_prefix}-{source_dataset_name}"
 
@@ -71,6 +69,8 @@ def main(
             target_project_id,
             dataset_id,
             display_name,
+            source_dataset_name,
+            target_dataset_name,
             service_account,
         )
 
@@ -119,10 +119,12 @@ def create_transfer_config(
     target_project_id: str,
     dataset_id: str,
     display_name: str,
+    source_dataset_name: str,
+    target_dataset_name: str,
     service_account: str,
 ) -> bigquery_datatransfer_v1.types.TransferConfig:
     transfer_config = bigquery_datatransfer_v1.TransferConfig(
-        destination_dataset_id=f"open_targets_{dataset_id}",
+        destination_dataset_id=f"{target_dataset_name}",
         display_name=display_name,
         data_source_id="cross_region_copy",
         dataset_region="US",
@@ -174,6 +176,7 @@ if __name__ == "__main__":
         target_project_id=os.environ["TARGET_PROJECT_ID"],
         service_account=os.environ["SERVICE_ACCOUNT"],
         dataset_name=os.environ["DATASET_NAME"],
-        dataset_versions=json.loads(os.environ["DATASET_VERSIONS"]),
+        source_dataset_name=os.environ["SOURCE_DATASET_NAME"],
+        target_dataset_name=os.environ["TARGET_DATASET_NAME"],
         timeout=int(os.getenv("TIMEOUT", 1200)),
     )

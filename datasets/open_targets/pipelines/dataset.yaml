@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,12 +19,6 @@ dataset:
   dataset_sources: ~
   terms_of_use: ~
 resources:
-
-  - type: storage_bucket
-    name: "open-targets"
-    uniform_bucket_level_access: True
-    location: US
-
   - type: bigquery_dataset
     dataset_id: open_targets_platform
     description: Open-Targets dataset
