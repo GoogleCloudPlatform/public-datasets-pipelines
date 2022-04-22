@@ -88,6 +88,13 @@ dag:
             }
 					INPUT_CSV_HEADERS: >-
 						[
+							"0",
+							"1",
+							"2",
+							"KPI_Name"
+						]
+					OUTPUT_CSV_HEADERS: >-
+						[
 							"geo_id",
 							"aggregate_travel_time_to_work",
 							"amerindian_including_hispanic",

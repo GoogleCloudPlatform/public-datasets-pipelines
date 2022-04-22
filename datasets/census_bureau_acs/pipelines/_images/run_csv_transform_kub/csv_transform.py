@@ -105,16 +105,16 @@ def execute_pipeline(
     group_id = json.load(json_obj_group_id)
     json_obj_state_code = open(state_code_file)
     state_code = json.load(json_obj_state_code)
-    logging.info("Extracting the data from API and loading into dataframe...")
-    if report_level == "national_level":
-        df = extract_data_and_convert_to_df_national_level(
-            group_id, year_report, api_naming_convention, source_url
-        )
-    elif report_level == "state_level":
-        df = extract_data_and_convert_to_df_state_level(
-            group_id, state_code, year_report, api_naming_convention, source_url
-        )
-    save_to_new_file(df, source_file, sep=",")
+    # logging.info("Extracting the data from API and loading into dataframe...")
+    # if report_level == "national_level":
+    #     df = extract_data_and_convert_to_df_national_level(
+    #         group_id, year_report, api_naming_convention, source_url
+    #     )
+    # elif report_level == "state_level":
+    #     df = extract_data_and_convert_to_df_state_level(
+    #         group_id, state_code, year_report, api_naming_convention, source_url
+    #     )
+    # save_to_new_file(df, source_file, sep=",")
     process_source_file(
         source_file=source_file,
         target_file=target_file,
@@ -124,7 +124,9 @@ def execute_pipeline(
         geography=geography,
         rename_mappings_list=rename_mappings_list,
         concat_col_list=concat_col_list,
-        input_csv_headers=input_csv_headers
+        input_csv_headers=input_csv_headers,
+        group_id=group_id,
+        state_code=state_code
     )
     if os.path.exists(target_file):
         upload_file_to_gcs(
@@ -167,7 +169,9 @@ def process_source_file(
     geography: str,
     rename_mappings_list: dict,
     concat_col_list: typing.List[str],
-    input_csv_headers: typing.List[str]
+    input_csv_headers: typing.List[str],
+    group_id: str,
+    state_code: str
 ) -> None:
     logging.info(f"Opening source file {source_file}")
     csv.field_size_limit(512<<10)
@@ -194,7 +198,9 @@ def process_source_file(
                     geography=geography,
                     rename_mappings_list=rename_mappings_list,
                     concat_col_list=concat_col_list,
-                    input_csv_headers=input_csv_headers
+                    input_csv_headers=input_csv_headers,
+                    group_id=group_id,
+                    state_code=state_code
                 )
                 data = []
                 chunk_number += 1
@@ -209,7 +215,9 @@ def process_source_file(
                 geography=geography,
                 rename_mappings_list=rename_mappings_list,
                 concat_col_list=concat_col_list,
-                input_csv_headers=input_csv_headers
+                input_csv_headers=input_csv_headers,
+                group_id=group_id,
+                state_code=state_code
             )
 
 
@@ -222,13 +230,15 @@ def process_dataframe_chunk(
     geography: str,
     rename_mappings_list: dict,
     concat_col_list: typing.List[str],
-    input_csv_headers: typing.List[str]
+    input_csv_headers: typing.List[str],
+    group_id: str,
+    state_code: str
 ) -> None:
     df = pd.DataFrame(
                 data,
                 columns=input_headers
             )
-    set_df_datatypes(df, data_dtypes)
+    # set_df_datatypes(df, data_dtypes)
     target_file_batch = str(target_file).replace(
         ".csv", "-" + str(chunk_number) + ".csv"
     )
@@ -240,7 +250,9 @@ def process_dataframe_chunk(
         geography=geography,
         rename_mappings_list=rename_mappings_list,
         concat_col_list=concat_col_list,
-        input_csv_headers=input_csv_headers
+        input_csv_headers=input_csv_headers,
+        group_id=group_id,
+        state_code=state_code
     )
 
 def set_df_datatypes(
@@ -261,7 +273,9 @@ def process_chunk(
     geography: str,
     rename_mappings_list: dict,
     concat_col_list: typing.List[str],
-    input_csv_headers: typing.List[str]
+    input_csv_headers: typing.List[str],
+    group_id: str,
+    state_code: str
 ) -> None:
     logging.info(f"Processing batch file {target_file_batch}")
     logging.info("Replacing values...")
@@ -271,6 +285,7 @@ def process_chunk(
         df["tract"] = df["tract"].apply(pad_zeroes_to_the_left, args=(6,))
         df["state"] = df["state"].apply(pad_zeroes_to_the_left, args=(2,))
         df["county"] = df["county"].apply(pad_zeroes_to_the_left, args=(3,))
+    import pdb; pdb.set_trace()
     df = create_geo_id(df, concat_col_list)
     df = pivot_dataframe(df)
     logging.info("Reordering headers...")
