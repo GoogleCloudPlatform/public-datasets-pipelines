@@ -15,18 +15,18 @@
  */
 
 
-resource "google_bigquery_dataset" "travel_sustainability" {
-  dataset_id  = "travel_sustainability"
+resource "google_bigquery_dataset" "travel_impact_model" {
+  dataset_id  = "travel_impact_model"
   project     = var.project_id
-  description = "Travel Sustainability"
+  description = "Travel Impact Model Data"
 }
 
-output "bigquery_dataset-travel_sustainability-dataset_id" {
-  value = google_bigquery_dataset.travel_sustainability.dataset_id
+output "bigquery_dataset-travel_impact_model-dataset_id" {
+  value = google_bigquery_dataset.travel_impact_model.dataset_id
 }
 
-resource "google_storage_bucket" "travel-sustainability" {
-  name                        = "${var.bucket_name_prefix}-travel-sustainability"
+resource "google_storage_bucket" "travel-impact-model" {
+  name                        = "${var.bucket_name_prefix}-travel-impact-model"
   force_destroy               = true
   location                    = "US"
   uniform_bucket_level_access = true
@@ -37,6 +37,6 @@ resource "google_storage_bucket" "travel-sustainability" {
   }
 }
 
-output "storage_bucket-travel-sustainability-name" {
-  value = google_storage_bucket.travel-sustainability.name
+output "storage_bucket-travel-impact-model-name" {
+  value = google_storage_bucket.travel-impact-model.name
 }

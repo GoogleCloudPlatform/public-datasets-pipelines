@@ -25,15 +25,15 @@ resources:
     # A Google BigQuery table to store your data. Requires a `bigquery_dataset`
     # to be specified in the config (i.e. `dataset.yaml) for the dataset that
     # this pipeline belongs in.
-    table_id: flight_emissions
-    description: "Flight emissions data"
+    table_id: flights_impact_data
+    description: "Flights impact data"
 
 dag:
   # [Required] Specify the Airflow version of the operators used by the DAG.
   airflow_version: 2
 
   initialize:
-    dag_id: flight_emissions
+    dag_id: flights_impact_data
     default_args:
       owner: "Google"
       depends_on_past: False
@@ -54,15 +54,15 @@ dag:
       # Arguments supported by this operator:
       # http://airflow.apache.org/docs/apache-airflow/stable/howto/operator/gcp/gcs.html#googlecloudstoragetobigqueryoperator
       args:
-        task_id: "flight_emissions_gcs_to_bq"
+        task_id: "flights_impact_data_gcs_to_bq"
 
         # The GCS bucket where the CSV file is located in.
-        bucket: "{{ var.json.travel_sustainability.source_bucket }}"
+        bucket: "{{ var.json.travel_impact_model.source_bucket }}"
 
         # Use the CSV file containing data from today
-        source_objects: ["flight_emissions.csv"]
+        source_objects: ["flights_impact_data.csv"]
         source_format: "CSV"
-        destination_project_dataset_table: "travel_sustainability.flight_emissions"
+        destination_project_dataset_table: "travel_impact_model.flights_impact_data"
 
         # Use this if your CSV file contains a header row
         skip_leading_rows: 1
@@ -126,4 +126,4 @@ dag:
             description: "Estimated CO2 in grams for one passenger in first cabin excluding non-CO2 effects"
 
   graph_paths:
-    - "flight_emissions_gcs_to_bq"
+    - "flights_impact_data_gcs_to_bq"
