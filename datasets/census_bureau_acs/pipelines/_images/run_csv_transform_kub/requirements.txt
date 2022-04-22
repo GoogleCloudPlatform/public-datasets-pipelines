@@ -1,5 +1,6 @@
-requests
-pandas
+google-cloud-bigquery
 google-cloud-storage
 numpy
+pandas
+requests
 

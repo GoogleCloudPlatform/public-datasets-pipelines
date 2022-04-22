@@ -82,7 +82,7 @@
 	{
 		"name": "black_pop",
 		"type": "FLOAT",
-		"mode": "NULLABLE"
+		"mode": "nullable"
 	},
 	{
 		"name": "children",
