@@ -13,6 +13,7 @@
 # limitations under the License.
 
 
+import csv
 import json
 import logging
 import os
@@ -28,7 +29,9 @@ from google.cloud import bigquery, storage
 
 def main(
     source_url: str,
+    source_file: pathlib.Path,
     target_file: pathlib.Path,
+    chunksize: str,
     project_id: str,
     dataset_id: str,
     table_id: str,
@@ -43,6 +46,7 @@ def main(
     concat_col_list: typing.List[str],
     group_id_file: str,
     state_code_file: str,
+    data_dtypes: str,
     rename_mappings_list: dict,
     input_csv_headers: typing.List[str],
 ) -> None:
@@ -51,12 +55,15 @@ def main(
     logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
     execute_pipeline(
+        source_file=source_file,
+        chunksize=chunksize,
         group_id_file=group_id_file,
         state_code_file=state_code_file,
         report_level=report_level,
         year_report=year_report,
         api_naming_convention=api_naming_convention,
         source_url=source_url,
+        data_dtypes=data_dtypes,
         rename_mappings_list=rename_mappings_list,
         geography=geography,
         concat_col_list=concat_col_list,
@@ -73,12 +80,15 @@ def main(
 
 
 def execute_pipeline(
+    source_file: str,
+    chunksize: str,
     group_id_file: str,
     state_code_file: str,
     report_level: str,
     year_report: str, 
     api_naming_convention: str, 
     source_url: str,
+    data_dtypes: dict,
     rename_mappings_list: dict,
     geography: str,
     concat_col_list: typing.List[str],
@@ -104,22 +114,18 @@ def execute_pipeline(
         df = extract_data_and_convert_to_df_state_level(
             group_id, state_code, year_report, api_naming_convention, source_url
         )
-    logging.info("Replacing values...")
-    df = df.replace(to_replace={"KPI_Name": group_id})
-    rename_headers(df, rename_mappings_list)
-    if geography == "censustract" or geography == "blockgroup":
-        df["tract"] = df["tract"].apply(pad_zeroes_to_the_left, args=(6,))
-        df["state"] = df["state"].apply(pad_zeroes_to_the_left, args=(2,))
-        df["county"] = df["county"].apply(pad_zeroes_to_the_left, args=(3,))
-    df = create_geo_id(df, concat_col_list)
-    df = pivot_dataframe(df)
-    logging.info("Reordering headers...")
-    df = df[input_csv_headers]
-    logging.info(f"Saving to output file.. {target_file}")
-    try:
-        save_to_new_file(df, file_path=str(target_file), sep="|")
-    except Exception as e:
-        logging.error(f"Error saving output file: {e}.")
+    save_to_new_file(df, source_file, sep=",")
+    process_source_file(
+        source_file=source_file,
+        target_file=target_file,
+        chunksize=chunksize,
+        input_headers=input_csv_headers,
+        data_dtypes=data_dtypes,
+        geography=geography,
+        rename_mappings_list=rename_mappings_list,
+        concat_col_list=concat_col_list,
+        input_csv_headers=input_csv_headers
+    )
     if os.path.exists(target_file):
         upload_file_to_gcs(
             file_path=target_file,
@@ -150,6 +156,128 @@ def execute_pipeline(
         logging.info(
             f"Informational: The data file {target_file} was not generated because no data file was available.  Continuing."
         )
+
+
+def process_source_file(
+    source_file: str,
+    target_file: str,
+    chunksize: str,
+    input_headers: str,
+    data_dtypes: dict,
+    geography: str,
+    rename_mappings_list: dict,
+    concat_col_list: typing.List[str],
+    input_csv_headers: typing.List[str]
+) -> None:
+    logging.info(f"Opening source file {source_file}")
+    csv.field_size_limit(512<<10)
+    csv.register_dialect(
+        'TabDialect',
+        quotechar='"',
+        delimiter=',',
+        strict=True
+    )
+    with open(
+        source_file
+    ) as reader:
+        data = []
+        chunk_number = 1
+        for index, line in enumerate(csv.reader(reader, 'TabDialect'), 0):
+            data.append(line)
+            if (index % int(chunksize) == 0 and index > 0):
+                process_dataframe_chunk(
+                    data=data,
+                    input_headers=input_headers,
+                    target_file=target_file,
+                    chunk_number=chunk_number,
+                    data_dtypes=data_dtypes,
+                    geography=geography,
+                    rename_mappings_list=rename_mappings_list,
+                    concat_col_list=concat_col_list,
+                    input_csv_headers=input_csv_headers
+                )
+                data = []
+                chunk_number += 1
+
+        if index % int(chunksize) != 0 and index > 0:
+            process_dataframe_chunk(
+                data=data,
+                input_headers=input_headers,
+                target_file=target_file,
+                chunk_number=chunk_number,
+                data_dtypes=data_dtypes,
+                geography=geography,
+                rename_mappings_list=rename_mappings_list,
+                concat_col_list=concat_col_list,
+                input_csv_headers=input_csv_headers
+            )
+
+
+def process_dataframe_chunk(
+    data: typing.List[str],
+    input_headers: typing.List[str],
+    target_file: str,
+    chunk_number: int,
+    data_dtypes: dict,
+    geography: str,
+    rename_mappings_list: dict,
+    concat_col_list: typing.List[str],
+    input_csv_headers: typing.List[str]
+) -> None:
+    df = pd.DataFrame(
+                data,
+                columns=input_headers
+            )
+    set_df_datatypes(df, data_dtypes)
+    target_file_batch = str(target_file).replace(
+        ".csv", "-" + str(chunk_number) + ".csv"
+    )
+    process_chunk(
+        df=df,
+        target_file_batch=target_file_batch,
+        target_file=target_file,
+        skip_header=(not chunk_number == 1),
+        geography=geography,
+        rename_mappings_list=rename_mappings_list,
+        concat_col_list=concat_col_list,
+        input_csv_headers=input_csv_headers
+    )
+
+def set_df_datatypes(
+    df: pd.DataFrame,
+    data_dtypes: dict
+) -> pd.DataFrame:
+    logging.info("Setting data types")
+    for key, item in data_dtypes.items():
+        df[key] = df[key].astype(item)
+    return df
+
+
+def process_chunk(
+    df: pd.DataFrame,
+    target_file_batch: str,
+    target_file: str,
+    skip_header: bool,
+    geography: str,
+    rename_mappings_list: dict,
+    concat_col_list: typing.List[str],
+    input_csv_headers: typing.List[str]
+) -> None:
+    logging.info(f"Processing batch file {target_file_batch}")
+    logging.info("Replacing values...")
+    df = df.replace(to_replace={"KPI_Name": group_id})
+    rename_headers(df, rename_mappings_list)
+    if geography == "censustract" or geography == "blockgroup":
+        df["tract"] = df["tract"].apply(pad_zeroes_to_the_left, args=(6,))
+        df["state"] = df["state"].apply(pad_zeroes_to_the_left, args=(2,))
+        df["county"] = df["county"].apply(pad_zeroes_to_the_left, args=(3,))
+    df = create_geo_id(df, concat_col_list)
+    df = pivot_dataframe(df)
+    logging.info("Reordering headers...")
+    df = df[input_csv_headers]
+    save_to_new_file(df, file_path=str(target_file_batch), sep="|")
+    append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
+    logging.info(f"Processing batch file {target_file_batch} completed")
 
 
 def load_data_to_bq(
@@ -374,6 +502,26 @@ def save_to_new_file(df: pd.DataFrame, file_path: str, sep: str = ",") -> None:
     logging.info(f"Saving data to target file.. {file_path} ...")
     df.to_csv(file_path, index=False, sep=sep)
 
+def append_batch_file(
+    batch_file_path: str, target_file_path: str, skip_header: bool, truncate_file: bool
+) -> None:
+    with open(batch_file_path, "r") as data_file:
+        if truncate_file:
+            target_file = open(target_file_path, "w+").close()
+        with open(target_file_path, "a+") as target_file:
+            if skip_header:
+                logging.info(
+                    f"Appending batch file {batch_file_path} to {target_file_path} with skip header"
+                )
+                next(data_file)
+            else:
+                logging.info(
+                    f"Appending batch file {batch_file_path} to {target_file_path}"
+                )
+            target_file.write(data_file.read())
+            if os.path.exists(batch_file_path):
+                os.remove(batch_file_path)
+
 
 def upload_file_to_gcs(
     file_path: pathlib.Path, target_gcs_bucket: str, target_gcs_path: str
@@ -397,6 +545,8 @@ if __name__ == "__main__":
 
     main(
         source_url=os.environ["SOURCE_URL"],
+        chunksize=os.environ["CHUNKSIZE"],
+        source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
         project_id=os.environ["PROJECT_ID"],
         dataset_id=os.environ["DATASET_ID"],
@@ -412,6 +562,7 @@ if __name__ == "__main__":
         group_id_file=os.environ["GROUP_ID_FILE"],
         state_code_file=os.environ["STATE_CODE_FILE"],
         concat_col_list=json.loads(os.environ["CONCAT_COL_LIST"]),
+        data_dtypes=json.loads(os.environ["DATA_DTYPES"]),
         rename_mappings_list=json.loads(os.environ["RENAME_MAPPINGS_LIST"]),
         input_csv_headers=json.loads(os.environ["INPUT_CSV_HEADERS"]),
     )
