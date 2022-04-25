@@ -49,6 +49,7 @@ def main(
     data_dtypes: str,
     rename_mappings_list: dict,
     input_csv_headers: typing.List[str],
+    output_csv_headers: typing.List[str]
 ) -> None:
 
     logging.info(f"{pipeline_name} process started")
@@ -68,6 +69,7 @@ def main(
         geography=geography,
         concat_col_list=concat_col_list,
         input_csv_headers=input_csv_headers,
+        output_csv_headers=output_csv_headers,
         target_file=target_file,
         target_gcs_bucket=target_gcs_bucket,
         target_gcs_path=target_gcs_path,
@@ -93,6 +95,7 @@ def execute_pipeline(
     geography: str,
     concat_col_list: typing.List[str],
     input_csv_headers: typing.List[str],
+    output_csv_headers: typing.List[str],
     target_file: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
@@ -125,15 +128,17 @@ def execute_pipeline(
         rename_mappings_list=rename_mappings_list,
         concat_col_list=concat_col_list,
         input_csv_headers=input_csv_headers,
+        output_csv_headers=output_csv_headers,
         group_id=group_id,
         state_code=state_code
     )
     if os.path.exists(target_file):
-        upload_file_to_gcs(
-            file_path=target_file,
-            target_gcs_bucket=target_gcs_bucket,
-            target_gcs_path=target_gcs_path,
-        )
+        # upload_file_to_gcs(
+        #     file_path=target_file,
+        #     target_gcs_bucket=target_gcs_bucket,
+        #     target_gcs_path=target_gcs_path,
+        #     project_id=project_id
+        # )
         table_exists = create_dest_table(
             project_id=project_id,
             dataset_id=dataset_id,
@@ -170,6 +175,7 @@ def process_source_file(
     rename_mappings_list: dict,
     concat_col_list: typing.List[str],
     input_csv_headers: typing.List[str],
+    output_csv_headers: typing.List[str],
     group_id: str,
     state_code: str
 ) -> None:
@@ -188,6 +194,7 @@ def process_source_file(
         chunk_number = 1
         for index, line in enumerate(csv.reader(reader, 'TabDialect'), 0):
             data.append(line)
+            #print("Index is-->",index)
             if (index % int(chunksize) == 0 and index > 0):
                 process_dataframe_chunk(
                     data=data,
@@ -199,6 +206,7 @@ def process_source_file(
                     rename_mappings_list=rename_mappings_list,
                     concat_col_list=concat_col_list,
                     input_csv_headers=input_csv_headers,
+                    output_csv_headers=output_csv_headers,
                     group_id=group_id,
                     state_code=state_code
                 )
@@ -216,6 +224,7 @@ def process_source_file(
                 rename_mappings_list=rename_mappings_list,
                 concat_col_list=concat_col_list,
                 input_csv_headers=input_csv_headers,
+                output_csv_headers=output_csv_headers,
                 group_id=group_id,
                 state_code=state_code
             )
@@ -231,6 +240,7 @@ def process_dataframe_chunk(
     rename_mappings_list: dict,
     concat_col_list: typing.List[str],
     input_csv_headers: typing.List[str],
+    output_csv_headers: typing.List[str],
     group_id: str,
     state_code: str
 ) -> None:
@@ -251,6 +261,7 @@ def process_dataframe_chunk(
         rename_mappings_list=rename_mappings_list,
         concat_col_list=concat_col_list,
         input_csv_headers=input_csv_headers,
+        output_csv_headers=output_csv_headers,
         group_id=group_id,
         state_code=state_code
     )
@@ -274,22 +285,27 @@ def process_chunk(
     rename_mappings_list: dict,
     concat_col_list: typing.List[str],
     input_csv_headers: typing.List[str],
+    output_csv_headers: typing.List[str],
     group_id: str,
     state_code: str
 ) -> None:
     logging.info(f"Processing batch file {target_file_batch}")
     logging.info("Replacing values...")
     df = df.replace(to_replace={"KPI_Name": group_id})
+    print(df)
     rename_headers(df, rename_mappings_list)
     if geography == "censustract" or geography == "blockgroup":
         df["tract"] = df["tract"].apply(pad_zeroes_to_the_left, args=(6,))
         df["state"] = df["state"].apply(pad_zeroes_to_the_left, args=(2,))
         df["county"] = df["county"].apply(pad_zeroes_to_the_left, args=(3,))
-    import pdb; pdb.set_trace()
+    #import pdb; pdb.set_trace()
     df = create_geo_id(df, concat_col_list)
     df = pivot_dataframe(df)
     logging.info("Reordering headers...")
-    df = df[input_csv_headers]
+    exclude=['commute_10_14_mins', 'commute_15_19_mins', 'commute_20_24_mins', 'commute_25_29_mins', 'commute_5_9_mins', 'male_21', 'male_22_to_24', 'male_25_to_29', 'male_30_to_34', 'male_35_to_39', 'pop_5_years_over', 'pop_determined_poverty_status', 'speak_only_english_at_home', 'speak_spanish_at_home', 'speak_spanish_at_home_low_english']
+    for i in exclude:
+        output_csv_headers.remove(i)
+    df = df[output_csv_headers]
     save_to_new_file(df, file_path=str(target_file_batch), sep="|")
     append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
     logging.info(f"Processing batch file {target_file_batch} completed")
@@ -414,6 +430,7 @@ def pivot_dataframe(
     df = df.pivot_table(
         index="geo_id", columns="KPI_Name", values="KPI_Value", aggfunc=np.sum
     ).reset_index()
+    print(df)
     return df
 
 
@@ -494,9 +511,11 @@ def extract_data_and_convert_to_df_state_level(
 
 def create_geo_id(df: pd.DataFrame, concat_col: str) -> pd.DataFrame:
     logging.info("Creating column geo_id...")
-    df["geo_id"] = ""
+    df=df.drop(0,axis=0)
+    df["geo_id"] = ''
     for col in concat_col:
         df["geo_id"] = df["geo_id"] + df[col]
+    print(df)
     return df
 
 
@@ -510,7 +529,10 @@ def pad_zeroes_to_the_left(val: str, length: int) -> str:
 def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
     logging.info("Renaming headers...")
     rename_mappings = {int(k): str(v) for k, v in rename_mappings.items()}
-    df.rename(columns=rename_mappings, inplace=True)
+    #df.rename(columns=rename_mappings, inplace=True)
+    print(rename_mappings)
+    df.columns=['name','KPI_Value','combined_statistical_area','KPI_Name']
+    print(df)
 
 
 def save_to_new_file(df: pd.DataFrame, file_path: str, sep: str = ",") -> None:
@@ -539,13 +561,16 @@ def append_batch_file(
 
 
 def upload_file_to_gcs(
-    file_path: pathlib.Path, target_gcs_bucket: str, target_gcs_path: str
+    file_path: pathlib.Path, 
+    target_gcs_bucket: str, 
+    target_gcs_path: str,
+    project_id: str
 ) -> None:
     if os.path.exists(file_path):
         logging.info(
             f"Uploading output file to gs://{target_gcs_bucket}/{target_gcs_path}"
         )
-        storage_client = storage.Client()
+        storage_client = storage.Client(project=project_id)
         bucket = storage_client.bucket(target_gcs_bucket)
         blob = bucket.blob(target_gcs_path)
         blob.upload_from_filename(file_path)
@@ -580,4 +605,5 @@ if __name__ == "__main__":
         data_dtypes=json.loads(os.environ["DATA_DTYPES"]),
         rename_mappings_list=json.loads(os.environ["RENAME_MAPPINGS_LIST"]),
         input_csv_headers=json.loads(os.environ["INPUT_CSV_HEADERS"]),
+        output_csv_headers=json.loads(os.environ["OUTPUT_CSV_HEADERS"])
     )
