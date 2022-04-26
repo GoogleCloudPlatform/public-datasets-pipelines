@@ -162,7 +162,7 @@ def main(
 
     # generate ghost events
     logging.info("generating ghost events")
-    for user_num in range(int(num_of_users)):
+    for user_num in range(int(num_of_users) * 5):
         logging.info(f"ghost event {user_num}")
         GhostEvents()
 
@@ -281,7 +281,7 @@ def get_address(
     return {
         "street": fake.street_address(),
         "city": loc["city"],
-        "state": loc["country"],
+        "state": loc["state"],
         "postal_code": loc["postal_code"],
         "country": loc["country"],
         "latitude": loc["latitude"],
@@ -504,7 +504,7 @@ class Order(DataUtil):
         self.user_id = user.id
         self.gender = user.gender
         self.status = self.random_item(
-            population=["Complete", "Cancelled", "Returned"],
+            population=["Complete", "Cancelled", "Returned", "Processing", "Shipped"],
             distribution=[0.85, 0.05, 0.1],
         )
         self.created_at = self.child_created_at()
@@ -526,6 +526,12 @@ class Order(DataUtil):
             self.delivered_at = self.shipped_at + datetime.timedelta(
                 minutes=random.randrange(MINUTES_IN_DAY * 5)
             )  # delivered between 0-5 days after ship date
+            self.returned_at = None
+        elif self.status == "Shipped":
+            self.shipped_at = self.created_at + datetime.timedelta(
+                minutes=random.randrange(MINUTES_IN_DAY * 3)
+            )  # shipped between 0-3 days after order placed
+            self.delivered_at = None
             self.returned_at = None
         else:
             self.shipped_at = None
@@ -592,8 +598,8 @@ class OrderItem(DataUtil):
     user_id: int = dataclasses.field(init=False)
     product_id: int = dataclasses.field(init=False)
     inventory_item_id: int = dataclasses.field(init=False)
+    status: str = dataclasses.field(init=False)
     created_at: datetime.datetime = dataclasses.field(init=False)
-
     shipped_at: datetime.datetime = dataclasses.field(init=False)
     delivered_at: datetime.datetime = dataclasses.field(init=False)
     returned_at: datetime.datetime = dataclasses.field(init=False)
@@ -618,6 +624,7 @@ class OrderItem(DataUtil):
         self.user_id = order.user_id
         inv_item_id = inv_item_id + 1
         self.inventory_item_id = inv_item_id
+        self.status = order.status
         self.created_at = order.created_at - datetime.timedelta(
             seconds=random.randrange(SECONDS_IN_MINUTE * 240)
         )  # order purchased within 4 hours
@@ -723,7 +730,7 @@ class InventoryItem:
         if order_item.is_sold is False:
             self.created_at = created_at(datetime.datetime(2020, 1, 1))
             self.sold_at = None
-        self.cost = PRODUCT_BY_ID_DICT[self.product_id]["cost"]
+        self.cost = (float(PRODUCT_BY_ID_DICT[self.product_id]["cost"]) *  (random.randrange(25, 90)/100))
         self.product_category = PRODUCT_BY_ID_DICT[self.product_id]["category"]
         self.product_name = PRODUCT_BY_ID_DICT[self.product_id]["name"]
         self.product_brand = PRODUCT_BY_ID_DICT[self.product_id]["brand"]
