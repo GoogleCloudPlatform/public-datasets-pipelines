@@ -61,8 +61,6 @@ def main(
     else:
         generate_pipeline_dag(dataset_id, pipeline_id, env)
 
-    generate_shared_variables_file(env)
-
 
 def generate_pipeline_dag(dataset_id: str, pipeline_id: str, env: str):
     pipeline_dir = DATASETS_PATH / dataset_id / "pipelines" / pipeline_id
@@ -134,15 +132,6 @@ def generate_task_contents(task: dict, airflow_version: str) -> str:
     )
 
 
-def generate_shared_variables_file(env: str) -> None:
-    shared_variables_file = pathlib.Path(
-        PROJECT_ROOT / f".{env}" / "datasets" / "shared_variables.json"
-    )
-    if not shared_variables_file.exists():
-        shared_variables_file.touch()
-        shared_variables_file.write_text("{}", encoding="utf-8")
-
-
 def dag_init(config: dict) -> dict:
     return config["dag"].get("initialize") or config["dag"].get("init")
 
@@ -201,7 +190,9 @@ def write_to_file(contents: str, filepath: pathlib.Path):
 
 
 def format_python_code(target_file: pathlib.Path):
-    subprocess.Popen(f"black -q {target_file}", stdout=subprocess.PIPE, shell=True)
+    subprocess.Popen(
+        f"black -q {target_file}", stdout=subprocess.PIPE, shell=True
+    ).wait()
     subprocess.check_call(["isort", "--profile", "black", "."], cwd=PROJECT_ROOT)
 
 
