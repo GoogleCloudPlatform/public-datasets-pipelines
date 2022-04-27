@@ -108,16 +108,16 @@ def execute_pipeline(
     group_id = json.load(json_obj_group_id)
     json_obj_state_code = open(state_code_file)
     state_code = json.load(json_obj_state_code)
-    # logging.info("Extracting the data from API and loading into dataframe...")
-    # if report_level == "national_level":
-    #     df = extract_data_and_convert_to_df_national_level(
-    #         group_id, year_report, api_naming_convention, source_url
-    #     )
-    # elif report_level == "state_level":
-    #     df = extract_data_and_convert_to_df_state_level(
-    #         group_id, state_code, year_report, api_naming_convention, source_url
-    #     )
-    # save_to_new_file(df, source_file, sep=",")
+    logging.info("Extracting the data from API and loading into dataframe...")
+    if report_level == "national_level":
+        df = extract_data_and_convert_to_df_national_level(
+            group_id, year_report, api_naming_convention, source_url
+        )
+    elif report_level == "state_level":
+        df = extract_data_and_convert_to_df_state_level(
+            group_id, state_code, year_report, api_naming_convention, source_url
+        )
+    save_to_new_file(df, source_file, sep=",")
     process_source_file(
         source_file=source_file,
         target_file=target_file,
@@ -584,26 +584,26 @@ if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
 
     main(
-        source_url=os.environ["SOURCE_URL"],
-        chunksize=os.environ["CHUNKSIZE"],
-        source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
-        target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
-        project_id=os.environ["PROJECT_ID"],
-        dataset_id=os.environ["DATASET_ID"],
-        table_id=os.environ["TABLE_ID"],
-        schema_path=os.environ["SCHEMA_PATH"],
-        pipeline_name=os.environ["PIPELINE_NAME"],
-        target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
-        target_gcs_path=os.environ["TARGET_GCS_PATH"],
-        year_report=os.environ["YEAR_REPORT"],
-        api_naming_convention=os.environ["API_NAMING_CONVENTION"],
-        geography=os.environ["GEOGRAPHY"],
-        report_level=os.environ["REPORT_LEVEL"],
-        group_id_file=os.environ["GROUP_ID_FILE"],
-        state_code_file=os.environ["STATE_CODE_FILE"],
-        concat_col_list=json.loads(os.environ["CONCAT_COL_LIST"]),
-        data_dtypes=json.loads(os.environ["DATA_DTYPES"]),
-        rename_mappings_list=json.loads(os.environ["RENAME_MAPPINGS_LIST"]),
-        input_csv_headers=json.loads(os.environ["INPUT_CSV_HEADERS"]),
-        output_csv_headers=json.loads(os.environ["OUTPUT_CSV_HEADERS"])
+        source_url=os.environ.get("SOURCE_URL",""),
+        chunksize=os.environ.get("CHUNKSIZE",""),
+        source_file=pathlib.Path(os.environ.get("SOURCE_FILE","")).expanduser(),
+        target_file=pathlib.Path(os.environ.get("TARGET_FILE","")).expanduser(),
+        project_id=os.environ.get("PROJECT_ID",""),
+        dataset_id=os.environ.get("DATASET_ID",""),
+        table_id=os.environ.get("TABLE_ID",""),
+        schema_path=os.environ.get("SCHEMA_PATH",""),
+        pipeline_name=os.environ.get("PIPELINE_NAME",""),
+        target_gcs_bucket=os.environ.get("TARGET_GCS_BUCKET",""),
+        target_gcs_path=os.environ.get("TARGET_GCS_PATH",""),
+        year_report=os.environ.get("YEAR_REPORT",""),
+        api_naming_convention=os.environ.get("API_NAMING_CONVENTION",""),
+        geography=os.environ.get("GEOGRAPHY",""),
+        report_level=os.environ.get("REPORT_LEVEL",""),
+        group_id_file=os.environ.get("GROUP_ID_FILE",""),
+        state_code_file=os.environ.get("STATE_CODE_FILE",""),
+        concat_col_list=json.loads(os.environ.get("CONCAT_COL_LIST",r"[]")),
+        data_dtypes=json.loads(os.environ.get("DATA_DTYPES",r"{}")),
+        rename_mappings_list=json.loads(os.environ.get("RENAME_MAPPINGS_LIST",r"{}")),
+        input_csv_headers=json.loads(os.environ.get("INPUT_CSV_HEADERS",r"[]")),
+        output_csv_headers=json.loads(os.environ.get("OUTPUT_CSV_HEADERS",r"[]"))
     )
