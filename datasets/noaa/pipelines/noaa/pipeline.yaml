@@ -95,6 +95,7 @@ dag:
           SCHEMA_PATH: "{{ var.json.noaa.ghcnd_by_year.schema_path }}"
           DROP_DEST_TABLE: "{{ var.json.noaa.ghcnd_by_year.drop_dest_table }}"
           INPUT_FIELD_DELIMITER: ","
+          FULL_DATA_LOAD: "{{ var.json.noaa.ghcnd_by_year.full_data_load }}"
           START_YEAR: "1763"
           INPUT_CSV_HEADERS: >-
             [

@@ -20,10 +20,12 @@ import json
 import logging
 import os
 import pathlib
+import time
 import typing
 
+
 import pandas as pd
-import requests
+# import requests
 from google.api_core.exceptions import NotFound
 from google.cloud import bigquery, storage
 
@@ -45,6 +47,7 @@ def main(
     schema_path: str,
     drop_dest_table: str,
     input_field_delimiter: str,
+    full_data_load: str,
     start_year: str,
     input_csv_headers: typing.List[str],
     data_dtypes: dict,
@@ -72,6 +75,7 @@ def main(
         schema_path=schema_path,
         drop_dest_table=drop_dest_table,
         input_field_delimiter=input_field_delimiter,
+        full_data_load=full_data_load,
         start_year=start_year,
         input_csv_headers=input_csv_headers,
         data_dtypes=data_dtypes,
@@ -100,6 +104,7 @@ def execute_pipeline(
     schema_path: str,
     drop_dest_table: str,
     input_field_delimiter: str,
+    full_data_load: str,
     start_year: str,
     input_csv_headers: typing.List[str],
     data_dtypes: dict,
@@ -109,6 +114,10 @@ def execute_pipeline(
     date_format_list: typing.List[str]
 ) -> None:
     if pipeline_name == "GHCND by year":
+        if full_data_load == "N":
+            start_year = str(datetime.datetime.now().year - 6)
+        else:
+            pass
         for yr in range(int(start_year), datetime.datetime.now().year + 1):
             yr_str = str(yr)
             source_zipfile=str.replace(str(source_file), ".csv", f"_{yr_str}.csv.gz")
@@ -312,8 +321,7 @@ def process_dataframe_chunk(
         pipeline_name=pipeline_name,
         reorder_headers_list=reorder_headers_list,
         date_format_list=date_format_list,
-        null_rows_list=null_rows_list,
-        destination_table=destination_table
+        null_rows_list=null_rows_list
     )
 
 
@@ -336,14 +344,13 @@ def process_chunk(
     pipeline_name: str,
     reorder_headers_list: dict,
     null_rows_list: typing.List[str],
-    date_format_list: typing.List[str],
-    destination_table: str
+    date_format_list: typing.List[str]
 ) -> None:
     if pipeline_name == "GHCND by year":
-        df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
         df = filter_null_rows(df, null_rows_list=null_rows_list)
-        df = source_convert_date_formats(df, date_format_list=date_format_list)
         df = add_metadata_cols(df, source_url=source_url)
+        df = source_convert_date_formats(df, date_format_list=date_format_list)
+        df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
     save_to_new_file(df, file_path=str(target_file_batch))
     append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
 
@@ -562,7 +569,7 @@ def download_file_ftp(
     source_url: str,
 ) -> None:
     logging.info(f"Downloading {source_url} into {local_file}")
-    ftp_conn = ftplib.FTP(ftp_host)
+    ftp_conn = ftplib.FTP(ftp_host, timeout=60)
     ftp_conn.login("", "")
     ftp_conn.cwd(ftp_dir)
     ftp_conn.encoding = "utf-8"
@@ -608,6 +615,7 @@ if __name__ == "__main__":
         target_gcs_bucket=os.environ.get("TARGET_GCS_BUCKET", ""),
         target_gcs_path=os.environ.get("TARGET_GCS_PATH", ""),
         input_field_delimiter=os.environ.get("INPUT_FIELD_DELIMITER", "N"),
+        full_data_load=os.environ.get("FULL_DATA_LOAD", "N"),
         start_year=os.environ.get("START_YEAR", ""),
         input_csv_headers=json.loads(os.environ.get("INPUT_CSV_HEADERS", r"[]")),
         data_dtypes=json.loads(os.environ.get("DATA_DTYPES", r"{}")),
