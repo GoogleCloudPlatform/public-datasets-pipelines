@@ -1,3 +1,7 @@
 requests
+<<<<<<< HEAD
+=======
+numpy
+>>>>>>> d6f4097 (fix: Integrating NOAA pipelines.)
 pandas
 google-cloud-storage

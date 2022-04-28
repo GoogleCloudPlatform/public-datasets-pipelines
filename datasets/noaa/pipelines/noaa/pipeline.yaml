@@ -1,0 +1,166 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+resources:
+  - type: bigquery_table
+    table_id: "ghcnd_by_year"
+    description: "noaaspc"
+  - type: bigquery_table
+    table_id: "ghcnd_countries"
+    description: "noaaspc"
+  - type: bigquery_table
+    table_id: "ghcnd_inventory"
+    description: "noaaspc"
+  - type: bigquery_table
+    table_id: "ghcnd_states"
+    description: "noaaspc"
+  - type: bigquery_table
+    table_id: "ghcnd_stations"
+    description: "noaaspc"
+  - type: bigquery_table
+    table_id: "gsod_stations"
+    description: "noaaspc"
+  - type: bigquery_table
+    table_id: "hurricanes"
+    description: "noaaspc"
+  - type: bigquery_table
+    table_id: "lightning_strikes_by_year"
+    description: "noaaspc"
+
+dag:
+  airflow_version: 2
+  initialize:
+    dag_id: noaa
+    default_args:
+      owner: "Google"
+      depends_on_past: False
+      start_date: '2021-03-01'
+    max_active_runs: 1
+    schedule_interval: "0 1 0 0 6"
+    catchup: False
+    default_view: graph
+
+  tasks:
+    - operator: "GKECreateClusterOperator"
+      args:
+        task_id: "create_cluster"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        body:
+          name: noaa
+          initial_node_count: 8
+          network: "{{ var.value.vpc_network }}"
+          node_config:
+            machine_type: e2-standard-16
+            oauth_scopes:
+              - https://www.googleapis.com/auth/devstorage.read_write
+              - https://www.googleapis.com/auth/cloud-platform
+    - operator: "GKEStartPodOperator"
+      description: "Run NOAA load processes"
+      args:
+        task_id: "ghcnd_by_year"
+        name: "noaa.ghcnd_by_year"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: noaa
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "{{ var.json.noaa.ghcnd_by_year.pipeline_name }}"
+          SOURCE_URL: "{{ var.json.noaa.ghcnd_by_year.source_url }}"
+          SOURCE_FILE: "{{ var.json.noaa.ghcnd_by_year.source_file }}"
+          TARGET_FILE: "{{ var.json.noaa.ghcnd_by_year.target_file }}"
+          CHUNKSIZE: "{{ var.json.noaa.ghcnd_by_year.chunksize }}"
+          FTP_HOST: "{{ var.json.noaa.ghcnd_by_year.ftp_host }}"
+          FTP_DIR: "{{ var.json.noaa.ghcnd_by_year.ftp_dir }}"
+          FTP_FILENAME: "{{ var.json.noaa.ghcnd_by_year.ftp_filename }}"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "{{ var.json.noaa.ghcnd_by_year.dataset_id }}"
+          TABLE_ID: "{{ var.json.noaa.ghcnd_by_year.table_id }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "{{ var.json.noaa.ghcnd_by_year.target_gcs_path }}"
+          SCHEMA_PATH: "{{ var.json.noaa.ghcnd_by_year.schema_path }}"
+          DROP_DEST_TABLE: "{{ var.json.noaa.ghcnd_by_year.drop_dest_table }}"
+          INPUT_FIELD_DELIMITER: ","
+          START_YEAR: "1763"
+          INPUT_CSV_HEADERS: >-
+            [
+              "id",
+              "date",
+              "element",
+              "value",
+              "mflag",
+              "qflag",
+              "sflag",
+              "time"
+            ]
+          DATA_DTYPES: >-
+            {
+              "id": "str",
+              "date": "str",
+              "element": "str",
+              "value": "str",
+              "mflag": "str",
+              "qflag": "str",
+              "sflag": "str",
+              "time": "str"
+            }
+          OUTPUT_CSV_HEADERS: >-
+            [
+              "id",
+              "date",
+              "element",
+              "value",
+              "mflag",
+              "qflag",
+              "sflag",
+              "time",
+              "source_url",
+              "etl_timestamp"
+            ]
+          REORDER_HEADERS_LIST: >-
+            [
+              "id",
+              "date",
+              "element",
+              "value",
+              "mflag",
+              "qflag",
+              "sflag",
+              "time",
+              "source_url",
+              "etl_timestamp"
+            ]
+          NULL_ROWS_LIST: >-
+            [
+              "id"
+            ]
+          DATE_FORMAT_LIST: >-
+            [
+              "date"
+            ]
+      resources:
+          request_ephemeral_storage: "8G"
+          limit_cpu: "3"
+    - operator: "GKEDeleteClusterOperator"
+      args:
+        task_id: "delete_cluster"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        name: noaa
+
+  graph_paths:
+    - "transform_csv >> load_to_bq"

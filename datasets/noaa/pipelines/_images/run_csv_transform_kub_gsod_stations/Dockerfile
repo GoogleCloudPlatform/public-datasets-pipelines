@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+<<<<<<< HEAD
 # The base image for this build
 # FROM gcr.io/google.com/cloudsdktool/cloud-sdk:slim
 FROM python:3.8
@@ -35,4 +36,12 @@ WORKDIR /custom
 COPY ./csv_transform.py .
 
 # Command to run the data processing script when the container is run
+=======
+FROM python:3.8
+ENV PYTHONUNBUFFERED True
+COPY requirements.txt ./
+RUN python3 -m pip install --no-cache-dir -r requirements.txt
+WORKDIR /custom
+COPY ./csv_transform.py .
+>>>>>>> d6f4097 (fix: Integrating NOAA pipelines.)
 CMD ["python3", "csv_transform.py"]
