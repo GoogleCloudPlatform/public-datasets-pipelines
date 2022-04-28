@@ -15,25 +15,25 @@
  */
 
 
-resource "google_bigquery_table" "fda_food_food_enforcement" {
+resource "google_bigquery_table" "lightning_strikes_by_year" {
   project    = var.project_id
-  dataset_id = "fda_food"
-  table_id   = "food_enforcement"
+  dataset_id = "noaa"
+  table_id   = "lightning_strikes_by_year"
 
-  description = "fda_foodspc"
+  description = "NOAA GCHN Daily Lightning Strikes By Year"
 
 
 
 
   depends_on = [
-    google_bigquery_dataset.fda_food
+    google_bigquery_dataset.noaa
   ]
 }
 
-output "bigquery_table-fda_food_food_enforcement-table_id" {
-  value = google_bigquery_table.fda_food_food_enforcement.table_id
+output "bigquery_table-lightning_strikes_by_year-table_id" {
+  value = google_bigquery_table.lightning_strikes_by_year.table_id
 }
 
-output "bigquery_table-fda_food_food_enforcement-id" {
-  value = google_bigquery_table.fda_food_food_enforcement.id
+output "bigquery_table-lightning_strikes_by_year-id" {
+  value = google_bigquery_table.lightning_strikes_by_year.id
 }
