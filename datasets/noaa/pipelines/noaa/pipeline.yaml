@@ -187,11 +187,11 @@ dag:
           INPUT_FIELD_DELIMITER: "{{ var.json.noaa.ghcnd_by_year.input_field_delimiter }}"
           INPUT_CSV_HEADERS: >-
             [
-              "textfield"
+              "textdata"
             ]
           DATA_DTYPES: >-
             {
-              "textfield": "str"
+              "textdata": "str"
             }
           OUTPUT_CSV_HEADERS: >-
             [
