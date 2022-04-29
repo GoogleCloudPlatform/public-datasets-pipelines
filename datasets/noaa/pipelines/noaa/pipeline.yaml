@@ -344,6 +344,81 @@ dag:
               "code": ["textdata", "0", "2"],
               "name": ["textdata", "3", ""]
             }
+    - operator: "GKEStartPodOperator"
+      description: "Run NOAA load processes"
+      args:
+        task_id: "ghcnd_stations"
+        name: "noaa.ghcnd_stations"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: noaa
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "{{ var.json.noaa.ghcnd_stations.pipeline_name }}"
+          SOURCE_URL: "{{ var.json.noaa.ghcnd_stations.source_url }}"
+          SOURCE_FILE: "{{ var.json.noaa.ghcnd_stations.source_file }}"
+          TARGET_FILE: "{{ var.json.noaa.ghcnd_stations.target_file }}"
+          CHUNKSIZE: "{{ var.json.noaa.ghcnd_stations.chunksize }}"
+          FTP_HOST: "{{ var.json.noaa.ghcnd_stations.ftp_host }}"
+          FTP_DIR: "{{ var.json.noaa.ghcnd_stations.ftp_dir }}"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "{{ var.json.noaa.ghcnd_stations.dataset_id }}"
+          TABLE_ID: "{{ var.json.noaa.ghcnd_stations.table_id }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "{{ var.json.noaa.ghcnd_stations.target_gcs_path }}"
+          SCHEMA_PATH: "{{ var.json.noaa.ghcnd_stations.schema_path }}"
+          DROP_DEST_TABLE: "{{ var.json.noaa.ghcnd_stations.drop_dest_table }}"
+          INPUT_FIELD_DELIMITER: "{{ var.json.noaa.ghcnd_stations.input_field_delimiter }}"
+          INPUT_CSV_HEADERS: >-
+            [
+              "textdata"
+            ]
+          DATA_DTYPES: >-
+            {
+              "textdata": "str"
+            }
+          OUTPUT_CSV_HEADERS: >-
+            [
+              "id",
+              "latitude",
+              "longitude",
+              "elevation",
+              "state",
+              "name",
+              "gsn_flag",
+              "hcn_cm_flag",
+              "wmoid",
+              "source_url",
+              "etl_timestamp"
+            ]
+          REORDER_HEADERS_LIST: >-
+            [
+              "id",
+              "latitude",
+              "longitude",
+              "elevation",
+              "state",
+              "name",
+              "gsn_flag",
+              "hcn_cm_flag",
+              "wmoid",
+              "source_url",
+              "etl_timestamp"
+            ]
+          SLICE_COLUMN_LIST: >-
+            {
+              "id": ["textdata", "0", "11"],
+              "latitude": ["textdata", "12", "20"],
+              "longitude": ["textdata", "21", "30"],
+              "elevation": ["textdata", "31", "37"],
+              "state": ["textdata", "38", "40"],
+              "name": ["textdata", "41", "71"],
+              "gsn_flag": ["textdata", "72", "75"],
+              "hcn_cm_flag": ["textdata", "76", "79"],
+              "wmoid": ["textdata", "80", "85"]
+            }
       resources:
           request_ephemeral_storage: "4G"
           limit_cpu: "3"
