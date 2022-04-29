@@ -19,12 +19,12 @@ from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
 default_args = {
     "owner": "Google",
     "depends_on_past": False,
-    "start_date": "2021-03-23",
+    "start_date": "2022-04-01",
 }
 
 
 with DAG(
-    dag_id="open_targets.copy_platform_data",
+    dag_id="open_targets.copy_genetics_data",
     default_args=default_args,
     max_active_runs=1,
     schedule_interval="@monthly",
@@ -32,7 +32,7 @@ with DAG(
     default_view="graph",
 ) as dag:
 
-    # Transfer Open Targets Platform Dataset
+    # Transfer Open Targets Genetics Dataset
     copy_bq_datasets = kubernetes_pod.KubernetesPodOperator(
         task_id="copy_bq_datasets",
         name="copy_bq_datasets",
@@ -41,12 +41,12 @@ with DAG(
         image_pull_policy="Always",
         image="{{ var.json.open_targets.container_registry.copy_bq_datasets }}",
         env_vars={
-            "SOURCE_PROJECT_ID": "{{ var.json.open_targets.platform.source_project_id }}",
-            "TARGET_PROJECT_ID": "{{ var.json.open_targets.platform.target_project_id }}",
+            "SOURCE_PROJECT_ID": "{{ var.json.open_targets.genetics.source_project_id }}",
+            "TARGET_PROJECT_ID": "{{ var.json.open_targets.genetics.target_project_id }}",
             "SERVICE_ACCOUNT": "{{ var.json.open_targets.service_account }}",
-            "TRANSFER_CONFIG_NAME": "open-targets-platform",
-            "SOURCE_DATASET_NAME": "{{ var.json.open_targets.platform.source_dataset_name }}",
-            "TARGET_DATASET_NAME": "{{ var.json.open_targets.platform.target_dataset_name }}",
+            "TRANSFER_CONFIG_NAME": "open-targets-genetics",
+            "SOURCE_DATASET_NAME": "{{ var.json.open_targets.genetics.source_dataset_name }}",
+            "TARGET_DATASET_NAME": "{{ var.json.open_targets.genetics.target_dataset_name }}",
         },
         resources={
             "request_memory": "128M",
