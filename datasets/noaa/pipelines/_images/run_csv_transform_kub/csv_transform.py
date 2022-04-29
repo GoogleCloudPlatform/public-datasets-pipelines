@@ -55,6 +55,7 @@ def main(
     reorder_headers_list: typing.List[str],
     null_rows_list: typing.List[str],
     date_format_list: typing.List[str],
+    slice_column_list: dict
 ) -> None:
     logging.info(f"{pipeline_name} process started")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
@@ -84,6 +85,7 @@ def main(
         reorder_headers_list=reorder_headers_list,
         null_rows_list=null_rows_list,
         date_format_list=date_format_list,
+        slice_column_list=slice_column_list
     )
     logging.info(f"{pipeline_name} process completed")
 
@@ -114,6 +116,7 @@ def execute_pipeline(
     reorder_headers_list: typing.List[str],
     null_rows_list: typing.List[str],
     date_format_list: typing.List[str],
+    slice_column_list: dict
 ) -> None:
     if pipeline_name == "GHCND by year":
         if full_data_load == "N":
@@ -168,6 +171,7 @@ def execute_pipeline(
                 reorder_headers_list=reorder_headers_list,
                 null_rows_list=null_rows_list,
                 date_format_list=date_format_list,
+                slice_column_list=slice_column_list
             )
     if pipeline_name == "GHCND countries":
         ftp_filename = os.path.split(source_url)[1]
@@ -191,6 +195,7 @@ def execute_pipeline(
             reorder_headers_list=reorder_headers_list,
             null_rows_list=null_rows_list,
             date_format_list=date_format_list,
+            slice_column_list=slice_column_list
         )
 
 
@@ -213,6 +218,7 @@ def process_and_load_table(
     reorder_headers_list: typing.List[str],
     null_rows_list: typing.List[str],
     date_format_list: typing.List[str],
+    slice_column_list: dict
 ) -> None:
     process_source_file(
         source_url=source_url,
@@ -226,6 +232,7 @@ def process_and_load_table(
         null_rows_list=null_rows_list,
         date_format_list=date_format_list,
         input_field_delimiter=input_field_delimiter,
+        slice_column_list=slice_column_list,
         remove_source_file=True
     )
     if os.path.exists(target_file):
@@ -276,7 +283,8 @@ def process_source_file(
     null_rows_list: typing.List[str],
     date_format_list: typing.List[str],
     input_field_delimiter: str,
-    remove_source_file: bool = False
+    slice_column_list: dict,
+    remove_source_file: bool = False,
 ) -> None:
     logging.info(f"Opening source file {source_file}")
     csv.field_size_limit(512 << 10)
@@ -299,7 +307,8 @@ def process_source_file(
                     chunk_number=chunk_number,
                     reorder_headers_list=reorder_headers_list,
                     date_format_list=date_format_list,
-                    null_rows_list=null_rows_list
+                    null_rows_list=null_rows_list,
+                    slice_column_list=slice_column_list
                 )
                 data = []
                 chunk_number += 1
@@ -316,7 +325,8 @@ def process_source_file(
                 chunk_number=chunk_number,
                 reorder_headers_list=reorder_headers_list,
                 date_format_list=date_format_list,
-                null_rows_list=null_rows_list
+                null_rows_list=null_rows_list,
+                slice_column_list=slice_column_list
             )
         if remove_source_file:
             os.remove(source_file)
@@ -333,6 +343,7 @@ def process_dataframe_chunk(
     reorder_headers_list: typing.List[str],
     date_format_list: typing.List[str],
     null_rows_list: typing.List[str],
+    slice_column_list: dict
 ) -> None:
     logging.info(f"Processing chunk #{chunk_number}")
     df = pd.DataFrame(data, columns=input_csv_headers)
@@ -350,6 +361,7 @@ def process_dataframe_chunk(
         reorder_headers_list=reorder_headers_list,
         date_format_list=date_format_list,
         null_rows_list=null_rows_list,
+        slice_column_list=slice_column_list
     )
 
 
@@ -370,6 +382,7 @@ def process_chunk(
     reorder_headers_list: dict,
     null_rows_list: typing.List[str],
     date_format_list: typing.List[str],
+    slice_column_list: dict
 ) -> None:
     if pipeline_name == "GHCND by year":
         df = filter_null_rows(df, null_rows_list=null_rows_list)
@@ -377,7 +390,7 @@ def process_chunk(
         df = source_convert_date_formats(df, date_format_list=date_format_list)
         df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
     if pipeline_name == "GHCND countries":
-        df = extract_columns(df)
+        df = slice_column(df, slice_column_list)
         df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
     save_to_new_file(df, file_path=str(target_file_batch))
     append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
@@ -437,10 +450,17 @@ def source_convert_date_formats(
     return df
 
 
-def extract_columns(df: pd.DataFrame) -> pd.DataFrame:
+def slice_column(df: pd.DataFrame, slice_column_list: dict) -> pd.DataFrame:
     logging.info("Extracting column data..")
-    df["code"] = df["textdata"].apply(get_column_country_code)
-    df["name"] = df["textdata"].apply(get_column_country_name)
+    for key, values in slice_column_list.items():
+        src_col = values[0]
+        dest_col = key
+        start_pos = values[1]
+        end_pos = values[2]
+        if end_pos == "":
+            df[dest_col] = df[src_col].apply(lambda x: str(x)[int(start_pos):])
+        else:
+            df[dest_col] = df[src_col].apply(lambda x: str(x)[int(start_pos):int(end_pos)])
     return df
 
 
@@ -693,4 +713,5 @@ if __name__ == "__main__":
         reorder_headers_list=json.loads(os.environ.get("REORDER_HEADERS_LIST", r"[]")),
         null_rows_list=json.loads(os.environ.get("NULL_ROWS_LIST", r"[]")),
         date_format_list=json.loads(os.environ.get("DATE_FORMAT_LIST", r"[]")),
+        slice_column_list=json.loads(os.environ.get("SLICE_COLUMN_LIST", r"{}")),
     )

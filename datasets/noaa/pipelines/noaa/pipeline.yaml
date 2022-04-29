@@ -170,21 +170,21 @@ dag:
         image_pull_policy: "Always"
         image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
         env_vars:
-          PIPELINE_NAME: "{{ var.json.noaa.ghcnd_by_year.pipeline_name }}"
-          SOURCE_URL: "{{ var.json.noaa.ghcnd_by_year.source_url }}"
-          SOURCE_FILE: "{{ var.json.noaa.ghcnd_by_year.source_file }}"
-          TARGET_FILE: "{{ var.json.noaa.ghcnd_by_year.target_file }}"
-          CHUNKSIZE: "{{ var.json.noaa.ghcnd_by_year.chunksize }}"
-          FTP_HOST: "{{ var.json.noaa.ghcnd_by_year.ftp_host }}"
-          FTP_DIR: "{{ var.json.noaa.ghcnd_by_year.ftp_dir }}"
+          PIPELINE_NAME: "{{ var.json.noaa.ghcnd_countries.pipeline_name }}"
+          SOURCE_URL: "{{ var.json.noaa.ghcnd_countries.source_url }}"
+          SOURCE_FILE: "{{ var.json.noaa.ghcnd_countries.source_file }}"
+          TARGET_FILE: "{{ var.json.noaa.ghcnd_countries.target_file }}"
+          CHUNKSIZE: "{{ var.json.noaa.ghcnd_countries.chunksize }}"
+          FTP_HOST: "{{ var.json.noaa.ghcnd_countries.ftp_host }}"
+          FTP_DIR: "{{ var.json.noaa.ghcnd_countries.ftp_dir }}"
           PROJECT_ID: "{{ var.value.gcp_project }}"
-          DATASET_ID: "{{ var.json.noaa.ghcnd_by_year.dataset_id }}"
-          TABLE_ID: "{{ var.json.noaa.ghcnd_by_year.table_id }}"
+          DATASET_ID: "{{ var.json.noaa.ghcnd_countries.dataset_id }}"
+          TABLE_ID: "{{ var.json.noaa.ghcnd_countries.table_id }}"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
-          TARGET_GCS_PATH: "{{ var.json.noaa.ghcnd_by_year.target_gcs_path }}"
-          SCHEMA_PATH: "{{ var.json.noaa.ghcnd_by_year.schema_path }}"
-          DROP_DEST_TABLE: "{{ var.json.noaa.ghcnd_by_year.drop_dest_table }}"
-          INPUT_FIELD_DELIMITER: "{{ var.json.noaa.ghcnd_by_year.input_field_delimiter }}"
+          TARGET_GCS_PATH: "{{ var.json.noaa.ghcnd_countries.target_gcs_path }}"
+          SCHEMA_PATH: "{{ var.json.noaa.ghcnd_countries.schema_path }}"
+          DROP_DEST_TABLE: "{{ var.json.noaa.ghcnd_countries.drop_dest_table }}"
+          INPUT_FIELD_DELIMITER: "{{ var.json.noaa.ghcnd_countries.input_field_delimiter }}"
           INPUT_CSV_HEADERS: >-
             [
               "textdata"
@@ -203,6 +203,11 @@ dag:
               "code",
               "name"
             ]
+          SLICE_COLUMN_LIST: >-
+            {
+              "code": ["textdata", "0", "2"],
+              "name": ["textdata", "3", ""]
+            }
       resources:
           request_ephemeral_storage: "4G"
           limit_cpu: "3"
