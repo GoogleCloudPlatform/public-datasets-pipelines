@@ -1,0 +1,137 @@
+[
+	{
+		"name": "recordid",
+		"type": "INTEGER",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "address",
+		"type": "STRING",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "house_number",
+		"type": "STRING",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "street",
+		"type": "STRING",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "zip_original",
+		"type": "INTEGER",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "cb_original",
+		"type": "INTEGER",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "site",
+		"type": "STRING",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "species",
+		"type": "STRING",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "diameter",
+		"type": "INTEGER",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "status",
+		"type": "STRING",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "wires",
+		"type": "STRING",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "sidewalk_condition",
+		"type": "STRING",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "support_structure",
+		"type": "STRING",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "borough",
+		"type": "STRING",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "x",
+		"type": "FLOAT",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "y",
+		"type": "FLOAT",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "longitude",
+		"type": "FLOAT",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "latitude",
+		"type": "FLOAT",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "cb_new",
+		"type": "INTEGER",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "zip_new",
+		"type": "INTEGER",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "censustract_2010",
+		"type": "STRING",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "censusblock_2010",
+		"type": "STRING",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "nta_2010",
+		"type": "STRING",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "segmentid",
+		"type": "INTEGER",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "spc_common",
+		"type": "STRING",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "spc_latin",
+		"type": "STRING",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "location",
+		"type": "STRING",
+		"mode": "NULLABLE"
+	}
+]
