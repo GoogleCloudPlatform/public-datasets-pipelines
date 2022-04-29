@@ -20,6 +20,7 @@ import json
 import logging
 import os
 import pathlib
+import threading
 import time
 import typing
 
@@ -28,7 +29,7 @@ import pandas as pd
 # import requests
 from google.api_core.exceptions import NotFound
 from google.cloud import bigquery, storage
-
+import reconnecting_ftp
 
 def main(
     pipeline_name: str,
@@ -134,6 +135,7 @@ def execute_pipeline(
             source_url_year=str.replace(source_url, ".csv.gz", f"{yr_str}.csv.gz")
             target_gcs_path_year=str.replace(target_gcs_path, ".csv", f"_{yr_str}.csv")
             if ftp_batch == int(ftp_batch_size):
+                logging.info("Sleeping...")
                 time.sleep(int(ftp_batch_sleep_time))
                 ftp_batch = 1
             else:
@@ -145,30 +147,30 @@ def execute_pipeline(
                 local_file=source_zipfile,
                 source_url=source_url_year
             )
-            gz_decompress(
-                infile=source_zipfile,
-                tofile=source_file_unzipped
-            )
-            process_and_load_table(
-                source_file=source_file_unzipped,
-                target_file=target_file_year,
-                pipeline_name=pipeline_name,
-                source_url=source_url_year,
-                chunksize=chunksize,
-                project_id=project_id,
-                dataset_id=dataset_id,
-                destination_table=destination_table_year,
-                target_gcs_bucket=target_gcs_bucket,
-                target_gcs_path=target_gcs_path_year,
-                schema_path=schema_path,
-                drop_dest_table=drop_dest_table,
-                input_field_delimiter=input_field_delimiter,
-                input_csv_headers=input_csv_headers,
-                data_dtypes=data_dtypes,
-                reorder_headers_list=reorder_headers_list,
-                null_rows_list=null_rows_list,
-                date_format_list=date_format_list
-            )
+            # gz_decompress(
+            #     infile=source_zipfile,
+            #     tofile=source_file_unzipped
+            # )
+            # process_and_load_table(
+            #     source_file=source_file_unzipped,
+            #     target_file=target_file_year,
+            #     pipeline_name=pipeline_name,
+            #     source_url=source_url_year,
+            #     chunksize=chunksize,
+            #     project_id=project_id,
+            #     dataset_id=dataset_id,
+            #     destination_table=destination_table_year,
+            #     target_gcs_bucket=target_gcs_bucket,
+            #     target_gcs_path=target_gcs_path_year,
+            #     schema_path=schema_path,
+            #     drop_dest_table=drop_dest_table,
+            #     input_field_delimiter=input_field_delimiter,
+            #     input_csv_headers=input_csv_headers,
+            #     data_dtypes=data_dtypes,
+            #     reorder_headers_list=reorder_headers_list,
+            #     null_rows_list=null_rows_list,
+            #     date_format_list=date_format_list
+            # )
 
 def process_and_load_table(
     source_file: pathlib.Path,
@@ -581,13 +583,37 @@ def download_file_ftp(
     source_url: str,
 ) -> None:
     logging.info(f"Downloading {source_url} into {local_file}")
-    ftp_conn = ftplib.FTP(ftp_host, timeout=60)
-    ftp_conn.login("", "")
-    ftp_conn.cwd(ftp_dir)
-    ftp_conn.encoding = "utf-8"
-    with open(local_file ,'wb') as dest_file:
-        ftp_conn.retrbinary('RETR %s' % ftp_filename, dest_file.write)
-    ftp_conn.quit()
+    for retry in range(1, 3):
+        if not download_file_ftp_single_try(
+                ftp_host,
+                ftp_dir,
+                ftp_filename,
+                local_file
+            ):
+            logging.info(f"FTP file download failed.  Retrying #{retry} in 60 seconds")
+            time.sleep(60)
+        else:
+            break
+
+
+
+def download_file_ftp_single_try(
+    ftp_host: str,
+    ftp_dir: str,
+    ftp_filename: str,
+    local_file: pathlib.Path
+) -> bool:
+    try:
+        with ftplib.FTP(ftp_host, timeout=60) as ftp_conn:
+            ftp_conn.login("", "")
+            ftp_conn.cwd(ftp_dir)
+            ftp_conn.encoding = "utf-8"
+            with open(local_file ,'wb') as dest_file:
+                ftp_conn.retrbinary('RETR %s' % ftp_filename, dest_file.write)
+            ftp_conn.quit()
+            return True
+    except:
+        return True
 
 
 def upload_file_to_gcs(
