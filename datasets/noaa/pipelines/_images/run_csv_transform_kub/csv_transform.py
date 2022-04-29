@@ -47,6 +47,8 @@ def main(
     schema_path: str,
     drop_dest_table: str,
     input_field_delimiter: str,
+    ftp_batch_size: str,
+    ftp_batch_sleep_time: str,
     full_data_load: str,
     start_year: str,
     input_csv_headers: typing.List[str],
@@ -75,6 +77,8 @@ def main(
         schema_path=schema_path,
         drop_dest_table=drop_dest_table,
         input_field_delimiter=input_field_delimiter,
+        ftp_batch_size=ftp_batch_size,
+        ftp_batch_sleep_time=ftp_batch_sleep_time,
         full_data_load=full_data_load,
         start_year=start_year,
         input_csv_headers=input_csv_headers,
@@ -104,6 +108,8 @@ def execute_pipeline(
     schema_path: str,
     drop_dest_table: str,
     input_field_delimiter: str,
+    ftp_batch_size: str,
+    ftp_batch_sleep_time: str,
     full_data_load: str,
     start_year: str,
     input_csv_headers: typing.List[str],
@@ -118,6 +124,7 @@ def execute_pipeline(
             start_year = str(datetime.datetime.now().year - 6)
         else:
             pass
+        ftp_batch = 1
         for yr in range(int(start_year), datetime.datetime.now().year + 1):
             yr_str = str(yr)
             source_zipfile=str.replace(str(source_file), ".csv", f"_{yr_str}.csv.gz")
@@ -126,6 +133,11 @@ def execute_pipeline(
             destination_table_year=f"{destination_table}_{yr_str}"
             source_url_year=str.replace(source_url, ".csv.gz", f"{yr_str}.csv.gz")
             target_gcs_path_year=str.replace(target_gcs_path, ".csv", f"_{yr_str}.csv")
+            if ftp_batch == int(ftp_batch_size):
+                time.sleep(int(ftp_batch_sleep_time))
+                ftp_batch = 1
+            else:
+                ftp_batch += 1
             download_file_ftp(
                 ftp_host=ftp_host,
                 ftp_dir=ftp_dir,
@@ -615,6 +627,8 @@ if __name__ == "__main__":
         target_gcs_bucket=os.environ.get("TARGET_GCS_BUCKET", ""),
         target_gcs_path=os.environ.get("TARGET_GCS_PATH", ""),
         input_field_delimiter=os.environ.get("INPUT_FIELD_DELIMITER", "N"),
+        ftp_batch_size=os.environ.get("FTP_BATCH_SIZE", "20"),
+        ftp_batch_sleep_time=os.environ.get("FTP_BATCH_SLEEP_TIME", "30"),
         full_data_load=os.environ.get("FULL_DATA_LOAD", "N"),
         start_year=os.environ.get("START_YEAR", ""),
         input_csv_headers=json.loads(os.environ.get("INPUT_CSV_HEADERS", r"[]")),
