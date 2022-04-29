@@ -66,7 +66,6 @@ def main(
         chunksize=chunksize,
         ftp_host=ftp_host,
         ftp_dir=ftp_dir,
-        ftp_filename=ftp_filename,
         project_id=project_id,
         dataset_id=dataset_id,
         destination_table=table_id,
@@ -145,7 +144,11 @@ def execute_pipeline(
                 local_file=source_zipfile,
                 source_url=source_url_year,
             )
-            gz_decompress(infile=source_zipfile, tofile=source_file_unzipped)
+            gz_decompress(
+                infile=source_zipfile,
+                tofile=source_file_unzipped,
+                delete_zipfile=True
+            )
             process_and_load_table(
                 source_file=source_file_unzipped,
                 target_file=target_file_year,
@@ -200,7 +203,7 @@ def process_and_load_table(
         null_rows_list=null_rows_list,
         date_format_list=date_format_list,
         input_field_delimiter=input_field_delimiter,
-        destination_table=destination_table,
+        remove_source_file=True
     )
     if os.path.exists(target_file):
         upload_file_to_gcs(
@@ -250,7 +253,7 @@ def process_source_file(
     null_rows_list: typing.List[str],
     date_format_list: typing.List[str],
     input_field_delimiter: str,
-    destination_table: str,
+    remove_source_file: bool = False
 ) -> None:
     logging.info(f"Opening source file {source_file}")
     csv.field_size_limit(512 << 10)
@@ -273,13 +276,13 @@ def process_source_file(
                     chunk_number=chunk_number,
                     reorder_headers_list=reorder_headers_list,
                     date_format_list=date_format_list,
-                    null_rows_list=null_rows_list,
-                    destination_table=destination_table,
+                    null_rows_list=null_rows_list
                 )
                 data = []
                 chunk_number += 1
 
-        if index % int(chunksize) != 0 and index > 0:
+        # if index % int(chunksize) != 0 and index > 0:
+        if data:
             process_dataframe_chunk(
                 data=data,
                 pipeline_name=pipeline_name,
@@ -290,9 +293,10 @@ def process_source_file(
                 chunk_number=chunk_number,
                 reorder_headers_list=reorder_headers_list,
                 date_format_list=date_format_list,
-                null_rows_list=null_rows_list,
-                destination_table=destination_table,
+                null_rows_list=null_rows_list
             )
+        if remove_source_file:
+            os.remove(source_file)
 
 
 def process_dataframe_chunk(
@@ -369,11 +373,13 @@ def reorder_headers(
     return df[reorder_headers_list]
 
 
-def gz_decompress(infile: str, tofile: str) -> None:
+def gz_decompress(infile: str, tofile: str, delete_zipfile: bool = False) -> None:
     logging.info(f"Decompressing {infile}")
     with open(infile, "rb") as inf, open(tofile, "w", encoding="utf8") as tof:
         decom_str = gzip.decompress(inf.read()).decode("utf-8")
         tof.write(decom_str)
+    if delete_zipfile:
+        os.remove(infile)
 
 
 def filter_null_rows(
@@ -594,7 +600,9 @@ def download_file_ftp_single_try(
 
 
 def upload_file_to_gcs(
-    file_path: pathlib.Path, target_gcs_bucket: str, target_gcs_path: str
+    file_path: pathlib.Path,
+    target_gcs_bucket: str,
+    target_gcs_path: str
 ) -> None:
     if os.path.exists(file_path):
         logging.info(
