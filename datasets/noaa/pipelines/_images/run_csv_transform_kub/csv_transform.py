@@ -173,7 +173,7 @@ def execute_pipeline(
                 date_format_list=date_format_list,
                 slice_column_list=slice_column_list
             )
-    if pipeline_name == "GHCND countries":
+    if pipeline_name in ["GHCND countries", "GHCND inventory"]:
         ftp_filename = os.path.split(source_url)[1]
         download_file_ftp(ftp_host, ftp_dir, ftp_filename, source_file, source_url)
         process_and_load_table(
@@ -389,8 +389,9 @@ def process_chunk(
         df = add_metadata_cols(df, source_url=source_url)
         df = source_convert_date_formats(df, date_format_list=date_format_list)
         df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
-    if pipeline_name == "GHCND countries":
+    if pipeline_name in ["GHCND countries", "GHCND inventory"]:
         df = slice_column(df, slice_column_list)
+        df = add_metadata_cols(df, source_url=source_url)
         df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
     save_to_new_file(df, file_path=str(target_file_batch))
     append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))

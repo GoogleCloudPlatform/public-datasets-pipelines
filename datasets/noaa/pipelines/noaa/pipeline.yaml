@@ -161,7 +161,7 @@ dag:
     - operator: "GKEStartPodOperator"
       description: "Run NOAA load processes"
       args:
-        task_id: "ghcnd_by_year"
+        task_id: "ghcnd_countries"
         name: "noaa.ghcnd_countries"
         project_id: "{{ var.value.gcp_project }}"
         location: "us-central1-c"
@@ -196,17 +196,90 @@ dag:
           OUTPUT_CSV_HEADERS: >-
             [
               "code",
-              "name"
+              "name",
+              "source_url",
+              "etl_timestamp"
             ]
           REORDER_HEADERS_LIST: >-
             [
               "code",
-              "name"
+              "name",
+              "source_url",
+              "etl_timestamp"
             ]
           SLICE_COLUMN_LIST: >-
             {
               "code": ["textdata", "0", "2"],
               "name": ["textdata", "3", ""]
+            }
+      resources:
+          request_ephemeral_storage: "4G"
+          limit_cpu: "3"
+    - operator: "GKEStartPodOperator"
+      description: "Run NOAA load processes"
+      args:
+        task_id: "ghcnd_inventory"
+        name: "noaa.ghcnd_inventory"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: noaa
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "{{ var.json.noaa.ghcnd_inventory.pipeline_name }}"
+          SOURCE_URL: "{{ var.json.noaa.ghcnd_inventory.source_url }}"
+          SOURCE_FILE: "{{ var.json.noaa.ghcnd_inventory.source_file }}"
+          TARGET_FILE: "{{ var.json.noaa.ghcnd_inventory.target_file }}"
+          CHUNKSIZE: "{{ var.json.noaa.ghcnd_inventory.chunksize }}"
+          FTP_HOST: "{{ var.json.noaa.ghcnd_inventory.ftp_host }}"
+          FTP_DIR: "{{ var.json.noaa.ghcnd_inventory.ftp_dir }}"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "{{ var.json.noaa.ghcnd_inventory.dataset_id }}"
+          TABLE_ID: "{{ var.json.noaa.ghcnd_inventory.table_id }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "{{ var.json.noaa.ghcnd_inventory.target_gcs_path }}"
+          SCHEMA_PATH: "{{ var.json.noaa.ghcnd_inventory.schema_path }}"
+          DROP_DEST_TABLE: "{{ var.json.noaa.ghcnd_inventory.drop_dest_table }}"
+          INPUT_FIELD_DELIMITER: "{{ var.json.noaa.ghcnd_inventory.input_field_delimiter }}"
+          INPUT_CSV_HEADERS: >-
+            [
+              "textdata"
+            ]
+          DATA_DTYPES: >-
+            {
+              "textdata": "str"
+            }
+          OUTPUT_CSV_HEADERS: >-
+            [
+              "id",
+              "latitude",
+              "longitude",
+              "element",
+              "firstyear",
+              "lastyear",
+              "source_url",
+              "etl_timestamp"
+            ]
+          REORDER_HEADERS_LIST: >-
+            [
+              "id",
+              "latitude",
+              "longitude",
+              "element",
+              "firstyear",
+              "lastyear",
+              "source_url",
+              "etl_timestamp"
+            ]
+          SLICE_COLUMN_LIST: >-
+            {
+              "id": ["textdata", "0", "11"],
+              "latitude": ["textdata", "12", "20"],
+              "longitude": ["textdata", "21", "30"],
+              "element": ["textdata", "31", "35"],
+              "firstyear": ["textdata", "36", "40"],
+              "lastyear": ["textdata", "41", "45"]
             }
       resources:
           request_ephemeral_storage: "4G"

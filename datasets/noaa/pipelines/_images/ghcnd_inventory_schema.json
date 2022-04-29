@@ -1,12 +1,32 @@
 [
 	{
-		"name": "code",
+		"name": "id",
 		"type": "STRING",
 		"mode": "NULLABLE"
 	},
 	{
-		"name": "name",
+		"name": "latitude",
+		"type": "FLOAT",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "longitude",
+		"type": "FLOAT",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "element",
 		"type": "STRING",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "firstyear",
+		"type": "INTEGER",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "lastyear",
+		"type": "INTEGER",
 		"mode": "NULLABLE"
     },
     {
