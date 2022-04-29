@@ -169,6 +169,29 @@ def execute_pipeline(
                 null_rows_list=null_rows_list,
                 date_format_list=date_format_list,
             )
+    if pipeline_name == "GHCND countries":
+        ftp_filename = os.path.split(source_url)[1]
+        download_file_ftp(ftp_host, ftp_dir, ftp_filename, source_file, source_url)
+        process_and_load_table(
+            source_file=source_file,
+            target_file=target_file,
+            pipeline_name=pipeline_name,
+            source_url=source_url,
+            chunksize=chunksize,
+            project_id=project_id,
+            dataset_id=dataset_id,
+            destination_table=destination_table,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=target_gcs_path,
+            schema_path=schema_path,
+            drop_dest_table=drop_dest_table,
+            input_field_delimiter=input_field_delimiter,
+            input_csv_headers=input_csv_headers,
+            data_dtypes=data_dtypes,
+            reorder_headers_list=reorder_headers_list,
+            null_rows_list=null_rows_list,
+            date_format_list=date_format_list,
+        )
 
 
 def process_and_load_table(
@@ -281,8 +304,8 @@ def process_source_file(
                 data = []
                 chunk_number += 1
 
-        # if index % int(chunksize) != 0 and index > 0:
         if data:
+            logging.info("Processing extra/final batch data")
             process_dataframe_chunk(
                 data=data,
                 pipeline_name=pipeline_name,
@@ -353,6 +376,9 @@ def process_chunk(
         df = add_metadata_cols(df, source_url=source_url)
         df = source_convert_date_formats(df, date_format_list=date_format_list)
         df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
+    if pipeline_name == "GHCND countries":
+        df = extract_columns(df)
+        df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
     save_to_new_file(df, file_path=str(target_file_batch))
     append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
 
@@ -409,6 +435,25 @@ def source_convert_date_formats(
     for fld in date_format_list:
         df[fld] = df[fld].apply(convert_dt_format)
     return df
+
+
+def extract_columns(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Extracting column data..")
+    df["code"] = df["textdata"].apply(get_column_country_code)
+    df["name"] = df["textdata"].apply(get_column_country_name)
+    return df
+
+
+def get_column_country_code(col_val: str) -> str:
+    return col_val.strip().split(" ")[0]
+
+
+def get_column_country_name(col_val: str) -> str:
+    len_code = len(str.split(str.strip(col_val), " ")[0])
+    strmain1 = str.strip(col_val)
+    len_main = len(str.strip(col_val))
+    len_out = len_main - len_code
+    return str.strip((strmain1[::-1])[0:(len_out)][::-1])
 
 
 def load_data_to_bq(
