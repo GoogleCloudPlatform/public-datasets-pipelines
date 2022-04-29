@@ -24,3 +24,13 @@ resource "google_bigquery_dataset" "open_targets_platform" {
 output "bigquery_dataset-open_targets_platform-dataset_id" {
   value = google_bigquery_dataset.open_targets_platform.dataset_id
 }
+
+resource "google_bigquery_dataset" "open_targets_genetics" {
+  dataset_id  = "open_targets_genetics"
+  project     = var.project_id
+  description = "Open-Targets-Genetics dataset"
+}
+
+output "bigquery_dataset-open_targets_genetics-dataset_id" {
+  value = google_bigquery_dataset.open_targets_genetics.dataset_id
+}

@@ -22,3 +22,7 @@ resources:
   - type: bigquery_dataset
     dataset_id: open_targets_platform
     description: Open-Targets dataset
+
+  - type: bigquery_dataset
+    dataset_id: open_targets_genetics
+    description: Open-Targets-Genetics dataset
