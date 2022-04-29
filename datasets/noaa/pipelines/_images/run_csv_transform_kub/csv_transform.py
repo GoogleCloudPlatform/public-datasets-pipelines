@@ -20,16 +20,13 @@ import json
 import logging
 import os
 import pathlib
-import threading
 import time
 import typing
 
-
 import pandas as pd
-# import requests
 from google.api_core.exceptions import NotFound
 from google.cloud import bigquery, storage
-import reconnecting_ftp
+
 
 def main(
     pipeline_name: str,
@@ -57,7 +54,7 @@ def main(
     output_csv_headers: typing.List[str],
     reorder_headers_list: typing.List[str],
     null_rows_list: typing.List[str],
-    date_format_list: typing.List[str]
+    date_format_list: typing.List[str],
 ) -> None:
     logging.info(f"{pipeline_name} process started")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
@@ -87,7 +84,7 @@ def main(
         output_csv_headers=output_csv_headers,
         reorder_headers_list=reorder_headers_list,
         null_rows_list=null_rows_list,
-        date_format_list=date_format_list
+        date_format_list=date_format_list,
     )
     logging.info(f"{pipeline_name} process completed")
 
@@ -100,7 +97,6 @@ def execute_pipeline(
     chunksize: str,
     ftp_host: str,
     ftp_dir: str,
-    ftp_filename: str,
     project_id: str,
     dataset_id: str,
     destination_table: str,
@@ -118,7 +114,7 @@ def execute_pipeline(
     output_csv_headers: typing.List[str],
     reorder_headers_list: typing.List[str],
     null_rows_list: typing.List[str],
-    date_format_list: typing.List[str]
+    date_format_list: typing.List[str],
 ) -> None:
     if pipeline_name == "GHCND by year":
         if full_data_load == "N":
@@ -128,12 +124,14 @@ def execute_pipeline(
         ftp_batch = 1
         for yr in range(int(start_year), datetime.datetime.now().year + 1):
             yr_str = str(yr)
-            source_zipfile=str.replace(str(source_file), ".csv", f"_{yr_str}.csv.gz")
-            source_file_unzipped=str.replace(str(source_zipfile), ".csv.gz", ".csv")
-            target_file_year=str.replace(str(target_file), ".csv", f"_{yr_str}.csv")
-            destination_table_year=f"{destination_table}_{yr_str}"
-            source_url_year=str.replace(source_url, ".csv.gz", f"{yr_str}.csv.gz")
-            target_gcs_path_year=str.replace(target_gcs_path, ".csv", f"_{yr_str}.csv")
+            source_zipfile = str.replace(str(source_file), ".csv", f"_{yr_str}.csv.gz")
+            source_file_unzipped = str.replace(str(source_zipfile), ".csv.gz", ".csv")
+            target_file_year = str.replace(str(target_file), ".csv", f"_{yr_str}.csv")
+            destination_table_year = f"{destination_table}_{yr_str}"
+            source_url_year = str.replace(source_url, ".csv.gz", f"{yr_str}.csv.gz")
+            target_gcs_path_year = str.replace(
+                target_gcs_path, ".csv", f"_{yr_str}.csv"
+            )
             if ftp_batch == int(ftp_batch_size):
                 logging.info("Sleeping...")
                 time.sleep(int(ftp_batch_sleep_time))
@@ -145,32 +143,30 @@ def execute_pipeline(
                 ftp_dir=ftp_dir,
                 ftp_filename=f"{yr_str}.csv.gz",
                 local_file=source_zipfile,
-                source_url=source_url_year
+                source_url=source_url_year,
             )
-            # gz_decompress(
-            #     infile=source_zipfile,
-            #     tofile=source_file_unzipped
-            # )
-            # process_and_load_table(
-            #     source_file=source_file_unzipped,
-            #     target_file=target_file_year,
-            #     pipeline_name=pipeline_name,
-            #     source_url=source_url_year,
-            #     chunksize=chunksize,
-            #     project_id=project_id,
-            #     dataset_id=dataset_id,
-            #     destination_table=destination_table_year,
-            #     target_gcs_bucket=target_gcs_bucket,
-            #     target_gcs_path=target_gcs_path_year,
-            #     schema_path=schema_path,
-            #     drop_dest_table=drop_dest_table,
-            #     input_field_delimiter=input_field_delimiter,
-            #     input_csv_headers=input_csv_headers,
-            #     data_dtypes=data_dtypes,
-            #     reorder_headers_list=reorder_headers_list,
-            #     null_rows_list=null_rows_list,
-            #     date_format_list=date_format_list
-            # )
+            gz_decompress(infile=source_zipfile, tofile=source_file_unzipped)
+            process_and_load_table(
+                source_file=source_file_unzipped,
+                target_file=target_file_year,
+                pipeline_name=pipeline_name,
+                source_url=source_url_year,
+                chunksize=chunksize,
+                project_id=project_id,
+                dataset_id=dataset_id,
+                destination_table=destination_table_year,
+                target_gcs_bucket=target_gcs_bucket,
+                target_gcs_path=target_gcs_path_year,
+                schema_path=schema_path,
+                drop_dest_table=drop_dest_table,
+                input_field_delimiter=input_field_delimiter,
+                input_csv_headers=input_csv_headers,
+                data_dtypes=data_dtypes,
+                reorder_headers_list=reorder_headers_list,
+                null_rows_list=null_rows_list,
+                date_format_list=date_format_list,
+            )
+
 
 def process_and_load_table(
     source_file: pathlib.Path,
@@ -190,7 +186,7 @@ def process_and_load_table(
     data_dtypes: dict,
     reorder_headers_list: typing.List[str],
     null_rows_list: typing.List[str],
-    date_format_list: typing.List[str]
+    date_format_list: typing.List[str],
 ) -> None:
     process_source_file(
         source_url=source_url,
@@ -204,7 +200,7 @@ def process_and_load_table(
         null_rows_list=null_rows_list,
         date_format_list=date_format_list,
         input_field_delimiter=input_field_delimiter,
-        destination_table=destination_table
+        destination_table=destination_table,
     )
     if os.path.exists(target_file):
         upload_file_to_gcs(
@@ -254,24 +250,19 @@ def process_source_file(
     null_rows_list: typing.List[str],
     date_format_list: typing.List[str],
     input_field_delimiter: str,
-    destination_table: str
+    destination_table: str,
 ) -> None:
     logging.info(f"Opening source file {source_file}")
-    csv.field_size_limit(512<<10)
+    csv.field_size_limit(512 << 10)
     csv.register_dialect(
-        'TabDialect',
-        quotechar='"',
-        delimiter=input_field_delimiter,
-        strict=True
+        "TabDialect", quotechar='"', delimiter=input_field_delimiter, strict=True
     )
-    with open(
-        source_file
-    ) as reader:
+    with open(source_file) as reader:
         data = []
         chunk_number = 1
-        for index, line in enumerate(csv.reader(reader, 'TabDialect'), 0):
+        for index, line in enumerate(csv.reader(reader, "TabDialect"), 0):
             data.append(line)
-            if (index % int(chunksize) == 0 and index > 0):
+            if index % int(chunksize) == 0 and index > 0:
                 process_dataframe_chunk(
                     data=data,
                     pipeline_name=pipeline_name,
@@ -283,7 +274,7 @@ def process_source_file(
                     reorder_headers_list=reorder_headers_list,
                     date_format_list=date_format_list,
                     null_rows_list=null_rows_list,
-                    destination_table=destination_table
+                    destination_table=destination_table,
                 )
                 data = []
                 chunk_number += 1
@@ -300,7 +291,7 @@ def process_source_file(
                 reorder_headers_list=reorder_headers_list,
                 date_format_list=date_format_list,
                 null_rows_list=null_rows_list,
-                destination_table=destination_table
+                destination_table=destination_table,
             )
 
 
@@ -315,13 +306,9 @@ def process_dataframe_chunk(
     reorder_headers_list: typing.List[str],
     date_format_list: typing.List[str],
     null_rows_list: typing.List[str],
-    destination_table: str
 ) -> None:
     logging.info(f"Processing chunk #{chunk_number}")
-    df = pd.DataFrame(
-                data,
-                columns=input_csv_headers
-            )
+    df = pd.DataFrame(data, columns=input_csv_headers)
     set_df_datatypes(df, data_dtypes)
     target_file_batch = str(target_file).replace(
         ".csv", "-" + str(chunk_number) + ".csv"
@@ -335,14 +322,11 @@ def process_dataframe_chunk(
         pipeline_name=pipeline_name,
         reorder_headers_list=reorder_headers_list,
         date_format_list=date_format_list,
-        null_rows_list=null_rows_list
+        null_rows_list=null_rows_list,
     )
 
 
-def set_df_datatypes(
-    df: pd.DataFrame,
-    data_dtypes: dict
-) -> pd.DataFrame:
+def set_df_datatypes(df: pd.DataFrame, data_dtypes: dict) -> pd.DataFrame:
     logging.info("Setting data types")
     for key, item in data_dtypes.items():
         df[key] = df[key].astype(item)
@@ -358,7 +342,7 @@ def process_chunk(
     pipeline_name: str,
     reorder_headers_list: dict,
     null_rows_list: typing.List[str],
-    date_format_list: typing.List[str]
+    date_format_list: typing.List[str],
 ) -> None:
     if pipeline_name == "GHCND by year":
         df = filter_null_rows(df, null_rows_list=null_rows_list)
@@ -369,18 +353,17 @@ def process_chunk(
     append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
 
 
-def add_metadata_cols(
-    df: pd.DataFrame,
-    source_url: str
-) -> pd.DataFrame:
+def add_metadata_cols(df: pd.DataFrame, source_url: str) -> pd.DataFrame:
     logging.info("Adding metadata columns")
     df["source_url"] = source_url
-    df["etl_timestamp"] = pd.to_datetime( datetime.datetime.now(), format="%Y-%m-%d %H:%M:%S", infer_datetime_format=True )
+    df["etl_timestamp"] = pd.to_datetime(
+        datetime.datetime.now(), format="%Y-%m-%d %H:%M:%S", infer_datetime_format=True
+    )
     return df
 
+
 def reorder_headers(
-    df: pd.DataFrame,
-    reorder_headers_list: typing.List[str]
+    df: pd.DataFrame, reorder_headers_list: typing.List[str]
 ) -> pd.DataFrame:
     logging.info("Reordering headers..")
     return df[reorder_headers_list]
@@ -393,7 +376,9 @@ def gz_decompress(infile: str, tofile: str) -> None:
         tof.write(decom_str)
 
 
-def filter_null_rows(df: pd.DataFrame, null_rows_list: typing.List[str]) -> pd.DataFrame:
+def filter_null_rows(
+    df: pd.DataFrame, null_rows_list: typing.List[str]
+) -> pd.DataFrame:
     logging.info("Removing rows with blank id's..")
     for fld in null_rows_list:
         df = df[df[fld] != ""]
@@ -412,8 +397,7 @@ def convert_dt_format(dt_str: str) -> str:
 
 
 def source_convert_date_formats(
-    df: pd.DataFrame,
-    date_format_list: typing.List[str]
+    df: pd.DataFrame, date_format_list: typing.List[str]
 ) -> pd.DataFrame:
     logging.info("Converting Date Format..")
     for fld in date_format_list:
@@ -585,31 +569,24 @@ def download_file_ftp(
     logging.info(f"Downloading {source_url} into {local_file}")
     for retry in range(1, 3):
         if not download_file_ftp_single_try(
-                ftp_host,
-                ftp_dir,
-                ftp_filename,
-                local_file
-            ):
+            ftp_host, ftp_dir, ftp_filename, local_file
+        ):
             logging.info(f"FTP file download failed.  Retrying #{retry} in 60 seconds")
             time.sleep(60)
         else:
             break
 
 
-
 def download_file_ftp_single_try(
-    ftp_host: str,
-    ftp_dir: str,
-    ftp_filename: str,
-    local_file: pathlib.Path
+    ftp_host: str, ftp_dir: str, ftp_filename: str, local_file: pathlib.Path
 ) -> bool:
     try:
         with ftplib.FTP(ftp_host, timeout=60) as ftp_conn:
             ftp_conn.login("", "")
             ftp_conn.cwd(ftp_dir)
             ftp_conn.encoding = "utf-8"
-            with open(local_file ,'wb') as dest_file:
-                ftp_conn.retrbinary('RETR %s' % ftp_filename, dest_file.write)
+            with open(local_file, "wb") as dest_file:
+                ftp_conn.retrbinary("RETR %s" % ftp_filename, dest_file.write)
             ftp_conn.quit()
             return True
     except:
@@ -662,5 +639,5 @@ if __name__ == "__main__":
         output_csv_headers=json.loads(os.environ.get("OUTPUT_CSV_HEADERS", r"[]")),
         reorder_headers_list=json.loads(os.environ.get("REORDER_HEADERS_LIST", r"[]")),
         null_rows_list=json.loads(os.environ.get("NULL_ROWS_LIST", r"[]")),
-        date_format_list=json.loads(os.environ.get("DATE_FORMAT_LIST", r"[]"))
+        date_format_list=json.loads(os.environ.get("DATE_FORMAT_LIST", r"[]")),
     )
