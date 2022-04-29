@@ -35,13 +35,13 @@ def main(
     source_project_id: str,
     target_project_id: str,
     service_account: str,
-    dataset_name: str,
+    transfer_config_name: str,
     source_dataset_name: str,
     target_dataset_name: str,
     timeout: int,
 ):
     client = bigquery_datatransfer_v1.DataTransferServiceClient()
-    transfer_config_prefix = f"{dataset_name}-copy"
+    transfer_config_prefix = f"{transfer_config_name}-copy"
     transfer_configs = client.list_transfer_configs(
         request=bigquery_datatransfer_v1.types.ListTransferConfigsRequest(
             parent=f"projects/{target_project_id}"
@@ -175,7 +175,7 @@ if __name__ == "__main__":
         source_project_id=os.environ["SOURCE_PROJECT_ID"],
         target_project_id=os.environ["TARGET_PROJECT_ID"],
         service_account=os.environ["SERVICE_ACCOUNT"],
-        dataset_name=os.environ["DATASET_NAME"],
+        transfer_config_name=os.environ["TRANSFER_CONFIG_NAME"],
         source_dataset_name=os.environ["SOURCE_DATASET_NAME"],
         target_dataset_name=os.environ["TARGET_DATASET_NAME"],
         timeout=int(os.getenv("TIMEOUT", 1200)),

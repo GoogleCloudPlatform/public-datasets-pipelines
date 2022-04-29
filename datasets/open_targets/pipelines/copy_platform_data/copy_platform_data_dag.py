@@ -19,7 +19,7 @@ from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
 default_args = {
     "owner": "Google",
     "depends_on_past": False,
-    "start_date": "2021-11-23",
+    "start_date": "2021-03-23",
 }
 
 
@@ -44,9 +44,9 @@ with DAG(
             "SOURCE_PROJECT_ID": "{{ var.json.open_targets.source_project_id }}",
             "TARGET_PROJECT_ID": "{{ var.json.open_targets.target_project_id }}",
             "SERVICE_ACCOUNT": "{{ var.json.open_targets.service_account }}",
-            "DATASET_NAME": "{{ var.json.open_targets.dataset_name }}",
-            "SOURCE_DATASET_NAME": "{{ var.json.open_targets.source_dataset_name }}",
-            "TARGET_DATASET_NAME": "{{ var.json.open_targets.target_dataset_name }}",
+            "TRANSFER_CONFIG_NAME": "open-targets",
+            "SOURCE_DATASET_NAME": "{{ var.json.open_targets.platform.source_dataset_name }}",
+            "TARGET_DATASET_NAME": "{{ var.json.open_targets.platform.target_dataset_name }}",
         },
         resources={
             "request_memory": "128M",
