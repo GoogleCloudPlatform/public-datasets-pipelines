@@ -290,6 +290,63 @@ dag:
         project_id: "{{ var.value.gcp_project }}"
         location: "us-central1-c"
         name: noaa
+    - operator: "GKEStartPodOperator"
+      description: "Run NOAA load processes"
+      args:
+        task_id: "ghcnd_states"
+        name: "noaa.ghcnd_states"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: noaa
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "{{ var.json.noaa.ghcnd_states.pipeline_name }}"
+          SOURCE_URL: "{{ var.json.noaa.ghcnd_states.source_url }}"
+          SOURCE_FILE: "{{ var.json.noaa.ghcnd_states.source_file }}"
+          TARGET_FILE: "{{ var.json.noaa.ghcnd_states.target_file }}"
+          CHUNKSIZE: "{{ var.json.noaa.ghcnd_states.chunksize }}"
+          FTP_HOST: "{{ var.json.noaa.ghcnd_states.ftp_host }}"
+          FTP_DIR: "{{ var.json.noaa.ghcnd_states.ftp_dir }}"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "{{ var.json.noaa.ghcnd_states.dataset_id }}"
+          TABLE_ID: "{{ var.json.noaa.ghcnd_states.table_id }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "{{ var.json.noaa.ghcnd_states.target_gcs_path }}"
+          SCHEMA_PATH: "{{ var.json.noaa.ghcnd_states.schema_path }}"
+          DROP_DEST_TABLE: "{{ var.json.noaa.ghcnd_states.drop_dest_table }}"
+          INPUT_FIELD_DELIMITER: "{{ var.json.noaa.ghcnd_states.input_field_delimiter }}"
+          INPUT_CSV_HEADERS: >-
+            [
+              "textdata"
+            ]
+          DATA_DTYPES: >-
+            {
+              "textdata": "str"
+            }
+          OUTPUT_CSV_HEADERS: >-
+            [
+              "code",
+              "name",
+              "source_url",
+              "etl_timestamp"
+            ]
+          REORDER_HEADERS_LIST: >-
+            [
+              "code",
+              "name",
+              "source_url",
+              "etl_timestamp"
+            ]
+          SLICE_COLUMN_LIST: >-
+            {
+              "code": ["textdata", "0", "2"],
+              "name": ["textdata", "3", ""]
+            }
+      resources:
+          request_ephemeral_storage: "4G"
+          limit_cpu: "3"
 
   graph_paths:
     - "transform_csv >> load_to_bq"

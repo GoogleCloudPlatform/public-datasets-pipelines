@@ -173,7 +173,7 @@ def execute_pipeline(
                 date_format_list=date_format_list,
                 slice_column_list=slice_column_list
             )
-    if pipeline_name in ["GHCND countries", "GHCND inventory"]:
+    if pipeline_name in ["GHCND countries", "GHCND inventory", "GHCND states"]:
         ftp_filename = os.path.split(source_url)[1]
         download_file_ftp(ftp_host, ftp_dir, ftp_filename, source_file, source_url)
         process_and_load_table(
@@ -389,7 +389,7 @@ def process_chunk(
         df = add_metadata_cols(df, source_url=source_url)
         df = source_convert_date_formats(df, date_format_list=date_format_list)
         df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
-    if pipeline_name in ["GHCND countries", "GHCND inventory"]:
+    if pipeline_name in ["GHCND countries", "GHCND inventory", "GHCND states"]:
         df = slice_column(df, slice_column_list)
         df = add_metadata_cols(df, source_url=source_url)
         df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
@@ -451,17 +451,27 @@ def source_convert_date_formats(
     return df
 
 
-def slice_column(df: pd.DataFrame, slice_column_list: dict) -> pd.DataFrame:
+def slice_column(df: pd.DataFrame, slice_column_list: dict, pipeline_name: str = "") -> pd.DataFrame:
     logging.info("Extracting column data..")
     for key, values in slice_column_list.items():
         src_col = values[0]
         dest_col = key
         start_pos = values[1]
         end_pos = values[2]
-        if end_pos == "":
-            df[dest_col] = df[src_col].apply(lambda x: str(x)[int(start_pos):])
+        if pipeline_name == "GHCND states":
+            if dest_col == "name":
+                # Work-around for Alabama - bad data
+                df[dest_col] = df[src_col].apply(lambda x: "ALABAMA" if str(x)[0:2] == "AL" else str(x)[int(start_pos):].strip())
+            else:
+                if end_pos == "":
+                    df[dest_col] = df[src_col].apply(lambda x: str(x)[int(start_pos):].strip())
+                else:
+                    df[dest_col] = df[src_col].apply(lambda x: str(x)[int(start_pos):int(end_pos)].strip())
         else:
-            df[dest_col] = df[src_col].apply(lambda x: str(x)[int(start_pos):int(end_pos)])
+            if end_pos == "":
+                df[dest_col] = df[src_col].apply(lambda x: str(x)[int(start_pos):].strip())
+            else:
+                df[dest_col] = df[src_col].apply(lambda x: str(x)[int(start_pos):int(end_pos)].strip())
     return df
 
 
