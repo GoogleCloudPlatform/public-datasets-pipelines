@@ -55,7 +55,6 @@ def main(
     ]
 
     _running_configs = []
-    dataset_id = f"{source_dataset_name}"
     display_name = f"{transfer_config_prefix}-{source_dataset_name}"
 
     _config = next(
@@ -67,7 +66,6 @@ def main(
             client,
             source_project_id,
             target_project_id,
-            dataset_id,
             display_name,
             source_dataset_name,
             target_dataset_name,
@@ -117,7 +115,6 @@ def create_transfer_config(
     client: bigquery_datatransfer_v1.DataTransferServiceClient,
     source_project_id: str,
     target_project_id: str,
-    dataset_id: str,
     display_name: str,
     source_dataset_name: str,
     target_dataset_name: str,
@@ -130,7 +127,7 @@ def create_transfer_config(
         dataset_region="US",
         params={
             "source_project_id": source_project_id,
-            "source_dataset_id": dataset_id,
+            "source_dataset_id": source_dataset_name,
         },
         schedule_options=bigquery_datatransfer_v1.ScheduleOptions(
             disable_auto_scheduling=True
