@@ -20,6 +20,7 @@ import json
 import logging
 import os
 import pathlib
+import requests
 import time
 import typing
 
@@ -56,6 +57,7 @@ def main(
     date_format_list: typing.List[str],
     slice_column_list: dict,
     regex_list: dict,
+    rename_headers_list: dict,
     remove_source_file: str,
     delete_target_file: str,
     number_of_header_rows: str
@@ -90,6 +92,7 @@ def main(
         date_format_list=date_format_list,
         slice_column_list=slice_column_list,
         regex_list=regex_list,
+        rename_headers_list=rename_headers_list,
         remove_source_file=(remove_source_file=="Y"),
         delete_target_file=(delete_target_file=="Y"),
         number_of_header_rows=int(number_of_header_rows)
@@ -126,6 +129,7 @@ def execute_pipeline(
     slice_column_list: dict,
     regex_list: dict,
     remove_source_file: bool,
+    rename_headers_list: dict,
     delete_target_file: bool,
     number_of_header_rows: int
 ) -> None:
@@ -184,10 +188,15 @@ def execute_pipeline(
                 date_format_list=date_format_list,
                 slice_column_list=slice_column_list,
                 regex_list=regex_list,
+                rename_headers_list=rename_headers_list,
                 remove_source_file=remove_source_file,
                 delete_target_file=delete_target_file
             )
-    if pipeline_name in ["GHCND countries", "GHCND inventory", "GHCND states", "GHCND stations", "GSOD stations"]:
+    if pipeline_name in ["GHCND countries",
+                         "GHCND inventory",
+                         "GHCND states",
+                         "GHCND stations",
+                         "GSOD stations"]:
         ftp_filename = os.path.split(source_url)[1]
         download_file_ftp(ftp_host, ftp_dir, ftp_filename, source_file, source_url)
         if number_of_header_rows > 0:
@@ -217,10 +226,43 @@ def execute_pipeline(
             date_format_list=date_format_list,
             slice_column_list=slice_column_list,
             regex_list=regex_list,
+            rename_headers_list=rename_headers_list,
             remove_source_file=remove_source_file,
             delete_target_file=delete_target_file
         )
-
+    if pipeline_name == "GHCND hurricanes":
+        download_file(source_url, source_file)
+        if number_of_header_rows > 0:
+            remove_header_rows(
+                source_file,
+                number_of_header_rows=number_of_header_rows)
+        else:
+            pass
+        process_and_load_table(
+            source_file=source_file,
+            target_file=target_file,
+            pipeline_name=pipeline_name,
+            source_url=source_url,
+            chunksize=chunksize,
+            project_id=project_id,
+            dataset_id=dataset_id,
+            destination_table=destination_table,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=target_gcs_path,
+            schema_path=schema_path,
+            drop_dest_table=drop_dest_table,
+            input_field_delimiter=input_field_delimiter,
+            input_csv_headers=input_csv_headers,
+            data_dtypes=data_dtypes,
+            reorder_headers_list=reorder_headers_list,
+            null_rows_list=null_rows_list,
+            date_format_list=date_format_list,
+            slice_column_list=slice_column_list,
+            regex_list=regex_list,
+            rename_headers_list=rename_headers_list,
+            remove_source_file=remove_source_file,
+            delete_target_file=delete_target_file
+        )
 
 def process_and_load_table(
     source_file: pathlib.Path,
@@ -243,6 +285,7 @@ def process_and_load_table(
     date_format_list: typing.List[str],
     slice_column_list: dict,
     regex_list: dict,
+    rename_headers_list: dict,
     remove_source_file: bool,
     delete_target_file: bool
 ) -> None:
@@ -260,6 +303,7 @@ def process_and_load_table(
         input_field_delimiter=input_field_delimiter,
         slice_column_list=slice_column_list,
         regex_list=regex_list,
+        rename_headers_list=rename_headers_list,
         remove_source_file=remove_source_file
     )
     if os.path.exists(target_file):
@@ -315,6 +359,7 @@ def process_source_file(
     input_field_delimiter: str,
     slice_column_list: dict,
     regex_list: dict,
+    rename_headers_list: dict,
     remove_source_file: bool = False
 ) -> None:
     logging.info(f"Opening source file {source_file}")
@@ -340,7 +385,8 @@ def process_source_file(
                     date_format_list=date_format_list,
                     null_rows_list=null_rows_list,
                     slice_column_list=slice_column_list,
-                    regex_list=regex_list
+                    regex_list=regex_list,
+                    rename_headers_list=rename_headers_list
                 )
                 data = []
                 chunk_number += 1
@@ -359,7 +405,8 @@ def process_source_file(
                 date_format_list=date_format_list,
                 null_rows_list=null_rows_list,
                 slice_column_list=slice_column_list,
-                regex_list=regex_list
+                regex_list=regex_list,
+                rename_headers_list=rename_headers_list
             )
         if remove_source_file:
             os.remove(source_file)
@@ -377,7 +424,8 @@ def process_dataframe_chunk(
     date_format_list: typing.List[str],
     null_rows_list: typing.List[str],
     slice_column_list: dict,
-    regex_list: dict
+    regex_list: dict,
+    rename_headers_list: dict
 ) -> None:
     logging.info(f"Processing chunk #{chunk_number}")
     df = pd.DataFrame(data, columns=input_csv_headers)
@@ -396,7 +444,8 @@ def process_dataframe_chunk(
         date_format_list=date_format_list,
         null_rows_list=null_rows_list,
         slice_column_list=slice_column_list,
-        regex_list=regex_list
+        regex_list=regex_list,
+        rename_headers_list=rename_headers_list
     )
 
 
@@ -418,7 +467,8 @@ def process_chunk(
     null_rows_list: typing.List[str],
     date_format_list: typing.List[str],
     slice_column_list: dict,
-    regex_list: dict
+    regex_list: dict,
+    rename_headers_list: dict
 ) -> None:
     if pipeline_name == "GHCND by year":
         df = filter_null_rows(df, null_rows_list=null_rows_list)
@@ -437,8 +487,21 @@ def process_chunk(
         df["lat"] = df["lat"].astype(str)
         df["lon"] = df["lon"].astype(str)
         df = apply_regex(df, regex_list)
+    if pipeline_name == "GHCND hurricanes":
+        df.columns = df.columns.str.lower()
+        df = rename_headers(df, rename_headers_list=rename_headers_list)
+        df = add_metadata_cols(df, source_url=source_url)
+        df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
     save_to_new_file(df, file_path=str(target_file_batch))
     append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
+
+
+def rename_headers(
+    df: pd.DataFrame,
+    rename_headers_list: dict
+) -> pd.DataFrame:
+    df.rename(columns=rename_headers_list, inplace=True)
+    return df
 
 
 def remove_header_rows(source_file: str, number_of_header_rows: int) -> None:
@@ -700,6 +763,17 @@ def upload_file_to_gcs(
         )
 
 
+def download_file(source_url: str, source_file: pathlib.Path) -> None:
+    logging.info(f"Downloading {source_url} to {source_file}")
+    r = requests.get(source_url, stream=True)
+    if r.status_code == 200:
+        with open(source_file, "wb") as f:
+            for chunk in r:
+                f.write(chunk)
+    else:
+        logging.error(f"Couldn't download {source_url}: {r.text}")
+
+
 def download_file_ftp(
     ftp_host: str,
     ftp_dir: str,
@@ -783,6 +857,7 @@ if __name__ == "__main__":
         null_rows_list=json.loads(os.environ.get("NULL_ROWS_LIST", r"[]")),
         date_format_list=json.loads(os.environ.get("DATE_FORMAT_LIST", r"[]")),
         slice_column_list=json.loads(os.environ.get("SLICE_COLUMN_LIST", r"{}")),
+        rename_headers_list=json.loads(os.environ.get("RENAME_HEADERS_LIST", r"{}")),
         remove_source_file=os.environ.get("REMOVE_SOURCE_FILE", "N"),
         delete_target_file=os.environ.get("DELETE_TARGET_FILE", "N"),
         number_of_header_rows=os.environ.get("NUMBER_OF_HEADER_ROWS", "0"),
