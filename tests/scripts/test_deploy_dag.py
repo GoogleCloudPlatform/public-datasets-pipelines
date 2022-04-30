@@ -346,7 +346,7 @@ def test_script_with_pipeline_arg_deploys_without_gcs_bucket_param(
     deploy_dag.check_airflow_version_compatibility.assert_called_once()
 
 
-def test_script_copy_files_in_data_folder_to_composer_data_folder(
+def test_script_copy_files_in_data_folder_to_composer_data_folder_with_folder_created(
     dataset_path: pathlib.Path,
     pipeline_path: pathlib.Path,
     env: str,
@@ -357,6 +357,16 @@ def test_script_copy_files_in_data_folder_to_composer_data_folder(
         pipeline_path,
         env,
         f"{dataset_path.name}_variables.json",
+    )
+
+    schema_path = pipeline_path / "data"
+
+    subprocess.run(
+        [
+            "mkdir",
+            "-p",
+            schema_path,
+        ],
     )
 
     #setup data folder inside the pipeline path (do a test similar to the above setup_data_and_variables)
@@ -375,18 +385,19 @@ def test_script_copy_files_in_data_folder_to_composer_data_folder(
     deploy_dag.main(
         env_path=ENV_PATH,
         dataset_id=dataset_path.name,
-        pipeline=pipeline_path_2.name,
+        pipeline=pipeline_path.name,
         composer_env="test-env",
         composer_bucket="test-bucket",
         composer_region="test-region",
     )
-    deploy_dag.copy_schema_to_composer_data_folder.assert_called_once()
-    deploy_dag.check_airflow_version_compatibility.assert_called_once()
 
-def test_script_copy_files_in_data_folder_to_composer_data_folder(
+    deploy_dag.check_airflow_version_compatibility.assert_called_once()
+    deploy_dag.copy_schema_to_composer_data_folder.assert_called_once()
+
+
+def test_script_copy_files_in_data_folder_to_composer_data_folder_without_folder(
     dataset_path: pathlib.Path,
     pipeline_path: pathlib.Path,
-    pipeline_path_2: pathlib.Path,
     env: str,
     mocker,
 ):
@@ -396,6 +407,10 @@ def test_script_copy_files_in_data_folder_to_composer_data_folder(
         env,
         f"{dataset_path.name}_variables.json",
     )
+
+    schema_path = pipeline_path / "data"
+
+    #setup data folder inside the pipeline path (do a test similar to the above setup_data_and_variables)
 
     airflow_version = 2
     mocker.patch("scripts.deploy_dag.copy_variables_to_airflow_data_folder")
@@ -411,14 +426,13 @@ def test_script_copy_files_in_data_folder_to_composer_data_folder(
     deploy_dag.main(
         env_path=ENV_PATH,
         dataset_id=dataset_path.name,
-        pipeline=pipeline_path_2.name,
+        pipeline=pipeline_path.name,
         composer_env="test-env",
         composer_bucket="test-bucket",
         composer_region="test-region",
     )
-    deploy_dag.copy_schema_to_composer_data_folder.assert_called_once()
-    deploy_dag.check_airflow_version_compatibility.assert_called_once()
 
+    deploy_dag.check_airflow_version_compatibility.assert_called_once()
 
 
 def test_script_without_local_flag_requires_cloud_composer_args(env: str):
