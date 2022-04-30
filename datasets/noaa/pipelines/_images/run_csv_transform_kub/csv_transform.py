@@ -20,6 +20,8 @@ import json
 import logging
 import os
 import pathlib
+import urllib
+import re
 import requests
 import time
 import typing
@@ -64,6 +66,7 @@ def main(
 ) -> None:
     logging.info(f"{pipeline_name} process started")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
+    # print(url_directory_list("https://www1.ncdc.noaa.gov/pub/data/swdi/database-csv/v2/", "nldn-tiles"))
     execute_pipeline(
         pipeline_name=pipeline_name,
         source_url=source_url,
@@ -263,6 +266,62 @@ def execute_pipeline(
             remove_source_file=remove_source_file,
             delete_target_file=delete_target_file
         )
+    if pipeline_name == "NOAA lightning strikes by year":
+        url_path = os.path.split(source_url)[0]
+        file_pattern = os.path.split(source_url)[1]
+        url_list = url_directory_list(f"{url_path}/", file_pattern)
+        if full_data_load:
+            start = int(start_year)
+            create_dest_table(
+                project_id=project_id,
+                dataset_id=dataset_id,
+                table_id=destination_table,
+                schema_filepath=schema_path,
+                bucket_name=target_gcs_bucket,
+                drop_table=True,
+            )
+        else:
+            start = datetime.datetime.now().year - 6
+        for yr in range(start, datetime.datetime.now().year):
+            for url in url_list.items():
+                url_file_name = os.path.split(url)[1]
+                if str(url_file_name).index(str(yr)):
+                    source_file = source_file.replace(".csv", f"_{yr}.csv")
+                    target_file = target_file.replace(".csv", f"_{yr}.csv")
+                    download_file(url, source_file)
+                    if not full_data_load:
+                        delete_source_file_data_from_bq(
+                            project_id=project_id,
+                            dataset_id=dataset_id,
+                            table_id=destination_table,
+                            source_url=url
+                        )
+                    process_and_load_table(
+                        source_file=source_file,
+                        target_file=target_file,
+                        pipeline_name=pipeline_name,
+                        source_url=url,
+                        chunksize=chunksize,
+                        project_id=project_id,
+                        dataset_id=dataset_id,
+                        destination_table=destination_table,
+                        target_gcs_bucket=target_gcs_bucket,
+                        target_gcs_path=target_gcs_path,
+                        schema_path=schema_path,
+                        drop_dest_table=False,
+                        input_field_delimiter=input_field_delimiter,
+                        input_csv_headers=input_csv_headers,
+                        data_dtypes=data_dtypes,
+                        reorder_headers_list=reorder_headers_list,
+                        null_rows_list=null_rows_list,
+                        date_format_list=date_format_list,
+                        slice_column_list=slice_column_list,
+                        regex_list=regex_list,
+                        rename_headers_list=rename_headers_list,
+                        remove_source_file=remove_source_file,
+                        delete_target_file=delete_target_file
+                    )
+
 
 def process_and_load_table(
     source_file: pathlib.Path,
@@ -492,8 +551,60 @@ def process_chunk(
         df = rename_headers(df, rename_headers_list=rename_headers_list)
         df = add_metadata_cols(df, source_url=source_url)
         df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
+    if pipeline_name == "NOAA lightning strikes by year":
+        df = rename_headers(df, rename_headers_list=rename_headers_list)
+        df = convert_date_from_int(df)
+        df = generate_location(df)
+        df = add_metadata_cols(df, source_url=source_url)
+        df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
     save_to_new_file(df, file_path=str(target_file_batch))
     append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
+
+
+def convert_date_from_int(df: pd.DataFrame, int_date_list: dict) -> pd.DataFrame:
+    logging.info("Converting dates from integers")
+    df["day"] = (
+        pd.to_datetime(
+            (df["day_int"][:].astype("string") + "000000"), "raise", False, True
+        ).astype("string")
+        + " 00:00:00"
+    )
+    return df
+
+
+def generate_location(df: pd.DataFrame, gen_location_list: dict) -> pd.DataFrame:
+    logging.info("Generating location data")
+    df["center_point"] = (
+        "POINT("
+        + df["centerlon"][:].astype("string")
+        + " "
+        + df["centerlat"][:].astype("string")
+        + ")"
+    )
+    return df
+
+
+def url_directory_list(source_url_path: str, file_pattern: str = "") -> typing.List[str]:
+    from urllib.request import Request, urlopen
+    from bs4 import BeautifulSoup
+    rtn_list = []
+    url = source_url_path.replace(" ","%20")
+    req = Request(url)
+    a = urlopen(req).read()
+    soup = BeautifulSoup(a, 'html.parser')
+    x = (soup.find_all('a'))
+    for i in x:
+        file_name = i.extract().get_text()
+        url_new = url + file_name
+        url_new = url_new.replace(" ","%20")
+        if file_pattern == "":
+            rtn_list.append(url_new)
+        else:
+            if re.search("" + file_pattern, file_name):
+                rtn_list.append(url_new)
+            else:
+                pass
+    return rtn_list
 
 
 def rename_headers(
@@ -690,6 +801,30 @@ def check_gcs_file_exists(file_path: str, bucket_name: str) -> bool:
     bucket = storage_client.bucket(bucket_name)
     exists = storage.Blob(bucket=bucket, name=file_path).exists(storage_client)
     return exists
+
+
+def delete_source_file_data_from_bq(
+    project_id: str, dataset_id: str, table_id: str, source_url: str
+) -> None:
+    logging.info(
+        f"Deleting data from {project_id}.{dataset_id}.{table_id} where source_url = '{source_url}'"
+    )
+    client = bigquery.Client()
+    query = f"""
+        DELETE
+        FROM {project_id}.{dataset_id}.{table_id}
+        WHERE source_url = '@source_url'
+    """
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("project_id", "STRING", project_id),
+            bigquery.ScalarQueryParameter("dataset_id", "STRING", dataset_id),
+            bigquery.ScalarQueryParameter("table_id", "STRING", table_id),
+            bigquery.ScalarQueryParameter("source_url", "STRING", source_url),
+        ]
+    )
+    query_job = client.query(query, job_config=job_config)  # Make an API request.
+    query_job.result()
 
 
 def create_table_schema(

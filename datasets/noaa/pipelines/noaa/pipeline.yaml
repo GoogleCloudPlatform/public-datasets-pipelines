@@ -1100,7 +1100,94 @@ dag:
       resources:
           request_ephemeral_storage: "4G"
           limit_cpu: "3"
-
+    - operator: "GKEStartPodOperator"
+      description: "Run NOAA load processes"
+      args:
+        task_id: "lightning_strikes"
+        name: "noaa.lightning_strikes"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: noaa
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "{{ var.json.noaa.lightning_strikes.pipeline_name }}"
+          SOURCE_URL: "{{ var.json.noaa.lightning_strikes.source_url }}"
+          SOURCE_FILE: "{{ var.json.noaa.lightning_strikes.source_file }}"
+          TARGET_FILE: "{{ var.json.noaa.lightning_strikes.target_file }}"
+          CHUNKSIZE: "{{ var.json.noaa.lightning_strikes.chunksize }}"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "{{ var.json.noaa.lightning_strikes.dataset_id }}"
+          TABLE_ID: "{{ var.json.noaa.lightning_strikes.table_id }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "{{ var.json.noaa.lightning_strikes.target_gcs_path }}"
+          SCHEMA_PATH: "{{ var.json.noaa.lightning_strikes.schema_path }}"
+          DROP_DEST_TABLE: "{{ var.json.noaa.lightning_strikes.drop_dest_table }}"
+          INPUT_FIELD_DELIMITER: "{{ var.json.noaa.lightning_strikes.input_field_delimiter }}"
+          REMOVE_SOURCE_FILE: "{{ var.json.noaa.lightning_strikes.remove_source_file }}"
+          DELETE_TARGET_FILE: "{{ var.json.noaa.lightning_strikes.delete_target_file }}"
+          INPUT_CSV_HEADERS: >-
+            [
+              "textdata"
+            ]
+          DATA_DTYPES: >-
+            {
+              "textdata": "str"
+            }
+          OUTPUT_CSV_HEADERS: >-
+            [
+              "usaf",
+              "wban",
+              "name",
+              "country",
+              "state",
+              "call",
+              "lat",
+              "lon",
+              "elev",
+              "begin",
+              "end",
+              "source_url",
+              "etl_timestamp"
+            ]
+          REORDER_HEADERS_LIST: >-
+            [
+              "usaf",
+              "wban",
+              "name",
+              "country",
+              "state",
+              "call",
+              "lat",
+              "lon",
+              "elev",
+              "begin",
+              "end",
+              "source_url",
+              "etl_timestamp"
+            ]
+          NULL_ROWS_LIST: >-
+            [
+              "usaf"
+            ]
+          SLICE_COLUMN_LIST: >-
+            {
+              "usaf": ["textdata", "0", "6"],
+              "wban": ["textdata", "7", "12"],
+              "name": ["textdata", "13", "42"],
+              "country": ["textdata", "43", "45"],
+              "state": ["textdata", "48", "50"],
+              "call": ["textdata", "51", "56"],
+              "lat": ["textdata", "57", "64"],
+              "lon": ["textdata", "65", "74"],
+              "elev": ["textdata", "75", "81"],
+              "begin": ["textdata", "82", "90"],
+              "end": ["textdata", "91", "99"]
+            }
+      resources:
+          request_ephemeral_storage: "4G"
+          limit_cpu: "3"
 
   graph_paths:
     - "transform_csv >> load_to_bq"
