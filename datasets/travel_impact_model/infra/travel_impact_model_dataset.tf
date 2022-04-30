@@ -37,6 +37,20 @@ resource "google_storage_bucket" "travel-impact-model" {
   }
 }
 
+data "google_iam_policy" "storage_bucket__travel-impact-model" {
+  dynamic "binding" {
+    for_each = var.iam_policies["storage_buckets"]["travel-impact-model"]
+    content {
+      role    = binding.value["role"]
+      members = binding.value["members"]
+    }
+  }
+}
+
+resource "google_storage_bucket_iam_policy" "travel-impact-model" {
+  bucket      = google_storage_bucket.travel-impact-model.name
+  policy_data = data.google_iam_policy.storage_bucket__travel-impact-model.policy_data
+}
 output "storage_bucket-travel-impact-model-name" {
   value = google_storage_bucket.travel-impact-model.name
 }
