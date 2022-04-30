@@ -21,6 +21,20 @@ resource "google_bigquery_dataset" "travel_impact_model" {
   description = "Travel Impact Model Data"
 }
 
+data "google_iam_policy" "bq_ds__travel_impact_model" {
+  dynamic "binding" {
+    for_each = var.iam_policies["bigquery_datasets"]["travel_impact_model"]
+    content {
+      role    = binding.value["role"]
+      members = binding.value["members"]
+    }
+  }
+}
+
+resource "google_bigquery_dataset_iam_policy" "travel_impact_model" {
+  dataset_id  = google_bigquery_dataset.travel_impact_model.dataset_id
+  policy_data = data.google_iam_policy.bq_ds__travel_impact_model.policy_data
+}
 output "bigquery_dataset-travel_impact_model-dataset_id" {
   value = google_bigquery_dataset.travel_impact_model.dataset_id
 }
