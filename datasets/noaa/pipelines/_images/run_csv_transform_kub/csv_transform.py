@@ -36,7 +36,6 @@ def main(
     chunksize: str,
     ftp_host: str,
     ftp_dir: str,
-    ftp_filename: str,
     project_id: str,
     dataset_id: str,
     table_id: str,
@@ -55,7 +54,11 @@ def main(
     reorder_headers_list: typing.List[str],
     null_rows_list: typing.List[str],
     date_format_list: typing.List[str],
-    slice_column_list: dict
+    slice_column_list: dict,
+    regex_list: dict,
+    remove_source_file: str,
+    delete_target_file: str,
+    number_of_header_rows: str
 ) -> None:
     logging.info(f"{pipeline_name} process started")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
@@ -85,7 +88,11 @@ def main(
         reorder_headers_list=reorder_headers_list,
         null_rows_list=null_rows_list,
         date_format_list=date_format_list,
-        slice_column_list=slice_column_list
+        slice_column_list=slice_column_list,
+        regex_list=regex_list,
+        remove_source_file=(remove_source_file=="Y"),
+        delete_target_file=(delete_target_file=="Y"),
+        number_of_header_rows=int(number_of_header_rows)
     )
     logging.info(f"{pipeline_name} process completed")
 
@@ -116,7 +123,11 @@ def execute_pipeline(
     reorder_headers_list: typing.List[str],
     null_rows_list: typing.List[str],
     date_format_list: typing.List[str],
-    slice_column_list: dict
+    slice_column_list: dict,
+    regex_list: dict,
+    remove_source_file: bool,
+    delete_target_file: bool,
+    number_of_header_rows: int
 ) -> None:
     if pipeline_name == "GHCND by year":
         if full_data_load == "N":
@@ -171,11 +182,20 @@ def execute_pipeline(
                 reorder_headers_list=reorder_headers_list,
                 null_rows_list=null_rows_list,
                 date_format_list=date_format_list,
-                slice_column_list=slice_column_list
+                slice_column_list=slice_column_list,
+                regex_list=regex_list,
+                remove_source_file=remove_source_file,
+                delete_target_file=delete_target_file
             )
-    if pipeline_name in ["GHCND countries", "GHCND inventory", "GHCND states", "GHCND stations"]:
+    if pipeline_name in ["GHCND countries", "GHCND inventory", "GHCND states", "GHCND stations", "GSOD stations"]:
         ftp_filename = os.path.split(source_url)[1]
         download_file_ftp(ftp_host, ftp_dir, ftp_filename, source_file, source_url)
+        if number_of_header_rows > 0:
+            remove_header_rows(
+                source_file,
+                number_of_header_rows=number_of_header_rows)
+        else:
+            pass
         process_and_load_table(
             source_file=source_file,
             target_file=target_file,
@@ -195,7 +215,10 @@ def execute_pipeline(
             reorder_headers_list=reorder_headers_list,
             null_rows_list=null_rows_list,
             date_format_list=date_format_list,
-            slice_column_list=slice_column_list
+            slice_column_list=slice_column_list,
+            regex_list=regex_list,
+            remove_source_file=remove_source_file,
+            delete_target_file=delete_target_file
         )
 
 
@@ -218,7 +241,10 @@ def process_and_load_table(
     reorder_headers_list: typing.List[str],
     null_rows_list: typing.List[str],
     date_format_list: typing.List[str],
-    slice_column_list: dict
+    slice_column_list: dict,
+    regex_list: dict,
+    remove_source_file: bool,
+    delete_target_file: bool
 ) -> None:
     process_source_file(
         source_url=source_url,
@@ -233,13 +259,14 @@ def process_and_load_table(
         date_format_list=date_format_list,
         input_field_delimiter=input_field_delimiter,
         slice_column_list=slice_column_list,
-        remove_source_file=True
+        regex_list=regex_list,
+        remove_source_file=remove_source_file
     )
     if os.path.exists(target_file):
         upload_file_to_gcs(
             file_path=target_file,
             target_gcs_bucket=target_gcs_bucket,
-            target_gcs_path=target_gcs_path,
+            target_gcs_path=target_gcs_path
         )
         if drop_dest_table == "Y":
             drop_table = True
@@ -265,6 +292,9 @@ def process_and_load_table(
         else:
             error_msg = f"Error: Data was not loaded because the destination table {project_id}.{dataset_id}.{destination_table} does not exist and/or could not be created."
             raise ValueError(error_msg)
+        if delete_target_file:
+            logging.info(f"Removing target file {target_file}")
+            os.remove(target_file)
     else:
         logging.info(
             f"Informational: The data file {target_file} was not generated because no data file was available.  Continuing."
@@ -284,7 +314,8 @@ def process_source_file(
     date_format_list: typing.List[str],
     input_field_delimiter: str,
     slice_column_list: dict,
-    remove_source_file: bool = False,
+    regex_list: dict,
+    remove_source_file: bool = False
 ) -> None:
     logging.info(f"Opening source file {source_file}")
     csv.field_size_limit(512 << 10)
@@ -308,7 +339,8 @@ def process_source_file(
                     reorder_headers_list=reorder_headers_list,
                     date_format_list=date_format_list,
                     null_rows_list=null_rows_list,
-                    slice_column_list=slice_column_list
+                    slice_column_list=slice_column_list,
+                    regex_list=regex_list
                 )
                 data = []
                 chunk_number += 1
@@ -326,7 +358,8 @@ def process_source_file(
                 reorder_headers_list=reorder_headers_list,
                 date_format_list=date_format_list,
                 null_rows_list=null_rows_list,
-                slice_column_list=slice_column_list
+                slice_column_list=slice_column_list,
+                regex_list=regex_list
             )
         if remove_source_file:
             os.remove(source_file)
@@ -343,7 +376,8 @@ def process_dataframe_chunk(
     reorder_headers_list: typing.List[str],
     date_format_list: typing.List[str],
     null_rows_list: typing.List[str],
-    slice_column_list: dict
+    slice_column_list: dict,
+    regex_list: dict
 ) -> None:
     logging.info(f"Processing chunk #{chunk_number}")
     df = pd.DataFrame(data, columns=input_csv_headers)
@@ -361,7 +395,8 @@ def process_dataframe_chunk(
         reorder_headers_list=reorder_headers_list,
         date_format_list=date_format_list,
         null_rows_list=null_rows_list,
-        slice_column_list=slice_column_list
+        slice_column_list=slice_column_list,
+        regex_list=regex_list
     )
 
 
@@ -382,7 +417,8 @@ def process_chunk(
     reorder_headers_list: dict,
     null_rows_list: typing.List[str],
     date_format_list: typing.List[str],
-    slice_column_list: dict
+    slice_column_list: dict,
+    regex_list: dict
 ) -> None:
     if pipeline_name == "GHCND by year":
         df = filter_null_rows(df, null_rows_list=null_rows_list)
@@ -393,8 +429,21 @@ def process_chunk(
         df = slice_column(df, slice_column_list)
         df = add_metadata_cols(df, source_url=source_url)
         df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
+    if pipeline_name == "GSOD stations":
+        df = slice_column(df, slice_column_list)
+        df = filter_null_rows(df, null_rows_list=null_rows_list)
+        df = add_metadata_cols(df, source_url=source_url)
+        df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
+        df["lat"] = df["lat"].astype(str)
+        df["lon"] = df["lon"].astype(str)
+        df = apply_regex(df, regex_list)
     save_to_new_file(df, file_path=str(target_file_batch))
     append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
+
+
+def remove_header_rows(source_file: str, number_of_header_rows: int) -> None:
+    logging.info(f"Removing header from {source_file}")
+    os.system(f"sed -i '1,{number_of_header_rows}d' {source_file} ")
 
 
 def add_metadata_cols(df: pd.DataFrame, source_url: str) -> pd.DataFrame:
@@ -485,6 +534,16 @@ def get_column_country_name(col_val: str) -> str:
     len_main = len(str.strip(col_val))
     len_out = len_main - len_code
     return str.strip((strmain1[::-1])[0:(len_out)][::-1])
+
+
+def apply_regex(df: pd.DataFrame, regex_list: dict) -> pd.DataFrame:
+    logging.info("Applying RegEx")
+    for key, values in regex_list.items():
+        regex_expr = values[0]
+        replace_expr = values[1]
+        isregex = (values[2]=="True")
+        df[key][:].replace(regex_expr, replace_expr, regex=isregex, inplace=True)
+    return df
 
 
 def load_data_to_bq(
@@ -705,7 +764,6 @@ if __name__ == "__main__":
         chunksize=os.environ.get("CHUNKSIZE", "100000"),
         ftp_host=os.environ.get("FTP_HOST", ""),
         ftp_dir=os.environ.get("FTP_DIR", ""),
-        ftp_filename=os.environ.get("FTP_FILENAME", ""),
         project_id=os.environ.get("PROJECT_ID", ""),
         dataset_id=os.environ.get("DATASET_ID", ""),
         table_id=os.environ.get("TABLE_ID", ""),
@@ -725,4 +783,8 @@ if __name__ == "__main__":
         null_rows_list=json.loads(os.environ.get("NULL_ROWS_LIST", r"[]")),
         date_format_list=json.loads(os.environ.get("DATE_FORMAT_LIST", r"[]")),
         slice_column_list=json.loads(os.environ.get("SLICE_COLUMN_LIST", r"{}")),
+        remove_source_file=os.environ.get("REMOVE_SOURCE_FILE", "N"),
+        delete_target_file=os.environ.get("DELETE_TARGET_FILE", "N"),
+        number_of_header_rows=os.environ.get("NUMBER_OF_HEADER_ROWS", "0"),
+        regex_list=json.loads(os.environ.get("REGEX_LIST", r"{}"))
     )

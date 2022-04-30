@@ -99,6 +99,8 @@ dag:
           FTP_BATCH_SLEEP_TIME: "{{ var.json.noaa.ghcnd_by_year.ftp_batch_sleep_time }}"
           FULL_DATA_LOAD: "{{ var.json.noaa.ghcnd_by_year.full_data_load }}"
           START_YEAR: "{{ var.json.noaa.ghcnd_by_year.start_year }}"
+          REMOVE_SOURCE_FILE: "{{ var.json.noaa.ghcnd_by_year.remove_source_file }}"
+          DELETE_TARGET_FILE: "{{ var.json.noaa.ghcnd_by_year.delete_target_file }}"
           INPUT_CSV_HEADERS: >-
             [
               "id",
@@ -185,6 +187,8 @@ dag:
           SCHEMA_PATH: "{{ var.json.noaa.ghcnd_countries.schema_path }}"
           DROP_DEST_TABLE: "{{ var.json.noaa.ghcnd_countries.drop_dest_table }}"
           INPUT_FIELD_DELIMITER: "{{ var.json.noaa.ghcnd_countries.input_field_delimiter }}"
+          REMOVE_SOURCE_FILE: "{{ var.json.noaa.ghcnd_countries.remove_source_file }}"
+          DELETE_TARGET_FILE: "{{ var.json.noaa.ghcnd_countries.delete_target_file }}"
           INPUT_CSV_HEADERS: >-
             [
               "textdata"
@@ -242,6 +246,8 @@ dag:
           SCHEMA_PATH: "{{ var.json.noaa.ghcnd_inventory.schema_path }}"
           DROP_DEST_TABLE: "{{ var.json.noaa.ghcnd_inventory.drop_dest_table }}"
           INPUT_FIELD_DELIMITER: "{{ var.json.noaa.ghcnd_inventory.input_field_delimiter }}"
+          REMOVE_SOURCE_FILE: "{{ var.json.noaa.ghcnd_inventory.remove_source_file }}"
+          DELETE_TARGET_FILE: "{{ var.json.noaa.ghcnd_inventory.delete_target_file }}"
           INPUT_CSV_HEADERS: >-
             [
               "textdata"
@@ -317,6 +323,8 @@ dag:
           SCHEMA_PATH: "{{ var.json.noaa.ghcnd_states.schema_path }}"
           DROP_DEST_TABLE: "{{ var.json.noaa.ghcnd_states.drop_dest_table }}"
           INPUT_FIELD_DELIMITER: "{{ var.json.noaa.ghcnd_states.input_field_delimiter }}"
+          REMOVE_SOURCE_FILE: "{{ var.json.noaa.ghcnd_states.remove_source_file }}"
+          DELETE_TARGET_FILE: "{{ var.json.noaa.ghcnd_states.delete_target_file }}"
           INPUT_CSV_HEADERS: >-
             [
               "textdata"
@@ -371,6 +379,8 @@ dag:
           SCHEMA_PATH: "{{ var.json.noaa.ghcnd_stations.schema_path }}"
           DROP_DEST_TABLE: "{{ var.json.noaa.ghcnd_stations.drop_dest_table }}"
           INPUT_FIELD_DELIMITER: "{{ var.json.noaa.ghcnd_stations.input_field_delimiter }}"
+          REMOVE_SOURCE_FILE: "{{ var.json.noaa.ghcnd_stations.remove_source_file }}"
+          DELETE_TARGET_FILE: "{{ var.json.noaa.ghcnd_stations.delete_target_file }}"
           INPUT_CSV_HEADERS: >-
             [
               "textdata"
@@ -418,6 +428,116 @@ dag:
               "gsn_flag": ["textdata", "72", "75"],
               "hcn_cm_flag": ["textdata", "76", "79"],
               "wmoid": ["textdata", "80", "85"]
+            }
+    - operator: "GKEStartPodOperator"
+      description: "Run NOAA load processes"
+      args:
+        task_id: "gsod_stations"
+        name: "noaa.gsod_stations"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: noaa
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "{{ var.json.noaa.gsod_stations.pipeline_name }}"
+          SOURCE_URL: "{{ var.json.noaa.gsod_stations.source_url }}"
+          SOURCE_FILE: "{{ var.json.noaa.gsod_stations.source_file }}"
+          TARGET_FILE: "{{ var.json.noaa.gsod_stations.target_file }}"
+          CHUNKSIZE: "{{ var.json.noaa.gsod_stations.chunksize }}"
+          FTP_HOST: "{{ var.json.noaa.gsod_stations.ftp_host }}"
+          FTP_DIR: "{{ var.json.noaa.gsod_stations.ftp_dir }}"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "{{ var.json.noaa.gsod_stations.dataset_id }}"
+          TABLE_ID: "{{ var.json.noaa.gsod_stations.table_id }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "{{ var.json.noaa.gsod_stations.target_gcs_path }}"
+          SCHEMA_PATH: "{{ var.json.noaa.gsod_stations.schema_path }}"
+          DROP_DEST_TABLE: "{{ var.json.noaa.gsod_stations.drop_dest_table }}"
+          INPUT_FIELD_DELIMITER: "{{ var.json.noaa.gsod_stations.input_field_delimiter }}"
+          REMOVE_SOURCE_FILE: "{{ var.json.noaa.gsod_stations.remove_source_file }}"
+          DELETE_TARGET_FILE: "{{ var.json.noaa.gsod_stations.delete_target_file }}"
+          NUMBER_OF_HEADER_ROWS: "{{ var.json.noaa.gsod_stations.number_of_header_rows }}"
+          REGEX_LIST: >-
+            {
+              "lat": ["^(-[0]+)(.*)", "-$2", "True"],
+              "lat": ["^(\\s+)$", "", "True"],
+              "lat": ["^(\\+\\d+\\.\\d+[0-9])\\s+", "$1", "True"],
+              "lat": ["^(-\\d+\\.\\d+[0-9])\\s+", "$1", "True"],
+              "lat": ["nan", "", "False"],
+              "lon": ["^(-[0]+)(.*)", "-$2", "True"],
+              "lon": ["^(\\s+)$", "", "True"],
+              "lon": ["^(\\+\\d+\\.\\d+[0-9])\\s+", "$1", "True"],
+              "lon": ["^(-\\d+\\.\\d+[0-9])\\s+", "$1", "True"],
+              "lon": ["nan", "", "False"],
+              "usaf": ["(\\d{1,})(\\s{1,})$", "$1", "True"],
+              "name": ["^\\s{1,}([a-zA-Z]\\D+)", "$1", "True"],
+              "name": ["^(\\D+[a-zA-Z])\\s{1,}$", "$1", "True"],
+              "name": ["^(\\s+)$", "", "True"],
+              "call": ["^(\\s+)$", "", "True"],
+              "call": ["^([a-zA-Z]+)\\s+", "$1", "True"],
+              "elev": ["^(\\s+)$", "", "True"],
+              "state": ["^(\\s+)$", "", "True"],
+              "country": ["^(\\s+)$", "", "True"]
+            }
+          INPUT_CSV_HEADERS: >-
+            [
+              "textdata"
+            ]
+          DATA_DTYPES: >-
+            {
+              "textdata": "str"
+            }
+          OUTPUT_CSV_HEADERS: >-
+            [
+              "usaf",
+              "wban",
+              "name",
+              "country",
+              "state",
+              "call",
+              "lat",
+              "lon",
+              "elev",
+              "begin",
+              "end",
+              "source_url",
+              "etl_timestamp"
+            ]
+          REORDER_HEADERS_LIST: >-
+            [
+              "usaf",
+              "wban",
+              "name",
+              "country",
+              "state",
+              "call",
+              "lat",
+              "lon",
+              "elev",
+              "begin",
+              "end",
+              "source_url",
+              "etl_timestamp"
+            ]
+          NULL_ROWS_LIST: >-
+            [
+              "usaf"
+            ]
+          SLICE_COLUMN_LIST: >-
+            {
+              "usaf": ["textdata", "0", "6"],
+              "wban": ["textdata", "7", "12"],
+              "name": ["textdata", "13", "42"],
+              "country": ["textdata", "43", "45"],
+              "state": ["textdata", "48", "50"],
+              "call": ["textdata", "51", "56"],
+              "lat": ["textdata", "57", "64"],
+              "lon": ["textdata", "65", "74"],
+              "elev": ["textdata", "75", "81"],
+              "begin": ["textdata", "82", "90"],
+              "end": ["textdata", "91", "99"]
             }
       resources:
           request_ephemeral_storage: "4G"
