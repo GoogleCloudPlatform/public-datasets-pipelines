@@ -15,20 +15,20 @@
  */
 
 
-resource "google_bigquery_table" "travel_sustainability_metadata" {
+resource "google_bigquery_table" "travel_impact_model_metadata" {
   project     = var.project_id
-  dataset_id  = "travel_sustainability"
+  dataset_id  = "travel_impact_model"
   table_id    = "metadata"
   description = "Metadata about the dataset"
   depends_on = [
-    google_bigquery_dataset.travel_sustainability
+    google_bigquery_dataset.travel_impact_model
   ]
 }
 
-output "bigquery_table-travel_sustainability_metadata-table_id" {
-  value = google_bigquery_table.travel_sustainability_metadata.table_id
+output "bigquery_table-travel_impact_model_metadata-table_id" {
+  value = google_bigquery_table.travel_impact_model_metadata.table_id
 }
 
-output "bigquery_table-travel_sustainability_metadata-id" {
-  value = google_bigquery_table.travel_sustainability_metadata.id
+output "bigquery_table-travel_impact_model_metadata-id" {
+  value = google_bigquery_table.travel_impact_model_metadata.id
 }

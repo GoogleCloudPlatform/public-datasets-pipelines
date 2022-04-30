@@ -24,7 +24,7 @@ default_args = {
 
 
 with DAG(
-    dag_id="travel_sustainability.flight_emissions",
+    dag_id="travel_impact_model.flights_impact_data",
     default_args=default_args,
     max_active_runs=1,
     schedule_interval="0 15 * * *",
@@ -33,12 +33,12 @@ with DAG(
 ) as dag:
 
     # Task to load CSV data to a BigQuery table
-    flight_emissions_gcs_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
-        task_id="flight_emissions_gcs_to_bq",
-        bucket="{{ var.json.travel_sustainability.source_bucket }}",
-        source_objects=["flight_emissions.csv"],
+    flights_impact_data_gcs_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
+        task_id="flights_impact_data_gcs_to_bq",
+        bucket="{{ var.json.travel_impact_model.source_bucket }}",
+        source_objects=["flights_impact_data.csv"],
         source_format="CSV",
-        destination_project_dataset_table="travel_sustainability.flight_emissions",
+        destination_project_dataset_table="travel_impact_model.flights_impact_data",
         skip_leading_rows=1,
         write_disposition="WRITE_TRUNCATE",
         schema_fields=[
@@ -123,4 +123,4 @@ with DAG(
         ],
     )
 
-    flight_emissions_gcs_to_bq
+    flights_impact_data_gcs_to_bq

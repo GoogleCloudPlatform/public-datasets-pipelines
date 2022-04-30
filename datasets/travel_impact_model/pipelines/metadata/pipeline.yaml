@@ -57,12 +57,12 @@ dag:
         task_id: "metadata_gcs_to_bq"
 
         # The GCS bucket where the CSV file is located in.
-        bucket: "{{ var.json.travel_sustainability.source_bucket }}"
+        bucket: "{{ var.json.travel_impact_model.source_bucket }}"
 
         # Use the CSV file containing data from today
         source_objects: ["metadata.csv"]
         source_format: "CSV"
-        destination_project_dataset_table: "travel_sustainability.metadata"
+        destination_project_dataset_table: "travel_impact_model.metadata"
 
         # Use this if your CSV file contains a header row
         skip_leading_rows: 1

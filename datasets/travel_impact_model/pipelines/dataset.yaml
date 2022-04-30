@@ -17,7 +17,7 @@ dataset:
   # to users of your data on the Google Cloud website.
 
   # Must be exactly the same name as the folder name your dataset.yaml is in.
-  name: travel_sustainability
+  name: travel_impact_model
 
   # A friendly, human-readable name of the dataset
   friendly_name: ~
@@ -52,8 +52,8 @@ resources:
     #   friendly_name (A user-friendly name of the dataset)
     #   description   (A user-friendly description of the dataset)
     #   location      (The geographic location where the dataset should reside)
-    dataset_id: travel_sustainability
-    description: "Travel Sustainability"
+    dataset_id: travel_impact_model
+    description: "Travel Impact Model Data"
 
   - type: storage_bucket
     # Google Cloud Storage Bucket that your pipelines need. Say, you need an
@@ -78,6 +78,6 @@ resources:
     # Optional Properties:
     #   location
     #   uniform_bucket_level_access (we suggest False for fine-grained access)
-    name: travel-sustainability
+    name: travel-impact-model
     location: US
     uniform_bucket_level_access: true
