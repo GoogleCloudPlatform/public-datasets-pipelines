@@ -15,20 +15,12 @@
  */
 
 
-resource "google_bigquery_table" "travel_sustainability_metadata" {
-  project     = var.project_id
-  dataset_id  = "travel_sustainability"
-  table_id    = "metadata"
-  description = "Metadata about the dataset"
-  depends_on = [
-    google_bigquery_dataset.travel_sustainability
-  ]
+variable "project_id" {}
+variable "bucket_name_prefix" {}
+variable "impersonating_acct" {}
+variable "region" {}
+variable "env" {}
+variable "iam_policies" {
+  default = {}
 }
 
-output "bigquery_table-travel_sustainability_metadata-table_id" {
-  value = google_bigquery_table.travel_sustainability_metadata.table_id
-}
-
-output "bigquery_table-travel_sustainability_metadata-id" {
-  value = google_bigquery_table.travel_sustainability_metadata.id
-}

@@ -24,7 +24,7 @@ default_args = {
 
 
 with DAG(
-    dag_id="travel_sustainability.metadata",
+    dag_id="travel_impact_model.metadata",
     default_args=default_args,
     max_active_runs=1,
     schedule_interval="0 15 * * *",
@@ -35,10 +35,10 @@ with DAG(
     # Task to load CSV data to a BigQuery table
     metadata_gcs_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="metadata_gcs_to_bq",
-        bucket="{{ var.json.travel_sustainability.source_bucket }}",
+        bucket="{{ var.json.travel_impact_model.source_bucket }}",
         source_objects=["metadata.csv"],
         source_format="CSV",
-        destination_project_dataset_table="travel_sustainability.metadata",
+        destination_project_dataset_table="travel_impact_model.metadata",
         skip_leading_rows=1,
         write_disposition="WRITE_TRUNCATE",
         schema_fields=[
