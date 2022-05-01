@@ -52,7 +52,6 @@ def main(
     start_year: str,
     input_csv_headers: typing.List[str],
     data_dtypes: dict,
-    output_csv_headers: typing.List[str],
     reorder_headers_list: typing.List[str],
     null_rows_list: typing.List[str],
     date_format_list: typing.List[str],
@@ -89,7 +88,6 @@ def main(
         start_year=start_year,
         input_csv_headers=input_csv_headers,
         data_dtypes=data_dtypes,
-        output_csv_headers=output_csv_headers,
         reorder_headers_list=reorder_headers_list,
         null_rows_list=null_rows_list,
         date_format_list=date_format_list,
@@ -141,6 +139,14 @@ def execute_pipeline(
 ) -> None:
     if pipeline_name == "GHCND by year":
         if full_data_load == "N":
+            create_dest_table(
+                project_id=project_id,
+                dataset_id=dataset_id,
+                table_id=destination_table,
+                schema_filepath=schema_path,
+                bucket_name=target_gcs_bucket,
+                drop_table=True
+            )
             start_year = str(datetime.datetime.now().year - 6)
         else:
             pass
@@ -330,7 +336,7 @@ def execute_pipeline(
                         target_gcs_bucket=target_gcs_bucket,
                         target_gcs_path=target_gcs_path,
                         schema_path=schema_path,
-                        drop_dest_table=False,
+                        drop_dest_table=drop_dest_table,
                         input_field_delimiter=input_field_delimiter,
                         input_csv_headers=input_csv_headers,
                         data_dtypes=data_dtypes,
@@ -348,8 +354,8 @@ def execute_pipeline(
 
 
 def process_and_load_table(
-    source_file: pathlib.Path,
-    target_file: pathlib.Path,
+    source_file: str,
+    target_file: str,
     pipeline_name: str,
     source_url: str,
     chunksize: str,
@@ -1040,7 +1046,6 @@ if __name__ == "__main__":
         start_year=os.environ.get("START_YEAR", ""),
         input_csv_headers=json.loads(os.environ.get("INPUT_CSV_HEADERS", r"[]")),
         data_dtypes=json.loads(os.environ.get("DATA_DTYPES", r"{}")),
-        output_csv_headers=json.loads(os.environ.get("OUTPUT_CSV_HEADERS", r"[]")),
         reorder_headers_list=json.loads(os.environ.get("REORDER_HEADERS_LIST", r"[]")),
         null_rows_list=json.loads(os.environ.get("NULL_ROWS_LIST", r"[]")),
         date_format_list=json.loads(os.environ.get("DATE_FORMAT_LIST", r"[]")),
