@@ -297,17 +297,17 @@ def execute_pipeline(
                 if str(url_file_name).find(f"{file_pattern}{yr}") >= 0:
                     source_file_path = os.path.split(source_file)[0]
                     source_file_zipped = f"{source_file_path}/{url_file_name}"
-                    source_file = str.replace(str(source_file), ".csv", f"_{yr}.csv")
-                    target_file = str.replace(str(target_file), ".csv", f"_{yr}.csv")
+                    source_file_year = str.replace(str(source_file), ".csv", f"_{yr}.csv")
+                    target_file_year = str.replace(str(target_file), ".csv", f"_{yr}.csv")
                     download_file(url, source_file_zipped)
                     gz_decompress(
                         infile=source_file_zipped,
-                        tofile=source_file,
+                        tofile=source_file_year,
                         delete_zipfile=True
                     )
                     if number_of_header_rows > 0:
                         remove_header_rows(
-                            source_file,
+                            source_file_year,
                             number_of_header_rows=number_of_header_rows)
                     else:
                         pass
@@ -319,8 +319,8 @@ def execute_pipeline(
                             source_url=url
                         )
                     process_and_load_table(
-                        source_file=source_file,
-                        target_file=target_file,
+                        source_file=source_file_year,
+                        target_file=target_file_year,
                         pipeline_name=pipeline_name,
                         source_url=url,
                         chunksize=chunksize,
