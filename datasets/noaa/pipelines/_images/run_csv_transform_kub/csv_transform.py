@@ -20,7 +20,6 @@ import json
 import logging
 import os
 import pathlib
-import urllib
 import re
 import requests
 import time
@@ -62,11 +61,12 @@ def main(
     rename_headers_list: dict,
     remove_source_file: str,
     delete_target_file: str,
-    number_of_header_rows: str
+    number_of_header_rows: str,
+    int_date_list: typing.List[str],
+    gen_location_list: dict
 ) -> None:
     logging.info(f"{pipeline_name} process started")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
-    # print(url_directory_list("https://www1.ncdc.noaa.gov/pub/data/swdi/database-csv/v2/", "nldn-tiles"))
     execute_pipeline(
         pipeline_name=pipeline_name,
         source_url=source_url,
@@ -98,7 +98,9 @@ def main(
         rename_headers_list=rename_headers_list,
         remove_source_file=(remove_source_file=="Y"),
         delete_target_file=(delete_target_file=="Y"),
-        number_of_header_rows=int(number_of_header_rows)
+        number_of_header_rows=int(number_of_header_rows),
+        int_date_list=int_date_list,
+        gen_location_list=gen_location_list
     )
     logging.info(f"{pipeline_name} process completed")
 
@@ -125,7 +127,6 @@ def execute_pipeline(
     start_year: str,
     input_csv_headers: typing.List[str],
     data_dtypes: dict,
-    output_csv_headers: typing.List[str],
     reorder_headers_list: typing.List[str],
     null_rows_list: typing.List[str],
     date_format_list: typing.List[str],
@@ -134,7 +135,9 @@ def execute_pipeline(
     remove_source_file: bool,
     rename_headers_list: dict,
     delete_target_file: bool,
-    number_of_header_rows: int
+    number_of_header_rows: int,
+    int_date_list: typing.List[str],
+    gen_location_list: dict
 ) -> None:
     if pipeline_name == "GHCND by year":
         if full_data_load == "N":
@@ -193,7 +196,9 @@ def execute_pipeline(
                 regex_list=regex_list,
                 rename_headers_list=rename_headers_list,
                 remove_source_file=remove_source_file,
-                delete_target_file=delete_target_file
+                delete_target_file=delete_target_file,
+                int_date_list=int_date_list,
+                gen_location_list=gen_location_list
             )
     if pipeline_name in ["GHCND countries",
                          "GHCND inventory",
@@ -231,7 +236,9 @@ def execute_pipeline(
             regex_list=regex_list,
             rename_headers_list=rename_headers_list,
             remove_source_file=remove_source_file,
-            delete_target_file=delete_target_file
+            delete_target_file=delete_target_file,
+            int_date_list=int_date_list,
+            gen_location_list=gen_location_list
         )
     if pipeline_name == "GHCND hurricanes":
         download_file(source_url, source_file)
@@ -264,11 +271,13 @@ def execute_pipeline(
             regex_list=regex_list,
             rename_headers_list=rename_headers_list,
             remove_source_file=remove_source_file,
-            delete_target_file=delete_target_file
+            delete_target_file=delete_target_file,
+            int_date_list=int_date_list,
+            gen_location_list=gen_location_list
         )
     if pipeline_name == "NOAA lightning strikes by year":
         url_path = os.path.split(source_url)[0]
-        file_pattern = os.path.split(source_url)[1]
+        file_pattern = str.split(os.path.split(source_url)[1], "*")[0]
         url_list = url_directory_list(f"{url_path}/", file_pattern)
         if full_data_load:
             start = int(start_year)
@@ -278,17 +287,30 @@ def execute_pipeline(
                 table_id=destination_table,
                 schema_filepath=schema_path,
                 bucket_name=target_gcs_bucket,
-                drop_table=True,
+                drop_table=True
             )
         else:
             start = datetime.datetime.now().year - 6
         for yr in range(start, datetime.datetime.now().year):
-            for url in url_list.items():
+            for url in url_list:
                 url_file_name = os.path.split(url)[1]
-                if str(url_file_name).index(str(yr)):
-                    source_file = source_file.replace(".csv", f"_{yr}.csv")
-                    target_file = target_file.replace(".csv", f"_{yr}.csv")
-                    download_file(url, source_file)
+                if str(url_file_name).find(f"{file_pattern}{yr}") >= 0:
+                    source_file_path = os.path.split(source_file)[0]
+                    source_file_zipped = f"{source_file_path}/{url_file_name}"
+                    source_file = str.replace(str(source_file), ".csv", f"_{yr}.csv")
+                    target_file = str.replace(str(target_file), ".csv", f"_{yr}.csv")
+                    download_file(url, source_file_zipped)
+                    gz_decompress(
+                        infile=source_file_zipped,
+                        tofile=source_file,
+                        delete_zipfile=True
+                    )
+                    if number_of_header_rows > 0:
+                        remove_header_rows(
+                            source_file,
+                            number_of_header_rows=number_of_header_rows)
+                    else:
+                        pass
                     if not full_data_load:
                         delete_source_file_data_from_bq(
                             project_id=project_id,
@@ -319,7 +341,9 @@ def execute_pipeline(
                         regex_list=regex_list,
                         rename_headers_list=rename_headers_list,
                         remove_source_file=remove_source_file,
-                        delete_target_file=delete_target_file
+                        delete_target_file=delete_target_file,
+                        int_date_list=int_date_list,
+                        gen_location_list=gen_location_list
                     )
 
 
@@ -346,7 +370,10 @@ def process_and_load_table(
     regex_list: dict,
     rename_headers_list: dict,
     remove_source_file: bool,
-    delete_target_file: bool
+    delete_target_file: bool,
+    int_date_list: typing.List[str],
+    gen_location_list: dict,
+    encoding: str = "utf-8"
 ) -> None:
     process_source_file(
         source_url=source_url,
@@ -363,7 +390,10 @@ def process_and_load_table(
         slice_column_list=slice_column_list,
         regex_list=regex_list,
         rename_headers_list=rename_headers_list,
-        remove_source_file=remove_source_file
+        remove_source_file=remove_source_file,
+        int_date_list=int_date_list,
+        gen_location_list=gen_location_list,
+        encoding=encoding
     )
     if os.path.exists(target_file):
         upload_file_to_gcs(
@@ -419,6 +449,9 @@ def process_source_file(
     slice_column_list: dict,
     regex_list: dict,
     rename_headers_list: dict,
+    int_date_list: typing.List[str],
+    gen_location_list: dict,
+    encoding: str = "utf8",
     remove_source_file: bool = False
 ) -> None:
     logging.info(f"Opening source file {source_file}")
@@ -426,10 +459,10 @@ def process_source_file(
     csv.register_dialect(
         "TabDialect", quotechar='"', delimiter=input_field_delimiter, strict=True
     )
-    with open(source_file) as reader:
+    with open(source_file, encoding=encoding, mode="r") as reader:
         data = []
         chunk_number = 1
-        for index, line in enumerate(csv.reader(reader, "TabDialect"), 0):
+        for index, line in enumerate(csv.reader((line.replace('\0','') for line in reader), "TabDialect"), 0):
             data.append(line)
             if index % int(chunksize) == 0 and index > 0:
                 process_dataframe_chunk(
@@ -445,13 +478,14 @@ def process_source_file(
                     null_rows_list=null_rows_list,
                     slice_column_list=slice_column_list,
                     regex_list=regex_list,
-                    rename_headers_list=rename_headers_list
+                    rename_headers_list=rename_headers_list,
+                    int_date_list=int_date_list,
+                    gen_location_list=gen_location_list
                 )
                 data = []
                 chunk_number += 1
 
         if data:
-            logging.info("Processing extra/final batch data")
             process_dataframe_chunk(
                 data=data,
                 pipeline_name=pipeline_name,
@@ -465,7 +499,9 @@ def process_source_file(
                 null_rows_list=null_rows_list,
                 slice_column_list=slice_column_list,
                 regex_list=regex_list,
-                rename_headers_list=rename_headers_list
+                rename_headers_list=rename_headers_list,
+                int_date_list=int_date_list,
+                gen_location_list=gen_location_list
             )
         if remove_source_file:
             os.remove(source_file)
@@ -484,7 +520,9 @@ def process_dataframe_chunk(
     null_rows_list: typing.List[str],
     slice_column_list: dict,
     regex_list: dict,
-    rename_headers_list: dict
+    rename_headers_list: dict,
+    int_date_list: typing.List[str],
+    gen_location_list: dict
 ) -> None:
     logging.info(f"Processing chunk #{chunk_number}")
     df = pd.DataFrame(data, columns=input_csv_headers)
@@ -504,7 +542,9 @@ def process_dataframe_chunk(
         null_rows_list=null_rows_list,
         slice_column_list=slice_column_list,
         regex_list=regex_list,
-        rename_headers_list=rename_headers_list
+        rename_headers_list=rename_headers_list,
+        int_date_list=int_date_list,
+        gen_location_list=gen_location_list
     )
 
 
@@ -527,7 +567,9 @@ def process_chunk(
     date_format_list: typing.List[str],
     slice_column_list: dict,
     regex_list: dict,
-    rename_headers_list: dict
+    rename_headers_list: dict,
+    int_date_list: typing.List[str],
+    gen_location_list: dict
 ) -> None:
     if pipeline_name == "GHCND by year":
         df = filter_null_rows(df, null_rows_list=null_rows_list)
@@ -552,9 +594,10 @@ def process_chunk(
         df = add_metadata_cols(df, source_url=source_url)
         df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
     if pipeline_name == "NOAA lightning strikes by year":
+        df.columns = df.columns.str.lower()
         df = rename_headers(df, rename_headers_list=rename_headers_list)
-        df = convert_date_from_int(df)
-        df = generate_location(df)
+        df = convert_date_from_int(df, int_date_list=int_date_list)
+        df = generate_location(df, gen_location_list=gen_location_list)
         df = add_metadata_cols(df, source_url=source_url)
         df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
     save_to_new_file(df, file_path=str(target_file_batch))
@@ -563,24 +606,34 @@ def process_chunk(
 
 def convert_date_from_int(df: pd.DataFrame, int_date_list: dict) -> pd.DataFrame:
     logging.info("Converting dates from integers")
-    df["day"] = (
-        pd.to_datetime(
-            (df["day_int"][:].astype("string") + "000000"), "raise", False, True
-        ).astype("string")
-        + " 00:00:00"
-    )
+    for key, values in int_date_list.items():
+        dt_col = key
+        dt_int_col = values
+        df[dt_col] = (
+            pd.to_datetime(
+                (df[dt_int_col][:].astype("string") + "000000"),
+                "raise",
+                False,
+                True
+            ).astype("string")
+            + " 00:00:00"
+        )
     return df
 
 
 def generate_location(df: pd.DataFrame, gen_location_list: dict) -> pd.DataFrame:
     logging.info("Generating location data")
-    df["center_point"] = (
-        "POINT("
-        + df["centerlon"][:].astype("string")
-        + " "
-        + df["centerlat"][:].astype("string")
-        + ")"
-    )
+    for key, values in gen_location_list.items():
+        loc_col = key
+        long_col = values[0]
+        lat_col = values[1]
+        df[loc_col] = (
+            "POINT("
+            + df[long_col][:].astype("string")
+            + " "
+            + df[lat_col][:].astype("string")
+            + ")"
+        )
     return df
 
 
@@ -996,5 +1049,7 @@ if __name__ == "__main__":
         remove_source_file=os.environ.get("REMOVE_SOURCE_FILE", "N"),
         delete_target_file=os.environ.get("DELETE_TARGET_FILE", "N"),
         number_of_header_rows=os.environ.get("NUMBER_OF_HEADER_ROWS", "0"),
-        regex_list=json.loads(os.environ.get("REGEX_LIST", r"{}"))
+        regex_list=json.loads(os.environ.get("REGEX_LIST", r"{}")),
+        int_date_list=json.loads(os.environ.get("INT_DATE_LIST", r"[]")),
+        gen_location_list=json.loads(os.environ.get("GEN_LOCATION_LIST", r"{}"))
     )

@@ -1127,63 +1127,50 @@ dag:
           INPUT_FIELD_DELIMITER: "{{ var.json.noaa.lightning_strikes.input_field_delimiter }}"
           REMOVE_SOURCE_FILE: "{{ var.json.noaa.lightning_strikes.remove_source_file }}"
           DELETE_TARGET_FILE: "{{ var.json.noaa.lightning_strikes.delete_target_file }}"
+          START_YEAR: "{{ var.json.noaa.lightning_strikes.start_year }}"
+          NUMBER_OF_HEADER_ROWS: "{{ var.json.noaa.lightning_strikes.number_of_header_rows }}"
+          INT_DATE_LIST: >-
+            {
+              "date": "day_int"
+            }
+          GEN_LOCATION_LIST: >-
+            {
+              "center_point_geom": ["centerlon", "centerlat"]
+            }
           INPUT_CSV_HEADERS: >-
             [
-              "textdata"
+              "ZDAY",
+              "CENTERLON",
+              "CENTERLAT",
+              "TOTAL_COUNT"
             ]
           DATA_DTYPES: >-
             {
-              "textdata": "str"
+              "ZDAY": "str",
+              "CENTERLON": "str",
+              "CENTERLAT": "str",
+              "TOTAL_COUNT": "str"
             }
           OUTPUT_CSV_HEADERS: >-
             [
-              "usaf",
-              "wban",
-              "name",
-              "country",
-              "state",
-              "call",
-              "lat",
-              "lon",
-              "elev",
-              "begin",
-              "end",
+              "date",
+              "number_of_strikes",
+              "center_point_geom",
               "source_url",
               "etl_timestamp"
             ]
           REORDER_HEADERS_LIST: >-
             [
-              "usaf",
-              "wban",
-              "name",
-              "country",
-              "state",
-              "call",
-              "lat",
-              "lon",
-              "elev",
-              "begin",
-              "end",
+              "date",
+              "number_of_strikes",
+              "center_point_geom",
               "source_url",
               "etl_timestamp"
             ]
-          NULL_ROWS_LIST: >-
-            [
-              "usaf"
-            ]
-          SLICE_COLUMN_LIST: >-
+          RENAME_HEADERS_LIST: >-
             {
-              "usaf": ["textdata", "0", "6"],
-              "wban": ["textdata", "7", "12"],
-              "name": ["textdata", "13", "42"],
-              "country": ["textdata", "43", "45"],
-              "state": ["textdata", "48", "50"],
-              "call": ["textdata", "51", "56"],
-              "lat": ["textdata", "57", "64"],
-              "lon": ["textdata", "65", "74"],
-              "elev": ["textdata", "75", "81"],
-              "begin": ["textdata", "82", "90"],
-              "end": ["textdata", "91", "99"]
+              "zday": "day_int",
+              "total_count": "number_of_strikes"
             }
       resources:
           request_ephemeral_storage: "4G"
