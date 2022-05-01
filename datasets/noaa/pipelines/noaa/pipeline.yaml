@@ -123,19 +123,6 @@ dag:
               "sflag": "str",
               "time": "str"
             }
-          OUTPUT_CSV_HEADERS: >-
-            [
-              "id",
-              "date",
-              "element",
-              "value",
-              "mflag",
-              "qflag",
-              "sflag",
-              "time",
-              "source_url",
-              "etl_timestamp"
-            ]
           REORDER_HEADERS_LIST: >-
             [
               "id",
@@ -197,13 +184,6 @@ dag:
             {
               "textdata": "str"
             }
-          OUTPUT_CSV_HEADERS: >-
-            [
-              "code",
-              "name",
-              "source_url",
-              "etl_timestamp"
-            ]
           REORDER_HEADERS_LIST: >-
             [
               "code",
@@ -256,17 +236,6 @@ dag:
             {
               "textdata": "str"
             }
-          OUTPUT_CSV_HEADERS: >-
-            [
-              "id",
-              "latitude",
-              "longitude",
-              "element",
-              "firstyear",
-              "lastyear",
-              "source_url",
-              "etl_timestamp"
-            ]
           REORDER_HEADERS_LIST: >-
             [
               "id",
@@ -333,13 +302,6 @@ dag:
             {
               "textdata": "str"
             }
-          OUTPUT_CSV_HEADERS: >-
-            [
-              "code",
-              "name",
-              "source_url",
-              "etl_timestamp"
-            ]
           REORDER_HEADERS_LIST: >-
             [
               "code",
@@ -389,20 +351,6 @@ dag:
             {
               "textdata": "str"
             }
-          OUTPUT_CSV_HEADERS: >-
-            [
-              "id",
-              "latitude",
-              "longitude",
-              "elevation",
-              "state",
-              "name",
-              "gsn_flag",
-              "hcn_cm_flag",
-              "wmoid",
-              "source_url",
-              "etl_timestamp"
-            ]
           REORDER_HEADERS_LIST: >-
             [
               "id",
@@ -489,22 +437,6 @@ dag:
             {
               "textdata": "str"
             }
-          OUTPUT_CSV_HEADERS: >-
-            [
-              "usaf",
-              "wban",
-              "name",
-              "country",
-              "state",
-              "call",
-              "lat",
-              "lon",
-              "elev",
-              "begin",
-              "end",
-              "source_url",
-              "etl_timestamp"
-            ]
           REORDER_HEADERS_LIST: >-
             [
               "usaf",
@@ -734,162 +666,6 @@ dag:
               "usa_searad_nw",
               "storm_speed",
               "storm_dir"
-            ]
-          OUTPUT_CSV_HEADERS: >-
-            [
-              "sid",
-              "season",
-              "number",
-              "basin",
-              "subbasin",
-              "name",
-              "iso_time",
-              "nature",
-              "latitude",
-              "longitude",
-              "wmo_wind",
-              "wmo_pressure",
-              "wmo_agency",
-              "track_type",
-              "dist2land",
-              "landfall",
-              "iflag",
-              "usa_agency",
-              "usa_latitude",
-              "usa_longitude",
-              "usa_record",
-              "usa_status",
-              "usa_wind",
-              "usa_pressure",
-              "usa_sshs",
-              "usa_r34_ne",
-              "usa_r34_se",
-              "usa_r34_sw",
-              "usa_r34_nw",
-              "usa_r50_ne",
-              "usa_r50_se",
-              "usa_r50_sw",
-              "usa_r50_nw",
-              "usa_r64_ne",
-              "usa_r64_se",
-              "usa_r64_sw",
-              "usa_r64_nw",
-              "usa_poci",
-              "usa_roci",
-              "usa_rmw",
-              "usa_eye",
-              "tokyo_latitude",
-              "tokyo_longitude",
-              "tokyo_grade",
-              "tokyo_wind",
-              "tokyo_pressure",
-              "tokyo_r50_dir",
-              "tokyo_r50_longitude",
-              "tokyo_r50_short",
-              "tokyo_r30_dir",
-              "tokyo_r30_long",
-              "tokyo_r30_short",
-              "tokyo_land",
-              "cma_latitude",
-              "cma_longitude",
-              "cma_cat",
-              "cma_wind",
-              "cma_pressure",
-              "hko_latitude",
-              "hko_longitude",
-              "hko_cat",
-              "hko_wind",
-              "hko_pressure",
-              "newdelhi_latitude",
-              "newdelhi_longitude",
-              "newdelhi_grade",
-              "newdelhi_wind",
-              "newdelhi_pressure",
-              "newdelhi_ci",
-              "newdelhi_dp",
-              "newdelhi_poci",
-              "reunion_latitude",
-              "reunion_longitude",
-              "reunion_type",
-              "reunion_wind",
-              "reunion_pressure",
-              "reunion_tnum",
-              "reunion_ci",
-              "reunion_rmw",
-              "reunion_r34_ne",
-              "reunion_r34_se",
-              "reunion_r34_sw",
-              "reunion_r34_nw",
-              "reunion_r50_ne",
-              "reunion_r50_se",
-              "reunion_r50_sw",
-              "reunion_r50_nw",
-              "reunion_r64_ne",
-              "reunion_r64_se",
-              "reunion_r64_sw",
-              "reunion_r64_nw",
-              "bom_latitude",
-              "bom_longitude",
-              "bom_type",
-              "bom_wind",
-              "bom_pressure",
-              "bom_tnum",
-              "bom_ci",
-              "bom_rmw",
-              "bom_r34_ne",
-              "bom_r34_se",
-              "bom_r34_sw",
-              "bom_r34_nw",
-              "bom_r50_ne",
-              "bom_r50_se",
-              "bom_r50_sw",
-              "bom_r50_nw",
-              "bom_r64_ne",
-              "bom_r64_se",
-              "bom_r64_sw",
-              "bom_r64_nw",
-              "bom_roci",
-              "bom_poci",
-              "bom_eye",
-              "bom_pos_method",
-              "bom_pressure_method",
-              "wellington_latitude",
-              "wellington_longitude",
-              "wellington_wind",
-              "wellington_pressure",
-              "nadi_latitude",
-              "nadi_longitude",
-              "nadi_cat",
-              "nadi_wind",
-              "nadi_pressure",
-              "ds824_latitude",
-              "ds824_longitude",
-              "ds824_stage",
-              "ds824_wind",
-              "ds824_pressure",
-              "td9636_latitude",
-              "td9636_longitude",
-              "td9636_stage",
-              "td9636_wind",
-              "td9636_pressure",
-              "td9635_latitude",
-              "td9635_longitude",
-              "td9635_wind",
-              "td9635_pressure",
-              "td9635_roci",
-              "neumann_latitude",
-              "neumann_longitude",
-              "neumann_class",
-              "neumann_wind",
-              "neumann_pressure",
-              "mlc_latitude",
-              "mlc_longitude",
-              "mlc_class",
-              "mlc_wind",
-              "mlc_pressure",
-              "usa_atcf_id",
-              "source_url",
-              "etl_timestamp"
             ]
           REORDER_HEADERS_LIST: >-
             [
@@ -1151,14 +927,6 @@ dag:
               "CENTERLAT": "str",
               "TOTAL_COUNT": "str"
             }
-          OUTPUT_CSV_HEADERS: >-
-            [
-              "date",
-              "number_of_strikes",
-              "center_point_geom",
-              "source_url",
-              "etl_timestamp"
-            ]
           REORDER_HEADERS_LIST: >-
             [
               "date",

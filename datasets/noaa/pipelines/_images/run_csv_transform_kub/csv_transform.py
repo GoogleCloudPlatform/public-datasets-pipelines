@@ -21,11 +21,11 @@ import logging
 import os
 import pathlib
 import re
-import requests
 import time
 import typing
 
 import pandas as pd
+import requests
 from google.api_core.exceptions import NotFound
 from google.cloud import bigquery, storage
 
@@ -62,7 +62,7 @@ def main(
     delete_target_file: str,
     number_of_header_rows: str,
     int_date_list: typing.List[str],
-    gen_location_list: dict
+    gen_location_list: dict,
 ) -> None:
     logging.info(f"{pipeline_name} process started")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
@@ -94,11 +94,11 @@ def main(
         slice_column_list=slice_column_list,
         regex_list=regex_list,
         rename_headers_list=rename_headers_list,
-        remove_source_file=(remove_source_file=="Y"),
-        delete_target_file=(delete_target_file=="Y"),
+        remove_source_file=(remove_source_file == "Y"),
+        delete_target_file=(delete_target_file == "Y"),
         number_of_header_rows=int(number_of_header_rows),
         int_date_list=int_date_list,
-        gen_location_list=gen_location_list
+        gen_location_list=gen_location_list,
     )
     logging.info(f"{pipeline_name} process completed")
 
@@ -135,7 +135,7 @@ def execute_pipeline(
     delete_target_file: bool,
     number_of_header_rows: int,
     int_date_list: typing.List[str],
-    gen_location_list: dict
+    gen_location_list: dict,
 ) -> None:
     if pipeline_name == "GHCND by year":
         if full_data_load == "N":
@@ -145,7 +145,7 @@ def execute_pipeline(
                 table_id=destination_table,
                 schema_filepath=schema_path,
                 bucket_name=target_gcs_bucket,
-                drop_table=True
+                drop_table=True,
             )
             start_year = str(datetime.datetime.now().year - 6)
         else:
@@ -175,9 +175,7 @@ def execute_pipeline(
                 source_url=source_url_year,
             )
             gz_decompress(
-                infile=source_zipfile,
-                tofile=source_file_unzipped,
-                delete_zipfile=True
+                infile=source_zipfile, tofile=source_file_unzipped, delete_zipfile=True
             )
             process_and_load_table(
                 source_file=source_file_unzipped,
@@ -204,19 +202,19 @@ def execute_pipeline(
                 remove_source_file=remove_source_file,
                 delete_target_file=delete_target_file,
                 int_date_list=int_date_list,
-                gen_location_list=gen_location_list
+                gen_location_list=gen_location_list,
             )
-    if pipeline_name in ["GHCND countries",
-                         "GHCND inventory",
-                         "GHCND states",
-                         "GHCND stations",
-                         "GSOD stations"]:
+    if pipeline_name in [
+        "GHCND countries",
+        "GHCND inventory",
+        "GHCND states",
+        "GHCND stations",
+        "GSOD stations",
+    ]:
         ftp_filename = os.path.split(source_url)[1]
         download_file_ftp(ftp_host, ftp_dir, ftp_filename, source_file, source_url)
         if number_of_header_rows > 0:
-            remove_header_rows(
-                source_file,
-                number_of_header_rows=number_of_header_rows)
+            remove_header_rows(source_file, number_of_header_rows=number_of_header_rows)
         else:
             pass
         process_and_load_table(
@@ -244,14 +242,12 @@ def execute_pipeline(
             remove_source_file=remove_source_file,
             delete_target_file=delete_target_file,
             int_date_list=int_date_list,
-            gen_location_list=gen_location_list
+            gen_location_list=gen_location_list,
         )
     if pipeline_name == "GHCND hurricanes":
         download_file(source_url, source_file)
         if number_of_header_rows > 0:
-            remove_header_rows(
-                source_file,
-                number_of_header_rows=number_of_header_rows)
+            remove_header_rows(source_file, number_of_header_rows=number_of_header_rows)
         else:
             pass
         process_and_load_table(
@@ -279,7 +275,7 @@ def execute_pipeline(
             remove_source_file=remove_source_file,
             delete_target_file=delete_target_file,
             int_date_list=int_date_list,
-            gen_location_list=gen_location_list
+            gen_location_list=gen_location_list,
         )
     if pipeline_name == "NOAA lightning strikes by year":
         url_path = os.path.split(source_url)[0]
@@ -293,7 +289,7 @@ def execute_pipeline(
                 table_id=destination_table,
                 schema_filepath=schema_path,
                 bucket_name=target_gcs_bucket,
-                drop_table=True
+                drop_table=True,
             )
         else:
             start = datetime.datetime.now().year - 6
@@ -303,18 +299,23 @@ def execute_pipeline(
                 if str(url_file_name).find(f"{file_pattern}{yr}") >= 0:
                     source_file_path = os.path.split(source_file)[0]
                     source_file_zipped = f"{source_file_path}/{url_file_name}"
-                    source_file_year = str.replace(str(source_file), ".csv", f"_{yr}.csv")
-                    target_file_year = str.replace(str(target_file), ".csv", f"_{yr}.csv")
+                    source_file_year = str.replace(
+                        str(source_file), ".csv", f"_{yr}.csv"
+                    )
+                    target_file_year = str.replace(
+                        str(target_file), ".csv", f"_{yr}.csv"
+                    )
                     download_file(url, source_file_zipped)
                     gz_decompress(
                         infile=source_file_zipped,
                         tofile=source_file_year,
-                        delete_zipfile=True
+                        delete_zipfile=True,
                     )
                     if number_of_header_rows > 0:
                         remove_header_rows(
                             source_file_year,
-                            number_of_header_rows=number_of_header_rows)
+                            number_of_header_rows=number_of_header_rows,
+                        )
                     else:
                         pass
                     if not full_data_load:
@@ -322,7 +323,7 @@ def execute_pipeline(
                             project_id=project_id,
                             dataset_id=dataset_id,
                             table_id=destination_table,
-                            source_url=url
+                            source_url=url,
                         )
                     process_and_load_table(
                         source_file=source_file_year,
@@ -349,7 +350,7 @@ def execute_pipeline(
                         remove_source_file=remove_source_file,
                         delete_target_file=delete_target_file,
                         int_date_list=int_date_list,
-                        gen_location_list=gen_location_list
+                        gen_location_list=gen_location_list,
                     )
 
 
@@ -379,7 +380,7 @@ def process_and_load_table(
     delete_target_file: bool,
     int_date_list: typing.List[str],
     gen_location_list: dict,
-    encoding: str = "utf-8"
+    encoding: str = "utf-8",
 ) -> None:
     process_source_file(
         source_url=source_url,
@@ -399,13 +400,13 @@ def process_and_load_table(
         remove_source_file=remove_source_file,
         int_date_list=int_date_list,
         gen_location_list=gen_location_list,
-        encoding=encoding
+        encoding=encoding,
     )
     if os.path.exists(target_file):
         upload_file_to_gcs(
             file_path=target_file,
             target_gcs_bucket=target_gcs_bucket,
-            target_gcs_path=target_gcs_path
+            target_gcs_path=target_gcs_path,
         )
         if drop_dest_table == "Y":
             drop_table = True
@@ -458,7 +459,7 @@ def process_source_file(
     int_date_list: typing.List[str],
     gen_location_list: dict,
     encoding: str = "utf8",
-    remove_source_file: bool = False
+    remove_source_file: bool = False,
 ) -> None:
     logging.info(f"Opening source file {source_file}")
     csv.field_size_limit(512 << 10)
@@ -468,7 +469,9 @@ def process_source_file(
     with open(source_file, encoding=encoding, mode="r") as reader:
         data = []
         chunk_number = 1
-        for index, line in enumerate(csv.reader((line.replace('\0','') for line in reader), "TabDialect"), 0):
+        for index, line in enumerate(
+            csv.reader((line.replace("\0", "") for line in reader), "TabDialect"), 0
+        ):
             data.append(line)
             if index % int(chunksize) == 0 and index > 0:
                 process_dataframe_chunk(
@@ -486,7 +489,7 @@ def process_source_file(
                     regex_list=regex_list,
                     rename_headers_list=rename_headers_list,
                     int_date_list=int_date_list,
-                    gen_location_list=gen_location_list
+                    gen_location_list=gen_location_list,
                 )
                 data = []
                 chunk_number += 1
@@ -507,7 +510,7 @@ def process_source_file(
                 regex_list=regex_list,
                 rename_headers_list=rename_headers_list,
                 int_date_list=int_date_list,
-                gen_location_list=gen_location_list
+                gen_location_list=gen_location_list,
             )
         if remove_source_file:
             os.remove(source_file)
@@ -528,7 +531,7 @@ def process_dataframe_chunk(
     regex_list: dict,
     rename_headers_list: dict,
     int_date_list: typing.List[str],
-    gen_location_list: dict
+    gen_location_list: dict,
 ) -> None:
     logging.info(f"Processing chunk #{chunk_number}")
     df = pd.DataFrame(data, columns=input_csv_headers)
@@ -550,7 +553,7 @@ def process_dataframe_chunk(
         regex_list=regex_list,
         rename_headers_list=rename_headers_list,
         int_date_list=int_date_list,
-        gen_location_list=gen_location_list
+        gen_location_list=gen_location_list,
     )
 
 
@@ -575,14 +578,19 @@ def process_chunk(
     regex_list: dict,
     rename_headers_list: dict,
     int_date_list: typing.List[str],
-    gen_location_list: dict
+    gen_location_list: dict,
 ) -> None:
     if pipeline_name == "GHCND by year":
         df = filter_null_rows(df, null_rows_list=null_rows_list)
         df = add_metadata_cols(df, source_url=source_url)
         df = source_convert_date_formats(df, date_format_list=date_format_list)
         df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
-    if pipeline_name in ["GHCND countries", "GHCND inventory", "GHCND states", "GHCND stations"]:
+    if pipeline_name in [
+        "GHCND countries",
+        "GHCND inventory",
+        "GHCND states",
+        "GHCND stations",
+    ]:
         df = slice_column(df, slice_column_list)
         df = add_metadata_cols(df, source_url=source_url)
         df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
@@ -617,10 +625,7 @@ def convert_date_from_int(df: pd.DataFrame, int_date_list: dict) -> pd.DataFrame
         dt_int_col = values
         df[dt_col] = (
             pd.to_datetime(
-                (df[dt_int_col][:].astype("string") + "000000"),
-                "raise",
-                False,
-                True
+                (df[dt_int_col][:].astype("string") + "000000"), "raise", False, True
             ).astype("string")
             + " 00:00:00"
         )
@@ -643,19 +648,23 @@ def generate_location(df: pd.DataFrame, gen_location_list: dict) -> pd.DataFrame
     return df
 
 
-def url_directory_list(source_url_path: str, file_pattern: str = "") -> typing.List[str]:
+def url_directory_list(
+    source_url_path: str, file_pattern: str = ""
+) -> typing.List[str]:
     from urllib.request import Request, urlopen
+
     from bs4 import BeautifulSoup
+
     rtn_list = []
-    url = source_url_path.replace(" ","%20")
+    url = source_url_path.replace(" ", "%20")
     req = Request(url)
     a = urlopen(req).read()
-    soup = BeautifulSoup(a, 'html.parser')
-    x = (soup.find_all('a'))
+    soup = BeautifulSoup(a, "html.parser")
+    x = soup.find_all("a")
     for i in x:
         file_name = i.extract().get_text()
         url_new = url + file_name
-        url_new = url_new.replace(" ","%20")
+        url_new = url_new.replace(" ", "%20")
         if file_pattern == "":
             rtn_list.append(url_new)
         else:
@@ -666,10 +675,7 @@ def url_directory_list(source_url_path: str, file_pattern: str = "") -> typing.L
     return rtn_list
 
 
-def rename_headers(
-    df: pd.DataFrame,
-    rename_headers_list: dict
-) -> pd.DataFrame:
+def rename_headers(df: pd.DataFrame, rename_headers_list: dict) -> pd.DataFrame:
     df.rename(columns=rename_headers_list, inplace=True)
     return df
 
@@ -733,7 +739,9 @@ def source_convert_date_formats(
     return df
 
 
-def slice_column(df: pd.DataFrame, slice_column_list: dict, pipeline_name: str = "") -> pd.DataFrame:
+def slice_column(
+    df: pd.DataFrame, slice_column_list: dict, pipeline_name: str = ""
+) -> pd.DataFrame:
     logging.info("Extracting column data..")
     for key, values in slice_column_list.items():
         src_col = values[0]
@@ -743,17 +751,29 @@ def slice_column(df: pd.DataFrame, slice_column_list: dict, pipeline_name: str =
         if pipeline_name == "GHCND states":
             if dest_col == "name":
                 # Work-around for Alabama - bad data
-                df[dest_col] = df[src_col].apply(lambda x: "ALABAMA" if str(x)[0:2] == "AL" else str(x)[int(start_pos):].strip())
+                df[dest_col] = df[src_col].apply(
+                    lambda x: "ALABAMA"
+                    if str(x)[0:2] == "AL"
+                    else str(x)[int(start_pos) :].strip()
+                )
             else:
                 if end_pos == "":
-                    df[dest_col] = df[src_col].apply(lambda x: str(x)[int(start_pos):].strip())
+                    df[dest_col] = df[src_col].apply(
+                        lambda x: str(x)[int(start_pos) :].strip()
+                    )
                 else:
-                    df[dest_col] = df[src_col].apply(lambda x: str(x)[int(start_pos):int(end_pos)].strip())
+                    df[dest_col] = df[src_col].apply(
+                        lambda x: str(x)[int(start_pos) : int(end_pos)].strip()
+                    )
         else:
             if end_pos == "":
-                df[dest_col] = df[src_col].apply(lambda x: str(x)[int(start_pos):].strip())
+                df[dest_col] = df[src_col].apply(
+                    lambda x: str(x)[int(start_pos) :].strip()
+                )
             else:
-                df[dest_col] = df[src_col].apply(lambda x: str(x)[int(start_pos):int(end_pos)].strip())
+                df[dest_col] = df[src_col].apply(
+                    lambda x: str(x)[int(start_pos) : int(end_pos)].strip()
+                )
     return df
 
 
@@ -774,7 +794,7 @@ def apply_regex(df: pd.DataFrame, regex_list: dict) -> pd.DataFrame:
     for key, values in regex_list.items():
         regex_expr = values[0]
         replace_expr = values[1]
-        isregex = (values[2]=="True")
+        isregex = values[2] == "True"
         df[key][:].replace(regex_expr, replace_expr, regex=isregex, inplace=True)
     return df
 
@@ -1003,9 +1023,7 @@ def download_file_ftp_single_try(
 
 
 def upload_file_to_gcs(
-    file_path: pathlib.Path,
-    target_gcs_bucket: str,
-    target_gcs_path: str
+    file_path: pathlib.Path, target_gcs_bucket: str, target_gcs_path: str
 ) -> None:
     if os.path.exists(file_path):
         logging.info(
@@ -1056,5 +1074,5 @@ if __name__ == "__main__":
         number_of_header_rows=os.environ.get("NUMBER_OF_HEADER_ROWS", "0"),
         regex_list=json.loads(os.environ.get("REGEX_LIST", r"{}")),
         int_date_list=json.loads(os.environ.get("INT_DATE_LIST", r"[]")),
-        gen_location_list=json.loads(os.environ.get("GEN_LOCATION_LIST", r"{}"))
+        gen_location_list=json.loads(os.environ.get("GEN_LOCATION_LIST", r"{}")),
     )
