@@ -25,7 +25,7 @@ dag:
       depends_on_past: False
       start_date: '2022-04-01'
     max_active_runs: 1
-    schedule_interval: "@monthly"
+    schedule_interval: "@once"
     catchup: False
     default_view: graph
 
