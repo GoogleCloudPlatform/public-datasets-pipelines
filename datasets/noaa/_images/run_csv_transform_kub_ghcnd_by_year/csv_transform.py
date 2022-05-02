@@ -12,12 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import datetime
+import gzip
 import logging
 import os
 import pathlib
 from ftplib import FTP
 
-import numpy as np
 import pandas as pd
 from google.cloud import storage
 
@@ -32,7 +33,7 @@ def main(
     chunksize: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
-):
+) -> None:
 
     # source_url            STRING          -> The full url of the source file to transform
     # ftp_host              STRING          -> The host IP of the ftp file (IP only)
@@ -40,37 +41,32 @@ def main(
     # ftp_filename          STRING          -> The name of the file to pull from the FTP site
     # source_file           PATHLIB.PATH    -> The (local) path pertaining to the downloaded source file
     # target_file           PATHLIB.PATH    -> The (local) target transformed file + filename
-    # chunksize             INT (STRING)    -> The number of records to import per each batch, reduces memory consumption
     # target_gcs_bucket     STRING          -> The target GCS bucket to place the output (transformed) file
     # target_gcs_path       STRING          -> The target GCS path ( within the GCS bucket ) to place the output (transformed) file
 
-    logging.info("NOAA GSOD Stations By Year process started")
+    logging.info("NOAA - GHCND By Year process started")
 
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
-    download_file_ftp(ftp_host, ftp_dir, ftp_filename, source_file, source_url)
+    download_source_file(source_url, source_file, ftp_host, ftp_dir, ftp_filename)
 
-    names = ["textdata"]
-
-    dtypes = {"textdata": np.str_}
+    names = ["id", "date", "element", "value", "mflag", "qflag", "sflag", "time"]
 
     chunksz = int(chunksize)
 
     logging.info(f"Opening batch file {source_file}")
     with pd.read_csv(
-        source_file,  # path to main source file to load in batches
+        source_file,
         engine="python",
         encoding="utf-8",
-        quotechar='"',  # string separator, typically double-quotes
-        chunksize=chunksz,  # size of batch data, in no. of records
-        sep=",",  # data column separator, typically ","
-        skiprows=21,  # skip the informational text
-        header=None,  # use when the data file does not contain a header
+        quotechar='"',
+        chunksize=chunksz,
+        header=None,
         names=names,
-        dtype=dtypes,
     ) as reader:
         for chunk_number, chunk in enumerate(reader):
+            logging.info(f"Processing batch {chunk_number}")
             target_file_batch = str(target_file).replace(
-                ".csv", "-" + str(chunk_number) + ".csv"
+                ".csv", f"-{chunk_number}.csv"
             )
             df = pd.DataFrame()
             df = pd.concat([df, chunk])
@@ -78,15 +74,15 @@ def main(
 
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
-    logging.info("NOAA GSOD Stations process completed")
+    logging.info("NOAA - GHCND By Year process completed")
 
 
 def process_chunk(
     df: pd.DataFrame, target_file_batch: str, target_file: str, skip_header: bool
 ) -> None:
-    df = extract_columns(df)
-    df = remove_empty_key_rows(df)
-    df = apply_regex(df)
+    df = reorder_headers(df)
+    df = filter_null_rows(df)
+    df = source_convert_date_formats(df)
     save_to_new_file(df, file_path=str(target_file_batch))
     append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
 
@@ -112,67 +108,54 @@ def append_batch_file(
         os.remove(batch_file_path)
 
 
-def remove_empty_key_rows(df: pd.DataFrame) -> pd.DataFrame:
-    logging.info("Remove Empty Rows")
-    df = df[df.usaf != ""]
+def download_source_file(
+    source_url: str, source_file: str, ftp_host: str, ftp_dir: str, ftp_filename
+) -> None:
+    pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
+    source_file_zipped = str(source_file) + ".gz"
+    download_file_ftp(ftp_host, ftp_dir, ftp_filename, source_file_zipped, source_url)
+    gz_decompress(source_file_zipped, source_file)
 
+
+def reorder_headers(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Reordering headers..")
+    df = df[["id", "date", "element", "value", "mflag", "qflag", "sflag", "time"]]
     return df
 
 
-def apply_regex(df: pd.DataFrame) -> pd.DataFrame:
-    logging.info("Applying RegEx")
-    df["lat"] = df["lat"].astype(str)
-    df["lat"][:].replace("^(-[0]+)(.*)", "-$2", regex=True, inplace=True)
-    df["lat"][:].replace("^(\\s+)$", "", regex=True, inplace=True)
-    df["lat"][:].replace("^(\\+\\d+\\.\\d+[0-9])\\s+", "$1", regex=True, inplace=True)
-    df["lat"][:].replace("^(-\\d+\\.\\d+[0-9])\\s+", "$1", regex=True, inplace=True)
-    df["lat"][:].replace("nan", "", regex=False, inplace=True)
-    df["lon"] = df["lon"].astype(str)
-    df["lon"][:].replace("^(-[0]+)(.*)", "-$2", regex=True, inplace=True)
-    df["lon"][:].replace("^(\\s+)$", "", regex=True, inplace=True)
-    df["lon"][:].replace("^(\\+\\d+\\.\\d+[0-9])\\s+", "$1", regex=True, inplace=True)
-    df["lon"][:].replace("^(-\\d+\\.\\d+[0-9])\\s+", "$1", regex=True, inplace=True)
-    df["lon"][:].replace("nan", "", regex=False, inplace=True)
-    df["usaf"][:].replace("(\\d{1,})(\\s{1,})$", "$1", regex=True, inplace=True)
-    df["name"][:].replace("^\\s{1,}([a-zA-Z]\\D+)", "$1", regex=True, inplace=True)
-    df["name"][:].replace("^(\\D+[a-zA-Z])\\s{1,}$", "$1", regex=True, inplace=True)
-    df["name"][:].replace("^(\\s+)$", "", regex=True, inplace=True)
-    df["call"][:].replace("^(\\s+)$", "", regex=True, inplace=True)
-    df["call"][:].replace("^([a-zA-Z]+)\\s+", "$1", regex=True, inplace=True)
-    df["elev"][:].replace("^(\\s+)$", "", regex=True, inplace=True)
-    df["state"][:].replace("^(\\s+)$", "", regex=True, inplace=True)
-    df["country"][:].replace("^(\\s+)$", "", regex=True, inplace=True)
+def gz_decompress(infile: str, tofile: str) -> None:
+    logging.info(f"Decompressing {infile}")
+    with open(infile, "rb") as inf, open(tofile, "w", encoding="utf8") as tof:
+        decom_str = gzip.decompress(inf.read()).decode("utf-8")
+        tof.write(decom_str)
 
+
+def filter_null_rows(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Removing rows with blank id's..")
+    df = df[df.id != ""]
     return df
 
 
-def extract_columns(df_filedata: pd.DataFrame) -> pd.DataFrame:
-    # Example:
-    # 007018 99999 WXPOD 7018                                  +00.000 +000.000 +7018.0 20110309 20130730
-    logging.info("Extracting columns")
-    col_ranges = {
-        "usaf": slice(0, 6),  # LENGTH:  7 EXAMPLE: 007018
-        "wban": slice(7, 12),  # LENGTH:  6 EXAMPLE: 999999
-        "name": slice(13, 42),  # LENGTH: 30 EXAMPLE: WXPOD 7018
-        "country": slice(43, 45),  # LENGTH:  3 EXAMPLE: AF
-        "state": slice(48, 50),  # LENGTH:  3 EXAMPLE: AK
-        "call": slice(51, 56),  # LENGTH:  6 EXAMPLE: ENRS
-        "lat": slice(57, 64),  # LENGTH:  8 EXAMPLE: +30.123
-        "lon": slice(65, 74),  # LENGTH: 10 EXAMPLE: +34.123
-        "elev": slice(75, 81),  # LENGTH:  7 EXAMPLE: +128.01
-        "begin": slice(82, 90),  # LENGTH:  9 EXAMPLE: 20211005
-        "end": slice(91, 99),  # LENGTH:  9 EXAMPLE: 20211030
-    }
+def convert_dt_format(dt_str: str) -> str:
+    if not dt_str or dt_str == "nan":
+        return str(dt_str)
+    else:
+        return str(
+            datetime.datetime.strptime(str(dt_str), "%Y%m%d")
+            .date()
+            .strftime("%Y-%m-%d")
+        )
 
-    df = pd.DataFrame()
 
-    def get_column(col_val: str, col_name: str) -> str:
-        return col_val.strip()[col_ranges[col_name]].strip()
-
-    for col_name in col_ranges.keys():
-        df[col_name] = df_filedata["textdata"].apply(get_column, args=(col_name,))
-
+def source_convert_date_formats(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Converting Date Format..")
+    df["date"] = df["date"].apply(convert_dt_format)
     return df
+
+
+def save_to_new_file(df, file_path) -> None:
+    logging.info(f"Saving to target file.. {file_path}")
+    df.to_csv(file_path, float_format="%.0f", index=False)
 
 
 def download_file_ftp(
@@ -192,6 +175,7 @@ def download_file_ftp(
     ftp_conn = FTP(ftp_host)
     ftp_conn.login("", "")
     ftp_conn.cwd(ftp_dir)
+    ftp_conn.encoding = "utf-8"
 
     dest_file = open(local_file, "wb")
     ftp_conn.encoding = "utf-8"
@@ -205,10 +189,6 @@ def download_file_ftp(
     dest_file.close()
 
 
-def save_to_new_file(df, file_path) -> None:
-    df.to_csv(file_path, index=False)
-
-
 def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:
     storage_client = storage.Client()
     bucket = storage_client.bucket(gcs_bucket)
@@ -218,6 +198,7 @@ def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) 
 
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
+
     main(
         source_url=os.environ["SOURCE_URL"],
         ftp_host=os.environ["FTP_HOST"],

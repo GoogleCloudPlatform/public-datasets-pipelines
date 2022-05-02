@@ -25,19 +25,18 @@ default_args = {
 
 
 with DAG(
-    dag_id="news_hatecrimes.hatecrimes",
+    dag_id="noaa.ghcnd_by_year",
     default_args=default_args,
     max_active_runs=1,
-    schedule_interval="@yearly",
+    schedule_interval="@daily",
     catchup=False,
     default_view="graph",
 ) as dag:
 
     # Run CSV transform within kubernetes pod
-    hatecrimes_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
-        task_id="hatecrimes_transform_csv",
-        startup_timeout_seconds=600,
-        name="hatecrimes",
+    transform_csv = kubernetes_pod.KubernetesPodOperator(
+        task_id="transform_csv",
+        name="ghcnd_by_year",
         namespace="default",
         affinity={
             "nodeAffinity": {
@@ -57,41 +56,46 @@ with DAG(
             }
         },
         image_pull_policy="Always",
-        image="{{ var.json.news_hatecrimes.container_registry.run_csv_transform_kub }}",
+        image="{{ var.json.noaa.container_registry.run_csv_transform_kub_ghcnd_by_year }}",
         env_vars={
-            "SOURCE_URL": "https://raw.githubusercontent.com/GoogleTrends/data/master/Documenting_Hate_latest.csv",
+            "SOURCE_URL": "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/by_year/{{ macros.ds_format(macros.ds_add(ds, 0), '%Y-%m-%d', '%Y') }}.csv.gz",
+            "FTP_HOST": "ftp.ncdc.noaa.gov",
+            "FTP_DIR": "pub/data/ghcn/daily/by_year",
+            "FTP_FILENAME": "{{ macros.ds_format(macros.ds_add(ds, 0), '%Y-%m-%d', '%Y') }}.csv.gz",
             "SOURCE_FILE": "files/data.csv",
             "TARGET_FILE": "files/data_output.csv",
             "CHUNKSIZE": "750000",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
-            "TARGET_GCS_PATH": "data/news_hatecrimes/hatecrimes/data_output.csv",
-            "PIPELINE_NAME": "hatecrimes",
-            "CSV_HEADERS": '["date","title","organization","city","state","url","keyword","summary"]',
-            "RENAME_MAPPINGS": '{"Date":"date","Title":"title","Organization":"organization","City":"city","State":"state","URL":"url","Keyword":"keyword","Summary":"summary"}',
+            "TARGET_GCS_PATH": "data/noaa/ghcnd_by_year/data_output.csv",
         },
-        resources={"request_memory": "2G", "request_cpu": "1"},
+        resources={"limit_memory": "8G", "limit_cpu": "3"},
     )
 
     # Task to load CSV data to a BigQuery table
-    load_hatecrimes_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
-        task_id="load_hatecrimes_to_bq",
+    load_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
+        task_id="load_to_bq",
         bucket="{{ var.value.composer_bucket }}",
-        source_objects=["data/news_hatecrimes/hatecrimes/data_output.csv"],
+        source_objects=["data/noaa/ghcnd_by_year/data_output.csv"],
         source_format="CSV",
-        destination_project_dataset_table="news_hatecrimes.hatecrimes",
+        destination_project_dataset_table="noaa.ghcnd_by_year",
         skip_leading_rows=1,
         allow_quoted_newlines=True,
         write_disposition="WRITE_TRUNCATE",
         schema_fields=[
-            {"name": "date", "type": "timestamp", "mode": "nullable"},
-            {"name": "title", "type": "string", "mode": "nullable"},
-            {"name": "organization", "type": "string", "mode": "nullable"},
-            {"name": "city", "type": "string", "mode": "nullable"},
-            {"name": "state", "type": "string", "mode": "nullable"},
-            {"name": "url", "type": "string", "mode": "nullable"},
-            {"name": "keyword", "type": "string", "mode": "nullable"},
-            {"name": "summary", "type": "string", "mode": "nullable"},
+            {"name": "id", "type": "STRING", "description": "", "mode": "REQUIRED"},
+            {"name": "date", "type": "DATE", "description": "", "mode": "NULLABLE"},
+            {
+                "name": "element",
+                "type": "STRING",
+                "description": "",
+                "mode": "NULLABLE",
+            },
+            {"name": "value", "type": "FLOAT", "description": "", "mode": "NULLABLE"},
+            {"name": "mflag", "type": "STRING", "description": "", "mode": "NULLABLE"},
+            {"name": "qflag", "type": "STRING", "description": "", "mode": "NULLABLE"},
+            {"name": "sflag", "type": "STRING", "description": "", "mode": "NULLABLE"},
+            {"name": "time", "type": "STRING", "description": "", "mode": "NULLABLE"},
         ],
     )
 
-    hatecrimes_transform_csv >> load_hatecrimes_to_bq
+    transform_csv >> load_to_bq

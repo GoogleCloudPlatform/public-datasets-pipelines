@@ -32,7 +32,7 @@ def main(
     chunksize: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
-):
+) -> None:
 
     # source_url            STRING          -> The full url of the source file to transform
     # ftp_host              STRING          -> The host IP of the ftp file (IP only)
@@ -40,11 +40,10 @@ def main(
     # ftp_filename          STRING          -> The name of the file to pull from the FTP site
     # source_file           PATHLIB.PATH    -> The (local) path pertaining to the downloaded source file
     # target_file           PATHLIB.PATH    -> The (local) target transformed file + filename
-    # chunksize             INT (STRING)    -> The number of records to import per each batch, reduces memory consumption
     # target_gcs_bucket     STRING          -> The target GCS bucket to place the output (transformed) file
     # target_gcs_path       STRING          -> The target GCS path ( within the GCS bucket ) to place the output (transformed) file
 
-    logging.info("NOAA GSOD Stations By Year process started")
+    logging.info("GCHND Countries process started")
 
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
     download_file_ftp(ftp_host, ftp_dir, ftp_filename, source_file, source_url)
@@ -62,11 +61,10 @@ def main(
         encoding="utf-8",
         quotechar='"',  # string separator, typically double-quotes
         chunksize=chunksz,  # size of batch data, in no. of records
-        sep=",",  # data column separator, typically ","
-        skiprows=21,  # skip the informational text
+        sep="|",  # data column separator, typically ","
         header=None,  # use when the data file does not contain a header
-        names=names,
-        dtype=dtypes,
+        names=names,  # column names
+        dtype=dtypes,  # use this when defining column and datatypes as per numpy
     ) as reader:
         for chunk_number, chunk in enumerate(reader):
             target_file_batch = str(target_file).replace(
@@ -78,17 +76,52 @@ def main(
 
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
-    logging.info("NOAA GSOD Stations process completed")
+    logging.info("GCHND Countries process completed")
 
 
 def process_chunk(
     df: pd.DataFrame, target_file_batch: str, target_file: str, skip_header: bool
 ) -> None:
     df = extract_columns(df)
-    df = remove_empty_key_rows(df)
-    df = apply_regex(df)
+    df = reorder_headers(df)
     save_to_new_file(df, file_path=str(target_file_batch))
     append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
+
+
+def extract_columns(df: pd.DataFrame) -> pd.DataFrame:
+    df["code"] = df["textdata"].apply(get_column_country_code)
+    df["name"] = df["textdata"].apply(get_column_country_name)
+
+    return df
+
+
+def reorder_headers(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Reordering headers..")
+    df = df[
+        [
+            "code",
+            "name",
+        ]
+    ]
+
+    return df
+
+
+def get_column_country_code(col_val: str) -> str:
+    return col_val.strip().split(" ")[0]
+
+
+def get_column_country_name(col_val: str) -> str:
+    len_code = len(str.split(str.strip(col_val), " ")[0])
+    strmain1 = str.strip(col_val)
+    len_main = len(str.strip(col_val))
+    len_out = len_main - len_code
+
+    return str.strip((strmain1[::-1])[0:(len_out)][::-1])
+
+
+def save_to_new_file(df: pd.DataFrame, file_path: str) -> str:
+    df.to_csv(file_path, float_format="%.0f", index=False)
 
 
 def append_batch_file(
@@ -110,69 +143,6 @@ def append_batch_file(
     target_file.close()
     if os.path.exists(batch_file_path):
         os.remove(batch_file_path)
-
-
-def remove_empty_key_rows(df: pd.DataFrame) -> pd.DataFrame:
-    logging.info("Remove Empty Rows")
-    df = df[df.usaf != ""]
-
-    return df
-
-
-def apply_regex(df: pd.DataFrame) -> pd.DataFrame:
-    logging.info("Applying RegEx")
-    df["lat"] = df["lat"].astype(str)
-    df["lat"][:].replace("^(-[0]+)(.*)", "-$2", regex=True, inplace=True)
-    df["lat"][:].replace("^(\\s+)$", "", regex=True, inplace=True)
-    df["lat"][:].replace("^(\\+\\d+\\.\\d+[0-9])\\s+", "$1", regex=True, inplace=True)
-    df["lat"][:].replace("^(-\\d+\\.\\d+[0-9])\\s+", "$1", regex=True, inplace=True)
-    df["lat"][:].replace("nan", "", regex=False, inplace=True)
-    df["lon"] = df["lon"].astype(str)
-    df["lon"][:].replace("^(-[0]+)(.*)", "-$2", regex=True, inplace=True)
-    df["lon"][:].replace("^(\\s+)$", "", regex=True, inplace=True)
-    df["lon"][:].replace("^(\\+\\d+\\.\\d+[0-9])\\s+", "$1", regex=True, inplace=True)
-    df["lon"][:].replace("^(-\\d+\\.\\d+[0-9])\\s+", "$1", regex=True, inplace=True)
-    df["lon"][:].replace("nan", "", regex=False, inplace=True)
-    df["usaf"][:].replace("(\\d{1,})(\\s{1,})$", "$1", regex=True, inplace=True)
-    df["name"][:].replace("^\\s{1,}([a-zA-Z]\\D+)", "$1", regex=True, inplace=True)
-    df["name"][:].replace("^(\\D+[a-zA-Z])\\s{1,}$", "$1", regex=True, inplace=True)
-    df["name"][:].replace("^(\\s+)$", "", regex=True, inplace=True)
-    df["call"][:].replace("^(\\s+)$", "", regex=True, inplace=True)
-    df["call"][:].replace("^([a-zA-Z]+)\\s+", "$1", regex=True, inplace=True)
-    df["elev"][:].replace("^(\\s+)$", "", regex=True, inplace=True)
-    df["state"][:].replace("^(\\s+)$", "", regex=True, inplace=True)
-    df["country"][:].replace("^(\\s+)$", "", regex=True, inplace=True)
-
-    return df
-
-
-def extract_columns(df_filedata: pd.DataFrame) -> pd.DataFrame:
-    # Example:
-    # 007018 99999 WXPOD 7018                                  +00.000 +000.000 +7018.0 20110309 20130730
-    logging.info("Extracting columns")
-    col_ranges = {
-        "usaf": slice(0, 6),  # LENGTH:  7 EXAMPLE: 007018
-        "wban": slice(7, 12),  # LENGTH:  6 EXAMPLE: 999999
-        "name": slice(13, 42),  # LENGTH: 30 EXAMPLE: WXPOD 7018
-        "country": slice(43, 45),  # LENGTH:  3 EXAMPLE: AF
-        "state": slice(48, 50),  # LENGTH:  3 EXAMPLE: AK
-        "call": slice(51, 56),  # LENGTH:  6 EXAMPLE: ENRS
-        "lat": slice(57, 64),  # LENGTH:  8 EXAMPLE: +30.123
-        "lon": slice(65, 74),  # LENGTH: 10 EXAMPLE: +34.123
-        "elev": slice(75, 81),  # LENGTH:  7 EXAMPLE: +128.01
-        "begin": slice(82, 90),  # LENGTH:  9 EXAMPLE: 20211005
-        "end": slice(91, 99),  # LENGTH:  9 EXAMPLE: 20211030
-    }
-
-    df = pd.DataFrame()
-
-    def get_column(col_val: str, col_name: str) -> str:
-        return col_val.strip()[col_ranges[col_name]].strip()
-
-    for col_name in col_ranges.keys():
-        df[col_name] = df_filedata["textdata"].apply(get_column, args=(col_name,))
-
-    return df
 
 
 def download_file_ftp(
@@ -205,10 +175,6 @@ def download_file_ftp(
     dest_file.close()
 
 
-def save_to_new_file(df, file_path) -> None:
-    df.to_csv(file_path, index=False)
-
-
 def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:
     storage_client = storage.Client()
     bucket = storage_client.bucket(gcs_bucket)
@@ -218,6 +184,7 @@ def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) 
 
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
+
     main(
         source_url=os.environ["SOURCE_URL"],
         ftp_host=os.environ["FTP_HOST"],
