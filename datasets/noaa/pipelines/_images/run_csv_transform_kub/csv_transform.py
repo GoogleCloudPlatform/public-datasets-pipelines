@@ -958,23 +958,6 @@ def append_batch_file(
                 os.remove(batch_file_path)
 
 
-def upload_file_to_gcs(
-    file_path: pathlib.Path, target_gcs_bucket: str, target_gcs_path: str
-) -> None:
-    if os.path.exists(file_path):
-        logging.info(
-            f"Uploading output file to gs://{target_gcs_bucket}/{target_gcs_path}"
-        )
-        storage_client = storage.Client()
-        bucket = storage_client.bucket(target_gcs_bucket)
-        blob = bucket.blob(target_gcs_path)
-        blob.upload_from_filename(file_path)
-    else:
-        logging.info(
-            f"Cannot upload file to gs://{target_gcs_bucket}/{target_gcs_path} as it does not exist."
-        )
-
-
 def download_file(source_url: str, source_file: pathlib.Path) -> None:
     logging.info(f"Downloading {source_url} to {source_file}")
     r = requests.get(source_url, stream=True)
@@ -1007,17 +990,17 @@ def download_file_ftp(
 def download_file_ftp_single_try(
     ftp_host: str, ftp_dir: str, ftp_filename: str, local_file: pathlib.Path
 ) -> bool:
-    try:
-        with ftplib.FTP(ftp_host, timeout=60) as ftp_conn:
-            ftp_conn.login("", "")
-            ftp_conn.cwd(ftp_dir)
-            ftp_conn.encoding = "utf-8"
-            with open(local_file, "wb") as dest_file:
-                ftp_conn.retrbinary("RETR %s" % ftp_filename, dest_file.write)
-            ftp_conn.quit()
-            return True
-    except:
+    # try:
+    with ftplib.FTP(ftp_host, timeout=60) as ftp_conn:
+        ftp_conn.login("", "")
+        ftp_conn.cwd(ftp_dir)
+        ftp_conn.encoding = "utf-8"
+        with open(local_file, "wb") as dest_file:
+            ftp_conn.retrbinary("RETR %s" % ftp_filename, dest_file.write)
+        ftp_conn.quit()
         return True
+    # except:
+    #     return True
 
 
 def upload_file_to_gcs(
