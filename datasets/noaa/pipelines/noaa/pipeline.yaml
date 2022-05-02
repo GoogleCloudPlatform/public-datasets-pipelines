@@ -60,7 +60,7 @@ dag:
         location: "us-central1-c"
         body:
           name: noaa
-          initial_node_count: 8
+          initial_node_count: 2
           network: "{{ var.value.vpc_network }}"
           node_config:
             machine_type: e2-standard-16
@@ -86,7 +86,6 @@ dag:
           CHUNKSIZE: "{{ var.json.noaa.ghcnd_by_year.chunksize }}"
           FTP_HOST: "{{ var.json.noaa.ghcnd_by_year.ftp_host }}"
           FTP_DIR: "{{ var.json.noaa.ghcnd_by_year.ftp_dir }}"
-          FTP_FILENAME: "{{ var.json.noaa.ghcnd_by_year.ftp_filename }}"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.noaa.ghcnd_by_year.dataset_id }}"
           TABLE_ID: "{{ var.json.noaa.ghcnd_by_year.table_id }}"
@@ -879,8 +878,8 @@ dag:
     - operator: "GKEStartPodOperator"
       description: "Run NOAA load processes"
       args:
-        task_id: "lightning_strikes"
-        name: "noaa.lightning_strikes"
+        task_id: "lightning_strikes_by_year"
+        name: "noaa.lightning_strikes_by_year"
         project_id: "{{ var.value.gcp_project }}"
         location: "us-central1-c"
         cluster_name: noaa
@@ -888,23 +887,23 @@ dag:
         image_pull_policy: "Always"
         image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
         env_vars:
-          PIPELINE_NAME: "{{ var.json.noaa.lightning_strikes.pipeline_name }}"
-          SOURCE_URL: "{{ var.json.noaa.lightning_strikes.source_url }}"
-          SOURCE_FILE: "{{ var.json.noaa.lightning_strikes.source_file }}"
-          TARGET_FILE: "{{ var.json.noaa.lightning_strikes.target_file }}"
-          CHUNKSIZE: "{{ var.json.noaa.lightning_strikes.chunksize }}"
+          PIPELINE_NAME: "{{ var.json.noaa.lightning_strikes_by_year.pipeline_name }}"
+          SOURCE_URL: "{{ var.json.noaa.lightning_strikes_by_year.source_url }}"
+          SOURCE_FILE: "{{ var.json.noaa.lightning_strikes_by_year.source_file }}"
+          TARGET_FILE: "{{ var.json.noaa.lightning_strikes_by_year.target_file }}"
+          CHUNKSIZE: "{{ var.json.noaa.lightning_strikes_by_year.chunksize }}"
           PROJECT_ID: "{{ var.value.gcp_project }}"
-          DATASET_ID: "{{ var.json.noaa.lightning_strikes.dataset_id }}"
-          TABLE_ID: "{{ var.json.noaa.lightning_strikes.table_id }}"
+          DATASET_ID: "{{ var.json.noaa.lightning_strikes_by_year.dataset_id }}"
+          TABLE_ID: "{{ var.json.noaa.lightning_strikes_by_year.table_id }}"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
-          TARGET_GCS_PATH: "{{ var.json.noaa.lightning_strikes.target_gcs_path }}"
-          SCHEMA_PATH: "{{ var.json.noaa.lightning_strikes.schema_path }}"
-          DROP_DEST_TABLE: "{{ var.json.noaa.lightning_strikes.drop_dest_table }}"
-          INPUT_FIELD_DELIMITER: "{{ var.json.noaa.lightning_strikes.input_field_delimiter }}"
-          REMOVE_SOURCE_FILE: "{{ var.json.noaa.lightning_strikes.remove_source_file }}"
-          DELETE_TARGET_FILE: "{{ var.json.noaa.lightning_strikes.delete_target_file }}"
-          START_YEAR: "{{ var.json.noaa.lightning_strikes.start_year }}"
-          NUMBER_OF_HEADER_ROWS: "{{ var.json.noaa.lightning_strikes.number_of_header_rows }}"
+          TARGET_GCS_PATH: "{{ var.json.noaa.lightning_strikes_by_year.target_gcs_path }}"
+          SCHEMA_PATH: "{{ var.json.noaa.lightning_strikes_by_year.schema_path }}"
+          DROP_DEST_TABLE: "{{ var.json.noaa.lightning_strikes_by_year.drop_dest_table }}"
+          INPUT_FIELD_DELIMITER: "{{ var.json.noaa.lightning_strikes_by_year.input_field_delimiter }}"
+          REMOVE_SOURCE_FILE: "{{ var.json.noaa.lightning_strikes_by_year.remove_source_file }}"
+          DELETE_TARGET_FILE: "{{ var.json.noaa.lightning_strikes_by_year.delete_target_file }}"
+          START_YEAR: "{{ var.json.noaa.lightning_strikes_by_year.start_year }}"
+          NUMBER_OF_HEADER_ROWS: "{{ var.json.noaa.lightning_strikes_by_year.number_of_header_rows }}"
           INT_DATE_LIST: >-
             {
               "date": "day_int"
@@ -945,4 +944,4 @@ dag:
           limit_cpu: "3"
 
   graph_paths:
-    - "transform_csv >> load_to_bq"
+    - "create_cluster >> [ghcnd_by_year, ghcnd_countries, ghcnd_inventory, ghcnd_states, ghcnd_stations, gsod_stations, ghcnd_hurricanes, lightning_strikes_by_year] >> delete_cluster"

@@ -23,9 +23,11 @@ import pathlib
 import re
 import time
 import typing
+from urllib.request import Request, urlopen
 
 import pandas as pd
 import requests
+from bs4 import BeautifulSoup
 from google.api_core.exceptions import NotFound
 from google.cloud import bigquery, storage
 
@@ -651,10 +653,6 @@ def generate_location(df: pd.DataFrame, gen_location_list: dict) -> pd.DataFrame
 def url_directory_list(
     source_url_path: str, file_pattern: str = ""
 ) -> typing.List[str]:
-    from urllib.request import Request, urlopen
-
-    from bs4 import BeautifulSoup
-
     rtn_list = []
     url = source_url_path.replace(" ", "%20")
     req = Request(url)
