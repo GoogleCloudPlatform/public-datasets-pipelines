@@ -158,12 +158,6 @@ with DAG(
             "SLICE_COLUMN_LIST": '{\n  "id": ["textdata", "0", "11"],\n  "latitude": ["textdata", "12", "20"],\n  "longitude": ["textdata", "21", "30"],\n  "element": ["textdata", "31", "35"],\n  "firstyear": ["textdata", "36", "40"],\n  "lastyear": ["textdata", "41", "45"]\n}',
         },
     )
-    delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
-        task_id="delete_cluster",
-        project_id="{{ var.value.gcp_project }}",
-        location="us-central1-c",
-        name="noaa",
-    )
 
     # Run NOAA load processes
     ghcnd_states = kubernetes_engine.GKEStartPodOperator(
@@ -297,6 +291,7 @@ with DAG(
             "SCHEMA_PATH": "{{ var.json.noaa.ghcnd_hurricanes.schema_path }}",
             "DROP_DEST_TABLE": "{{ var.json.noaa.ghcnd_hurricanes.drop_dest_table }}",
             "INPUT_FIELD_DELIMITER": "{{ var.json.noaa.ghcnd_hurricanes.input_field_delimiter }}",
+            "NUMBER_OF_HEADER_ROWS": "{{ var.json.noaa.ghcnd_hurricanes.number_of_header_rows }}",
             "REMOVE_SOURCE_FILE": "{{ var.json.noaa.ghcnd_hurricanes.remove_source_file }}",
             "DELETE_TARGET_FILE": "{{ var.json.noaa.ghcnd_hurricanes.delete_target_file }}",
             "INPUT_CSV_HEADERS": '[\n  "sid",\n  "season",\n  "number",\n  "basin",\n  "subbasin",\n  "name",\n  "iso_time",\n  "nature",\n  "lat",\n  "lon",\n  "wmo_wind",\n  "wmo_pres",\n  "wmo_agency",\n  "track_type",\n  "dist2land",\n  "landfall",\n  "iflag",\n  "usa_agency",\n  "usa_atcf_id",\n  "usa_lat",\n  "usa_lon",\n  "usa_record",\n  "usa_status",\n  "usa_wind",\n  "usa_pres",\n  "usa_sshs",\n  "usa_r34_ne",\n  "usa_r34_se",\n  "usa_r34_sw",\n  "usa_r34_nw",\n  "usa_r50_ne",\n  "usa_r50_se",\n  "usa_r50_sw",\n  "usa_r50_nw",\n  "usa_r64_ne",\n  "usa_r64_se",\n  "usa_r64_sw",\n  "usa_r64_nw",\n  "usa_poci",\n  "usa_roci",\n  "usa_rmw",\n  "usa_eye",\n  "tokyo_lat",\n  "tokyo_lon",\n  "tokyo_grade",\n  "tokyo_wind",\n  "tokyo_pres",\n  "tokyo_r50_dir",\n  "tokyo_r50_long",\n  "tokyo_r50_short",\n  "tokyo_r30_dir",\n  "tokyo_r30_long",\n  "tokyo_r30_short",\n  "tokyo_land",\n  "cma_lat",\n  "cma_lon",\n  "cma_cat",\n  "cma_wind",\n  "cma_pres",\n  "hko_lat",\n  "hko_lon",\n  "hko_cat",\n  "hko_wind",\n  "hko_pres",\n  "newdelhi_lat",\n  "newdelhi_lon",\n  "newdelhi_grade",\n  "newdelhi_wind",\n  "newdelhi_pres",\n  "newdelhi_ci",\n  "newdelhi_dp",\n  "newdelhi_poci",\n  "reunion_lat",\n  "reunion_lon",\n  "reunion_type",\n  "reunion_wind",\n  "reunion_pres",\n  "reunion_tnum",\n  "reunion_ci",\n  "reunion_rmw",\n  "reunion_r34_ne",\n  "reunion_r34_se",\n  "reunion_r34_sw",\n  "reunion_r34_nw",\n  "reunion_r50_ne",\n  "reunion_r50_se",\n  "reunion_r50_sw",\n  "reunion_r50_nw",\n  "reunion_r64_ne",\n  "reunion_r64_se",\n  "reunion_r64_sw",\n  "reunion_r64_nw",\n  "bom_lat",\n  "bom_lon",\n  "bom_type",\n  "bom_wind",\n  "bom_pres",\n  "bom_tnum",\n  "bom_ci",\n  "bom_rmw",\n  "bom_r34_ne",\n  "bom_r34_se",\n  "bom_r34_sw",\n  "bom_r34_nw",\n  "bom_r50_ne",\n  "bom_r50_se",\n  "bom_r50_sw",\n  "bom_r50_nw",\n  "bom_r64_ne",\n  "bom_r64_se",\n  "bom_r64_sw",\n  "bom_r64_nw",\n  "bom_roci",\n  "bom_poci",\n  "bom_eye",\n  "bom_pos_method",\n  "bom_pres_method",\n  "nadi_lat",\n  "nadi_lon",\n  "nadi_cat",\n  "nadi_wind",\n  "nadi_pres",\n  "wellington_lat",\n  "wellington_lon",\n  "wellington_wind",\n  "wellington_pres",\n  "ds824_lat",\n  "ds824_lon",\n  "ds824_stage",\n  "ds824_wind",\n  "ds824_pres",\n  "td9636_lat",\n  "td9636_lon",\n  "td9636_stage",\n  "td9636_wind",\n  "td9636_pres",\n  "td9635_lat",\n  "td9635_lon",\n  "td9635_wind",\n  "td9635_pres",\n  "td9635_roci",\n  "neumann_lat",\n  "neumann_lon",\n  "neumann_class",\n  "neumann_wind",\n  "neumann_pres",\n  "mlc_lat",\n  "mlc_lon",\n  "mlc_class",\n  "mlc_wind",\n  "mlc_pres",\n  "usa_gust",\n  "bom_gust",\n  "bom_gust_per",\n  "reunion_gust",\n  "reunion_gust_per",\n  "usa_seahgt",\n  "usa_searad_ne",\n  "usa_searad_se",\n  "usa_searad_sw",\n  "usa_searad_nw",\n  "storm_speed",\n  "storm_dir"\n]',
@@ -340,6 +335,12 @@ with DAG(
             "REORDER_HEADERS_LIST": '[\n  "date",\n  "number_of_strikes",\n  "center_point_geom",\n  "source_url",\n  "etl_timestamp"\n]',
             "RENAME_HEADERS_LIST": '{\n  "zday": "day_int",\n  "total_count": "number_of_strikes"\n}',
         },
+    )
+    delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
+        task_id="delete_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        name="noaa",
     )
 
     (

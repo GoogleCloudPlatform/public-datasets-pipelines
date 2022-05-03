@@ -258,12 +258,6 @@ dag:
       resources:
           request_ephemeral_storage: "4G"
           limit_cpu: "3"
-    - operator: "GKEDeleteClusterOperator"
-      args:
-        task_id: "delete_cluster"
-        project_id: "{{ var.value.gcp_project }}"
-        location: "us-central1-c"
-        name: noaa
     - operator: "GKEStartPodOperator"
       description: "Run NOAA load processes"
       args:
@@ -313,6 +307,9 @@ dag:
               "code": ["textdata", "0", "2"],
               "name": ["textdata", "3", ""]
             }
+      resources:
+          request_ephemeral_storage: "4G"
+          limit_cpu: "3"
     - operator: "GKEStartPodOperator"
       description: "Run NOAA load processes"
       args:
@@ -376,6 +373,9 @@ dag:
               "hcn_cm_flag": ["textdata", "76", "79"],
               "wmoid": ["textdata", "80", "85"]
             }
+      resources:
+          request_ephemeral_storage: "4G"
+          limit_cpu: "3"
     - operator: "GKEStartPodOperator"
       description: "Run NOAA load processes"
       args:
@@ -498,6 +498,7 @@ dag:
           SCHEMA_PATH: "{{ var.json.noaa.ghcnd_hurricanes.schema_path }}"
           DROP_DEST_TABLE: "{{ var.json.noaa.ghcnd_hurricanes.drop_dest_table }}"
           INPUT_FIELD_DELIMITER: "{{ var.json.noaa.ghcnd_hurricanes.input_field_delimiter }}"
+          NUMBER_OF_HEADER_ROWS: "{{ var.json.noaa.ghcnd_hurricanes.number_of_header_rows }}"
           REMOVE_SOURCE_FILE: "{{ var.json.noaa.ghcnd_hurricanes.remove_source_file }}"
           DELETE_TARGET_FILE: "{{ var.json.noaa.ghcnd_hurricanes.delete_target_file }}"
           INPUT_CSV_HEADERS: >-
@@ -873,7 +874,7 @@ dag:
               "mlc_pres": "mlc_pressure"
             }
       resources:
-          request_ephemeral_storage: "4G"
+          request_ephemeral_storage: "16G"
           limit_cpu: "3"
     - operator: "GKEStartPodOperator"
       description: "Run NOAA load processes"
@@ -940,8 +941,14 @@ dag:
               "total_count": "number_of_strikes"
             }
       resources:
-          request_ephemeral_storage: "4G"
+          request_ephemeral_storage: "16G"
           limit_cpu: "3"
+    - operator: "GKEDeleteClusterOperator"
+      args:
+        task_id: "delete_cluster"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        name: noaa
 
   graph_paths:
     - "create_cluster >> [ghcnd_by_year, ghcnd_countries, ghcnd_inventory, ghcnd_states, ghcnd_stations, gsod_stations, ghcnd_hurricanes, lightning_strikes_by_year] >> delete_cluster"
