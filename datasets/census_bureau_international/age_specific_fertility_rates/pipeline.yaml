@@ -1,0 +1,145 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+resources:
+
+  - type: bigquery_table
+    table_id: "age_specific_fertility_rates"
+    description: "census_bureau_internationalspc"
+
+dag:
+  airflow_version: 2
+  initialize:
+    dag_id: age_specific_fertility_rates
+    default_args:
+      owner: "Google"
+      depends_on_past: False
+      start_date: '2021-03-01'
+    max_active_runs: 1
+    schedule_interval: "@daily"
+    catchup: False
+    default_view: graph
+
+  tasks:
+
+    - operator: "KubernetesPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+
+      args:
+
+        task_id: "transform_csv"
+        name: "age_specific_fertility_rates"
+        namespace: "default"
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: cloud.google.com/gke-nodepool
+                      operator: In
+                      values:
+                        - "pool-e2-standard-4"
+        image_pull_policy: "Always"
+        image: "{{ var.json.census_bureau_international.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: |
+            "gs://pdp-feeds-staging/Census/idbzip/IDBext028.csv",
+            "gs://pdp-feeds-staging/Census/idbzip/IDBextCTYS.csv"
+          SOURCE_FILE: "data.csv"
+          TARGET_FILE: "data_output.csv"
+          CHUNKSIZE: "50000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/census_bureau_international/age_specific_fertility_rates/data_output.csv"
+          REORDER_HEADERS: >-
+            [ "country_code", "country_name", "year", "fertility_rate_15_19", "fertility_rate_20_24",
+              "fertility_rate_25_29", "fertility_rate_30_34", "fertility_rate_35_39", "fertility_rate_40_44",
+              "fertility_rate_45_49", "total_fertility_rate", "gross_reproduction_rate", "sex_ratio_at_birth" ]
+          FILTER_HEADERS: >-
+            [ ]
+          TRANSFORM_LIST: >-
+            [ "obtain_population", "obtain_country", "reorder_headers" ]
+          PIPELINE_ENGLISH_NAME: "International Database (Country Names - Fertility Rates) Delivery"
+        resources:
+          limit_memory: "4G"
+          limit_cpu: "1"
+
+    - operator: "GoogleCloudStorageToBigQueryOperator"
+      description: "Task to load CSV data to a BigQuery table"
+
+      args:
+        task_id: "load_to_bq"
+        bucket: "{{ var.value.composer_bucket }}"
+        source_objects: ["data/census_bureau_international/age_specific_fertility_rates/data_output.csv"]
+        source_format: "CSV"
+        destination_project_dataset_table: "{{ var.json.census_bureau_international.container_registry.age_specific_fertility_rates_destination_table }}"
+        skip_leading_rows: 1
+        allow_quoted_newlines: True
+        write_disposition: "WRITE_TRUNCATE"
+        schema_fields:
+          - name: "country_code"
+            type: "STRING"
+            description: "Federal Information Processing Standard (FIPS) country/area code"
+            mode: "REQUIRED"
+          - name: "country_name"
+            type: "STRING"
+            description: "Country or area name"
+            mode: "NULLABLE"
+          - name: "year"
+            type: "INTEGER"
+            description: "Year"
+            mode: "REQUIRED"
+          - name: "fertility_rate_15_19"
+            type: "FLOAT"
+            description: "Age specific fertility rate for age 15-19 (births per 1,000 population)"
+            mode: "NULLABLE"
+          - name: "fertility_rate_20_24"
+            type: "FLOAT"
+            description: "Age specific fertility rate for age 20-24 (births per 1,000 population)"
+            mode: "NULLABLE"
+          - name: "fertility_rate_25_29"
+            type: "FLOAT"
+            description: "Age specific fertility rate for age 25-29 (births per 1,000 population)"
+            mode: "NULLABLE"
+          - name: "fertility_rate_30_34"
+            type: "FLOAT"
+            description: "Age specific fertility rate for age 30-34 (births per 1,000 population)"
+            mode: "NULLABLE"
+          - name: "fertility_rate_35_39"
+            type: "FLOAT"
+            description: "Age specific fertility rate for age 35-39 (births per 1,000 population)"
+            mode: "NULLABLE"
+          - name: "fertility_rate_40_44"
+            type: "FLOAT"
+            description: "Age specific fertility rate for age 40-44 (births per 1,000 population)"
+            mode: "NULLABLE"
+          - name: "fertility_rate_45_49"
+            type: "FLOAT"
+            description: "Age specific fertility rate for age 45-49 (births per 1,000 population)"
+            mode: "NULLABLE"
+          - name: "total_fertility_rate"
+            type: "FLOAT"
+            description: "Total fertility rate (lifetime births per woman)"
+            mode: "NULLABLE"
+          - name: "gross_reproduction_rate"
+            type: "FLOAT"
+            description: "Gross reproduction rate (lifetime female births per woman)"
+            mode: "NULLABLE"
+          - name: "sex_ratio_at_birth"
+            type: "FLOAT"
+            description: "Sex ratio at birth (male births per female birth)"
+            mode: "NULLABLE"
+
+  graph_paths:
+    - "transform_csv >> load_to_bq"
