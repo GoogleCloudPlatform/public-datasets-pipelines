@@ -87,6 +87,7 @@ with DAG(
             "NULL_ROWS_LIST": '[\n  "id"\n]',
             "DATE_FORMAT_LIST": '[\n  "date"\n]',
         },
+        resources={"request_ephemeral_storage": "16G", "limit_cpu": "3"},
     )
 
     # Run NOAA load processes
@@ -122,6 +123,7 @@ with DAG(
             "REORDER_HEADERS_LIST": '[\n  "code",\n  "name",\n  "source_url",\n  "etl_timestamp"\n]',
             "SLICE_COLUMN_LIST": '{\n  "code": ["textdata", "0", "2"],\n  "name": ["textdata", "3", ""]\n}',
         },
+        resources={"request_ephemeral_storage": "4G", "limit_cpu": "3"},
     )
 
     # Run NOAA load processes
@@ -157,6 +159,7 @@ with DAG(
             "REORDER_HEADERS_LIST": '[\n  "id",\n  "latitude",\n  "longitude",\n  "element",\n  "firstyear",\n  "lastyear",\n  "source_url",\n  "etl_timestamp"\n]',
             "SLICE_COLUMN_LIST": '{\n  "id": ["textdata", "0", "11"],\n  "latitude": ["textdata", "12", "20"],\n  "longitude": ["textdata", "21", "30"],\n  "element": ["textdata", "31", "35"],\n  "firstyear": ["textdata", "36", "40"],\n  "lastyear": ["textdata", "41", "45"]\n}',
         },
+        resources={"request_ephemeral_storage": "4G", "limit_cpu": "3"},
     )
 
     # Run NOAA load processes
@@ -192,6 +195,7 @@ with DAG(
             "REORDER_HEADERS_LIST": '[\n  "code",\n  "name",\n  "source_url",\n  "etl_timestamp"\n]',
             "SLICE_COLUMN_LIST": '{\n  "code": ["textdata", "0", "2"],\n  "name": ["textdata", "3", ""]\n}',
         },
+        resources={"request_ephemeral_storage": "4G", "limit_cpu": "3"},
     )
 
     # Run NOAA load processes
@@ -227,6 +231,7 @@ with DAG(
             "REORDER_HEADERS_LIST": '[\n  "id",\n  "latitude",\n  "longitude",\n  "elevation",\n  "state",\n  "name",\n  "gsn_flag",\n  "hcn_cm_flag",\n  "wmoid",\n  "source_url",\n  "etl_timestamp"\n]',
             "SLICE_COLUMN_LIST": '{\n  "id": ["textdata", "0", "11"],\n  "latitude": ["textdata", "12", "20"],\n  "longitude": ["textdata", "21", "30"],\n  "elevation": ["textdata", "31", "37"],\n  "state": ["textdata", "38", "40"],\n  "name": ["textdata", "41", "71"],\n  "gsn_flag": ["textdata", "72", "75"],\n  "hcn_cm_flag": ["textdata", "76", "79"],\n  "wmoid": ["textdata", "80", "85"]\n}',
         },
+        resources={"request_ephemeral_storage": "4G", "limit_cpu": "3"},
     )
 
     # Run NOAA load processes
@@ -265,6 +270,7 @@ with DAG(
             "NULL_ROWS_LIST": '[\n  "usaf"\n]',
             "SLICE_COLUMN_LIST": '{\n  "usaf": ["textdata", "0", "6"],\n  "wban": ["textdata", "7", "12"],\n  "name": ["textdata", "13", "42"],\n  "country": ["textdata", "43", "45"],\n  "state": ["textdata", "48", "50"],\n  "call": ["textdata", "51", "56"],\n  "lat": ["textdata", "57", "64"],\n  "lon": ["textdata", "65", "74"],\n  "elev": ["textdata", "75", "81"],\n  "begin": ["textdata", "82", "90"],\n  "end": ["textdata", "91", "99"]\n}',
         },
+        resources={"request_ephemeral_storage": "4G", "limit_cpu": "3"},
     )
 
     # Run NOAA load processes
@@ -298,6 +304,7 @@ with DAG(
             "REORDER_HEADERS_LIST": '[\n  "sid",\n  "season",\n  "number",\n  "basin",\n  "subbasin",\n  "name",\n  "iso_time",\n  "nature",\n  "latitude",\n  "longitude",\n  "wmo_wind",\n  "wmo_pressure",\n  "wmo_agency",\n  "track_type",\n  "dist2land",\n  "landfall",\n  "iflag",\n  "usa_agency",\n  "usa_latitude",\n  "usa_longitude",\n  "usa_record",\n  "usa_status",\n  "usa_wind",\n  "usa_pressure",\n  "usa_sshs",\n  "usa_r34_ne",\n  "usa_r34_se",\n  "usa_r34_sw",\n  "usa_r34_nw",\n  "usa_r50_ne",\n  "usa_r50_se",\n  "usa_r50_sw",\n  "usa_r50_nw",\n  "usa_r64_ne",\n  "usa_r64_se",\n  "usa_r64_sw",\n  "usa_r64_nw",\n  "usa_poci",\n  "usa_roci",\n  "usa_rmw",\n  "usa_eye",\n  "tokyo_latitude",\n  "tokyo_longitude",\n  "tokyo_grade",\n  "tokyo_wind",\n  "tokyo_pressure",\n  "tokyo_r50_dir",\n  "tokyo_r50_longitude",\n  "tokyo_r50_short",\n  "tokyo_r30_dir",\n  "tokyo_r30_long",\n  "tokyo_r30_short",\n  "tokyo_land",\n  "cma_latitude",\n  "cma_longitude",\n  "cma_cat",\n  "cma_wind",\n  "cma_pressure",\n  "hko_latitude",\n  "hko_longitude",\n  "hko_cat",\n  "hko_wind",\n  "hko_pressure",\n  "newdelhi_latitude",\n  "newdelhi_longitude",\n  "newdelhi_grade",\n  "newdelhi_wind",\n  "newdelhi_pressure",\n  "newdelhi_ci",\n  "newdelhi_dp",\n  "newdelhi_poci",\n  "reunion_latitude",\n  "reunion_longitude",\n  "reunion_type",\n  "reunion_wind",\n  "reunion_pressure",\n  "reunion_tnum",\n  "reunion_ci",\n  "reunion_rmw",\n  "reunion_r34_ne",\n  "reunion_r34_se",\n  "reunion_r34_sw",\n  "reunion_r34_nw",\n  "reunion_r50_ne",\n  "reunion_r50_se",\n  "reunion_r50_sw",\n  "reunion_r50_nw",\n  "reunion_r64_ne",\n  "reunion_r64_se",\n  "reunion_r64_sw",\n  "reunion_r64_nw",\n  "bom_latitude",\n  "bom_longitude",\n  "bom_type",\n  "bom_wind",\n  "bom_pressure",\n  "bom_tnum",\n  "bom_ci",\n  "bom_rmw",\n  "bom_r34_ne",\n  "bom_r34_se",\n  "bom_r34_sw",\n  "bom_r34_nw",\n  "bom_r50_ne",\n  "bom_r50_se",\n  "bom_r50_sw",\n  "bom_r50_nw",\n  "bom_r64_ne",\n  "bom_r64_se",\n  "bom_r64_sw",\n  "bom_r64_nw",\n  "bom_roci",\n  "bom_poci",\n  "bom_eye",\n  "bom_pos_method",\n  "bom_pressure_method",\n  "wellington_latitude",\n  "wellington_longitude",\n  "wellington_wind",\n  "wellington_pressure",\n  "nadi_latitude",\n  "nadi_longitude",\n  "nadi_cat",\n  "nadi_wind",\n  "nadi_pressure",\n  "ds824_latitude",\n  "ds824_longitude",\n  "ds824_stage",\n  "ds824_wind",\n  "ds824_pressure",\n  "td9636_latitude",\n  "td9636_longitude",\n  "td9636_stage",\n  "td9636_wind",\n  "td9636_pressure",\n  "td9635_latitude",\n  "td9635_longitude",\n  "td9635_wind",\n  "td9635_pressure",\n  "td9635_roci",\n  "neumann_latitude",\n  "neumann_longitude",\n  "neumann_class",\n  "neumann_wind",\n  "neumann_pressure",\n  "mlc_latitude",\n  "mlc_longitude",\n  "mlc_class",\n  "mlc_wind",\n  "mlc_pressure",\n  "usa_atcf_id",\n  "source_url",\n  "etl_timestamp"\n]',
             "RENAME_HEADERS_LIST": '{\n  "lat": "latitude",\n  "lon": "longitude",\n  "wmo_pres": "wmo_pressure",\n  "usa_lat": "usa_latitude",\n  "usa_lon": "usa_longitude",\n  "usa_pres": "usa_pressure",\n  "tokyo_lat": "tokyo_latitude",\n  "tokyo_lon": "tokyo_longitude",\n  "tokyo_pres": "tokyo_pressure",\n  "tokyo_r50_long": "tokyo_r50_longitude",\n  "cma_lat": "cma_latitude",\n  "cma_lon": "cma_longitude",\n  "cma_pres": "cma_pressure",\n  "hko_lat": "hko_latitude",\n  "hko_lon": "hko_longitude",\n  "hko_pres": "hko_pressure",\n  "newdelhi_lat": "newdelhi_latitude",\n  "newdelhi_lon": "newdelhi_longitude",\n  "newdelhi_pres": "newdelhi_pressure",\n  "reunion_lat": "reunion_latitude",\n  "reunion_lon": "reunion_longitude",\n  "reunion_pres": "reunion_pressure",\n  "bom_lat": "bom_latitude",\n  "bom_lon": "bom_longitude",\n  "bom_pres": "bom_pressure",\n  "bom_pres_method": "bom_pressure_method",\n  "wellington_lat": "wellington_latitude",\n  "wellington_lon": "wellington_longitude",\n  "wellington_pres": "wellington_pressure",\n  "nadi_lat": "nadi_latitude",\n  "nadi_lon": "nadi_longitude",\n  "nadi_pres": "nadi_pressure",\n  "ds824_lat": "ds824_latitude",\n  "ds824_lon": "ds824_longitude",\n  "ds824_pres": "ds824_pressure",\n  "td9636_lat": "td9636_latitude",\n  "td9636_lon": "td9636_longitude",\n  "td9636_pres": "td9636_pressure",\n  "td9635_lat": "td9635_latitude",\n  "td9635_lon": "td9635_longitude",\n  "td9635_pres": "td9635_pressure",\n  "neumann_lat": "neumann_latitude",\n  "neumann_lon": "neumann_longitude",\n  "neumann_pres": "neumann_pressure",\n  "mlc_lat": "mlc_latitude",\n  "mlc_lon": "mlc_longitude",\n  "mlc_pres": "mlc_pressure"\n}',
         },
+        resources={"request_ephemeral_storage": "16G", "limit_cpu": "3"},
     )
 
     # Run NOAA load processes
@@ -335,6 +342,7 @@ with DAG(
             "REORDER_HEADERS_LIST": '[\n  "date",\n  "number_of_strikes",\n  "center_point_geom",\n  "source_url",\n  "etl_timestamp"\n]',
             "RENAME_HEADERS_LIST": '{\n  "zday": "day_int",\n  "total_count": "number_of_strikes"\n}',
         },
+        resources={"request_ephemeral_storage": "16G", "limit_cpu": "3"},
     )
     delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
         task_id="delete_cluster",

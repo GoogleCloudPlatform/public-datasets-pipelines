@@ -143,7 +143,7 @@ dag:
             [
               "date"
             ]
-      resources:
+        resources:
           request_ephemeral_storage: "16G"
           limit_cpu: "3"
     - operator: "GKEStartPodOperator"
@@ -195,7 +195,7 @@ dag:
               "code": ["textdata", "0", "2"],
               "name": ["textdata", "3", ""]
             }
-      resources:
+        resources:
           request_ephemeral_storage: "4G"
           limit_cpu: "3"
     - operator: "GKEStartPodOperator"
@@ -255,7 +255,7 @@ dag:
               "firstyear": ["textdata", "36", "40"],
               "lastyear": ["textdata", "41", "45"]
             }
-      resources:
+        resources:
           request_ephemeral_storage: "4G"
           limit_cpu: "3"
     - operator: "GKEStartPodOperator"
@@ -307,7 +307,7 @@ dag:
               "code": ["textdata", "0", "2"],
               "name": ["textdata", "3", ""]
             }
-      resources:
+        resources:
           request_ephemeral_storage: "4G"
           limit_cpu: "3"
     - operator: "GKEStartPodOperator"
@@ -373,7 +373,7 @@ dag:
               "hcn_cm_flag": ["textdata", "76", "79"],
               "wmoid": ["textdata", "80", "85"]
             }
-      resources:
+        resources:
           request_ephemeral_storage: "4G"
           limit_cpu: "3"
     - operator: "GKEStartPodOperator"
@@ -470,7 +470,7 @@ dag:
               "begin": ["textdata", "82", "90"],
               "end": ["textdata", "91", "99"]
             }
-      resources:
+        resources:
           request_ephemeral_storage: "4G"
           limit_cpu: "3"
     - operator: "GKEStartPodOperator"
@@ -873,7 +873,7 @@ dag:
               "mlc_lon": "mlc_longitude",
               "mlc_pres": "mlc_pressure"
             }
-      resources:
+        resources:
           request_ephemeral_storage: "16G"
           limit_cpu: "3"
     - operator: "GKEStartPodOperator"
@@ -940,7 +940,7 @@ dag:
               "zday": "day_int",
               "total_count": "number_of_strikes"
             }
-      resources:
+        resources:
           request_ephemeral_storage: "16G"
           limit_cpu: "3"
     - operator: "GKEDeleteClusterOperator"
