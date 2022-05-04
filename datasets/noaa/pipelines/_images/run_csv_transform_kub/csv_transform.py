@@ -141,19 +141,11 @@ def execute_pipeline(
 ) -> None:
     if pipeline_name == "GHCND by year":
         if full_data_load == "N":
-            create_dest_table(
-                project_id=project_id,
-                dataset_id=dataset_id,
-                table_id=destination_table,
-                schema_filepath=schema_path,
-                bucket_name=target_gcs_bucket,
-                drop_table=True,
-            )
-            start_year = str(datetime.datetime.now().year - 6)
+            start = str(datetime.datetime.now().year - 6)
         else:
-            pass
+            start = start_year
         ftp_batch = 1
-        for yr in range(int(start_year), datetime.datetime.now().year + 1):
+        for yr in range(int(start), datetime.datetime.now().year + 1):
             yr_str = str(yr)
             source_zipfile = str.replace(str(source_file), ".csv", f"_{yr_str}.csv.gz")
             source_file_unzipped = str.replace(str(source_zipfile), ".csv.gz", ".csv")
@@ -283,18 +275,10 @@ def execute_pipeline(
         url_path = os.path.split(source_url)[0]
         file_pattern = str.split(os.path.split(source_url)[1], "*")[0]
         url_list = url_directory_list(f"{url_path}/", file_pattern)
-        if full_data_load:
-            start = int(start_year)
-            create_dest_table(
-                project_id=project_id,
-                dataset_id=dataset_id,
-                table_id=destination_table,
-                schema_filepath=schema_path,
-                bucket_name=target_gcs_bucket,
-                drop_table=True,
-            )
-        else:
+        if full_data_load == 'N':
             start = datetime.datetime.now().year - 6
+        else:
+            start = int(start_year)
         for yr in range(start, datetime.datetime.now().year):
             for url in url_list:
                 url_file_name = os.path.split(url)[1]
