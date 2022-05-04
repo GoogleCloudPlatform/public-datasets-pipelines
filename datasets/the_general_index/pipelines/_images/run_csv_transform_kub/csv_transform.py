@@ -212,7 +212,7 @@ def process_source_file(
                 data = []
                 chunk_number += 1
 
-        if index % int(chunksize) != 0 and index > 0:
+        if data:
             process_dataframe_chunk(
                 data,
                 input_headers,
