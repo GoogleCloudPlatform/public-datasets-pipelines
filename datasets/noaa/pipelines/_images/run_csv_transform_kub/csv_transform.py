@@ -275,7 +275,7 @@ def execute_pipeline(
         url_path = os.path.split(source_url)[0]
         file_pattern = str.split(os.path.split(source_url)[1], "*")[0]
         url_list = url_directory_list(f"{url_path}/", file_pattern)
-        if full_data_load == 'N':
+        if full_data_load == "N":
             start = datetime.datetime.now().year - 6
         else:
             start = int(start_year)
