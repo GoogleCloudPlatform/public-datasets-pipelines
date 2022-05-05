@@ -1,3 +1,4 @@
 requests
+numpy
 pandas
 google-cloud-storage

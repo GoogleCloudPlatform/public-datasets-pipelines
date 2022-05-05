@@ -1,0 +1,5 @@
+bs4
+google-cloud-bigquery
+google-cloud-storage
+numpy
+pandas
