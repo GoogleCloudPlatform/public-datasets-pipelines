@@ -32,7 +32,6 @@ resources:
   - type: bigquery_dataset
     dataset_id: covid19_google_mobility_eu
     location: EU
-    location: EU
     description: |-
         Terms of use
         In order to download or use the data or reports, you must agree to the Google Terms of Service: https://policies.google.com/terms
