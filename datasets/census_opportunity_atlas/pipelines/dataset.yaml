@@ -15,7 +15,7 @@
 dataset:
   name: census_opportunity_atlas
   friendly_name: census_opportunity_atlas
-  description: Census Opportunity Atlas
+  description: SDOH census opportunity atlas
   dataset_sources: ~
   terms_of_use: ~
 
