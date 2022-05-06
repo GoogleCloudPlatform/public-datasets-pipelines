@@ -1,0 +1,170 @@
+[
+	{
+		"name": "borough",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "contributing_factor_vehicle_1",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "contributing_factor_vehicle_2",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "contributing_factor_vehicle_3",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "contributing_factor_vehicle_4",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "contributing_factor_vehicle_5",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "cross_street_name",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "timestamp",
+		"type": "DATETIME",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "latitude",
+		"type": "FLOAT",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "longitude",
+		"type": "FLOAT",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "location",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "number_of_cyclist_injured",
+		"type": "INTEGER",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "number_of_cyclist_killed",
+		"type": "INTEGER",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "number_of_motorist_injured",
+		"type": "INTEGER",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "number_of_motorist_killed",
+		"type": "INTEGER",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "number_of_pedestrians_injured",
+		"type": "INTEGER",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "number_of_pedestrians_killed",
+		"type": "INTEGER",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "number_of_persons_injured",
+		"type": "INTEGER",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "number_of_persons_killed",
+		"type": "INTEGER",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "off_street_name",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "on_street_name",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "unique_key",
+		"type": "INTEGER",
+		"description": "",
+        "mode": "REQUIRED"
+    },
+	{
+		"name": "vehicle_type_code1",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "vehicle_type_code2",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "vehicle_type_code_3",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "vehicle_type_code_4",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "vehicle_type_code_5",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "zip_code",
+		"type": "INTEGER",
+		"description": "",
+		"mode": "NULLABLE"
+	}
+]

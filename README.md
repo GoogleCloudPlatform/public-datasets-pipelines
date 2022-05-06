@@ -1,7 +1,10 @@
-# Public Datasets Pipelines
+# Cloud Datasets Pipelines & Documentation Sets
 
-Cloud-native, data pipeline architecture for onboarding public datasets to [Datasets for Google Cloud](https://cloud.google.com/solutions/datasets).
+This repository contains the followings:
+- Cloud-native, data pipeline architecture for onboarding public datasets to [Datasets for Google Cloud](https://cloud.google.com/solutions/datasets).
+- Documentation Sets, used to analyze the datasets, uncover hidden patterns, or apply different ML techniques.
 
+<<<<<<< HEAD
 # Overview
 
 ![public-datasets-pipelines](images/architecture.png)
@@ -295,3 +298,6 @@ The `samples` folder contains references for the YAML config files, complete wit
   The "one bucket per dataset" rule prevents us from creating too many buckets for too many purposes. This also helps in discoverability and organization as we scale to thousands of datasets and pipelines.
 
   Quick note: If you can conveniently fit the data in memory, the data transforms are close-to-trivial and are computationally cheap, you may skip having to store mid-stream data. Just apply the transformations in one go, and store the final resulting data to their final destinations.
+=======
+For detailed documentation, please see the [Wiki Pages](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/wiki).
+>>>>>>> main

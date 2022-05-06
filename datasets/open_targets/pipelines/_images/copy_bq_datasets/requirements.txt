@@ -1,0 +1,3 @@
+google-api-core
+google-cloud-bigquery-datatransfer
+protobuf

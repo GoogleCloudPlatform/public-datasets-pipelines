@@ -13,11 +13,13 @@
 # limitations under the License.
 
 
+import json
 import pathlib
 import shutil
 import subprocess
 import tempfile
 import typing
+import uuid
 
 import pytest
 from ruamel import yaml
@@ -160,10 +162,6 @@ def test_script_can_deploy_without_variables_files(
         f"{dataset_path.name}_variables.json",
     )
 
-    # Delete the shared variables file
-    (ENV_DATASETS_PATH / "shared_variables.json").unlink()
-    assert not (ENV_DATASETS_PATH / "shared_variables.json").exists()
-
     # Delete the dataset-specific variables file
     (
         ENV_DATASETS_PATH
@@ -190,6 +188,53 @@ def test_script_can_deploy_without_variables_files(
         composer_bucket="test-bucket",
         composer_region="test-region",
     )
+
+
+def test_vars_yaml_generates_pipeline_vars_json_file(
+    dataset_path: pathlib.Path,
+    pipeline_path: pathlib.Path,
+    env: str,
+    mocker,
+):
+    variables_filename = f"{dataset_path.name}_variables.json"
+    setup_dag_and_variables(
+        dataset_path,
+        pipeline_path,
+        env,
+        variables_filename,
+    )
+
+    # Delete the variables JSON file
+    variables_json = (
+        ENV_DATASETS_PATH / dataset_path.name / "pipelines" / variables_filename
+    )
+    variables_json.unlink()
+    assert not variables_json.exists()
+
+    # Create .vars.test.yaml file
+    pipeline_vars = {
+        f"{dataset_path.name}": {
+            "airflow_var": f"var-{uuid.uuid4()}",
+            "constant_var": 1234,
+        }
+    }
+    yaml.dump({"pipelines": pipeline_vars}, dataset_path / f".vars.{env}.yaml")
+
+    mocker.patch("scripts.deploy_dag.run_gsutil_cmd")
+    mocker.patch("scripts.deploy_dag.run_cloud_composer_vars_import")
+    mocker.patch("scripts.deploy_dag.composer_airflow_version", return_value=2)
+
+    deploy_dag.main(
+        env_path=ENV_PATH,
+        dataset_id=dataset_path.name,
+        pipeline=pipeline_path.name,
+        composer_env="test-env",
+        composer_bucket="test-bucket",
+        composer_region="test-region",
+    )
+
+    assert variables_json.exists()
+    assert json.loads(variables_json.read_text()) == pipeline_vars
 
 
 def test_script_errors_out_when_deploying_airflow2_dag_to_airflow1_env(
@@ -256,6 +301,7 @@ def test_script_without_pipeline_arg_deploys_all_pipelines_under_the_dataset(
         composer_env="test-env",
         composer_bucket="test-bucket",
         composer_region="test-region",
+        pipeline=None,
     )
 
     pipelines_dir = ENV_DATASETS_PATH / dataset_path.name / "pipelines"
@@ -346,6 +392,7 @@ def test_script_with_pipeline_arg_deploys_without_gcs_bucket_param(
     deploy_dag.check_airflow_version_compatibility.assert_called_once()
 
 
+<<<<<<< HEAD
 def test_script_copy_files_in_data_folder_to_composer_data_folder_with_folder_created(
     dataset_path: pathlib.Path,
     pipeline_path: pathlib.Path,
@@ -436,6 +483,8 @@ def test_script_copy_files_in_data_folder_to_composer_data_folder_without_folder
     deploy_dag.copy_schema_to_composer_data_folder.assert_not_called()
 
 
+=======
+>>>>>>> main
 def test_script_without_local_flag_requires_cloud_composer_args(env: str):
     with pytest.raises(subprocess.CalledProcessError):
         # No --composer-env parameter
@@ -449,24 +498,6 @@ def test_script_without_local_flag_requires_cloud_composer_args(env: str):
                 env,
                 "--composer-bucket",
                 "us-east4-composer-env-bucket",
-                "--composer-region",
-                "us-east4",
-            ],
-            cwd=deploy_dag.PROJECT_ROOT,
-        )
-
-    with pytest.raises(subprocess.CalledProcessError):
-        # No --composer-bucket parameter
-        subprocess.check_call(
-            [
-                "python",
-                "scripts/deploy_dag.py",
-                "--dataset",
-                "some_test_dataset",
-                "--env",
-                env,
-                "--composer-env",
-                "test-composer-env",
                 "--composer-region",
                 "us-east4",
             ],
