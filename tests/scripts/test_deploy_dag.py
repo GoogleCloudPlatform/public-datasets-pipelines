@@ -359,15 +359,18 @@ def test_script_copy_files_in_data_folder_to_composer_data_folder_with_folder_cr
         f"{dataset_path.name}_variables.json",
     )
 
-    schema_path = pipeline_path / "data"
+    data_folder = pipeline_path / "data"
+    #pathlib creates folder for you instead using - path.mkdir(parents=True)
+    #assert path.exists() and path.is_dir()
 
     subprocess.run(
         [
             "mkdir",
             "-p",
-            schema_path,
+            data_folder,
         ],
     )
+
 
     #setup data folder inside the pipeline path (do a test similar to the above setup_data_and_variables)
 
@@ -391,7 +394,6 @@ def test_script_copy_files_in_data_folder_to_composer_data_folder_with_folder_cr
         composer_region="test-region",
     )
 
-    deploy_dag.check_airflow_version_compatibility.assert_called_once()
     deploy_dag.copy_schema_to_composer_data_folder.assert_called_once()
 
 
@@ -408,8 +410,6 @@ def test_script_copy_files_in_data_folder_to_composer_data_folder_without_folder
         f"{dataset_path.name}_variables.json",
     )
 
-    schema_path = pipeline_path / "data"
-
     #setup data folder inside the pipeline path (do a test similar to the above setup_data_and_variables)
 
     airflow_version = 2
@@ -422,6 +422,7 @@ def test_script_copy_files_in_data_folder_to_composer_data_folder_without_folder
     mocker.patch("scripts.deploy_dag.copy_generated_dag_to_airflow_dags_folder")
     mocker.patch("scripts.deploy_dag.check_airflow_version_compatibility")
     mocker.patch("scripts.deploy_dag.copy_schema_to_composer_data_folder")
+    #copy_data_folder_to_composer_bucket
 
     deploy_dag.main(
         env_path=ENV_PATH,
@@ -432,7 +433,7 @@ def test_script_copy_files_in_data_folder_to_composer_data_folder_without_folder
         composer_region="test-region",
     )
 
-    deploy_dag.check_airflow_version_compatibility.assert_called_once()
+    deploy_dag.copy_schema_to_composer_data_folder.assert_not_called()
 
 
 def test_script_without_local_flag_requires_cloud_composer_args(env: str):
