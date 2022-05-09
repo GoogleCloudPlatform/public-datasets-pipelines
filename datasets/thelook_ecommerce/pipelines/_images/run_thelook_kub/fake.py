@@ -730,7 +730,9 @@ class InventoryItem:
         if order_item.is_sold is False:
             self.created_at = created_at(datetime.datetime(2020, 1, 1))
             self.sold_at = None
-        self.cost = (float(PRODUCT_BY_ID_DICT[self.product_id]["cost"]) *  (random.randrange(25, 90)/100))
+        self.cost = float(PRODUCT_BY_ID_DICT[self.product_id]["cost"]) * (
+            random.randrange(25, 90) / 100
+        )
         self.product_category = PRODUCT_BY_ID_DICT[self.product_id]["category"]
         self.product_name = PRODUCT_BY_ID_DICT[self.product_id]["name"]
         self.product_brand = PRODUCT_BY_ID_DICT[self.product_id]["brand"]
