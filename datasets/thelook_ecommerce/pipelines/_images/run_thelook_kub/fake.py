@@ -142,6 +142,7 @@ PRODUCT_BY_ID_DICT = products[1]
 
 def main(
     num_of_users: int,
+    num_of_ghost_events: int,
     target_gcs_prefix: str,
     target_gcs_bucket: str,
     source_dir: str,
@@ -162,7 +163,7 @@ def main(
 
     # generate ghost events
     logging.info("generating ghost events")
-    for user_num in range(int(num_of_users) * 5):
+    for user_num in range(int(num_of_users) * int(num_of_ghost_events)):
         logging.info(f"ghost event {user_num}")
         GhostEvents()
 
@@ -638,7 +639,7 @@ class OrderItem(DataUtil):
         ]
         product = PRODUCT_GENDER_DICT[order.gender][random_idx]
         self.product_id = product[0]
-        self.sale_price = product[3]
+        self.sale_price = product[7]
         self.ip_address = fake.ipv4()
         self.browser = self.random_item(
             population=["IE", "Chrome", "Safari", "Firefox", "Other"],
@@ -730,9 +731,7 @@ class InventoryItem:
         if order_item.is_sold is False:
             self.created_at = created_at(datetime.datetime(2020, 1, 1))
             self.sold_at = None
-        self.cost = float(PRODUCT_BY_ID_DICT[self.product_id]["cost"]) * (
-            random.randrange(25, 90) / 100
-        )
+        self.cost = PRODUCT_BY_ID_DICT[self.product_id]["cost"]
         self.product_category = PRODUCT_BY_ID_DICT[self.product_id]["category"]
         self.product_name = PRODUCT_BY_ID_DICT[self.product_id]["name"]
         self.product_brand = PRODUCT_BY_ID_DICT[self.product_id]["brand"]
@@ -824,6 +823,7 @@ if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
     main(
         num_of_users=int(os.environ["NUM_OF_USERS"]),
+        num_of_ghost_events=int(os.environ["NUM_OF_GHOST_EVENTS"]),
         target_gcs_prefix=os.environ["TARGET_GCS_PREFIX"],
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
         source_dir=os.environ["SOURCE_DIR"],
