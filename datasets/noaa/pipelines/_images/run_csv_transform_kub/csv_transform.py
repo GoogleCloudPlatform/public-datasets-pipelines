@@ -622,15 +622,9 @@ def generate_location(df: pd.DataFrame, gen_location_list: dict) -> pd.DataFrame
     logging.info("Generating location data")
     for key, values in gen_location_list.items():
         loc_col = key
-        long_col = values[0]
-        lat_col = values[1]
-        df[loc_col] = (
-            "POINT("
-            + df[long_col][:].astype("string")
-            + " "
-            + df[lat_col][:].astype("string")
-            + ")"
-        )
+        long_col = df[values[0]][:].astype("string")
+        lat_col = df[values[1]][:].astype["string"]
+        df[loc_col] = f"POINT({long_col} {lat_col})"
     return df
 
 
@@ -702,11 +696,17 @@ def filter_null_rows(
 
 
 def convert_dt_format(dt_str: str) -> str:
-    if not dt_str or dt_str == "nan":
-        return str(dt_str)
+    if not dt_str or dt_str.lower() == "nan":
+        # return str(dt_str)
+        return dt_str
     else:
+        # return str(
+        #     datetime.datetime.strptime(str(dt_str), "%Y%m%d")
+        #     .date()
+        #     .strftime("%Y-%m-%d")
+        # )
         return str(
-            datetime.datetime.strptime(str(dt_str), "%Y%m%d")
+            datetime.datetime.strptime(dt_str, "%Y%m%d")
             .date()
             .strftime("%Y-%m-%d")
         )
