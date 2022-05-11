@@ -388,12 +388,12 @@ def test_script_with_pipeline_arg_deploys_without_gcs_bucket_param(
         composer_bucket=None,
         composer_region="test-region",
     )
+
     deploy_dag.get_composer_bucket.assert_called_once()
     deploy_dag.check_airflow_version_compatibility.assert_called_once()
 
 
-<<<<<<< HEAD
-def test_script_copy_files_in_data_folder_to_composer_data_folder_with_folder_created(
+def test_script_copy_files_in_data_folder_to_composer_with_folder_created(
     dataset_path: pathlib.Path,
     pipeline_path: pathlib.Path,
     env: str,
@@ -407,19 +407,8 @@ def test_script_copy_files_in_data_folder_to_composer_data_folder_with_folder_cr
     )
 
     data_folder = pipeline_path / "data"
-    #pathlib creates folder for you instead using - path.mkdir(parents=True)
-    #assert path.exists() and path.is_dir()
-
-    subprocess.run(
-        [
-            "mkdir",
-            "-p",
-            data_folder,
-        ],
-    )
-
-
-    #setup data folder inside the pipeline path (do a test similar to the above setup_data_and_variables)
+    data_folder.mkdir(parents=True)
+    assert data_folder.exists() and data_folder.is_dir()
 
     airflow_version = 2
     mocker.patch("scripts.deploy_dag.copy_variables_to_airflow_data_folder")
@@ -430,18 +419,18 @@ def test_script_copy_files_in_data_folder_to_composer_data_folder_with_folder_cr
     mocker.patch("scripts.deploy_dag.copy_custom_callables_to_airflow_dags_folder")
     mocker.patch("scripts.deploy_dag.copy_generated_dag_to_airflow_dags_folder")
     mocker.patch("scripts.deploy_dag.check_airflow_version_compatibility")
-    mocker.patch("scripts.deploy_dag.copy_schema_to_composer_data_folder")
+    mocker.patch("scripts.deploy_dag.copy_data_folder_to_composer_bucket")
 
     deploy_dag.main(
         env_path=ENV_PATH,
         dataset_id=dataset_path.name,
         pipeline=pipeline_path.name,
-        composer_env="test-env",
+        composer_env="tests-env",
         composer_bucket="test-bucket",
         composer_region="test-region",
     )
 
-    deploy_dag.copy_schema_to_composer_data_folder.assert_called_once()
+    deploy_dag.copy_data_folder_to_composer_bucket.assert_called_once()
 
 
 def test_script_copy_files_in_data_folder_to_composer_data_folder_without_folder(
@@ -457,8 +446,6 @@ def test_script_copy_files_in_data_folder_to_composer_data_folder_without_folder
         f"{dataset_path.name}_variables.json",
     )
 
-    #setup data folder inside the pipeline path (do a test similar to the above setup_data_and_variables)
-
     airflow_version = 2
     mocker.patch("scripts.deploy_dag.copy_variables_to_airflow_data_folder")
     mocker.patch("scripts.deploy_dag.import_variables_to_airflow_env")
@@ -468,8 +455,7 @@ def test_script_copy_files_in_data_folder_to_composer_data_folder_without_folder
     mocker.patch("scripts.deploy_dag.copy_custom_callables_to_airflow_dags_folder")
     mocker.patch("scripts.deploy_dag.copy_generated_dag_to_airflow_dags_folder")
     mocker.patch("scripts.deploy_dag.check_airflow_version_compatibility")
-    mocker.patch("scripts.deploy_dag.copy_schema_to_composer_data_folder")
-    #copy_data_folder_to_composer_bucket
+    mocker.patch("scripts.deploy_dag.copy_data_folder_to_composer_bucket")
 
     deploy_dag.main(
         env_path=ENV_PATH,
@@ -479,12 +465,10 @@ def test_script_copy_files_in_data_folder_to_composer_data_folder_without_folder
         composer_bucket="test-bucket",
         composer_region="test-region",
     )
+    
+    deploy_dag.copy_data_folder_to_composer_bucket.assert_not_called()
 
-    deploy_dag.copy_schema_to_composer_data_folder.assert_not_called()
 
-
-=======
->>>>>>> main
 def test_script_without_local_flag_requires_cloud_composer_args(env: str):
     with pytest.raises(subprocess.CalledProcessError):
         # No --composer-env parameter
