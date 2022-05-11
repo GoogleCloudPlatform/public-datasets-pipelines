@@ -465,7 +465,7 @@ def test_script_copy_files_in_data_folder_to_composer_data_folder_without_folder
         composer_bucket="test-bucket",
         composer_region="test-region",
     )
-    
+
     deploy_dag.copy_data_folder_to_composer_bucket.assert_not_called()
 
 

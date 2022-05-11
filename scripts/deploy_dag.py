@@ -48,8 +48,10 @@ def main(
 
     data_folder = DATASETS_PATH / dataset_id / "pipelines" / pipeline / "data"
 
-    if(data_folder.exists() and data_folder.is_dir()):
-        copy_data_folder_to_composer_bucket(dataset_id, data_folder, composer_bucket, pipeline)
+    if data_folder.exists() and data_folder.is_dir():
+        copy_data_folder_to_composer_bucket(
+            dataset_id, data_folder, composer_bucket, pipeline
+        )
 
     print("\n========== AIRFLOW VARIABLES ==========")
     copy_variables_to_airflow_data_folder(env_path, dataset_id, composer_bucket)
@@ -171,23 +173,28 @@ def copy_data_folder_to_composer_bucket(
     cd .{ENV}/datasets/{dataset_id}/data
     """
 
-    if(len(schema_file_dir)>0):
-        print("\nCopying files from local data folder into Cloud Composer data folder\n")                
+    if len(schema_file_dir) > 0:
+        print(
+            "\nCopying files from local data folder into Cloud Composer data folder\n"
+        )
         print("  Source:\n")
         for x in data_folder.iterdir():
             print("  " + str(x) + "\n")
 
         print("  Destination:\n")
         for y in data_folder.iterdir():
-            print("  " + gcs_uri + "/" + str(y).split('/data/')[1] + "\n")
-    
-        run_gsutil_cmd(["cp", schema_file_dir_pattern , gcs_uri])
+            print("  " + gcs_uri + "/" + str(y).split("/data/")[1] + "\n")
 
-    else :
-        print("\n No files in local data folder to copy into Cloud Composer data folder \n")
-       
-#data_folder = DATASETS_PATH / "austin_bikeshare" / "pipelines" / "bikeshare_stations" / "data" 
-#copy_data_folder_to_composer_bucket("austin_bikeshare",data_folder,"us-central1-composer-demo-5e589749-bucket","bikeshare_stations")
+        run_gsutil_cmd(["cp", schema_file_dir_pattern, gcs_uri])
+
+    else:
+        print(
+            "\n No files in local data folder to copy into Cloud Composer data folder \n"
+        )
+
+
+# data_folder = DATASETS_PATH / "austin_bikeshare" / "pipelines" / "bikeshare_stations" / "data"
+# copy_data_folder_to_composer_bucket("austin_bikeshare",data_folder,"us-central1-composer-demo-5e589749-bucket","bikeshare_stations")
 
 
 def run_cloud_composer_vars_import(
