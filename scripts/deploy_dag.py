@@ -16,7 +16,6 @@
 import argparse
 import json
 import pathlib
-import re
 import subprocess
 import typing
 
