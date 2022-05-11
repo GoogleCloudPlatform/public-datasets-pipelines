@@ -1,0 +1,248 @@
+[
+	{
+		"name": "unique_key",
+		"type": "INTEGER",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "created_date",
+		"type": "TIMESTAMP",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "closed_date",
+		"type": "TIMESTAMP",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "agency",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "agency_name",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "complaint_type",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "descriptor",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "location_type",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "incident_zip",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "incident_address",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "street_name",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "cross_street_1",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "cross_street_2",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "intersection_street_1",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "intersection_street_2",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "address_type",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "city",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "landmark",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "facility_type",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "status",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "due_date",
+		"type": "TIMESTAMP",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "resolution_description",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "resolution_action_updated_date",
+		"type": "TIMESTAMP",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "community_board",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "borough",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "x_coordinate",
+		"type": "INTEGER",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "y_coordinate",
+		"type": "INTEGER",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "park_facility_name",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "park_borough",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "bbl",
+		"type": "INTEGER",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "open_data_channel_type",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "vehicle_type",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "taxi_company_borough",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "taxi_pickup_location",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "bridge_highway_name",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "bridge_highway_direction",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "road_ramp",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "bridge_highway_segment",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "latitude",
+		"type": "FLOAT",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "longitude",
+		"type": "FLOAT",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "location",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	}
+]

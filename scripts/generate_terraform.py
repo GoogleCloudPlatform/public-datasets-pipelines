@@ -62,17 +62,29 @@ def main(
     dataset_config = yaml.load(
         open(DATASETS_PATH / dataset_id / "pipelines" / "dataset.yaml")
     )
-    generate_dataset_tf(dataset_id, project_id, dataset_config, env)
+    infra_vars = load_env_vars(dataset_id, env).get("infra")
+    generate_dataset_tf(dataset_id, project_id, dataset_config, infra_vars, env)
 
     generate_all_pipelines_tf(dataset_id, project_id, env_path)
 
     generate_variables_tf(dataset_id, env_path)
     generate_tfvars_file(
-        project_id, bucket_name_prefix, dataset_id, region, impersonating_acct, env_path
+        project_id,
+        bucket_name_prefix,
+        dataset_id,
+        region,
+        impersonating_acct,
+        env_path,
+        infra_vars,
     )
 
     if tf_apply:
         actuate_terraform_resources(dataset_id, env_path)
+
+
+def load_env_vars(dataset_id: str, env: str) -> dict:
+    env_vars_file = PROJECT_ROOT / "datasets" / dataset_id / f".vars.{env}.yaml"
+    return yaml.load(open(env_vars_file)) if env_vars_file.exists() else {}
 
 
 def generate_provider_tf(
@@ -113,8 +125,17 @@ def generate_backend_tf(
     )
 
 
-def generate_dataset_tf(dataset_id: str, project_id: str, config: dict, env: str):
-    subs = {"project_id": project_id, "dataset_id": dataset_id, "env": env}
+def generate_dataset_tf(
+    dataset_id: str,
+    project_id: str,
+    config: dict,
+    infra_vars: typing.Union[dict, None],
+    env: str,
+):
+    if infra_vars:
+        subs = infra_vars
+    else:
+        subs = {"project_id": project_id, "dataset_id": dataset_id, "env": env}
 
     if not config["resources"]:
         return
@@ -175,14 +196,18 @@ def generate_tfvars_file(
     region: str,
     impersonating_acct: str,
     env_path: pathlib.Path,
+    infra_vars: typing.Union[dict, None],
 ):
-    tf_vars = {
-        "project_id": project_id,
-        "bucket_name_prefix": bucket_name_prefix,
-        "impersonating_acct": impersonating_acct,
-        "region": region,
-        "env": env_path.name.replace(".", ""),
-    }
+    if infra_vars:
+        tf_vars = infra_vars
+    else:
+        tf_vars = {
+            "project_id": project_id,
+            "bucket_name_prefix": bucket_name_prefix,
+            "impersonating_acct": impersonating_acct,
+            "region": region,
+            "env": env_path.name.replace(".", ""),
+        }
 
     contents = apply_substitutions_to_template(
         TEMPLATE_PATHS["tfvars"], {"tf_vars": tf_vars}
@@ -309,7 +334,7 @@ def terraform_fmt(target_file: pathlib.Path):
         f"terraform fmt -write=true {target_file}",
         stdout=subprocess.DEVNULL,
         shell=True,
-    )
+    ).wait()
 
 
 def actuate_terraform_resources(dataset_id: str, env_path: pathlib.Path):
@@ -325,7 +350,7 @@ def apply_substitutions_to_template(template: pathlib.Path, subs: dict) -> str:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Generate Terraform infra code for BigQuery datasets"
+        description="Generate Terraform code for infrastructure required by every dataset"
     )
     parser.add_argument(
         "-d",
@@ -333,19 +358,18 @@ if __name__ == "__main__":
         required=True,
         type=str,
         dest="dataset",
-        help="The directory name of the dataset.",
+        help="The directory name of the dataset",
     )
     parser.add_argument(
         "--gcp-project-id",
-        required=True,
         type=str,
+        default="",
         dest="project_id",
         help="The Google Cloud project ID",
     )
     parser.add_argument(
         "-b",
         "--bucket-name-prefix",
-        required=True,
         type=str,
         default="",
         dest="bucket_name_prefix",

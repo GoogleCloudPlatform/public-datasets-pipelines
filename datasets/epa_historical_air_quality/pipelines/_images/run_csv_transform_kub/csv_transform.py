@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import datetime
-import fnmatch
 import json
 import logging
 import os
@@ -23,70 +22,359 @@ import zipfile as zip
 
 import pandas as pd
 import requests
-from google.cloud import storage
+from google.cloud import bigquery, storage
+from google.cloud.exceptions import NotFound
 
 
 def main(
     source_url: str,
     start_year: int,
     source_file: pathlib.Path,
-    target_file: pathlib.Path,
+    # target_file: pathlib.Path,
+    project_id: str,
+    dataset_id: str,
+    table_id: str,
+    year_field_name: str,
+    year_field_type: str,
+    schema_path: str,
     chunksize: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
-    data_names: typing.List[str],
+    pipeline_name: str,
+    input_headers: typing.List[str],
     data_dtypes: dict,
+    output_headers: typing.List[str],
 ) -> None:
-
-    logging.info("Pipeline process started")
-
+    logging.info(f"{pipeline_name} process started")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
     dest_path = os.path.split(source_file)[0]
-    end_year = datetime.datetime.today().year - 2
-    download_url_files_from_year_range(
-        source_url, start_year, end_year, dest_path, True, False
+    execute_pipeline(
+        project_id=project_id,
+        dataset_id=dataset_id,
+        table_name=table_id,
+        year_field_name=year_field_name,
+        year_field_type=year_field_type,
+        start_year=start_year,
+        source_url=source_url,
+        dest_path=dest_path,
+        schema_path=schema_path,
+        target_gcs_bucket=target_gcs_bucket,
+        target_gcs_path=target_gcs_path,
+        input_headers=input_headers,
+        output_headers=output_headers,
+        data_dtypes=data_dtypes,
+        chunksize=chunksize,
+        field_delimiter="|",
     )
+    logging.info(f"{pipeline_name} process completed")
+
+
+def execute_pipeline(
+    project_id: str,
+    dataset_id: str,
+    table_name: str,
+    year_field_name: str,
+    year_field_type: str,
+    start_year: str,
+    source_url: str,
+    dest_path: str,
+    schema_path: str,
+    target_gcs_bucket: str,
+    target_gcs_path: str,
+    input_headers: typing.List[str],
+    output_headers: typing.List[str],
+    data_dtypes: dict,
+    chunksize: str,
+    field_delimiter: str,
+) -> None:
+    create_dest_table(
+        project_id=project_id,
+        dataset_id=dataset_id,
+        table_id=table_name,
+        schema_filepath=schema_path,
+        bucket_name=target_gcs_bucket,
+    )
+    end_year = datetime.datetime.today().year - 2
+    for yr in range(start_year, end_year + 1, 1):
+        process_year_data(
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_name=table_name,
+            year_field_name=year_field_name,
+            year_field_type=year_field_type,
+            year=yr,
+            continue_on_error=False,
+            source_url=source_url,
+            dest_path=dest_path,
+            input_headers=input_headers,
+            output_headers=output_headers,
+            data_dtypes=data_dtypes,
+            chunksize=chunksize,
+            field_delimiter=field_delimiter,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=target_gcs_path,
+        )
     st_year = datetime.datetime.today().year - 1
     end_year = datetime.datetime.today().year
-    download_url_files_from_year_range(
-        source_url, st_year, end_year, dest_path, True, True
-    )
-    file_group_wildcard = os.path.split(source_url)[1].replace("_YEAR_ITERATOR.zip", "")
-    source = concatenate_files(source_file, dest_path, file_group_wildcard, False, ",")
+    for yr in range(st_year, end_year + 1, 1):
+        process_year_data(
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_name=table_name,
+            year_field_name=year_field_name,
+            year_field_type=year_field_type,
+            year=yr,
+            continue_on_error=True,
+            source_url=source_url,
+            dest_path=dest_path,
+            input_headers=input_headers,
+            output_headers=output_headers,
+            data_dtypes=data_dtypes,
+            chunksize=chunksize,
+            field_delimiter=field_delimiter,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=target_gcs_path,
+        )
 
-    process_source_file(source, target_file, data_names, data_dtypes, int(chunksize))
 
-    upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
-
-    logging.info("Pipeline process completed")
-
-
-def download_url_files_from_year_range(
+def process_year_data(
+    project_id: str,
+    dataset_id: str,
+    table_name: str,
+    year_field_name: str,
+    year_field_type: str,
+    year: str,
+    continue_on_error: bool,
     source_url: str,
-    start_year: int,
-    end_year: int,
     dest_path: str,
-    remove_file: bool = False,
-    continue_on_error: bool = False,
+    input_headers: typing.List[str],
+    output_headers: typing.List[str],
+    data_dtypes: dict,
+    chunksize: str,
+    field_delimiter: str,
+    target_gcs_bucket: str,
+    target_gcs_path: str,
+    remove_file: bool = True,
 ):
-    for yr in range(start_year, end_year + 1, 1):
-        src_url = source_url.replace("YEAR_ITERATOR", str(yr))
-        dest_file = dest_path + "/source_" + os.path.split(src_url)[1]
-        download_file_http(src_url, dest_file, continue_on_error)
-        unpack_file(dest_file, dest_path, "zip")
-        if remove_file:
-            os.remove(dest_file)
+    logging.info(f"Processing year {year} data.")
+    table_has_data = table_has_year_data(
+        project_id, dataset_id, table_name, year_field_name, year_field_type, year
+    )
+    if table_has_data or table_has_data is None:
+        pass
+    else:
+        src_url = source_url.replace("YEAR_ITERATOR", str(year))
+        url_file = os.path.split(src_url)[1]
+        url_file_csv = url_file.replace(".zip", ".csv")
+        source_file = f"{dest_path}/source_{url_file}"
+        source_csv_file = f"{dest_path}/{url_file_csv}"
+        target_file = f"{dest_path}/target_{url_file_csv}"
+        file_exists = download_file_http(
+            source_url=src_url,
+            source_file=source_file,
+            continue_on_error=continue_on_error,
+        )
+        if file_exists:
+            unpack_file(infile=source_file, dest_path=dest_path, compression_type="zip")
+            process_source_file(
+                source_file=source_file,
+                target_file=target_file,
+                input_headers=input_headers,
+                output_headers=output_headers,
+                dtypes=data_dtypes,
+                chunksize=chunksize,
+                field_delimiter=field_delimiter,
+            )
+            load_data_to_bq(
+                project_id=project_id,
+                dataset_id=dataset_id,
+                table_id=table_name,
+                file_path=target_file,
+                field_delimiter=field_delimiter,
+                truncate_table=False,
+            )
+            if os.path.exists(target_file):
+                upload_file_to_gcs(
+                    file_path=target_file,
+                    target_gcs_bucket=target_gcs_bucket,
+                    target_gcs_path=target_gcs_path,
+                )
+            if remove_file:
+                os.remove(source_file)
+                os.remove(source_csv_file)
+                os.remove(target_file)
+            else:
+                pass
+        else:
+            pass
+    logging.info(f"Processing year {year} data completed.")
+
+
+def table_has_year_data(
+    project_id: str,
+    dataset_id: str,
+    table_name: str,
+    year_field_name: str,
+    year_field_type: str,
+    year: str,
+) -> bool:
+    number_rows = number_rows_in_table(
+        project_id, dataset_id, table_name, year_field_name, year_field_type, year
+    )
+    if number_rows > 0:
+        return True
+    elif number_rows == -1:
+        return None
+    else:
+        return False
+
+
+def table_exists(project_id: str, dataset_id: str, table_name: str) -> bool:
+    client = bigquery.Client(project=project_id)
+    tables = client.list_tables(dataset_id)
+    found_table = False
+    for tbl in tables:
+        if tbl.table_id == table_name:
+            found_table = True
+    return found_table
+
+
+def field_exists(
+    project_id: str, dataset_id: str, table_name: str, field_name: str
+) -> bool:
+    if table_exists(project_id, dataset_id, table_name):
+        client = bigquery.Client(project=project_id)
+        table_ref = f"{dataset_id}.{table_name}"
+        tbl_schema = client.get_table(table_ref).schema
+        found_field = False
+        for field in tbl_schema:
+            if field.name == field_name:
+                found_field = True
+        return found_field
+    else:
+        return False
+
+
+def number_rows_in_table(
+    project_id: str,
+    dataset_id: str,
+    table_name: str,
+    year_field_name: str,
+    year_field_type: str,
+    year: str,
+) -> int:
+    check_field_exists = field_exists(
+        project_id, dataset_id, table_name, year_field_name
+    )
+    if check_field_exists:
+        client = bigquery.Client(project=project_id)
+        query = f"""
+            SELECT count(1) AS number_of_rows
+            FROM {dataset_id}.{table_name}
+            WHERE
+        """
+        if year_field_type == "DATETIME":
+            query = query + f" FORMAT_DATE('%Y', {year_field_name}) = '{year}'"
+        else:
+            query = query + f" {year_field_name} = {year}"
+        job_config = bigquery.QueryJobConfig()
+        query_job = client.query(query, job_config=job_config)
+        for row in query_job.result():
+            count_rows = row.number_of_rows
+        return int(count_rows)
+    else:
+        return -1
+
+
+def process_source_file(
+    source_file: str,
+    target_file: str,
+    input_headers: typing.List[str],
+    output_headers: typing.List[str],
+    dtypes: dict,
+    chunksize: str,
+    field_delimiter: str,
+) -> None:
+    logging.info(f"Opening batch file {source_file}")
+    with pd.read_csv(
+        source_file,  # path to main source file to load in batches
+        engine="python",
+        encoding="utf-8",
+        quotechar='"',  # string separator, typically double-quotes
+        chunksize=int(chunksize),  # size of batch data, in no. of records
+        sep=",",  # data column separator, typically ","
+        header=0,  # use when the data file does not contain a header
+        names=input_headers,
+        dtype=dtypes,
+        keep_default_na=True,
+        na_values=[" "],
+    ) as reader:
+        for chunk_number, chunk in enumerate(reader):
+            target_file_batch = str(target_file).replace(
+                ".csv", "-" + str(chunk_number) + ".csv"
+            )
+            df = pd.DataFrame()
+            df = pd.concat([df, chunk])
+            process_chunk(
+                df=df,
+                target_file_batch=target_file_batch,
+                target_file=target_file,
+                include_header=(chunk_number == 0),
+                truncate_file=(chunk_number == 0),
+                field_delimiter=field_delimiter,
+                output_headers=output_headers,
+            )
+
+
+def load_data_to_bq(
+    project_id: str,
+    dataset_id: str,
+    table_id: str,
+    file_path: str,
+    field_delimiter: str,
+    truncate_table: bool,
+) -> None:
+    logging.info(
+        f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} delim={field_delimiter} started"
+    )
+    client = bigquery.Client(project=project_id)
+    table_ref = client.dataset(dataset_id).table(table_id)
+    job_config = bigquery.LoadJobConfig()
+    job_config.source_format = bigquery.SourceFormat.CSV
+    job_config.field_delimiter = field_delimiter
+    if truncate_table:
+        job_config.write_disposition = "WRITE_TRUNCATE"
+    else:
+        job_config.write_disposition = "WRITE_APPEND"
+    job_config.skip_leading_rows = 1
+    job_config.autodetect = False
+    with open(file_path, "rb") as source_file:
+        job = client.load_table_from_file(
+            file_obj=source_file, destination=table_ref, job_config=job_config
+        )
+    job.result()
+    logging.info(
+        f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} completed"
+    )
 
 
 def download_file_http(
     source_url: str, source_file: pathlib.Path, continue_on_error: bool = False
-) -> None:
+) -> bool:
     logging.info(f"Downloading {source_url} to {source_file}")
     try:
         src_file = requests.get(source_url, stream=True)
-        with open(source_file, "wb") as f:
-            for chunk in src_file:
-                f.write(chunk)
+        rtn_status_code = src_file.status_code
+        if 400 <= rtn_status_code <= 499:
+            logging.info(
+                f"Unable to download file {source_url} (error code was {rtn_status_code})"
+            )
+            return False
+        else:
+            with open(source_file, "wb") as f:
+                for chunk in src_file:
+                    f.write(chunk)
+            return True
     except requests.exceptions.RequestException as e:
         if e == requests.exceptions.HTTPError:
             err_msg = "A HTTP error occurred."
@@ -98,9 +386,8 @@ def download_file_http(
             logging.info(f"{err_msg} Unable to obtain {source_url}")
             raise SystemExit(e)
         else:
-            logging.info(
-                f"{err_msg} Unable to obtain {source_url}. Continuing execution."
-            )
+            logging.info(f"{err_msg} Unable to obtain {source_url}.")
+        return False
 
 
 def unpack_file(infile: str, dest_path: str, compression_type: str = "zip") -> None:
@@ -118,100 +405,114 @@ def unpack_file(infile: str, dest_path: str, compression_type: str = "zip") -> N
         logging.info(f"{infile} not unpacked because it does not exist.")
 
 
-def zip_decompress(infile: str, dest_path: str) -> None:
-    logging.info(f"Unpacking {infile} to {dest_path}")
-    with zip.ZipFile(infile, mode="r") as zipf:
-        zipf.extractall(dest_path)
-        zipf.close()
-
-
-def concatenate_files(
-    target_file_path: str,
-    dest_path: str,
-    file_group_wildcard: str,
-    incl_file_source_path: bool = False,
-    separator: str = ",",
-    delete_src_file: bool = True,
-) -> str:
-    target_file_dir = os.path.split(str(target_file_path))[0]
-    target_file_path = str(target_file_path).replace(
-        ".csv", "_" + file_group_wildcard + ".csv"
-    )
-    logging.info(f"Concatenating files {target_file_dir}/*{file_group_wildcard}")
-    if os.path.isfile(target_file_path):
-        os.unlink(target_file_path)
-    for src_file_path in sorted(
-        fnmatch.filter(os.listdir(dest_path), "*" + file_group_wildcard + "*")
-    ):
-        src_file_path = dest_path + "/" + src_file_path
-        with open(src_file_path, "r") as src_file:
-            with open(target_file_path, "a+") as target_file:
-                next(src_file)
-                logging.info(
-                    f"Reading from file {src_file_path}, writing to file {target_file_path}"
-                )
-                for line in src_file:
-                    if incl_file_source_path:
-                        line = (
-                            '"'
-                            + os.path.split(src_file_path)[1].strip()
-                            + '"'
-                            + separator
-                            + line
-                        )  # include the file source
-                    else:
-                        line = line
-                    target_file.write(line)
-        if os.path.isfile(src_file_path) and delete_src_file:
-            os.unlink(src_file_path)
-
-    return target_file_path
-
-
-def process_source_file(
-    source_file: str, target_file: str, names: list, dtypes: dict, chunksize: int
-) -> None:
-    logging.info(f"Opening batch file {source_file}")
-    with pd.read_csv(
-        source_file,  # path to main source file to load in batches
-        engine="python",
-        encoding="utf-8",
-        quotechar='"',  # string separator, typically double-quotes
-        chunksize=chunksize,  # size of batch data, in no. of records
-        sep=",",  # data column separator, typically ","
-        header=None,  # use when the data file does not contain a header
-        names=names,
-        dtype=dtypes,
-        keep_default_na=True,
-        na_values=[" "],
-    ) as reader:
-        for chunk_number, chunk in enumerate(reader):
-            target_file_batch = str(target_file).replace(
-                ".csv", "-" + str(chunk_number) + ".csv"
+def create_dest_table(
+    project_id: str,
+    dataset_id: str,
+    table_id: str,
+    schema_filepath: list,
+    bucket_name: str,
+) -> bool:
+    table_ref = f"{project_id}.{dataset_id}.{table_id}"
+    logging.info(f"Attempting to create table {table_ref} if it doesn't already exist")
+    client = bigquery.Client()
+    table_exists = False
+    try:
+        table_exists_id = client.get_table(table_ref).table_id
+        logging.info(f"Table {table_exists_id} currently exists.")
+        table_exists = True
+    except NotFound:
+        logging.info(
+            (
+                f"Table {table_ref} currently does not exist.  Attempting to create table."
             )
-            df = pd.DataFrame()
-            df = pd.concat([df, chunk])
-            process_chunk(df, target_file_batch, target_file, (not chunk_number == 0))
+        )
+        try:
+            if check_gcs_file_exists(schema_filepath, bucket_name):
+                schema = create_table_schema([], bucket_name, schema_filepath)
+                table = bigquery.Table(table_ref, schema=schema)
+                client.create_table(table)
+                print(f"Table {table_ref} was created".format(table_id))
+                table_exists = True
+            else:
+                file_name = os.path.split(schema_filepath)[1]
+                file_path = os.path.split(schema_filepath)[0]
+                logging.info(
+                    f"Error: Unable to create table {table_ref} because schema file {file_name} does not exist in location {file_path} in bucket {bucket_name}"
+                )
+                table_exists = False
+        except Exception as e:
+            logging.info(f"Unable to create table. {e}")
+            table_exists = False
+    return table_exists
+
+
+def check_gcs_file_exists(file_path: str, bucket_name: str) -> bool:
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(bucket_name)
+    exists = storage.Blob(bucket=bucket, name=file_path).exists(storage_client)
+    return exists
+
+
+def create_table_schema(
+    schema_structure: list, bucket_name: str = "", schema_filepath: str = ""
+) -> list:
+    logging.info(f"Defining table schema... {bucket_name} ... {schema_filepath}")
+    schema = []
+    if not (schema_filepath):
+        schema_struct = schema_structure
+    else:
+        storage_client = storage.Client()
+        bucket = storage_client.get_bucket(bucket_name)
+        blob = bucket.blob(schema_filepath)
+        schema_struct = json.loads(blob.download_as_string(client=None))
+    for schema_field in schema_struct:
+        fld_name = schema_field["name"]
+        fld_type = schema_field["type"]
+        try:
+            fld_descr = schema_field["description"]
+        except KeyError:
+            fld_descr = ""
+        fld_mode = schema_field["mode"]
+        schema.append(
+            bigquery.SchemaField(
+                name=fld_name, field_type=fld_type, mode=fld_mode, description=fld_descr
+            )
+        )
+    return schema
 
 
 def process_chunk(
     df: pd.DataFrame,
     target_file_batch: str,
     target_file: str,
-    skip_header: bool,
+    include_header: bool,
+    truncate_file: bool,
+    field_delimiter: str,
+    output_headers: typing.List[str],
 ) -> None:
     df = resolve_date_format(df, "%Y-%m-%d %H:%M")
-    save_to_new_file(df, file_path=str(target_file_batch), sep=",")
-    append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
+    df = reorder_headers(df, output_headers)
+    save_to_new_file(df=df, file_path=str(target_file_batch), sep=field_delimiter)
+    append_batch_file(
+        batch_file_path=target_file_batch,
+        target_file_path=target_file,
+        include_header=include_header,
+        truncate_target_file=truncate_file,
+    )
+    logging.info(f"Processing Batch {target_file_batch} completed")
+
+
+def reorder_headers(df: pd.DataFrame, output_headers: typing.List[str]) -> pd.DataFrame:
+    logging.info("Reordering headers..")
+    df = df[output_headers]
+    return df
 
 
 def resolve_date_format(df: pd.DataFrame, from_format: str) -> pd.DataFrame:
-    logging.info("Resolving Date Format")
     for col in df.columns:
         if df[col].dtype == "datetime64[ns]":
             logging.info(f"Resolving datetime on {col}")
             df[col] = df[col].apply(lambda x: convert_dt_format(str(x), from_format))
-
     return df
 
 
@@ -236,42 +537,58 @@ def convert_dt_format(dt_str: str, from_format: str) -> str:
         from_format = "%Y-%m-%d " + from_format.strip().split(" ")[1]
     else:
         dt_str = ""
-
     return rtnval
 
 
-def save_to_new_file(df, file_path, sep="|") -> None:
+def save_to_new_file(df: pd.DataFrame, file_path: str, sep: str = "|") -> None:
     logging.info(f"Saving to file {file_path} separator='{sep}'")
     df.to_csv(file_path, sep=sep, index=False)
 
 
 def append_batch_file(
-    batch_file_path: str, target_file_path: str, skip_header: bool, truncate_file: bool
+    batch_file_path: str,
+    target_file_path: str,
+    include_header: bool,
+    truncate_target_file: bool,
 ) -> None:
+    logging.info(
+        f"Appending file {batch_file_path} to file {target_file_path} with include_header={include_header} and truncate_target_file={truncate_target_file}"
+    )
     with open(batch_file_path, "r") as data_file:
-        if truncate_file:
+        if truncate_target_file:
             target_file = open(target_file_path, "w+").close()
         with open(target_file_path, "a+") as target_file:
-            if skip_header:
+            if not include_header:
                 logging.info(
-                    f"Appending batch file {batch_file_path} to {target_file_path} with skip header"
+                    f"Appending batch file {batch_file_path} to {target_file_path} without header"
                 )
                 next(data_file)
             else:
                 logging.info(
-                    f"Appending batch file {batch_file_path} to {target_file_path}"
+                    f"Appending batch file {batch_file_path} to {target_file_path} with header"
                 )
             target_file.write(data_file.read())
+            data_file.close()
+            target_file.close()
             if os.path.exists(batch_file_path):
                 os.remove(batch_file_path)
 
 
-def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:
-    logging.info(f"Uploading to GCS {gcs_bucket} in {gcs_path}")
-    storage_client = storage.Client()
-    bucket = storage_client.bucket(gcs_bucket)
-    blob = bucket.blob(gcs_path)
-    blob.upload_from_filename(file_path)
+def upload_file_to_gcs(
+    file_path: pathlib.Path, target_gcs_bucket: str, target_gcs_path: str
+) -> None:
+    if os.path.exists(file_path):
+        logging.info(
+            f"Uploading output file {file_path} to gs://{target_gcs_bucket}/{target_gcs_path}"
+        )
+        storage_client = storage.Client()
+        bucket = storage_client.bucket(target_gcs_bucket)
+        blob = bucket.blob(target_gcs_path)
+        blob.upload_from_filename(file_path)
+    else:
+        logging.info(
+            f"Cannot upload file to gs://{target_gcs_bucket}/{target_gcs_path} as it does not exist."
+        )
 
 
 if __name__ == "__main__":
@@ -279,12 +596,19 @@ if __name__ == "__main__":
 
     main(
         source_url=os.environ["SOURCE_URL"],
-        source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
-        target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
         start_year=int(os.environ["START_YEAR"]),
+        source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
+        project_id=os.environ["PROJECT_ID"],
+        dataset_id=os.environ["DATASET_ID"],
+        table_id=os.environ["TABLE_ID"],
+        year_field_name=os.environ["YEAR_FIELD_NAME"],
+        year_field_type=os.environ["YEAR_FIELD_TYPE"],
+        schema_path=os.environ["SCHEMA_PATH"],
         chunksize=os.environ["CHUNKSIZE"],
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
-        data_names=json.loads(os.environ["DATA_NAMES"]),
+        pipeline_name=os.environ["PIPELINE_NAME"],
+        input_headers=json.loads(os.environ["INPUT_CSV_HEADERS"]),
         data_dtypes=json.loads(os.environ["DATA_DTYPES"]),
+        output_headers=json.loads(os.environ["OUTPUT_CSV_HEADERS"]),
     )
