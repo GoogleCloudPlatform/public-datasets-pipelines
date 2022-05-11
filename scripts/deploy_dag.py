@@ -61,11 +61,16 @@ def main(
 
     for pipeline_path in pipelines:
         check_airflow_version_compatibility(pipeline_path, runtime_airflow_version)
-        
-        data_folder = DATASETS_PATH / dataset_id / "pipelines" / pipeline_path.name / "data"
+
+        data_folder = (
+            DATASETS_PATH / dataset_id / "pipelines" / pipeline_path.name / "data"
+        )
         if data_folder.exists() and data_folder.is_dir():
             copy_data_folder_to_composer_bucket(
-                dataset_id, data_folder, pipeline_path.name, composer_bucket, 
+                dataset_id,
+                data_folder,
+                pipeline_path.name,
+                composer_bucket,
             )
 
         copy_custom_callables_to_airflow_dags_folder(
@@ -175,7 +180,7 @@ def copy_data_folder_to_composer_bucket(
         print(
             "\nCopying files from local data folder into Cloud Composer data folder\n"
         )
-        
+
         for file in data_folder.iterdir():
             print("  Source:\n")
             print("  " + str(file) + "\n")
