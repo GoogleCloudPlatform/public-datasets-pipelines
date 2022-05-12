@@ -43,7 +43,8 @@ with DAG(
         image_pull_policy="Always",
         image="{{ var.json.thelook_ecommerce.docker_image }}",
         env_vars={
-            "NUM_OF_USERS": "15000",
+            "NUM_OF_USERS": "100000",
+            "NUM_OF_GHOST_EVENTS": "5",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PREFIX": "data/thelook_ecommerce",
             "SOURCE_DIR": "data",
@@ -143,6 +144,7 @@ with DAG(
             {"name": "user_id", "type": "INTEGER", "mode": "NULLABLE"},
             {"name": "product_id", "type": "INTEGER", "mode": "NULLABLE"},
             {"name": "inventory_item_id", "type": "INTEGER", "mode": "NULLABLE"},
+            {"name": "status", "type": "STRING", "mode": "NULLABLE"},
             {"name": "created_at", "type": "TIMESTAMP", "mode": "NULLABLE"},
             {"name": "shipped_at", "type": "TIMESTAMP", "mode": "NULLABLE"},
             {"name": "delivered_at", "type": "TIMESTAMP", "mode": "NULLABLE"},
