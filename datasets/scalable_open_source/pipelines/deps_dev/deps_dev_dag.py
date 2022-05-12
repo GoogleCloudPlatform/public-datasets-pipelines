@@ -24,7 +24,7 @@ default_args = {
 
 
 with DAG(
-    dag_id="scalable_open_source.copy_deps_dev_bq_dataset",
+    dag_id="scalable_open_source.deps_dev",
     default_args=default_args,
     max_active_runs=1,
     schedule_interval="@weekly",
