@@ -19,7 +19,7 @@ from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
 default_args = {
     "owner": "Google",
     "depends_on_past": False,
-    "start_date": "2022-03-22",
+    "start_date": "2022-05-01",
 }
 
 
@@ -27,7 +27,7 @@ with DAG(
     dag_id="scalable_open_source.copy_deps_dev_bq_dataset",
     default_args=default_args,
     max_active_runs=1,
-    schedule_interval="@daily",
+    schedule_interval="@weekly",
     catchup=False,
     default_view="graph",
 ) as dag:
