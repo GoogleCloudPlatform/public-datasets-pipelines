@@ -506,7 +506,7 @@ class Order(DataUtil):
         self.gender = user.gender
         self.status = self.random_item(
             population=["Complete", "Cancelled", "Returned", "Processing", "Shipped"],
-            distribution=[0.85, 0.05, 0.1],
+            distribution=[0.25, 0.15, 0.1, .2, .3],
         )
         self.created_at = self.child_created_at()
         # add random generator for days it takes to ship, deliver, return etc.
