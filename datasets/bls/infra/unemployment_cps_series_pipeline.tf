@@ -16,15 +16,10 @@
 
 
 resource "google_bigquery_table" "bls_unemployment_cps_series" {
-  project    = var.project_id
-  dataset_id = "bls"
-  table_id   = "unemployment_cps_series"
-
+  project     = var.project_id
+  dataset_id  = "bls"
+  table_id    = "unemployment_cps_series"
   description = "Unemployment_CPS_Series Dataset"
-
-
-
-
   depends_on = [
     google_bigquery_dataset.bls
   ]
