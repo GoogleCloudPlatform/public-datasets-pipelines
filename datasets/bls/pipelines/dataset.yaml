@@ -28,6 +28,10 @@ resources:
 
       Dataset source: U.S. Bureau of Labor Statistics
 
-      Terms of use: This dataset is publicly available for anyone to use under the following terms provided by the Dataset Source - http://www.data.gov/privacy-policy#data_policy - and is provided "AS IS" without any warranty, express or implied, from Google. Google disclaims all liability for any damages, direct or indirect, resulting from the use of the dataset.
+      Terms of use: This dataset is publicly available for anyone to use under the following terms provided by the Dataset Source - http://www.data.gov/privacy-policy#data_policy - and is provided "AS IS" without any warranty, express or implied, from Google. Google disclaims all liability for any damages, direct or indirect, resulting from the use of the dataset.
 
       See the GCP Marketplace listing for more details and sample queries: https://console.cloud.google.com/marketplace/details/bls-public-data/bureau-of-labor-statistics
+  - type: storage_bucket
+    name: "bls"
+    uniform_bucket_level_access: True
+    location: US

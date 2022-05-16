@@ -16,15 +16,10 @@
 
 
 resource "google_bigquery_table" "bls_c_cpi_u" {
-  project    = var.project_id
-  dataset_id = "bls"
-  table_id   = "c_cpi_u"
-
+  project     = var.project_id
+  dataset_id  = "bls"
+  table_id    = "c_cpi_u"
   description = "C_CPI_U Dataset"
-
-
-
-
   depends_on = [
     google_bigquery_dataset.bls
   ]
