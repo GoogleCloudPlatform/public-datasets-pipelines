@@ -13,19 +13,20 @@
 # limitations under the License.
 
 dataset:
-  name: google_dei
-
+  name: nces
   friendly_name: ~
-  description: "Google Diversity, Equity, and Inclusion (DEI)"
+  description: ~
   dataset_sources: ~
   terms_of_use: ~
 
 resources:
   - type: bigquery_dataset
-    dataset_id: google_dei
-    description: "Diversity, Equity, and Inclusion (DEI) includes demographic data on workforce representation, hiring, and attrition of employees at Google"
+    dataset_id: nces_ipeds
+    description: |-
+      The National Center for Education Statistics (NCES) collects, analyzes and makes available data related to education in the U.S. and other nations.
+      The Integrated Postsecondary Education Data System (IPEDS) contains information on U.S. colleges, universities, and technical and vocational institutions.
 
   - type: storage_bucket
-    name: "ggl-dei"
+    name: "nces"
     uniform_bucket_level_access: True
     location: US
