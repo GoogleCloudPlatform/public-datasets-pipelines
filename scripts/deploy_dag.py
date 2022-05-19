@@ -62,6 +62,17 @@ def main(
     for pipeline_path in pipelines:
         check_airflow_version_compatibility(pipeline_path, runtime_airflow_version)
 
+        data_folder = (
+            DATASETS_PATH / dataset_id / "pipelines" / pipeline_path.name / "data"
+        )
+        if data_folder.exists() and data_folder.is_dir():
+            copy_data_folder_to_composer_bucket(
+                dataset_id,
+                data_folder,
+                pipeline_path.name,
+                composer_bucket,
+            )
+
         copy_custom_callables_to_airflow_dags_folder(
             env_path,
             dataset_id,
@@ -146,6 +157,41 @@ def copy_variables_to_airflow_data_folder(
         f"  Destination:\n  {gcs_uri}\n"
     )
     run_gsutil_cmd(["cp", pipeline_vars_file, gcs_uri], cwd=cwd)
+
+
+def copy_data_folder_to_composer_bucket(
+    dataset_id: str,
+    data_folder: pathlib.Path,
+    pipeline: str,
+    composer_bucket: str,
+):
+    gcs_uri = f"gs://{composer_bucket}/data/{dataset_id}/pipeline/{pipeline}/data"
+    schema_file_dir_pattern = "*"
+    schema_file_dir = []
+
+    schema_file_dir = sorted(data_folder.rglob(schema_file_dir_pattern))
+    """
+    [remote]
+    gsutil cp * gs://{composer_bucket}/data/{dataset_id}/pipeline/{pipeline}
+    cd .{ENV}/datasets/{dataset_id}/data
+    """
+
+    if len(schema_file_dir) > 0:
+        print(
+            "\nCopying files from local data folder into Cloud Composer data folder\n"
+        )
+
+        for file in data_folder.iterdir():
+            print("  Source:\n")
+            print("  " + str(file) + "\n")
+            print("  Destination:\n")
+            print("  " + gcs_uri + "/" + str(file).split("/data/")[1] + "\n")
+
+        run_gsutil_cmd(["cp", schema_file_dir_pattern, gcs_uri])
+    else:
+        print(
+            "\n No files in local data folder to copy into Cloud Composer data folder \n"
+        )
 
 
 def run_cloud_composer_vars_import(
