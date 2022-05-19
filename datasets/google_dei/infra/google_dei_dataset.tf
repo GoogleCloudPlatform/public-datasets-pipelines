@@ -21,6 +21,20 @@ resource "google_bigquery_dataset" "google_dei" {
   description = "Diversity, Equity, and Inclusion (DEI) includes demographic data on workforce representation, hiring, and attrition of employees at Google"
 }
 
+data "google_iam_policy" "bq_ds__google_dei" {
+  dynamic "binding" {
+    for_each = var.iam_policies["bigquery_datasets"]["google_dei"]
+    content {
+      role    = binding.value["role"]
+      members = binding.value["members"]
+    }
+  }
+}
+
+resource "google_bigquery_dataset_iam_policy" "google_dei" {
+  dataset_id  = google_bigquery_dataset.google_dei.dataset_id
+  policy_data = data.google_iam_policy.bq_ds__google_dei.policy_data
+}
 output "bigquery_dataset-google_dei-dataset_id" {
   value = google_bigquery_dataset.google_dei.dataset_id
 }
@@ -28,6 +42,7 @@ output "bigquery_dataset-google_dei-dataset_id" {
 resource "google_storage_bucket" "ggl-dei" {
   name                        = "${var.bucket_name_prefix}-ggl-dei"
   force_destroy               = true
+  location                    = "US"
   uniform_bucket_level_access = true
   lifecycle {
     ignore_changes = [
