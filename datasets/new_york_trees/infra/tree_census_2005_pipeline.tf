@@ -15,12 +15,20 @@
  */
 
 
-variable "project_id" {}
-variable "bucket_name_prefix" {}
-variable "impersonating_acct" {}
-variable "region" {}
-variable "env" {}
-variable "iam_policies" {
-  default = {}
+resource "google_bigquery_table" "new_york_trees_tree_census_2005" {
+  project     = var.project_id
+  dataset_id  = "new_york_trees"
+  table_id    = "tree_census_2005"
+  description = "Tree Census table"
+  depends_on = [
+    google_bigquery_dataset.new_york_trees
+  ]
 }
 
+output "bigquery_table-new_york_trees_tree_census_2005-table_id" {
+  value = google_bigquery_table.new_york_trees_tree_census_2005.table_id
+}
+
+output "bigquery_table-new_york_trees_tree_census_2005-id" {
+  value = google_bigquery_table.new_york_trees_tree_census_2005.id
+}

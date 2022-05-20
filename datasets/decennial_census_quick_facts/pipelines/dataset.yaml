@@ -13,19 +13,18 @@
 # limitations under the License.
 
 dataset:
-  name: google_dei
-
-  friendly_name: ~
-  description: "Google Diversity, Equity, and Inclusion (DEI)"
+  name: decennial_census_quick_facts
+  friendly_name: decennial_census_quick_facts
+  description: QuickFacts United States
   dataset_sources: ~
   terms_of_use: ~
 
+
 resources:
   - type: bigquery_dataset
-    dataset_id: google_dei
-    description: "Diversity, Equity, and Inclusion (DEI) includes demographic data on workforce representation, hiring, and attrition of employees at Google"
-
+    dataset_id: decennial_census_quick_facts
+    description: "QuickFacts United States"
   - type: storage_bucket
-    name: "ggl-dei"
+    name: decennial-census-quick-facts
     uniform_bucket_level_access: True
     location: US

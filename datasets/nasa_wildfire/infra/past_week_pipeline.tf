@@ -15,12 +15,20 @@
  */
 
 
-variable "project_id" {}
-variable "bucket_name_prefix" {}
-variable "impersonating_acct" {}
-variable "region" {}
-variable "env" {}
-variable "iam_policies" {
-  default = {}
+resource "google_bigquery_table" "nasa_wildfire_past_week" {
+  project     = var.project_id
+  dataset_id  = "nasa_wildfire"
+  table_id    = "past_week"
+  description = "Past Week table"
+  depends_on = [
+    google_bigquery_dataset.nasa_wildfire
+  ]
 }
 
+output "bigquery_table-nasa_wildfire_past_week-table_id" {
+  value = google_bigquery_table.nasa_wildfire_past_week.table_id
+}
+
+output "bigquery_table-nasa_wildfire_past_week-id" {
+  value = google_bigquery_table.nasa_wildfire_past_week.id
+}

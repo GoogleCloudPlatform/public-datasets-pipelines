@@ -13,19 +13,18 @@
 # limitations under the License.
 
 dataset:
-  name: google_dei
-
-  friendly_name: ~
-  description: "Google Diversity, Equity, and Inclusion (DEI)"
+  name: :new_york_trees
+  friendly_name: :new_york_trees
+  description: New York Trees dataset
   dataset_sources: ~
   terms_of_use: ~
 
+
 resources:
   - type: bigquery_dataset
-    dataset_id: google_dei
-    description: "Diversity, Equity, and Inclusion (DEI) includes demographic data on workforce representation, hiring, and attrition of employees at Google"
-
+    dataset_id: new_york_trees
+    description: New York Trees dataset
   - type: storage_bucket
-    name: "ggl-dei"
+    name: newyork-trees
     uniform_bucket_level_access: True
     location: US

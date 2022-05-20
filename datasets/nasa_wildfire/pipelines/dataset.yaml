@@ -13,19 +13,13 @@
 # limitations under the License.
 
 dataset:
-  name: google_dei
-
-  friendly_name: ~
-  description: "Google Diversity, Equity, and Inclusion (DEI)"
+  name: nasa_wildfire
+  friendly_name: nasa_wildfire
+  description: NASA Wildfire dataset
   dataset_sources: ~
   terms_of_use: ~
 
 resources:
   - type: bigquery_dataset
-    dataset_id: google_dei
-    description: "Diversity, Equity, and Inclusion (DEI) includes demographic data on workforce representation, hiring, and attrition of employees at Google"
-
-  - type: storage_bucket
-    name: "ggl-dei"
-    uniform_bucket_level_access: True
-    location: US
+    dataset_id: nasa_wildfire
+    description: Past Week dataset
