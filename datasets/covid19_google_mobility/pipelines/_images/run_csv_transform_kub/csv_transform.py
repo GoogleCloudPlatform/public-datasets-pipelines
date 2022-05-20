@@ -30,22 +30,67 @@ def main(
     source_url: str,
     source_file: pathlib.Path,
     target_file: pathlib.Path,
+    pipeline_name: str,
+    chunksize: str,
+    project_id: str,
+    dataset_id: str,
+    table_id: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
-    headers: typing.List[str],
-    rename_mappings: dict,
-    pipeline_name: str,
+    schema_path: str,
+    drop_dest_table: str,
+    input_field_delimiter: str,
+    remove_source_file: str,
+    delete_target_file: str,
+    input_csv_headers: typing.List[str],
+    data_dtypes: dict,
+    rename_mappings: dict
 ) -> None:
-
-    logging.info(
-        f"COVID19 Google mobility {pipeline_name} process started at "
-        + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    )
-
-    logging.info("Creating 'files' folder")
+    logging.info(f"{pipeline_name} process started")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
+    execute_pipeline(
+        source_url=source_url,
+        source_file=source_file,
+        target_file=target_file,
+        pipeline_name=pipeline_name,
+        chunksize=chunksize,
+        project_id=project_id,
+        dataset_id=dataset_id,
+        destination_table=table_id,
+        target_gcs_bucket=target_gcs_bucket,
+        target_gcs_path=target_gcs_path,
+        schema_path=schema_path,
+        drop_dest_table=drop_dest_table,
+        input_field_delimiter=input_field_delimiter,
+        remove_source_file=remove_source_file,
+        delete_target_file=delete_target_file,
+        input_csv_headers=input_csv_headers,
+        data_dtypes=data_dtypes,
+        rename_mappings=rename_mappings
+    )
+    logging.info(f"{pipeline_name} process completed")
 
-    logging.info(f"Downloading file from {source_url}...")
+def execute_pipeline(
+    source_url: str,
+    source_file: pathlib.Path,
+    target_file: pathlib.Path,
+    pipeline_name: str,
+    chunksize: str,
+    project_id: str,
+    dataset_id: str,
+    destination_table: str,
+    target_gcs_bucket: str,
+    target_gcs_path: str,
+    schema_path: str,
+    drop_dest_table: str,
+    input_field_delimiter: str,
+    remove_source_file: str,
+    delete_target_file: str,
+    input_csv_headers: typing.List[str],
+    data_dtypes: dict,
+    rename_mappings: dict
+)
+
     download_file(source_url, source_file)
 
     logging.info(f"Opening file {source_file}...")
@@ -73,33 +118,29 @@ def main(
     )
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
-    logging.info(
-        f"COVID19 Google mobility {pipeline_name} process completed at "
-        + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    )
 
 
-def convert_to_integer_string(input: typing.Union[str, float]) -> str:
-    str_val = ""
-    if not input or (math.isnan(input)):
-        str_val = ""
-    else:
-        str_val = str(int(round(input, 0)))
-    return str_val
+# def convert_to_integer_string(input: typing.Union[str, float]) -> str:
+#     str_val = ""
+#     if not input or (math.isnan(input)):
+#         str_val = ""
+#     else:
+#         str_val = str(int(round(input, 0)))
+#     return str_val
 
 
-def convert_values_to_integer_string(df: pd.DataFrame) -> None:
-    cols = [
-        "retail_and_recreation_percent_change_from_baseline",
-        "grocery_and_pharmacy_percent_change_from_baseline",
-        "parks_percent_change_from_baseline",
-        "transit_stations_percent_change_from_baseline",
-        "workplaces_percent_change_from_baseline",
-        "residential_percent_change_from_baseline",
-    ]
+# def convert_values_to_integer_string(df: pd.DataFrame) -> None:
+#     cols = [
+#         "retail_and_recreation_percent_change_from_baseline",
+#         "grocery_and_pharmacy_percent_change_from_baseline",
+#         "parks_percent_change_from_baseline",
+#         "transit_stations_percent_change_from_baseline",
+#         "workplaces_percent_change_from_baseline",
+#         "residential_percent_change_from_baseline",
+#     ]
 
-    for cols in cols:
-        df[cols] = df[cols].apply(convert_to_integer_string)
+#     for cols in cols:
+#         df[cols] = df[cols].apply(convert_to_integer_string)
 
 
 def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
@@ -135,9 +176,19 @@ if __name__ == "__main__":
         source_url=os.environ["SOURCE_URL"],
         source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
+        pipeline_name=os.environ["PIPELINE_NAME"],
+        chunksize=os.environ["CHUNKSIZE"],
+        project_id=os.environ["PROJECT_ID"],
+        dataset_id=os.environ["DATASET_ID"],
+        table_id=os.environ["TABLE_ID"],
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
-        headers=json.loads(os.environ["CSV_HEADERS"]),
-        rename_mappings=json.loads(os.environ["RENAME_MAPPINGS"]),
-        pipeline_name=os.environ["PIPELINE_NAME"],
+        schema_path=os.environ["SCHEMA_PATH"],
+        drop_dest_table=os.environ["DROP_DEST_TABLE"],
+        input_field_delimiter=os.environ["INPUT_FIELD_DELIMITER"],
+        remove_source_file=os.environ["REMOVE_SOURCE_FILE"],
+        delete_target_file=os.environ["DELETE_TARGET_FILE"],
+        input_csv_headers=json.loads(os.environ["INPUT_CSV_HEADERS"]),
+        data_dtypes=json.loads(os.environ["DATA_DTYPES"]),
+        rename_mappings=json.loads(os.environ["RENAME_MAPPINGS"])
     )
