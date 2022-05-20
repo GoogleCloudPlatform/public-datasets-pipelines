@@ -3,9 +3,7 @@ from testbook import testbook
 
 
 @pytest.mark.timeout(900)
-@testbook(
-    "datasets/gbif/docs/tutorials/biodiversity_map/australia.ipynb"
-)
+@testbook("datasets/gbif/docs/tutorials/biodiversity_map/australia.ipynb")
 def test_run_notebook(tb):
     tb.inject(
         """
