@@ -665,13 +665,13 @@ with DAG(
             },
             {
                 "name": "gender_women",
-                "description": "The percentage of Googlers in the region who are women",
+                "description": "The percentage of Googlers hired in the region who are women",
                 "type": "float",
                 "mode": "nullable",
             },
             {
                 "name": "gender_men",
-                "description": "The percentage of Googlers in the region who are men",
+                "description": "The percentage of Googlers hired in the region who are men",
                 "type": "float",
                 "mode": "nullable",
             },
