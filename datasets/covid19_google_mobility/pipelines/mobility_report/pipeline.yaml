@@ -78,23 +78,23 @@ dag:
             ]
           DATA_DTYPES: >-
             {
-              "country_region_code": str,
-              "country_region": str,
-              "sub_region_1": str,
-              "sub_region_2": str,
-              "metro_area": str,
-              "iso_3166_2_code": str,
-              "census_fips_code": str,
-              "place_id": str,
-              "date": str,
-              "retail_and_recreation_percent_change_from_baseline": str,
-              "grocery_and_pharmacy_percent_change_from_baseline": str,
-              "parks_percent_change_from_baseline": str,
-              "transit_stations_percent_change_from_baseline": str,
-              "workplaces_percent_change_from_baseline": str,
-              "residential_percent_change_from_baseline": str
+              "country_region_code": "str",
+              "country_region": "str",
+              "sub_region_1": "str",
+              "sub_region_2": "str",
+              "metro_area": "str",
+              "iso_3166_2_code": "str",
+              "census_fips_code": "str",
+              "place_id": "str",
+              "date": "str",
+              "retail_and_recreation_percent_change_from_baseline": "str",
+              "grocery_and_pharmacy_percent_change_from_baseline": "str",
+              "parks_percent_change_from_baseline": "str",
+              "transit_stations_percent_change_from_baseline": "str",
+              "workplaces_percent_change_from_baseline": "str",
+              "residential_percent_change_from_baseline": "str"
             }
-          RENAME_MAPPINGS: >-
+          RENAME_HEADERS_LIST: >-
             {
               "country_region_code": "country_region_code",
               "country_region": "country_region",
@@ -112,6 +112,7 @@ dag:
               "workplaces_percent_change_from_baseline": "workplaces_percent_change_from_baseline",
               "residential_percent_change_from_baseline":"residential_percent_change_from_baseline"
             }
+          TABLE_DESCRIPTION: " Terms of use By downloading or using the data, you agree to Google's Terms of Service: https://policies.google.com/terms Description This dataset aims to provide insights into what has changed in response to policies aimed at combating COVID-19. It reports movement trends over time by geography, across different categories of places such as retail and recreation, groceries and pharmacies, parks, transit stations, workplaces, and residential. This dataset is intended to help remediate the impact of COVID-19. It shouldn’t be used for medical diagnostic, prognostic, or treatment purposes. It also isn’t intended to be used for guidance on personal travel plans. To learn more about the dataset, the place categories and how we calculate these trends and preserve privacy, read the data documentation: https://www.google.com/covid19/mobility/data_documentation.html "
         resources:
           request_memory: "8G"
           request_cpu: "2"
