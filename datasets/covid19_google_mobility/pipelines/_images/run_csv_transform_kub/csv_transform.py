@@ -13,6 +13,7 @@
 # limitations under the License.
 
 
+import datetime
 import json
 import logging
 import os
@@ -93,6 +94,7 @@ def execute_pipeline(
 ) -> None:
     download_file(source_url, source_file)
     process_source_file(
+        source_url=source_url,
         source_file=source_file,
         target_file=target_file,
         chunksize=chunksize,
@@ -144,6 +146,7 @@ def execute_pipeline(
 
 
 def process_source_file(
+    source_url: str,
     source_file: str,
     target_file: str,
     chunksize: str,
@@ -175,6 +178,7 @@ def process_source_file(
                 df = pd.concat([df, chunk])
                 process_chunk(
                     df=df,
+                    source_url=source_url,
                     target_file_batch=target_file_batch,
                     target_file=target_file,
                     skip_header=(not chunk_number == 0),
@@ -203,6 +207,7 @@ def process_source_file(
                     df = pd.concat([df, chunk])
                     process_chunk(
                         df=df,
+                        source_url=source_url,
                         target_file_batch=target_file_batch,
                         target_file=target_file,
                         skip_header=(not chunk_number == 0),
@@ -228,6 +233,7 @@ def process_source_file(
                     df = pd.concat([df, chunk])
                     process_chunk(
                         df=df,
+                        source_url=source_url,
                         target_file_batch=target_file_batch,
                         target_file=target_file,
                         skip_header=(not chunk_number == 0),
@@ -237,6 +243,7 @@ def process_source_file(
 
 def process_chunk(
     df: pd.DataFrame,
+    source_url: str,
     target_file_batch: str,
     target_file: str,
     skip_header: bool,
@@ -244,6 +251,7 @@ def process_chunk(
 ) -> None:
     logging.info(f"Processing batch file {target_file_batch}")
     df = rename_headers(df, rename_headers_list)
+    df = add_metadata_cols(df, source_url)
     save_to_new_file(df, file_path=str(target_file_batch), sep="|")
     append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
     logging.info(f"Processing batch file {target_file_batch} completed")
@@ -362,36 +370,18 @@ def create_table_schema(
     return schema
 
 
-
-    logging.info(f"Opening file {source_file}...")
-    df = pd.read_csv(str(source_file))
-
-    logging.info(f"Transforming {source_file}... ")
-
-    logging.info(f"Transform: Rename columns.. {source_file}")
-    rename_headers(df, rename_mappings)
-
-    logging.info(f"Transform: Converting to integer {source_file}... ")
-    convert_values_to_integer_string(df)
-
-    logging.info("Transform: Reordering headers..")
-    df = df[headers]
-
-    logging.info(f"Saving to output file.. {target_file}")
-    try:
-        save_to_new_file(df, file_path=str(target_file))
-    except Exception as e:
-        logging.error(f"Error saving output file: {e}.")
-
-    logging.info(
-        f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
-    )
-    upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
-
-
 def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> pd.DataFrame:
     logging.info("Renaming Headers")
     return df.rename(columns=rename_mappings)
+
+
+def add_metadata_cols(df: pd.DataFrame, source_url: str) -> pd.DataFrame:
+    logging.info("Adding metadata columns")
+    df["source_url"] = source_url
+    df["etl_timestamp"] = pd.to_datetime(
+        datetime.datetime.now(), format="%Y-%m-%d %H:%M:%S", infer_datetime_format=True
+    )
+    return df
 
 
 def save_to_new_file(df: pd.DataFrame, file_path: str, sep: str = "|") -> None:
