@@ -88,5 +88,17 @@
         "type": "integer",
         "description": "Mobility trends for places of residence.",
         "mode": "nullable"
+    },
+    {
+        "name": "source_url",
+        "type": "STRING",
+        "description": "Source ",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "etl_timestamp",
+        "type": "TIMESTAMP",
+        "description": "Load time for this data row",
+        "mode": "NULLABLE"
     }
 ]

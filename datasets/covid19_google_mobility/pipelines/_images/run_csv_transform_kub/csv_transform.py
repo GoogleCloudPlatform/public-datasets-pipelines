@@ -45,7 +45,7 @@ def main(
     input_csv_headers: typing.List[str],
     data_dtypes: dict,
     rename_headers_list: dict,
-    table_description: str
+    table_description: str,
 ) -> None:
     logging.info(f"{pipeline_name} process started")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
@@ -67,7 +67,7 @@ def main(
         input_csv_headers=input_csv_headers,
         data_dtypes=data_dtypes,
         rename_headers_list=rename_headers_list,
-        table_description=table_description
+        table_description=table_description,
     )
     logging.info(f"{pipeline_name} process completed")
 
@@ -90,7 +90,7 @@ def execute_pipeline(
     input_csv_headers: typing.List[str],
     data_dtypes: dict,
     rename_headers_list: dict,
-    table_description: str
+    table_description: str,
 ) -> None:
     download_file(source_url, source_file)
     process_source_file(
@@ -102,7 +102,7 @@ def execute_pipeline(
         data_dtypes=data_dtypes,
         rename_headers_list=rename_headers_list,
         header_row_ordinal="0",
-        field_separator=input_field_delimiter
+        field_separator=input_field_delimiter,
     )
     if os.path.exists(target_file):
         upload_file_to_gcs(
@@ -117,7 +117,7 @@ def execute_pipeline(
             schema_filepath=schema_path,
             bucket_name=target_gcs_bucket,
             drop_table=(drop_dest_table == "Y"),
-            table_description=table_description
+            table_description=table_description,
         )
         if table_exists:
             load_data_to_bq(
@@ -154,7 +154,7 @@ def process_source_file(
     data_dtypes: dict,
     rename_headers_list: typing.List[str],
     header_row_ordinal: str = "0",
-    field_separator: str = ","
+    field_separator: str = ",",
 ) -> None:
     logging.info(f"Opening source file {source_file}")
     if header_row_ordinal is None or header_row_ordinal == "None":
@@ -182,7 +182,7 @@ def process_source_file(
                     target_file_batch=target_file_batch,
                     target_file=target_file,
                     skip_header=(not chunk_number == 0),
-                    rename_headers_list=rename_headers_list
+                    rename_headers_list=rename_headers_list,
                 )
     else:
         header = int(header_row_ordinal)
@@ -211,7 +211,7 @@ def process_source_file(
                         target_file_batch=target_file_batch,
                         target_file=target_file,
                         skip_header=(not chunk_number == 0),
-                        rename_headers_list=rename_headers_list
+                        rename_headers_list=rename_headers_list,
                     )
         else:
             with pd.read_csv(
@@ -237,7 +237,7 @@ def process_source_file(
                         target_file_batch=target_file_batch,
                         target_file=target_file,
                         skip_header=(not chunk_number == 0),
-                        rename_headers_list=rename_headers_list
+                        rename_headers_list=rename_headers_list,
                     )
 
 
@@ -247,7 +247,7 @@ def process_chunk(
     target_file_batch: str,
     target_file: str,
     skip_header: bool,
-    rename_headers_list: typing.List[str]
+    rename_headers_list: typing.List[str],
 ) -> None:
     logging.info(f"Processing batch file {target_file_batch}")
     df = rename_headers(df, rename_headers_list)
@@ -294,7 +294,7 @@ def create_dest_table(
     schema_filepath: list,
     bucket_name: str,
     drop_table: bool = False,
-    table_description = ""
+    table_description="",
 ) -> bool:
     table_ref = f"{project_id}.{dataset_id}.{table_id}"
     logging.info(f"Attempting to create table {table_ref} if it doesn't already exist")
@@ -460,5 +460,5 @@ if __name__ == "__main__":
         input_csv_headers=json.loads(os.environ.get("INPUT_CSV_HEADERS", r"[]")),
         data_dtypes=json.loads(os.environ.get("DATA_DTYPES", r"{}")),
         rename_headers_list=json.loads(os.environ.get("RENAME_HEADERS_LIST", r"{}")),
-        table_description=os.environ.get("TABLE_DESCRIPTION", "")
+        table_description=os.environ.get("TABLE_DESCRIPTION", ""),
     )
