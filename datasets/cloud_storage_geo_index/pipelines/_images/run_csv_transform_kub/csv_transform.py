@@ -107,10 +107,10 @@ def execute_pipeline(
     table_partition_field: str,
     table_partition_field_type: str
 ) -> None:
-    # download_file(source_url, source_zipfile)
-    # gz_decompress(
-    #     infile=source_zipfile, tofile=source_file, delete_zipfile=True
-    # )
+    download_file(source_url, source_zipfile)
+    gz_decompress(
+        infile=source_zipfile, tofile=source_file, delete_zipfile=True
+    )
     process_source_file(
         source_url=source_url,
         source_file=source_file,
