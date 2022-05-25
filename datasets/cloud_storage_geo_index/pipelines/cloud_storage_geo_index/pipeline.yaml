@@ -32,6 +32,20 @@ dag:
     default_view: graph
 
   tasks:
+    - operator: "GKECreateClusterOperator"
+      args:
+        task_id: "create_cluster"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        body:
+          name: cloud-storage-geo-index
+          initial_node_count: 1
+          network: "{{ var.value.vpc_network }}"
+          node_config:
+            machine_type: e2-standard-16
+            oauth_scopes:
+              - https://www.googleapis.com/auth/devstorage.read_write
+              - https://www.googleapis.com/auth/cloud-platform
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
@@ -123,7 +137,7 @@ dag:
               "BASE_URL": "base_url",
             }
           REORDER_HEADERS_LIST: >-
-            {
+            [
               "scene_id",
               "product_id",
               "spacecraft_id",
@@ -142,7 +156,7 @@ dag:
               "east_lon",
               "total_size",
               "base_url"
-            }
+            ]
           TABLE_DESCRIPTION: "Landsat index table"
           TABLE_CLUSTERING_FIELD_LIST: >-
             [
@@ -154,9 +168,8 @@ dag:
           TABLE_PARTITION_FIELD: "sensing_time"
           TABLE_PARTITION_FIELD_TYPE: "MONTH"
         resources:
-          request_memory: "4G"
-          request_cpu: "1"
-          request_ephemeral_storage: "5G"
+          request_ephemeral_storage: "16G"
+          request_cpu: "2"
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
@@ -205,7 +218,7 @@ dag:
               "GRANULE_ID": "str",
               "PRODUCT_ID": "str",
               "DATATAKE_IDENTIFIER": "str",
-              "MGRS_TILE": str",
+              "MGRS_TILE": "str",
               "SENSING_TIME": "str",
               "TOTAL_SIZE": "str",
               "CLOUD_COVER": "str",
@@ -234,10 +247,42 @@ dag:
               "EAST_LON": "east_lon",
               "BASE_URL": "base_url"
             }
-        TABLE_DESCRIPTION: "Sentinel 2 table"
+          REORDER_HEADERS_LIST: >-
+            [
+              "granule_id",
+              "product_id",
+              "datatake_identifier",
+              "mgrs_tile",
+              "sensing_time",
+              "geometric_quality_flag",
+              "generation_time",
+              "north_lat",
+              "south_lat",
+              "west_lon",
+              "east_lon",
+              "base_url",
+              "total_size",
+              "cloud_cover"
+            ]
+          TABLE_DESCRIPTION: "Sentinel 2 table"
+          TABLE_CLUSTERING_FIELD_LIST: >-
+            [
+              "product_id",
+              "mgrs_tile",
+              "generation_time",
+              "datatake_identifier"
+            ]
+          TABLE_PARTITION_FIELD: "sensing_time"
+          TABLE_PARTITION_FIELD_TYPE: "MONTH"
         resources:
-          request_memory: "4G"
-          request_cpu: "1"
-          request_ephemeral_storage: "5G"
+          request_ephemeral_storage: "16G"
+          request_cpu: "2"
+    - operator: "GKEDeleteClusterOperator"
+      args:
+        task_id: "delete_cluster"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        name: cloud-storage-geo-index
+
   graph_paths:
-    - "landsat_index_transform_csv >> load_landsat_index_to_bq"
+    - "create_cluster >> [ landsat_index, sentinel_2 ] >> delete_cluster"
