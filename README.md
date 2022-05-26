@@ -1,4 +1,4 @@
-# Cloud Datasets Pipelines & Documentation Sets
+# Google Cloud Datasets: Data Pipelines and Documentation Set
 
 This repository contains the followings:
 - Cloud-native, data pipeline architecture for onboarding public datasets to [Datasets for Google Cloud](https://cloud.google.com/solutions/datasets).
