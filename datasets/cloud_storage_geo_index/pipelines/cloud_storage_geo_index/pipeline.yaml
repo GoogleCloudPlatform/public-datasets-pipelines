@@ -21,7 +21,7 @@ resources:
 dag:
   airflow_version: 2
   initialize:
-    dag_id: landsat_index
+    dag_id: cloud_storage_geo_index
     default_args:
       owner: "Google"
       depends_on_past: False
@@ -39,7 +39,7 @@ dag:
         location: "us-central1-c"
         body:
           name: cloud-storage-geo-index
-          initial_node_count: 1
+          initial_node_count: 2
           network: "{{ var.value.vpc_network }}"
           node_config:
             machine_type: e2-standard-16
@@ -82,7 +82,7 @@ dag:
               "DATE_ACQUIRED",
               "COLLECTION_NUMBER",
               "COLLECTION_CATEGORY",
-              "SENSING_TIME"
+              "SENSING_TIME",
               "DATA_TYPE",
               "WRS_PATH",
               "WRS_ROW",
@@ -92,7 +92,7 @@ dag:
               "WEST_LON",
               "EAST_LON",
               "TOTAL_SIZE",
-              "BASE_URL",
+              "BASE_URL"
             ]
           DATA_DTYPES: >-
             {
@@ -103,7 +103,7 @@ dag:
               "DATE_ACQUIRED": "str",
               "COLLECTION_NUMBER": "str",
               "COLLECTION_CATEGORY": "str",
-              "SENSING_TIME": "str"
+              "SENSING_TIME": "str",
               "DATA_TYPE": "str",
               "WRS_PATH": "str",
               "WRS_ROW": "str",
@@ -113,7 +113,7 @@ dag:
               "WEST_LON": "str",
               "EAST_LON": "str",
               "TOTAL_SIZE": "str",
-              "BASE_URL": "str",
+              "BASE_URL": "str"
             }
           RENAME_HEADERS_LIST: >-
             {
@@ -124,7 +124,7 @@ dag:
               "DATE_ACQUIRED": "date_acquired",
               "COLLECTION_NUMBER": "collection_number",
               "COLLECTION_CATEGORY": "collection_category",
-              "SENSING_TIME": "sensing_time"
+              "SENSING_TIME": "sensing_time",
               "DATA_TYPE": "data_type",
               "WRS_PATH": "wrs_path",
               "WRS_ROW": "wrs_row",
@@ -134,7 +134,7 @@ dag:
               "WEST_LON": "west_lon",
               "EAST_LON": "east_lon",
               "TOTAL_SIZE": "total_size",
-              "BASE_URL": "base_url",
+              "BASE_URL": "base_url"
             }
           REORDER_HEADERS_LIST: >-
             [
@@ -168,8 +168,8 @@ dag:
           TABLE_PARTITION_FIELD: "sensing_time"
           TABLE_PARTITION_FIELD_TYPE: "MONTH"
         resources:
-          request_ephemeral_storage: "16G"
-          request_cpu: "2"
+          request_ephemeral_storage: "32G"
+          request_cpu: "4"
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
@@ -181,21 +181,21 @@ dag:
         image_pull_policy: "Always"
         image: "{{ var.json.cloud_storage_geo_index.container_registry.run_csv_transform_kub }}"
         env_vars:
-          PIPELINE_NAME: "{{ var.json.cloud_storage_geo_index.sentinel_2.pipeline_name }}"
-          SOURCE_URL: "{{ var.json.cloud_storage_geo_index.sentinel_2.source_url }}"
-          SOURCE_FILE: "{{ var.json.cloud_storage_geo_index.sentinel_2.source_file }}"
-          TARGET_FILE: "{{ var.json.cloud_storage_geo_index.sentinel_2.target_file }}"
-          CHUNKSIZE: "{{ var.json.cloud_storage_geo_index.sentinel_2.chunksize }}"
+          PIPELINE_NAME: "{{ var.json.cloud_storage_geo_index.sentinel_2_index.pipeline_name }}"
+          SOURCE_URL: "{{ var.json.cloud_storage_geo_index.sentinel_2_index.source_url }}"
+          SOURCE_FILE: "{{ var.json.cloud_storage_geo_index.sentinel_2_index.source_file }}"
+          TARGET_FILE: "{{ var.json.cloud_storage_geo_index.sentinel_2_index.target_file }}"
+          CHUNKSIZE: "{{ var.json.cloud_storage_geo_index.sentinel_2_index.chunksize }}"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.cloud_storage_geo_index.dataset_id }}"
-          TABLE_ID: "{{ var.json.cloud_storage_geo_index.sentinel_2.table_id }}"
+          TABLE_ID: "{{ var.json.cloud_storage_geo_index.sentinel_2_index.table_id }}"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
-          TARGET_GCS_PATH: "{{ var.json.cloud_storage_geo_index.sentinel_2.target_gcs_path }}"
-          SCHEMA_PATH: "{{ var.json.cloud_storage_geo_index.sentinel_2.schema_path }}"
-          DROP_DEST_TABLE: "{{ var.json.cloud_storage_geo_index.sentinel_2.drop_dest_table }}"
-          INPUT_FIELD_DELIMITER: "{{ var.json.cloud_storage_geo_index.sentinel_2.input_field_delimiter }}"
-          REMOVE_SOURCE_FILE: "{{ var.json.cloud_storage_geo_index.sentinel_2.remove_source_file }}"
-          DELETE_TARGET_FILE: "{{ var.json.cloud_storage_geo_index.sentinel_2.delete_target_file }}"
+          TARGET_GCS_PATH: "{{ var.json.cloud_storage_geo_index.sentinel_2_index.target_gcs_path }}"
+          SCHEMA_PATH: "{{ var.json.cloud_storage_geo_index.sentinel_2_index.schema_path }}"
+          DROP_DEST_TABLE: "{{ var.json.cloud_storage_geo_index.sentinel_2_index.drop_dest_table }}"
+          INPUT_FIELD_DELIMITER: "{{ var.json.cloud_storage_geo_index.sentinel_2_index.input_field_delimiter }}"
+          REMOVE_SOURCE_FILE: "{{ var.json.cloud_storage_geo_index.sentinel_2_index.remove_source_file }}"
+          DELETE_TARGET_FILE: "{{ var.json.cloud_storage_geo_index.sentinel_2_index.delete_target_file }}"
           INPUT_CSV_HEADERS: >-
             [
               "GRANULE_ID",
@@ -230,7 +230,7 @@ dag:
               "EAST_LON": "str",
               "BASE_URL": "str"
             }
-          RENAME_HEADERS_LIST:
+          RENAME_HEADERS_LIST: >-
             {
               "GRANULE_ID": "granule_id",
               "PRODUCT_ID": "product_id",
@@ -275,8 +275,8 @@ dag:
           TABLE_PARTITION_FIELD: "sensing_time"
           TABLE_PARTITION_FIELD_TYPE: "MONTH"
         resources:
-          request_ephemeral_storage: "16G"
-          request_cpu: "2"
+          request_ephemeral_storage: "32G"
+          request_cpu: "4"
     - operator: "GKEDeleteClusterOperator"
       args:
         task_id: "delete_cluster"

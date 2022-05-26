@@ -50,7 +50,7 @@ def main(
     table_description: str,
     table_clustering_field_list: typing.List[str],
     table_partition_field: str,
-    table_partition_field_type: str
+    table_partition_field_type: str,
 ) -> None:
     logging.info(f"{pipeline_name} process started")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
@@ -77,7 +77,7 @@ def main(
         table_description=table_description,
         table_clustering_field_list=table_clustering_field_list,
         table_partition_field=table_partition_field,
-        table_partition_field_type=table_partition_field_type
+        table_partition_field_type=table_partition_field_type,
     )
     logging.info(f"{pipeline_name} process completed")
 
@@ -105,12 +105,10 @@ def execute_pipeline(
     table_description: str,
     table_clustering_field_list: typing.List[str],
     table_partition_field: str,
-    table_partition_field_type: str
+    table_partition_field_type: str,
 ) -> None:
     download_file(source_url, source_zipfile)
-    gz_decompress(
-        infile=source_zipfile, tofile=source_file, delete_zipfile=True
-    )
+    gz_decompress(infile=source_zipfile, tofile=source_file, delete_zipfile=True)
     process_source_file(
         source_url=source_url,
         source_file=source_file,
@@ -121,7 +119,7 @@ def execute_pipeline(
         rename_headers_list=rename_headers_list,
         reorder_headers_list=reorder_headers_list,
         header_row_ordinal="0",
-        field_separator=input_field_delimiter
+        field_separator=input_field_delimiter,
     )
     if os.path.exists(target_file):
         upload_file_to_gcs(
@@ -139,7 +137,7 @@ def execute_pipeline(
             table_description=table_description,
             table_clustering_field_list=table_clustering_field_list,
             table_partition_field=table_partition_field,
-            table_partition_field_type=table_partition_field_type
+            table_partition_field_type=table_partition_field_type,
         )
         if table_exists:
             load_data_to_bq(
@@ -186,7 +184,7 @@ def process_source_file(
     rename_headers_list: dict,
     reorder_headers_list: typing.List[str],
     header_row_ordinal: str = "0",
-    field_separator: str = ","
+    field_separator: str = ",",
 ) -> None:
     logging.info(f"Opening source file {source_file}")
     if header_row_ordinal is None or header_row_ordinal == "None":
@@ -215,7 +213,7 @@ def process_source_file(
                     target_file=target_file,
                     skip_header=(not chunk_number == 0),
                     rename_headers_list=rename_headers_list,
-                    reorder_headers_list=reorder_headers_list
+                    reorder_headers_list=reorder_headers_list,
                 )
     else:
         header = int(header_row_ordinal)
@@ -245,7 +243,7 @@ def process_source_file(
                         target_file=target_file,
                         skip_header=(not chunk_number == 0),
                         rename_headers_list=rename_headers_list,
-                        reorder_headers_list=reorder_headers_list
+                        reorder_headers_list=reorder_headers_list,
                     )
         else:
             with pd.read_csv(
@@ -272,7 +270,7 @@ def process_source_file(
                         target_file=target_file,
                         skip_header=(not chunk_number == 0),
                         rename_headers_list=rename_headers_list,
-                        reorder_headers_list=reorder_headers_list
+                        reorder_headers_list=reorder_headers_list,
                     )
 
 
@@ -334,7 +332,7 @@ def create_dest_table(
     table_clustering_field_list: typing.List[str] = [],
     table_description: str = "",
     table_partition_field: str = "",
-    table_partition_field_type: str = ""
+    table_partition_field_type: str = "",
 ) -> bool:
     table_ref = f"{project_id}.{dataset_id}.{table_id}"
     logging.info(f"Attempting to create table {table_ref} if it doesn't already exist")
@@ -361,10 +359,14 @@ def create_dest_table(
             table = bigquery.Table(table_ref, schema=schema)
             table.description = table_description
             if table_clustering_field_list:
-                logging.info(f"Creating cluster on table ({table_clustering_field_list})")
+                logging.info(
+                    f"Creating cluster on table ({table_clustering_field_list})"
+                )
                 table.clustering_fields = table_clustering_field_list
             if table_partition_field:
-                logging.info(f"Creating partition on table ({table_partition_field}, {table_partition_field_type})")
+                logging.info(
+                    f"Creating partition on table ({table_partition_field}, {table_partition_field_type})"
+                )
                 table.partitioning_type = table_partition_field_type
                 table.time_partitioning.field = table_partition_field
             client.create_table(table)
@@ -517,7 +519,9 @@ if __name__ == "__main__":
         rename_headers_list=json.loads(os.environ.get("RENAME_HEADERS_LIST", r"{}")),
         reorder_headers_list=json.loads(os.environ.get("REORDER_HEADERS_LIST", r"[]")),
         table_description=os.environ.get("TABLE_DESCRIPTION", ""),
-        table_clustering_field_list=json.loads(os.environ.get("TABLE_CLUSTERING_FIELD_LIST", r"[]")),
+        table_clustering_field_list=json.loads(
+            os.environ.get("TABLE_CLUSTERING_FIELD_LIST", r"[]")
+        ),
         table_partition_field=os.environ.get("TABLE_PARTITION_FIELD", ""),
-        table_partition_field_type=os.environ.get("TABLE_PARTITION_FIELD_TYPE", "")
+        table_partition_field_type=os.environ.get("TABLE_PARTITION_FIELD_TYPE", ""),
     )
