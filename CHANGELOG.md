@@ -1,5 +1,47 @@
 # Changelog
 
+## [4.0.0](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v3.0.0...v4.0.0) (2022-05-23)
+
+
+### ⚠ BREAKING CHANGES
+
+* Unified variables and adds support for IAM policies (#341)
+* Use poetry over pipenv (#337)
+
+### Datasets
+
+* Onboard Census Opportunity Atlas Dataset ([#263](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/263)) ([13ce71d](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/13ce71d33d60688d2ffbb7c470f4db5bdbd72076))
+* Onboard deps.dev (Open Source Insights) dataset ([#356](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/356)) ([12143af](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/12143af2556e84c25c56c61f6bd27b74f3235d92))
+* Onboard Diversity Annual Report and complementary datasets ([#358](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/358)) ([4a8a2cd](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/4a8a2cd3fdb7a817b77bff96c958ff3cc97571c8))
+* Onboard EPA Historical Air Quality dataset ([#301](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/301)) ([214a56f](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/214a56ff6a60c09eb2cdbd344acbfc06cc6db822))
+* Onboard GBIF dataset ([#355](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/355)) ([ab4e208](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/ab4e208193d143b6582e662409a4ac14b8a38c83))
+* Onboard IDC v8 dataset ([#319](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/319)) ([0f112e0](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/0f112e0fa39ee8353f7761f261a382445b22e3e3))
+* Onboard International Search Terms for Google Trends ([#323](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/323)) ([855aa7f](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/855aa7fb987944e07b680b08adafab4b85ca67e2))
+* Onboard NASA wildfire ([#275](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/275)) ([f593161](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/f5931612c03f13d21f55967349c399de6e2a2780))
+* Onboard New York Trees dataset ([#265](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/265)) ([2905308](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/2905308e04b130dde04f870490377251ecfb55f1))
+* Onboard Open Targets Genetics dataset  ([#318](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/318)) ([03b4f89](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/03b4f8964127f20a4db34136224ec9e315c8bfbc))
+* Onboard Open Targets Platform dataset ([#313](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/313)) ([c5adce6](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/c5adce6ff66ea36545e6611b51fb8183421fb8fd))
+* Onboard SEC Failure to Deliver dataset ([#309](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/309)) ([afa6492](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/afa6492c40a8a0f09d67a694c07a2d8841ae3f84))
+* Rename Travel Sustainability to Travel Impact Model ([#351](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/351)) ([83df285](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/83df285f0b47041832a138516596953846c12b30))
+* Retrieve Composer bucket name when deploying DAGs ([#312](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/312)) ([220f1d5](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/220f1d54f8104ce5c67bd7e0df5f84ec28ebd54a))
+* Update BLS - CPSAAT18 with 2021 data ([#357](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/357)) ([a8f8856](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/a8f8856250a6e47565cf1867a2c637976412d9a4))
+
+
+### Features
+
+* Added functionality to support a data folder to store schema files ([#354](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/354)) ([f893dff](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/f893dffc9a1ecc4294a7def84ffa6b9e151e0048))
+* Unified variables and adds support for IAM policies ([#341](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/341)) ([c4a45a0](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/c4a45a055437bc860954c0daeb15587537eeaa42))
+* Use poetry over pipenv ([#337](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/337)) ([ca43066](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/ca43066a64f5ca3a7b32a6c1bd6c461958329ab0))
+
+
+### Bug Fixes
+
+* Adds packages for docs dependency group ([#339](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/339)) ([6721490](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/6721490f29d18eb0434d48e8722bb3e249e60f0e))
+* bump black version due to `click` dependency issue ([#320](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/320)) ([cac6f18](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/cac6f182177cbd24d0068677145e779c6a512878))
+* Fix generating BQ views for IDC dataset ([#324](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/324)) ([5896865](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/58968650090975a96510c57342a21bc99ced7a7d))
+* Removed unecessary pathlib param from test_deploy_dag ([#345](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/345)) ([45dd0b2](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/45dd0b2c15821e38f0b7b511c253025fc7497ad0))
+* thelook_ecommerce - increase # of customers and revised order_items ([#352](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/352)) ([ed1570d](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/ed1570d736babf926a6aec1421e3f7b57eb3139b))
+
 ## [3.0.0](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v2.8.0...v3.0.0) (2022-03-24)
 
 
