@@ -17,6 +17,9 @@ resources:
   - type: bigquery_table
     table_id: landsat_index
     description: "Landsat_Index Dataset"
+  - type: bigquery_table
+    table_id: sentinel_2_index
+    description: "Sentinel_2_Index Dataset"
 
 dag:
   airflow_version: 2
@@ -27,7 +30,7 @@ dag:
       depends_on_past: False
       start_date: '2021-03-01'
     max_active_runs: 1
-    schedule_interval: "@daily"
+    schedule_interval: "0 1 0 0 6"
     catchup: False
     default_view: graph
 
@@ -46,14 +49,15 @@ dag:
             oauth_scopes:
               - https://www.googleapis.com/auth/devstorage.read_write
               - https://www.googleapis.com/auth/cloud-platform
-    - operator: "KubernetesPodOperator"
-      description: "Run CSV transform within kubernetes pod"
+    - operator: "GKEStartPodOperator"
+      description: "Run Landsat index transform within kubernetes pod"
       args:
         task_id: "landsat_index"
-        startup_timeout_seconds: 600
         name: "landsat_index"
-        namespace: "composer"
-        service_account_name: "datasets"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: cloud-storage-geo-index
+        namespace: "default"
         image_pull_policy: "Always"
         image: "{{ var.json.cloud_storage_geo_index.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -168,16 +172,17 @@ dag:
           TABLE_PARTITION_FIELD: "sensing_time"
           TABLE_PARTITION_FIELD_TYPE: "MONTH"
         resources:
-          request_ephemeral_storage: "16G"
-          request_cpu: "2"
-    - operator: "KubernetesPodOperator"
+          limit_memory: "32G"
+          limit_cpu: "1"
+    - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
         task_id: "sentinel_2"
-        startup_timeout_seconds: 600
         name: "sentinel_2"
-        namespace: "composer"
-        service_account_name: "datasets"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: cloud-storage-geo-index
+        namespace: "default"
         image_pull_policy: "Always"
         image: "{{ var.json.cloud_storage_geo_index.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -275,8 +280,8 @@ dag:
           TABLE_PARTITION_FIELD: "sensing_time"
           TABLE_PARTITION_FIELD_TYPE: "MONTH"
         resources:
-          request_ephemeral_storage: "32G"
-          request_cpu: "2"
+          limit_memory: "32G"
+          limit_cpu: "1"
     - operator: "GKEDeleteClusterOperator"
       args:
         task_id: "delete_cluster"

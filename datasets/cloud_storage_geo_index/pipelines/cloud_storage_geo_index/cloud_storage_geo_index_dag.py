@@ -14,7 +14,6 @@
 
 
 from airflow import DAG
-from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
 from airflow.providers.google.cloud.operators import kubernetes_engine
 
 default_args = {
@@ -28,7 +27,7 @@ with DAG(
     dag_id="cloud_storage_geo_index.cloud_storage_geo_index",
     default_args=default_args,
     max_active_runs=1,
-    schedule_interval="@daily",
+    schedule_interval="0 1 0 0 6",
     catchup=False,
     default_view="graph",
 ) as dag:
@@ -50,13 +49,14 @@ with DAG(
         },
     )
 
-    # Run CSV transform within kubernetes pod
-    landsat_index = kubernetes_pod.KubernetesPodOperator(
+    # Run Landsat index transform within kubernetes pod
+    landsat_index = kubernetes_engine.GKEStartPodOperator(
         task_id="landsat_index",
-        startup_timeout_seconds=600,
         name="landsat_index",
-        namespace="composer",
-        service_account_name="datasets",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="cloud-storage-geo-index",
+        namespace="default",
         image_pull_policy="Always",
         image="{{ var.json.cloud_storage_geo_index.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -85,16 +85,17 @@ with DAG(
             "TABLE_PARTITION_FIELD": "sensing_time",
             "TABLE_PARTITION_FIELD_TYPE": "MONTH",
         },
-        resources={"request_ephemeral_storage": "16G", "request_cpu": "2"},
+        resources={"limit_memory": "32G", "limit_cpu": "1"},
     )
 
     # Run CSV transform within kubernetes pod
-    sentinel_2 = kubernetes_pod.KubernetesPodOperator(
+    sentinel_2 = kubernetes_engine.GKEStartPodOperator(
         task_id="sentinel_2",
-        startup_timeout_seconds=600,
         name="sentinel_2",
-        namespace="composer",
-        service_account_name="datasets",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="cloud-storage-geo-index",
+        namespace="default",
         image_pull_policy="Always",
         image="{{ var.json.cloud_storage_geo_index.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -122,7 +123,7 @@ with DAG(
             "TABLE_PARTITION_FIELD": "sensing_time",
             "TABLE_PARTITION_FIELD_TYPE": "MONTH",
         },
-        resources={"request_ephemeral_storage": "32G", "request_cpu": "2"},
+        resources={"limit_memory": "32G", "limit_cpu": "1"},
     )
     delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
         task_id="delete_cluster",
