@@ -43,21 +43,21 @@ dag:
         image_pull_policy: "Always"
         image: "{{ var.json.covid19_google_mobility.container_registry.run_csv_transform_kub }}"
         env_vars:
-          PIPELINE_NAME: "{{ var.json.covid19_google_mobility.mobility_report.pipeline_name }}"
-          SOURCE_URL: "{{ var.json.covid19_google_mobility.mobility_report.source_url }}"
-          SOURCE_FILE: "{{ var.json.covid19_google_mobility.mobility_report.source_file }}"
-          TARGET_FILE: "{{ var.json.covid19_google_mobility.mobility_report.target_file }}"
-          CHUNKSIZE: "{{ var.json.covid19_google_mobility.mobility_report.chunksize }}"
+          PIPELINE_NAME: "Covid 19 Mobility Report"
+          SOURCE_URL: "https://www.gstatic.com/covid19/mobility/Global_Mobility_Report.csv"
+          SOURCE_FILE: "files/covid19_mobility_report_data.csv"
+          TARGET_FILE: "files/covid19_mobility_report_data_output.csv"
+          CHUNKSIZE: "1000000"
           PROJECT_ID: "{{ var.value.gcp_project }}"
-          DATASET_ID: "{{ var.json.covid19_google_mobility.mobility_report.dataset_id }}"
-          TABLE_ID: "{{ var.json.covid19_google_mobility.mobility_report.table_id }}"
+          DATASET_ID: "covid19_google_mobility"
+          TABLE_ID: "mobility_report"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
-          TARGET_GCS_PATH: "{{ var.json.covid19_google_mobility.mobility_report.target_gcs_path }}"
-          SCHEMA_PATH: "{{ var.json.covid19_google_mobility.mobility_report.schema_path }}"
-          DROP_DEST_TABLE: "{{ var.json.covid19_google_mobility.mobility_report.drop_dest_table }}"
-          INPUT_FIELD_DELIMITER: "{{ var.json.covid19_google_mobility.mobility_report.input_field_delimiter }}"
-          REMOVE_SOURCE_FILE: "{{ var.json.covid19_google_mobility.mobility_report.remove_source_file }}"
-          DELETE_TARGET_FILE: "{{ var.json.covid19_google_mobility.mobility_report.delete_target_file }}"
+          TARGET_GCS_PATH: "data/covid19_google_mobility/mobility_report/data_output.csv"
+          SCHEMA_PATH: "data/covid19_google_mobility/schema/covid19_google_mobility_mobility_report_schema.json"
+          DROP_DEST_TABLE: "Y"
+          INPUT_FIELD_DELIMITER: ","
+          REMOVE_SOURCE_FILE: "Y"
+          DELETE_TARGET_FILE: "Y"
           INPUT_CSV_HEADERS: >-
             [
               "country_region_code",
@@ -114,9 +114,8 @@ dag:
             }
           TABLE_DESCRIPTION: " Terms of use By downloading or using the data, you agree to Google's Terms of Service: https://policies.google.com/terms Description This dataset aims to provide insights into what has changed in response to policies aimed at combating COVID-19. It reports movement trends over time by geography, across different categories of places such as retail and recreation, groceries and pharmacies, parks, transit stations, workplaces, and residential. This dataset is intended to help remediate the impact of COVID-19. It shouldn’t be used for medical diagnostic, prognostic, or treatment purposes. It also isn’t intended to be used for guidance on personal travel plans. To learn more about the dataset, the place categories and how we calculate these trends and preserve privacy, read the data documentation: https://www.google.com/covid19/mobility/data_documentation.html "
         resources:
-          request_memory: "8G"
+          request_memory: "32G"
           request_cpu: "2"
-          request_ephemeral_storage: "10G"
-
+          request_ephemeral_storage: "28G"
   graph_paths:
     - "mobility_report"
