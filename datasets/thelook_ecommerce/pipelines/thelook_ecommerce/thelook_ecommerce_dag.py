@@ -50,6 +50,11 @@ with DAG(
             "SOURCE_DIR": "data",
             "EXTRANEOUS_HEADERS": '["event_type", "ip_address", "browser", "traffic_source", "session_id", "sequence_number", "uri", "is_sold"]',
         },
+        resources={
+            "request_memory": "8G",
+            "request_cpu": "2",
+            "request_ephemeral_storage": "10G",
+        },
     )
 
     # Task to load Products data to a BigQuery table
