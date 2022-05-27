@@ -85,7 +85,7 @@ with DAG(
             "TABLE_PARTITION_FIELD": "sensing_time",
             "TABLE_PARTITION_FIELD_TYPE": "MONTH",
         },
-        resources={"limit_memory": "32G", "limit_cpu": "1"},
+        resources={"limit_memory": "32G", "limit_cpu": "2"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -101,6 +101,7 @@ with DAG(
         env_vars={
             "PIPELINE_NAME": "{{ var.json.cloud_storage_geo_index.sentinel_2_index.pipeline_name }}",
             "SOURCE_URL": "{{ var.json.cloud_storage_geo_index.sentinel_2_index.source_url }}",
+            "SOURCE_ZIPFILE": "{{ var.json.cloud_storage_geo_index.sentinel_2_index.source_zipfile }}",
             "SOURCE_FILE": "{{ var.json.cloud_storage_geo_index.sentinel_2_index.source_file }}",
             "TARGET_FILE": "{{ var.json.cloud_storage_geo_index.sentinel_2_index.target_file }}",
             "CHUNKSIZE": "{{ var.json.cloud_storage_geo_index.sentinel_2_index.chunksize }}",
@@ -123,7 +124,7 @@ with DAG(
             "TABLE_PARTITION_FIELD": "sensing_time",
             "TABLE_PARTITION_FIELD_TYPE": "MONTH",
         },
-        resources={"limit_memory": "32G", "limit_cpu": "1"},
+        resources={"limit_memory": "48G", "limit_cpu": "2"},
     )
     delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
         task_id="delete_cluster",
