@@ -38,7 +38,7 @@ with DAG(
         location="us-central1-c",
         body={
             "name": "cloud-storage-geo-index",
-            "initial_node_count": 2,
+            "initial_node_count": 4,
             "network": "{{ var.value.vpc_network }}",
             "node_config": {
                 "machine_type": "e2-standard-16",
@@ -85,7 +85,7 @@ with DAG(
             "TABLE_PARTITION_FIELD": "sensing_time",
             "TABLE_PARTITION_FIELD_TYPE": "MONTH",
         },
-        resources={"request_ephemeral_storage": "32G", "request_cpu": "4"},
+        resources={"request_ephemeral_storage": "16G", "request_cpu": "2"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -122,7 +122,7 @@ with DAG(
             "TABLE_PARTITION_FIELD": "sensing_time",
             "TABLE_PARTITION_FIELD_TYPE": "MONTH",
         },
-        resources={"request_ephemeral_storage": "48G", "request_cpu": "4"},
+        resources={"request_ephemeral_storage": "32G", "request_cpu": "2"},
     )
     delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
         task_id="delete_cluster",

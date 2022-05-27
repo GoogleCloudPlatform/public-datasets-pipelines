@@ -39,7 +39,7 @@ dag:
         location: "us-central1-c"
         body:
           name: cloud-storage-geo-index
-          initial_node_count: 2
+          initial_node_count: 4
           network: "{{ var.value.vpc_network }}"
           node_config:
             machine_type: e2-standard-16
@@ -168,8 +168,8 @@ dag:
           TABLE_PARTITION_FIELD: "sensing_time"
           TABLE_PARTITION_FIELD_TYPE: "MONTH"
         resources:
-          request_ephemeral_storage: "32G"
-          request_cpu: "4"
+          request_ephemeral_storage: "16G"
+          request_cpu: "2"
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
@@ -276,7 +276,7 @@ dag:
           TABLE_PARTITION_FIELD_TYPE: "MONTH"
         resources:
           request_ephemeral_storage: "32G"
-          request_cpu: "4"
+          request_cpu: "2"
     - operator: "GKEDeleteClusterOperator"
       args:
         task_id: "delete_cluster"
