@@ -30,7 +30,6 @@ def main(
     source_url: str,
     start_year: int,
     source_file: pathlib.Path,
-    # target_file: pathlib.Path,
     project_id: str,
     dataset_id: str,
     table_id: str,
@@ -512,16 +511,23 @@ def resolve_date_format(df: pd.DataFrame, from_format: str) -> pd.DataFrame:
     for col in df.columns:
         if df[col].dtype == "datetime64[ns]":
             logging.info(f"Resolving datetime on {col}")
-            df[col] = df[col].apply(lambda x: convert_dt_format(str(x), from_format))
+            df[col] = df[col].apply(lambda x: convert_dt_format(dt_str=str(x), from_format=from_format))
+        elif df[col].dtype == "date":
+            logging.info(f"Resolving date on {col}")
+            df[col] = df[col].apply(lambda x: convert_dt_format(dt_str=str(x), from_format=from_format, include_time=False))
     return df
 
 
-def convert_dt_format(dt_str: str, from_format: str) -> str:
+def convert_dt_format(dt_str: str, from_format: str, include_time: bool = True) -> str:
     if not dt_str or str(dt_str).lower() == "nan" or str(dt_str).lower() == "nat":
         rtnval = ""
     elif len(dt_str.strip()) == 10:
-        # if there is no time format
-        rtnval = dt_str + " 00:00:00"
+        if include_time:
+            # if there is no time value
+            rtnval = dt_str + " 00:00:00"
+        else:
+            # exclude time value
+            rtnval = dt_str
     elif len(dt_str.strip().split(" ")[1]) == 8:
         # if format of time portion is 00:00:00 then use 00:00 format
         dt_str = dt_str[:-3]
