@@ -21,6 +21,20 @@ resource "google_bigquery_dataset" "open_targets_platform" {
   description = "Open-Targets dataset"
 }
 
+data "google_iam_policy" "bq_ds__open_targets_platform" {
+  dynamic "binding" {
+    for_each = var.iam_policies["bigquery_datasets"]["open_targets_platform"]
+    content {
+      role    = binding.value["role"]
+      members = binding.value["members"]
+    }
+  }
+}
+
+resource "google_bigquery_dataset_iam_policy" "open_targets_platform" {
+  dataset_id  = google_bigquery_dataset.open_targets_platform.dataset_id
+  policy_data = data.google_iam_policy.bq_ds__open_targets_platform.policy_data
+}
 output "bigquery_dataset-open_targets_platform-dataset_id" {
   value = google_bigquery_dataset.open_targets_platform.dataset_id
 }
@@ -31,6 +45,20 @@ resource "google_bigquery_dataset" "open_targets_genetics" {
   description = "Open-Targets-Genetics dataset"
 }
 
+data "google_iam_policy" "bq_ds__open_targets_genetics" {
+  dynamic "binding" {
+    for_each = var.iam_policies["bigquery_datasets"]["open_targets_genetics"]
+    content {
+      role    = binding.value["role"]
+      members = binding.value["members"]
+    }
+  }
+}
+
+resource "google_bigquery_dataset_iam_policy" "open_targets_genetics" {
+  dataset_id  = google_bigquery_dataset.open_targets_genetics.dataset_id
+  policy_data = data.google_iam_policy.bq_ds__open_targets_genetics.policy_data
+}
 output "bigquery_dataset-open_targets_genetics-dataset_id" {
   value = google_bigquery_dataset.open_targets_genetics.dataset_id
 }
