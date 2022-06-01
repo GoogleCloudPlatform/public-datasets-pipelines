@@ -511,10 +511,16 @@ def resolve_date_format(df: pd.DataFrame, from_format: str) -> pd.DataFrame:
     for col in df.columns:
         if df[col].dtype == "datetime64[ns]":
             logging.info(f"Resolving datetime on {col}")
-            df[col] = df[col].apply(lambda x: convert_dt_format(dt_str=str(x), from_format=from_format))
+            df[col] = df[col].apply(
+                lambda x: convert_dt_format(dt_str=str(x), from_format=from_format)
+            )
         elif df[col].dtype == "date":
             logging.info(f"Resolving date on {col}")
-            df[col] = df[col].apply(lambda x: convert_dt_format(dt_str=str(x), from_format=from_format, include_time=False))
+            df[col] = df[col].apply(
+                lambda x: convert_dt_format(
+                    dt_str=str(x), from_format=from_format, include_time=False
+                )
+            )
     return df
 
 
