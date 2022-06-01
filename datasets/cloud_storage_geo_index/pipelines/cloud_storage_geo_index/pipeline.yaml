@@ -177,8 +177,8 @@ dag:
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
-        task_id: "sentinel_2"
-        name: "sentinel_2"
+        task_id: "sentinel_2_index"
+        name: "sentinel_2_index"
         project_id: "{{ var.value.gcp_project }}"
         location: "us-central1-c"
         cluster_name: cloud-storage-geo-index
@@ -196,7 +196,7 @@ dag:
           DATASET_ID: "cloud_storage_geo_index"
           TABLE_ID: "sentinel_2_index"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
-          TARGET_GCS_PATH: "data/cloud_storage_geo_index/sentinel_2/data_output.csv"
+          TARGET_GCS_PATH: "data/cloud_storage_geo_index/sentinel_2_index/data_output.csv"
           SCHEMA_PATH: "data/cloud_storage_geo_index/schema/cloud_storage_geo_index_sentinel_2_schema.json"
           DROP_DEST_TABLE: "Y"
           INPUT_FIELD_DELIMITER: ","
@@ -291,4 +291,4 @@ dag:
         name: cloud-storage-geo-index
 
   graph_paths:
-    - "create_cluster >> [ landsat_index, sentinel_2 ] >> delete_cluster"
+    - "create_cluster >> [ landsat_index, sentinel_2_index ] >> delete_cluster"
