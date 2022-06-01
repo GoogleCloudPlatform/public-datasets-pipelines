@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import datetime
+import fnmatch
 import json
 import logging
 import os
@@ -34,7 +35,7 @@ def main(
     headers: typing.List[str],
     rename_mappings: dict,
     pipeline_name: str,
-    file_name: str,
+    file_name_prefix: str,
 ) -> None:
 
     logging.info("Creating 'files' folder")
@@ -44,9 +45,13 @@ def main(
     download_file(source_url, source_file)
 
     logging.info(f"Opening file {source_file}")
-    with ZipFile(source_file) as myzip:
-        data = myzip.open(file_name)
-    df = pd.read_csv(data)
+    dest_path = os.path.split(source_file)[0]
+    unpack_file(
+        infile = source_file,
+        dest_path = dest_path
+    )
+    datafile = find_file_in_path(dest_path, f"*{file_name_prefix}*.csv")[0]
+    df = pd.read_csv(datafile)
 
     logging.info(f"Transformation Process Starting.. {source_file}")
     rename_headers(df, rename_mappings)
@@ -71,6 +76,28 @@ def main(
     )
 
 
+def find_file_in_path(root_path: str, pattern: str = "*") -> typing.List[str]:
+    logging.info(f"Searching for files ({pattern}) in {root_path}")
+    result = []
+    for root, dirs, files in os.walk(root_path):
+        for name in files:
+            if fnmatch.fnmatch(name, pattern):
+                result.append(os.path.join(root, name))
+            else:
+                pass
+    return result
+
+
+def unpack_file(infile: str, dest_path: str, compression_type: str = "zip") -> None:
+    if os.path.exists(infile):
+            logging.info(f"Unpacking {infile} to {dest_path}")
+            with ZipFile(infile, mode="r") as zipf:
+                zipf.extractall(dest_path)
+                zipf.close()
+    else:
+        logging.info(f"{infile} not unpacked because it does not exist.")
+
+
 def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
     df.rename(columns=rename_mappings, inplace=True)
 
@@ -90,11 +117,21 @@ def download_file(source_url: str, source_file: pathlib.Path) -> None:
         logging.error(f"Couldn't download {source_url}: {r.text}")
 
 
-def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:
-    storage_client = storage.Client()
-    bucket = storage_client.bucket(gcs_bucket)
-    blob = bucket.blob(gcs_path)
-    blob.upload_from_filename(file_path)
+def upload_file_to_gcs(
+    file_path: pathlib.Path, target_gcs_bucket: str, target_gcs_path: str
+) -> None:
+    if os.path.exists(file_path):
+        logging.info(
+            f"Uploading output file {file_path} to gs://{target_gcs_bucket}/{target_gcs_path}"
+        )
+        storage_client = storage.Client()
+        bucket = storage_client.bucket(target_gcs_bucket)
+        blob = bucket.blob(target_gcs_path)
+        blob.upload_from_filename(file_path)
+    else:
+        logging.info(
+            f"Cannot upload file to gs://{target_gcs_bucket}/{target_gcs_path} as it does not exist."
+        )
 
 
 if __name__ == "__main__":
@@ -109,5 +146,5 @@ if __name__ == "__main__":
         headers=json.loads(os.environ["CSV_HEADERS"]),
         rename_mappings=json.loads(os.environ["RENAME_MAPPINGS"]),
         pipeline_name=os.environ["PIPELINE_NAME"],
-        file_name=os.environ["FILE_NAME"],
+        file_name_prefix=os.environ["FILE_NAME_PREFIX"],
     )
