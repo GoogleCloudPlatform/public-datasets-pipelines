@@ -186,7 +186,7 @@ dag:
               "fourth_max_value": "float64", "fourth_max_datetime": "datetime64[ns]", "first_max_non_overlapping_value": "float64", "first_no_max_datetime": "datetime64[ns]", "second_max_non_overlapping_value": "float64",
               "second_no_max_datetime": "datetime64[ns]", "ninety_nine_percentile": "float64", "ninety_eight_percentile": "float64", "ninety_five_percentile": "float64", "ninety_percentile": "float64",
               "seventy_five_percentile": "float64", "fifty_percentile": "float64", "ten_percentile": "float64", "local_site_name": "str", "address": "str",
-              "state_name": "str", "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "date" }
+              "state_name": "str", "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "str" }
           OUTPUT_CSV_HEADERS: >-
             [ "state_code", "county_code", "site_num", "parameter_code", "poc",
               "latitude", "longitude", "datum", "parameter_name", "sample_duration",
@@ -242,7 +242,7 @@ dag:
               "pollutant_standard": "str", "date_local": "datetime64[ns]", "units_of_measure": "str", "event_type": "str", "observation_count": "int32",
               "observation_percent": "float64", "arithmetic_mean": "float64", "first_max_value": "float64", "first_max_hour": "int32", "aqi": "str",
               "method_code": "str", "method_name": "str", "local_site_name": "str", "address": "str", "state_name": "str",
-              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "date" }
+              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "str" }
           OUTPUT_CSV_HEADERS: >-
             [ "state_code", "county_code", "site_num", "parameter_code", "poc",
               "latitude", "longitude", "datum", "parameter_name", "sample_duration",
@@ -291,7 +291,7 @@ dag:
               "latitude": "str", "longitude": "str", "datum": "str", "parameter_name": "str", "date_local": "datetime64[ns]", "time_local": "str",
               "date_gmt": "datetime64[ns]", "time_gmt": "str", "sample_measurement": "str", "units_of_measure": "str",
               "mdl": "float64", "uncertainty": "str", "qualifier": "str", "method_type": "str", "method_code": "str",
-              "method_name": "str", "state_name": "str", "date_of_last_change": "date" }
+              "method_name": "str", "state_name": "str", "date_of_last_change": "str" }
           OUTPUT_CSV_HEADERS: >-
             [ "state_code", "county_code", "site_num", "parameter_code", "poc",
               "latitude", "longitude", "datum", "parameter_name", "date_local",
@@ -341,7 +341,7 @@ dag:
               "pollutant_standard": "str", "date_local": "datetime64[ns]", "units_of_measure": "str", "event_type": "str", "observation_count": "int32",
               "observation_percent": "float64", "arithmetic_mean": "float64", "first_max_value": "float64", "first_max_hour": "int32", "aqi": "str",
               "method_code": "str", "method_name": "str", "local_site_name": "str", "address": "str", "state_name": "str",
-              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "date" }
+              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "str" }
           OUTPUT_CSV_HEADERS: >-
             [ "state_code", "county_code", "site_num", "parameter_code", "poc",
               "latitude", "longitude", "datum", "parameter_name", "sample_duration",
@@ -390,7 +390,7 @@ dag:
               "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "date_local": "datetime64[ns]",
               "time_local": "str", "date_gmt": "datetime64[ns]", "time_gmt": "str", "sample_measurement": "float64", "units_of_measure": "str",
               "mdl": "float64", "uncertainty": "float64", "qualifier": "str", "method_type": "str", "method_code": "int32", "method_name": "str",
-              "state_name": "str", "county_name": "str", "date_of_last_change": "date" }
+              "state_name": "str", "county_name": "str", "date_of_last_change": "str" }
           OUTPUT_CSV_HEADERS: >-
             [ "state_code", "county_code", "site_num", "parameter_code", "poc",
               "latitude", "longitude", "datum", "parameter_name", "date_local",
@@ -440,7 +440,7 @@ dag:
               "pollutant_standard": "str", "date_local": "datetime64[ns]", "units_of_measure": "str", "event_type": "str", "observation_count": "int32",
               "observation_percent": "float64", "arithmetic_mean": "float64", "first_max_value": "float64", "first_max_hour": "int32", "aqi": "str",
               "method_code": "str", "method_name": "str", "local_site_name": "str", "address": "str", "state_name": "str",
-              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "date" }
+              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "str" }
           OUTPUT_CSV_HEADERS: >-
             [ "state_code", "county_code", "site_num", "parameter_code", "poc",
               "latitude", "longitude", "datum", "parameter_name", "sample_duration",
@@ -491,7 +491,7 @@ dag:
               "pollutant_standard": "str", "date_local": "datetime64[ns]", "units_of_measure": "str", "event_type": "str", "observation_count": "int32",
               "observation_percent": "float64", "arithmetic_mean": "float64", "first_max_value": "float64", "first_max_hour": "int32", "aqi": "str",
               "method_code": "str", "method_name": "str", "local_site_name": "str", "address": "str", "state_name": "str",
-              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "date" }
+              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "str" }
           OUTPUT_CSV_HEADERS: >-
             [ "state_code", "county_code", "site_num", "parameter_code", "poc",
               "latitude", "longitude", "datum", "parameter_name", "sample_duration",
@@ -540,7 +540,7 @@ dag:
               "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "date_local": "datetime64[ns]",
               "time_local": "str", "date_gmt": "datetime64[ns]", "time_gmt": "str", "sample_measurement": "float64", "units_of_measure": "str",
               "mdl": "float64", "uncertainty": "float64", "qualifier": "str", "method_type": "str", "method_code": "int32", "method_name": "str",
-              "state_name": "str", "county_name": "str", "date_of_last_change": "date" }
+              "state_name": "str", "county_name": "str", "date_of_last_change": "str" }
           OUTPUT_CSV_HEADERS: >-
             [ "state_code", "county_code", "site_num", "parameter_code", "poc",
               "latitude", "longitude", "datum", "parameter_name", "date_local",
@@ -590,7 +590,7 @@ dag:
               "pollutant_standard": "str", "date_local": "datetime64[ns]", "units_of_measure": "str", "event_type": "str", "observation_count": "int32",
               "observation_percent": "float64", "arithmetic_mean": "float64", "first_max_value": "float64", "first_max_hour": "int32", "aqi": "str",
               "method_code": "str", "method_name": "str", "local_site_name": "str", "address": "str", "state_name": "str",
-              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "date" }
+              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "str" }
           OUTPUT_CSV_HEADERS: >-
             [ "state_code", "county_code", "site_num", "parameter_code", "poc",
               "latitude", "longitude", "datum", "parameter_name", "sample_duration",
@@ -639,7 +639,7 @@ dag:
               "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "date_local": "datetime64[ns]",
               "time_local": "str", "date_gmt": "datetime64[ns]", "time_gmt": "str", "sample_measurement": "float64", "units_of_measure": "str",
               "mdl": "float64", "uncertainty": "float64", "qualifier": "str", "method_type": "str", "method_code": "int32", "method_name": "str",
-              "state_name": "str", "county_name": "str", "date_of_last_change": "date" }
+              "state_name": "str", "county_name": "str", "date_of_last_change": "str" }
           OUTPUT_CSV_HEADERS: >-
             [ "state_code", "county_code", "site_num", "parameter_code", "poc",
               "latitude", "longitude", "datum", "parameter_name", "date_local",
@@ -689,7 +689,7 @@ dag:
               "pollutant_standard": "str", "date_local": "datetime64[ns]", "units_of_measure": "str", "event_type": "str", "observation_count": "int32",
               "observation_percent": "float64", "arithmetic_mean": "float64", "first_max_value": "float64", "first_max_hour": "int32", "aqi": "str",
               "method_code": "str", "method_name": "str", "local_site_name": "str", "address": "str", "state_name": "str",
-              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "date" }
+              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "str" }
           OUTPUT_CSV_HEADERS: >-
             [ "state_code", "county_code", "site_num", "parameter_code", "poc",
               "latitude", "longitude", "datum", "parameter_name", "sample_duration",
@@ -738,7 +738,7 @@ dag:
               "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "date_local": "datetime64[ns]",
               "time_local": "str", "date_gmt": "datetime64[ns]", "time_gmt": "str", "sample_measurement": "float64", "units_of_measure": "str",
               "mdl": "float64", "uncertainty": "float64", "qualifier": "str", "method_type": "str", "method_code": "int32", "method_name": "str",
-              "state_name": "str", "county_name": "str", "date_of_last_change": "date" }
+              "state_name": "str", "county_name": "str", "date_of_last_change": "str" }
           OUTPUT_CSV_HEADERS: >-
             [ "state_code", "county_code", "site_num", "parameter_code", "poc",
               "latitude", "longitude", "datum", "parameter_name", "date_local",
@@ -788,7 +788,7 @@ dag:
               "pollutant_standard": "str", "date_local": "datetime64[ns]", "units_of_measure": "str", "event_type": "str", "observation_count": "int32",
               "observation_percent": "float64", "arithmetic_mean": "float64", "first_max_value": "float64", "first_max_hour": "int32", "aqi": "str",
               "method_code": "str", "method_name": "str", "local_site_name": "str", "address": "str", "state_name": "str",
-              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "date" }
+              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "str" }
           OUTPUT_CSV_HEADERS: >-
             [ "state_code", "county_code", "site_num", "parameter_code", "poc",
               "latitude", "longitude", "datum", "parameter_name", "sample_duration",
@@ -837,7 +837,7 @@ dag:
               "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "date_local": "datetime64[ns]",
               "time_local": "str", "date_gmt": "datetime64[ns]", "time_gmt": "str", "sample_measurement": "float64", "units_of_measure": "str",
               "mdl": "float64", "uncertainty": "float64", "qualifier": "str", "method_type": "str", "method_code": "int32", "method_name": "str",
-              "state_name": "str", "county_name": "str", "date_of_last_change": "date" }
+              "state_name": "str", "county_name": "str", "date_of_last_change": "str" }
           OUTPUT_CSV_HEADERS: >-
             [ "state_code", "county_code", "site_num", "parameter_code", "poc",
               "latitude", "longitude", "datum", "parameter_name", "date_local",
@@ -885,7 +885,7 @@ dag:
               "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "date_local": "datetime64[ns]",
               "time_local": "str", "date_gmt": "datetime64[ns]", "time_gmt": "str", "sample_measurement": "float64", "units_of_measure": "str",
               "mdl": "float64", "uncertainty": "float64", "qualifier": "str", "method_type": "str", "method_code": "int32", "method_name": "str",
-              "state_name": "str", "county_name": "str", "date_of_last_change": "date" }
+              "state_name": "str", "county_name": "str", "date_of_last_change": "str" }
           OUTPUT_CSV_HEADERS: >-
             [ "state_code", "county_code", "site_num", "parameter_code", "poc",
               "latitude", "longitude", "datum", "parameter_name", "date_local",
@@ -935,7 +935,7 @@ dag:
               "pollutant_standard": "str", "date_local": "datetime64[ns]", "units_of_measure": "str", "event_type": "str", "observation_count": "int32",
               "observation_percent": "float64", "arithmetic_mean": "float64", "first_max_value": "float64", "first_max_hour": "int32", "aqi": "str",
               "method_code": "str", "method_name": "str", "local_site_name": "str", "address": "str", "state_name": "str",
-              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "date" }
+              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "str" }
           OUTPUT_CSV_HEADERS: >-
             [ "state_code", "county_code", "site_num", "parameter_code", "poc",
               "latitude", "longitude", "datum", "parameter_name", "sample_duration",
@@ -984,7 +984,7 @@ dag:
               "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "date_local": "datetime64[ns]",
               "time_local": "str", "date_gmt": "datetime64[ns]", "time_gmt": "str", "sample_measurement": "float64", "units_of_measure": "str",
               "mdl": "float64", "uncertainty": "float64", "qualifier": "str", "method_type": "str", "method_code": "int32", "method_name": "str",
-              "state_name": "str", "county_name": "str", "date_of_last_change": "date" }
+              "state_name": "str", "county_name": "str", "date_of_last_change": "str" }
           OUTPUT_CSV_HEADERS: >-
             [ "state_code", "county_code", "site_num", "parameter_code", "poc",
               "latitude", "longitude", "datum", "parameter_name", "date_local",
@@ -1034,7 +1034,7 @@ dag:
               "pollutant_standard": "str", "date_local": "datetime64[ns]", "units_of_measure": "str", "event_type": "str", "observation_count": "int32",
               "observation_percent": "float64", "arithmetic_mean": "float64", "first_max_value": "float64", "first_max_hour": "int32", "aqi": "str",
               "method_code": "str", "method_name": "str", "local_site_name": "str", "address": "str", "state_name": "str",
-              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "date" }
+              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "str" }
           OUTPUT_CSV_HEADERS: >-
             [ "state_code", "county_code", "site_num", "parameter_code", "poc",
               "latitude", "longitude", "datum", "parameter_name", "sample_duration",
@@ -1083,7 +1083,7 @@ dag:
               "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "date_local": "datetime64[ns]",
               "time_local": "str", "date_gmt": "datetime64[ns]", "time_gmt": "str", "sample_measurement": "float64", "units_of_measure": "str",
               "mdl": "float64", "uncertainty": "float64", "qualifier": "str", "method_type": "str", "method_code": "int32", "method_name": "str",
-              "state_name": "str", "county_name": "str", "date_of_last_change": "date" }
+              "state_name": "str", "county_name": "str", "date_of_last_change": "str" }
           OUTPUT_CSV_HEADERS: >-
             [ "state_code", "county_code", "site_num", "parameter_code", "poc",
               "latitude", "longitude", "datum", "parameter_name", "date_local",
@@ -1133,7 +1133,7 @@ dag:
               "pollutant_standard": "str", "date_local": "datetime64[ns]", "units_of_measure": "str", "event_type": "str", "observation_count": "int32",
               "observation_percent": "float64", "arithmetic_mean": "float64", "first_max_value": "float64", "first_max_hour": "int32", "aqi": "str",
               "method_code": "str", "method_name": "str", "local_site_name": "str", "address": "str", "state_name": "str",
-              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "date" }
+              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "str" }
           OUTPUT_CSV_HEADERS: >-
             [ "state_code", "county_code", "site_num", "parameter_code", "poc",
               "latitude", "longitude", "datum", "parameter_name", "sample_duration",
@@ -1182,7 +1182,7 @@ dag:
               "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "date_local": "datetime64[ns]",
               "time_local": "str", "date_gmt": "datetime64[ns]", "time_gmt": "str", "sample_measurement": "float64", "units_of_measure": "str",
               "mdl": "float64", "uncertainty": "float64", "qualifier": "str", "method_type": "str", "method_code": "int32", "method_name": "str",
-              "state_name": "str", "county_name": "str", "date_of_last_change": "date" }
+              "state_name": "str", "county_name": "str", "date_of_last_change": "str" }
           OUTPUT_CSV_HEADERS: >-
             [ "state_code", "county_code", "site_num", "parameter_code", "poc",
               "latitude", "longitude", "datum", "parameter_name", "date_local",
@@ -1232,7 +1232,7 @@ dag:
               "pollutant_standard": "str", "date_local": "datetime64[ns]", "units_of_measure": "str", "event_type": "str", "observation_count": "int32",
               "observation_percent": "float64", "arithmetic_mean": "float64", "first_max_value": "float64", "first_max_hour": "int32", "aqi": "str",
               "method_code": "str", "method_name": "str", "local_site_name": "str", "address": "str", "state_name": "str",
-              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "date" }
+              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "str" }
           OUTPUT_CSV_HEADERS: >-
             [ "state_code", "county_code", "site_num", "parameter_code", "poc",
               "latitude", "longitude", "datum", "parameter_name", "sample_duration",
@@ -1281,7 +1281,7 @@ dag:
               "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "date_local": "datetime64[ns]",
               "time_local": "str", "date_gmt": "datetime64[ns]", "time_gmt": "str", "sample_measurement": "float64", "units_of_measure": "str",
               "mdl": "float64", "uncertainty": "float64", "qualifier": "str", "method_type": "str", "method_code": "int32", "method_name": "str",
-              "state_name": "str", "county_name": "str", "date_of_last_change": "date" }
+              "state_name": "str", "county_name": "str", "date_of_last_change": "str" }
           OUTPUT_CSV_HEADERS: >-
             [ "state_code", "county_code", "site_num", "parameter_code", "poc",
               "latitude", "longitude", "datum", "parameter_name", "date_local",
@@ -1331,7 +1331,7 @@ dag:
               "pollutant_standard": "str", "date_local": "datetime64[ns]", "units_of_measure": "str", "event_type": "str", "observation_count": "int32",
               "observation_percent": "float64", "arithmetic_mean": "float64", "first_max_value": "float64", "first_max_hour": "int32", "aqi": "str",
               "method_code": "str", "method_name": "str", "local_site_name": "str", "address": "str", "state_name": "str",
-              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "date" }
+              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "str" }
           OUTPUT_CSV_HEADERS: >-
             [ "state_code", "county_code", "site_num", "parameter_code", "poc",
               "latitude", "longitude", "datum", "parameter_name", "sample_duration",
@@ -1380,7 +1380,7 @@ dag:
               "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "date_local": "datetime64[ns]",
               "time_local": "str", "date_gmt": "datetime64[ns]", "time_gmt": "str", "sample_measurement": "float64", "units_of_measure": "str",
               "mdl": "float64", "uncertainty": "float64", "qualifier": "str", "method_type": "str", "method_code": "int32", "method_name": "str",
-              "state_name": "str", "county_name": "str", "date_of_last_change": "date" }
+              "state_name": "str", "county_name": "str", "date_of_last_change": "str" }
           OUTPUT_CSV_HEADERS: >-
             [ "state_code", "county_code", "site_num", "parameter_code", "poc",
               "latitude", "longitude", "datum", "parameter_name", "date_local",
@@ -1430,7 +1430,7 @@ dag:
               "pollutant_standard": "str", "date_local": "datetime64[ns]", "units_of_measure": "str", "event_type": "str", "observation_count": "int32",
               "observation_percent": "float64", "arithmetic_mean": "float64", "first_max_value": "float64", "first_max_hour": "int32", "aqi": "str",
               "method_code": "str", "method_name": "str", "local_site_name": "str", "address": "str", "state_name": "str",
-              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "date" }
+              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "str" }
           OUTPUT_CSV_HEADERS: >-
             [ "state_code", "county_code", "site_num", "parameter_code", "poc",
               "latitude", "longitude", "datum", "parameter_name", "sample_duration",
@@ -1479,7 +1479,7 @@ dag:
               "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "date_local": "datetime64[ns]",
               "time_local": "str", "date_gmt": "datetime64[ns]", "time_gmt": "str", "sample_measurement": "float64", "units_of_measure": "str",
               "mdl": "float64", "uncertainty": "float64", "qualifier": "str", "method_type": "str", "method_code": "int32", "method_name": "str",
-              "state_name": "str", "county_name": "str", "date_of_last_change": "date" }
+              "state_name": "str", "county_name": "str", "date_of_last_change": "str" }
           OUTPUT_CSV_HEADERS: >-
             [ "state_code", "county_code", "site_num", "parameter_code", "poc",
               "latitude", "longitude", "datum", "parameter_name", "date_local",
@@ -1529,7 +1529,7 @@ dag:
               "pollutant_standard": "str", "date_local": "datetime64[ns]", "units_of_measure": "str", "event_type": "str", "observation_count": "int32",
               "observation_percent": "float64", "arithmetic_mean": "float64", "first_max_value": "float64", "first_max_hour": "int32", "aqi": "str",
               "method_code": "str", "method_name": "str", "local_site_name": "str", "address": "str", "state_name": "str",
-              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "date" }
+              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "str" }
           OUTPUT_CSV_HEADERS: >-
             [ "state_code", "county_code", "site_num", "parameter_code", "poc",
               "latitude", "longitude", "datum", "parameter_name", "sample_duration",
@@ -1578,7 +1578,7 @@ dag:
               "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "date_local": "datetime64[ns]",
               "time_local": "str", "date_gmt": "datetime64[ns]", "time_gmt": "str", "sample_measurement": "float64", "units_of_measure": "str",
               "mdl": "float64", "uncertainty": "float64", "qualifier": "str", "method_type": "str", "method_code": "int32", "method_name": "str",
-              "state_name": "str", "county_name": "str", "date_of_last_change": "date" }
+              "state_name": "str", "county_name": "str", "date_of_last_change": "str" }
           OUTPUT_CSV_HEADERS: >-
             [ "state_code", "county_code", "site_num", "parameter_code", "poc",
               "latitude", "longitude", "datum", "parameter_name", "date_local",
@@ -1628,7 +1628,7 @@ dag:
               "pollutant_standard": "str", "date_local": "datetime64[ns]", "units_of_measure": "str", "event_type": "str", "observation_count": "int32",
               "observation_percent": "float64", "arithmetic_mean": "float64", "first_max_value": "float64", "first_max_hour": "int32", "aqi": "str",
               "method_code": "str", "method_name": "str", "local_site_name": "str", "address": "str", "state_name": "str",
-              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "date" }
+              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "str" }
           OUTPUT_CSV_HEADERS: >-
             [ "state_code", "county_code", "site_num", "parameter_code", "poc",
               "latitude", "longitude", "datum", "parameter_name", "sample_duration",
@@ -1677,7 +1677,7 @@ dag:
               "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "date_local": "datetime64[ns]",
               "time_local": "str", "date_gmt": "datetime64[ns]", "time_gmt": "str", "sample_measurement": "float64", "units_of_measure": "str",
               "mdl": "float64", "uncertainty": "float64", "qualifier": "str", "method_type": "str", "method_code": "int32", "method_name": "str",
-              "state_name": "str", "county_name": "str", "date_of_last_change": "date" }
+              "state_name": "str", "county_name": "str", "date_of_last_change": "str" }
           OUTPUT_CSV_HEADERS: >-
             [ "state_code", "county_code", "site_num", "parameter_code", "poc",
               "latitude", "longitude", "datum", "parameter_name", "date_local",
