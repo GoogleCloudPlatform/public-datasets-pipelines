@@ -548,7 +548,7 @@ def truncate_date_field(df: pd.DataFrame, truncate_date_fields: typing.List[str]
     for col in df.columns:
         if df[col].name in truncate_date_fields:
             logging.info(f"Formatting Date value in {col}")
-            df[col] = df[col].apply(lambda x: datetime.datetime.strptime(x, from_format).strftime("%Y-%m-%d"))
+            df[col] = df[col].apply(lambda x: "" if x == "" or x.lower() == "nan" or x.lower() == "nat" else datetime.datetime.strptime(x, from_format).strftime("%Y-%m-%d"))
     return df
 
 
