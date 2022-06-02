@@ -43,6 +43,7 @@ def main(
     input_headers: typing.List[str],
     data_dtypes: dict,
     output_headers: typing.List[str],
+    drop_dest_table: str
 ) -> None:
     logging.info(f"{pipeline_name} process started")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
@@ -64,6 +65,7 @@ def main(
         data_dtypes=data_dtypes,
         chunksize=chunksize,
         field_delimiter="|",
+        drop_dest_table=drop_dest_table
     )
     logging.info(f"{pipeline_name} process completed")
 
@@ -85,13 +87,15 @@ def execute_pipeline(
     data_dtypes: dict,
     chunksize: str,
     field_delimiter: str,
+    drop_dest_table: str = "N"
 ) -> None:
-    create_dest_table(
+    table_exists = create_dest_table(
         project_id=project_id,
         dataset_id=dataset_id,
         table_id=table_name,
         schema_filepath=schema_path,
         bucket_name=target_gcs_bucket,
+        drop_table=(drop_dest_table == "Y")
     )
     end_year = datetime.datetime.today().year - 2
     for yr in range(start_year, end_year + 1, 1):
@@ -153,6 +157,7 @@ def process_year_data(
     field_delimiter: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
+    drop_dest_table: str = "N",
     remove_file: bool = True,
 ):
     logging.info(f"Processing year {year} data.")
@@ -325,38 +330,6 @@ def process_source_file(
             )
 
 
-def load_data_to_bq(
-    project_id: str,
-    dataset_id: str,
-    table_id: str,
-    file_path: str,
-    field_delimiter: str,
-    truncate_table: bool,
-) -> None:
-    logging.info(
-        f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} delim={field_delimiter} started"
-    )
-    client = bigquery.Client(project=project_id)
-    table_ref = client.dataset(dataset_id).table(table_id)
-    job_config = bigquery.LoadJobConfig()
-    job_config.source_format = bigquery.SourceFormat.CSV
-    job_config.field_delimiter = field_delimiter
-    if truncate_table:
-        job_config.write_disposition = "WRITE_TRUNCATE"
-    else:
-        job_config.write_disposition = "WRITE_APPEND"
-    job_config.skip_leading_rows = 1
-    job_config.autodetect = False
-    with open(file_path, "rb") as source_file:
-        job = client.load_table_from_file(
-            file_obj=source_file, destination=table_ref, job_config=job_config
-        )
-    job.result()
-    logging.info(
-        f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} completed"
-    )
-
-
 def download_file_http(
     source_url: str, source_file: pathlib.Path, continue_on_error: bool = False
 ) -> bool:
@@ -404,44 +377,95 @@ def unpack_file(infile: str, dest_path: str, compression_type: str = "zip") -> N
         logging.info(f"{infile} not unpacked because it does not exist.")
 
 
+def load_data_to_bq(
+    project_id: str,
+    dataset_id: str,
+    table_id: str,
+    file_path: str,
+    truncate_table: bool,
+    field_delimiter: str = "|",
+) -> None:
+    logging.info(
+        f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} started"
+    )
+    client = bigquery.Client(project=project_id)
+    table_ref = client.dataset(dataset_id).table(table_id)
+    job_config = bigquery.LoadJobConfig()
+    job_config.source_format = bigquery.SourceFormat.CSV
+    job_config.field_delimiter = field_delimiter
+    if truncate_table:
+        job_config.write_disposition = "WRITE_TRUNCATE"
+    else:
+        job_config.write_disposition = "WRITE_APPEND"
+    job_config.skip_leading_rows = 1  # ignore the header
+    job_config.autodetect = False
+    with open(file_path, "rb") as source_file:
+        job = client.load_table_from_file(source_file, table_ref, job_config=job_config)
+    job.result()
+    logging.info(
+        f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} completed"
+    )
+
+
 def create_dest_table(
     project_id: str,
     dataset_id: str,
     table_id: str,
     schema_filepath: list,
     bucket_name: str,
+    drop_table: bool = False,
+    table_clustering_field_list: typing.List[str] = [],
+    table_description: str = "",
+    table_partition_field: str = "",
+    table_partition_field_type: str = "",
 ) -> bool:
     table_ref = f"{project_id}.{dataset_id}.{table_id}"
     logging.info(f"Attempting to create table {table_ref} if it doesn't already exist")
     client = bigquery.Client()
     table_exists = False
     try:
-        table_exists_id = client.get_table(table_ref).table_id
+        table = client.get_table(table_ref)
+        table_exists_id = table.table_id
         logging.info(f"Table {table_exists_id} currently exists.")
-        table_exists = True
+        if drop_table:
+            logging.info("Dropping existing table")
+            client.delete_table(table)
+            table = None
     except NotFound:
+        table = None
+    if not table:
         logging.info(
             (
                 f"Table {table_ref} currently does not exist.  Attempting to create table."
             )
         )
-        try:
-            if check_gcs_file_exists(schema_filepath, bucket_name):
-                schema = create_table_schema([], bucket_name, schema_filepath)
-                table = bigquery.Table(table_ref, schema=schema)
-                client.create_table(table)
-                print(f"Table {table_ref} was created".format(table_id))
-                table_exists = True
-            else:
-                file_name = os.path.split(schema_filepath)[1]
-                file_path = os.path.split(schema_filepath)[0]
+        if check_gcs_file_exists(schema_filepath, bucket_name):
+            schema = create_table_schema([], bucket_name, schema_filepath)
+            table = bigquery.Table(table_ref, schema=schema)
+            table.description = table_description
+            if table_clustering_field_list:
                 logging.info(
-                    f"Error: Unable to create table {table_ref} because schema file {file_name} does not exist in location {file_path} in bucket {bucket_name}"
+                    f"Creating cluster on table ({table_clustering_field_list})"
                 )
-                table_exists = False
-        except Exception as e:
-            logging.info(f"Unable to create table. {e}")
+                table.clustering_fields = table_clustering_field_list
+            if table_partition_field:
+                logging.info(
+                    f"Creating partition on table ({table_partition_field}, {table_partition_field_type})"
+                )
+                table.partitioning_type = table_partition_field_type
+                table.time_partitioning.field = table_partition_field
+            client.create_table(table)
+            print(f"Table {table_ref} was created".format(table_id))
+            table_exists = True
+        else:
+            file_name = os.path.split(schema_filepath)[1]
+            file_path = os.path.split(schema_filepath)[0]
+            logging.info(
+                f"Error: Unable to create table {table_ref} because schema file {file_name} does not exist in location {file_path} in bucket {bucket_name}"
+            )
             table_exists = False
+    else:
+        table_exists = True
     return table_exists
 
 
@@ -489,7 +513,9 @@ def process_chunk(
     field_delimiter: str,
     output_headers: typing.List[str],
 ) -> None:
+    import pdb; pdb.set_trace()
     df = resolve_date_format(df, "%Y-%m-%d %H:%M")
+    df = truncate_date_field(df, ['date_local', 'date_of_last_change'], "%Y-%m-%d")
     df = reorder_headers(df, output_headers)
     save_to_new_file(df=df, file_path=str(target_file_batch), sep=field_delimiter)
     append_batch_file(
@@ -521,6 +547,14 @@ def resolve_date_format(df: pd.DataFrame, from_format: str) -> pd.DataFrame:
                     dt_str=str(x), from_format=from_format, include_time=False
                 )
             )
+            print(datetime.datetime.strptime('2010-03-05 02:04:06', "%Y-%m-%d %H:%M:%S").strftime("%Y-%m-%d"))
+    return df
+
+
+def truncate_date_field(df: pd.DataFrame, truncate_date_fields: str, from_format: str) -> pd.DataFrame:
+    for col in df.columns:
+        if df[col].name in truncate_date_fields:
+            df[col] = df[col].apply(lambda x: datetime.datetime.strptime(x, from_format).strftime("%Y-%m-%d"))
     return df
 
 
@@ -623,4 +657,5 @@ if __name__ == "__main__":
         input_headers=json.loads(os.environ["INPUT_CSV_HEADERS"]),
         data_dtypes=json.loads(os.environ["DATA_DTYPES"]),
         output_headers=json.loads(os.environ["OUTPUT_CSV_HEADERS"]),
+        drop_dest_table=os.environ.get("DROP_DEST_TABLE", "N")
     )
