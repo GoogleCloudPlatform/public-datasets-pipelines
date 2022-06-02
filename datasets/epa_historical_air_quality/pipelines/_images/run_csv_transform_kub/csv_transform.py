@@ -40,7 +40,7 @@ def main(
     target_gcs_bucket: str,
     target_gcs_path: str,
     pipeline_name: str,
-    input_headers: typing.List[str],
+    input_csv_headers: typing.List[str],
     data_dtypes: dict,
     output_headers: typing.List[str],
     drop_dest_table: str
@@ -60,7 +60,7 @@ def main(
         schema_path=schema_path,
         target_gcs_bucket=target_gcs_bucket,
         target_gcs_path=target_gcs_path,
-        input_headers=input_headers,
+        input_headers=input_csv_headers,
         output_headers=output_headers,
         data_dtypes=data_dtypes,
         chunksize=chunksize,
@@ -89,7 +89,7 @@ def execute_pipeline(
     field_delimiter: str,
     drop_dest_table: str = "N"
 ) -> None:
-    table_exists = create_dest_table(
+    create_dest_table(
         project_id=project_id,
         dataset_id=dataset_id,
         table_id=table_name,
@@ -157,7 +157,6 @@ def process_year_data(
     field_delimiter: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
-    drop_dest_table: str = "N",
     remove_file: bool = True,
 ):
     logging.info(f"Processing year {year} data.")
@@ -165,7 +164,7 @@ def process_year_data(
         project_id, dataset_id, table_name, year_field_name, year_field_type, year
     )
     if table_has_data or table_has_data is None:
-        pass
+        logging.info(f"Table {project_id}.{dataset_id}.{table_name} has data.  Skipping load process for year {year}")
     else:
         src_url = source_url.replace("YEAR_ITERATOR", str(year))
         url_file = os.path.split(src_url)[1]
@@ -636,21 +635,21 @@ if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
 
     main(
-        source_url=os.environ["SOURCE_URL"],
-        start_year=int(os.environ["START_YEAR"]),
-        source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
-        project_id=os.environ["PROJECT_ID"],
-        dataset_id=os.environ["DATASET_ID"],
-        table_id=os.environ["TABLE_ID"],
-        year_field_name=os.environ["YEAR_FIELD_NAME"],
-        year_field_type=os.environ["YEAR_FIELD_TYPE"],
-        schema_path=os.environ["SCHEMA_PATH"],
-        chunksize=os.environ["CHUNKSIZE"],
-        target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
-        target_gcs_path=os.environ["TARGET_GCS_PATH"],
-        pipeline_name=os.environ["PIPELINE_NAME"],
-        input_headers=json.loads(os.environ["INPUT_CSV_HEADERS"]),
-        data_dtypes=json.loads(os.environ["DATA_DTYPES"]),
-        output_headers=json.loads(os.environ["OUTPUT_CSV_HEADERS"]),
+        source_url=os.environ.get("SOURCE_URL", ""),
+        start_year=int(os.environ.get("START_YEAR", "1980")),
+        source_file=pathlib.Path(os.environ.get("SOURCE_FILE", "")).expanduser(),
+        project_id=os.environ.get("PROJECT_ID", ""),
+        dataset_id=os.environ.get("DATASET_ID", ""),
+        table_id=os.environ.get("TABLE_ID", ""),
+        year_field_name=os.environ.get("YEAR_FIELD_NAME", ""),
+        year_field_type=os.environ.get("YEAR_FIELD_TYPE", ""),
+        schema_path=os.environ.get("SCHEMA_PATH", ""),
+        chunksize=os.environ.get("CHUNKSIZE", "1500000"),
+        target_gcs_bucket=os.environ.get("TARGET_GCS_BUCKET", ""),
+        target_gcs_path=os.environ.get("TARGET_GCS_PATH", ""),
+        pipeline_name=os.environ.get("PIPELINE_NAME", ""),
+        input_csv_headers=json.loads(os.environ.get("INPUT_CSV_HEADERS", r"[]")),
+        data_dtypes=json.loads(os.environ.get("DATA_DTYPES", r"{}")),
+        output_headers=json.loads(os.environ.get("OUTPUT_CSV_HEADERS", r"[]")),
         drop_dest_table=os.environ.get("DROP_DEST_TABLE", "N")
     )
