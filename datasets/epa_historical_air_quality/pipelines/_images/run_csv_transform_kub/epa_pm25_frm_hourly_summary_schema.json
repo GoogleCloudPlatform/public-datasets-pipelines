@@ -67,7 +67,7 @@
 	},
 	{
 		"name": "date_gmt",
-		"type": "TIMESTAMP",
+		"type": "DATE",
 		"description": "The calendar date of the sample in Greenwich Mean Time.",
 		"mode": "NULLABLE"
 	},
