@@ -24,10 +24,10 @@ default_args = {
 
 
 with DAG(
-    dag_id="epa_historical_air_quality.epa_historical_air_quality",
+    dag_id="epa_historical_air_quality.epa_historical_air_quality_full_load",
     default_args=default_args,
     max_active_runs=1,
-    schedule_interval="0 1 * * 6",
+    schedule_interval="@once",
     catchup=False,
     default_view="graph",
 ) as dag:
@@ -61,7 +61,7 @@ with DAG(
         image_pull_policy="Always",
         image="{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}",
         env_vars={
-            "SOURCE_URL": "data/epa_historical_air_quality/schemas/epa_annual_summaries_schema.json",
+            "SOURCE_URL": "https://aqs.epa.gov/aqsweb/airdata/annual_conc_by_monitor_YEAR_ITERATOR.zip",
             "START_YEAR": "1980",
             "SOURCE_FILE": "files/data.csv",
             "PROJECT_ID": "{{ var.value.gcp_project }}",

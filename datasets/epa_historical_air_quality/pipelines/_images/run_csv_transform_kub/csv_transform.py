@@ -277,7 +277,7 @@ def number_rows_in_table(
             FROM {dataset_id}.{table_name}
             WHERE
         """
-        if year_field_type == "DATETIME":
+        if year_field_type == "DATE":
             query = query + f" FORMAT_DATE('%Y', {year_field_name}) = '{year}'"
         else:
             query = query + f" {year_field_name} = {year}"
@@ -513,9 +513,9 @@ def process_chunk(
     field_delimiter: str,
     output_headers: typing.List[str],
 ) -> None:
-    import pdb; pdb.set_trace()
-    df = resolve_date_format(df, "%Y-%m-%d %H:%M")
-    df = truncate_date_field(df, ['date_local', 'date_of_last_change'], "%Y-%m-%d")
+    date_fields = ['date_local', 'date_of_last_change']
+    df = resolve_date_format(df, date_fields, "%Y-%m-%d %H:%M:%S")
+    df = truncate_date_field(df, date_fields, "%Y-%m-%d %H:%M:%S")
     df = reorder_headers(df, output_headers)
     save_to_new_file(df=df, file_path=str(target_file_batch), sep=field_delimiter)
     append_batch_file(
@@ -533,27 +533,22 @@ def reorder_headers(df: pd.DataFrame, output_headers: typing.List[str]) -> pd.Da
     return df
 
 
-def resolve_date_format(df: pd.DataFrame, from_format: str) -> pd.DataFrame:
+def resolve_date_format(df: pd.DataFrame, date_fields: typing.List[str], from_format: str) -> pd.DataFrame:
     for col in df.columns:
-        if df[col].dtype == "datetime64[ns]":
+        if df[col].name in date_fields:
             logging.info(f"Resolving datetime on {col}")
             df[col] = df[col].apply(
                 lambda x: convert_dt_format(dt_str=str(x), from_format=from_format)
             )
-        elif df[col].dtype == "date":
-            logging.info(f"Resolving date on {col}")
-            df[col] = df[col].apply(
-                lambda x: convert_dt_format(
-                    dt_str=str(x), from_format=from_format, include_time=False
-                )
-            )
-            print(datetime.datetime.strptime('2010-03-05 02:04:06', "%Y-%m-%d %H:%M:%S").strftime("%Y-%m-%d"))
+        else:
+            pass
     return df
 
 
-def truncate_date_field(df: pd.DataFrame, truncate_date_fields: str, from_format: str) -> pd.DataFrame:
+def truncate_date_field(df: pd.DataFrame, truncate_date_fields: typing.List[str], from_format: str) -> pd.DataFrame:
     for col in df.columns:
         if df[col].name in truncate_date_fields:
+            logging.info(f"Formatting Date value in {col}")
             df[col] = df[col].apply(lambda x: datetime.datetime.strptime(x, from_format).strftime("%Y-%m-%d"))
     return df
 
