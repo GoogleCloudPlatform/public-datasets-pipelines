@@ -43,7 +43,7 @@ def main(
     input_csv_headers: typing.List[str],
     data_dtypes: dict,
     output_headers: typing.List[str],
-    drop_dest_table: str
+    drop_dest_table: str,
 ) -> None:
     logging.info(f"{pipeline_name} process started")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
@@ -65,7 +65,7 @@ def main(
         data_dtypes=data_dtypes,
         chunksize=chunksize,
         field_delimiter="|",
-        drop_dest_table=drop_dest_table
+        drop_dest_table=drop_dest_table,
     )
     logging.info(f"{pipeline_name} process completed")
 
@@ -87,7 +87,7 @@ def execute_pipeline(
     data_dtypes: dict,
     chunksize: str,
     field_delimiter: str,
-    drop_dest_table: str = "N"
+    drop_dest_table: str = "N",
 ) -> None:
     create_dest_table(
         project_id=project_id,
@@ -95,7 +95,7 @@ def execute_pipeline(
         table_id=table_name,
         schema_filepath=schema_path,
         bucket_name=target_gcs_bucket,
-        drop_table=(drop_dest_table == "Y")
+        drop_table=(drop_dest_table == "Y"),
     )
     end_year = datetime.datetime.today().year - 2
     for yr in range(start_year, end_year + 1, 1):
@@ -164,7 +164,9 @@ def process_year_data(
         project_id, dataset_id, table_name, year_field_name, year_field_type, year
     )
     if table_has_data or table_has_data is None:
-        logging.info(f"Table {project_id}.{dataset_id}.{table_name} has data.  Skipping load process for year {year}")
+        logging.info(
+            f"Table {project_id}.{dataset_id}.{table_name} has data.  Skipping load process for year {year}"
+        )
     else:
         src_url = source_url.replace("YEAR_ITERATOR", str(year))
         url_file = os.path.split(src_url)[1]
@@ -512,7 +514,7 @@ def process_chunk(
     field_delimiter: str,
     output_headers: typing.List[str],
 ) -> None:
-    date_fields = ['date_local', 'date_of_last_change']
+    date_fields = ["date_local", "date_of_last_change"]
     df = resolve_date_format(df, date_fields, "%Y-%m-%d %H:%M:%S")
     df = truncate_date_field(df, date_fields, "%Y-%m-%d %H:%M:%S")
     df = reorder_headers(df, output_headers)
@@ -532,7 +534,9 @@ def reorder_headers(df: pd.DataFrame, output_headers: typing.List[str]) -> pd.Da
     return df
 
 
-def resolve_date_format(df: pd.DataFrame, date_fields: typing.List[str], from_format: str) -> pd.DataFrame:
+def resolve_date_format(
+    df: pd.DataFrame, date_fields: typing.List[str], from_format: str
+) -> pd.DataFrame:
     for col in df.columns:
         if df[col].name in date_fields:
             logging.info(f"Resolving datetime on {col}")
@@ -544,11 +548,17 @@ def resolve_date_format(df: pd.DataFrame, date_fields: typing.List[str], from_fo
     return df
 
 
-def truncate_date_field(df: pd.DataFrame, truncate_date_fields: typing.List[str], from_format: str) -> pd.DataFrame:
+def truncate_date_field(
+    df: pd.DataFrame, truncate_date_fields: typing.List[str], from_format: str
+) -> pd.DataFrame:
     for col in df.columns:
         if df[col].name in truncate_date_fields:
             logging.info(f"Formatting Date value in {col}")
-            df[col] = df[col].apply(lambda x: "" if x == "" or x.lower() == "nan" or x.lower() == "nat" else datetime.datetime.strptime(x, from_format).strftime("%Y-%m-%d"))
+            df[col] = df[col].apply(
+                lambda x: ""
+                if x == "" or x.lower() == "nan" or x.lower() == "nat"
+                else datetime.datetime.strptime(x, from_format).strftime("%Y-%m-%d")
+            )
     return df
 
 
@@ -651,5 +661,5 @@ if __name__ == "__main__":
         input_csv_headers=json.loads(os.environ.get("INPUT_CSV_HEADERS", r"[]")),
         data_dtypes=json.loads(os.environ.get("DATA_DTYPES", r"{}")),
         output_headers=json.loads(os.environ.get("OUTPUT_CSV_HEADERS", r"[]")),
-        drop_dest_table=os.environ.get("DROP_DEST_TABLE", "N")
+        drop_dest_table=os.environ.get("DROP_DEST_TABLE", "N"),
     )
