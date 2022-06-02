@@ -24,7 +24,7 @@ import google.auth
 import jinja2
 from ruamel import yaml
 
-yaml = yaml.YAML(typ="safe")
+# yaml = yaml.YAML(typ="safe")
 
 
 CURRENT_PATH = pathlib.Path(__file__).resolve().parent
@@ -64,8 +64,7 @@ def main(
 
 def generate_pipeline_dag(dataset_id: str, pipeline_id: str, env: str):
     pipeline_dir = DATASETS_PATH / dataset_id / "pipelines" / pipeline_id
-    config = yaml.load((pipeline_dir / "pipeline.yaml").read_text())
-
+    config = yaml.load((pipeline_dir / "pipeline.yaml").read_text(), Loader=yaml.Loader)
     validate_airflow_version_existence_and_value(config)
     validate_dag_id_existence_and_format(config)
     dag_contents = generate_dag(config, dataset_id)
@@ -305,4 +304,12 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
+
+    def image_constructor(loader, node):
+        value = loader.construct_scalar(node)
+        value = f"gcr.io/{gcp_project_id()}/{args.dataset}__{value}"
+        return value
+
+    yaml.add_constructor("!IMAGE", image_constructor)
+
     main(args.dataset, args.pipeline, args.env, args.all_pipelines, args.skip_builds)
