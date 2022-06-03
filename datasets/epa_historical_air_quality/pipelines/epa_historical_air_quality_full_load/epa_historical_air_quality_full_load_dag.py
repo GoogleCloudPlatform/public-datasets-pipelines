@@ -79,7 +79,7 @@ with DAG(
             "OUTPUT_CSV_HEADERS": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "sample_duration",\n  "pollutant_standard", "metric_used", "method_name", "year", "units_of_measure",\n  "event_type", "observation_count", "observation_percent", "completeness_indicator", "valid_day_count",\n  "required_day_count", "exceptional_data_count", "null_data_count", "primary_exceedance_count", "secondary_exceedance_count",\n  "certification_indicator", "num_obs_below_mdl", "arithmetic_mean", "arithmetic_standard_dev", "first_max_value",\n  "first_max_datetime", "second_max_value", "second_max_datetime", "third_max_value", "third_max_datetime",\n  "fourth_max_value", "fourth_max_datetime", "first_max_non_overlapping_value", "first_no_max_datetime", "second_max_non_overlapping_value",\n  "second_no_max_datetime", "ninety_nine_percentile", "ninety_eight_percentile", "ninety_five_percentile", "ninety_percentile",\n  "seventy_five_percentile", "fifty_percentile", "ten_percentile", "local_site_name", "address",\n  "state_name", "county_name", "city_name", "cbsa_name", "date_of_last_change"]',
             "DROP_DEST_TABLE": "Y",
         },
-        resources={"request_ephemeral_storage": "16G", "request_cpu": "1"},
+        resources={"limit_memory": "16G", "limit_cpu": "2"},
     )
 
     # Run CSV transform within kubernetes pod

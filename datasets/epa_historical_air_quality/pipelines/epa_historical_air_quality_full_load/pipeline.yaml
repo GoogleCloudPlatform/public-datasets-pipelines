@@ -201,8 +201,8 @@ dag:
               "state_name", "county_name", "city_name", "cbsa_name", "date_of_last_change"]
           DROP_DEST_TABLE: "Y"
         resources:
-          request_ephemeral_storage: "16G"
-          request_cpu: "1"
+          limit_memory: "16G"
+          limit_cpu: "2"
 
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"

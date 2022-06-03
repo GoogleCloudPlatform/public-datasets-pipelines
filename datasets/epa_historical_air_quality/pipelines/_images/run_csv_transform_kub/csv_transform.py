@@ -181,6 +181,7 @@ def process_year_data(
         )
         if file_exists:
             unpack_file(infile=source_file, dest_path=dest_path, compression_type="zip")
+            rename_files_lowercase(dir=dest_path)
             process_source_file(
                 source_file=source_file,
                 target_file=target_file,
@@ -213,6 +214,13 @@ def process_year_data(
         else:
             pass
     logging.info(f"Processing year {year} data completed.")
+
+
+def rename_files_lowercase(dir: str = "files") -> None:
+    for file in os.listdir(dir):
+        new_filename = file.lower()
+        logging.info(f"{dir}  {file}  {new_filename}")
+        os.rename(f"{dir}/{file}", f"{dir}/{new_filename}")
 
 
 def table_has_year_data(
@@ -514,7 +522,14 @@ def process_chunk(
     field_delimiter: str,
     output_headers: typing.List[str],
 ) -> None:
-    date_fields = ["date_local", "date_of_last_change"]
+    date_fields = ["date_local",
+                   "date_of_last_change",
+                   "first_max_datetime",
+                   "second_max_datetime",
+                   "third_max_datetime",
+                   "fourth_max_datetime",
+                   "first_no_max_datetime",
+                   "second_no_max_datetime"]
     df = resolve_date_format(df, date_fields, "%Y-%m-%d %H:%M:%S")
     df = truncate_date_field(df, date_fields, "%Y-%m-%d %H:%M:%S")
     df = reorder_headers(df, output_headers)
