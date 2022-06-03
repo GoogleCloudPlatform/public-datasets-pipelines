@@ -523,15 +523,16 @@ def process_chunk(
     output_headers: typing.List[str],
 ) -> None:
     date_fields = ["date_local",
-                   "date_of_last_change",
-                   "first_max_datetime",
+                   "date_of_last_change"]
+    df = resolve_date_format(df, date_fields, "%Y-%m-%d %H:%M:%S")
+    df = truncate_date_field(df, date_fields, "%Y-%m-%d %H:%M:%S")
+    date_fields = ["first_max_datetime",
                    "second_max_datetime",
                    "third_max_datetime",
                    "fourth_max_datetime",
                    "first_no_max_datetime",
                    "second_no_max_datetime"]
-    df = resolve_date_format(df, date_fields, "%Y-%m-%d %H:%M:%S")
-    df = truncate_date_field(df, date_fields, "%Y-%m-%d %H:%M:%S")
+    df = resolve_date_format(df, date_fields, "%Y-%m-%d %H:%M")
     df = reorder_headers(df, output_headers)
     save_to_new_file(df=df, file_path=str(target_file_batch), sep=field_delimiter)
     append_batch_file(
@@ -584,6 +585,13 @@ def convert_dt_format(dt_str: str, from_format: str, include_time: bool = True) 
         if include_time:
             # if there is no time value
             rtnval = dt_str + " 00:00:00"
+        else:
+            # exclude time value
+            rtnval = dt_str
+    elif len(dt_str.strip()) == 16:
+        if include_time:
+            # if there is no time value
+            rtnval = dt_str + ":00"
         else:
             # exclude time value
             rtnval = dt_str
