@@ -172,8 +172,11 @@ def process_year_data(
         url_file = os.path.split(src_url)[1]
         url_file_csv = url_file.replace(".zip", ".csv")
         source_file = f"{dest_path}/source_{url_file}"
+        source_file = source_file.lower()
         source_csv_file = f"{dest_path}/{url_file_csv}"
+        source_csv_file = source_csv_file.lower()
         target_file = f"{dest_path}/target_{url_file_csv}"
+        target_file = target_file.lower()
         file_exists = download_file_http(
             source_url=src_url,
             source_file=source_file,
