@@ -525,16 +525,17 @@ def process_chunk(
     field_delimiter: str,
     output_headers: typing.List[str],
 ) -> None:
-    date_fields = ["date_local",
-                   "date_of_last_change"]
+    date_fields = ["date_local", "date_of_last_change"]
     df = resolve_date_format(df, date_fields, "%Y-%m-%d %H:%M:%S")
     df = truncate_date_field(df, date_fields, "%Y-%m-%d %H:%M:%S")
-    date_fields = ["first_max_datetime",
-                   "second_max_datetime",
-                   "third_max_datetime",
-                   "fourth_max_datetime",
-                   "first_no_max_datetime",
-                   "second_no_max_datetime"]
+    date_fields = [
+        "first_max_datetime",
+        "second_max_datetime",
+        "third_max_datetime",
+        "fourth_max_datetime",
+        "first_no_max_datetime",
+        "second_no_max_datetime",
+    ]
     df = resolve_date_format(df, date_fields, "%Y-%m-%d %H:%M")
     df = reorder_headers(df, output_headers)
     save_to_new_file(df=df, file_path=str(target_file_batch), sep=field_delimiter)

@@ -27,7 +27,7 @@ with DAG(
     dag_id="epa_historical_air_quality.epa_historical_air_quality",
     default_args=default_args,
     max_active_runs=1,
-    schedule_interval="0 1 * * 6",
+    schedule_interval="@once",
     catchup=False,
     default_view="graph",
 ) as dag:
@@ -63,7 +63,7 @@ with DAG(
         env_vars={
             "SOURCE_URL": "https://aqs.epa.gov/aqsweb/airdata/annual_conc_by_monitor_YEAR_ITERATOR.zip",
             "START_YEAR": "1980",
-            "SOURCE_FILE": "files/data.csv",
+            "SOURCE_FILE": "files/annual_summary_data.csv",
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "epa_historical_air_quality",
             "TABLE_ID": "air_quality_annual_summary",
@@ -79,7 +79,7 @@ with DAG(
             "OUTPUT_CSV_HEADERS": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "sample_duration",\n  "pollutant_standard", "metric_used", "method_name", "year", "units_of_measure",\n  "event_type", "observation_count", "observation_percent", "completeness_indicator", "valid_day_count",\n  "required_day_count", "exceptional_data_count", "null_data_count", "primary_exceedance_count", "secondary_exceedance_count",\n  "certification_indicator", "num_obs_below_mdl", "arithmetic_mean", "arithmetic_standard_dev", "first_max_value",\n  "first_max_datetime", "second_max_value", "second_max_datetime", "third_max_value", "third_max_datetime",\n  "fourth_max_value", "fourth_max_datetime", "first_max_non_overlapping_value", "first_no_max_datetime", "second_max_non_overlapping_value",\n  "second_no_max_datetime", "ninety_nine_percentile", "ninety_eight_percentile", "ninety_five_percentile", "ninety_percentile",\n  "seventy_five_percentile", "fifty_percentile", "ten_percentile", "local_site_name", "address",\n  "state_name", "county_name", "city_name", "cbsa_name", "date_of_last_change"]',
             "DROP_DEST_TABLE": "N",
         },
-        resources={"request_ephemeral_storage": "16G", "request_cpu": "1"},
+        resources={"limit_memory": "16G", "limit_cpu": "2"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -96,7 +96,7 @@ with DAG(
         env_vars={
             "SOURCE_URL": "https://aqs.epa.gov/aqsweb/airdata/daily_42101_YEAR_ITERATOR.zip",
             "START_YEAR": "1990",
-            "SOURCE_FILE": "files/data.csv",
+            "SOURCE_FILE": "files/co_daily_summary_data.csv",
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "epa_historical_air_quality",
             "TABLE_ID": "co_daily_summary",
@@ -129,7 +129,7 @@ with DAG(
         env_vars={
             "SOURCE_URL": "https://aqs.epa.gov/aqsweb/airdata/hourly_42101_YEAR_ITERATOR.zip",
             "START_YEAR": "1990",
-            "SOURCE_FILE": "files/data.csv",
+            "SOURCE_FILE": "files/co_hourly_summary_data.csv",
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "epa_historical_air_quality",
             "TABLE_ID": "co_hourly_summary",
@@ -162,7 +162,7 @@ with DAG(
         env_vars={
             "SOURCE_URL": "https://aqs.epa.gov/aqsweb/airdata/daily_HAPS_YEAR_ITERATOR.zip",
             "START_YEAR": "1990",
-            "SOURCE_FILE": "files/data.csv",
+            "SOURCE_FILE": "files/hap_daily_summary_data.csv",
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "epa_historical_air_quality",
             "TABLE_ID": "hap_daily_summary",
@@ -195,10 +195,10 @@ with DAG(
         env_vars={
             "SOURCE_URL": "https://aqs.epa.gov/aqsweb/airdata/hourly_HAPS_YEAR_ITERATOR.zip",
             "START_YEAR": "1990",
-            "SOURCE_FILE": "files/data.csv",
+            "SOURCE_FILE": "files/hap_hourly_summary_data.csv",
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "epa_historical_air_quality",
-            "TABLE_ID": "hap_daily_summary",
+            "TABLE_ID": "hap_hourly_summary",
             "YEAR_FIELD_NAME": "date_local",
             "YEAR_FIELD_TYPE": "DATE",
             "SCHEMA_PATH": "data/epa_historical_air_quality/schemas/epa_hap_hourly_summary_schema.json",
@@ -228,7 +228,7 @@ with DAG(
         env_vars={
             "SOURCE_URL": "https://aqs.epa.gov/aqsweb/airdata/daily_LEAD_YEAR_ITERATOR.zip",
             "START_YEAR": "1980",
-            "SOURCE_FILE": "files/data.csv",
+            "SOURCE_FILE": "files/lead_daily_summary_data.csv",
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "epa_historical_air_quality",
             "TABLE_ID": "lead_daily_summary",
@@ -261,7 +261,7 @@ with DAG(
         env_vars={
             "SOURCE_URL": "https://aqs.epa.gov/aqsweb/airdata/daily_42602_YEAR_ITERATOR.zip",
             "START_YEAR": "1990",
-            "SOURCE_FILE": "files/data.csv",
+            "SOURCE_FILE": "files/no2_daily_summary_data.csv",
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "epa_historical_air_quality",
             "TABLE_ID": "no2_daily_summary",
@@ -294,7 +294,7 @@ with DAG(
         env_vars={
             "SOURCE_URL": "https://aqs.epa.gov/aqsweb/airdata/hourly_42602_YEAR_ITERATOR.zip",
             "START_YEAR": "1990",
-            "SOURCE_FILE": "files/data.csv",
+            "SOURCE_FILE": "files/no2_hourly_summary_data.csv",
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "epa_historical_air_quality",
             "TABLE_ID": "no2_hourly_summary",
@@ -327,7 +327,7 @@ with DAG(
         env_vars={
             "SOURCE_URL": "https://aqs.epa.gov/aqsweb/airdata/daily_NONOxNOy_YEAR_ITERATOR.zip",
             "START_YEAR": "1990",
-            "SOURCE_FILE": "files/data.csv",
+            "SOURCE_FILE": "files/nonoxnoy_daily_summary_data.csv",
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "epa_historical_air_quality",
             "TABLE_ID": "nonoxnoy_daily_summary",
@@ -360,7 +360,7 @@ with DAG(
         env_vars={
             "SOURCE_URL": "https://aqs.epa.gov/aqsweb/airdata/hourly_NONOxNOy_YEAR_ITERATOR.zip",
             "START_YEAR": "1990",
-            "SOURCE_FILE": "files/data.csv",
+            "SOURCE_FILE": "files/nonoxnoy_hourly_summary_data.csv",
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "epa_historical_air_quality",
             "TABLE_ID": "nonoxnoy_hourly_summary",
@@ -393,7 +393,7 @@ with DAG(
         env_vars={
             "SOURCE_URL": "https://aqs.epa.gov/aqsweb/airdata/daily_44201_YEAR_ITERATOR.zip",
             "START_YEAR": "1990",
-            "SOURCE_FILE": "files/data.csv",
+            "SOURCE_FILE": "files/o3_daily_summary_data.csv",
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "epa_historical_air_quality",
             "TABLE_ID": "o3_daily_summary",
@@ -426,7 +426,7 @@ with DAG(
         env_vars={
             "SOURCE_URL": "https://aqs.epa.gov/aqsweb/airdata/hourly_44201_YEAR_ITERATOR.zip",
             "START_YEAR": "1980",
-            "SOURCE_FILE": "files/data.csv",
+            "SOURCE_FILE": "files/o3_hourly_summary_data.csv",
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "epa_historical_air_quality",
             "TABLE_ID": "o3_hourly_summary",
@@ -459,7 +459,7 @@ with DAG(
         env_vars={
             "SOURCE_URL": "https://aqs.epa.gov/aqsweb/airdata/daily_81102_YEAR_ITERATOR.zip",
             "START_YEAR": "1990",
-            "SOURCE_FILE": "files/data.csv",
+            "SOURCE_FILE": "files/pm10_daily_summary_data.csv",
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "epa_historical_air_quality",
             "TABLE_ID": "pm10_daily_summary",
@@ -492,7 +492,7 @@ with DAG(
         env_vars={
             "SOURCE_URL": "https://aqs.epa.gov/aqsweb/airdata/hourly_81102_YEAR_ITERATOR.zip",
             "START_YEAR": "1990",
-            "SOURCE_FILE": "files/data.csv",
+            "SOURCE_FILE": "files/pm10_hourly_summary_data.csv",
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "epa_historical_air_quality",
             "TABLE_ID": "pm10_hourly_summary",
@@ -525,7 +525,7 @@ with DAG(
         env_vars={
             "SOURCE_URL": "https://aqs.epa.gov/aqsweb/airdata/hourly_88101_YEAR_ITERATOR.zip",
             "START_YEAR": "1980",
-            "SOURCE_FILE": "files/data.csv",
+            "SOURCE_FILE": "files/pm25_frm_hourly_summary_data.csv",
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "epa_historical_air_quality",
             "TABLE_ID": "pm25_frm_hourly_summary",
@@ -558,7 +558,7 @@ with DAG(
         env_vars={
             "SOURCE_URL": "https://aqs.epa.gov/aqsweb/airdata/daily_88502_YEAR_ITERATOR.zip",
             "START_YEAR": "1980",
-            "SOURCE_FILE": "files/data.csv",
+            "SOURCE_FILE": "files/pm25_nonfrm_daily_summary_data.csv",
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "epa_historical_air_quality",
             "TABLE_ID": "pm25_nonfrm_daily_summary",
@@ -591,7 +591,7 @@ with DAG(
         env_vars={
             "SOURCE_URL": "https://aqs.epa.gov/aqsweb/airdata/hourly_88502_YEAR_ITERATOR.zip",
             "START_YEAR": "1990",
-            "SOURCE_FILE": "files/data.csv",
+            "SOURCE_FILE": "files/pm25_nonfrm_hourly_summary_data.csv",
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "epa_historical_air_quality",
             "TABLE_ID": "pm25_nonfrm_hourly_summary",
@@ -624,7 +624,7 @@ with DAG(
         env_vars={
             "SOURCE_URL": "https://aqs.epa.gov/aqsweb/airdata/daily_SPEC_YEAR_ITERATOR.zip",
             "START_YEAR": "1990",
-            "SOURCE_FILE": "files/data.csv",
+            "SOURCE_FILE": "files/pm25_speciation_daily_summary_data.csv",
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "epa_historical_air_quality",
             "TABLE_ID": "pm25_speciation_daily_summary",
@@ -657,7 +657,7 @@ with DAG(
         env_vars={
             "SOURCE_URL": "https://aqs.epa.gov/aqsweb/airdata/hourly_SPEC_YEAR_ITERATOR.zip",
             "START_YEAR": "1990",
-            "SOURCE_FILE": "files/data.csv",
+            "SOURCE_FILE": "files/pm25_speciation_hourly_summary_data.csv",
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "epa_historical_air_quality",
             "TABLE_ID": "pm25_speciation_hourly_summary",
@@ -690,7 +690,7 @@ with DAG(
         env_vars={
             "SOURCE_URL": "https://aqs.epa.gov/aqsweb/airdata/daily_PRESS_YEAR_ITERATOR.zip",
             "START_YEAR": "1990",
-            "SOURCE_FILE": "files/data.csv",
+            "SOURCE_FILE": "files/pressure_daily_summary_data.csv",
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "epa_historical_air_quality",
             "TABLE_ID": "pressure_daily_summary",
@@ -723,7 +723,7 @@ with DAG(
         env_vars={
             "SOURCE_URL": "https://aqs.epa.gov/aqsweb/airdata/hourly_PRESS_YEAR_ITERATOR.zip",
             "START_YEAR": "1990",
-            "SOURCE_FILE": "files/data.csv",
+            "SOURCE_FILE": "files/pressure_hourly_summary_data.csv",
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "epa_historical_air_quality",
             "TABLE_ID": "pressure_hourly_summary",
@@ -756,7 +756,7 @@ with DAG(
         env_vars={
             "SOURCE_URL": "https://aqs.epa.gov/aqsweb/airdata/daily_RH_DP_YEAR_ITERATOR.zip",
             "START_YEAR": "1990",
-            "SOURCE_FILE": "files/data.csv",
+            "SOURCE_FILE": "files/rh_and_dp_daily_summary_data.csv",
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "epa_historical_air_quality",
             "TABLE_ID": "rh_and_dp_daily_summary",
@@ -789,7 +789,7 @@ with DAG(
         env_vars={
             "SOURCE_URL": "https://aqs.epa.gov/aqsweb/airdata/hourly_RH_DP_YEAR_ITERATOR.zip",
             "START_YEAR": "1990",
-            "SOURCE_FILE": "files/data.csv",
+            "SOURCE_FILE": "files/rh_and_dp_hourly_summary_data.csv",
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "epa_historical_air_quality",
             "TABLE_ID": "rh_and_dp_hourly_summary",
@@ -822,7 +822,7 @@ with DAG(
         env_vars={
             "SOURCE_URL": "https://aqs.epa.gov/aqsweb/airdata/daily_42401_YEAR_ITERATOR.zip",
             "START_YEAR": "1990",
-            "SOURCE_FILE": "files/data.csv",
+            "SOURCE_FILE": "files/so2_daily_summary_data.csv",
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "epa_historical_air_quality",
             "TABLE_ID": "so2_daily_summary",
@@ -855,7 +855,7 @@ with DAG(
         env_vars={
             "SOURCE_URL": "https://aqs.epa.gov/aqsweb/airdata/hourly_42401_YEAR_ITERATOR.zip",
             "START_YEAR": "1990",
-            "SOURCE_FILE": "files/data.csv",
+            "SOURCE_FILE": "files/so2_hourly_summary_data.csv",
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "epa_historical_air_quality",
             "TABLE_ID": "so2_hourly_summary",
@@ -888,7 +888,7 @@ with DAG(
         env_vars={
             "SOURCE_URL": "https://aqs.epa.gov/aqsweb/airdata/daily_TEMP_YEAR_ITERATOR.zip",
             "START_YEAR": "1990",
-            "SOURCE_FILE": "files/data.csv",
+            "SOURCE_FILE": "files/temperature_daily_summary_data.csv",
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "epa_historical_air_quality",
             "TABLE_ID": "temperature_daily_summary",
@@ -921,7 +921,7 @@ with DAG(
         env_vars={
             "SOURCE_URL": "https://aqs.epa.gov/aqsweb/airdata/hourly_TEMP_YEAR_ITERATOR.zip",
             "START_YEAR": "1990",
-            "SOURCE_FILE": "files/data.csv",
+            "SOURCE_FILE": "files/temperature_hourly_summary_data.csv",
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "epa_historical_air_quality",
             "TABLE_ID": "temperature_hourly_summary",
@@ -954,7 +954,7 @@ with DAG(
         env_vars={
             "SOURCE_URL": "https://aqs.epa.gov/aqsweb/airdata/daily_VOCS_YEAR_ITERATOR.zip",
             "START_YEAR": "1990",
-            "SOURCE_FILE": "files/data.csv",
+            "SOURCE_FILE": "files/voc_daily_summary_data.csv",
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "epa_historical_air_quality",
             "TABLE_ID": "voc_daily_summary",
@@ -987,7 +987,7 @@ with DAG(
         env_vars={
             "SOURCE_URL": "https://aqs.epa.gov/aqsweb/airdata/hourly_VOCS_YEAR_ITERATOR.zip",
             "START_YEAR": "1990",
-            "SOURCE_FILE": "files/data.csv",
+            "SOURCE_FILE": "files/voc_hourly_summary_data.csv",
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "epa_historical_air_quality",
             "TABLE_ID": "voc_hourly_summary",
@@ -1020,7 +1020,7 @@ with DAG(
         env_vars={
             "SOURCE_URL": "https://aqs.epa.gov/aqsweb/airdata/daily_WIND_YEAR_ITERATOR.zip",
             "START_YEAR": "1990",
-            "SOURCE_FILE": "files/data.csv",
+            "SOURCE_FILE": "files/wind_daily_summary_data.csv",
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "epa_historical_air_quality",
             "TABLE_ID": "wind_daily_summary",
@@ -1053,7 +1053,7 @@ with DAG(
         env_vars={
             "SOURCE_URL": "https://aqs.epa.gov/aqsweb/airdata/hourly_WIND_YEAR_ITERATOR.zip",
             "START_YEAR": "1990",
-            "SOURCE_FILE": "files/data.csv",
+            "SOURCE_FILE": "files/wind_hourly_summary_data.csv",
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "epa_historical_air_quality",
             "TABLE_ID": "wind_hourly_summary",
