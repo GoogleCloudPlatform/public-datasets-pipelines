@@ -49,7 +49,7 @@ def main(
     output_csv_headers: typing.List[str],
     table_description: str,
     pipeline_name: str,
-    file_name_prefix: str
+    file_name_prefix: str,
 ) -> None:
     logging.info(f"{pipeline_name} process started")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
@@ -74,7 +74,7 @@ def main(
         rename_headers_list=rename_headers_list,
         output_csv_headers=output_csv_headers,
         table_description=table_description,
-        file_name_prefix=file_name_prefix
+        file_name_prefix=file_name_prefix,
     )
     logging.info(f"{pipeline_name} process completed")
 
@@ -100,14 +100,11 @@ def execute_pipeline(
     output_csv_headers: typing.List[str],
     rename_headers_list: dict,
     table_description: str,
-    file_name_prefix: str
+    file_name_prefix: str,
 ) -> None:
     download_file(source_url, source_file)
     dest_path = os.path.split(source_file)[0]
-    unpack_file(
-        infile = source_file,
-        dest_path = dest_path
-    )
+    unpack_file(infile=source_file, dest_path=dest_path)
     datafile = find_file_in_path(dest_path, f"*{file_name_prefix}*.csv")[0]
     process_source_file(
         source_url=source_url,
@@ -119,7 +116,7 @@ def execute_pipeline(
         output_csv_headers=output_csv_headers,
         rename_headers_list=rename_headers_list,
         header_row_ordinal="0",
-        field_separator=input_field_delimiter
+        field_separator=input_field_delimiter,
     )
     if os.path.exists(target_file):
         upload_file_to_gcs(
@@ -265,7 +262,7 @@ def process_chunk(
     target_file: str,
     skip_header: bool,
     rename_headers_list: dict,
-    output_csv_headers_list: typing.List[str]
+    output_csv_headers_list: typing.List[str],
 ) -> None:
     logging.info(f"Processing batch file {target_file_batch}")
     df = rename_headers(df, rename_headers_list)
@@ -443,20 +440,12 @@ def find_file_in_path(root_path: str, pattern: str = "*") -> typing.List[str]:
 
 def unpack_file(infile: str, dest_path: str, compression_type: str = "zip") -> None:
     if os.path.exists(infile):
-            logging.info(f"Unpacking {infile} to {dest_path}")
-            with ZipFile(infile, mode="r") as zipf:
-                zipf.extractall(dest_path)
-                zipf.close()
+        logging.info(f"Unpacking {infile} to {dest_path}")
+        with ZipFile(infile, mode="r") as zipf:
+            zipf.extractall(dest_path)
+            zipf.close()
     else:
         logging.info(f"{infile} not unpacked because it does not exist.")
-
-
-def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
-    df.rename(columns=rename_mappings, inplace=True)
-
-
-def save_to_new_file(df: pd.DataFrame, file_path: str) -> None:
-    df.to_csv(file_path, float_format="%.0f", index=False)
 
 
 def download_file(source_url: str, source_file: pathlib.Path) -> None:
@@ -475,7 +464,7 @@ def upload_file_to_gcs(
 ) -> None:
     if os.path.exists(file_path):
         logging.info(
-            f"Uploading output file {file_path} to gs://{target_gcs_bucket}/{target_gcs_path}"
+            f"Uploading output file to gs://{target_gcs_bucket}/{target_gcs_path}"
         )
         storage_client = storage.Client()
         bucket = storage_client.bucket(target_gcs_bucket)
@@ -512,5 +501,5 @@ if __name__ == "__main__":
         output_csv_headers=json.loads(os.environ.get("OUTPUT_CSV_HEADERS", r"[]")),
         table_description=os.environ.get("TABLE_DESCRIPTION", ""),
         pipeline_name=os.environ.get("PIPELINE_NAME", ""),
-        file_name_prefix=os.environ.get("FILE_NAME_PREFIX", "")
+        file_name_prefix=os.environ.get("FILE_NAME_PREFIX", ""),
     )
