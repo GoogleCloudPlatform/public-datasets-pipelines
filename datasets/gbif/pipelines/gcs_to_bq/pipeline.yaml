@@ -1,0 +1,47 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+resources:
+
+  - type: bigquery_table
+    table_id: occurrences
+    description: "Evidence of the occurrence of a species (or other taxon) at a particular place on a specified date."
+
+dag:
+  airflow_version: 2
+  initialize:
+    dag_id: gcs_to_bq
+    default_args:
+      owner: "Google"
+      depends_on_past: False
+      start_date: "2022-03-31"
+    max_active_runs: 1
+    schedule_interval: "0 0 2 * *"  # Every 2nd day of the month
+    catchup: False
+    default_view: graph
+
+  tasks:
+    - operator: "GoogleCloudStorageToBigQueryOperator"
+      description: "Load Parquet files to BQ"
+      args:
+        task_id: "load_parquet_files_to_bq"
+        bucket: "{{ var.json.gbif.source_bucket }}"
+        source_objects: ["occurrence/{{ execution_date.strftime('%Y-%m-01') }}/occurrence.parquet/*"]
+        source_format: "PARQUET"
+        destination_project_dataset_table: "gbif.occurrences"
+        write_disposition: "WRITE_TRUNCATE"
+
+  graph_paths:
+    - "load_parquet_files_to_bq"

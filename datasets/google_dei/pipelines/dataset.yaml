@@ -28,3 +28,4 @@ resources:
   - type: storage_bucket
     name: "ggl-dei"
     uniform_bucket_level_access: True
+    location: US

@@ -27,7 +27,7 @@ with DAG(
     dag_id="open_targets.copy_genetics_data",
     default_args=default_args,
     max_active_runs=1,
-    schedule_interval="@monthly",
+    schedule_interval="@once",
     catchup=False,
     default_view="graph",
 ) as dag:
