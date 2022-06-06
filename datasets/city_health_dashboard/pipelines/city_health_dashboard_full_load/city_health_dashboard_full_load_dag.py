@@ -27,7 +27,7 @@ with DAG(
     dag_id="city_health_dashboard.city_health_dashboard_full_load",
     default_args=default_args,
     max_active_runs=1,
-    schedule_interval="@daily",
+    schedule_interval="@once",
     catchup=False,
     default_view="graph",
 ) as dag:

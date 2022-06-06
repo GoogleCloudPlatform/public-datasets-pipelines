@@ -50,7 +50,7 @@ dag:
           CHUNKSIZE: "500000"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "city_health_dashboard"
-          TABLE_ID: "city_health_dashboard.chdb_data_city_all"
+          TABLE_ID: "chdb_data_city_all"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/city_health_dashboard/chdb_data_city_all/data_output.csv"
           SCHEMA_PATH: "data/city_health_dashboard/schema/chdb_data_city_schema.json"
@@ -67,7 +67,7 @@ dag:
               "multiplier_indicator", "data_yr_type", "geo_level", "date_export"
             ]
           DATA_DTYPES: >-
-            [
+            {
               "state_abbr": "str",
               "state_fips": "str",
               "place_fips": "str",
@@ -87,7 +87,7 @@ dag:
               "data_yr_type": "str",
               "geo_level": "str",
               "date_export": "str"
-            ]
+            }
           OUTPUT_CSV_HEADERS: >-
             [
               "state_abbr", "state_fips", "place_fips", "stpl_fips", "city_name",
@@ -141,7 +141,7 @@ dag:
           CHUNKSIZE: "500000"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "city_health_dashboard"
-          TABLE_ID: "city_health_dashboard.chdb_data_tract_all"
+          TABLE_ID: "chdb_data_tract_all"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/city_health_dashboard/chdb_data_tract_all/data_output.csv"
           SCHEMA_PATH: "data/city_health_dashboard/schema/chdb_data_tract_schema.json"
@@ -158,7 +158,7 @@ dag:
               "lci", "uci", "data_yr_type", "geo_level", "date_export"
             ]
           DATA_DTYPES: >-
-            [
+            {
               "state_abbr": "str",
               "state_fips": "str",
               "county_fips": "str",
@@ -179,7 +179,7 @@ dag:
               "data_yr_type": "str",
               "geo_level": "str",
               "date_export": "str"
-            ]
+            }
           OUTPUT_CSV_HEADERS: >-
             [
               "state_abbr", "state_fips", "county_fips", "county_name", "tract_code",
