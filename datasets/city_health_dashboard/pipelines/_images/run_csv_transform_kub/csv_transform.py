@@ -111,7 +111,7 @@ def execute_pipeline(
         source_file=datafile,
         target_file=target_file,
         chunksize=chunksize,
-        input_headers=input_csv_headers,
+        input_csv_headers=input_csv_headers,
         data_dtypes=data_dtypes,
         output_csv_headers=output_csv_headers,
         rename_headers_list=rename_headers_list,
@@ -164,8 +164,9 @@ def process_source_file(
     source_file: str,
     target_file: str,
     chunksize: str,
-    input_headers: typing.List[str],
+    input_csv_headers: typing.List[str],
     data_dtypes: dict,
+    output_csv_headers: typing.List[str],
     rename_headers_list: typing.List[str],
     header_row_ordinal: str = "0",
     field_separator: str = ",",
@@ -179,7 +180,7 @@ def process_source_file(
             quotechar='"',
             chunksize=int(chunksize),  # size of batch data, in no. of records
             sep=field_separator,  # data column separator, typically ","
-            names=input_headers,
+            names=input_csv_headers,
             dtype=data_dtypes,
             keep_default_na=True,
             na_values=[" "],
@@ -197,6 +198,7 @@ def process_source_file(
                     target_file=target_file,
                     skip_header=(not chunk_number == 0),
                     rename_headers_list=rename_headers_list,
+                    output_csv_headers_list=output_csv_headers
                 )
     else:
         header = int(header_row_ordinal)
@@ -226,6 +228,7 @@ def process_source_file(
                         target_file=target_file,
                         skip_header=(not chunk_number == 0),
                         rename_headers_list=rename_headers_list,
+                        output_csv_headers_list=output_csv_headers
                     )
         else:
             with pd.read_csv(
@@ -252,6 +255,7 @@ def process_source_file(
                         target_file=target_file,
                         skip_header=(not chunk_number == 0),
                         rename_headers_list=rename_headers_list,
+                        output_csv_headers_list=output_csv_headers
                     )
 
 
