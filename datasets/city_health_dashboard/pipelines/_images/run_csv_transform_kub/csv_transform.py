@@ -198,7 +198,7 @@ def process_source_file(
                     target_file=target_file,
                     skip_header=(not chunk_number == 0),
                     rename_headers_list=rename_headers_list,
-                    output_csv_headers_list=output_csv_headers
+                    output_csv_headers_list=output_csv_headers,
                 )
     else:
         header = int(header_row_ordinal)
@@ -228,7 +228,7 @@ def process_source_file(
                         target_file=target_file,
                         skip_header=(not chunk_number == 0),
                         rename_headers_list=rename_headers_list,
-                        output_csv_headers_list=output_csv_headers
+                        output_csv_headers_list=output_csv_headers,
                     )
         else:
             with pd.read_csv(
@@ -255,7 +255,7 @@ def process_source_file(
                         target_file=target_file,
                         skip_header=(not chunk_number == 0),
                         rename_headers_list=rename_headers_list,
-                        output_csv_headers_list=output_csv_headers
+                        output_csv_headers_list=output_csv_headers,
                     )
 
 
