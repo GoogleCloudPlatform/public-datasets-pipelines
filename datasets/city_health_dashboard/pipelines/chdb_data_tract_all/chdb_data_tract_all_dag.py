@@ -51,7 +51,7 @@ with DAG(
             "CSV_HEADERS": '["state_abbr","state_fips","county_fips","county_name","tract_code","stcotr_fips","stpl_fips","city_name","metric_name","metric_number","group_name","group_number","num","denom","est","lci","uci","data_yr_type","geo_level","date_export"]',
             "RENAME_MAPPINGS": '{"state_abbr": "state_abbr","state_fips": "state_fips","county_fips": "county_fips","county_name": "county_name","tract_code": "tract_code","stcotr_fips": "stcotr_fips","stpl_fips": "stpl_fips","city_name": "city_name","metric_name": "metric_name","metric_number": "metric_number","group_name": "group_name","group_number": "group_number","num": "num","denom": "denom","est": "est","lci": "lci","uci": "uci","data_yr_type": "data_yr_type","geo_level": "geo_level","date_export": "date_export"}',
             "PIPELINE_NAME": "chdb_data_tract_all",
-            "FILE_NAME": "CHDB_data_tract_all_v13.1.csv",
+            "FILE_NAME_PREFIX": "CHDB_data_tract_all_",
         },
         resources={
             "limit_memory": "2G",
