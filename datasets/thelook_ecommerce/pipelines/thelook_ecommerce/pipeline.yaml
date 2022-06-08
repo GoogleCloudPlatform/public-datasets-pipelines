@@ -76,7 +76,7 @@ dag:
 
         # Docker images will be built and pushed to GCR by default whenever the `scripts/generate_dag.py` is run. To skip building and pushing images, use the optional `--skip-builds` flag.
         # image: "{{ var.json.thelook_ecommerce.docker_image }}"
-        image: !IMAGE run_thelook_kub
+        image: !IMAGE: run_thelook_kub
 
         # Set the environment variables you need initialized in the container. Use these as input variables for the script your container is expected to perform.
         env_vars:

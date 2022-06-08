@@ -41,7 +41,7 @@ with DAG(
         namespace="composer",
         service_account_name="datasets",
         image_pull_policy="Always",
-        image="gcr.io/sandbox-trials/thelook_ecommerce__run_thelook_kub",
+        image="gcr.io/{{ var.value.gcp_project }}/thelook_ecommerce__run_thelook_kub",
         env_vars={
             "NUM_OF_USERS": "100000",
             "NUM_OF_GHOST_EVENTS": "5",
