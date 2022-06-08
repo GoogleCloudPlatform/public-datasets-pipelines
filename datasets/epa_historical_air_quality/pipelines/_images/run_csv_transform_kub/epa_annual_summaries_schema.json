@@ -325,7 +325,7 @@
 	},
 	{
 		"name": "date_of_last_change",
-		"type": "TIMESTAMP",
+		"type": "DATE",
 		"description": "The date the last time any numeric values in this record were updated in the AQS data system.",
 		"mode": "NULLABLE"
 	}

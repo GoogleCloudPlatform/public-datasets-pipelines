@@ -33,12 +33,12 @@ with DAG(
 ) as dag:
 
     # Task to load CSV data to a BigQuery table
-    load_intersectional_attrition_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
-        task_id="load_intersectional_attrition_to_bq",
+    load_intersectional_attrition_index_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
+        task_id="load_intersectional_attrition_index_to_bq",
         bucket="{{ var.json.google_dei.storage_bucket }}",
-        source_objects=["DAR/intersectional_attrition.csv"],
+        source_objects=["DAR/2022/intersectional_attrition_index.csv"],
         source_format="CSV",
-        destination_project_dataset_table="google_dei.dar_intersectional_attrition",
+        destination_project_dataset_table="google_dei.dar_intersectional_attrition_index",
         skip_leading_rows=1,
         write_disposition="WRITE_TRUNCATE",
         schema_fields=[
@@ -56,37 +56,37 @@ with DAG(
             },
             {
                 "name": "gender_us",
-                "description": "Gender of Googlers in the U.S.",
+                "description": "Gender of Googler exits in the U.S.",
                 "type": "string",
                 "mode": "required",
             },
             {
                 "name": "race_asian",
-                "description": "The attrition index score of Googlers in the U.S. who identify as Asian",
+                "description": "The attrition index score of Googlers in the U.S. who identify as Asian and zero or more other races",
                 "type": "integer",
                 "mode": "nullable",
             },
             {
                 "name": "race_black",
-                "description": "The attrition index score of Googlers in the U.S. who identify as Black",
+                "description": "The attrition index score of Googlers in the U.S. who identify as Black and zero or more other races",
                 "type": "integer",
                 "mode": "nullable",
             },
             {
                 "name": "race_hispanic_latinx",
-                "description": "The attrition index score of Googlers in the U.S. who identify as Hispanic or Latinx",
+                "description": "The attrition index score of Googlers in the U.S. who identify as Hispanic or Latinx and zero or more other races",
                 "type": "integer",
                 "mode": "nullable",
             },
             {
                 "name": "race_native_american",
-                "description": "The attrition index score of Googlers in the U.S. who identify as Native American",
+                "description": "The attrition index score of Googlers in the U.S. who identify as Native American and zero or more other races",
                 "type": "integer",
                 "mode": "nullable",
             },
             {
                 "name": "race_white",
-                "description": "The attrition index score of Googlers in the U.S. who identify as White",
+                "description": "The attrition index score of Googlers in the U.S. who identify as White and zero or more other races",
                 "type": "integer",
                 "mode": "nullable",
             },
@@ -97,7 +97,7 @@ with DAG(
     load_intersectional_hiring_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_intersectional_hiring_to_bq",
         bucket="{{ var.json.google_dei.storage_bucket }}",
-        source_objects=["DAR/intersectional_hiring.csv"],
+        source_objects=["DAR/2022/intersectional_hiring.csv"],
         source_format="CSV",
         destination_project_dataset_table="google_dei.dar_intersectional_hiring",
         skip_leading_rows=1,
@@ -123,31 +123,31 @@ with DAG(
             },
             {
                 "name": "race_asian",
-                "description": "The percentage of Googlers hired in the U.S. who identify as Asian",
+                "description": "The percentage of Googlers hired in the U.S. who identify as Asian and zero or more other races",
                 "type": "float",
                 "mode": "nullable",
             },
             {
                 "name": "race_black",
-                "description": "The percentage of Googlers hired in the U.S. who identify as Black",
+                "description": "The percentage of Googlers hired in the U.S. who identify as Black and zero or more other races",
                 "type": "float",
                 "mode": "nullable",
             },
             {
                 "name": "race_hispanic_latinx",
-                "description": "The percentage of Googlers hired in the U.S. who identify as Hispanic or Latinx",
+                "description": "The percentage of Googlers hired in the U.S. who identify as Hispanic or Latinx and zero or more other races",
                 "type": "float",
                 "mode": "nullable",
             },
             {
                 "name": "race_native_american",
-                "description": "The percentage of Googlers hired in the U.S. who identify as Native American",
+                "description": "The percentage of Googlers hired in the U.S. who identify as Native American and zero or more other races",
                 "type": "float",
                 "mode": "nullable",
             },
             {
                 "name": "race_white",
-                "description": "The percentage of Googlers hired in the U.S. who identify as White",
+                "description": "The percentage of Googlers hired in the U.S. who identify as White and zero or more other races",
                 "type": "float",
                 "mode": "nullable",
             },
@@ -158,7 +158,7 @@ with DAG(
     load_intersectional_representation_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_intersectional_representation_to_bq",
         bucket="{{ var.json.google_dei.storage_bucket }}",
-        source_objects=["DAR/intersectional_representation.csv"],
+        source_objects=["DAR/2022/intersectional_representation.csv"],
         source_format="CSV",
         destination_project_dataset_table="google_dei.dar_intersectional_representation",
         skip_leading_rows=1,
@@ -184,31 +184,92 @@ with DAG(
             },
             {
                 "name": "race_asian",
-                "description": "The percentage of Googlers in the U.S. who identify as Asian",
+                "description": "The percentage of Googlers in the U.S. who identify as Asian and zero or more other races",
                 "type": "float",
                 "mode": "nullable",
             },
             {
                 "name": "race_black",
-                "description": "The percentage of Googlers in the U.S. who identify as Black",
+                "description": "The percentage of Googlers in the U.S. who identify as Black and zero or more other races",
                 "type": "float",
                 "mode": "nullable",
             },
             {
                 "name": "race_hispanic_latinx",
-                "description": "The percentage of Googlers in the U.S. who identify as Hispanic or Latinx",
+                "description": "The percentage of Googlers in the U.S. who identify as Hispanic or Latinx and zero or more other races",
                 "type": "float",
                 "mode": "nullable",
             },
             {
                 "name": "race_native_american",
-                "description": "The percentage of Googlers in the U.S. who identify as Native American",
+                "description": "The percentage of Googlers in the U.S. who identify as Native American and zero or more other races",
                 "type": "float",
                 "mode": "nullable",
             },
             {
                 "name": "race_white",
-                "description": "The percentage of Googlers in the U.S. who identify as White",
+                "description": "The percentage of Googlers in the U.S. who identify as White and zero or more other races",
+                "type": "float",
+                "mode": "nullable",
+            },
+        ],
+    )
+
+    # Task to load CSV data to a BigQuery table
+    load_intersectional_exits_representation_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
+        task_id="load_intersectional_exits_representation_to_bq",
+        bucket="{{ var.json.google_dei.storage_bucket }}",
+        source_objects=["DAR/2022/intersectional_exits_representation.csv"],
+        source_format="CSV",
+        destination_project_dataset_table="google_dei.dar_intersectional_exits_representation",
+        skip_leading_rows=1,
+        write_disposition="WRITE_TRUNCATE",
+        schema_fields=[
+            {
+                "name": "workforce",
+                "description": "Overall and sub-categories",
+                "type": "string",
+                "mode": "required",
+            },
+            {
+                "name": "report_year",
+                "description": "The year the report was published",
+                "type": "integer",
+                "mode": "required",
+            },
+            {
+                "name": "gender_us",
+                "description": "Gender of Googler exits in the U.S.",
+                "type": "string",
+                "mode": "required",
+            },
+            {
+                "name": "race_asian",
+                "description": "The percentage of Googler exits in the U.S. who identify as Asian and zero or more other races",
+                "type": "float",
+                "mode": "nullable",
+            },
+            {
+                "name": "race_black",
+                "description": "The percentage of Googler exits in the U.S. who identify as Black and zero or more other races",
+                "type": "float",
+                "mode": "nullable",
+            },
+            {
+                "name": "race_hispanic_latinx",
+                "description": "The percentage of Googler exits in the U.S. who identify as Hispanic or Latinx and zero or more other races",
+                "type": "float",
+                "mode": "nullable",
+            },
+            {
+                "name": "race_native_american",
+                "description": "The percentage of Googler exits in the U.S. who identify as Native American and zero or more other races",
+                "type": "float",
+                "mode": "nullable",
+            },
+            {
+                "name": "race_white",
+                "description": "The percentage of Googler exits in the U.S. who identify as White and zero or more other races",
                 "type": "float",
                 "mode": "nullable",
             },
@@ -219,7 +280,7 @@ with DAG(
     load_non_intersectional_representation_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_non_intersectional_representation_to_bq",
         bucket="{{ var.json.google_dei.storage_bucket }}",
-        source_objects=["DAR/non_intersectional_representation.csv"],
+        source_objects=["DAR/2022/non_intersectional_representation.csv"],
         source_format="CSV",
         destination_project_dataset_table="google_dei.dar_non_intersectional_representation",
         skip_leading_rows=1,
@@ -239,55 +300,55 @@ with DAG(
             },
             {
                 "name": "race_asian",
-                "description": "The percentage of Googlers in the U.S. who identify as Asian",
+                "description": "The percentage of Googlers in the U.S. who identify as Asian and zero or more other races",
                 "type": "float",
                 "mode": "nullable",
             },
             {
                 "name": "race_black",
-                "description": "The percentage of Googlers in the U.S. who identify as Black",
+                "description": "The percentage of Googlers in the U.S. who identify as Black and zero or more other races",
                 "type": "float",
                 "mode": "nullable",
             },
             {
                 "name": "race_hispanic_latinx",
-                "description": "The percentage of Googlers in the U.S. who identify as Hispanic or Latinx",
+                "description": "The percentage of Googlers in the U.S. who identify as Hispanic or Latinx and zero or more other races",
                 "type": "float",
                 "mode": "nullable",
             },
             {
                 "name": "race_native_american",
-                "description": "The percentage of Googlers in the U.S. who identify as Native American",
+                "description": "The percentage of Googlers in the U.S. who identify as Native American and zero or more other races",
                 "type": "float",
                 "mode": "nullable",
             },
             {
                 "name": "race_white",
-                "description": "The percentage of Googlers in the U.S. who identify as White",
+                "description": "The percentage of Googlers in the U.S. who identify as White and zero or more other races",
                 "type": "float",
                 "mode": "nullable",
             },
             {
-                "name": "gender_us_female",
-                "description": "The percentage of Googlers in the U.S. who identify as female",
+                "name": "gender_us_women",
+                "description": "The percentage of Googlers in the U.S. who identify as women",
                 "type": "float",
                 "mode": "nullable",
             },
             {
-                "name": "gender_us_male",
-                "description": "The percentage of Googlers in the U.S. who identify as male",
+                "name": "gender_us_men",
+                "description": "The percentage of Googlers in the U.S. who identify as men",
                 "type": "float",
                 "mode": "nullable",
             },
             {
-                "name": "gender_global_female",
-                "description": "The percentage of global Googlers who identify as female",
+                "name": "gender_global_women",
+                "description": "The percentage of global Googlers who identify as women",
                 "type": "float",
                 "mode": "nullable",
             },
             {
-                "name": "gender_global_male",
-                "description": "The percentage of global Googlers who identify as male",
+                "name": "gender_global_men",
+                "description": "The percentage of global Googlers who identify as men",
                 "type": "float",
                 "mode": "nullable",
             },
@@ -295,12 +356,12 @@ with DAG(
     )
 
     # Task to load CSV data to a BigQuery table
-    load_non_intersectional_attrition_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
-        task_id="load_non_intersectional_attrition_to_bq",
+    load_non_intersectional_exits_representation_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
+        task_id="load_non_intersectional_exits_representation_to_bq",
         bucket="{{ var.json.google_dei.storage_bucket }}",
-        source_objects=["DAR/non_intersectional_attrition.csv"],
+        source_objects=["DAR/2022/non_intersectional_exits_representation.csv"],
         source_format="CSV",
-        destination_project_dataset_table="google_dei.dar_non_intersectional_attrition",
+        destination_project_dataset_table="google_dei.dar_non_intersectional_exits_representation",
         skip_leading_rows=1,
         write_disposition="WRITE_TRUNCATE",
         schema_fields=[
@@ -318,55 +379,134 @@ with DAG(
             },
             {
                 "name": "race_asian",
-                "description": "The attrition index score of Googlers in the U.S. who identify as Asian",
+                "description": "The percentage of Googler exits in the U.S. who identify as Asian and zero or more other races",
+                "type": "float",
+                "mode": "nullable",
+            },
+            {
+                "name": "race_black",
+                "description": "The percentage of Googler exits in the U.S. who identify as Black and zero or more other races",
+                "type": "float",
+                "mode": "nullable",
+            },
+            {
+                "name": "race_hispanic_latinx",
+                "description": "The percentage of Googler exits in the U.S. who identify as Hispanic or Latinx and zero or more other races",
+                "type": "float",
+                "mode": "nullable",
+            },
+            {
+                "name": "race_native_american",
+                "description": "The percentage of Googler exits in the U.S. who identify as Native American and zero or more other races",
+                "type": "float",
+                "mode": "nullable",
+            },
+            {
+                "name": "race_white",
+                "description": "The percentage of Googler exits in the U.S. who identify as White and zero or more other races",
+                "type": "float",
+                "mode": "nullable",
+            },
+            {
+                "name": "gender_us_women",
+                "description": "The percentage of Googler exits in the U.S. who identify as women",
+                "type": "float",
+                "mode": "nullable",
+            },
+            {
+                "name": "gender_us_men",
+                "description": "The percentage of Googler exits in the U.S. who identify as men",
+                "type": "float",
+                "mode": "nullable",
+            },
+            {
+                "name": "gender_global_women",
+                "description": "The percentage of global Googler exits who identify as women",
+                "type": "float",
+                "mode": "nullable",
+            },
+            {
+                "name": "gender_global_men",
+                "description": "The percentage of global Googler exits who identify as men",
+                "type": "float",
+                "mode": "nullable",
+            },
+        ],
+    )
+
+    # Task to load CSV data to a BigQuery table
+    load_non_intersectional_attrition_index_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
+        task_id="load_non_intersectional_attrition_index_to_bq",
+        bucket="{{ var.json.google_dei.storage_bucket }}",
+        source_objects=["DAR/2022/non_intersectional_attrition_index.csv"],
+        source_format="CSV",
+        destination_project_dataset_table="google_dei.dar_non_intersectional_attrition_index",
+        skip_leading_rows=1,
+        write_disposition="WRITE_TRUNCATE",
+        schema_fields=[
+            {
+                "name": "workforce",
+                "description": "Overall and sub-categories",
+                "type": "string",
+                "mode": "required",
+            },
+            {
+                "name": "report_year",
+                "description": "The year the report was published",
+                "type": "integer",
+                "mode": "required",
+            },
+            {
+                "name": "race_asian",
+                "description": "The attrition index score of Googlers in the U.S. who identify as Asian and zero or more other races",
                 "type": "integer",
                 "mode": "nullable",
             },
             {
                 "name": "race_black",
-                "description": "The attrition index score of Googlers in the U.S. who identify as Black",
+                "description": "The attrition index score of Googlers in the U.S. who identify as Black and zero or more other races",
                 "type": "integer",
                 "mode": "nullable",
             },
             {
                 "name": "race_hispanic_latinx",
-                "description": "The attrition index score of Googlers in the U.S. who identify as Hispanic or Latinx",
+                "description": "The attrition index score of Googlers in the U.S. who identify as Hispanic or Latinx and zero or more other races",
                 "type": "integer",
                 "mode": "nullable",
             },
             {
                 "name": "race_native_american",
-                "description": "The attrition index score of Googlers in the U.S. who identify as Native American",
+                "description": "The attrition index score of Googlers in the U.S. who identify as Native American and zero or more other races",
                 "type": "integer",
                 "mode": "nullable",
             },
             {
                 "name": "race_white",
-                "description": "The attrition index score of Googlers in the U.S. who identify as White",
+                "description": "The attrition index score of Googlers in the U.S. who identify as White and zero or more other races",
                 "type": "integer",
                 "mode": "nullable",
             },
             {
-                "name": "gender_us_female",
-                "description": "The attrition index score of Googlers in the U.S. who are female",
+                "name": "gender_us_women",
+                "description": "The attrition index score of Googlers in the U.S. who are women",
                 "type": "integer",
                 "mode": "nullable",
             },
             {
-                "name": "gender_us_male",
-                "description": "The attrition index score of Googlers in the U.S. who are male",
+                "name": "gender_us_men",
+                "description": "The attrition index score of Googlers in the U.S. who are men",
                 "type": "integer",
                 "mode": "nullable",
             },
             {
-                "name": "gender_global_female",
-                "description": "The attrition index score of global Googlers who are female",
+                "name": "gender_global_women",
+                "description": "The attrition index score of global Googlers who are women",
                 "type": "integer",
                 "mode": "nullable",
             },
             {
-                "name": "gender_global_male",
-                "description": "The attrition index score of global Googlers who are male",
+                "name": "gender_global_men",
+                "description": "The attrition index score of global Googlers who are men",
                 "type": "integer",
                 "mode": "nullable",
             },
@@ -377,7 +517,7 @@ with DAG(
     load_non_intersectional_hiring_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_non_intersectional_hiring_to_bq",
         bucket="{{ var.json.google_dei.storage_bucket }}",
-        source_objects=["DAR/non_intersectional_hiring.csv"],
+        source_objects=["DAR/2022/non_intersectional_hiring.csv"],
         source_format="CSV",
         destination_project_dataset_table="google_dei.dar_non_intersectional_hiring",
         skip_leading_rows=1,
@@ -397,55 +537,55 @@ with DAG(
             },
             {
                 "name": "race_asian",
-                "description": "The percentage of Googlers hired in the U.S. who identify as Asian",
+                "description": "The percentage of Googlers hired in the U.S. who identify as Asian and zero or more other races",
                 "type": "float",
                 "mode": "nullable",
             },
             {
                 "name": "race_black",
-                "description": "The percentage of Googlers hired in the U.S. who identify as Black",
+                "description": "The percentage of Googlers hired in the U.S. who identify as Black and zero or more other races",
                 "type": "float",
                 "mode": "nullable",
             },
             {
                 "name": "race_hispanic_latinx",
-                "description": "The percentage of Googlers hired in the U.S. who identify as Hispanic or Latinx",
+                "description": "The percentage of Googlers hired in the U.S. who identify as Hispanic or Latinx and zero or more other races",
                 "type": "float",
                 "mode": "nullable",
             },
             {
                 "name": "race_native_american",
-                "description": "The percentage of Googlers hired in the U.S. who identify as Native American",
+                "description": "The percentage of Googlers hired in the U.S. who identify as Native American and zero or more other races",
                 "type": "float",
                 "mode": "nullable",
             },
             {
                 "name": "race_white",
-                "description": "The percentage of Googlers hired in the U.S. who identify as White",
+                "description": "The percentage of Googlers hired in the U.S. who identify as White and zero or more other races",
                 "type": "float",
                 "mode": "nullable",
             },
             {
-                "name": "gender_us_female",
-                "description": "The percentage of Googlers hired in the U.S. who are female",
+                "name": "gender_us_women",
+                "description": "The percentage of Googlers hired in the U.S. who are women",
                 "type": "float",
                 "mode": "nullable",
             },
             {
-                "name": "gender_us_male",
-                "description": "The percentage of Googlers hired in the U.S. who are male",
+                "name": "gender_us_men",
+                "description": "The percentage of Googlers hired in the U.S. who are men",
                 "type": "float",
                 "mode": "nullable",
             },
             {
-                "name": "gender_global_female",
-                "description": "The percentage of global Googlers hired who are female",
+                "name": "gender_global_women",
+                "description": "The percentage of global Googlers hired who are women",
                 "type": "float",
                 "mode": "nullable",
             },
             {
-                "name": "gender_global_male",
-                "description": "The percentage of global Googlers hired who are male",
+                "name": "gender_global_men",
+                "description": "The percentage of global Googlers hired who are men",
                 "type": "float",
                 "mode": "nullable",
             },
@@ -453,12 +593,12 @@ with DAG(
     )
 
     # Task to load CSV data to a BigQuery table
-    load_region_non_intersectional_attrition_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
-        task_id="load_region_non_intersectional_attrition_to_bq",
+    load_region_non_intersectional_attrition_index_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
+        task_id="load_region_non_intersectional_attrition_index_to_bq",
         bucket="{{ var.json.google_dei.storage_bucket }}",
-        source_objects=["DAR/region_non_intersectional_attrition.csv"],
+        source_objects=["DAR/2022/region_non_intersectional_attrition_index.csv"],
         source_format="CSV",
-        destination_project_dataset_table="google_dei.dar_region_non_intersectional_attrition",
+        destination_project_dataset_table="google_dei.dar_region_non_intersectional_attrition_index",
         skip_leading_rows=1,
         write_disposition="WRITE_TRUNCATE",
         schema_fields=[
@@ -469,26 +609,26 @@ with DAG(
                 "mode": "required",
             },
             {
-                "name": "region",
-                "description": "Region",
-                "type": "string",
-                "mode": "required",
-            },
-            {
                 "name": "report_year",
                 "description": "The year the report was published",
                 "type": "integer",
                 "mode": "required",
             },
             {
-                "name": "gender_female",
-                "description": "The attrition index score of Googlers in the region who are female",
+                "name": "region",
+                "description": "Region",
+                "type": "string",
+                "mode": "required",
+            },
+            {
+                "name": "gender_women",
+                "description": "The attrition index score of Googlers in the region who are women",
                 "type": "integer",
                 "mode": "nullable",
             },
             {
-                "name": "gender_male",
-                "description": "The attrition index score of Googlers in the region who are male",
+                "name": "gender_men",
+                "description": "The attrition index score of Googlers in the region who are men",
                 "type": "integer",
                 "mode": "nullable",
             },
@@ -499,7 +639,7 @@ with DAG(
     load_region_non_intersectional_hiring_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_region_non_intersectional_hiring_to_bq",
         bucket="{{ var.json.google_dei.storage_bucket }}",
-        source_objects=["DAR/region_non_intersectional_hiring.csv"],
+        source_objects=["DAR/2022/region_non_intersectional_hiring.csv"],
         source_format="CSV",
         destination_project_dataset_table="google_dei.dar_region_non_intersectional_hiring",
         skip_leading_rows=1,
@@ -512,26 +652,26 @@ with DAG(
                 "mode": "required",
             },
             {
-                "name": "region",
-                "description": "Region",
-                "type": "string",
-                "mode": "required",
-            },
-            {
                 "name": "report_year",
                 "description": "The year the report was published",
                 "type": "integer",
                 "mode": "required",
             },
             {
-                "name": "gender_female",
-                "description": "The percentage of Googlers in the region who are female",
+                "name": "region",
+                "description": "Region",
+                "type": "string",
+                "mode": "required",
+            },
+            {
+                "name": "gender_women",
+                "description": "The percentage of Googlers hired in the region who are women",
                 "type": "float",
                 "mode": "nullable",
             },
             {
-                "name": "gender_male",
-                "description": "The percentage of Googlers in the region who are male",
+                "name": "gender_men",
+                "description": "The percentage of Googlers hired in the region who are men",
                 "type": "float",
                 "mode": "nullable",
             },
@@ -542,7 +682,7 @@ with DAG(
     load_region_non_intersectional_representation_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_region_non_intersectional_representation_to_bq",
         bucket="{{ var.json.google_dei.storage_bucket }}",
-        source_objects=["DAR/region_non_intersectional_representation.csv"],
+        source_objects=["DAR/2022/region_non_intersectional_representation.csv"],
         source_format="CSV",
         destination_project_dataset_table="google_dei.dar_region_non_intersectional_representation",
         skip_leading_rows=1,
@@ -555,8 +695,81 @@ with DAG(
                 "mode": "required",
             },
             {
+                "name": "report_year",
+                "description": "The year the report was published",
+                "type": "integer",
+                "mode": "required",
+            },
+            {
                 "name": "region",
                 "description": "Region",
+                "type": "string",
+                "mode": "required",
+            },
+            {
+                "name": "race_asian",
+                "description": "The percentage of Googlers in the region who identify as Asian and zero or more other races",
+                "type": "float",
+                "mode": "nullable",
+            },
+            {
+                "name": "race_black_african",
+                "description": "The percentage of Googlers in the region who identify as Black African and zero or more other races",
+                "type": "float",
+                "mode": "nullable",
+            },
+            {
+                "name": "race_hispanic_latino_latinx",
+                "description": "The percentage of Googlers in the region who identify as Hispanic, Latino, or Latinx and zero or more other races",
+                "type": "float",
+                "mode": "nullable",
+            },
+            {
+                "name": "race_indigenous",
+                "description": "The percentage of Googlers in the region who identify as Indigenous and zero or more other races",
+                "type": "float",
+                "mode": "nullable",
+            },
+            {
+                "name": "race_mena",
+                "description": "The percentage of Googlers in the region who identify as Middle Eastern or North African and zero or more other races",
+                "type": "float",
+                "mode": "nullable",
+            },
+            {
+                "name": "race_white_european",
+                "description": "The percentage of Googlers in the region who identify as White or European and zero or more other races",
+                "type": "float",
+                "mode": "nullable",
+            },
+            {
+                "name": "gender_women",
+                "description": "The percentage of Googlers in the region who are women",
+                "type": "float",
+                "mode": "nullable",
+            },
+            {
+                "name": "gender_men",
+                "description": "The percentage of Googlers in the region who are men",
+                "type": "float",
+                "mode": "nullable",
+            },
+        ],
+    )
+
+    # Task to load CSV data to a BigQuery table
+    load_region_non_intersectional_exits_representation_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
+        task_id="load_region_non_intersectional_exits_representation_to_bq",
+        bucket="{{ var.json.google_dei.storage_bucket }}",
+        source_objects=["DAR/2022/region_non_intersectional_exits_representation.csv"],
+        source_format="CSV",
+        destination_project_dataset_table="google_dei.dar_region_non_intersectional_exits_representation",
+        skip_leading_rows=1,
+        write_disposition="WRITE_TRUNCATE",
+        schema_fields=[
+            {
+                "name": "workforce",
+                "description": "Overall and sub-categories",
                 "type": "string",
                 "mode": "required",
             },
@@ -567,50 +780,20 @@ with DAG(
                 "mode": "required",
             },
             {
-                "name": "race_asian",
-                "description": "The percentage of Googlers in the region who identify as Asian",
+                "name": "region",
+                "description": "Region",
+                "type": "string",
+                "mode": "required",
+            },
+            {
+                "name": "gender_women",
+                "description": "The percentage of Googler exits in the region who are women",
                 "type": "float",
                 "mode": "nullable",
             },
             {
-                "name": "race_black_african",
-                "description": "The percentage of Googlers in the region who identify as Black African",
-                "type": "float",
-                "mode": "nullable",
-            },
-            {
-                "name": "race_hispanic_latino_latinx",
-                "description": "The percentage of Googlers in the region who identify as Hispanic or Latino or Latinx",
-                "type": "float",
-                "mode": "nullable",
-            },
-            {
-                "name": "race_indigenous",
-                "description": "The percentage of Googlers in the region who identify as Indigenous",
-                "type": "float",
-                "mode": "nullable",
-            },
-            {
-                "name": "race_mena",
-                "description": "The percentage of Googlers in the region who identify as Middle Eastern or North African",
-                "type": "float",
-                "mode": "nullable",
-            },
-            {
-                "name": "race_white_european",
-                "description": "The percentage of Googlers in the region who identify as White European",
-                "type": "float",
-                "mode": "nullable",
-            },
-            {
-                "name": "gender_female",
-                "description": "The percentage of Googlers in the region who are female",
-                "type": "float",
-                "mode": "nullable",
-            },
-            {
-                "name": "gender_male",
-                "description": "The percentage of Googlers in the region who are male",
+                "name": "gender_men",
+                "description": "The percentage of Googler exits in the region who are men",
                 "type": "float",
                 "mode": "nullable",
             },
@@ -618,18 +801,18 @@ with DAG(
     )
 
     # Task to load CSV data to a BigQuery table
-    load_self_id_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
-        task_id="load_self_id_to_bq",
+    load_selfid_representation_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
+        task_id="load_selfid_representation_to_bq",
         bucket="{{ var.json.google_dei.storage_bucket }}",
-        source_objects=["DAR/self_id.csv"],
+        source_objects=["DAR/2022/selfid_representation.csv"],
         source_format="CSV",
-        destination_project_dataset_table="google_dei.dar_self_id",
+        destination_project_dataset_table="google_dei.dar_selfid_representation",
         skip_leading_rows=1,
         write_disposition="WRITE_TRUNCATE",
         schema_fields=[
             {
                 "name": "workforce",
-                "description": "Self-identification category. lgbtq: Global Googlers who self-identified as LGBQ+ and/or Trans+; disability: Global Googlers who self-identified as having a disability; military: Global Googlers who self-identified as being or having been members of the military; nonbinary: Global Googlers who self-identified as non-binary",
+                "description": "Self-identification category. lgbtq: Googlers who self-identify as LGBQ+ and/or Trans+; disability: Googlers who self-identify as having a disability; military: Googlers who self-identify as being or having been members of the military; nonbinary: Googlers who self-identify as non-binary",
                 "type": "string",
                 "mode": "required",
             },
@@ -641,20 +824,23 @@ with DAG(
             },
             {
                 "name": "global",
-                "description": 'The percentage of Googlers who identify as being part of the self-identification category (i.e., "workforce" type)',
+                "description": 'The percentage of global Googlers who identify as being part of the self-identification category (i.e., "workforce" type)',
                 "type": "float",
                 "mode": "nullable",
             },
         ],
     )
 
-    load_intersectional_attrition_to_bq
+    load_intersectional_attrition_index_to_bq
     load_intersectional_hiring_to_bq
     load_intersectional_representation_to_bq
-    load_non_intersectional_attrition_to_bq
+    load_intersectional_exits_representation_to_bq
+    load_non_intersectional_attrition_index_to_bq
     load_non_intersectional_hiring_to_bq
     load_non_intersectional_representation_to_bq
-    load_region_non_intersectional_attrition_to_bq
+    load_non_intersectional_exits_representation_to_bq
+    load_region_non_intersectional_attrition_index_to_bq
     load_region_non_intersectional_hiring_to_bq
     load_region_non_intersectional_representation_to_bq
-    load_self_id_to_bq
+    load_region_non_intersectional_exits_representation_to_bq
+    load_selfid_representation_to_bq
