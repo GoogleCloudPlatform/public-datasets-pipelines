@@ -1,0 +1,238 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+resources:
+  - type: bigquery_table
+    table_id: tract_covariates
+    description: "Census Opportunity Atlas"
+dag:
+  airflow_version: 2
+  initialize:
+    dag_id: census_opportunity_atlas
+    default_args:
+      owner: "Google"
+      depends_on_past: False
+      start_date: '2021-03-01'
+    max_active_runs: 1
+    schedule_interval: "@daily"
+    catchup: False
+    default_view: graph
+  tasks:
+    - operator: "GKECreateClusterOperator"
+      args:
+        task_id: "create_cluster"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        body:
+          name: census-opportunity-atlas
+          initial_node_count: 2
+          network: "{{ var.value.vpc_network }}"
+          node_config:
+            machine_type: e2-standard-16
+            oauth_scopes:
+              - https://www.googleapis.com/auth/devstorage.read_write
+              - https://www.googleapis.com/auth/cloud-platform
+    - operator: "GKEStartPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "tract_covariates"
+        startup_timeout_seconds: 600
+        name: "tract_covariates"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: census-opportunity-atlas
+        image_pull_policy: "Always"
+        image: "{{ var.json.census_opportunity_atlas.container_registry.tract_covariates.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "https://opportunityinsights.org/wp-content/uploads/2018/10/tract_covariates.csv"
+          PIPELINE_NAME: "Census Opportunity Atlas - Tract Covariates"
+          SOURCE_FILE: "files/data_tract_covariates.csv"
+          SOURCE_FILE_UNZIPPED: ""
+          TARGET_FILE: "files/data_output_tract_covariates.csv"
+          CHUNKSIZE: "{{ var.json.census_opportunity_atlas.container_registry.tract_covariates.chunksize }}"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "{{ var.json.census_opportunity_atlas.container_registry.tract_covariates.dataset_id }}"
+          TABLE_ID: "{{ var.json.census_opportunity_atlas.container_registry.tract_covariates.destination_table }}"
+          SCHEMA_PATH: "{{ var.json.census_opportunity_atlas.container_registry.tract_covariates.schema_path }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "{{ var.json.census_opportunity_atlas.container_registry.tract_covariates.target_gcs_path }}"
+          INPUT_CSV_HEADERS: >-
+            [
+              "state",
+              "county",
+              "tract",
+              "cz",
+              "czname",
+              "hhinc_mean2000",
+              "mean_commutetime2000",
+              "frac_coll_plus2000",
+              "frac_coll_plus2010",
+              "foreign_share2010",
+              "med_hhinc1990",
+              "med_hhinc2016",
+              "popdensity2000",
+              "poor_share2010",
+              "poor_share2000",
+              "poor_share1990",
+              "share_white2010",
+              "share_black2010",
+              "share_hisp2010",
+              "share_asian2010",
+              "share_black2000",
+              "share_white2000",
+              "share_hisp2000",
+              "share_asian2000",
+              "gsmn_math_g3_2013",
+              "rent_twobed2015",
+              "singleparent_share2010",
+              "singleparent_share1990",
+              "singleparent_share2000",
+              "traveltime15_2010",
+              "emp2000",
+              "mail_return_rate2010",
+              "ln_wage_growth_hs_grad",
+              "obs_total_5mi_2015",
+              "jobs_highpay_5mi_2015",
+              "popdensity2010",
+              "ann_avg_job_growth_2004_2013",
+              "job_density_2013"
+            ]
+          DATA_DTYPES: >-
+            {
+              "state": "int",
+              "county": "int",
+              "tract": "int",
+              "cz": "int",
+              "czname": "str",
+              "hhinc_mean2000": "float",
+              "mean_commutetime2000": "float",
+              "frac_coll_plus2000": "float",
+              "frac_coll_plus2010": "float",
+              "foreign_share2010": "float",
+              "med_hhinc1990": "float",
+              "med_hhinc2016": "int",
+              "popdensity2000": "float",
+              "poor_share2010": "float",
+              "poor_share2000": "float",
+              "poor_share1990": "float",
+              "share_white2010": "float",
+              "share_black2010": "float",
+              "share_hisp2010": "float",
+              "share_asian2010": "float",
+              "share_black2000": "float",
+              "share_white2000": "float",
+              "share_hisp2000": "float",
+              "share_asian2000": "float",
+              "gsmn_math_g3_2013": "float",
+              "rent_twobed2015": "int",
+              "singleparent_share2010": "float",
+              "singleparent_share1990": "float",
+              "singleparent_share2000": "float",
+              "traveltime15_2010": "float",
+              "emp2000": "float",
+              "mail_return_rate2010": "float",
+              "ln_wage_growth_hs_grad": "float",
+              "jobs_total_5mi_2015": "int",
+              "jobs_highpay_5mi_2015": "int",
+              "popdensity2010": "float",
+              "ann_avg_job_growth_2004_2013": "float",
+              "job_density_2013": "float"
+            }
+          RENAME_MAPPINGS: >-
+            {
+              "state": "state",
+              "county": "county",
+              "tract": "tract",
+              "cz": "cz",
+              "czname": "czname",
+              "hhinc_mean2000": "hhinc_mean2000",
+              "mean_commutetime2000": "mean_commutetime2000",
+              "frac_coll_plus2000": "frac_coll_plus2000",
+              "frac_coll_plus2010": "frac_coll_plus2010",
+              "foreign_share2010": "foreign_share2010",
+              "med_hhinc1990": "med_hhinc1990",
+              "med_hhinc2016": "med_hhinc2016",
+              "popdensity2000": "popdensity2000",
+              "poor_share2010": "poor_share2010",
+              "poor_share2000": "poor_share2000",
+              "poor_share1990": "poor_share1990",
+              "share_white2010": "share_white2010",
+              "share_black2010": "share_black2010",
+              "share_hisp2010": "share_hisp2010",
+              "share_asian2010": "share_asian2010",
+              "share_black2000": "share_black2000",
+              "share_white2000": "share_white2000",
+              "share_hisp2000": "share_hisp2000",
+              "share_asian2000": "share_asian2000",
+              "gsmn_math_g3_2013": "gsmn_math_g3_2013",
+              "rent_twobed2015": "rent_twobed2015",
+              "singleparent_share2010": "singleparent_share2010",
+              "singleparent_share1990": "singleparent_share1990",
+              "singleparent_share2000": "singleparent_share2000",
+              "traveltime15_2010": "traveltime15_2010",
+              "emp2000": "emp2000",
+              "mail_return_rate2010": "mail_return_rate2010",
+              "ln_wage_growth_hs_grad": "ln_wage_growth_hs_grad",
+              "jobs_total_5mi_2015": "jobs_total_5mi_2015",
+              "jobs_highpay_5mi_2015": "jobs_highpay_5mi_2015",
+              "popdensity2010": "popdensity2010",
+              "ann_avg_job_growth_2004_2013": "ann_avg_job_growth_2004_2013",
+              "job_density_2013": "job_density_2013"
+            }
+        resources:
+          request_ephemeral_storage: "8G"
+          request_cpu: "1"
+    - operator: "GKEStartPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "tract_outcomes"
+        name: "tract_outcomes"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: census-opportunity-atlas
+        image_pull_policy: "Always"
+        image: "{{ var.json.census_opportunity_atlas.container_registry.tract_outcomes.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "https://opportunityinsights.org/wp-content/uploads/2018/10/tract_outcomes.zip"
+          PIPELINE_NAME: "Census Opportunity Atlas - Tract Outcomes"
+          SOURCE_FILE: "files/data_tract_outcomes.csv"
+          SOURCE_FILE_UNZIPPED: "files/tract_outcomes_early.csv"
+          TARGET_FILE: "files/data_output_tract_outcomes.csv"
+          CHUNKSIZE: "{{ var.json.census_opportunity_atlas.container_registry.tract_outcomes.chunksize }}"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "{{ var.json.census_opportunity_atlas.container_registry.tract_outcomes.dataset_id }}"
+          TABLE_ID: "{{ var.json.census_opportunity_atlas.container_registry.tract_outcomes.destination_table }}"
+          SCHEMA_PATH: "{{ var.json.census_opportunity_atlas.container_registry.tract_outcomes.schema_path }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "{{ var.json.census_opportunity_atlas.container_registry.tract_outcomes.target_gcs_path }}"
+          INPUT_CSV_HEADERS: >-
+            [ "none" ]
+          DATA_DTYPES: >-
+            { "none": "int" }
+          RENAME_MAPPINGS: >-
+            { "none": "none" }
+        resources:
+          request_ephemeral_storage: "8G"
+          limit_cpu: "1"
+    - operator: "GKEDeleteClusterOperator"
+      args:
+        task_id: "delete_cluster"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        name: census-opportunity-atlas
+  graph_paths:
+    - "create_cluster >> [ tract_covariates, tract_outcomes ] >> delete_cluster"
