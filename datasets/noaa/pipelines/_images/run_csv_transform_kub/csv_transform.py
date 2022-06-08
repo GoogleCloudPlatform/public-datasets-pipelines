@@ -697,18 +697,10 @@ def filter_null_rows(
 
 def convert_dt_format(dt_str: str) -> str:
     if not dt_str or dt_str.lower() == "nan":
-        # return str(dt_str)
         return dt_str
     else:
-        # return str(
-        #     datetime.datetime.strptime(str(dt_str), "%Y%m%d")
-        #     .date()
-        #     .strftime("%Y-%m-%d")
-        # )
         return str(
-            datetime.datetime.strptime(dt_str, "%Y%m%d")
-            .date()
-            .strftime("%Y-%m-%d")
+            datetime.datetime.strptime(dt_str, "%Y%m%d").date().strftime("%Y-%m-%d")
         )
 
 
