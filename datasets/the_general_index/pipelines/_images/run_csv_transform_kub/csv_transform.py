@@ -14,12 +14,12 @@
 
 import csv
 import datetime
+import gzip
 import json
 import logging
 import os
 import pathlib
 import typing
-import zipfile as zip
 from urllib.parse import urlparse
 
 import pandas as pd
@@ -92,10 +92,8 @@ def execute_pipeline(
     source_file_path = os.path.split(source_file)[0]
     source_url_file = os.path.basename(urlparse(source_url).path)
     source_file_zipfile = f"{source_file_path}/{source_url_file}"
-    source_file_zipfile_csv = str.replace(source_file_zipfile, ".zip", "")
     download_file(source_url, source_file_zipfile)
-    unpack_file(source_file_zipfile, os.path.split(source_file_zipfile)[0], "zip")
-    os.rename(source_file_zipfile_csv, source_file)
+    gz_decompress(infile=source_file_zipfile, tofile=source_file, delete_zipfile=False)
     remove_header_footer(
         source_file=source_file,
         header_rows=int(source_file_header_rows),
@@ -149,25 +147,21 @@ def execute_pipeline(
         )
 
 
-def unpack_file(infile: str, dest_path: str, compression_type: str = "zip") -> None:
-    if compression_type == "zip":
-        logging.info(f"Unpacking {infile} to {dest_path}")
-        zip_decompress(infile=infile, dest_path=dest_path)
-    else:
-        logging.info(
-            f"{infile} ignored as it is not compressed or is of unknown compression"
-        )
-
-
-def zip_decompress(infile: str, dest_path: str) -> None:
-    with zip.ZipFile(infile, mode="r") as zipf:
-        zipf.extractall(dest_path)
-        zipf.close()
+def gz_decompress(infile: str, tofile: str, delete_zipfile: bool = False) -> None:
+    logging.info(f"Decompressing {infile}")
+    with open(infile, "rb") as inf, open(tofile, "w", encoding="utf8") as tof:
+        decom_str = gzip.decompress(inf.read()).decode("utf-8")
+        tof.write(decom_str)
+    if delete_zipfile:
+        os.remove(infile)
 
 
 def remove_header_footer(source_file: str, header_rows: int, footer_rows: int) -> None:
-    logging.info(f"Removing header and footer from {source_file}")
+    logging.info(f"Cleansing data in {source_file}")
+    os.system(f"sed -i $'s/[^[:print:]\t]//g' {source_file} ")
+    logging.info(f"Removing header from {source_file}")
     os.system(f"sed -i '1,{header_rows}d' {source_file} ")
+    logging.info(f"Removing trailer from {source_file}")
     os.system(
         f'sed -i "$(( $(wc -l <{source_file})-{footer_rows}+1 )),$ d" {source_file}'
     )
@@ -192,7 +186,9 @@ def process_source_file(
     logging.info(f"Opening source file {source_file}")
     csv.field_size_limit(512 << 10)
     csv.register_dialect("TabDialect", quotechar='"', delimiter="\t", strict=True)
-    with open(source_file) as reader:
+    with open(
+        source_file,
+    ) as reader:
         data = []
         chunk_number = 1
         for index, line in enumerate(csv.reader(reader, "TabDialect"), 0):
