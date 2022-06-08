@@ -15,20 +15,20 @@
  */
 
 
-resource "google_bigquery_table" "census_opportunity_atlas_tract_covariates" {
+resource "google_bigquery_table" "census_opportunity_atlas_tract_outcomes" {
   project     = var.project_id
   dataset_id  = "census_opportunity_atlas"
-  table_id    = "tract_covariates"
-  description = "Census Opportunity Atlas"
+  table_id    = "tract_outcomes"
+  description = "tract_outcomesspc"
   depends_on = [
     google_bigquery_dataset.census_opportunity_atlas
   ]
 }
 
-output "bigquery_table-census_opportunity_atlas_tract_covariates-table_id" {
-  value = google_bigquery_table.census_opportunity_atlas_tract_covariates.table_id
+output "bigquery_table-census_opportunity_atlas_tract_outcomes-table_id" {
+  value = google_bigquery_table.census_opportunity_atlas_tract_outcomes.table_id
 }
 
-output "bigquery_table-census_opportunity_atlas_tract_covariates-id" {
-  value = google_bigquery_table.census_opportunity_atlas_tract_covariates.id
+output "bigquery_table-census_opportunity_atlas_tract_outcomes-id" {
+  value = google_bigquery_table.census_opportunity_atlas_tract_outcomes.id
 }
