@@ -27,7 +27,7 @@ with DAG(
     dag_id="epa_historical_air_quality.epa_historical_air_quality",
     default_args=default_args,
     max_active_runs=1,
-    schedule_interval="@once",
+    schedule_interval="0 2 * * 6",
     catchup=False,
     default_view="graph",
 ) as dag:
