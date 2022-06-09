@@ -621,10 +621,9 @@ def convert_date_from_int(df: pd.DataFrame, int_date_list: dict) -> pd.DataFrame
 def generate_location(df: pd.DataFrame, gen_location_list: dict) -> pd.DataFrame:
     logging.info("Generating location data")
     for key, values in gen_location_list.items():
-        loc_col = key
-        long_col = df[values[0]][:].astype("string")
-        lat_col = df[values[1]][:].astype["string"]
-        df[loc_col] = f"POINT({long_col} {lat_col})"
+        df[key] = df[[values[0], values[1]]].apply(
+            lambda x: f"POINT({x[0]} {x[1]})", axis=1
+        )
     return df
 
 
