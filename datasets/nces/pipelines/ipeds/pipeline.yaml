@@ -1,0 +1,135 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+resources:
+  - type: bigquery_table
+    table_id: c2020_a
+    dataset_id: nces_ipeds
+    description: ~
+
+  - type: bigquery_table
+    table_id: c2020_a_dict_frequencies
+    dataset_id: nces_ipeds
+    description: ~
+
+  - type: bigquery_table
+    table_id: hd2020
+    dataset_id: nces_ipeds
+    description: ~
+
+  - type: bigquery_table
+    table_id: hd2020_dict_frequencies
+    dataset_id: nces_ipeds
+    description: ~
+
+  - type: bigquery_table
+    table_id: ic2020
+    dataset_id: nces_ipeds
+    description: ~
+
+  - type: bigquery_table
+    table_id: ic2020_dict_frequencies
+    dataset_id: nces_ipeds
+    description: ~
+
+
+dag:
+  airflow_version: 2
+  initialize:
+    dag_id: ipeds
+    default_args:
+      owner: "Google"
+      depends_on_past: False
+      start_date: "2021-05-01"
+    max_active_runs: 1
+    schedule_interval: "@once"
+    catchup: False
+    default_view: graph
+
+  tasks:
+    - operator: "GoogleCloudStorageToBigQueryOperator"
+      description: "Task to load CSV data to a BigQuery table"
+      args:
+        task_id: "load_c2020_a_csv_to_bq"
+        bucket: "{{ var.json.nces.storage_bucket }}"
+        source_objects: ["IPEDS/2020/c2020_a.csv"]
+        source_format: "CSV"
+        destination_project_dataset_table: "nces_ipeds.c2020_a"
+        skip_leading_rows: 1
+        write_disposition: "WRITE_TRUNCATE"
+
+    - operator: "GoogleCloudStorageToBigQueryOperator"
+      description: "Task to load CSV data to a BigQuery table"
+      args:
+        task_id: "load_c2020_a_dict_frequencies_csv_to_bq"
+        bucket: "{{ var.json.nces.storage_bucket }}"
+        source_objects: ["IPEDS/2020/c2020_a_dict_frequencies.csv"]
+        source_format: "CSV"
+        destination_project_dataset_table: "nces_ipeds.c2020_a_dict_frequencies"
+        skip_leading_rows: 1
+        write_disposition: "WRITE_TRUNCATE"
+
+    - operator: "GoogleCloudStorageToBigQueryOperator"
+      description: "Task to load CSV data to a BigQuery table"
+      args:
+        task_id: "load_hd2020_csv_to_bq"
+        bucket: "{{ var.json.nces.storage_bucket }}"
+        source_objects: ["IPEDS/2020/hd2020.csv"]
+        source_format: "CSV"
+        destination_project_dataset_table: "nces_ipeds.hd2020"
+        skip_leading_rows: 1
+        write_disposition: "WRITE_TRUNCATE"
+
+    - operator: "GoogleCloudStorageToBigQueryOperator"
+      description: "Task to load CSV data to a BigQuery table"
+      args:
+        task_id: "load_hd2020_dict_frequencies_csv_to_bq"
+        bucket: "{{ var.json.nces.storage_bucket }}"
+        source_objects: ["IPEDS/2020/hd2020_dict_frequencies.csv"]
+        source_format: "CSV"
+        destination_project_dataset_table: "nces_ipeds.hd2020_dict_frequencies"
+        skip_leading_rows: 1
+        write_disposition: "WRITE_TRUNCATE"
+
+    - operator: "GoogleCloudStorageToBigQueryOperator"
+      description: "Task to load CSV data to a BigQuery table"
+      args:
+        task_id: "load_ic2020_csv_to_bq"
+        bucket: "{{ var.json.nces.storage_bucket }}"
+        source_objects: ["IPEDS/2020/ic2020.csv"]
+        source_format: "CSV"
+        destination_project_dataset_table: "nces_ipeds.ic2020"
+        skip_leading_rows: 1
+        write_disposition: "WRITE_TRUNCATE"
+
+    - operator: "GoogleCloudStorageToBigQueryOperator"
+      description: "Task to load CSV data to a BigQuery table"
+      args:
+        task_id: "load_ic2020_dict_frequencies_csv_to_bq"
+        bucket: "{{ var.json.nces.storage_bucket }}"
+        source_objects: ["IPEDS/2020/ic2020_dict_frequencies.csv"]
+        source_format: "CSV"
+        destination_project_dataset_table: "nces_ipeds.ic2020_dict_frequencies"
+        skip_leading_rows: 1
+        write_disposition: "WRITE_TRUNCATE"
+
+
+  graph_paths:
+    - "load_c2020_a_csv_to_bq"
+    - "load_c2020_a_dict_frequencies_csv_to_bq"
+    - "load_hd2020_csv_to_bq"
+    - "load_hd2020_dict_frequencies_csv_to_bq"
+    - "load_ic2020_csv_to_bq"
+    - "load_ic2020_dict_frequencies_csv_to_bq"

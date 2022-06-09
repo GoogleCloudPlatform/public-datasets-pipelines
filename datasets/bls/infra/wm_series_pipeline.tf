@@ -16,15 +16,10 @@
 
 
 resource "google_bigquery_table" "bls_wm_series" {
-  project    = var.project_id
-  dataset_id = "bls"
-  table_id   = "wm_series"
-
+  project     = var.project_id
+  dataset_id  = "bls"
+  table_id    = "wm_series"
   description = "WM_Series Dataset"
-
-
-
-
   depends_on = [
     google_bigquery_dataset.bls
   ]
