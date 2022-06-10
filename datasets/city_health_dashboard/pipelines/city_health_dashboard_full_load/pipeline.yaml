@@ -1,0 +1,222 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+resources:
+  - type: bigquery_table
+    table_id: chdb_data_city_all
+    description: "City Health Dashboard Data Tract"
+  - type: bigquery_table
+    table_id: chdb_data_tract_all
+    description: "City Health Dashboard Data Tract"
+dag:
+  airflow_version: 2
+  initialize:
+    dag_id: city_health_dashboard_full_load
+    default_args:
+      owner: "Google"
+      depends_on_past: False
+      start_date: '2021-03-01'
+    max_active_runs: 1
+    schedule_interval: "@once"
+    catchup: False
+    default_view: graph
+  tasks:
+    - operator: "KubernetesPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "chdb_data_city"
+        startup_timeout_seconds: 600
+        name: "city_health_dashboard_chdb_data_city_all"
+        namespace: "composer"
+        service_account_name: "datasets"
+        image_pull_policy: "Always"
+        image: "{{ var.json.city_health_dashboard.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "https://www.cityhealthdashboard.com/drupal/media/23/download"
+          SOURCE_FILE: "files/chdb_data_city_data.zip"
+          TARGET_FILE: "files/chdb_data_city_data_output.csv"
+          CHUNKSIZE: "500000"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "city_health_dashboard"
+          TABLE_ID: "chdb_data_city_all"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/city_health_dashboard/chdb_data_city_all/data_output.csv"
+          SCHEMA_PATH: "data/city_health_dashboard/schema/chdb_data_city_schema.json"
+          DROP_DEST_TABLE: "Y"
+          TRUNCATE_TABLE: "Y"
+          INPUT_FIELD_DELIMITER: ","
+          REMOVE_SOURCE_FILE: "Y"
+          DELETE_TARGET_FILE: "Y"
+          INPUT_CSV_HEADERS: >-
+            [
+              "state_abbr", "state_fips", "place_fips", "stpl_fips", "city_name",
+              "metric_name", "group_name", "metric_number", "group_number", "num",
+              "denom", "est", "lci", "uci", "county_indicator",
+              "multiplier_indicator", "data_yr_type", "geo_level", "date_export"
+            ]
+          DATA_DTYPES: >-
+            {
+              "state_abbr": "str",
+              "state_fips": "str",
+              "place_fips": "str",
+              "stpl_fips": "str",
+              "city_name": "str",
+              "metric_name": "str",
+              "group_name": "str",
+              "metric_number": "str",
+              "group_number": "str",
+              "num": "str",
+              "denom": "str",
+              "est": "str",
+              "lci": "str",
+              "uci": "str",
+              "county_indicator": "str",
+              "multiplier_indicator": "str",
+              "data_yr_type": "str",
+              "geo_level": "str",
+              "date_export": "str"
+            }
+          OUTPUT_CSV_HEADERS: >-
+            [
+              "state_abbr", "state_fips", "place_fips", "stpl_fips", "city_name",
+              "metric_name", "group_name", "metric_number", "group_number", "num",
+              "denom", "est", "lci", "uci", "county_indicator",
+              "multiplier_indicator", "data_yr_type", "geo_level", "date_export", "source_url",
+              "etl_timestamp"
+            ]
+          RENAME_HEADERS_LIST: >-
+            {
+              "state_abbr": "state_abbr",
+              "state_fips": "state_fips",
+              "place_fips": "place_fips",
+              "stpl_fips": "stpl_fips",
+              "city_name": "city_name",
+              "metric_name": "metric_name",
+              "group_name": "group_name",
+              "metric_number": "metric_number",
+              "group_number": "group_number",
+              "num": "num",
+              "denom": "denom",
+              "est": "est",
+              "lci": "lci",
+              "uci": "uci",
+              "county_indicator": "county_indicator",
+              "multiplier_indicator": "multiplier_indicator",
+              "data_yr_type": "data_yr_type",
+              "geo_level": "geo_level",
+              "date_export": "date_export"
+            }
+          TABLE_DESCRIPTION: "City Health Dashboard Data Tract"
+          PIPELINE_NAME: "chdb_data_city_all"
+          FILE_NAME_PREFIX: "CHDB_data_city_all_"
+        resources:
+          limit_memory: "8G"
+          limit_cpu: "1"
+    - operator: "KubernetesPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "chdb_data_tract"
+        startup_timeout_seconds: 600
+        name: "city_health_dashboard_chdb_data_tract_all"
+        namespace: "composer"
+        service_account_name: "datasets"
+        image_pull_policy: "Always"
+        image: "{{ var.json.city_health_dashboard.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "https://www.cityhealthdashboard.com/drupal/media/23/download"
+          SOURCE_FILE: "files/chdb_data_tract_data.zip"
+          TARGET_FILE: "files/chdb_data_tract_data_output.csv"
+          CHUNKSIZE: "500000"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "city_health_dashboard"
+          TABLE_ID: "chdb_data_tract_all"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/city_health_dashboard/chdb_data_tract_all/data_output.csv"
+          SCHEMA_PATH: "data/city_health_dashboard/schema/chdb_data_tract_schema.json"
+          DROP_DEST_TABLE: "Y"
+          TRUNCATE_TABLE: "Y"
+          INPUT_FIELD_DELIMITER: ","
+          REMOVE_SOURCE_FILE: "Y"
+          DELETE_TARGET_FILE: "Y"
+          INPUT_CSV_HEADERS: >-
+            [
+              "state_abbr", "state_fips", "county_fips", "county_name", "tract_code",
+              "stcotr_fips", "stpl_fips", "city_name", "metric_name", "metric_number",
+              "group_name", "group_number", "num", "denom", "est",
+              "lci", "uci", "data_yr_type", "geo_level", "date_export"
+            ]
+          DATA_DTYPES: >-
+            {
+              "state_abbr": "str",
+              "state_fips": "str",
+              "county_fips": "str",
+              "county_name": "str",
+              "tract_code": "str",
+              "stcotr_fips": "str",
+              "stpl_fips": "str",
+              "city_name": "str",
+              "metric_name": "str",
+              "metric_number": "str",
+              "group_name": "str",
+              "group_number": "str",
+              "num": "str",
+              "denom": "str",
+              "est": "str",
+              "lci": "str",
+              "uci": "str",
+              "data_yr_type": "str",
+              "geo_level": "str",
+              "date_export": "str"
+            }
+          OUTPUT_CSV_HEADERS: >-
+            [
+              "state_abbr", "state_fips", "county_fips", "county_name", "tract_code",
+              "stcotr_fips", "stpl_fips", "city_name", "metric_name", "metric_number",
+              "group_name", "group_number", "num", "denom", "est",
+              "lci", "uci", "data_yr_type", "geo_level", "date_export", "source_url",
+              "etl_timestamp"
+            ]
+          RENAME_HEADERS_LIST: >-
+            {
+              "state_abbr": "state_abbr",
+              "state_fips": "state_fips",
+              "county_fips": "county_fips",
+              "county_name": "county_name",
+              "tract_code": "tract_code",
+              "stcotr_fips": "stcotr_fips",
+              "stpl_fips": "stpl_fips",
+              "city_name": "city_name",
+              "metric_name": "metric_name",
+              "metric_number": "metric_number",
+              "group_name": "group_name",
+              "group_number": "group_number",
+              "num": "num",
+              "denom": "denom",
+              "est": "est",
+              "lci": "lci",
+              "uci": "uci",
+              "data_yr_type": "data_yr_type",
+              "geo_level": "geo_level",
+              "date_export": "date_export"
+            }
+          TABLE_DESCRIPTION: "City Health Dashboard Data Tract"
+          PIPELINE_NAME: "chdb_data_tract_all"
+          FILE_NAME_PREFIX: "CHDB_data_tract_all_"
+        resources:
+          limit_memory: "8G"
+          limit_cpu: "1"
+
+  graph_paths:
+    - "[ chdb_data_tract, chdb_data_city ]"

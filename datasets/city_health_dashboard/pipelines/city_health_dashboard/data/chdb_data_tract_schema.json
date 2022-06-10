@@ -1,0 +1,112 @@
+[
+	{
+		"name": "state_abbr",
+		"type": "STRING",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "state_fips",
+		"type": "INTEGER",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "county_fips",
+		"type": "INTEGER",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "county_name",
+		"type": "STRING",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "tract_code",
+		"type": "INTEGER",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "stcotr_fips",
+		"type": "INTEGER",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "stpl_fips",
+		"type": "INTEGER",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "city_name",
+		"type": "STRING",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "metric_name",
+		"type": "STRING",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "metric_number",
+		"type": "INTEGER",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "group_name",
+		"type": "STRING",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "group_number",
+		"type": "INTEGER",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "num",
+		"type": "FLOAT",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "denom",
+		"type": "FLOAT",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "est",
+		"type": "FLOAT",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "lci",
+		"type": "FLOAT",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "uci",
+		"type": "FLOAT",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "data_yr_type",
+		"type": "STRING",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "geo_level",
+		"type": "STRING",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "date_export",
+		"type": "DATE",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "source_url",
+		"type": "STRING",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "etl_timestamp",
+		"type": "TIMESTAMP",
+		"mode": "NULLABLE"
+	}
+]
