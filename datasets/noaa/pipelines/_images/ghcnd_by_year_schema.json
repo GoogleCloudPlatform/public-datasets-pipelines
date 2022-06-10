@@ -1,0 +1,62 @@
+[
+  {
+      "name": "id",
+      "type": "STRING",
+      "description": "",
+      "mode": "REQUIRED"
+  },
+  {
+      "name": "date",
+      "type": "DATE",
+      "description": "",
+      "mode": "NULLABLE"
+  },
+  {
+      "name": "element",
+      "type": "STRING",
+      "description": "",
+      "mode": "NULLABLE"
+  },
+  {
+      "name": "value",
+      "type": "FLOAT",
+      "description": "",
+      "mode": "NULLABLE"
+  },
+  {
+      "name": "mflag",
+      "type": "STRING",
+      "description": "",
+      "mode": "NULLABLE"
+  },
+  {
+      "name": "qflag",
+      "type": "STRING",
+      "description": "",
+      "mode": "NULLABLE"
+  },
+  {
+      "name": "sflag",
+      "type": "STRING",
+      "description": "",
+      "mode": "NULLABLE"
+  },
+  {
+      "name": "time",
+      "type": "STRING",
+      "description": "",
+      "mode": "NULLABLE"
+  },
+  {
+      "name": "source_url",
+      "type": "STRING",
+      "description": "Source ",
+      "mode": "NULLABLE"
+  },
+  {
+      "name": "etl_timestamp",
+      "type": "TIMESTAMP",
+      "description": "Load time for this data row",
+      "mode": "NULLABLE"
+  }
+]
