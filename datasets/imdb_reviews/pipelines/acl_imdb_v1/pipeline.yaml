@@ -17,7 +17,7 @@
 dag:
   airflow_version: 2
   initialize:
-    dag_id: "reviews"
+    dag_id: "acl_imdb_v1"
     default_args:
       owner: "Google"
       depends_on_past: False
@@ -43,4 +43,5 @@ dag:
           data_dir: "/home/airflow/gcs/data/imdb_reviews/acl_imdb_v1"
 
   graph_paths:
-    - "download_and_process_source_zip_file" # >> load_csv_file_to_bq_table"
+    - "download_and_process_source_zip_file" 
+    
