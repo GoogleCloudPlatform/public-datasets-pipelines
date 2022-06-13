@@ -33,8 +33,10 @@ dag:
       args:
         task_id: "download_and_process_source_tar_file"
         bash_command: |
-          mkdir -p $data_dir/imdb_reviews
-          touch $data_dir/checking.txt
+          mkdir -p $data_dir/{{ ds }}
+          curl -o $data_dir/{{ ds }}/aclImdb_v1.tar.gz -L $zip_source_url
+          tar -xvzf $data_dir/{{ ds }}/aclImdb_v1.tar.gz -C $data_dir/{{ ds }}/
+          mv $data_dir/{{ ds }}/aclImdb $data_dir/{{ ds }}/acl_imdb_v1
           
         env:
           zip_source_url: "https://ai.stanford.edu/~amaas/data/sentiment/aclImdb_v1.tar.gz"
