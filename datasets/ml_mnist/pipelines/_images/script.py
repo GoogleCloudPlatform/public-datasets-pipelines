@@ -14,13 +14,10 @@
 
 
 import datetime
-import json
 import logging
 import os
 import pathlib
-import typing
 
-import pandas as pd
 import requests
 from google.cloud import storage
 
@@ -28,11 +25,8 @@ from google.cloud import storage
 def main(
     source_url: str,
     source_file: pathlib.Path,
-    target_file: pathlib.Path,
     target_gcs_bucket: str,
     target_gcs_path: str,
-    headers: typing.List[str],
-    rename_mappings: dict,
     pipeline_name: str,
 ) -> None:
 
@@ -47,43 +41,15 @@ def main(
     logging.info(f"Downloading file from {source_url}... ")
     download_file(source_url, source_file)
 
-    logging.info(f"Opening file {source_file}...")
-    df = pd.read_csv(str(source_file))
-
-    logging.info(f"Transforming {source_file}... ")
-
-    logging.info("Transform: Rename columns... ")
-    rename_headers(df, rename_mappings)
-
-    logging.info("Transform: Replacing values... ")
-    df = df.replace(to_replace={"species": {"Iris-": ""}})
-
-    logging.info("Transform: Reordering headers..")
-    df = df[headers]
-
-    logging.info(f"Saving to output file.. {target_file}")
-    try:
-        save_to_new_file(df, file_path=str(target_file))
-    except Exception as e:
-        logging.error(f"Error saving output file: {e}.")
-
     logging.info(
         f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
     )
-    upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
+    upload_file_to_gcs(source_file, target_gcs_bucket, target_gcs_path)
 
     logging.info(
         f"ML datasets {pipeline_name} process completed at "
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
-
-
-def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
-    df.rename(columns=rename_mappings, inplace=True)
-
-
-def save_to_new_file(df: pd.DataFrame, file_path: str) -> None:
-    df.to_csv(file_path, index=False)
 
 
 def download_file(source_url: str, source_file: pathlib.Path) -> None:
@@ -110,10 +76,7 @@ if __name__ == "__main__":
     main(
         source_url=os.environ["SOURCE_URL"],
         source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
-        target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
-        headers=json.loads(os.environ["CSV_HEADERS"]),
-        rename_mappings=json.loads(os.environ["RENAME_MAPPINGS"]),
         pipeline_name=os.environ["PIPELINE_NAME"],
     )
