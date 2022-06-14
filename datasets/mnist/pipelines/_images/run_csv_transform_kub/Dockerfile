@@ -12,15 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-dataset:
-  name: ml_mnist
-  friendly_name: ml_mnist
-  description: ~
-  dataset_sources: ~
-  terms_of_use: ~
-
-resources:
-  - type: storage_bucket
-    dataset_id: ml_mnist
-    uniform_bucket_level_access: True
-    location: US
+FROM python:3.8
+ENV PYTHONUNBUFFERED True
+COPY requirements.txt ./
+RUN python3 -m pip install --no-cache-dir -r requirements.txt
+WORKDIR /custom
+COPY ./csv_transform.py .
+CMD ["python3", "csv_transform.py"]

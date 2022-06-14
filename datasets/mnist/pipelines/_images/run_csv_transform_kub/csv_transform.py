@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ from google.cloud import storage
 def main(
     source_url: str,
     source_file: pathlib.Path,
+    target_file: pathlib.Path,
     target_gcs_bucket: str,
     target_gcs_path: str,
     pipeline_name: str,
@@ -44,7 +45,7 @@ def main(
     logging.info(
         f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
     )
-    upload_file_to_gcs(source_file, target_gcs_bucket, target_gcs_path)
+    upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
     logging.info(
         f"ML datasets {pipeline_name} process completed at "
@@ -63,11 +64,21 @@ def download_file(source_url: str, source_file: pathlib.Path) -> None:
         logging.error(f"Couldn't download {source_url}: {r.text}")
 
 
-def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:
-    storage_client = storage.Client()
-    bucket = storage_client.bucket(gcs_bucket)
-    blob = bucket.blob(gcs_path)
-    blob.upload_from_filename(file_path)
+def upload_file_to_gcs(
+    file_path: pathlib.Path, target_gcs_bucket: str, target_gcs_path: str
+) -> None:
+    if os.path.exists(file_path):
+        logging.info(
+            f"Uploading output file to gs://{target_gcs_bucket}/{target_gcs_path}"
+        )
+        storage_client = storage.Client()
+        bucket = storage_client.bucket(target_gcs_bucket)
+        blob = bucket.blob(target_gcs_path)
+        blob.upload_from_filename(file_path)
+    else:
+        logging.info(
+            f"Cannot upload file to gs://{target_gcs_bucket}/{target_gcs_path} as it does not exist."
+        )
 
 
 if __name__ == "__main__":
@@ -76,6 +87,7 @@ if __name__ == "__main__":
     main(
         source_url=os.environ["SOURCE_URL"],
         source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
+        target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
         pipeline_name=os.environ["PIPELINE_NAME"],
