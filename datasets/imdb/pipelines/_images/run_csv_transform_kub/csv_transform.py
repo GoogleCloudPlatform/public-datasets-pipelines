@@ -118,7 +118,7 @@ def create_dataframe(extract_here: pathlib.Path, headers: typing.List[str]) -> p
       logging.info(f"\tSuccessfully created Dataframe(Child Dataframe) for {parent}-->{child}.")
       logging.info(f'\tTrying to concatenating main dataframe & child dataframe for {parent}-->{child}.')
       df = pd.concat([df,df_child],ignore_index=True)
-      logging.inf(f'\tChild Dataframe concatenated with main Dataframe df')
+      logging.info(f'\tChild Dataframe concatenated with main Dataframe df')
   return df
 
 def clean_html_tags(df: pd.DataFrame) -> None:
