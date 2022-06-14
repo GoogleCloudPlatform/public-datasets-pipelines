@@ -14,18 +14,19 @@
 
 
 
-import os
 import datetime
+import glob
 import json
 import logging
+import os
 import pathlib
-import typing
 import tarfile
-import glob
+import typing
 
 import pandas as pd
 import requests
 from google.cloud import storage
+
 
 def main(
     source_url: str,
@@ -131,7 +132,7 @@ def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
     df.rename(columns=rename_mappings, inplace=True)
 
 def save_to_newfile(df: pd.DataFrame, target_file: pathlib.Path) -> None:
-    df.to_csv(str(target_file,) header=True, index=False)
+    df.to_csv(str(target_file), header=True, index=False)
   
     
 def upload_file_to_gcs(target_file: pathlib.Path, target_gcs_bucket : str, target_gcs_path: str) -> None:
