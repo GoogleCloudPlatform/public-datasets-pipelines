@@ -18,7 +18,7 @@ WORKDIR /custom
 
 # Copy the specific data processing script/s in the image under /custom/*
 COPY ./fake.py .
-COPY ./helper ./data
+COPY ./data ./data
 
 # Command to run the data processing script when the container is run
 CMD ["python3", "fake.py"]

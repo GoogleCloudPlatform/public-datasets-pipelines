@@ -36,7 +36,7 @@ with DAG(
     load_csv_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_csv_to_bq",
         bucket="{{ var.json.bls.source_bucket }}",
-        source_objects=["cpsaat18/*.csv"],
+        source_objects=["cpsaat18/2021.csv"],
         source_format="CSV",
         destination_project_dataset_table="bls.cpsaat18",
         skip_leading_rows=1,

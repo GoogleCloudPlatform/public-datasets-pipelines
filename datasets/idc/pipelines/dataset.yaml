@@ -58,5 +58,9 @@ resources:
     description: Imaging Data Commons (IDC) - The Cancer Imaging Archive (TCIA) v8 data
 
   - type: bigquery_dataset
+    dataset_id: idc_v9
+    description: Imaging Data Commons (IDC) - The Cancer Imaging Archive (TCIA) v9 data
+
+  - type: bigquery_dataset
     dataset_id: idc_current
     description: Imaging Data Commons (IDC) - The Cancer Imaging Archive (TCIA) current data

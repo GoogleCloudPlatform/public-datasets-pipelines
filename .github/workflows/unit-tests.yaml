@@ -22,7 +22,7 @@ jobs:
         python-version: [3.8]
     steps:
       - uses: actions/checkout@v2
-      - uses: hashicorp/setup-terraform@v1
+      - uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 0.15.1
       - name: Setup Python ${{ matrix.python-version }}
