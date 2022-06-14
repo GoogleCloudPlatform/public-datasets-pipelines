@@ -1,5 +1,23 @@
 # Changelog
 
+## [4.1.0](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v4.0.0...v4.1.0) (2022-06-10)
+
+
+### Datasets
+
+* Onboard City Health Dashboard dataset ([#374](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/374)) ([c7cd9dd](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/c7cd9dd0fd715f04d14f9d183d3b0c7facfcdd14))
+* Onboard Cloud Storage Geo Index ([#367](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/367)) ([63cdb2a](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/63cdb2aef0c840bca85de71f2268547468da1606))
+* Onboard EPA Historical Air Quality ([#373](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/373)) ([4f4c87e](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/4f4c87edae252059062ba479b80559e7675a885f))
+* Onboard IDC v9 dataset ([#364](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/364)) ([bfb9f23](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/bfb9f239368494b7842c0ccde3351a979a77e11c))
+* Onboard NOAA datasets ([#353](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/353)) ([0f1c696](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/0f1c696c73a1ccc16ded61de39db6aa8d06806e3))
+* Onboard The General Index Dataset ([#342](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/342)) ([67d7216](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/67d7216829ee738e96a92c3d56f3fa0712d10c94))
+* Revised COVID-19 Google Mobility dataset ([#363](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/363)) ([ddd3dac](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/ddd3dac5d6a9a22bd70f47b10194d6f3d1291c34))
+
+
+### Documentation Set
+
+* Adds a simple mapping tutorial for the GBIF dataset ([#360](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/360)) ([e7a726a](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/e7a726a486928964042956849124bb1ee12153f1))
+
 ## [4.0.0](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v3.0.0...v4.0.0) (2022-05-23)
 
 
