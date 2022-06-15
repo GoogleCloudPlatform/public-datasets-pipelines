@@ -124,4 +124,9 @@ with DAG(
         },
     )
 
-    download_and_process_source_zip_file
+    (
+        download_and_process_source_zip_file
+        >> download_and_process_source_zip_file_2
+        >> download_and_process_source_zip_file_3
+        >> download_and_process_source_zip_file_4
+    )
