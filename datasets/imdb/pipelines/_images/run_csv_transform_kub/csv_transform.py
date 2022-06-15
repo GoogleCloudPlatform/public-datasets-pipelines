@@ -111,7 +111,7 @@ def create_dataframe(extract_here: pathlib.Path, headers: typing.List[str]) -> p
   df = pd.DataFrame(columns=headers)
   for parent in ['train', 'test']:
     for child in  ['pos', 'neg']:
-      path = f'{extract_here}aclImdb/{parent}/{child}/'
+      path = f'{extract_here}/aclImdb/{parent}/{child}/'
       csv_files = list(glob.glob(path + "*.txt"))
       logging.info(f"\tCreating Dataframe from by reading fila from {parent}-->{child}.")
       df_child = pd.DataFrame([[open(file).read(), file.split('/')[-2]] for file in csv_files], columns=headers)
@@ -131,15 +131,15 @@ def change_label(df: pd.DataFrame) -> None:
 def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
     df.rename(columns=rename_mappings, inplace=True)
 
-def save_to_newfile(df: pd.DataFrame, target_file: pathlib.Path) -> None:
+def save_to_new_file(df: pd.DataFrame, target_file: pathlib.Path) -> None:
     df.to_csv(str(target_file), header=True, index=False)
   
     
 def upload_file_to_gcs(target_file: pathlib.Path, target_gcs_bucket : str, target_gcs_path: str) -> None:
     storage_client = storage.Client()
-    bucket = storage_client.bucket(gcs_bucket)
-    blob = bucket.blob(gcs_path)
-    blob.upload_from_filename(file_path)
+    bucket = storage_client.bucket(target_gcs_bucket)
+    blob = bucket.blob(target_gcs_path)
+    blob.upload_from_filename(target_file)
 
 
 if __name__ == "__main__":

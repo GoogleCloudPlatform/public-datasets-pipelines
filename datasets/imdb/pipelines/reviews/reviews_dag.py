@@ -44,20 +44,16 @@ with DAG(
         image="{{ var.json.imdb.container_registry.run_csv_transform_kub }}",
         env_vars={
             "SOURCE_URL": "https://ai.stanford.edu/~amaas/data/sentiment/aclImdb_v1.tar.gz",
-            "SOURCE_FILE": "files/data.tar.gz",
-            "EXTRACT_HERE": "files/",
-            "TARGET_FILE": "files/data_output.csv",
+            "SOURCE_FILE": "./files/data.tar.gz",
+            "EXTRACT_HERE": "./files",
+            "TARGET_FILE": "./files/data_output.csv",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/imdb/reviews/data_output.csv",
             "PIPELINE_NAME": "reviews",
             "CSV_HEADERS": '["review", "label"]',
             "RENAME_MAPPINGS": '{"review": "review", "label": "label"}',
         },
-        resources={
-            "request_memory": "3G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "5G",
-        },
+        resources={"request_memory": "4G", "request_cpu": "1"},
     )
 
     # Task to load CSV data to a BigQuery table
@@ -73,15 +69,15 @@ with DAG(
         schema_fields=[
             {
                 "name": "review",
-                "type": "string",
+                "type": "STRING",
                 "description": "User review's in IMDb",
-                "mode": "nullable",
+                "mode": "NULLABLE",
             },
             {
                 "name": "label",
-                "type": "string",
+                "type": "STRING",
                 "description": "Type of the review",
-                "mode": "nullable",
+                "mode": "NULLABLE",
             },
         ],
     )

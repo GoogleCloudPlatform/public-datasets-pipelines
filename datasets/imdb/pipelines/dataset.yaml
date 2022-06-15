@@ -21,4 +21,4 @@ dataset:
 resources:
   - type: bigquery_dataset
     dataset_id: imdb
-    description: aclImdb_v1 dataset
+    description: "aclImdb_v1 dataset"
