@@ -1,0 +1,192 @@
+[
+	{
+		"name": "state",
+		"type": "INTEGER",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "county",
+		"type": "INTEGER",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "tract",
+		"type": "INTEGER",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "cz",
+		"type": "INTEGER",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "czname",
+		"type": "STRING",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "hhinc_mean2000",
+		"type": "FLOAT",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "mean_commutetime2000",
+		"type": "FLOAT",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "frac_coll_plus2000",
+		"type": "FLOAT",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "frac_coll_plus2010",
+		"type": "FLOAT",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "foreign_share2010",
+		"type": "FLOAT",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "med_hhinc1990",
+		"type": "FLOAT",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "med_hhinc2016",
+		"type": "INTEGER",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "popdensity2000",
+		"type": "FLOAT",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "poor_share2010",
+		"type": "FLOAT",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "poor_share2000",
+		"type": "FLOAT",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "poor_share1990",
+		"type": "FLOAT",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "share_white2010",
+		"type": "FLOAT",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "share_black2010",
+		"type": "FLOAT",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "share_hisp2010",
+		"type": "FLOAT",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "share_asian2010",
+		"type": "FLOAT",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "share_black2000",
+		"type": "FLOAT",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "share_white2000",
+		"type": "FLOAT",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "share_hisp2000",
+		"type": "FLOAT",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "share_asian2000",
+		"type": "FLOAT",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "gsmn_math_g3_2013",
+		"type": "FLOAT",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "rent_twobed2015",
+		"type": "INTEGER",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "singleparent_share2010",
+		"type": "FLOAT",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "singleparent_share1990",
+		"type": "FLOAT",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "singleparent_share2000",
+		"type": "FLOAT",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "traveltime15_2010",
+		"type": "FLOAT",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "emp2000",
+		"type": "FLOAT",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "mail_return_rate2010",
+		"type": "FLOAT",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "ln_wage_growth_hs_grad",
+		"type": "STRING",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "jobs_total_5mi_2015",
+		"type": "INTEGER",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "jobs_highpay_5mi_2015",
+		"type": "INTEGER",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "popdensity2010",
+		"type": "FLOAT",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "ann_avg_job_growth_2004_2013",
+		"type": "FLOAT",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "job_density_2013",
+		"type": "FLOAT",
+		"mode": "NULLABLE"
+	}
+]

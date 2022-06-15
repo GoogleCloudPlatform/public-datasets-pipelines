@@ -15,12 +15,20 @@
  */
 
 
-variable "project_id" {}
-variable "bucket_name_prefix" {}
-variable "impersonating_acct" {}
-variable "region" {}
-variable "env" {}
-variable "iam_policies" {
-  default = {}
+resource "google_bigquery_table" "the_general_index_the_general_index" {
+  project     = var.project_id
+  dataset_id  = "the_general_index"
+  table_id    = "the_general_index"
+  description = "The General Index"
+  depends_on = [
+    google_bigquery_dataset.the_general_index
+  ]
 }
 
+output "bigquery_table-the_general_index_the_general_index-table_id" {
+  value = google_bigquery_table.the_general_index_the_general_index.table_id
+}
+
+output "bigquery_table-the_general_index_the_general_index-id" {
+  value = google_bigquery_table.the_general_index_the_general_index.id
+}

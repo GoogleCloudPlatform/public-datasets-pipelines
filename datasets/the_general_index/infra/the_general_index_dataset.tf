@@ -15,12 +15,12 @@
  */
 
 
-variable "project_id" {}
-variable "bucket_name_prefix" {}
-variable "impersonating_acct" {}
-variable "region" {}
-variable "env" {}
-variable "iam_policies" {
-  default = {}
+resource "google_bigquery_dataset" "the_general_index" {
+  dataset_id  = "the_general_index"
+  project     = var.project_id
+  description = "Indicators dataset"
 }
 
+output "bigquery_dataset-the_general_index-dataset_id" {
+  value = google_bigquery_dataset.the_general_index.dataset_id
+}

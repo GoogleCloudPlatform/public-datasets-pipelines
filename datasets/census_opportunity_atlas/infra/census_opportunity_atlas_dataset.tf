@@ -24,14 +24,3 @@ resource "google_bigquery_dataset" "census_opportunity_atlas" {
 output "bigquery_dataset-census_opportunity_atlas-dataset_id" {
   value = google_bigquery_dataset.census_opportunity_atlas.dataset_id
 }
-
-resource "google_storage_bucket" "census-opportunity-atlas" {
-  name                        = "${var.bucket_name_prefix}-census-opportunity-atlas"
-  force_destroy               = true
-  location                    = "US"
-  uniform_bucket_level_access = true
-}
-
-output "storage_bucket-census-opportunity-atlas-name" {
-  value = google_storage_bucket.census-opportunity-atlas.name
-}

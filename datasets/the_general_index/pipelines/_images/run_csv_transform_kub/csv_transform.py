@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,12 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+import csv
+import datetime
+import gzip
 import json
 import logging
 import os
 import pathlib
 import typing
-from zipfile import ZipFile
+from urllib.parse import urlparse
 
 import pandas as pd
 import requests
@@ -28,34 +32,41 @@ def main(
     source_url: str,
     pipeline_name: str,
     source_file: pathlib.Path,
-    source_file_unzipped: str,
     target_file: pathlib.Path,
     project_id: str,
     dataset_id: str,
     table_id: str,
     schema_path: str,
+    source_file_header_rows: str,
+    source_file_footer_rows: str,
     chunksize: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
-    input_headers: typing.List[str],
-    rename_mappings: dict,
+    input_headers: str,
+    data_dtypes: dict,
+    datetime_list: typing.List[str],
+    null_string_list: typing.List[str],
 ) -> None:
+
     logging.info(f"{pipeline_name} process started")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
     execute_pipeline(
         source_url=source_url,
         source_file=source_file,
-        source_file_unzipped=source_file_unzipped,
         target_file=target_file,
         project_id=project_id,
         dataset_id=dataset_id,
         destination_table=table_id,
         schema_path=schema_path,
+        source_file_header_rows=source_file_header_rows,
+        source_file_footer_rows=source_file_footer_rows,
         chunksize=chunksize,
         target_gcs_bucket=target_gcs_bucket,
         target_gcs_path=target_gcs_path,
         input_headers=input_headers,
-        rename_mappings=rename_mappings,
+        data_dtypes=data_dtypes,
+        datetime_list=datetime_list,
+        null_string_list=null_string_list,
     )
     logging.info(f"{pipeline_name} process completed")
 
@@ -63,35 +74,42 @@ def main(
 def execute_pipeline(
     source_url: str,
     source_file: pathlib.Path,
-    source_file_unzipped: str,
     target_file: pathlib.Path,
     project_id: str,
     dataset_id: str,
     destination_table: str,
     schema_path: str,
+    source_file_header_rows: str,
+    source_file_footer_rows: str,
     chunksize: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
-    input_headers: typing.List[str],
-    rename_mappings: dict,
+    input_headers: str,
+    data_dtypes: dict,
+    datetime_list: typing.List[str],
+    null_string_list: typing.List[str],
 ) -> None:
-    if destination_table == "tract_outcomes":
-        source_zipfile = str.replace(str(source_file), ".csv", ".zip")
-        source_file_path = source_file.parent
-        download_file(source_url=source_url, source_file=source_zipfile)
-        zip_decompress(
-            infile=source_zipfile, topath=source_file_path, remove_zipfile=True
-        )
-        os.rename(source_file_unzipped, target_file)
-    else:
-        download_file(source_url, source_file)
-        process_source_file(
-            source_file=source_file,
-            target_file=target_file,
-            chunksize=chunksize,
-            input_headers=input_headers,
-            rename_mappings=rename_mappings,
-        )
+    source_file_path = os.path.split(source_file)[0]
+    source_url_file = os.path.basename(urlparse(source_url).path)
+    source_file_zipfile = f"{source_file_path}/{source_url_file}"
+    download_file(source_url, source_file_zipfile)
+    gz_decompress(infile=source_file_zipfile, tofile=source_file, delete_zipfile=False)
+    remove_header_footer(
+        source_file=source_file,
+        header_rows=int(source_file_header_rows),
+        footer_rows=int(source_file_footer_rows),
+    )
+    replace_double_quotes(source_file=source_file, replacement_char="'")
+    process_source_file(
+        source_file=source_file,
+        target_file=target_file,
+        chunksize=chunksize,
+        input_headers=input_headers,
+        data_dtypes=data_dtypes,
+        datetime_list=datetime_list,
+        null_string_list=null_string_list,
+        source_url=source_url,
+    )
     if os.path.exists(target_file):
         upload_file_to_gcs(
             file_path=target_file,
@@ -106,24 +124,20 @@ def execute_pipeline(
             bucket_name=target_gcs_bucket,
         )
         if table_exists:
-            if destination_table == "tract_outcomes":
-                load_data_to_bq(
-                    project_id=project_id,
-                    dataset_id=dataset_id,
-                    table_id=destination_table,
-                    file_path=target_file,
-                    truncate_table=True,
-                    field_delimiter=",",
-                )
-            else:
-                load_data_to_bq(
-                    project_id=project_id,
-                    dataset_id=dataset_id,
-                    table_id=destination_table,
-                    file_path=target_file,
-                    truncate_table=True,
-                    field_delimiter="|",
-                )
+            delete_source_file_data_from_bq(
+                project_id=project_id,
+                dataset_id=dataset_id,
+                table_id=destination_table,
+                source_url=source_url,
+            )
+            load_data_to_bq(
+                project_id=project_id,
+                dataset_id=dataset_id,
+                table_id=destination_table,
+                file_path=target_file,
+                truncate_table=False,
+                field_delimiter="|",
+            )
         else:
             error_msg = f"Error: Data was not loaded because the destination table {project_id}.{dataset_id}.{destination_table} does not exist and/or could not be created."
             raise ValueError(error_msg)
@@ -133,39 +147,114 @@ def execute_pipeline(
         )
 
 
+def gz_decompress(infile: str, tofile: str, delete_zipfile: bool = False) -> None:
+    logging.info(f"Decompressing {infile}")
+    with open(infile, "rb") as inf, open(tofile, "w", encoding="utf8") as tof:
+        decom_str = gzip.decompress(inf.read()).decode("utf-8")
+        tof.write(decom_str)
+    if delete_zipfile:
+        os.remove(infile)
+
+
+def remove_header_footer(source_file: str, header_rows: int, footer_rows: int) -> None:
+    logging.info(f"Cleansing data in {source_file}")
+    os.system(f"sed -i $'s/[^[:print:]\t]//g' {source_file} ")
+    logging.info(f"Removing header from {source_file}")
+    os.system(f"sed -i '1,{header_rows}d' {source_file} ")
+    logging.info(f"Removing trailer from {source_file}")
+    os.system(
+        f'sed -i "$(( $(wc -l <{source_file})-{footer_rows}+1 )),$ d" {source_file}'
+    )
+
+
+def replace_double_quotes(source_file: str, replacement_char: str) -> None:
+    cmd = f'sed -i "s/\\"/\'/g" {source_file} '
+    logging.info(cmd)
+    os.system(cmd)
+
+
 def process_source_file(
     source_file: str,
     target_file: str,
     chunksize: str,
-    input_headers: typing.List[str],
-    rename_mappings: dict,
+    input_headers: str,
+    data_dtypes: dict,
+    datetime_list: typing.List[str],
+    null_string_list: typing.List[str],
+    source_url: str,
 ) -> None:
     logging.info(f"Opening source file {source_file}")
-    with pd.read_csv(
+    csv.field_size_limit(512 << 10)
+    csv.register_dialect("TabDialect", quotechar='"', delimiter="\t", strict=True)
+    with open(
         source_file,
-        engine="python",
-        encoding="utf-8",
-        quotechar='"',
-        chunksize=int(chunksize),  # size of batch data, in no. of records
-        sep=",",  # data column separator, typically ","
-        header=0,  # use when the data file does not contain a header
-        names=input_headers,
-        keep_default_na=True,
-        na_values=[" "],
     ) as reader:
-        for chunk_number, chunk in enumerate(reader):
-            target_file_batch = str(target_file).replace(
-                ".csv", "-" + str(chunk_number) + ".csv"
+        data = []
+        chunk_number = 1
+        for index, line in enumerate(csv.reader(reader, "TabDialect"), 0):
+            data.append(line)
+            if index % int(chunksize) == 0 and index > 0:
+                process_dataframe_chunk(
+                    data,
+                    input_headers,
+                    data_dtypes,
+                    target_file,
+                    chunk_number,
+                    datetime_list,
+                    null_string_list,
+                    source_file,
+                    source_url,
+                )
+                data = []
+                chunk_number += 1
+
+        if data:
+            process_dataframe_chunk(
+                data,
+                input_headers,
+                data_dtypes,
+                target_file,
+                chunk_number,
+                datetime_list,
+                null_string_list,
+                source_file,
+                source_url,
             )
-            df = pd.DataFrame()
-            df = pd.concat([df, chunk])
-            process_chunk(
-                df=df,
-                target_file_batch=target_file_batch,
-                target_file=target_file,
-                skip_header=(not chunk_number == 0),
-                rename_headers_list=rename_mappings,
-            )
+
+
+def process_dataframe_chunk(
+    data: typing.List[str],
+    input_headers: typing.List[str],
+    data_dtypes: dict,
+    target_file: str,
+    chunk_number: int,
+    datetime_list: typing.List[str],
+    null_string_list: typing.List[str],
+    source_file: str,
+    source_url: str,
+) -> None:
+    df = pd.DataFrame(data, columns=input_headers)
+    set_df_datatypes(df, data_dtypes)
+    target_file_batch = str(target_file).replace(
+        ".csv", "-" + str(chunk_number) + ".csv"
+    )
+    process_chunk(
+        df=df,
+        target_file_batch=target_file_batch,
+        target_file=target_file,
+        skip_header=(not chunk_number == 1),
+        datetime_list=datetime_list,
+        null_string_list=null_string_list,
+        source_file=source_file,
+        source_url=source_url,
+    )
+
+
+def set_df_datatypes(df: pd.DataFrame, data_dtypes: dict) -> pd.DataFrame:
+    logging.info("Setting data types")
+    for key, item in data_dtypes.items():
+        df[key] = df[key].astype(item)
+    return df
 
 
 def process_chunk(
@@ -173,56 +262,65 @@ def process_chunk(
     target_file_batch: str,
     target_file: str,
     skip_header: bool,
-    rename_headers_list: list,
+    datetime_list: typing.List[str],
+    null_string_list: typing.List[str],
+    source_file: str,
+    source_url: str,
 ) -> None:
     logging.info(f"Processing batch file {target_file_batch}")
-    df = rename_headers(df, rename_headers_list)
+    df = remove_null_strings(df, null_string_list)
+    df = add_metadata_columns(df, source_file, source_url)
+    df = resolve_date_format(df, datetime_list)
     save_to_new_file(df, file_path=str(target_file_batch), sep="|")
     append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
     logging.info(f"Processing batch file {target_file_batch} completed")
 
 
-def append_batch_file(
-    batch_file_path: str, target_file_path: str, skip_header: bool, truncate_file: bool
-) -> None:
-    with open(batch_file_path, "r") as data_file:
-        if truncate_file:
-            target_file = open(target_file_path, "w+").close()
-        with open(target_file_path, "a+") as target_file:
-            if skip_header:
-                logging.info(
-                    f"Appending batch file {batch_file_path} to {target_file_path} with skip header"
-                )
-                next(data_file)
-            else:
-                logging.info(
-                    f"Appending batch file {batch_file_path} to {target_file_path}"
-                )
-            target_file.write(data_file.read())
-            if os.path.exists(batch_file_path):
-                os.remove(batch_file_path)
+def add_metadata_columns(
+    df: pd.DataFrame, source_file: str, source_url: str
+) -> pd.DataFrame:
+    df["etl_timestamp"] = datetime.datetime.now()
+    df["source_file"] = os.path.split(source_file)[1]
+    df["source_url"] = source_url
+    return df
+
+
+def remove_null_strings(
+    df: pd.DataFrame, null_string_list: typing.List[str]
+) -> pd.DataFrame:
+    for column in null_string_list:
+        logging.info(f"Removing null strings from column {column}")
+        df[column] = df[column].str.replace("\\N", "", regex=False)
+    return df
+
+
+def resolve_date_format(
+    df: pd.DataFrame,
+    date_format_list: typing.List[str],
+) -> pd.DataFrame:
+    logging.info("Resolving date formats")
+    for dt_fld in date_format_list:
+        df[dt_fld] = df[dt_fld].apply(convert_dt_format)
+    return df
+
+
+def convert_dt_format(dt_str: str) -> str:
+    if not dt_str or str(dt_str).lower() == "nan" or str(dt_str).lower() == "nat":
+        return ""
+    else:
+        return str(
+            pd.to_datetime(
+                dt_str, format='"%Y-%m-%d %H:%M:%S"', infer_datetime_format=True
+            )
+        )
 
 
 def download_file(source_url: str, source_file: pathlib.Path) -> None:
-    logging.info(f"Downloading file {source_url} to {source_file}")
+    logging.info(f"downloading file {source_file} from {source_url}")
     r = requests.get(source_url, stream=True)
     with open(source_file, "wb") as f:
         for chunk in r:
             f.write(chunk)
-
-
-def zip_decompress(infile: str, topath: str, remove_zipfile: bool = False) -> None:
-    logging.info(f"Decompressing {infile} to {topath}")
-    with ZipFile(infile, "r") as zip:
-        zip.extractall(topath)
-    if remove_zipfile:
-        os.unlink(infile)
-
-
-def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
-    logging.info("Renaming Headers")
-    df.rename(columns=rename_mappings, inplace=True)
-    return df
 
 
 def load_data_to_bq(
@@ -303,6 +401,22 @@ def check_gcs_file_exists(file_path: str, bucket_name: str) -> bool:
     return exists
 
 
+def delete_source_file_data_from_bq(
+    project_id: str, dataset_id: str, table_id: str, source_url: str
+) -> None:
+    logging.info(
+        f"Deleting data from {project_id}.{dataset_id}.{table_id} where source_url = '{source_url}'"
+    )
+    client = bigquery.Client(project=project_id)
+    query_delete = f"""
+        DELETE
+        FROM {project_id}.{dataset_id}.{table_id}
+        WHERE source_url = '{source_url}'
+    """
+    query_job = client.query(query_delete)  # Make an API request.
+    query_job.result()
+
+
 def create_table_schema(
     schema_structure: list, bucket_name: str = "", schema_filepath: str = ""
 ) -> list:
@@ -333,7 +447,28 @@ def create_table_schema(
 
 def save_to_new_file(df: pd.DataFrame, file_path: str, sep: str = "|") -> None:
     logging.info(f"Saving data to target file.. {file_path} ...")
-    df.to_csv(file_path, float_format="%.0f", index=False, sep=sep)
+    df.to_csv(file_path, index=False, sep=sep)
+
+
+def append_batch_file(
+    batch_file_path: str, target_file_path: str, skip_header: bool, truncate_file: bool
+) -> None:
+    with open(batch_file_path, "r") as data_file:
+        if truncate_file:
+            target_file = open(target_file_path, "w+").close()
+        with open(target_file_path, "a+") as target_file:
+            if skip_header:
+                logging.info(
+                    f"Appending batch file {batch_file_path} to {target_file_path} with skip header"
+                )
+                next(data_file)
+            else:
+                logging.info(
+                    f"Appending batch file {batch_file_path} to {target_file_path}"
+                )
+            target_file.write(data_file.read())
+            if os.path.exists(batch_file_path):
+                os.remove(batch_file_path)
 
 
 def upload_file_to_gcs(
@@ -360,17 +495,18 @@ if __name__ == "__main__":
         source_url=os.environ["SOURCE_URL"],
         pipeline_name=os.environ["PIPELINE_NAME"],
         source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
-        source_file_unzipped=pathlib.Path(
-            os.environ["SOURCE_FILE_UNZIPPED"]
-        ).expanduser(),
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
+        chunksize=os.environ["CHUNKSIZE"],
+        target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
+        target_gcs_path=os.environ["TARGET_GCS_PATH"],
         project_id=os.environ["PROJECT_ID"],
         dataset_id=os.environ["DATASET_ID"],
         table_id=os.environ["TABLE_ID"],
         schema_path=os.environ["SCHEMA_PATH"],
-        chunksize=os.environ["CHUNKSIZE"],
-        target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
-        target_gcs_path=os.environ["TARGET_GCS_PATH"],
+        source_file_header_rows=os.environ["SOURCE_FILE_HEADER_ROWS"],
+        source_file_footer_rows=os.environ["SOURCE_FILE_FOOTER_ROWS"],
         input_headers=json.loads(os.environ["INPUT_CSV_HEADERS"]),
-        rename_mappings=json.loads(os.environ["RENAME_MAPPINGS"]),
+        data_dtypes=json.loads(os.environ["DATA_DTYPES"]),
+        datetime_list=json.loads(os.environ["DATETIME_LIST"]),
+        null_string_list=json.loads(os.environ["NULL_STRING_LIST"]),
     )
