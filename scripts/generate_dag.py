@@ -305,14 +305,15 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    class CustomYamlConstructors(yaml.YAMLObject):
+    class CustomYAMLTags(yaml.YAMLObject):
         def __init__(self):
-            yaml.add_constructor("!IMAGE:", self.image_constructor)
+            yaml.add_constructor("!IMAGE", self.image_constructor)
+
         def image_constructor(self, loader, node):
             value = loader.construct_scalar(node)
-            value = f'gcr.io/{{{{ var.value.gcp_project }}}}/{args.dataset}__{value}'
+            value = f"gcr.io/{{{{ var.value.gcp_project }}}}/{args.dataset}__{value}"
             return value
 
-    CustomYamlConstructors()
+    CustomYAMLTags()
 
     main(args.dataset, args.pipeline, args.env, args.all_pipelines, args.skip_builds)
