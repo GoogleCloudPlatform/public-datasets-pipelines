@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-
 import datetime
 import glob
 import json
@@ -26,7 +24,6 @@ import typing
 import pandas as pd
 import requests
 from google.cloud import storage
-
 
 def main(
     source_url: str,
@@ -43,9 +40,6 @@ def main(
         f"IMDb Dataset {pipeline_name} pipeline process started at "
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
-
-    # logging.info(f'creating {extract_here} folder under {os.getcwd()}.')
-    # os.makedirs(extract_here, exist_ok=True)
 
     logging.info("Downloading tar file ...")
     download_tarfile(source_url, source_file)
@@ -89,7 +83,6 @@ def main(
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
 
-
 def download_tarfile(source_url: str, source_file: pathlib.Path) -> None:
     logging.info(f"Creating 'files' folder under {os.getcwd()}")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
@@ -124,7 +117,6 @@ def create_dataframe(extract_here: pathlib.Path, headers: typing.List[str]) -> p
 def clean_html_tags(df: pd.DataFrame) -> None:
     df.review.replace(to_replace='<{1,}.{0,4}>',value='',regex=True,inplace=True)
 
-
 def change_label(df: pd.DataFrame) -> None:
     df.label.replace({'neg': 'Negative', 'pos': 'Positive'}, inplace=True)
 
@@ -133,14 +125,12 @@ def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
 
 def save_to_new_file(df: pd.DataFrame, target_file: pathlib.Path) -> None:
     df.to_csv(str(target_file), header=True, index=False)
-  
-    
+
 def upload_file_to_gcs(target_file: pathlib.Path, target_gcs_bucket : str, target_gcs_path: str) -> None:
     storage_client = storage.Client()
     bucket = storage_client.bucket(target_gcs_bucket)
     blob = bucket.blob(target_gcs_path)
     blob.upload_from_filename(target_file)
-
 
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
@@ -148,7 +138,7 @@ if __name__ == "__main__":
     main(
         source_url=os.environ["SOURCE_URL"],
         source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
-        extract_here = pathlib.Path(os.environ["EXTRACT_HERE"]).expanduser(), 
+        extract_here = pathlib.Path(os.environ["EXTRACT_HERE"]).expanduser(),
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
