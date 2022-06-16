@@ -56,8 +56,7 @@ dag:
         resources:
           request_memory: "4G"
           request_cpu: "1"
-          # request_ephemeral_storage: "8G"
-          
+
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
       args:
