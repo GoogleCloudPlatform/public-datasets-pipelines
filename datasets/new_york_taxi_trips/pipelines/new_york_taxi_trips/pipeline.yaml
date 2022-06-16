@@ -16,7 +16,7 @@
 resources:
   - type: bigquery_table
     table_id: "tlc_green_trips"
-    description: "New york green taxi trips table"
+    description: "New York green taxi trips table"
   - type: bigquery_table
     table_id: "tlc_yellow_trips"
     description: "New york yellow taxi trips table"
