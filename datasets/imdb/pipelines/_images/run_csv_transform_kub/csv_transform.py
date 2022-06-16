@@ -144,13 +144,13 @@ def upload_file_to_gcs(target_file: pathlib.Path, target_gcs_bucket : str, targe
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
     main(
-        source_url=os.environ.get("SOURCE_URL"),
-        source_file=pathlib.Path(os.environ.get("SOURCE_FILE")).expanduser(),
-        extract_here=pathlib.Path(os.environ.get("EXTRACT_HERE")).expanduser(),
-        target_file=pathlib.Path(os.environ.get("TARGET_FILE")).expanduser(),
-        target_gcs_bucket=os.environ.get("TARGET_GCS_BUCKET"),
-        target_gcs_path=os.environ.get("TARGET_GCS_PATH"),
-        headers=json.loads(os.environ.get("CSV_HEADERS")),
-        rename_mappings=json.loads(os.environ.get("RENAME_MAPPINGS")),
-        pipeline_name=os.environ.get("PIPELINE_NAME"),
+        source_url=os.environ["SOURCE_URL"],
+        source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
+        extract_here=pathlib.Path(os.environ["EXTRACT_HERE"]).expanduser(),
+        target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
+        target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
+        target_gcs_path=os.environ["TARGET_GCS_PATH"],
+        headers=json.loads(os.environ["CSV_HEADERS"]),
+        rename_mappings=json.loads(os.environ["RENAME_MAPPINGS"]),
+        pipeline_name=os.environ["PIPELINE_NAME"],
     )
