@@ -16,9 +16,8 @@
 
 
 resource "google_bigquery_dataset" "new_york_taxi_trips" {
-  dataset_id  = "new_york_taxi_trips"
-  project     = var.project_id
-  description = "TLC Green trips 2018 dataset"
+  dataset_id = "new_york_taxi_trips"
+  project    = var.project_id
 }
 
 output "bigquery_dataset-new_york_taxi_trips-dataset_id" {

@@ -15,11 +15,29 @@
  */
 
 
+resource "google_bigquery_table" "new_york_taxi_trips_tlc_green_trips" {
+  project     = var.project_id
+  dataset_id  = "new_york_taxi_trips"
+  table_id    = "tlc_green_trips"
+  description = "New York green taxi trips table"
+  depends_on = [
+    google_bigquery_dataset.new_york_taxi_trips
+  ]
+}
+
+output "bigquery_table-new_york_taxi_trips_tlc_green_trips-table_id" {
+  value = google_bigquery_table.new_york_taxi_trips_tlc_green_trips.table_id
+}
+
+output "bigquery_table-new_york_taxi_trips_tlc_green_trips-id" {
+  value = google_bigquery_table.new_york_taxi_trips_tlc_green_trips.id
+}
+
 resource "google_bigquery_table" "new_york_taxi_trips_tlc_yellow_trips" {
   project     = var.project_id
   dataset_id  = "new_york_taxi_trips"
   table_id    = "tlc_yellow_trips"
-  description = "New york yellow taxi trips table"
+  description = "New York yellow taxi trips table"
   depends_on = [
     google_bigquery_dataset.new_york_taxi_trips
   ]
