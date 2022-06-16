@@ -15,12 +15,18 @@
  */
 
 
-variable "project_id" {}
-variable "bucket_name_prefix" {}
-variable "impersonating_acct" {}
-variable "region" {}
-variable "env" {}
-variable "iam_policies" {
-  default = {}
+resource "google_storage_bucket" "mnist" {
+  name                        = "${var.bucket_name_prefix}-mnist"
+  force_destroy               = true
+  location                    = "US"
+  uniform_bucket_level_access = true
+  lifecycle {
+    ignore_changes = [
+      logging,
+    ]
+  }
 }
 
+output "storage_bucket-mnist-name" {
+  value = google_storage_bucket.mnist.name
+}

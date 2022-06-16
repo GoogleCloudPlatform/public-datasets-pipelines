@@ -15,12 +15,20 @@
  */
 
 
-variable "project_id" {}
-variable "bucket_name_prefix" {}
-variable "impersonating_acct" {}
-variable "region" {}
-variable "env" {}
-variable "iam_policies" {
-  default = {}
+resource "google_bigquery_table" "imdb_reviews" {
+  project     = var.project_id
+  dataset_id  = "imdb"
+  table_id    = "reviews"
+  description = "Reviews table"
+  depends_on = [
+    google_bigquery_dataset.imdb
+  ]
 }
 
+output "bigquery_table-imdb_reviews-table_id" {
+  value = google_bigquery_table.imdb_reviews.table_id
+}
+
+output "bigquery_table-imdb_reviews-id" {
+  value = google_bigquery_table.imdb_reviews.id
+}
