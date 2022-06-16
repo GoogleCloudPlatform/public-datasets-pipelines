@@ -25,6 +25,7 @@ import pandas as pd
 import requests
 from google.cloud import storage
 
+
 def main(
     source_url: str,
     source_file: pathlib.Path,
@@ -49,7 +50,7 @@ def main(
     extract_tar(source_file, extract_here)
     logging.info(f"Successfully extracted tar file to {extract_here}.")
 
-    logging.info(f"Started creating Dataframe.")
+    logging.info("Started creating Dataframe.")
     df = create_dataframe(extract_here, headers)
     logging.info('Successfully Created Dataframe and assigned to variable df.')
 
@@ -60,7 +61,6 @@ def main(
     logging.info('Changing "label" column data from  ["neg", "pos"] -->  ["Negative", "Positive"].')
     change_label(df)
     logging.info('Successfully replaced "label" column data.')
-
 
     logging.info('Renaming headers')
     rename_headers(df, rename_mappings)
@@ -83,6 +83,7 @@ def main(
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
 
+
 def download_tarfile(source_url: str, source_file: pathlib.Path) -> None:
     logging.info(f"Creating 'files' folder under {os.getcwd()}")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
@@ -96,35 +97,42 @@ def download_tarfile(source_url: str, source_file: pathlib.Path) -> None:
     else:
         logging.error(f"Couldn't download {source_url}: {res.text}")
 
+
 def extract_tar(source_file: pathlib.Path, extract_here: pathlib.Path):
-  with tarfile.open(str(source_file),'r') as tar_fb:
-    tar_fb.extractall(extract_here)
+    with tarfile.open(str(source_file), 'r') as tar_fb:
+        tar_fb.extractall(extract_here)
+
 
 def create_dataframe(extract_here: pathlib.Path, headers: typing.List[str]) -> pd.DataFrame:
-  df = pd.DataFrame(columns=headers)
-  for parent in ['train', 'test']:
-    for child in  ['pos', 'neg']:
-      path = f'{extract_here}/aclImdb/{parent}/{child}/'
-      csv_files = list(glob.glob(path + "*.txt"))
-      logging.info(f"\tCreating Dataframe from by reading fila from {parent}-->{child}.")
-      df_child = pd.DataFrame([[open(file).read(), file.split('/')[-2]] for file in csv_files], columns=headers)
-      logging.info(f"\tSuccessfully created Dataframe(Child Dataframe) for {parent}-->{child}.")
-      logging.info(f'\tTrying to concatenating main dataframe & child dataframe for {parent}-->{child}.')
-      df = pd.concat([df,df_child],ignore_index=True)
-      logging.info(f'\tChild Dataframe concatenated with main Dataframe df')
-  return df
+    df = pd.DataFrame(columns=headers)
+    for parent in ['train', 'test']:
+        for child in ['pos', 'neg']:
+            path = f'{extract_here}/aclImdb/{parent}/{child}/'
+            csv_files = list(glob.glob(path + "*.txt"))
+            logging.info(f"\tCreating Dataframe from by reading fila from {parent}-->{child}.")
+            df_child = pd.DataFrame([[open(file).read(), file.split('/')[-2]] for file in csv_files], columns=headers)
+            logging.info(f"\tSuccessfully created Dataframe(Child Dataframe) for {parent}-->{child}.")
+            logging.info(f'\tTrying to concatenating main dataframe & child dataframe for {parent}-->{child}.')
+            df = pd.concat([df, df_child], ignore_index=True)
+            logging.info('\tChild Dataframe concatenated with main Dataframe df')
+    return df
+
 
 def clean_html_tags(df: pd.DataFrame) -> None:
-    df.review.replace(to_replace='<{1,}.{0,4}>',value='',regex=True,inplace=True)
+    df.review.replace(to_replace='<{1,}.{0,4}>', value='', regex=True, inplace=True)
+
 
 def change_label(df: pd.DataFrame) -> None:
     df.label.replace({'neg': 'Negative', 'pos': 'Positive'}, inplace=True)
 
+
 def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
     df.rename(columns=rename_mappings, inplace=True)
 
+
 def save_to_new_file(df: pd.DataFrame, target_file: pathlib.Path) -> None:
     df.to_csv(str(target_file), header=True, index=False)
+
 
 def upload_file_to_gcs(target_file: pathlib.Path, target_gcs_bucket : str, target_gcs_path: str) -> None:
     storage_client = storage.Client()
@@ -132,17 +140,17 @@ def upload_file_to_gcs(target_file: pathlib.Path, target_gcs_bucket : str, targe
     blob = bucket.blob(target_gcs_path)
     blob.upload_from_filename(target_file)
 
+
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
-
     main(
-        source_url=os.environ["SOURCE_URL"],
-        source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
-        extract_here = pathlib.Path(os.environ["EXTRACT_HERE"]).expanduser(),
-        target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
-        target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
-        target_gcs_path=os.environ["TARGET_GCS_PATH"],
-        headers=json.loads(os.environ["CSV_HEADERS"]),
-        rename_mappings=json.loads(os.environ["RENAME_MAPPINGS"]),
-        pipeline_name=os.environ["PIPELINE_NAME"],
+        source_url=os.environ.get("SOURCE_URL"),
+        source_file=pathlib.Path(os.environ.get("SOURCE_FILE")).expanduser(),
+        extract_here=pathlib.Path(os.environ.get("EXTRACT_HERE")).expanduser(),
+        target_file=pathlib.Path(os.environ.get("TARGET_FILE")).expanduser(),
+        target_gcs_bucket=os.environ.get("TARGET_GCS_BUCKET"),
+        target_gcs_path=os.environ.get("TARGET_GCS_PATH"),
+        headers=json.loads(os.environ.get("CSV_HEADERS")),
+        rename_mappings=json.loads(os.environ.get("RENAME_MAPPINGS")),
+        pipeline_name=os.environ.get("PIPELINE_NAME"),
     )
