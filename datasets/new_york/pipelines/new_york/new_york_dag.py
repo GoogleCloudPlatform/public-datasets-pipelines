@@ -58,7 +58,7 @@ with DAG(
         cluster_name="new-york",
         namespace="default",
         image_pull_policy="Always",
-        image="{{ var.json.new_york.container_registry.ny_311_service_requests.run_csv_transform_kub }}",
+        image="{{ var.json.new_york.container_registry.run_csv_transform_kub_ny_311_service_requests }}",
         env_vars={
             "PIPELINE_NAME": "{{ var.json.new_york.ny_311_service_requests.pipeline_name }}",
             "SOURCE_URL": "{{ var.json.new_york.ny_311_service_requests.source_url }}",
@@ -89,7 +89,7 @@ with DAG(
         cluster_name="new-york",
         namespace="default",
         image_pull_policy="Always",
-        image="{{ var.json.new_york.container_registry.citibike_stations.run_csv_transform_kub }}",
+        image="{{ var.json.new_york.container_registry.run_csv_transform_kub_citibike_stations }}",
         env_vars={
             "PIPELINE_NAME": "{{ var.json.new_york.citibike_stations.pipeline_name }}",
             "SOURCE_URL_STATIONS_JSON": "{{ var.json.new_york.citibike_stations.source_url_stations }}",
@@ -124,7 +124,7 @@ with DAG(
         cluster_name="new-york",
         namespace="default",
         image_pull_policy="Always",
-        image="{{ var.json.new_york.container_registry.nypd_mv_collisions.run_csv_transform_kub }}",
+        image="{{ var.json.new_york.container_registry.run_csv_transform_kub_nypd_mv_collisions }}",
         env_vars={
             "PIPELINE_NAME": "{{ var.json.new_york.nypd_mv_collisions.pipeline_name }}",
             "SOURCE_URL": "{{ var.json.new_york.nypd_mv_collisions.source_url }}",
@@ -158,7 +158,7 @@ with DAG(
         cluster_name="new-york",
         namespace="default",
         image_pull_policy="Always",
-        image="{{ var.json.new_york.container_registry.tree_census_1995.run_csv_transform_kub }}",
+        image="{{ var.json.new_york.container_registry.run_csv_transform_kub_tree_census_1995 }}",
         env_vars={
             "PIPELINE_NAME": "{{ var.json.new_york.tree_census_1995.pipeline_name }}",
             "SOURCE_URL": "{{ var.json.new_york.tree_census_1995.source_url }}",
