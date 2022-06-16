@@ -52,23 +52,25 @@ def main(
 
     logging.info("Started creating Dataframe.")
     df = create_dataframe(extract_here, headers)
-    logging.info('Successfully Created Dataframe and assigned to variable df.')
+    logging.info("Successfully Created Dataframe and assigned to variable df.")
 
     logging.info("Started cleaning html tags from the user review.")
     clean_html_tags(df)
     logging.info("Cleaning html tags completed.")
 
-    logging.info('Changing "label" column data from  ["neg", "pos"] -->  ["Negative", "Positive"].')
+    logging.info(
+        'Changing "label" column data from  ["neg", "pos"] -->  ["Negative", "Positive"].'
+    )
     change_label(df)
     logging.info('Successfully replaced "label" column data.')
 
-    logging.info('Renaming headers')
+    logging.info("Renaming headers")
     rename_headers(df, rename_mappings)
 
     logging.info(f"Saving to output file... {target_file}")
     try:
         save_to_new_file(df, target_file)
-        logging.info('Successfully saved.')
+        logging.info("Successfully saved.")
     except Exception as e:
         logging.error(f"Error saving output file: {e}.")
 
@@ -76,7 +78,7 @@ def main(
         f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
     )
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
-    logging.info('Successfully uploaded file to gcs bucket.')
+    logging.info("Successfully uploaded file to gcs bucket.")
 
     logging.info(
         f"IMDb Dataset {pipeline_name} pipeline process completed at "
@@ -99,31 +101,42 @@ def download_tarfile(source_url: str, source_file: pathlib.Path) -> None:
 
 
 def extract_tar(source_file: pathlib.Path, extract_here: pathlib.Path):
-    with tarfile.open(str(source_file), 'r') as tar_fb:
+    with tarfile.open(str(source_file), "r") as tar_fb:
         tar_fb.extractall(extract_here)
 
 
-def create_dataframe(extract_here: pathlib.Path, headers: typing.List[str]) -> pd.DataFrame:
+def create_dataframe(
+    extract_here: pathlib.Path, headers: typing.List[str]
+) -> pd.DataFrame:
     df = pd.DataFrame(columns=headers)
-    for parent in ['train', 'test']:
-        for child in ['pos', 'neg']:
-            path = f'{extract_here}/aclImdb/{parent}/{child}/'
+    for parent in ["train", "test"]:
+        for child in ["pos", "neg"]:
+            path = f"{extract_here}/aclImdb/{parent}/{child}/"
             csv_files = list(glob.glob(path + "*.txt"))
-            logging.info(f"\tCreating Dataframe from by reading fila from {parent}-->{child}.")
-            df_child = pd.DataFrame([[open(file).read(), file.split('/')[-2]] for file in csv_files], columns=headers)
-            logging.info(f"\tSuccessfully created Dataframe(Child Dataframe) for {parent}-->{child}.")
-            logging.info(f'\tTrying to concatenating main dataframe & child dataframe for {parent}-->{child}.')
+            logging.info(
+                f"\tCreating Dataframe from by reading fila from {parent}-->{child}."
+            )
+            df_child = pd.DataFrame(
+                [[open(file).read(), file.split("/")[-2]] for file in csv_files],
+                columns=headers,
+            )
+            logging.info(
+                f"\tSuccessfully created Dataframe(Child Dataframe) for {parent}-->{child}."
+            )
+            logging.info(
+                f"\tTrying to concatenating main dataframe & child dataframe for {parent}-->{child}."
+            )
             df = pd.concat([df, df_child], ignore_index=True)
-            logging.info('\tChild Dataframe concatenated with main Dataframe df')
+            logging.info("\tChild Dataframe concatenated with main Dataframe df")
     return df
 
 
 def clean_html_tags(df: pd.DataFrame) -> None:
-    df.review.replace(to_replace='<{1,}.{0,4}>', value='', regex=True, inplace=True)
+    df.review.replace(to_replace="<{1,}.{0,4}>", value="", regex=True, inplace=True)
 
 
 def change_label(df: pd.DataFrame) -> None:
-    df.label.replace({'neg': 'Negative', 'pos': 'Positive'}, inplace=True)
+    df.label.replace({"neg": "Negative", "pos": "Positive"}, inplace=True)
 
 
 def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
@@ -134,7 +147,9 @@ def save_to_new_file(df: pd.DataFrame, target_file: pathlib.Path) -> None:
     df.to_csv(str(target_file), header=True, index=False)
 
 
-def upload_file_to_gcs(target_file: pathlib.Path, target_gcs_bucket : str, target_gcs_path: str) -> None:
+def upload_file_to_gcs(
+    target_file: pathlib.Path, target_gcs_bucket: str, target_gcs_path: str
+) -> None:
     storage_client = storage.Client()
     bucket = storage_client.bucket(target_gcs_bucket)
     blob = bucket.blob(target_gcs_path)
