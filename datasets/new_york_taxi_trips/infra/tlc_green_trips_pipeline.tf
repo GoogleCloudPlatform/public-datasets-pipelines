@@ -19,7 +19,7 @@ resource "google_bigquery_table" "new_york_taxi_trips_tlc_green_trips" {
   project     = var.project_id
   dataset_id  = "new_york_taxi_trips"
   table_id    = "tlc_green_trips"
-  description = "New york green taxi trips table"
+  description = "New York green taxi trips table"
   depends_on = [
     google_bigquery_dataset.new_york_taxi_trips
   ]
