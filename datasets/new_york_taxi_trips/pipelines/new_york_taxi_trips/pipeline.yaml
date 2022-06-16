@@ -19,7 +19,7 @@ resources:
     description: "New York green taxi trips table"
   - type: bigquery_table
     table_id: "tlc_yellow_trips"
-    description: "New york yellow taxi trips table"
+    description: "New York yellow taxi trips table"
 
 dag:
   airflow_version: 2
