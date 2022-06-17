@@ -23,4 +23,4 @@ dataset:
 resources:
   - type: bigquery_dataset
     dataset_id: mimiciii_demo
-    description: 
+    description: ~
