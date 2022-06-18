@@ -19,35 +19,22 @@ resources: ~
 dag:
   airflow_version: 2
   initialize:
-    dag_id: copy_tcia_data
+    dag_id: cfe_calculator
     default_args:
       owner: "Google"
       depends_on_past: False
       start_date: '2021-11-23'
     max_active_runs: 1
-    schedule_interval: "@monthly"
+    schedule_interval: "@once"
     catchup: False
     default_view: graph
 
   tasks:
-    - operator: "CloudDataTransferServiceGCSToGCSOperator"
-      description: "Task to run a GCS to GCS operation using Google resources"
-      args:
-        task_id: copy_gcs_bucket
-        timeout: 43200  # 12 hours
-        retries: 0
-        wait: True
-        project_id: bigquery-public-data-dev
-        source_bucket: "{{ var.json.cfe_calculator.source_bucket }}"
-        destination_bucket: "{{ var.json.cfe_calculator.destination_bucket}}"
-        transfer_options:
-          deleteObjectsUniqueInSink: False
-
     - operator: "KubernetesPodOperator"
-      description: "Transfer IDC Databases"
+      description: "Transfer CFE Databases"
       args:
-        task_id: "copy_bq_datasets"
-        name: "copy_bq_datasets"
+        task_id: "copy_bq_dataset"
+        name: "copy_bq_dataset"
         namespace: "composer"
         service_account_name: "datasets"
         image_pull_policy: "Always"
@@ -55,33 +42,12 @@ dag:
         env_vars:
           SOURCE_PROJECT_ID: "{{ var.json.cfe_calculator.source_project_id }}"
           TARGET_PROJECT_ID: "{{ var.json.cfe_calculator.target_project_id }}"
+          DATASET_NAME: "{{ var.json.cfe_calculator.dataset_name }}"
           SERVICE_ACCOUNT: "{{ var.json.cfe_calculator.service_account }}"
-          DATASET_NAME: "idc"
-          DATASET_VERSIONS: >-
-            ["v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9"]
         resources:
           request_memory: "128M"
           request_cpu: "200m"
 
-    # - operator: "KubernetesPodOperator"
-    #   description: "Generate BQ views"
-    #   args:
-    #     task_id: "generate_bq_views"
-    #     name: "generate_bq_views"
-    #     namespace: "composer"
-    #     service_account_name: "datasets"
-    #     image_pull_policy: "Always"
-    #     image: "{{ var.json.cfe_calculator.container_registry.generate_bq_views }}"
-    #     env_vars:
-    #       SOURCE_PROJECT_ID: "{{ var.json.cfe_calculator.source_project_id }}"
-    #       TARGET_PROJECT_ID: "{{ var.json.cfe_calculator.target_project_id }}"
-    #       BQ_DATASETS: >-
-    #         ["idc_v1", "idc_v2", "idc_v3", "idc_v4", "idc_v5", "idc_v6", "idc_v7", "idc_v8", "idc_v9", "idc_current"]
-    #       SERVICE_ACCOUNT: "{{ var.json.idc.service_account }}"
-    #     resources:
-    #       request_memory: "128M"
-    #       request_cpu: "200m"
 
   graph_paths:
-    # - "copy_gcs_bucket >> copy_bq_datasets >> generate_bq_views"
-    - "copy_gcs_bucket >> copy_bq_datasets"
+    - "copy_bq_dataset"
