@@ -3,10 +3,10 @@
 ## [4.1.1](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v4.1.0...v4.1.1) (2022-06-16)
 
 
-### Features
+### Datasets
 
-* Onboard IMDB Dataset ([#382](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/382)) ([8bf7065](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/8bf7065699ef9519778e640c5168fc876e1f8081))
-* Onboard Mnist Dataset ([#379](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/379)) ([9809935](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/9809935936866332e425f278ec97b935bdf4a65d))
+* Onboard IMDB dataset ([#382](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/382)) ([8bf7065](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/8bf7065699ef9519778e640c5168fc876e1f8081))
+* Onboard MNIST dataset ([#379](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/379)) ([9809935](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/9809935936866332e425f278ec97b935bdf4a65d))
 * Onboard New York Taxi Trips dataset ([#381](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/381)) ([897ac3f](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/897ac3f3352e5dc40e08c5c80e223f877a406394))
 
 
