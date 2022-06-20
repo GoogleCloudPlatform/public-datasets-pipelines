@@ -67,7 +67,7 @@
 	},
 	{
 		"name": "date_local",
-		"type": "TIMESTAMP",
+		"type": "DATE",
 		"description": "The calendar date for the summary. All daily summaries are for the local standard day (midnight to midnight) at the monitor.",
 		"mode": "NULLABLE"
 	},
@@ -169,7 +169,7 @@
 	},
 	{
 		"name": "date_of_last_change",
-		"type": "TIMESTAMP",
+		"type": "DATE",
 		"description": "The date the last time any numeric values in this record were updated in the AQS data system.",
 		"mode": "NULLABLE"
 	}

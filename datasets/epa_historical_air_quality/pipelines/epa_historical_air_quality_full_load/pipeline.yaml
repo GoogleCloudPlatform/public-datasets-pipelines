@@ -1,0 +1,1730 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+resources:
+  - type: bigquery_table
+    table_id: "annual_summaries"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "co_daily_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "co_hourly_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "hap_daily_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "hap_hourly_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "lead_daily_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "no2_daily_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "no2_hourly_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "nonoxnoy_daily_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "nonoxnoy_hourly_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "ozone_daily_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "ozone_hourly_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "pm10_daily_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "pm10_hourly_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "pm25_frm_hourly_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "pm25_nonfrm_daily_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "pm25_nonfrm_hourly_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "pm25_speciation_daily_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "pm25_speciation_hourly_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "pressure_daily_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "pressure_hourly_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "rh_and_dp_daily_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "rh_and_dp_hourly_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "so2_daily_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "so2_hourly_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "temperature_daily_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "temperature_hourly_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "voc_daily_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "voc_hourly_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "wind_daily_summary"
+    description: "epaspc"
+  - type: bigquery_table
+    table_id: "wind_hourly_summary"
+    description: "epaspc"
+
+dag:
+  airflow_version: 2
+  initialize:
+    dag_id: epa_historical_air_quality_full_load
+    default_args:
+      owner: "Google"
+      depends_on_past: False
+      start_date: '2021-03-01'
+    max_active_runs: 1
+    schedule_interval: "@once"
+    catchup: False
+    default_view: graph
+
+  tasks:
+    - operator: "GKECreateClusterOperator"
+      args:
+        task_id: "create_cluster"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        body:
+          name: epa-hist-air-quality
+          initial_node_count: 8
+          network: "{{ var.value.vpc_network }}"
+          node_config:
+            machine_type: e2-standard-16
+            oauth_scopes:
+              - https://www.googleapis.com/auth/devstorage.read_write
+              - https://www.googleapis.com/auth/cloud-platform
+
+    - operator: "GKEStartPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "annual_summaries"
+        startup_timeout_seconds: 600
+        name: "load_data"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: epa-hist-air-quality
+        image_pull_policy: "Always"
+        image: "{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "https://aqs.epa.gov/aqsweb/airdata/annual_conc_by_monitor_YEAR_ITERATOR.zip"
+          START_YEAR: "1980"
+          SOURCE_FILE: "files/annual_summary_data.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "epa_historical_air_quality"
+          TABLE_ID: "air_quality_annual_summary"
+          YEAR_FIELD_NAME: "year"
+          YEAR_FIELD_TYPE: "INT"
+          SCHEMA_PATH: "data/epa_historical_air_quality/schemas/epa_annual_summaries_schema.json"
+          CHUNKSIZE: "1500000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/epa_historical_air_quality/annual_summary/data_output.csv"
+          PIPELINE_NAME: "epa_historical_air_quality - annual_summaries"
+          INPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "sample_duration",
+              "pollutant_standard", "metric_used", "method_name", "year", "units_of_measure",
+              "event_type", "observation_count", "observation_percent", "completeness_indicator", "valid_day_count",
+              "required_day_count", "exceptional_data_count", "null_data_count", "primary_exceedance_count", "secondary_exceedance_count",
+              "certification_indicator", "num_obs_below_mdl", "arithmetic_mean", "arithmetic_standard_dev", "first_max_value",
+              "first_max_datetime", "second_max_value", "second_max_datetime", "third_max_value", "third_max_datetime",
+              "fourth_max_value", "fourth_max_datetime", "first_max_non_overlapping_value", "first_no_max_datetime", "second_max_non_overlapping_value",
+              "second_no_max_datetime", "ninety_nine_percentile", "ninety_eight_percentile", "ninety_five_percentile", "ninety_percentile",
+              "seventy_five_percentile", "fifty_percentile", "ten_percentile", "local_site_name", "address",
+              "state_name", "county_name", "city_name", "cbsa_name", "date_of_last_change"]
+          DATA_DTYPES: >-
+            { "state_code": "str", "county_code": "str", "site_num": "str", "parameter_code": "int32", "poc": "int32",
+              "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "sample_duration": "str",
+              "pollutant_standard": "str", "metric_used": "str", "method_name": "str", "year": "int32", "units_of_measure": "str",
+              "event_type": "str", "observation_count": "int32", "observation_percent": "float64", "completeness_indicator": "str", "valid_day_count": "int32",
+              "required_day_count": "int32", "exceptional_data_count": "int32", "null_data_count": "int32", "primary_exceedance_count": "str", "secondary_exceedance_count": "str",
+              "certification_indicator": "str", "num_obs_below_mdl": "int32", "arithmetic_mean": "float64", "arithmetic_standard_dev": "float64", "first_max_value": "float64",
+              "first_max_datetime": "datetime64[ns]", "second_max_value": "float64", "second_max_datetime": "datetime64[ns]", "third_max_value": "float64", "third_max_datetime": "datetime64[ns]",
+              "fourth_max_value": "float64", "fourth_max_datetime": "datetime64[ns]", "first_max_non_overlapping_value": "float64", "first_no_max_datetime": "datetime64[ns]", "second_max_non_overlapping_value": "float64",
+              "second_no_max_datetime": "datetime64[ns]", "ninety_nine_percentile": "float64", "ninety_eight_percentile": "float64", "ninety_five_percentile": "float64", "ninety_percentile": "float64",
+              "seventy_five_percentile": "float64", "fifty_percentile": "float64", "ten_percentile": "float64", "local_site_name": "str", "address": "str",
+              "state_name": "str", "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "str" }
+          OUTPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "sample_duration",
+              "pollutant_standard", "metric_used", "method_name", "year", "units_of_measure",
+              "event_type", "observation_count", "observation_percent", "completeness_indicator", "valid_day_count",
+              "required_day_count", "exceptional_data_count", "null_data_count", "primary_exceedance_count", "secondary_exceedance_count",
+              "certification_indicator", "num_obs_below_mdl", "arithmetic_mean", "arithmetic_standard_dev", "first_max_value",
+              "first_max_datetime", "second_max_value", "second_max_datetime", "third_max_value", "third_max_datetime",
+              "fourth_max_value", "fourth_max_datetime", "first_max_non_overlapping_value", "first_no_max_datetime", "second_max_non_overlapping_value",
+              "second_no_max_datetime", "ninety_nine_percentile", "ninety_eight_percentile", "ninety_five_percentile", "ninety_percentile",
+              "seventy_five_percentile", "fifty_percentile", "ten_percentile", "local_site_name", "address",
+              "state_name", "county_name", "city_name", "cbsa_name", "date_of_last_change"]
+          DROP_DEST_TABLE: "Y"
+        resources:
+          limit_memory: "16G"
+          limit_cpu: "2"
+
+    - operator: "GKEStartPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "co_daily_summary"
+        startup_timeout_seconds: 600
+        name: "load_co_daily_summary"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: epa-hist-air-quality
+        image_pull_policy: "Always"
+        image: "{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "https://aqs.epa.gov/aqsweb/airdata/daily_42101_YEAR_ITERATOR.zip"
+          START_YEAR: "1990"
+          SOURCE_FILE: "files/co_daily_summary_data.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "epa_historical_air_quality"
+          TABLE_ID: "co_daily_summary"
+          YEAR_FIELD_NAME: "date_local"
+          YEAR_FIELD_TYPE: "DATE"
+          SCHEMA_PATH: "data/epa_historical_air_quality/schemas/epa_co_daily_summary_schema.json"
+          CHUNKSIZE: "1500000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/epa_historical_air_quality/co_daily_summary/data_output.csv"
+          PIPELINE_NAME: "epa_historical_air_quality - co_daily_summary"
+          INPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "sample_duration",
+              "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",
+              "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",
+              "method_code", "method_name", "local_site_name", "address", "state_name",
+              "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
+          DATA_DTYPES: >-
+            { "state_code": "str", "county_code": "str", "site_num": "str", "parameter_code": "str", "poc": "int32",
+              "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "sample_duration": "str",
+              "pollutant_standard": "str", "date_local": "str", "units_of_measure": "str", "event_type": "str", "observation_count": "int32",
+              "observation_percent": "float64", "arithmetic_mean": "float64", "first_max_value": "float64", "first_max_hour": "int32", "aqi": "str",
+              "method_code": "str", "method_name": "str", "local_site_name": "str", "address": "str", "state_name": "str",
+              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "str" }
+          OUTPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "sample_duration",
+              "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",
+              "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",
+              "method_code", "method_name", "local_site_name", "address", "state_name",
+              "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
+          DROP_DEST_TABLE: "Y"
+        resources:
+          limit_memory: "16G"
+          limit_cpu: "2"
+
+    - operator: "GKEStartPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "co_hourly_summary"
+        startup_timeout_seconds: 600
+        name: "load_data"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: epa-hist-air-quality
+        image_pull_policy: "Always"
+        image: "{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "https://aqs.epa.gov/aqsweb/airdata/hourly_42101_YEAR_ITERATOR.zip"
+          START_YEAR: "1990"
+          SOURCE_FILE: "files/co_hourly_summary_data.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "epa_historical_air_quality"
+          TABLE_ID: "co_hourly_summary"
+          YEAR_FIELD_NAME: "date_local"
+          YEAR_FIELD_TYPE: "DATE"
+          SCHEMA_PATH: "data/epa_historical_air_quality/schemas/epa_co_hourly_summary_schema.json"
+          CHUNKSIZE: "1500000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/epa_historical_air_quality/co_hourly_summary/data_output.csv"
+          PIPELINE_NAME: "epa_historical_air_quality - co_hourly_summaries"
+          INPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "date_local",
+              "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",
+              "mdl", "uncertainty", "qualifier", "method_type", "method_code",
+              "method_name", "state_name", "county_name", "date_of_last_change" ]
+          DATA_DTYPES: >-
+            { "state_code": "str", "county_code": "str", "site_num": "str", "parameter_code": "int32", "poc": "int32",
+              "latitude": "str", "longitude": "str", "datum": "str", "parameter_name": "str", "date_local": "str", "time_local": "str",
+              "date_gmt": "datetime64[ns]", "time_gmt": "str", "sample_measurement": "str", "units_of_measure": "str",
+              "mdl": "float64", "uncertainty": "str", "qualifier": "str", "method_type": "str", "method_code": "str",
+              "method_name": "str", "state_name": "str", "date_of_last_change": "str" }
+          OUTPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "date_local",
+              "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",
+              "mdl", "uncertainty", "qualifier", "method_type", "method_code",
+              "method_name", "state_name", "county_name", "date_of_last_change" ]
+          DROP_DEST_TABLE: "Y"
+        resources:
+          limit_memory: "16G"
+          limit_cpu: "2"
+
+    - operator: "GKEStartPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "hap_daily_summary"
+        startup_timeout_seconds: 600
+        name: "load_data"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: epa-hist-air-quality
+        image_pull_policy: "Always"
+        image: "{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "https://aqs.epa.gov/aqsweb/airdata/daily_HAPS_YEAR_ITERATOR.zip"
+          START_YEAR: "1990"
+          SOURCE_FILE: "files/hap_daily_summary_data.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "epa_historical_air_quality"
+          TABLE_ID: "hap_daily_summary"
+          YEAR_FIELD_NAME: "date_local"
+          YEAR_FIELD_TYPE: "DATE"
+          SCHEMA_PATH: "data/epa_historical_air_quality/schemas/epa_hap_daily_summary_schema.json"
+          CHUNKSIZE: "1500000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/epa_historical_air_quality/hap_daily_summary/data_output.csv"
+          PIPELINE_NAME: "epa_historical_air_quality - hap_daily_summary"
+          INPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "sample_duration",
+              "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",
+              "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",
+              "method_code", "method_name", "local_site_name", "address", "state_name",
+              "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
+          DATA_DTYPES: >-
+            { "state_code": "str", "county_code": "str", "site_num": "str", "parameter_code": "int32", "poc": "int32",
+              "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "sample_duration": "str",
+              "pollutant_standard": "str", "date_local": "str", "units_of_measure": "str", "event_type": "str", "observation_count": "int32",
+              "observation_percent": "float64", "arithmetic_mean": "float64", "first_max_value": "float64", "first_max_hour": "int32", "aqi": "str",
+              "method_code": "str", "method_name": "str", "local_site_name": "str", "address": "str", "state_name": "str",
+              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "str" }
+          OUTPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "sample_duration",
+              "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",
+              "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",
+              "method_code", "method_name", "local_site_name", "address", "state_name",
+              "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
+          DROP_DEST_TABLE: "Y"
+        resources:
+          limit_memory: "16G"
+          limit_cpu: "2"
+
+    - operator: "GKEStartPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "hap_hourly_summary"
+        startup_timeout_seconds: 600
+        name: "load_data"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: epa-hist-air-quality
+        image_pull_policy: "Always"
+        image: "{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "https://aqs.epa.gov/aqsweb/airdata/hourly_HAPS_YEAR_ITERATOR.zip"
+          START_YEAR: "1990"
+          SOURCE_FILE: "files/hap_hourly_summary_data.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "epa_historical_air_quality"
+          TABLE_ID: "hap_hourly_summary"
+          YEAR_FIELD_NAME: "date_local"
+          YEAR_FIELD_TYPE: "DATE"
+          SCHEMA_PATH: "data/epa_historical_air_quality/schemas/epa_hap_hourly_summary_schema.json"
+          CHUNKSIZE: "1500000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/epa_historical_air_quality/hap_hourly_summary/data_output.csv"
+          PIPELINE_NAME: "epa_historical_air_quality - hap_hourly_summaries"
+          INPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "date_local",
+              "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",
+              "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",
+              "state_name", "county_name", "date_of_last_change" ]
+          DATA_DTYPES: >-
+            { "state_code": "str", "county_code": "str", "site_num": "str", "parameter_code": "int32", "poc": "int32",
+              "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "date_local": "str",
+              "time_local": "str", "date_gmt": "datetime64[ns]", "time_gmt": "str", "sample_measurement": "float64", "units_of_measure": "str",
+              "mdl": "float64", "uncertainty": "float64", "qualifier": "str", "method_type": "str", "method_code": "int32", "method_name": "str",
+              "state_name": "str", "county_name": "str", "date_of_last_change": "str" }
+          OUTPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "date_local",
+              "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",
+              "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",
+              "state_name", "county_name", "date_of_last_change" ]
+          DROP_DEST_TABLE: "Y"
+        resources:
+          limit_memory: "16G"
+          limit_cpu: "2"
+
+    - operator: "GKEStartPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "lead_daily_summary"
+        startup_timeout_seconds: 600
+        name: "load_data"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: epa-hist-air-quality
+        image_pull_policy: "Always"
+        image: "{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "https://aqs.epa.gov/aqsweb/airdata/daily_LEAD_YEAR_ITERATOR.zip"
+          START_YEAR: "1980"
+          SOURCE_FILE: "files/lead_daily_summary_data.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "epa_historical_air_quality"
+          TABLE_ID: "lead_daily_summary"
+          YEAR_FIELD_NAME: "date_local"
+          YEAR_FIELD_TYPE: "DATE"
+          SCHEMA_PATH: "data/epa_historical_air_quality/schemas/epa_lead_daily_summary_schema.json"
+          CHUNKSIZE: "1500000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/epa_historical_air_quality/lead_daily_summary/data_output.csv"
+          PIPELINE_NAME: "epa_historical_air_quality - lead_daily_summaries"
+          INPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "sample_duration",
+              "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",
+              "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",
+              "method_code", "method_name", "local_site_name", "address", "state_name",
+              "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
+          DATA_DTYPES: >-
+            { "state_code": "str", "county_code": "str", "site_num": "str", "parameter_code": "int32", "poc": "int32",
+              "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "sample_duration": "str",
+              "pollutant_standard": "str", "date_local": "str", "units_of_measure": "str", "event_type": "str", "observation_count": "int32",
+              "observation_percent": "float64", "arithmetic_mean": "float64", "first_max_value": "float64", "first_max_hour": "int32", "aqi": "str",
+              "method_code": "str", "method_name": "str", "local_site_name": "str", "address": "str", "state_name": "str",
+              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "str" }
+          OUTPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "sample_duration",
+              "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",
+              "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",
+              "method_code", "method_name", "local_site_name", "address", "state_name",
+              "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
+          DROP_DEST_TABLE: "Y"
+        resources:
+          limit_memory: "16G"
+          limit_cpu: "2"
+
+    - operator: "GKEStartPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "no2_daily_summary"
+        startup_timeout_seconds: 600
+        name: "load_data"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: epa-hist-air-quality
+        image_pull_policy: "Always"
+        image: "{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "https://aqs.epa.gov/aqsweb/airdata/daily_42602_YEAR_ITERATOR.zip"
+          START_YEAR: "1990"
+          SOURCE_FILE: "files/no2_daily_summary_data.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "epa_historical_air_quality"
+          TABLE_ID: "no2_daily_summary"
+          YEAR_FIELD_NAME: "date_local"
+          YEAR_FIELD_TYPE: "DATE"
+          SCHEMA_PATH: "data/epa_historical_air_quality/schemas/epa_no2_daily_summary_schema.json"
+          CHUNKSIZE: "1500000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/epa_historical_air_quality/no2_daily_summary/data_output.csv"
+          PIPELINE_NAME: "epa_historical_air_quality - no2_daily_summaries"
+          INPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "sample_duration",
+              "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",
+              "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",
+              "method_code", "method_name", "local_site_name", "address", "state_name",
+              "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
+          DATA_DTYPES: >-
+            { "state_code": "str", "county_code": "str", "site_num": "str", "parameter_code": "int32", "poc": "int32",
+              "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "sample_duration": "str",
+              "pollutant_standard": "str", "date_local": "str", "units_of_measure": "str", "event_type": "str", "observation_count": "int32",
+              "observation_percent": "float64", "arithmetic_mean": "float64", "first_max_value": "float64", "first_max_hour": "int32", "aqi": "str",
+              "method_code": "str", "method_name": "str", "local_site_name": "str", "address": "str", "state_name": "str",
+              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "str" }
+          OUTPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "sample_duration",
+              "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",
+              "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",
+              "method_code", "method_name", "local_site_name", "address", "state_name",
+              "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
+          DROP_DEST_TABLE: "Y"
+        resources:
+          limit_memory: "16G"
+          limit_cpu: "2"
+
+    - operator: "GKEStartPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "no2_hourly_summary"
+        startup_timeout_seconds: 600
+        name: "load_data"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: epa-hist-air-quality
+        image_pull_policy: "Always"
+        image: "{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "https://aqs.epa.gov/aqsweb/airdata/hourly_42602_YEAR_ITERATOR.zip"
+          START_YEAR: "1990"
+          SOURCE_FILE: "files/no2_hourly_summary_data.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "epa_historical_air_quality"
+          TABLE_ID: "no2_hourly_summary"
+          YEAR_FIELD_NAME: "date_local"
+          YEAR_FIELD_TYPE: "DATE"
+          SCHEMA_PATH: "data/epa_historical_air_quality/schemas/epa_no2_hourly_summary_schema.json"
+          CHUNKSIZE: "1500000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/epa_historical_air_quality/no2_hourly_summary/data_output.csv"
+          PIPELINE_NAME: "epa_historical_air_quality - no2_hourly"
+          INPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "date_local",
+              "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",
+              "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",
+              "state_name", "county_name", "date_of_last_change" ]
+          DATA_DTYPES: >-
+            { "state_code": "str", "county_code": "str", "site_num": "str", "parameter_code": "int32", "poc": "int32",
+              "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "date_local": "str",
+              "time_local": "str", "date_gmt": "datetime64[ns]", "time_gmt": "str", "sample_measurement": "float64", "units_of_measure": "str",
+              "mdl": "float64", "uncertainty": "float64", "qualifier": "str", "method_type": "str", "method_code": "int32", "method_name": "str",
+              "state_name": "str", "county_name": "str", "date_of_last_change": "str" }
+          OUTPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "date_local",
+              "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",
+              "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",
+              "state_name", "county_name", "date_of_last_change" ]
+          DROP_DEST_TABLE: "Y"
+        resources:
+          limit_memory: "16G"
+          limit_cpu: "2"
+
+    - operator: "GKEStartPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "nonoxnoy_daily_summary"
+        startup_timeout_seconds: 600
+        name: "load_data"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: epa-hist-air-quality
+        image_pull_policy: "Always"
+        image: "{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "https://aqs.epa.gov/aqsweb/airdata/daily_NONOxNOy_YEAR_ITERATOR.zip"
+          START_YEAR: "1990"
+          SOURCE_FILE: "files/nonoxnoy_daily_summary_data.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "epa_historical_air_quality"
+          TABLE_ID: "nonoxnoy_daily_summary"
+          YEAR_FIELD_NAME: "date_local"
+          YEAR_FIELD_TYPE: "DATE"
+          SCHEMA_PATH: "data/epa_historical_air_quality/schemas/epa_nonoxnoy_daily_summary_schema.json"
+          CHUNKSIZE: "1500000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/epa_historical_air_quality/nonoxnoy_daily_summary/data_output.csv"
+          PIPELINE_NAME: "epa_historical_air_quality - nonoxnoy_daily"
+          INPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "sample_duration",
+              "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",
+              "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",
+              "method_code", "method_name", "local_site_name", "address", "state_name",
+              "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
+          DATA_DTYPES: >-
+            { "state_code": "str", "county_code": "str", "site_num": "str", "parameter_code": "int32", "poc": "int32",
+              "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "sample_duration": "str",
+              "pollutant_standard": "str", "date_local": "str", "units_of_measure": "str", "event_type": "str", "observation_count": "int32",
+              "observation_percent": "float64", "arithmetic_mean": "float64", "first_max_value": "float64", "first_max_hour": "int32", "aqi": "str",
+              "method_code": "str", "method_name": "str", "local_site_name": "str", "address": "str", "state_name": "str",
+              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "str" }
+          OUTPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "sample_duration",
+              "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",
+              "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",
+              "method_code", "method_name", "local_site_name", "address", "state_name",
+              "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
+          DROP_DEST_TABLE: "Y"
+        resources:
+          limit_memory: "16G"
+          limit_cpu: "2"
+
+    - operator: "GKEStartPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "nonoxnoy_hourly_summary"
+        startup_timeout_seconds: 600
+        name: "load_data"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: epa-hist-air-quality
+        image_pull_policy: "Always"
+        image: "{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "https://aqs.epa.gov/aqsweb/airdata/hourly_NONOxNOy_YEAR_ITERATOR.zip"
+          START_YEAR: "1990"
+          SOURCE_FILE: "files/nonoxnoy_hourly_summary_data.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "epa_historical_air_quality"
+          TABLE_ID: "nonoxnoy_hourly_summary"
+          YEAR_FIELD_NAME: "date_local"
+          YEAR_FIELD_TYPE: "DATE"
+          SCHEMA_PATH: "data/epa_historical_air_quality/schemas/epa_nonoxnoy_hourly_summary_schema.json"
+          CHUNKSIZE: "1500000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/epa_historical_air_quality/nonoxnoy_hourly_summary/data_output.csv"
+          PIPELINE_NAME: "epa_historical_air_quality - nonoxnoy_hourly"
+          INPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "date_local",
+              "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",
+              "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",
+              "state_name", "county_name", "date_of_last_change" ]
+          DATA_DTYPES: >-
+            { "state_code": "str", "county_code": "str", "site_num": "str", "parameter_code": "int32", "poc": "int32",
+              "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "date_local": "str",
+              "time_local": "str", "date_gmt": "datetime64[ns]", "time_gmt": "str", "sample_measurement": "float64", "units_of_measure": "str",
+              "mdl": "float64", "uncertainty": "float64", "qualifier": "str", "method_type": "str", "method_code": "int32", "method_name": "str",
+              "state_name": "str", "county_name": "str", "date_of_last_change": "str" }
+          OUTPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "date_local",
+              "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",
+              "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",
+              "state_name", "county_name", "date_of_last_change" ]
+          DROP_DEST_TABLE: "Y"
+        resources:
+          limit_memory: "16G"
+          limit_cpu: "2"
+
+    - operator: "GKEStartPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "ozone_daily_summary"
+        startup_timeout_seconds: 600
+        name: "load_data"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: epa-hist-air-quality
+        image_pull_policy: "Always"
+        image: "{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "https://aqs.epa.gov/aqsweb/airdata/daily_44201_YEAR_ITERATOR.zip"
+          START_YEAR: "1990"
+          SOURCE_FILE: "files/o3_daily_summary_data.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "epa_historical_air_quality"
+          TABLE_ID: "o3_daily_summary"
+          YEAR_FIELD_NAME: "date_local"
+          YEAR_FIELD_TYPE: "DATE"
+          SCHEMA_PATH: "data/epa_historical_air_quality/schemas/epa_ozone_daily_summary_schema.json"
+          CHUNKSIZE: "1500000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/epa_historical_air_quality/ozone_daily_summary/data_output.csv"
+          PIPELINE_NAME: "epa_historical_air_quality - ozone_daily_summary"
+          INPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "sample_duration",
+              "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",
+              "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",
+              "method_code", "method_name", "local_site_name", "address", "state_name",
+              "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
+          DATA_DTYPES: >-
+            { "state_code": "str", "county_code": "str", "site_num": "str", "parameter_code": "int32", "poc": "int32",
+              "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "sample_duration": "str",
+              "pollutant_standard": "str", "date_local": "str", "units_of_measure": "str", "event_type": "str", "observation_count": "int32",
+              "observation_percent": "float64", "arithmetic_mean": "float64", "first_max_value": "float64", "first_max_hour": "int32", "aqi": "str",
+              "method_code": "str", "method_name": "str", "local_site_name": "str", "address": "str", "state_name": "str",
+              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "str" }
+          OUTPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "sample_duration",
+              "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",
+              "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",
+              "method_code", "method_name", "local_site_name", "address", "state_name",
+              "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
+          DROP_DEST_TABLE: "Y"
+        resources:
+          limit_memory: "16G"
+          limit_cpu: "2"
+
+    - operator: "GKEStartPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "ozone_hourly_summary"
+        startup_timeout_seconds: 600
+        name: "load_data"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: epa-hist-air-quality
+        image_pull_policy: "Always"
+        image: "{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "https://aqs.epa.gov/aqsweb/airdata/hourly_44201_YEAR_ITERATOR.zip"
+          START_YEAR: "1980"
+          SOURCE_FILE: "files/o3_hourly_summary_data.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "epa_historical_air_quality"
+          TABLE_ID: "o3_hourly_summary"
+          YEAR_FIELD_NAME: "date_local"
+          YEAR_FIELD_TYPE: "DATE"
+          SCHEMA_PATH: "data/epa_historical_air_quality/schemas/epa_ozone_hourly_summary_schema.json"
+          CHUNKSIZE: "1500000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/epa_historical_air_quality/ozone_hourly_summary/data_output.csv"
+          PIPELINE_NAME: "epa_historical_air_quality - ozone_hourly_summary"
+          INPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "date_local",
+              "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",
+              "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",
+              "state_name", "county_name", "date_of_last_change" ]
+          DATA_DTYPES: >-
+            { "state_code": "str", "county_code": "str", "site_num": "str", "parameter_code": "int32", "poc": "int32",
+              "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "date_local": "str",
+              "time_local": "str", "date_gmt": "datetime64[ns]", "time_gmt": "str", "sample_measurement": "float64", "units_of_measure": "str",
+              "mdl": "float64", "uncertainty": "float64", "qualifier": "str", "method_type": "str", "method_code": "int32", "method_name": "str",
+              "state_name": "str", "county_name": "str", "date_of_last_change": "str" }
+          OUTPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "date_local",
+              "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",
+              "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",
+              "state_name", "county_name", "date_of_last_change" ]
+          DROP_DEST_TABLE: "Y"
+        resources:
+          limit_memory: "16G"
+          limit_cpu: "2"
+
+    - operator: "GKEStartPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "pm10_daily_summary"
+        startup_timeout_seconds: 600
+        name: "load_data"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: epa-hist-air-quality
+        image_pull_policy: "Always"
+        image: "{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "https://aqs.epa.gov/aqsweb/airdata/daily_81102_YEAR_ITERATOR.zip"
+          START_YEAR: "1990"
+          SOURCE_FILE: "files/pm10_daily_summary_data.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "epa_historical_air_quality"
+          TABLE_ID: "pm10_daily_summary"
+          YEAR_FIELD_NAME: "date_local"
+          YEAR_FIELD_TYPE: "DATE"
+          SCHEMA_PATH: "data/epa_historical_air_quality/schemas/epa_pm10_daily_summary_schema.json"
+          CHUNKSIZE: "1500000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/epa_historical_air_quality/pm10_daily_summary/data_output.csv"
+          PIPELINE_NAME: "epa_historical_air_quality - pm10_daily_summaries"
+          INPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "sample_duration",
+              "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",
+              "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",
+              "method_code", "method_name", "local_site_name", "address", "state_name",
+              "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
+          DATA_DTYPES: >-
+            { "state_code": "str", "county_code": "str", "site_num": "str", "parameter_code": "int32", "poc": "int32",
+              "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "sample_duration": "str",
+              "pollutant_standard": "str", "date_local": "str", "units_of_measure": "str", "event_type": "str", "observation_count": "int32",
+              "observation_percent": "float64", "arithmetic_mean": "float64", "first_max_value": "float64", "first_max_hour": "int32", "aqi": "str",
+              "method_code": "str", "method_name": "str", "local_site_name": "str", "address": "str", "state_name": "str",
+              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "str" }
+          OUTPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "sample_duration",
+              "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",
+              "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",
+              "method_code", "method_name", "local_site_name", "address", "state_name",
+              "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
+          DROP_DEST_TABLE: "Y"
+        resources:
+          limit_memory: "16G"
+          limit_cpu: "2"
+
+    - operator: "GKEStartPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "pm10_hourly_summary"
+        startup_timeout_seconds: 600
+        name: "load_data"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: epa-hist-air-quality
+        image_pull_policy: "Always"
+        image: "{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "https://aqs.epa.gov/aqsweb/airdata/hourly_81102_YEAR_ITERATOR.zip"
+          START_YEAR: "1990"
+          SOURCE_FILE: "files/pm10_hourly_summary_data.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "epa_historical_air_quality"
+          TABLE_ID: "pm10_hourly_summary"
+          YEAR_FIELD_NAME: "date_local"
+          YEAR_FIELD_TYPE: "DATE"
+          SCHEMA_PATH: "data/epa_historical_air_quality/schemas/epa_pm10_hourly_summary_schema.json"
+          CHUNKSIZE: "1500000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/epa_historical_air_quality/pm10_hourly_summary/data_output.csv"
+          PIPELINE_NAME: "epa_historical_air_quality - pm10_hourly_summaries"
+          INPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "date_local",
+              "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",
+              "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",
+              "state_name", "county_name", "date_of_last_change" ]
+          DATA_DTYPES: >-
+            { "state_code": "str", "county_code": "str", "site_num": "str", "parameter_code": "int32", "poc": "int32",
+              "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "date_local": "str",
+              "time_local": "str", "date_gmt": "datetime64[ns]", "time_gmt": "str", "sample_measurement": "float64", "units_of_measure": "str",
+              "mdl": "float64", "uncertainty": "float64", "qualifier": "str", "method_type": "str", "method_code": "int32", "method_name": "str",
+              "state_name": "str", "county_name": "str", "date_of_last_change": "str" }
+          OUTPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "date_local",
+              "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",
+              "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",
+              "state_name", "county_name", "date_of_last_change" ]
+          DROP_DEST_TABLE: "Y"
+        resources:
+          limit_memory: "16G"
+          limit_cpu: "2"
+
+    - operator: "GKEStartPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "pm25_frm_hourly_summary"
+        startup_timeout_seconds: 600
+        name: "load_data"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: epa-hist-air-quality
+        image_pull_policy: "Always"
+        image: "{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "https://aqs.epa.gov/aqsweb/airdata/hourly_88101_YEAR_ITERATOR.zip"
+          START_YEAR: "1980"
+          SOURCE_FILE: "files/pm25_frm_hourly_summary_data.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "epa_historical_air_quality"
+          TABLE_ID: "pm25_frm_hourly_summary"
+          YEAR_FIELD_NAME: "date_local"
+          YEAR_FIELD_TYPE: "DATE"
+          SCHEMA_PATH: "data/epa_historical_air_quality/schemas/epa_pm25_frm_hourly_summary_schema.json"
+          CHUNKSIZE: "1500000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/epa_historical_air_quality/pm25_frm_hourly_summary/data_output.csv"
+          PIPELINE_NAME: "epa_historical_air_quality - pm25_frm_hourly_summaries"
+          INPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "date_local",
+              "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",
+              "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",
+              "state_name", "county_name", "date_of_last_change" ]
+          DATA_DTYPES: >-
+            { "state_code": "str", "county_code": "str", "site_num": "str", "parameter_code": "int32", "poc": "int32",
+              "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "date_local": "str",
+              "time_local": "str", "date_gmt": "datetime64[ns]", "time_gmt": "str", "sample_measurement": "float64", "units_of_measure": "str",
+              "mdl": "float64", "uncertainty": "float64", "qualifier": "str", "method_type": "str", "method_code": "int32", "method_name": "str",
+              "state_name": "str", "county_name": "str", "date_of_last_change": "str" }
+          OUTPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "date_local",
+              "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",
+              "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",
+              "state_name", "county_name", "date_of_last_change" ]
+          DROP_DEST_TABLE: "Y"
+        resources:
+          limit_memory: "16G"
+          limit_cpu: "2"
+
+    - operator: "GKEStartPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "pm25_nonfrm_daily_summary"
+        startup_timeout_seconds: 600
+        name: "load_data"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: epa-hist-air-quality
+        image_pull_policy: "Always"
+        image: "{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "https://aqs.epa.gov/aqsweb/airdata/daily_88502_YEAR_ITERATOR.zip"
+          START_YEAR: "1980"
+          SOURCE_FILE: "files/pm25_nonfrm_daily_summary_data.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "epa_historical_air_quality"
+          TABLE_ID: "pm25_nonfrm_daily_summary"
+          YEAR_FIELD_NAME: "date_local"
+          YEAR_FIELD_TYPE: "DATE"
+          SCHEMA_PATH: "data/epa_historical_air_quality/schemas/epa_pm25_nonfrm_daily_summary_schema.json"
+          CHUNKSIZE: "1500000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/epa_historical_air_quality/pm25_nonfrm_daily_summary/data_output.csv"
+          PIPELINE_NAME: "epa_historical_air_quality - pm25_nonfrm_daily_summaries"
+          INPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "sample_duration",
+              "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",
+              "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",
+              "method_code", "method_name", "local_site_name", "address", "state_name",
+              "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
+          DATA_DTYPES: >-
+            { "state_code": "str", "county_code": "str", "site_num": "str", "parameter_code": "int32", "poc": "int32",
+              "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "sample_duration": "str",
+              "pollutant_standard": "str", "date_local": "str", "units_of_measure": "str", "event_type": "str", "observation_count": "int32",
+              "observation_percent": "float64", "arithmetic_mean": "float64", "first_max_value": "float64", "first_max_hour": "int32", "aqi": "str",
+              "method_code": "str", "method_name": "str", "local_site_name": "str", "address": "str", "state_name": "str",
+              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "str" }
+          OUTPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "sample_duration",
+              "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",
+              "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",
+              "method_code", "method_name", "local_site_name", "address", "state_name",
+              "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
+          DROP_DEST_TABLE: "Y"
+        resources:
+          limit_memory: "16G"
+          limit_cpu: "2"
+
+    - operator: "GKEStartPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "pm25_nonfrm_hourly_summary"
+        startup_timeout_seconds: 600
+        name: "load_data"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: epa-hist-air-quality
+        image_pull_policy: "Always"
+        image: "{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "https://aqs.epa.gov/aqsweb/airdata/hourly_88502_YEAR_ITERATOR.zip"
+          START_YEAR: "1990"
+          SOURCE_FILE: "files/pm25_nonfrm_hourly_summary_data.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "epa_historical_air_quality"
+          TABLE_ID: "pm25_nonfrm_hourly_summary"
+          YEAR_FIELD_NAME: "date_local"
+          YEAR_FIELD_TYPE: "DATE"
+          SCHEMA_PATH: "data/epa_historical_air_quality/schemas/epa_pm25_nonfrm_hourly_summary_schema.json"
+          CHUNKSIZE: "1500000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/epa_historical_air_quality/pm25_nonfrm_hourly_summary/data_output.csv"
+          PIPELINE_NAME: "epa_historical_air_quality - pm25_nonfrm_hourly_summaries"
+          INPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "date_local",
+              "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",
+              "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",
+              "state_name", "county_name", "date_of_last_change" ]
+          DATA_DTYPES: >-
+            { "state_code": "str", "county_code": "str", "site_num": "str", "parameter_code": "int32", "poc": "int32",
+              "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "date_local": "str",
+              "time_local": "str", "date_gmt": "datetime64[ns]", "time_gmt": "str", "sample_measurement": "float64", "units_of_measure": "str",
+              "mdl": "float64", "uncertainty": "float64", "qualifier": "str", "method_type": "str", "method_code": "int32", "method_name": "str",
+              "state_name": "str", "county_name": "str", "date_of_last_change": "str" }
+          OUTPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "date_local",
+              "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",
+              "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",
+              "state_name", "county_name", "date_of_last_change" ]
+          DROP_DEST_TABLE: "Y"
+        resources:
+          limit_memory: "16G"
+          limit_cpu: "2"
+
+    - operator: "GKEStartPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "pm25_speciation_daily_summary"
+        startup_timeout_seconds: 600
+        name: "load_data"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: epa-hist-air-quality
+        image_pull_policy: "Always"
+        image: "{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "https://aqs.epa.gov/aqsweb/airdata/daily_SPEC_YEAR_ITERATOR.zip"
+          START_YEAR: "1990"
+          SOURCE_FILE: "files/pm25_speciation_daily_summary_data.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "epa_historical_air_quality"
+          TABLE_ID: "pm25_speciation_daily_summary"
+          YEAR_FIELD_NAME: "date_local"
+          YEAR_FIELD_TYPE: "DATE"
+          SCHEMA_PATH: "data/epa_historical_air_quality/schemas/epa_pm25_speciation_daily_summary_schema.json"
+          CHUNKSIZE: "1500000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/epa_historical_air_quality/pm25_speciation_daily_summary/data_output.csv"
+          PIPELINE_NAME: "epa_historical_air_quality - pm25_speciation_daily_summaries"
+          INPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "sample_duration",
+              "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",
+              "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",
+              "method_code", "method_name", "local_site_name", "address", "state_name",
+              "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
+          DATA_DTYPES: >-
+            { "state_code": "str", "county_code": "str", "site_num": "str", "parameter_code": "int32", "poc": "int32",
+              "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "sample_duration": "str",
+              "pollutant_standard": "str", "date_local": "str", "units_of_measure": "str", "event_type": "str", "observation_count": "int32",
+              "observation_percent": "float64", "arithmetic_mean": "float64", "first_max_value": "float64", "first_max_hour": "int32", "aqi": "str",
+              "method_code": "str", "method_name": "str", "local_site_name": "str", "address": "str", "state_name": "str",
+              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "str" }
+          OUTPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "sample_duration",
+              "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",
+              "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",
+              "method_code", "method_name", "local_site_name", "address", "state_name",
+              "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
+          DROP_DEST_TABLE: "Y"
+        resources:
+          limit_memory: "16G"
+          limit_cpu: "2"
+
+    - operator: "GKEStartPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "pm25_speciation_hourly_summary"
+        startup_timeout_seconds: 600
+        name: "load_data"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: epa-hist-air-quality
+        image_pull_policy: "Always"
+        image: "{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "https://aqs.epa.gov/aqsweb/airdata/hourly_SPEC_YEAR_ITERATOR.zip"
+          START_YEAR: "1990"
+          SOURCE_FILE: "files/pm25_speciation_hourly_summary_data.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "epa_historical_air_quality"
+          TABLE_ID: "pm25_speciation_hourly_summary"
+          YEAR_FIELD_NAME: "date_local"
+          YEAR_FIELD_TYPE: "DATE"
+          SCHEMA_PATH: "data/epa_historical_air_quality/schemas/epa_pm25_speciation_hourly_summary_schema.json"
+          CHUNKSIZE: "1500000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/epa_historical_air_quality/pm25_speciation_hourly_summary/data_output.csv"
+          PIPELINE_NAME: "epa_historical_air_quality - pm25_speciation_hourly_summary"
+          INPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "date_local",
+              "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",
+              "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",
+              "state_name", "county_name", "date_of_last_change" ]
+          DATA_DTYPES: >-
+            { "state_code": "str", "county_code": "str", "site_num": "str", "parameter_code": "int32", "poc": "int32",
+              "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "date_local": "str",
+              "time_local": "str", "date_gmt": "datetime64[ns]", "time_gmt": "str", "sample_measurement": "float64", "units_of_measure": "str",
+              "mdl": "float64", "uncertainty": "float64", "qualifier": "str", "method_type": "str", "method_code": "int32", "method_name": "str",
+              "state_name": "str", "county_name": "str", "date_of_last_change": "str" }
+          OUTPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "date_local",
+              "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",
+              "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",
+              "state_name", "county_name", "date_of_last_change" ]
+          DROP_DEST_TABLE: "Y"
+        resources:
+          limit_memory: "16G"
+          limit_cpu: "2"
+
+    - operator: "GKEStartPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "pressure_daily_summary"
+        startup_timeout_seconds: 600
+        name: "load_data"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: epa-hist-air-quality
+        image_pull_policy: "Always"
+        image: "{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "https://aqs.epa.gov/aqsweb/airdata/daily_PRESS_YEAR_ITERATOR.zip"
+          START_YEAR: "1990"
+          SOURCE_FILE: "files/pressure_daily_summary_data.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "epa_historical_air_quality"
+          TABLE_ID: "pressure_daily_summary"
+          YEAR_FIELD_NAME: "date_local"
+          YEAR_FIELD_TYPE: "DATE"
+          SCHEMA_PATH: "data/epa_historical_air_quality/schemas/epa_pressure_daily_summary_schema.json"
+          CHUNKSIZE: "1500000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/epa_historical_air_quality/pressure_daily_summary/data_output.csv"
+          PIPELINE_NAME: "epa_historical_air_quality - pressure_daily_summaries"
+          INPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "sample_duration",
+              "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",
+              "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",
+              "method_code", "method_name", "local_site_name", "address", "state_name",
+              "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
+          DATA_DTYPES: >-
+            { "state_code": "str", "county_code": "str", "site_num": "str", "parameter_code": "int32", "poc": "int32",
+              "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "sample_duration": "str",
+              "pollutant_standard": "str", "date_local": "str", "units_of_measure": "str", "event_type": "str", "observation_count": "int32",
+              "observation_percent": "float64", "arithmetic_mean": "float64", "first_max_value": "float64", "first_max_hour": "int32", "aqi": "str",
+              "method_code": "str", "method_name": "str", "local_site_name": "str", "address": "str", "state_name": "str",
+              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "str" }
+          OUTPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "sample_duration",
+              "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",
+              "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",
+              "method_code", "method_name", "local_site_name", "address", "state_name",
+              "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
+          DROP_DEST_TABLE: "Y"
+        resources:
+          limit_memory: "16G"
+          limit_cpu: "2"
+
+    - operator: "GKEStartPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "pressure_hourly_summary"
+        startup_timeout_seconds: 600
+        name: "load_data"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: epa-hist-air-quality
+        image_pull_policy: "Always"
+        image: "{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "https://aqs.epa.gov/aqsweb/airdata/hourly_PRESS_YEAR_ITERATOR.zip"
+          START_YEAR: "1990"
+          SOURCE_FILE: "files/pressure_hourly_summary_data.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "epa_historical_air_quality"
+          TABLE_ID: "pressure_hourly_summary"
+          YEAR_FIELD_NAME: "date_local"
+          YEAR_FIELD_TYPE: "DATE"
+          SCHEMA_PATH: "data/epa_historical_air_quality/schemas/epa_pressure_hourly_summary_schema.json"
+          CHUNKSIZE: "1500000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/epa_historical_air_quality/pressure_hourly_summary/data_output.csv"
+          PIPELINE_NAME: "epa_historical_air_quality - pressure_hourly_summary"
+          INPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "date_local",
+              "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",
+              "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",
+              "state_name", "county_name", "date_of_last_change" ]
+          DATA_DTYPES: >-
+            { "state_code": "str", "county_code": "str", "site_num": "str", "parameter_code": "int32", "poc": "int32",
+              "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "date_local": "str",
+              "time_local": "str", "date_gmt": "datetime64[ns]", "time_gmt": "str", "sample_measurement": "float64", "units_of_measure": "str",
+              "mdl": "float64", "uncertainty": "float64", "qualifier": "str", "method_type": "str", "method_code": "int32", "method_name": "str",
+              "state_name": "str", "county_name": "str", "date_of_last_change": "str" }
+          OUTPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "date_local",
+              "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",
+              "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",
+              "state_name", "county_name", "date_of_last_change" ]
+          DROP_DEST_TABLE: "Y"
+        resources:
+          limit_memory: "16G"
+          limit_cpu: "2"
+
+    - operator: "GKEStartPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "rh_and_dp_daily_summary"
+        startup_timeout_seconds: 600
+        name: "load_data"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: epa-hist-air-quality
+        image_pull_policy: "Always"
+        image: "{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "https://aqs.epa.gov/aqsweb/airdata/daily_RH_DP_YEAR_ITERATOR.zip"
+          START_YEAR: "1990"
+          SOURCE_FILE: "files/rh_and_dp_daily_summary_data.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "epa_historical_air_quality"
+          TABLE_ID: "rh_and_dp_daily_summary"
+          YEAR_FIELD_NAME: "date_local"
+          YEAR_FIELD_TYPE: "DATE"
+          SCHEMA_PATH: "data/epa_historical_air_quality/schemas/epa_rh_and_dp_daily_summary_schema.json"
+          CHUNKSIZE: "1500000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/epa_historical_air_quality/rh_and_dp_daily_summary/data_output.csv"
+          PIPELINE_NAME: "epa_historical_air_quality - rh_and_dp_daily_summaries"
+          INPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "sample_duration",
+              "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",
+              "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",
+              "method_code", "method_name", "local_site_name", "address", "state_name",
+              "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
+          DATA_DTYPES: >-
+            { "state_code": "str", "county_code": "str", "site_num": "str", "parameter_code": "int32", "poc": "int32",
+              "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "sample_duration": "str",
+              "pollutant_standard": "str", "date_local": "str", "units_of_measure": "str", "event_type": "str", "observation_count": "int32",
+              "observation_percent": "float64", "arithmetic_mean": "float64", "first_max_value": "float64", "first_max_hour": "int32", "aqi": "str",
+              "method_code": "str", "method_name": "str", "local_site_name": "str", "address": "str", "state_name": "str",
+              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "str" }
+          OUTPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "sample_duration",
+              "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",
+              "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",
+              "method_code", "method_name", "local_site_name", "address", "state_name",
+              "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
+          DROP_DEST_TABLE: "Y"
+        resources:
+          limit_memory: "16G"
+          limit_cpu: "2"
+
+    - operator: "GKEStartPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "rh_and_dp_hourly_summary"
+        startup_timeout_seconds: 600
+        name: "load_data"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: epa-hist-air-quality
+        image_pull_policy: "Always"
+        image: "{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "https://aqs.epa.gov/aqsweb/airdata/hourly_RH_DP_YEAR_ITERATOR.zip"
+          START_YEAR: "1990"
+          SOURCE_FILE: "files/rh_and_dp_hourly_summary_data.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "epa_historical_air_quality"
+          TABLE_ID: "rh_and_dp_hourly_summary"
+          YEAR_FIELD_NAME: "date_local"
+          YEAR_FIELD_TYPE: "DATE"
+          SCHEMA_PATH: "data/epa_historical_air_quality/schemas/epa_rh_and_dp_hourly_summary_schema.json"
+          CHUNKSIZE: "1500000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/epa_historical_air_quality/rh_and_dp_hourly_summary/data_output.csv"
+          PIPELINE_NAME: "epa_historical_air_quality - rh_and_dp_hourly_summary"
+          INPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "date_local",
+              "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",
+              "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",
+              "state_name", "county_name", "date_of_last_change" ]
+          DATA_DTYPES: >-
+            { "state_code": "str", "county_code": "str", "site_num": "str", "parameter_code": "int32", "poc": "int32",
+              "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "date_local": "str",
+              "time_local": "str", "date_gmt": "datetime64[ns]", "time_gmt": "str", "sample_measurement": "float64", "units_of_measure": "str",
+              "mdl": "float64", "uncertainty": "float64", "qualifier": "str", "method_type": "str", "method_code": "int32", "method_name": "str",
+              "state_name": "str", "county_name": "str", "date_of_last_change": "str" }
+          OUTPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "date_local",
+              "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",
+              "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",
+              "state_name", "county_name", "date_of_last_change" ]
+          DROP_DEST_TABLE: "Y"
+        resources:
+          limit_memory: "16G"
+          limit_cpu: "2"
+
+    - operator: "GKEStartPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "so2_daily_summary"
+        startup_timeout_seconds: 600
+        name: "load_data"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: epa-hist-air-quality
+        image_pull_policy: "Always"
+        image: "{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "https://aqs.epa.gov/aqsweb/airdata/daily_42401_YEAR_ITERATOR.zip"
+          START_YEAR: "1990"
+          SOURCE_FILE: "files/so2_daily_summary_data.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "epa_historical_air_quality"
+          TABLE_ID: "so2_daily_summary"
+          YEAR_FIELD_NAME: "date_local"
+          YEAR_FIELD_TYPE: "DATE"
+          SCHEMA_PATH: "data/epa_historical_air_quality/schemas/epa_so2_daily_summary_schema.json"
+          CHUNKSIZE: "1500000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/epa_historical_air_quality/so2_daily_summary/data_output.csv"
+          PIPELINE_NAME: "epa_historical_air_quality - so2_daily_summary"
+          INPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "sample_duration",
+              "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",
+              "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",
+              "method_code", "method_name", "local_site_name", "address", "state_name",
+              "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
+          DATA_DTYPES: >-
+            { "state_code": "str", "county_code": "str", "site_num": "str", "parameter_code": "int32", "poc": "int32",
+              "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "sample_duration": "str",
+              "pollutant_standard": "str", "date_local": "str", "units_of_measure": "str", "event_type": "str", "observation_count": "int32",
+              "observation_percent": "float64", "arithmetic_mean": "float64", "first_max_value": "float64", "first_max_hour": "int32", "aqi": "str",
+              "method_code": "str", "method_name": "str", "local_site_name": "str", "address": "str", "state_name": "str",
+              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "str" }
+          OUTPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "sample_duration",
+              "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",
+              "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",
+              "method_code", "method_name", "local_site_name", "address", "state_name",
+              "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
+          DROP_DEST_TABLE: "Y"
+        resources:
+          limit_memory: "16G"
+          limit_cpu: "2"
+
+    - operator: "GKEStartPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "so2_hourly_summary"
+        startup_timeout_seconds: 600
+        name: "load_data"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: epa-hist-air-quality
+        image_pull_policy: "Always"
+        image: "{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "https://aqs.epa.gov/aqsweb/airdata/hourly_42401_YEAR_ITERATOR.zip"
+          START_YEAR: "1990"
+          SOURCE_FILE: "files/so2_hourly_summary_data.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "epa_historical_air_quality"
+          TABLE_ID: "so2_hourly_summary"
+          YEAR_FIELD_NAME: "date_local"
+          YEAR_FIELD_TYPE: "DATE"
+          SCHEMA_PATH: "data/epa_historical_air_quality/schemas/epa_so2_hourly_summary_schema.json"
+          CHUNKSIZE: "1500000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/epa_historical_air_quality/so2_hourly_summary/data_output.csv"
+          PIPELINE_NAME: "epa_historical_air_quality - so2_hourly_summary"
+          INPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "date_local",
+              "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",
+              "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",
+              "state_name", "county_name", "date_of_last_change" ]
+          DATA_DTYPES: >-
+            { "state_code": "str", "county_code": "str", "site_num": "str", "parameter_code": "int32", "poc": "int32",
+              "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "date_local": "str",
+              "time_local": "str", "date_gmt": "datetime64[ns]", "time_gmt": "str", "sample_measurement": "float64", "units_of_measure": "str",
+              "mdl": "float64", "uncertainty": "float64", "qualifier": "str", "method_type": "str", "method_code": "int32", "method_name": "str",
+              "state_name": "str", "county_name": "str", "date_of_last_change": "str" }
+          OUTPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "date_local",
+              "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",
+              "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",
+              "state_name", "county_name", "date_of_last_change" ]
+          DROP_DEST_TABLE: "Y"
+        resources:
+          limit_memory: "16G"
+          limit_cpu: "2"
+
+    - operator: "GKEStartPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "temperature_daily_summary"
+        startup_timeout_seconds: 600
+        name: "load_data"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: epa-hist-air-quality
+        image_pull_policy: "Always"
+        image: "{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "https://aqs.epa.gov/aqsweb/airdata/daily_TEMP_YEAR_ITERATOR.zip"
+          START_YEAR: "1990"
+          SOURCE_FILE: "files/temperature_daily_summary_data.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "epa_historical_air_quality"
+          TABLE_ID: "temperature_daily_summary"
+          YEAR_FIELD_NAME: "date_local"
+          YEAR_FIELD_TYPE: "DATE"
+          SCHEMA_PATH: "data/epa_historical_air_quality/schemas/epa_temperature_daily_summary_schema.json"
+          CHUNKSIZE: "1500000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/epa_historical_air_quality/temperature_daily_summary/data_output.csv"
+          PIPELINE_NAME: "epa_historical_air_quality - temperature_daily_summary"
+          INPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "sample_duration",
+              "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",
+              "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",
+              "method_code", "method_name", "local_site_name", "address", "state_name",
+              "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
+          DATA_DTYPES: >-
+            { "state_code": "str", "county_code": "str", "site_num": "str", "parameter_code": "int32", "poc": "int32",
+              "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "sample_duration": "str",
+              "pollutant_standard": "str", "date_local": "str", "units_of_measure": "str", "event_type": "str", "observation_count": "int32",
+              "observation_percent": "float64", "arithmetic_mean": "float64", "first_max_value": "float64", "first_max_hour": "int32", "aqi": "str",
+              "method_code": "str", "method_name": "str", "local_site_name": "str", "address": "str", "state_name": "str",
+              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "str" }
+          OUTPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "sample_duration",
+              "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",
+              "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",
+              "method_code", "method_name", "local_site_name", "address", "state_name",
+              "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
+          DROP_DEST_TABLE: "Y"
+        resources:
+          limit_memory: "16G"
+          limit_cpu: "2"
+
+    - operator: "GKEStartPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "temperature_hourly_summary"
+        startup_timeout_seconds: 600
+        name: "load_data"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: epa-hist-air-quality
+        image_pull_policy: "Always"
+        image: "{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "https://aqs.epa.gov/aqsweb/airdata/hourly_TEMP_YEAR_ITERATOR.zip"
+          START_YEAR: "1990"
+          SOURCE_FILE: "files/temperature_hourly_summary_data.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "epa_historical_air_quality"
+          TABLE_ID: "temperature_hourly_summary"
+          YEAR_FIELD_NAME: "date_local"
+          YEAR_FIELD_TYPE: "DATE"
+          SCHEMA_PATH: "data/epa_historical_air_quality/schemas/epa_temperature_hourly_summary_schema.json"
+          CHUNKSIZE: "1500000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/epa_historical_air_quality/temperature_hourly_summary/data_output.csv"
+          PIPELINE_NAME: "epa_historical_air_quality - temperature_hourly_summary"
+          INPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "date_local",
+              "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",
+              "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",
+              "state_name", "county_name", "date_of_last_change" ]
+          DATA_DTYPES: >-
+            { "state_code": "str", "county_code": "str", "site_num": "str", "parameter_code": "int32", "poc": "int32",
+              "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "date_local": "str",
+              "time_local": "str", "date_gmt": "datetime64[ns]", "time_gmt": "str", "sample_measurement": "float64", "units_of_measure": "str",
+              "mdl": "float64", "uncertainty": "float64", "qualifier": "str", "method_type": "str", "method_code": "int32", "method_name": "str",
+              "state_name": "str", "county_name": "str", "date_of_last_change": "str" }
+          OUTPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "date_local",
+              "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",
+              "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",
+              "state_name", "county_name", "date_of_last_change" ]
+          DROP_DEST_TABLE: "Y"
+        resources:
+          limit_memory: "16G"
+          limit_cpu: "2"
+
+    - operator: "GKEStartPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "voc_daily_summary"
+        startup_timeout_seconds: 600
+        name: "load_data"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: epa-hist-air-quality
+        image_pull_policy: "Always"
+        image: "{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "https://aqs.epa.gov/aqsweb/airdata/daily_VOCS_YEAR_ITERATOR.zip"
+          START_YEAR: "1990"
+          SOURCE_FILE: "files/voc_daily_summary_data.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "epa_historical_air_quality"
+          TABLE_ID: "voc_daily_summary"
+          YEAR_FIELD_NAME: "date_local"
+          YEAR_FIELD_TYPE: "DATE"
+          SCHEMA_PATH: "data/epa_historical_air_quality/schemas/epa_voc_daily_summary_schema.json"
+          CHUNKSIZE: "1500000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/epa_historical_air_quality/voc_daily_summary/data_output.csv"
+          PIPELINE_NAME: "epa_historical_air_quality - voc_daily_summary"
+          INPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "sample_duration",
+              "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",
+              "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",
+              "method_code", "method_name", "local_site_name", "address", "state_name",
+              "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
+          DATA_DTYPES: >-
+            { "state_code": "str", "county_code": "str", "site_num": "str", "parameter_code": "int32", "poc": "int32",
+              "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "sample_duration": "str",
+              "pollutant_standard": "str", "date_local": "str", "units_of_measure": "str", "event_type": "str", "observation_count": "int32",
+              "observation_percent": "float64", "arithmetic_mean": "float64", "first_max_value": "float64", "first_max_hour": "int32", "aqi": "str",
+              "method_code": "str", "method_name": "str", "local_site_name": "str", "address": "str", "state_name": "str",
+              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "str" }
+          OUTPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "sample_duration",
+              "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",
+              "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",
+              "method_code", "method_name", "local_site_name", "address", "state_name",
+              "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
+          DROP_DEST_TABLE: "Y"
+        resources:
+          limit_memory: "16G"
+          limit_cpu: "2"
+
+    - operator: "GKEStartPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "voc_hourly_summary"
+        startup_timeout_seconds: 600
+        name: "load_data"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: epa-hist-air-quality
+        image_pull_policy: "Always"
+        image: "{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "https://aqs.epa.gov/aqsweb/airdata/hourly_VOCS_YEAR_ITERATOR.zip"
+          START_YEAR: "1990"
+          SOURCE_FILE: "files/voc_hourly_summary_data.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "epa_historical_air_quality"
+          TABLE_ID: "voc_hourly_summary"
+          YEAR_FIELD_NAME: "date_local"
+          YEAR_FIELD_TYPE: "DATE"
+          SCHEMA_PATH: "data/epa_historical_air_quality/schemas/epa_voc_hourly_summary_schema.json"
+          CHUNKSIZE: "1500000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/epa_historical_air_quality/voc_hourly_summary/data_output.csv"
+          PIPELINE_NAME: "epa_historical_air_quality - voc_hourly_summary"
+          INPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "date_local",
+              "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",
+              "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",
+              "state_name", "county_name", "date_of_last_change" ]
+          DATA_DTYPES: >-
+            { "state_code": "str", "county_code": "str", "site_num": "str", "parameter_code": "int32", "poc": "int32",
+              "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "date_local": "str",
+              "time_local": "str", "date_gmt": "datetime64[ns]", "time_gmt": "str", "sample_measurement": "float64", "units_of_measure": "str",
+              "mdl": "float64", "uncertainty": "float64", "qualifier": "str", "method_type": "str", "method_code": "int32", "method_name": "str",
+              "state_name": "str", "county_name": "str", "date_of_last_change": "str" }
+          OUTPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "date_local",
+              "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",
+              "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",
+              "state_name", "county_name", "date_of_last_change" ]
+          DROP_DEST_TABLE: "Y"
+        resources:
+          limit_memory: "16G"
+          limit_cpu: "2"
+
+    - operator: "GKEStartPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "wind_daily_summary"
+        startup_timeout_seconds: 600
+        name: "load_data"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: epa-hist-air-quality
+        image_pull_policy: "Always"
+        image: "{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "https://aqs.epa.gov/aqsweb/airdata/daily_WIND_YEAR_ITERATOR.zip"
+          START_YEAR: "1990"
+          SOURCE_FILE: "files/wind_daily_summary_data.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "epa_historical_air_quality"
+          TABLE_ID: "wind_daily_summary"
+          YEAR_FIELD_NAME: "date_local"
+          YEAR_FIELD_TYPE: "DATE"
+          SCHEMA_PATH: "data/epa_historical_air_quality/schemas/epa_wind_daily_summary_schema.json"
+          CHUNKSIZE: "1500000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/epa_historical_air_quality/wind_daily_summary/data_output.csv"
+          PIPELINE_NAME: "epa_historical_air_quality - wind_daily_summaries"
+          INPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "sample_duration",
+              "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",
+              "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",
+              "method_code", "method_name", "local_site_name", "address", "state_name",
+              "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
+          DATA_DTYPES: >-
+            { "state_code": "str", "county_code": "str", "site_num": "str", "parameter_code": "int32", "poc": "int32",
+              "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "sample_duration": "str",
+              "pollutant_standard": "str", "date_local": "str", "units_of_measure": "str", "event_type": "str", "observation_count": "int32",
+              "observation_percent": "float64", "arithmetic_mean": "float64", "first_max_value": "float64", "first_max_hour": "int32", "aqi": "str",
+              "method_code": "str", "method_name": "str", "local_site_name": "str", "address": "str", "state_name": "str",
+              "county_name": "str", "city_name": "str", "cbsa_name": "str", "date_of_last_change": "str" }
+          OUTPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "sample_duration",
+              "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",
+              "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",
+              "method_code", "method_name", "local_site_name", "address", "state_name",
+              "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
+          DROP_DEST_TABLE: "Y"
+        resources:
+          limit_memory: "16G"
+          limit_cpu: "2"
+
+    - operator: "GKEStartPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "wind_hourly_summary"
+        startup_timeout_seconds: 600
+        name: "load_data"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: epa-hist-air-quality
+        image_pull_policy: "Always"
+        image: "{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "https://aqs.epa.gov/aqsweb/airdata/hourly_WIND_YEAR_ITERATOR.zip"
+          START_YEAR: "1990"
+          SOURCE_FILE: "files/wind_hourly_summary_data.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "epa_historical_air_quality"
+          TABLE_ID: "wind_hourly_summary"
+          YEAR_FIELD_NAME: "date_local"
+          YEAR_FIELD_TYPE: "DATE"
+          SCHEMA_PATH: "data/epa_historical_air_quality/schemas/epa_wind_hourly_summary_schema.json"
+          CHUNKSIZE: "1500000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/epa_historical_air_quality/wind_hourly_summary/data_output.csv"
+          PIPELINE_NAME: "epa_historical_air_quality - wind_hourly_summary"
+          INPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "date_local",
+              "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",
+              "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",
+              "state_name", "county_name", "date_of_last_change" ]
+          DATA_DTYPES: >-
+            { "state_code": "str", "county_code": "str", "site_num": "str", "parameter_code": "int32", "poc": "int32",
+              "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "date_local": "str",
+              "time_local": "str", "date_gmt": "datetime64[ns]", "time_gmt": "str", "sample_measurement": "float64", "units_of_measure": "str",
+              "mdl": "float64", "uncertainty": "float64", "qualifier": "str", "method_type": "str", "method_code": "int32", "method_name": "str",
+              "state_name": "str", "county_name": "str", "date_of_last_change": "str" }
+          OUTPUT_CSV_HEADERS: >-
+            [ "state_code", "county_code", "site_num", "parameter_code", "poc",
+              "latitude", "longitude", "datum", "parameter_name", "date_local",
+              "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",
+              "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",
+              "state_name", "county_name", "date_of_last_change" ]
+          DROP_DEST_TABLE: "Y"
+        resources:
+          limit_memory: "16G"
+          limit_cpu: "2"
+
+    - operator: "GKEDeleteClusterOperator"
+      args:
+        task_id: "delete_cluster"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        name: epa-hist-air-quality
+
+  graph_paths:
+    - "create_cluster >> [ annual_summaries, co_daily_summary, co_hourly_summary, hap_daily_summary, hap_hourly_summary, lead_daily_summary, no2_daily_summary, no2_hourly_summary, nonoxnoy_daily_summary, nonoxnoy_hourly_summary, ozone_daily_summary, ozone_hourly_summary, pm10_daily_summary, pm10_hourly_summary, pm25_frm_hourly_summary, pm25_nonfrm_daily_summary, pm25_nonfrm_hourly_summary, pm25_speciation_daily_summary, pm25_speciation_hourly_summary, pressure_daily_summary, pressure_hourly_summary, rh_and_dp_daily_summary, rh_and_dp_hourly_summary, so2_daily_summary, so2_hourly_summary, temperature_daily_summary, temperature_hourly_summary, voc_daily_summary, voc_hourly_summary, wind_daily_summary, wind_hourly_summary ] >> delete_cluster"
