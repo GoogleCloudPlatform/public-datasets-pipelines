@@ -17,79 +17,79 @@ resources:
 
   - type: bigquery_table
     table_id: admissions
-    description: ""
+    description: "This table consists of an individuals's admission details in a health centre. Few details include admit time, emergency type, the diagnosis etc."
   - type: bigquery_table
     table_id: callout
-    description: ""
+    description: "This table consists of call out details such as call out status, call out outcome, etc."
   - type: bigquery_table
     table_id: caregivers
-    description: ""
+    description: "This table consists of the id of the caregivers respective to the patients."
   - type: bigquery_table
     table_id: chartevents
-    description: ""
+    description: "This table consists of details like subject id, chart time, store time, etc."
   - type: bigquery_table
     table_id: cptevents
-    description: ""
+    description: "This table consists of current procedural terminology details like cpt number, cost center, cpt suffix etc."
   - type: bigquery_table
     table_id: d_cpt
-    description: ""
+    description: "This table consists of cpt details like section header, section range, category etc."
   - type: bigquery_table
     table_id: d_icd_diagnoses
-    description: ""
+    description: "This table consists of details like icd code, title, etc."
   - type: bigquery_table
     table_id: d_icd_procedures
-    description: ""
+    description: "This table consists of details like icd code, title, etc."
   - type: bigquery_table
     table_id: d_items
-    description: ""
+    description: "This table consists of details like item id, label, category etc."
   - type: bigquery_table
     table_id: d_labitems
-    description: ""
+    description: "This table consists of specimen details like item id, fluid, label, etc."
   - type: bigquery_table
     table_id: datetimeevents
-    description: ""
+    description: "This table consists of details like icu stay details, chart time, store time etc."
   - type: bigquery_table
     table_id: diagnoses_icd
-    description: ""
+    description: "This table consists of details like admission id, icd code etc."
   - type: bigquery_table
     table_id: drgcodes
-    description: ""
+    description: "This table consists of diagnosis related group details like drg type, drg code, etc "
   - type: bigquery_table
     table_id: icustays
-    description: ""
+    description: "This table consists of icu details like time of stay, ward id, care unit etc"
   - type: bigquery_table
     table_id: inputevents_cv
-    description: ""
+    description: "This table consists of details like chart time, amount, rate, etc."
   - type: bigquery_table
     table_id: inputevents_mv
-    description: ""
+    description: "This table consists of details like chart time, amount, rate, order category name, order id, etc."
   - type: bigquery_table
     table_id: labevents
-    description: ""
+    description: "This table consists of details like chart time, value, flag etc."
   - type: bigquery_table
     table_id: microbiologyevents
-    description: ""
+    description: "This table consists of details like dilution value, isolation, interpretation, etc."
   - type: bigquery_table
     table_id: outputevents
-    description: ""
+    description: "This table consists of details like icu stay id, admission id, store time, etc."
   - type: bigquery_table
     table_id: patients
-    description: ""
+    description: "This table consists of an individual's details like date of birth, gender, subject id, etc."
   - type: bigquery_table
     table_id: prescriptions
-    description: ""
+    description: "This table consists of details like drug name, drug type, formula, drug strength, etc."
   - type: bigquery_table
     table_id: procedureevents_mv
-    description: ""
+    description: "This table consists of details like order category name, status description, etc."
   - type: bigquery_table
     table_id: procedures_icd
-    description: ""
+    description: "This table consists of details like sequence number, icd code, etc."
   - type: bigquery_table
     table_id: services
-    description: ""
+    description: "This table consists of details like transfer time, previous service, current service"
   - type: bigquery_table
     table_id: transfers
-    description: ""
+    description: "This table consists of details like in time, out time, icu stay id, care unit, ward id, etc."
 
 dag:
   airflow_version: 1
@@ -106,7 +106,7 @@ dag:
 
   tasks:
     - operator: "BigQueryToBigQueryOperator"
-      description: "Copy table from one bigquery project to another"
+      description: "Copy admissions table from one bigquery project to another"
       args:
         task_id: "admissions"
         source_project_dataset_tables: "physionet-data.mimiciii_demo.admissions"
@@ -114,7 +114,7 @@ dag:
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
-      description: "Copy table from one bigquery project to another"
+      description: "Copy callout table from one bigquery project to another"
       args:
         task_id: "callout"
         source_project_dataset_tables: "physionet-data.mimiciii_demo.callout"
@@ -122,7 +122,7 @@ dag:
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
-      description: "Copy table from one bigquery project to another"
+      description: "Copy caregivers table from one bigquery project to another"
       args:
         task_id: "caregivers"
         source_project_dataset_tables: "physionet-data.mimiciii_demo.caregivers"
@@ -130,7 +130,7 @@ dag:
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
-      description: "Copy table from one bigquery project to another"
+      description: "Copy chartevents table from one bigquery project to another"
       args:
         task_id: "chartevents"
         source_project_dataset_tables: "physionet-data.mimiciii_demo.chartevents"
@@ -138,7 +138,7 @@ dag:
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
-      description: "Copy table from one bigquery project to another"
+      description: "Copy cptevents table from one bigquery project to another"
       args:
         task_id: "cptevents"
         source_project_dataset_tables: "physionet-data.mimiciii_demo.cptevents"
@@ -146,7 +146,7 @@ dag:
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
-      description: "Copy table from one bigquery project to another"
+      description: "Copy d cpt table from one bigquery project to another"
       args:
         task_id: "d_cpt"
         source_project_dataset_tables: "physionet-data.mimiciii_demo.d_cpt"
@@ -154,7 +154,7 @@ dag:
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
-      description: "Copy table from one bigquery project to another"
+      description: "Copy d icd diagnoses table from one bigquery project to another"
       args:
         task_id: "d_icd_diagnoses"
         source_project_dataset_tables: "physionet-data.mimiciii_demo.d_icd_diagnoses"
@@ -162,7 +162,7 @@ dag:
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
-      description: "Copy table from one bigquery project to another"
+      description: "Copy d icd procedures table from one bigquery project to another"
       args:
         task_id: "d_icd_procedures"
         source_project_dataset_tables: "physionet-data.mimiciii_demo.d_icd_procedures"
@@ -170,7 +170,7 @@ dag:
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
-      description: "Copy table from one bigquery project to another"
+      description: "Copy d_items table from one bigquery project to another"
       args:
         task_id: "d_items"
         source_project_dataset_tables: "physionet-data.mimiciii_demo.d_items"
@@ -178,7 +178,7 @@ dag:
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
-      description: "Copy table from one bigquery project to another"
+      description: "Copy d_labitems table from one bigquery project to another"
       args:
         task_id: "d_labitems"
         source_project_dataset_tables: "physionet-data.mimiciii_demo.d_labitems"
@@ -186,7 +186,7 @@ dag:
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
-      description: "Copy table from one bigquery project to another"
+      description: "Copy datetimeevents table from one bigquery project to another"
       args:
         task_id: "datetimeevents"
         source_project_dataset_tables: "physionet-data.mimiciii_demo.datetimeevents"
@@ -194,7 +194,7 @@ dag:
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
-      description: "Copy table from one bigquery project to another"
+      description: "Copy diagnoses_icd table from one bigquery project to another"
       args:
         task_id: "diagnoses_icd"
         source_project_dataset_tables: "physionet-data.mimiciii_demo.diagnoses_icd"
@@ -202,7 +202,7 @@ dag:
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
-      description: "Copy table from one bigquery project to another"
+      description: "Copy drgcodes table from one bigquery project to another"
       args:
         task_id: "drgcodes"
         source_project_dataset_tables: "physionet-data.mimiciii_demo.drgcodes"
@@ -210,7 +210,7 @@ dag:
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
-      description: "Copy table from one bigquery project to another"
+      description: "Copy icustays table from one bigquery project to another"
       args:
         task_id: "icustays"
         source_project_dataset_tables: "physionet-data.mimiciii_demo.icustays"
@@ -218,7 +218,7 @@ dag:
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
-      description: "Copy table from one bigquery project to another"
+      description: "Copy inputevents_cv table from one bigquery project to another"
       args:
         task_id: "inputevents_cv"
         source_project_dataset_tables: "physionet-data.mimiciii_demo.inputevents_cv"
@@ -226,7 +226,7 @@ dag:
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
-      description: "Copy table from one bigquery project to another"
+      description: "Copy inputevents_mv table from one bigquery project to another"
       args:
         task_id: "inputevents_mv"
         source_project_dataset_tables: "physionet-data.mimiciii_demo.inputevents_mv"
@@ -234,7 +234,7 @@ dag:
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
-      description: "Copy table from one bigquery project to another"
+      description: "Copy labevents table from one bigquery project to another"
       args:
         task_id: "labevents"
         source_project_dataset_tables: "physionet-data.mimiciii_demo.labevents"
@@ -242,7 +242,7 @@ dag:
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
-      description: "Copy table from one bigquery project to another"
+      description: "Copy microbiologyevents table from one bigquery project to another"
       args:
         task_id: "microbiologyevents"
         source_project_dataset_tables: "physionet-data.mimiciii_demo.microbiologyevents"
@@ -250,7 +250,7 @@ dag:
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
-      description: "Copy table from one bigquery project to another"
+      description: "Copy outputevents table from one bigquery project to another"
       args:
         task_id: "outputevents"
         source_project_dataset_tables: "physionet-data.mimiciii_demo.outputevents"
@@ -258,7 +258,7 @@ dag:
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
-      description: "Copy table from one bigquery project to another"
+      description: "Copy patients table from one bigquery project to another"
       args:
         task_id: "patients"
         source_project_dataset_tables: "physionet-data.mimiciii_demo.patients"
@@ -266,7 +266,7 @@ dag:
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
-      description: "Copy table from one bigquery project to another"
+      description: "Copy prescriptions table from one bigquery project to another"
       args:
         task_id: "prescriptions"
         source_project_dataset_tables: "physionet-data.mimiciii_demo.prescriptions"
@@ -274,7 +274,7 @@ dag:
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
-      description: "Copy table from one bigquery project to another"
+      description: "Copy procedureevents_mv table from one bigquery project to another"
       args:
         task_id: "procedureevents_mv"
         source_project_dataset_tables: "physionet-data.mimiciii_demo.procedureevents_mv"
@@ -282,7 +282,7 @@ dag:
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
-      description: "Copy table from one bigquery project to another"
+      description: "Copy procedures_icd table from one bigquery project to another"
       args:
         task_id: "procedures_icd"
         source_project_dataset_tables: "physionet-data.mimiciii_demo.procedures_icd"
@@ -290,7 +290,7 @@ dag:
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
-      description: "Copy table from one bigquery project to another"
+      description: "Copy services table from one bigquery project to another"
       args:
         task_id: "services"
         source_project_dataset_tables: "physionet-data.mimiciii_demo.services"
@@ -298,7 +298,7 @@ dag:
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
-      description: "Copy table from one bigquery project to another"
+      description: "Copy transfers table from one bigquery project to another"
       args:
         task_id: "transfers"
         source_project_dataset_tables: "physionet-data.mimiciii_demo.transfers"
