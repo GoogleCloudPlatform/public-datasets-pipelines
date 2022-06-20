@@ -1,0 +1,69 @@
+[
+  {
+    "name": "usaf",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "wban",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "name",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "country",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "state",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "call",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "lat",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "lon",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "elev",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "begin",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "end",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "source_url",
+    "type": "STRING",
+    "description": "Source ",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "etl_timestamp",
+    "type": "TIMESTAMP",
+    "description": "Load time for this data row",
+    "mode": "NULLABLE"
+  }
+]
