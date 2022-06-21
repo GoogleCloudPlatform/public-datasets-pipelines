@@ -1,5 +1,0 @@
-requests
-pandas
-google-cloud-storage
-numpy
-
