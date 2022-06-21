@@ -307,4 +307,3 @@ dag:
 
   graph_paths:
     - "admissions , callout , caregivers , chartevents , cptevents , d_cpt , d_icd_diagnoses , d_icd_procedures , d_items , d_labitems , datetimeevents , diagnoses_icd , drgcodes , icustays , inputevents_cv , inputevents_mv , labevents , microbiologyevents , outputevents , patients , prescriptions , procedureevents_mv , procedures_icd , services , transfers"
-
