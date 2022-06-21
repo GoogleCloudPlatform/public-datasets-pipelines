@@ -44,6 +44,7 @@ with DAG(
             "SOURCE_PROJECT_ID": "{{ var.json.cfe_calculator.source_project_id }}",
             "TARGET_PROJECT_ID": "{{ var.json.cfe_calculator.target_project_id }}",
             "DATASET_NAME": "{{ var.json.cfe_calculator.dataset_name }}",
+            "DATASET_VERSIONS": "{{ var.json.cfe_calculator.dataset_versions }}",
             "SERVICE_ACCOUNT": "{{ var.json.cfe_calculator.service_account }}",
         },
         resources={"request_memory": "128M", "request_cpu": "200m"},
