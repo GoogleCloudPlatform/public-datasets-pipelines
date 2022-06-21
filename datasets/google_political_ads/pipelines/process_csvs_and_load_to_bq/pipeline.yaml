@@ -61,7 +61,7 @@ dag:
       depends_on_past: False
       start_date: "2021-03-01"
     max_active_runs: 1
-    schedule_interval: "@daily"
+    schedule_interval: "0 */3 * * *"
     catchup: False
     default_view: graph
 
