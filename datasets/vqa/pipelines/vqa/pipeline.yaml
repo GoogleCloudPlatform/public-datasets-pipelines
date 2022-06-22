@@ -1,0 +1,118 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+resources: ~
+  # - type: bigquery_table
+  #   table_id: "ghcnd_by_year"
+  #   description: "noaaspc"
+  # - type: bigquery_table
+  #   table_id: "ghcnd_countries"
+  #   description: "noaaspc"
+  # - type: bigquery_table
+  #   table_id: "ghcnd_inventory"
+  #   description: "noaaspc"
+  # - type: bigquery_table
+  #   table_id: "ghcnd_states"
+  #   description: "noaaspc"
+  # - type: bigquery_table
+  #   table_id: "ghcnd_stations"
+  #   description: "noaaspc"
+  # - type: bigquery_table
+  #   table_id: "gsod_stations"
+  #   description: "noaaspc"
+  # - type: bigquery_table
+  #   table_id: "hurricanes"
+  #   description: "noaaspc"
+  # - type: bigquery_table
+  #   table_id: "lightning_strikes_by_year"
+  #   description: "noaaspc"
+
+dag:
+  airflow_version: 2
+  initialize:
+    dag_id: vqa
+    default_args:
+      owner: "Google"
+      depends_on_past: False
+      start_date: '2021-03-01'
+    max_active_runs: 1
+    schedule_interval: "0 1 0 0 6"
+    catchup: False
+    default_view: graph
+
+  tasks:
+    - operator: "GKECreateClusterOperator"
+      args:
+        task_id: "create_cluster"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        body:
+          name: pubds-vqa
+          initial_node_count: 2
+          network: "{{ var.value.vpc_network }}"
+          node_config:
+            machine_type: e2-standard-16
+            oauth_scopes:
+              - https://www.googleapis.com/auth/devstorage.read_write
+              - https://www.googleapis.com/auth/cloud-platform
+    - operator: "GKEStartPodOperator"
+      description: "Run VQA load processes"
+      args:
+        task_id: "load_annotations"
+        name: "vqa.load_annotations"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: pubds-vqa
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.vqa.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "Load Annotations"
+          SOURCE_URL: >-
+            [
+              ["Training annotations 2017 v2.0", "https://s3.amazonaws.com/cvmlp/vqa/mscoco/vqa/v2_Annotations_Train_mscoco.zip", "training_ann_2017"],
+              ["Validation annotations 2017 v2.0", https://s3.amazonaws.com/cvmlp/vqa/mscoco/vqa/v2_Annotations_Val_mscoco.zip", "validation_ann_2017"]
+            ]
+          SOURCE_FILE: "files/data.csv"
+          TARGET_FILE: "files/data_output.csv"
+          CHUNKSIZE: "1000000"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "vqa"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/vqa/data_output.csv"
+          SCHEMA_PATH: "data/vqa/schema/annotations_schema.json"
+          DROP_DEST_TABLE: "N"
+          REMOVE_SOURCE_FILE: "Y"
+          DELETE_TARGET_FILE: "Y"
+          INPUT_CSV_HEADERS: >-
+            [
+              "id"
+            ]
+          DATA_DTYPES: >-
+            {
+              "id": "str"
+            }
+        resources:
+          limit_memory: "16G"
+          limit_cpu: "3"
+    - operator: "GKEDeleteClusterOperator"
+      args:
+        task_id: "delete_cluster"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        name: pubds-vqa
+
+  graph_paths:
+    - "create_cluster >> delete_cluster"
