@@ -19,7 +19,7 @@ resources: ~
 dag:
   airflow_version: 2
   initialize:
-    dag_id: cfe_calculator
+    dag_id: cfe_calculator.cfe_calculator
     default_args:
       owner: "Google"
       depends_on_past: False
