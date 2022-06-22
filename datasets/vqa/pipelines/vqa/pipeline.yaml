@@ -80,10 +80,20 @@ dag:
         image: "{{ var.json.vqa.container_registry.run_csv_transform_kub }}"
         env_vars:
           PIPELINE_NAME: "Load Annotations"
-          SOURCE_URL: >-
+          SOURCE_URL: >- # [ [subtask name, url, dest table name, src file name ], [ ... ], ... ]
             [
-              ["Training annotations 2017 v2.0", "https://s3.amazonaws.com/cvmlp/vqa/mscoco/vqa/v2_Annotations_Train_mscoco.zip", "training_ann_2017"],
-              ["Validation annotations 2017 v2.0", https://s3.amazonaws.com/cvmlp/vqa/mscoco/vqa/v2_Annotations_Val_mscoco.zip", "validation_ann_2017"]
+              [
+                "Training annotations 2017 v2.0",
+                "https://s3.amazonaws.com/cvmlp/vqa/mscoco/vqa/v2_Annotations_Train_mscoco.zip",
+                "training_ann_2017",
+                "v2_mscoco_train2014_annotations.json"
+              ],
+              [
+                "Validation annotations 2017 v2.0",
+                "https://s3.amazonaws.com/cvmlp/vqa/mscoco/vqa/v2_Annotations_Val_mscoco.zip",
+                "validation_ann_2017",
+                "v2_mscoco_val2014_annotations.json"
+              ]
             ]
           SOURCE_FILE: "files/data.csv"
           TARGET_FILE: "files/data_output.csv"

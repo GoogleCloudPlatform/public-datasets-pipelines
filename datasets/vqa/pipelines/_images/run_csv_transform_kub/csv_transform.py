@@ -16,6 +16,7 @@ import csv
 import datetime
 import ftplib
 import gzip
+from zipfile import ZipFile
 import json
 import logging
 import os
@@ -88,8 +89,27 @@ def execute_pipeline(
     input_csv_headers: typing.List[str],
     data_dtypes: dict
 ) -> None:
-    for subtask, url, table_name in source_url:
-        print(f"subtask: {subtask} url: {url} table_name: {table_name}")
+    for subtask, url, table_name, src_filename in source_url:
+        print(f"... Executing Load Process for {subtask}")
+        source_zipfile = str.replace(str(source_file), ".csv", f"{table_name}.zip")
+        root_path = os.path.split(source_zipfile)[0]
+        download_file(url, source_zipfile)
+        zip_decompress(source_zipfile, root_path, False)
+        if pipeline_name == "Load Annotations":
+            data = json.load(open(f"{root_path}/{src_filename}"))
+            df = pd.json_normalize(data)
+            import pdb; pdb.set_trace()
+        else:
+            pass
+
+
+def zip_decompress(infile: str, topath: str, remove_zipfile: bool = False) -> None:
+    logging.info(f"Decompressing {infile} to {topath}")
+    with ZipFile(infile, "r") as zip:
+        zip.extractall(topath)
+    if remove_zipfile:
+        os.unlink(infile)
+
 
 # def process_and_load_table(
 #     source_file: str,
@@ -684,15 +704,15 @@ def execute_pipeline(
 #                 os.remove(batch_file_path)
 
 
-# def download_file(source_url: str, source_file: pathlib.Path) -> None:
-#     logging.info(f"Downloading {source_url} to {source_file}")
-#     r = requests.get(source_url, stream=True)
-#     if r.status_code == 200:
-#         with open(source_file, "wb") as f:
-#             for chunk in r:
-#                 f.write(chunk)
-#     else:
-#         logging.error(f"Couldn't download {source_url}: {r.text}")
+def download_file(source_url: str, source_file: pathlib.Path) -> None:
+    logging.info(f"Downloading {source_url} to {source_file}")
+    r = requests.get(source_url, stream=True)
+    if r.status_code == 200:
+        with open(source_file, "wb") as f:
+            for chunk in r:
+                f.write(chunk)
+    else:
+        logging.error(f"Couldn't download {source_url}: {r.text}")
 
 
 # def download_file_ftp(
