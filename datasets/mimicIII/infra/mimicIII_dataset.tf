@@ -15,12 +15,11 @@
  */
 
 
-variable "project_id" {}
-variable "bucket_name_prefix" {}
-variable "impersonating_acct" {}
-variable "region" {}
-variable "env" {}
-variable "iam_policies" {
-  default = {}
+resource "google_bigquery_dataset" "mimicIII" {
+  dataset_id = "mimicIII"
+  project    = var.project_id
 }
 
+output "bigquery_dataset-mimicIII-dataset_id" {
+  value = google_bigquery_dataset.mimicIII.dataset_id
+}

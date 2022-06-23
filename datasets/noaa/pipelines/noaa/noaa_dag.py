@@ -38,7 +38,6 @@ with DAG(
         body={
             "name": "noaa",
             "initial_node_count": 2,
-            "network": "{{ var.value.vpc_network }}",
             "node_config": {
                 "machine_type": "e2-standard-16",
                 "oauth_scopes": [
