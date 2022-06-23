@@ -97,7 +97,6 @@ def execute_pipeline(
         source_zipfile = str.replace(str(source_file), ".csv", f"{table_name}.zip")
         root_path = os.path.split(source_zipfile)[0]
         target_file_path_main = str.replace(str(target_file), ".csv", f"_{table_name}.csv")
-        target_file_path_annot = str.replace(str(target_file), ".csv", f"_{table_name}_annot.csv")
         download_file(url, source_zipfile)
         zip_decompress(source_zipfile, root_path, False)
         if pipeline_name == "Load Annotations":
@@ -109,8 +108,23 @@ def execute_pipeline(
             df = df[reorder_headers_list]
             save_to_new_file(df, target_file_path_main)
             annot_column_list=['question_type','multiple_choice_answer','answer_type','question_id']
+            target_file_path_annot = str.replace(str(target_file), ".csv", f"_{table_name}_annot.csv")
             save_to_new_file(df_annot['annot_norm'][0][:][annot_column_list], target_file_path_annot)
-            import pdb; pdb.set_trace()
+            # import pdb; pdb.set_trace()
+        else:
+            pass
+        if pipeline_name == "Load Questions":
+            data = json.load(open(f"{root_path}/{src_filename}"))
+            df = pd.json_normalize(data)
+            df = rename_headers(df)
+            df_quest = pd.DataFrame()
+            df_quest['questions'] = df['questions'].apply(lambda x: pd.json_normalize(x))
+            df = df[reorder_headers_list]
+            save_to_new_file(df, target_file_path_main)
+            question_column_list=['image_id','question','question_id']
+            target_file_path_quest = str.replace(str(target_file), ".csv", f"_{table_name}_quest.csv")
+            save_to_new_file(df_quest['annot_norm'][0][:][question_column_list], target_file_path_quest)
+            # import pdb; pdb.set_trace()
         else:
             pass
 
