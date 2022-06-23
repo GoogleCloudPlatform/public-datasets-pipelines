@@ -114,6 +114,19 @@ dag:
             {
               "id": "str"
             }
+          REORDER_HEADERS_LIST: >-
+            [
+              'data_subtype',
+              'data_type',
+              'info_description',
+              'info_url',
+              'info_version',
+              'info_year',
+              'info_contributor',
+              'info_date_created',
+              'license_url',
+              'license_name'
+            ]
         resources:
           limit_memory: "16G"
           limit_cpu: "3"

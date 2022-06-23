@@ -48,7 +48,8 @@ def main(
     remove_source_file: str,
     delete_target_file: str,
     input_csv_headers: typing.List[str],
-    data_dtypes: dict
+    data_dtypes: dict,
+    reorder_headers_list: typing.List[str]
 ) -> None:
     logging.info(f"{pipeline_name} process started")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
@@ -67,7 +68,8 @@ def main(
         remove_source_file=(remove_source_file == "Y"),
         delete_target_file=(delete_target_file == "Y"),
         input_csv_headers=input_csv_headers,
-        data_dtypes=data_dtypes
+        data_dtypes=data_dtypes,
+        reorder_headers_list=reorder_headers_list
     )
     logging.info(f"{pipeline_name} process completed")
 
@@ -87,20 +89,41 @@ def execute_pipeline(
     remove_source_file: bool,
     delete_target_file: bool,
     input_csv_headers: typing.List[str],
-    data_dtypes: dict
+    data_dtypes: dict,
+    reorder_headers_list: typing.List[str]
 ) -> None:
     for subtask, url, table_name, src_filename in source_url:
         print(f"... Executing Load Process for {subtask}")
         source_zipfile = str.replace(str(source_file), ".csv", f"{table_name}.zip")
         root_path = os.path.split(source_zipfile)[0]
+        target_file_path_main = str.replace(str(target_file), ".csv", f"_{table_name}.csv")
+        target_file_path_annot = str.replace(str(target_file), ".csv", f"_{table_name}_annot.csv")
         download_file(url, source_zipfile)
         zip_decompress(source_zipfile, root_path, False)
         if pipeline_name == "Load Annotations":
             data = json.load(open(f"{root_path}/{src_filename}"))
             df = pd.json_normalize(data)
+            df = rename_headers(df)
+            df_annot = pd.DataFrame()
+            df_annot['annot_norm'] = df['annotations'].apply(lambda x: pd.json_normalize(x))
+            df = df[reorder_headers_list]
+            save_to_new_file(df, target_file_path_main)
+            annot_column_list=['question_type','multiple_choice_answer','answer_type','question_id']
+            save_to_new_file(df_annot['annot_norm'][0][:][annot_column_list], target_file_path_annot)
             import pdb; pdb.set_trace()
         else:
             pass
+
+
+def download_file(source_url: str, source_file: pathlib.Path) -> None:
+    logging.info(f"Downloading {source_url} to {source_file}")
+    r = requests.get(source_url, stream=True)
+    if r.status_code == 200:
+        with open(source_file, "wb") as f:
+            for chunk in r:
+                f.write(chunk)
+    else:
+        logging.error(f"Couldn't download {source_url}: {r.text}")
 
 
 def zip_decompress(infile: str, topath: str, remove_zipfile: bool = False) -> None:
@@ -109,6 +132,18 @@ def zip_decompress(infile: str, topath: str, remove_zipfile: bool = False) -> No
         zip.extractall(topath)
     if remove_zipfile:
         os.unlink(infile)
+
+
+def rename_headers(df: pd.DataFrame) -> pd.DataFrame:
+    for col in df.columns:
+        new_col_name = str.replace(str(col), ".", "_")
+        df.rename(columns={col: new_col_name}, inplace=True)
+    return df
+
+
+def save_to_new_file(df: pd.DataFrame, file_path: str, sep: str = "|") -> None:
+    logging.info(f"Saving data to target file.. {file_path} ...")
+    df.to_csv(file_path, index=False, sep=sep)
 
 
 # def process_and_load_table(
@@ -421,11 +456,6 @@ def zip_decompress(infile: str, topath: str, remove_zipfile: bool = False) -> No
 #     return rtn_list
 
 
-# def rename_headers(df: pd.DataFrame, rename_headers_list: dict) -> pd.DataFrame:
-#     df.rename(columns=rename_headers_list, inplace=True)
-#     return df
-
-
 # def remove_header_rows(source_file: str, number_of_header_rows: int) -> None:
 #     logging.info(f"Removing header from {source_file}")
 #     os.system(f"sed -i '1,{number_of_header_rows}d' {source_file} ")
@@ -678,11 +708,6 @@ def zip_decompress(infile: str, topath: str, remove_zipfile: bool = False) -> No
 #     return schema
 
 
-# def save_to_new_file(df: pd.DataFrame, file_path: str, sep: str = "|") -> None:
-#     logging.info(f"Saving data to target file.. {file_path} ...")
-#     df.to_csv(file_path, index=False, sep=sep)
-
-
 # def append_batch_file(
 #     batch_file_path: str, target_file_path: str, skip_header: bool, truncate_file: bool
 # ) -> None:
@@ -702,17 +727,6 @@ def zip_decompress(infile: str, topath: str, remove_zipfile: bool = False) -> No
 #             target_file.write(data_file.read())
 #             if os.path.exists(batch_file_path):
 #                 os.remove(batch_file_path)
-
-
-def download_file(source_url: str, source_file: pathlib.Path) -> None:
-    logging.info(f"Downloading {source_url} to {source_file}")
-    r = requests.get(source_url, stream=True)
-    if r.status_code == 200:
-        with open(source_file, "wb") as f:
-            for chunk in r:
-                f.write(chunk)
-    else:
-        logging.error(f"Couldn't download {source_url}: {r.text}")
 
 
 # def download_file_ftp(
@@ -784,5 +798,6 @@ if __name__ == "__main__":
         remove_source_file=os.environ.get("REMOVE_SOURCE_FILE", "N"),
         delete_target_file=os.environ.get("DELETE_TARGET_FILE", "N"),
         input_csv_headers=json.loads(os.environ.get("INPUT_CSV_HEADERS", r"[]")),
-        data_dtypes=json.loads(os.environ.get("DATA_DTYPES", r"{}"))
+        data_dtypes=json.loads(os.environ.get("DATA_DTYPES", r"{}")),
+        reorder_headers_list=json.loads(os.environ.get("REORDER_HEADERS_LIST", r"[]"))
     )
