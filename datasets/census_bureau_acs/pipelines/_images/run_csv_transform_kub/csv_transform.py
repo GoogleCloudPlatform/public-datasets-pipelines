@@ -535,11 +535,12 @@ def extract_data_and_convert_to_df_state_level(
             try:
                 r = requests.get(source_url_new, stream=True, verify=False, timeout=200)
                 if r.status_code == 200:
+                    logging.info("Data source valid for at least one entity")       
+                    flag=1       
                     text = r.json()
                     frame = load_nested_list_into_df_without_headers(text)
                     frame["KPI_Name"] = key
-                    list_temp.append(frame)
-                    flag=1                    
+                    list_temp.append(frame)          
                 elif 400>= r.status_code <=499:      #Unable to download data
                     logging.info(r.status_code)
                 else:
