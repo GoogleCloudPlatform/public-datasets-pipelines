@@ -28,7 +28,7 @@ with DAG(
     dag_id="google_political_ads.process_csvs_and_load_to_bq",
     default_args=default_args,
     max_active_runs=1,
-    schedule_interval="@daily",
+    schedule_interval="0 */3 * * *",
     catchup=False,
     default_view="graph",
 ) as dag:
