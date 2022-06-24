@@ -16,7 +16,6 @@ import csv
 import datetime
 import ftplib
 import gzip
-from zipfile import ZipFile
 import json
 import logging
 import os
@@ -25,6 +24,7 @@ import re
 import time
 import typing
 from urllib.request import Request, urlopen
+from zipfile import ZipFile
 
 import pandas as pd
 import requests
@@ -49,7 +49,7 @@ def main(
     delete_target_file: str,
     input_csv_headers: typing.List[str],
     data_dtypes: dict,
-    reorder_headers_list: typing.List[str]
+    reorder_headers_list: typing.List[str],
 ) -> None:
     logging.info(f"{pipeline_name} process started")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
@@ -69,7 +69,7 @@ def main(
         delete_target_file=(delete_target_file == "Y"),
         input_csv_headers=input_csv_headers,
         data_dtypes=data_dtypes,
-        reorder_headers_list=reorder_headers_list
+        reorder_headers_list=reorder_headers_list,
     )
     logging.info(f"{pipeline_name} process completed")
 
@@ -90,13 +90,15 @@ def execute_pipeline(
     delete_target_file: bool,
     input_csv_headers: typing.List[str],
     data_dtypes: dict,
-    reorder_headers_list: typing.List[str]
+    reorder_headers_list: typing.List[str],
 ) -> None:
     for subtask, url, table_name, src_filename in source_url:
         logging.info(f"... Executing Load Process for {subtask}")
         source_zipfile = str.replace(str(source_file), ".csv", f"{table_name}.zip")
         root_path = os.path.split(source_zipfile)[0]
-        target_file_path_main = str.replace(str(target_file), ".csv", f"_{table_name}.csv")
+        target_file_path_main = str.replace(
+            str(target_file), ".csv", f"_{table_name}.csv"
+        )
         download_file(url, source_zipfile)
         zip_decompress(source_zipfile, root_path, False)
         if pipeline_name == "Load Annotations":
@@ -104,12 +106,23 @@ def execute_pipeline(
             df = pd.json_normalize(data)
             df = rename_headers(df)
             df_annot = pd.DataFrame()
-            df_annot['annot_norm'] = df['annotations'].apply(lambda x: pd.json_normalize(x))
+            df_annot["annot_norm"] = df["annotations"].apply(
+                lambda x: pd.json_normalize(x)
+            )
             df = df[reorder_headers_list]
             save_to_new_file(df, target_file_path_main)
-            annot_column_list=['question_type','multiple_choice_answer','answer_type','question_id']
-            target_file_path_annot = str.replace(str(target_file), ".csv", f"_{table_name}_annot.csv")
-            save_to_new_file(df_annot['annot_norm'][0][:][annot_column_list], target_file_path_annot)
+            annot_column_list = [
+                "question_type",
+                "multiple_choice_answer",
+                "answer_type",
+                "question_id",
+            ]
+            target_file_path_annot = str.replace(
+                str(target_file), ".csv", f"_{table_name}_annot.csv"
+            )
+            save_to_new_file(
+                df_annot["annot_norm"][0][:][annot_column_list], target_file_path_annot
+            )
             # import pdb; pdb.set_trace()
         else:
             pass
@@ -121,18 +134,28 @@ def execute_pipeline(
                 df = pd.json_normalize(data)
                 df = rename_headers(df)
                 df_quest = pd.DataFrame()
-                df_quest['questions'] = df['questions'].apply(lambda x: pd.json_normalize(x))
+                df_quest["questions"] = df["questions"].apply(
+                    lambda x: pd.json_normalize(x)
+                )
                 df = df[reorder_headers_list]
-                question_column_list=['image_id','question','question_id']
-                target_file_path_quest = str.replace(str(target_file), ".csv", f"_{table_name}_quest.csv")
+                question_column_list = ["image_id", "question", "question_id"]
+                target_file_path_quest = str.replace(
+                    str(target_file), ".csv", f"_{table_name}_quest.csv"
+                )
                 # import pdb; pdb.set_trace()
                 if file_counter == 0:
                     save_to_new_file(df, target_file_path_main, include_headers=True)
-                    save_to_new_file(df_quest['questions'][0][:][question_column_list], target_file_path_quest)
+                    save_to_new_file(
+                        df_quest["questions"][0][:][question_column_list],
+                        target_file_path_quest,
+                    )
                 else:
-                    file_counter+=1
+                    file_counter += 1
                     save_to_new_file(df, target_file_path_main, include_headers=False)
-                    save_to_new_file(df_quest['questions'][0][:][question_column_list], target_file_path_quest)
+                    save_to_new_file(
+                        df_quest["questions"][0][:][question_column_list],
+                        target_file_path_quest,
+                    )
         else:
             pass
 
@@ -163,9 +186,17 @@ def rename_headers(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def save_to_new_file(df: pd.DataFrame, file_path: str, sep: str = "|", include_headers: bool = True) -> None:
+def save_to_new_file(
+    df: pd.DataFrame, file_path: str, sep: str = "|", include_headers: bool = True
+) -> None:
     logging.info(f"Saving data to target file.. {file_path} ...")
-    df.to_csv(file_path, index=False, sep=sep, header=include_headers, mode=("w+" if include_headers else "a"))
+    df.to_csv(
+        file_path,
+        index=False,
+        sep=sep,
+        header=include_headers,
+        mode=("w+" if include_headers else "a"),
+    )
 
 
 def append_batch_file(
@@ -842,5 +873,5 @@ if __name__ == "__main__":
         delete_target_file=os.environ.get("DELETE_TARGET_FILE", "N"),
         input_csv_headers=json.loads(os.environ.get("INPUT_CSV_HEADERS", r"[]")),
         data_dtypes=json.loads(os.environ.get("DATA_DTYPES", r"{}")),
-        reorder_headers_list=json.loads(os.environ.get("REORDER_HEADERS_LIST", r"[]"))
+        reorder_headers_list=json.loads(os.environ.get("REORDER_HEADERS_LIST", r"[]")),
     )
