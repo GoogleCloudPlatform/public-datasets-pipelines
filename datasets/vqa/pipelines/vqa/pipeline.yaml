@@ -106,14 +106,6 @@ dag:
           DROP_DEST_TABLE: "N"
           REMOVE_SOURCE_FILE: "Y"
           DELETE_TARGET_FILE: "Y"
-          INPUT_CSV_HEADERS: >-
-            [
-              "id"
-            ]
-          DATA_DTYPES: >-
-            {
-              "id": "str"
-            }
           REORDER_HEADERS_LIST: >-
             [
               'data_subtype',
@@ -180,14 +172,66 @@ dag:
           DROP_DEST_TABLE: "N"
           REMOVE_SOURCE_FILE: "Y"
           DELETE_TARGET_FILE: "Y"
-          INPUT_CSV_HEADERS: >-
+          REORDER_HEADERS_LIST: >-
             [
-              "id"
+              'task_type',
+              'data_type',
+              'data_subtype',
+              'info_description',
+              'info_url',
+              'info_version',
+              'info_year',
+              'info_contributor',
+              'info_date_created',
+              'license_url',
+              'license_name'
             ]
-          DATA_DTYPES: >-
-            {
-              "id": "str"
-            }
+        resources:
+          limit_memory: "16G"
+          limit_cpu: "3"
+    - operator: "GKEStartPodOperator"
+      description: "Run VQA complimentary pairs load processes"
+      args:
+        task_id: "load_complimentary_pairs"
+        name: "vqa.load_complimentary_pairs"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: pubds-vqa
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.vqa.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "Load Complimentary Pairs"
+          SOURCE_URL: >- # [ [subtask name, url, dest table name, src file name ], [ ... ], ... ]
+            [
+              [
+                "Training complementary pairs",
+                "https://s3.amazonaws.com/cvmlp/vqa/mscoco/vqa/v2_Complementary_Pairs_Train_mscoco.zip",
+                "training_complimentary_pairs",
+                [
+                  "v2_mscoco_train2014_complementary_pairs.json"
+                ]
+              ],
+              [
+                "Validation complementary pairs",
+                "https://s3.amazonaws.com/cvmlp/vqa/mscoco/vqa/v2_Complementary_Pairs_Val_mscoco.zip",
+                "validation_complimentary_pairs",
+                [
+                  "v2_mscoco_val2014_complementary_pairs.json"
+                ]
+              ]
+            ]
+          SOURCE_FILE: "files/data.csv"
+          TARGET_FILE: "files/data_output.csv"
+          CHUNKSIZE: "1000000"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "vqa"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/vqa/data_output.csv"
+          SCHEMA_PATH: "data/vqa/schema/annotations_schema.json"
+          DROP_DEST_TABLE: "N"
+          REMOVE_SOURCE_FILE: "Y"
+          DELETE_TARGET_FILE: "Y"
           REORDER_HEADERS_LIST: >-
             [
               'task_type',

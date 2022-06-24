@@ -21,6 +21,8 @@ import logging
 import os
 import pathlib
 import re
+from shutil import move
+import subprocess
 import time
 import typing
 from urllib.request import Request, urlopen
@@ -47,8 +49,6 @@ def main(
     drop_dest_table: str,
     remove_source_file: str,
     delete_target_file: str,
-    input_csv_headers: typing.List[str],
-    data_dtypes: dict,
     reorder_headers_list: typing.List[str],
 ) -> None:
     logging.info(f"{pipeline_name} process started")
@@ -67,8 +67,6 @@ def main(
         drop_dest_table=drop_dest_table,
         remove_source_file=(remove_source_file == "Y"),
         delete_target_file=(delete_target_file == "Y"),
-        input_csv_headers=input_csv_headers,
-        data_dtypes=data_dtypes,
         reorder_headers_list=reorder_headers_list,
     )
     logging.info(f"{pipeline_name} process completed")
@@ -88,8 +86,6 @@ def execute_pipeline(
     drop_dest_table: str,
     remove_source_file: bool,
     delete_target_file: bool,
-    input_csv_headers: typing.List[str],
-    data_dtypes: dict,
     reorder_headers_list: typing.List[str],
 ) -> None:
     for subtask, url, table_name, src_filename in source_url:
@@ -158,6 +154,30 @@ def execute_pipeline(
                     )
         else:
             pass
+        if pipeline_name == "Load Complementary Pairs":
+            file_counter = 0
+            for src in src_filename:
+                logging.info(f"    ... Processing file {root_path}/{src}")
+                target_file_path_pairs = target_file.replace(".csv", "_{table_name}_pairs.csv")
+                if convert_comp_pairs_file_to_csv(src, target_file_path_pairs) != "":
+                    logging.info(f"        ... {target_file_path_pairs} was created.")
+                else:
+                    logging.info(f"        ... {target_file_path_pairs} was not created.")
+
+
+
+def convert_comp_pairs_file_to_csv(src_json: str, destination_csv: str) -> str:
+    subprocess.check_call(f"sed -i -e 's/\], \[/\n/g' {src_json}")
+    subprocess.check_call(f"sed -i -e 's/,/\|/g' {src_json}")
+    subprocess.check_call(f"sed -i -e 's/\[//g' {src_json}")
+    subprocess.check_call(f"sed -i -e 's/\]//g' {src_json}")
+    subprocess.check_call(f"sed -i -e 's/ //g' {src_json}")
+    subprocess.check_call(f"echo 'question_id_1|question_id_2' > {destination_csv}")
+    subprocess.check_call(f"cat {src_json} >> {destination_csv}")
+    if os.path.exists(destination_csv):
+        return destination_csv
+    else:
+        return ""
 
 
 def download_file(source_url: str, source_file: pathlib.Path) -> None:
@@ -871,7 +891,5 @@ if __name__ == "__main__":
         target_gcs_path=os.environ.get("TARGET_GCS_PATH", ""),
         remove_source_file=os.environ.get("REMOVE_SOURCE_FILE", "N"),
         delete_target_file=os.environ.get("DELETE_TARGET_FILE", "N"),
-        input_csv_headers=json.loads(os.environ.get("INPUT_CSV_HEADERS", r"[]")),
-        data_dtypes=json.loads(os.environ.get("DATA_DTYPES", r"{}")),
         reorder_headers_list=json.loads(os.environ.get("REORDER_HEADERS_LIST", r"[]")),
     )
