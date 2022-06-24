@@ -93,7 +93,7 @@ def execute_pipeline(
     reorder_headers_list: typing.List[str]
 ) -> None:
     for subtask, url, table_name, src_filename in source_url:
-        print(f"... Executing Load Process for {subtask}")
+        logging.info(f"... Executing Load Process for {subtask}")
         source_zipfile = str.replace(str(source_file), ".csv", f"{table_name}.zip")
         root_path = os.path.split(source_zipfile)[0]
         target_file_path_main = str.replace(str(target_file), ".csv", f"_{table_name}.csv")
@@ -114,17 +114,25 @@ def execute_pipeline(
         else:
             pass
         if pipeline_name == "Load Questions":
-            data = json.load(open(f"{root_path}/{src_filename}"))
-            df = pd.json_normalize(data)
-            df = rename_headers(df)
-            df_quest = pd.DataFrame()
-            df_quest['questions'] = df['questions'].apply(lambda x: pd.json_normalize(x))
-            df = df[reorder_headers_list]
-            save_to_new_file(df, target_file_path_main)
-            question_column_list=['image_id','question','question_id']
-            target_file_path_quest = str.replace(str(target_file), ".csv", f"_{table_name}_quest.csv")
-            save_to_new_file(df_quest['annot_norm'][0][:][question_column_list], target_file_path_quest)
-            # import pdb; pdb.set_trace()
+            file_counter = 0
+            for src in src_filename:
+                logging.info(f"    ... Processing file {root_path}/{src}")
+                data = json.load(open(f"{root_path}/{src}"))
+                df = pd.json_normalize(data)
+                df = rename_headers(df)
+                df_quest = pd.DataFrame()
+                df_quest['questions'] = df['questions'].apply(lambda x: pd.json_normalize(x))
+                df = df[reorder_headers_list]
+                question_column_list=['image_id','question','question_id']
+                target_file_path_quest = str.replace(str(target_file), ".csv", f"_{table_name}_quest.csv")
+                # import pdb; pdb.set_trace()
+                if file_counter == 0:
+                    save_to_new_file(df, target_file_path_main, include_headers=True)
+                    save_to_new_file(df_quest['questions'][0][:][question_column_list], target_file_path_quest)
+                else:
+                    file_counter+=1
+                    save_to_new_file(df, target_file_path_main, include_headers=False)
+                    save_to_new_file(df_quest['questions'][0][:][question_column_list], target_file_path_quest)
         else:
             pass
 
@@ -155,9 +163,30 @@ def rename_headers(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def save_to_new_file(df: pd.DataFrame, file_path: str, sep: str = "|") -> None:
+def save_to_new_file(df: pd.DataFrame, file_path: str, sep: str = "|", include_headers: bool = True) -> None:
     logging.info(f"Saving data to target file.. {file_path} ...")
-    df.to_csv(file_path, index=False, sep=sep)
+    df.to_csv(file_path, index=False, sep=sep, header=include_headers, mode=("w+" if include_headers else "a"))
+
+
+def append_batch_file(
+    batch_file_path: str, target_file_path: str, skip_header: bool, truncate_file: bool
+) -> None:
+    with open(batch_file_path, "r") as data_file:
+        if truncate_file:
+            target_file = open(target_file_path, "w+").close()
+        with open(target_file_path, "a+") as target_file:
+            if skip_header:
+                logging.info(
+                    f"Appending batch file {batch_file_path} to {target_file_path} with skip header"
+                )
+                next(data_file)
+            else:
+                logging.info(
+                    f"Appending batch file {batch_file_path} to {target_file_path}"
+                )
+            target_file.write(data_file.read())
+            if os.path.exists(batch_file_path):
+                os.remove(batch_file_path)
 
 
 # def process_and_load_table(
