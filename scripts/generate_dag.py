@@ -52,6 +52,9 @@ def main(
     all_pipelines: bool = False,
     skip_builds: bool = False,
 ):
+    custom_yaml_constructor = CustomYAMLTags()
+    custom_yaml_constructor.dataset = dataset_id
+
     if not skip_builds:
         build_images(dataset_id, env)
 
@@ -269,6 +272,17 @@ def gcp_project_id(project_id: str = None) -> str:
     return project_id
 
 
+class CustomYAMLTags(yaml.YAMLObject):
+    def __init__(self):
+        self.dataset = None
+        yaml.add_constructor("!IMAGE", self.image_constructor)
+
+    def image_constructor(self, loader, node):
+        value = loader.construct_scalar(node)
+        value = f"gcr.io/{{{{ var.value.gcp_project }}}}/{self.dataset}__{value}"
+        return value
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Generate Terraform infra code for BigQuery datasets"
@@ -304,16 +318,5 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-
-    class CustomYAMLTags(yaml.YAMLObject):
-        def __init__(self):
-            yaml.add_constructor("!IMAGE", self.image_constructor)
-
-        def image_constructor(self, loader, node):
-            value = loader.construct_scalar(node)
-            value = f"gcr.io/{{{{ var.value.gcp_project }}}}/{args.dataset}__{value}"
-            return value
-
-    CustomYAMLTags()
 
     main(args.dataset, args.pipeline, args.env, args.all_pipelines, args.skip_builds)
