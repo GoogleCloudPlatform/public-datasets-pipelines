@@ -70,8 +70,8 @@ dag:
     - operator: "GKEStartPodOperator"
       description: "Run VQA annotations load processes"
       args:
-        task_id: "load_annotations"
-        name: "vqa.load_annotations"
+        task_id: "extract_annotations"
+        name: "vqa.extract_annotations"
         project_id: "{{ var.value.gcp_project }}"
         location: "us-central1-c"
         cluster_name: pubds-vqa
@@ -132,8 +132,8 @@ dag:
     - operator: "GKEStartPodOperator"
       description: "Run VQA questions load processes"
       args:
-        task_id: "load_questions"
-        name: "vqa.load_questions"
+        task_id: "extract_questions"
+        name: "vqa.extract_questions"
         project_id: "{{ var.value.gcp_project }}"
         location: "us-central1-c"
         cluster_name: pubds-vqa
@@ -175,7 +175,7 @@ dag:
           DATASET_ID: "vqa"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/vqa/data_output.csv"
-          SCHEMA_PATH: "data/vqa/schema/annotations_schema.json"
+          SCHEMA_PATH: "data/vqa/schema/questions_schema.json"
           DROP_DEST_TABLE: "N"
           REMOVE_SOURCE_FILE: "Y"
           DELETE_TARGET_FILE: "Y"
@@ -205,8 +205,8 @@ dag:
     - operator: "GKEStartPodOperator"
       description: "Run VQA complimentary pairs load processes"
       args:
-        task_id: "load_complimentary_pairs"
-        name: "vqa.load_complimentary_pairs"
+        task_id: "extract_complimentary_pairs"
+        name: "vqa.extract_complimentary_pairs"
         project_id: "{{ var.value.gcp_project }}"
         location: "us-central1-c"
         cluster_name: pubds-vqa
@@ -241,7 +241,7 @@ dag:
           DATASET_ID: "vqa"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/vqa/data_output.csv"
-          SCHEMA_PATH: "data/vqa/schema/annotations_schema.json"
+          SCHEMA_PATH: "data/vqa/schema/complementary_pairs_schema.json"
           DROP_DEST_TABLE: "N"
           REMOVE_SOURCE_FILE: "Y"
           DELETE_TARGET_FILE: "Y"
@@ -270,4 +270,4 @@ dag:
         name: pubds-vqa
 
   graph_paths:
-    - "create_cluster >> delete_cluster"
+    - "create_cluster >> [ load_annotations, load_questions, load_complementary_pairs ] >> delete_cluster"

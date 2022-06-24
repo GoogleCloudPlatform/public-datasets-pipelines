@@ -115,7 +115,7 @@ def execute_pipeline(
                 target_file_path_annot = str.replace(
                     str(target_file), ".csv", f"_{table_name}_annot.csv"
                 )
-                add_metadata_cols(df, url)
+                df = add_metadata_cols(df, url)
                 save_to_new_file(
                     df,
                     target_file_path_main,
@@ -147,13 +147,14 @@ def execute_pipeline(
                 target_file_path_quest = str.replace(
                     str(target_file), ".csv", f"_{table_name}_quest.csv"
                 )
-                # import pdb; pdb.set_trace()
                 df = add_metadata_cols(df, url)
                 save_to_new_file(df, target_file_path_main, include_headers=(file_counter == 0))
                 df_quest = add_metadata_cols(df_quest, url)
                 save_to_new_file(
                     df_quest["questions"][0][:][detail_data_headers_list],
                     target_file_path_quest,
+                    sep="|",
+                    include_headers=(file_counter == 0)
                 )
                 file_counter += 1
         else:
