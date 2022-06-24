@@ -300,7 +300,6 @@ def test_check_custom_yaml_loader(
 
 def test_generated_dag_file_loads_properly_in_python(
     dataset_path: pathlib.Path, pipeline_path: pathlib.Path, env: str
-
 ):
     copy_config_files_and_set_tmp_folder_names_as_ids(dataset_path, pipeline_path)
 
