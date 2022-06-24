@@ -50,6 +50,7 @@ def main(
     remove_source_file: str,
     delete_target_file: str,
     reorder_headers_list: typing.List[str],
+    detail_data_headers_list: typing.List[str]
 ) -> None:
     logging.info(f"{pipeline_name} process started")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
@@ -68,6 +69,7 @@ def main(
         remove_source_file=(remove_source_file == "Y"),
         delete_target_file=(delete_target_file == "Y"),
         reorder_headers_list=reorder_headers_list,
+        detail_data_headers_list=detail_data_headers_list
     )
     logging.info(f"{pipeline_name} process completed")
 
@@ -87,6 +89,7 @@ def execute_pipeline(
     remove_source_file: bool,
     delete_target_file: bool,
     reorder_headers_list: typing.List[str],
+    detail_data_headers_list: typing.List[str]
 ) -> None:
     for subtask, url, table_name, src_filename in source_url:
         logging.info(f"... Executing Load Process for {subtask}")
@@ -98,28 +101,35 @@ def execute_pipeline(
         download_file(url, source_zipfile)
         zip_decompress(source_zipfile, root_path, False)
         if pipeline_name == "Load Annotations":
-            data = json.load(open(f"{root_path}/{src_filename}"))
-            df = pd.json_normalize(data)
-            df = rename_headers(df)
-            df_annot = pd.DataFrame()
-            df_annot["annot_norm"] = df["annotations"].apply(
-                lambda x: pd.json_normalize(x)
-            )
-            df = df[reorder_headers_list]
-            save_to_new_file(df, target_file_path_main)
-            annot_column_list = [
-                "question_type",
-                "multiple_choice_answer",
-                "answer_type",
-                "question_id",
-            ]
-            target_file_path_annot = str.replace(
-                str(target_file), ".csv", f"_{table_name}_annot.csv"
-            )
-            save_to_new_file(
-                df_annot["annot_norm"][0][:][annot_column_list], target_file_path_annot
-            )
-            # import pdb; pdb.set_trace()
+            file_counter = 0
+            for src in src_filename:
+                logging.info(f"    ... Processing file {root_path}/{src}")
+                data = json.load(open(f"{root_path}/{src}"))
+                df = pd.json_normalize(data)
+                df = rename_headers(df)
+                df_annot = pd.DataFrame()
+                df_annot["annot_norm"] = df["annotations"].apply(
+                    lambda x: pd.json_normalize(x)
+                )
+                df = df[reorder_headers_list]
+                target_file_path_annot = str.replace(
+                    str(target_file), ".csv", f"_{table_name}_annot.csv"
+                )
+                add_metadata_cols(df, url)
+                save_to_new_file(
+                    df,
+                    target_file_path_main,
+                    sep="|",
+                    include_headers=(file_counter == 0)
+                )
+                file_counter += 1
+                df_annot = add_metadata_cols(df_annot, url)
+                save_to_new_file(
+                    df_annot["annot_norm"][0][:][detail_data_headers_list],
+                    target_file_path_annot,
+                    sep="|",
+                    include_headers=(file_counter == 0)
+                )
         else:
             pass
         if pipeline_name == "Load Questions":
@@ -134,24 +144,18 @@ def execute_pipeline(
                     lambda x: pd.json_normalize(x)
                 )
                 df = df[reorder_headers_list]
-                question_column_list = ["image_id", "question", "question_id"]
                 target_file_path_quest = str.replace(
                     str(target_file), ".csv", f"_{table_name}_quest.csv"
                 )
                 # import pdb; pdb.set_trace()
-                if file_counter == 0:
-                    save_to_new_file(df, target_file_path_main, include_headers=True)
-                    save_to_new_file(
-                        df_quest["questions"][0][:][question_column_list],
-                        target_file_path_quest,
-                    )
-                else:
-                    file_counter += 1
-                    save_to_new_file(df, target_file_path_main, include_headers=False)
-                    save_to_new_file(
-                        df_quest["questions"][0][:][question_column_list],
-                        target_file_path_quest,
-                    )
+                df = add_metadata_cols(df, url)
+                save_to_new_file(df, target_file_path_main, include_headers=(file_counter == 0))
+                df_quest = add_metadata_cols(df_quest, url)
+                save_to_new_file(
+                    df_quest["questions"][0][:][detail_data_headers_list],
+                    target_file_path_quest,
+                )
+                file_counter += 1
         else:
             pass
         if pipeline_name == "Load Complementary Pairs":
@@ -238,6 +242,15 @@ def append_batch_file(
             target_file.write(data_file.read())
             if os.path.exists(batch_file_path):
                 os.remove(batch_file_path)
+
+
+def add_metadata_cols(df: pd.DataFrame, source_url: str) -> pd.DataFrame:
+    logging.info("Adding metadata columns")
+    df["source_url"] = source_url
+    df["etl_timestamp"] = pd.to_datetime(
+        datetime.datetime.now(), format="%Y-%m-%d %H:%M:%S", infer_datetime_format=True
+    )
+    return df
 
 
 # def process_and_load_table(
@@ -553,15 +566,6 @@ def append_batch_file(
 # def remove_header_rows(source_file: str, number_of_header_rows: int) -> None:
 #     logging.info(f"Removing header from {source_file}")
 #     os.system(f"sed -i '1,{number_of_header_rows}d' {source_file} ")
-
-
-# def add_metadata_cols(df: pd.DataFrame, source_url: str) -> pd.DataFrame:
-#     logging.info("Adding metadata columns")
-#     df["source_url"] = source_url
-#     df["etl_timestamp"] = pd.to_datetime(
-#         datetime.datetime.now(), format="%Y-%m-%d %H:%M:%S", infer_datetime_format=True
-#     )
-#     return df
 
 
 # def reorder_headers(
@@ -892,4 +896,5 @@ if __name__ == "__main__":
         remove_source_file=os.environ.get("REMOVE_SOURCE_FILE", "N"),
         delete_target_file=os.environ.get("DELETE_TARGET_FILE", "N"),
         reorder_headers_list=json.loads(os.environ.get("REORDER_HEADERS_LIST", r"[]")),
+        detail_data_headers_list=json.loads(os.environ.get("DETAIL_DATA_HEADERS_LIST", r"[]"))
     )

@@ -119,6 +119,13 @@ dag:
               'license_url',
               'license_name'
             ]
+          DETAIL_DATA_HEADERS_LIST: >-
+            [
+              "question_type",
+              "multiple_choice_answer",
+              "answer_type",
+              "question_id"
+            ]
         resources:
           limit_memory: "16G"
           limit_cpu: "3"
@@ -185,6 +192,12 @@ dag:
               'info_date_created',
               'license_url',
               'license_name'
+            ]
+          DETAIL_DATA_HEADERS_LIST: >-
+            [
+              "image_id",
+              "question",
+              "question_id"
             ]
         resources:
           limit_memory: "16G"
