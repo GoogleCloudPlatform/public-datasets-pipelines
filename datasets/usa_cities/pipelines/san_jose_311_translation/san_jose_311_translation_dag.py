@@ -25,7 +25,7 @@ default_args = {
 
 
 with DAG(
-    dag_id="usa_cities.311_service_requests",
+    dag_id="usa_cities.san_jose_311_translation",
     default_args=default_args,
     max_active_runs=1,
     schedule_interval="@once",

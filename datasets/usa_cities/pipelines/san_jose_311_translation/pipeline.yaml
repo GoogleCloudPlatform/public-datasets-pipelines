@@ -27,7 +27,7 @@ resources:
 dag:
   airflow_version: 2
   initialize:
-    dag_id: 311_service_requests
+    dag_id: san_jose_311_translation
     default_args:
       owner: "Google"
       depends_on_past: False
