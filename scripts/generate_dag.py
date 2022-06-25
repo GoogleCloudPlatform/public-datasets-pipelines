@@ -63,7 +63,9 @@ def main(
         generate_pipeline_dag(dataset_id, pipeline_id, env, format_code)
 
 
-def generate_pipeline_dag(dataset_id: str, pipeline_id: str, env: str, format_code: bool):
+def generate_pipeline_dag(
+    dataset_id: str, pipeline_id: str, env: str, format_code: bool
+):
     pipeline_dir = DATASETS_PATH / dataset_id / "pipelines" / pipeline_id
     config = yaml.load((pipeline_dir / "pipeline.yaml").read_text())
 
