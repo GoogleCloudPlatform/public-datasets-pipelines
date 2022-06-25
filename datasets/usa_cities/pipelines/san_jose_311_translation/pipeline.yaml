@@ -34,7 +34,7 @@ dag:
       start_date: '2022-06-01'
     max_active_runs: 1
     # Expected update: annually.
-    # We run this manually whenever we are told there is a new dataset (source urls must be updated).
+    # We run this manually whenever we are told there is new data available (source urls must be updated).
     schedule_interval: "@once"
     catchup: False
     default_view: graph
