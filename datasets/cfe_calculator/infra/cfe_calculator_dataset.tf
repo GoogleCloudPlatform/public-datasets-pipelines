@@ -15,6 +15,36 @@
  */
 
 
+resource "google_storage_bucket" "cfe_calculator" {
+  name                        = "${var.bucket_name_prefix}-cfe_calculator"
+  force_destroy               = true
+  location                    = "US"
+  uniform_bucket_level_access = true
+  lifecycle {
+    ignore_changes = [
+      logging,
+    ]
+  }
+}
+
+data "google_iam_policy" "storage_bucket__cfe_calculator" {
+  dynamic "binding" {
+    for_each = var.iam_policies["storage_buckets"]["cfe_calculator"]
+    content {
+      role    = binding.value["role"]
+      members = binding.value["members"]
+    }
+  }
+}
+
+resource "google_storage_bucket_iam_policy" "cfe_calculator" {
+  bucket      = google_storage_bucket.cfe_calculator.name
+  policy_data = data.google_iam_policy.storage_bucket__cfe_calculator.policy_data
+}
+output "storage_bucket-cfe_calculator-name" {
+  value = google_storage_bucket.cfe_calculator.name
+}
+
 resource "google_bigquery_dataset" "cfe_calculator" {
   dataset_id  = "cfe_calculator"
   project     = var.project_id
