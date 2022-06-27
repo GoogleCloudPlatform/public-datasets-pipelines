@@ -40,6 +40,7 @@ def main(
     source_url: typing.List[typing.List[str]],
     source_file: pathlib.Path,
     target_file: pathlib.Path,
+    load_file_list: dict,
     chunksize: str,
     project_id: str,
     dataset_id: str,
@@ -59,6 +60,7 @@ def main(
         source_url=source_url,
         source_file=source_file,
         target_file=target_file,
+        load_file_list=load_file_list,
         chunksize=chunksize,
         project_id=project_id,
         dataset_id=dataset_id,
@@ -79,6 +81,7 @@ def execute_pipeline(
     source_url: typing.List[typing.List[str]],
     source_file: pathlib.Path,
     target_file: pathlib.Path,
+    load_file_list: typing.List[dict],
     chunksize: str,
     project_id: str,
     dataset_id: str,
@@ -91,83 +94,90 @@ def execute_pipeline(
     reorder_headers_list: typing.List[str],
     detail_data_headers_list: typing.List[str]
 ) -> None:
-    for subtask, url, table_name, src_filename in source_url:
-        logging.info(f"... Executing Load Process for {subtask}")
-        source_zipfile = str.replace(str(source_file), ".csv", f"{table_name}.zip")
-        root_path = os.path.split(source_zipfile)[0]
-        target_file_path_main = str.replace(
-            str(target_file), ".csv", f"_{table_name}.csv"
-        )
-        download_file(url, source_zipfile)
-        zip_decompress(source_zipfile, root_path, False)
-        if pipeline_name == "Load Annotations":
-            file_counter = 0
-            for src in src_filename:
-                logging.info(f"    ... Processing file {root_path}/{src}")
-                data = json.load(open(f"{root_path}/{src}"))
-                df = pd.json_normalize(data)
-                df = rename_headers(df)
-                df_annot = pd.DataFrame()
-                df_annot["annot_norm"] = df["annotations"].apply(
-                    lambda x: pd.json_normalize(x)
-                )
-                df = df[reorder_headers_list]
-                target_file_path_annot = str.replace(
-                    str(target_file), ".csv", f"_{table_name}_annot.csv"
-                )
-                df = add_metadata_cols(df, url)
-                save_to_new_file(
-                    df,
-                    target_file_path_main,
-                    sep="|",
-                    include_headers=(file_counter == 0)
-                )
-                file_counter += 1
-                df_annot = add_metadata_cols(df_annot, url)
-                save_to_new_file(
-                    df_annot["annot_norm"][0][:][detail_data_headers_list],
-                    target_file_path_annot,
-                    sep="|",
-                    include_headers=(file_counter == 0)
-                )
+    if "Extract " in pipeline_name:
+        for subtask, url, table_name, src_filename in source_url:
+            logging.info(f"... Executing Extraction Process for {subtask}")
+            source_zipfile = str.replace(str(source_file), ".csv", f"{table_name}.zip")
+            root_path = os.path.split(source_zipfile)[0]
+            target_file_path_main = str.replace(
+                str(target_file), ".csv", f"_{table_name}.csv"
+            )
+            download_file(url, source_zipfile)
+            zip_decompress(source_zipfile, root_path, False)
+            if pipeline_name == "Extract Annotations":
+                file_counter = 0
+                for src in src_filename:
+                    logging.info(f"    ... Processing file {root_path}/{src}")
+                    data = json.load(open(f"{root_path}/{src}"))
+                    df = pd.json_normalize(data)
+                    df = rename_headers(df)
+                    df_annot = pd.DataFrame()
+                    df_annot["annot_norm"] = df["annotations"].apply(
+                        lambda x: pd.json_normalize(x)
+                    )
+                    df = df[reorder_headers_list]
+                    target_file_path_annot = str.replace(
+                        str(target_file), ".csv", f"_{table_name}_annot.csv"
+                    )
+                    df = add_metadata_cols(df, url)
+                    save_to_new_file(
+                        df,
+                        target_file_path_main,
+                        sep="|",
+                        include_headers=(file_counter == 0)
+                    )
+                    file_counter += 1
+                    df_annot = add_metadata_cols(df_annot, url)
+                    save_to_new_file(
+                        df_annot["annot_norm"][0][:][detail_data_headers_list],
+                        target_file_path_annot,
+                        sep="|",
+                        include_headers=(file_counter == 0)
+                    )
+            else:
+                pass
+            if pipeline_name == "Extract Questions":
+                file_counter = 0
+                for src in src_filename:
+                    logging.info(f"    ... Processing file {root_path}/{src}")
+                    data = json.load(open(f"{root_path}/{src}"))
+                    df = pd.json_normalize(data)
+                    df = rename_headers(df)
+                    df_quest = pd.DataFrame()
+                    df_quest["questions"] = df["questions"].apply(
+                        lambda x: pd.json_normalize(x)
+                    )
+                    df = df[reorder_headers_list]
+                    target_file_path_quest = str.replace(
+                        str(target_file), ".csv", f"_{table_name}_quest.csv"
+                    )
+                    df = add_metadata_cols(df, url)
+                    save_to_new_file(df, target_file_path_main, include_headers=(file_counter == 0))
+                    df_quest = add_metadata_cols(df_quest, url)
+                    save_to_new_file(
+                        df_quest["questions"][0][:][detail_data_headers_list],
+                        target_file_path_quest,
+                        sep="|",
+                        include_headers=(file_counter == 0)
+                    )
+                    file_counter += 1
+            else:
+                pass
+            if pipeline_name == "Extract Complementary Pairs":
+                file_counter = 0
+                for src in src_filename:
+                    logging.info(f"    ... Processing file {root_path}/{src}")
+                    target_file_path_pairs = target_file.replace(".csv", "_{table_name}_pairs.csv")
+                    if convert_comp_pairs_file_to_csv(src, target_file_path_pairs) != "":
+                        logging.info(f"        ... {target_file_path_pairs} was created.")
+                    else:
+                        logging.info(f"        ... {target_file_path_pairs} was not created.")
         else:
             pass
-        if pipeline_name == "Load Questions":
-            file_counter = 0
-            for src in src_filename:
-                logging.info(f"    ... Processing file {root_path}/{src}")
-                data = json.load(open(f"{root_path}/{src}"))
-                df = pd.json_normalize(data)
-                df = rename_headers(df)
-                df_quest = pd.DataFrame()
-                df_quest["questions"] = df["questions"].apply(
-                    lambda x: pd.json_normalize(x)
-                )
-                df = df[reorder_headers_list]
-                target_file_path_quest = str.replace(
-                    str(target_file), ".csv", f"_{table_name}_quest.csv"
-                )
-                df = add_metadata_cols(df, url)
-                save_to_new_file(df, target_file_path_main, include_headers=(file_counter == 0))
-                df_quest = add_metadata_cols(df_quest, url)
-                save_to_new_file(
-                    df_quest["questions"][0][:][detail_data_headers_list],
-                    target_file_path_quest,
-                    sep="|",
-                    include_headers=(file_counter == 0)
-                )
-                file_counter += 1
-        else:
-            pass
-        if pipeline_name == "Load Complementary Pairs":
-            file_counter = 0
-            for src in src_filename:
-                logging.info(f"    ... Processing file {root_path}/{src}")
-                target_file_path_pairs = target_file.replace(".csv", "_{table_name}_pairs.csv")
-                if convert_comp_pairs_file_to_csv(src, target_file_path_pairs) != "":
-                    logging.info(f"        ... {target_file_path_pairs} was created.")
-                else:
-                    logging.info(f"        ... {target_file_path_pairs} was not created.")
+        if pipeline_name == "Load Data":
+            for domain_list in load_file_list:
+                for domain in domain_list:
+                    print(domain)
 
 
 
@@ -887,6 +897,7 @@ if __name__ == "__main__":
         source_url=json.loads(os.environ.get("SOURCE_URL", r"[[]]")),
         source_file=pathlib.Path(os.environ.get("SOURCE_FILE", "")).expanduser(),
         target_file=pathlib.Path(os.environ.get("TARGET_FILE", "")).expanduser(),
+        load_file_list=json.loads(os.environ.get("LOAD_FILE_LIST", r"{}")),
         chunksize=os.environ.get("CHUNKSIZE", "100000"),
         project_id=os.environ.get("PROJECT_ID", ""),
         dataset_id=os.environ.get("DATASET_ID", ""),
