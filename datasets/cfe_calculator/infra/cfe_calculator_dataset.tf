@@ -15,12 +15,12 @@
  */
 
 
-resource "google_bigquery_dataset" "oedi_commercial_and_residential_hourly_load_profiles" {
-  dataset_id  = "oedi_commercial_and_residential_hourly_load_profiles"
+resource "google_bigquery_dataset" "cfe_calculator" {
+  dataset_id  = "cfe_calculator"
   project     = var.project_id
   description = "OEDI commercial and residential hourly load"
 }
 
-output "bigquery_dataset-oedi_commercial_and_residential_hourly_load_profiles-dataset_id" {
-  value = google_bigquery_dataset.oedi_commercial_and_residential_hourly_load_profiles.dataset_id
+output "bigquery_dataset-cfe_calculator-dataset_id" {
+  value = google_bigquery_dataset.cfe_calculator.dataset_id
 }
