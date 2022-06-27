@@ -98,7 +98,7 @@ dag:
     default_args:
       owner: "Google"
       depends_on_past: False
-      start_date: "2022-05-15"
+      start_date: "2022-05-27"
     max_active_runs: 1
     schedule_interval: "@monthly"
     catchup: False
@@ -109,200 +109,200 @@ dag:
       description: "Copy admissions table from one bigquery project to another"
       args:
         task_id: "admissions"
-        source_project_dataset_tables: "physionet-data.mimiciii_demo.admissions"
-        destination_project_dataset_table: "bigquery-public-data-dev.mimicIII.admissions"
+        source_project_dataset_tables: "{{ var.json.mimicIII.admissions.source_table }}"
+        destination_project_dataset_table: "{{ var.json.mimicIII.admissions.destination_table }}"
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
       description: "Copy callout table from one bigquery project to another"
       args:
         task_id: "callout"
-        source_project_dataset_tables: "physionet-data.mimiciii_demo.callout"
-        destination_project_dataset_table: "bigquery-public-data-dev.mimicIII.callout"
+        source_project_dataset_tables: "{{ var.json.mimicIII.callout.source_table }}"
+        destination_project_dataset_table: "{{ var.json.mimicIII.callout.destination_table }}"
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
       description: "Copy caregivers table from one bigquery project to another"
       args:
         task_id: "caregivers"
-        source_project_dataset_tables: "physionet-data.mimiciii_demo.caregivers"
-        destination_project_dataset_table: "bigquery-public-data-dev.mimicIII.caregivers"
+        source_project_dataset_tables: "{{ var.json.mimicIII.caregivers.source_table }}"
+        destination_project_dataset_table: "{{ var.json.mimicIII.caregivers.destination_table }}"
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
       description: "Copy chartevents table from one bigquery project to another"
       args:
         task_id: "chartevents"
-        source_project_dataset_tables: "physionet-data.mimiciii_demo.chartevents"
-        destination_project_dataset_table: "bigquery-public-data-dev.mimicIII.chartevents"
+        source_project_dataset_tables: "{{ var.json.mimicIII.chartevents.source_table }}"
+        destination_project_dataset_table: "{{ var.json.mimicIII.chartevents.destination_table }}"
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
       description: "Copy cptevents table from one bigquery project to another"
       args:
         task_id: "cptevents"
-        source_project_dataset_tables: "physionet-data.mimiciii_demo.cptevents"
-        destination_project_dataset_table: "bigquery-public-data-dev.mimicIII.cptevents"
+        source_project_dataset_tables: "{{ var.json.mimicIII.cptevents.source_table }}"
+        destination_project_dataset_table: "{{ var.json.mimicIII.cptevents.destination_table }}"
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
       description: "Copy d cpt table from one bigquery project to another"
       args:
         task_id: "d_cpt"
-        source_project_dataset_tables: "physionet-data.mimiciii_demo.d_cpt"
-        destination_project_dataset_table: "bigquery-public-data-dev.mimicIII.d_cpt"
+        source_project_dataset_tables: "{{ var.json.mimicIII.d_cpt.source_table }}"
+        destination_project_dataset_table: "{{ var.json.mimicIII.d_cpt.destination_table }}"
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
       description: "Copy d icd diagnoses table from one bigquery project to another"
       args:
         task_id: "d_icd_diagnoses"
-        source_project_dataset_tables: "physionet-data.mimiciii_demo.d_icd_diagnoses"
-        destination_project_dataset_table: "bigquery-public-data-dev.mimicIII.d_icd_diagnoses"
+        source_project_dataset_tables: "{{ var.json.mimicIII.d_icd_diagnoses.source_table }}"
+        destination_project_dataset_table: "{{ var.json.mimicIII.d_icd_diagnoses.destination_table }}"
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
       description: "Copy d icd procedures table from one bigquery project to another"
       args:
         task_id: "d_icd_procedures"
-        source_project_dataset_tables: "physionet-data.mimiciii_demo.d_icd_procedures"
-        destination_project_dataset_table: "bigquery-public-data-dev.mimicIII.d_icd_procedures"
+        source_project_dataset_tables: "{{ var.json.mimicIII.d_icd_procedures.source_table }}"
+        destination_project_dataset_table: "{{ var.json.mimicIII.d_icd_procedures.destination_table }}"
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
       description: "Copy d_items table from one bigquery project to another"
       args:
         task_id: "d_items"
-        source_project_dataset_tables: "physionet-data.mimiciii_demo.d_items"
-        destination_project_dataset_table: "bigquery-public-data-dev.mimicIII.d_items"
+        source_project_dataset_tables: "{{ var.json.mimicIII.d_items.source_table }}"
+        destination_project_dataset_table: "{{ var.json.mimicIII.d_items.destination_table }}"
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
       description: "Copy d_labitems table from one bigquery project to another"
       args:
         task_id: "d_labitems"
-        source_project_dataset_tables: "physionet-data.mimiciii_demo.d_labitems"
-        destination_project_dataset_table: "bigquery-public-data-dev.mimicIII.d_labitems"
+        source_project_dataset_tables: "{{ var.json.mimicIII.d_labitems.source_table }}"
+        destination_project_dataset_table: "{{ var.json.mimicIII.d_labitems.destination_table }}"
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
       description: "Copy datetimeevents table from one bigquery project to another"
       args:
         task_id: "datetimeevents"
-        source_project_dataset_tables: "physionet-data.mimiciii_demo.datetimeevents"
-        destination_project_dataset_table: "bigquery-public-data-dev.mimicIII.datetimeevents"
+        source_project_dataset_tables: "{{ var.json.mimicIII.datetimeevents.source_table }}"
+        destination_project_dataset_table: "{{ var.json.mimicIII.datetimeevents.destination_table }}"
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
       description: "Copy diagnoses_icd table from one bigquery project to another"
       args:
         task_id: "diagnoses_icd"
-        source_project_dataset_tables: "physionet-data.mimiciii_demo.diagnoses_icd"
-        destination_project_dataset_table: "bigquery-public-data-dev.mimicIII.diagnoses_icd"
+        source_project_dataset_tables: "{{ var.json.mimicIII.diagnoses_icd.source_table }}"
+        destination_project_dataset_table: "{{ var.json.mimicIII.diagnoses_icd.destination_table }}"
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
       description: "Copy drgcodes table from one bigquery project to another"
       args:
         task_id: "drgcodes"
-        source_project_dataset_tables: "physionet-data.mimiciii_demo.drgcodes"
-        destination_project_dataset_table: "bigquery-public-data-dev.mimicIII.drgcodes"
+        source_project_dataset_tables: "{{ var.json.mimicIII.drgcodes.source_table }}"
+        destination_project_dataset_table: "{{ var.json.mimicIII.drgcodes.destination_table }}"
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
       description: "Copy icustays table from one bigquery project to another"
       args:
         task_id: "icustays"
-        source_project_dataset_tables: "physionet-data.mimiciii_demo.icustays"
-        destination_project_dataset_table: "bigquery-public-data-dev.mimicIII.icustays"
+        source_project_dataset_tables: "{{ var.json.mimicIII.icustays.source_table }}"
+        destination_project_dataset_table: "{{ var.json.mimicIII.icustays.destination_table }}"
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
       description: "Copy inputevents_cv table from one bigquery project to another"
       args:
         task_id: "inputevents_cv"
-        source_project_dataset_tables: "physionet-data.mimiciii_demo.inputevents_cv"
-        destination_project_dataset_table: "bigquery-public-data-dev.mimicIII.inputevents_cv"
+        source_project_dataset_tables: "{{ var.json.mimicIII.inputevents_cv.source_table }}"
+        destination_project_dataset_table: "{{ var.json.mimicIII.inputevents_cv.destination_table }}"
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
       description: "Copy inputevents_mv table from one bigquery project to another"
       args:
         task_id: "inputevents_mv"
-        source_project_dataset_tables: "physionet-data.mimiciii_demo.inputevents_mv"
-        destination_project_dataset_table: "bigquery-public-data-dev.mimicIII.inputevents_mv"
+        source_project_dataset_tables: "{{ var.json.mimicIII.inputevents_mv.source_table }}"
+        destination_project_dataset_table: "{{ var.json.mimicIII.inputevents_mv.destination_table }}"
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
       description: "Copy labevents table from one bigquery project to another"
       args:
         task_id: "labevents"
-        source_project_dataset_tables: "physionet-data.mimiciii_demo.labevents"
-        destination_project_dataset_table: "bigquery-public-data-dev.mimicIII.labevents"
+        source_project_dataset_tables: "{{ var.json.mimicIII.labevents.source_table }}"
+        destination_project_dataset_table: "{{ var.json.mimicIII.labevents.destination_table }}"
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
       description: "Copy microbiologyevents table from one bigquery project to another"
       args:
         task_id: "microbiologyevents"
-        source_project_dataset_tables: "physionet-data.mimiciii_demo.microbiologyevents"
-        destination_project_dataset_table: "bigquery-public-data-dev.mimicIII.microbiologyevents"
+        source_project_dataset_tables: "{{ var.json.mimicIII.microbiologyevents.source_table }}"
+        destination_project_dataset_table: "{{ var.json.mimicIII.microbiologyevents.destination_table }}"
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
       description: "Copy outputevents table from one bigquery project to another"
       args:
         task_id: "outputevents"
-        source_project_dataset_tables: "physionet-data.mimiciii_demo.outputevents"
-        destination_project_dataset_table: "bigquery-public-data-dev.mimicIII.outputevents"
+        source_project_dataset_tables: "{{ var.json.mimicIII.outputevents.source_table }}"
+        destination_project_dataset_table: "{{ var.json.mimicIII.outputevents.destination_table }}"
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
       description: "Copy patients table from one bigquery project to another"
       args:
         task_id: "patients"
-        source_project_dataset_tables: "physionet-data.mimiciii_demo.patients"
-        destination_project_dataset_table: "bigquery-public-data-dev.mimicIII.patients"
+        source_project_dataset_tables: "{{ var.json.mimicIII.patients.source_table }}"
+        destination_project_dataset_table: "{{ var.json.mimicIII.patients.destination_table }}"
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
       description: "Copy prescriptions table from one bigquery project to another"
       args:
         task_id: "prescriptions"
-        source_project_dataset_tables: "physionet-data.mimiciii_demo.prescriptions"
-        destination_project_dataset_table: "bigquery-public-data-dev.mimicIII.prescriptions"
+        source_project_dataset_tables: "{{ var.json.mimicIII.prescriptions.source_table }}"
+        destination_project_dataset_table: "{{ var.json.mimicIII.prescriptions.destination_table }}"
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
       description: "Copy procedureevents_mv table from one bigquery project to another"
       args:
         task_id: "procedureevents_mv"
-        source_project_dataset_tables: "physionet-data.mimiciii_demo.procedureevents_mv"
-        destination_project_dataset_table: "bigquery-public-data-dev.mimicIII.procedureevents_mv"
+        source_project_dataset_tables: "{{ var.json.mimicIII.procedureevents_mv.source_table }}"
+        destination_project_dataset_table: "{{ var.json.mimicIII.procedureevents_mv.destination_table }}"
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
       description: "Copy procedures_icd table from one bigquery project to another"
       args:
         task_id: "procedures_icd"
-        source_project_dataset_tables: "physionet-data.mimiciii_demo.procedures_icd"
-        destination_project_dataset_table: "bigquery-public-data-dev.mimicIII.procedures_icd"
+        source_project_dataset_tables: "{{ var.json.mimicIII.procedures_icd.source_table }}"
+        destination_project_dataset_table: "{{ var.json.mimicIII.procedures_icd.destination_table }}"
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
       description: "Copy services table from one bigquery project to another"
       args:
         task_id: "services"
-        source_project_dataset_tables: "physionet-data.mimiciii_demo.services"
-        destination_project_dataset_table: "bigquery-public-data-dev.mimicIII.services"
+        source_project_dataset_tables: "{{ var.json.mimicIII.services.source_table }}"
+        destination_project_dataset_table: "{{ var.json.mimicIII.services.destination_table }}"
         write_disposition: "WRITE_TRUNCATE"
 
     - operator: "BigQueryToBigQueryOperator"
       description: "Copy transfers table from one bigquery project to another"
       args:
         task_id: "transfers"
-        source_project_dataset_tables: "physionet-data.mimiciii_demo.transfers"
-        destination_project_dataset_table: "bigquery-public-data-dev.mimicIII.transfers"
+        source_project_dataset_tables: "{{ var.json.mimicIII.transfers.source_table }}"
+        destination_project_dataset_table: "{{ var.json.mimicIII.transfers.destination_table }}"
         write_disposition: "WRITE_TRUNCATE"
 
   graph_paths:
