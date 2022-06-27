@@ -13,13 +13,13 @@
 # limitations under the License.
 
 dataset:
-  name: idc
-  friendly_name: ~
-  description: ~
+  name: cfe_calculator
+  friendly_name: Carbon-free energy calculator
+  description: OEDI commercial and residential hourly load
   dataset_sources: ~
   terms_of_use: ~
 resources:
 
   - type: bigquery_dataset
-    dataset_id: oedi_commercial_and_residential_hourly_load_profiles
+    dataset_id: cfe_calculator
     description: OEDI commercial and residential hourly load
