@@ -24,7 +24,7 @@ default_args = {
 
 
 with DAG(
-    dag_id="cfe_calculator.cfe_calculator",
+    dag_id="cfe_calculator.copy_cfe_data",
     default_args=default_args,
     max_active_runs=1,
     schedule_interval="@once",
