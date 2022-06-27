@@ -14,7 +14,7 @@
 
 dataset:
   name: cfe_calculator
-  friendly_name: Carbon-free energy calculator
+  friendly_name: cfe_calculator
   description: OEDI commercial and residential hourly load
   dataset_sources: ~
   terms_of_use: ~
