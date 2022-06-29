@@ -92,7 +92,7 @@ def execute_pipeline(
     detail_data_headers_list: typing.List[str],
 ) -> None:
     if "Extract " in pipeline_name:
-        for subtask, url, table_name, src_filename in source_url:
+        for subtask, url, table_name, schema_filepath, schema_filepath_detail, src_filename in source_url:
             logging.info(f"... Executing Extraction Process for {subtask}")
             source_zipfile = str.replace(str(source_file), ".csv", f"{table_name}.zip")
             root_path = os.path.split(source_zipfile)[0]
@@ -102,30 +102,80 @@ def execute_pipeline(
             download_file(url, source_zipfile)
             zip_decompress(source_zipfile, root_path, False)
             if pipeline_name == "Extract Annotations":
+                normalize_tag_source = "annotations"
+                normalize_tag_dest="annot_norm"
+                target_file_path_detail = str.replace(
+                    str(target_file), ".csv", f"_{table_name}_{normalize_tag_dest}.csv"
+                )
                 extract_transform_file(
                     url=url,
                     src_filename=src_filename,
                     target_file=target_file,
                     target_file_path_main=target_file_path_main,
+                    target_file_path_detail=target_file_path_detail,
                     table_name=table_name,
                     root_path=root_path,
                     reorder_headers_list=reorder_headers_list,
                     detail_data_headers_list=detail_data_headers_list,
-                    normalize_tag_source="annotations",
-                    normalize_tag_dest="annot_norm",
+                    normalize_tag_source=normalize_tag_source
+                )
+                load_target_file(
+                    target_file=target_file_path_main,
+                    target_gcs_bucket=target_gcs_bucket,
+                    target_gcs_path=target_gcs_path,
+                    project_id=project_id,
+                    dataset_id=dataset_id,
+                    destination_table=table_name,
+                    schema_filepath=schema_filepath,
+                    source_url=url
+                )
+                load_target_file(
+                    target_file=target_file_path_detail,
+                    target_gcs_bucket=target_gcs_bucket,
+                    target_gcs_path=target_gcs_path,
+                    project_id=project_id,
+                    dataset_id=dataset_id,
+                    destination_table=f"{table_name}_detail",
+                    schema_filepath=schema_filepath_detail,
+                    source_url=url
                 )
             elif pipeline_name == "Extract Questions":
+                normalize_tag_source = "questions"
+                normalize_tag_dest="questions"
+                target_file_path_detail = str.replace(
+                    str(target_file), ".csv", f"_{table_name}_{normalize_tag_dest}.csv"
+                )
                 extract_transform_file(
                     url=url,
                     src_filename=src_filename,
                     target_file=target_file,
                     target_file_path_main=target_file_path_main,
+                    target_file_path_detail=target_file_path_detail,
                     table_name=table_name,
                     root_path=root_path,
                     reorder_headers_list=reorder_headers_list,
                     detail_data_headers_list=detail_data_headers_list,
-                    normalize_tag_source="questions",
-                    normalize_tag_dest="questions",
+                    normalize_tag_source=normalize_tag_source
+                )
+                load_target_file(
+                    target_file=target_file_path_main,
+                    target_gcs_bucket=target_gcs_bucket,
+                    target_gcs_path=target_gcs_path,
+                    project_id=project_id,
+                    dataset_id=dataset_id,
+                    destination_table=table_name,
+                    schema_filepath=schema_filepath,
+                    source_url=url
+                )
+                load_target_file(
+                    target_file=target_file_path_detail,
+                    target_gcs_bucket=target_gcs_bucket,
+                    target_gcs_path=target_gcs_path,
+                    project_id=project_id,
+                    dataset_id=dataset_id,
+                    destination_table=f"{table_name}_detail",
+                    schema_filepath=schema_filepath_detail,
+                    source_url=url
                 )
             elif pipeline_name == "Extract Complementary Pairs":
                 for src in src_filename:
@@ -155,14 +205,13 @@ def execute_pipeline(
 def extract_transform_file(
     url: str,
     src_filename: str,
-    target_file: str,
-    target_file_path_main,
-    table_name: str,
+    target_file_path_main: str,
+    target_file_path_detail: str,
     root_path: str,
     reorder_headers_list: typing.List[str],
     detail_data_headers_list: typing.List[str],
-    normalize_tag_source: str,
-    normalize_tag_dest: str,
+    normalize_tag_source: str #,
+    # normalize_tag_dest: str,
 ) -> bool:
     file_counter = 0
     for src in src_filename:
@@ -175,9 +224,6 @@ def extract_transform_file(
         )[0][:][detail_data_headers_list]
         df_main = rename_headers(df_main)
         df_main = df_main[reorder_headers_list]
-        target_file_path_detail = str.replace(
-            str(target_file), ".csv", f"_{table_name}_{normalize_tag_dest}.csv"
-        )
         df_main = add_metadata_cols(df_main, url)
         save_to_new_file(
             df_main, target_file_path_main, sep="|", include_headers=(file_counter == 0)
@@ -204,6 +250,53 @@ def extract_transform_file(
         return True
     else:
         return False
+
+
+def load_target_file(
+    target_file: str,
+    target_gcs_bucket: str,
+    target_gcs_path: str,
+    project_id: str,
+    dataset_id: str,
+    destination_table: str,
+    schema_filepath: str,
+    source_url: str
+) -> None:
+    if os.path.exists(target_file):
+        upload_file_to_gcs(
+            file_path=target_file,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=target_gcs_path,
+        )
+        table_exists = create_dest_table(
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_id=destination_table,
+            schema_filepath=schema_filepath,
+            bucket_name=target_gcs_bucket,
+        )
+        if table_exists:
+            delete_source_file_data_from_bq(
+                project_id=project_id,
+                dataset_id=dataset_id,
+                table_id=destination_table,
+                source_url=source_url,
+            )
+            load_data_to_bq(
+                project_id=project_id,
+                dataset_id=dataset_id,
+                table_id=destination_table,
+                file_path=target_file,
+                truncate_table=True,
+                field_delimiter="|"
+            )
+        else:
+            error_msg = f"Error: Data was not loaded because the destination table {project_id}.{dataset_id}.{destination_table} does not exist and/or could not be created."
+            raise ValueError(error_msg)
+    else:
+        logging.info(
+            f"Informational: The data file {target_file} was not generated because no data file was available.  Continuing."
+        )
 
 
 def convert_comp_pairs_file_to_csv(src_json: str, destination_csv: str, source_url: str = "") -> str:
@@ -429,6 +522,23 @@ def create_table_schema(
             )
         )
     return schema
+
+
+def upload_file_to_gcs(
+    file_path: pathlib.Path, target_gcs_bucket: str, target_gcs_path: str
+) -> None:
+    if os.path.exists(file_path):
+        logging.info(
+            f"Uploading output file to gs://{target_gcs_bucket}/{target_gcs_path}"
+        )
+        storage_client = storage.Client()
+        bucket = storage_client.bucket(target_gcs_bucket)
+        blob = bucket.blob(target_gcs_path)
+        blob.upload_from_filename(file_path)
+    else:
+        logging.info(
+            f"Cannot upload file to gs://{target_gcs_bucket}/{target_gcs_path} as it does not exist."
+        )
 
 
 # def process_and_load_table(
@@ -902,23 +1012,6 @@ def create_table_schema(
 #         return True
 #     # except:
 #     #     return True
-
-
-# def upload_file_to_gcs(
-#     file_path: pathlib.Path, target_gcs_bucket: str, target_gcs_path: str
-# ) -> None:
-#     if os.path.exists(file_path):
-#         logging.info(
-#             f"Uploading output file to gs://{target_gcs_bucket}/{target_gcs_path}"
-#         )
-#         storage_client = storage.Client()
-#         bucket = storage_client.bucket(target_gcs_bucket)
-#         blob = bucket.blob(target_gcs_path)
-#         blob.upload_from_filename(file_path)
-#     else:
-#         logging.info(
-#             f"Cannot upload file to gs://{target_gcs_bucket}/{target_gcs_path} as it does not exist."
-#         )
 
 
 if __name__ == "__main__":

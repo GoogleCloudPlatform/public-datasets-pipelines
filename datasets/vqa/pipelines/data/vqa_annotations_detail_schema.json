@@ -1,0 +1,38 @@
+[
+  {
+    "name": "question_type",
+    "type": "STRING",
+    "description": "Type of the question determined by the first few words of the question. For details, please see https://github.com/VT-vision-lab/VQA/blob/master/README.md",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "multiple_choice_answer",
+    "type": "STRING",
+    "description": "Most frequent ground-truth answer",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "answer_type",
+    "type": "STRING",
+    "description": "Type of the answer. Currently, yes or no, number, or other",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "question_id",
+    "type": "STRING",
+    "description": "Unique surrogate ID of question",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "source_url",
+    "type": "STRING",
+    "description": "Original URL location of source file",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "etl_timestamp",
+    "type": "STRING",
+    "description": "Date and time this data was loaded to BQ",
+    "mode": "NULLABLE"
+  }
+]

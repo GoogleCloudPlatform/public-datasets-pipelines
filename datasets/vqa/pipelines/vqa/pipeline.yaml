@@ -86,12 +86,16 @@ dag:
                 "Training annotations 2017 v2.0",
                 "https://s3.amazonaws.com/cvmlp/vqa/mscoco/vqa/v2_Annotations_Train_mscoco.zip",
                 "training_ann_2017",
+                "vqa_annotations_schema.json",
+                "vqa_annotations_detail_schema.json"
                 [ "v2_mscoco_train2014_annotations.json" ]
               ],
               [
                 "Validation annotations 2017 v2.0",
                 "https://s3.amazonaws.com/cvmlp/vqa/mscoco/vqa/v2_Annotations_Val_mscoco.zip",
                 "validation_ann_2017",
+                "vqa_annotations_schema.json",
+                "vqa_annotations_detail_schema.json"
                 [ "v2_mscoco_val2014_annotations.json" ]
               ]
             ]
@@ -148,6 +152,8 @@ dag:
                 "Testing questions 2017 v2.0",
                 "https://s3.amazonaws.com/cvmlp/vqa/mscoco/vqa/v2_Questions_Test_mscoco.zip",
                 "testing_questions_2017",
+                "vqa_questions_schema.json",
+                "vqa_questions_detail_schema.json"
                 [
                   "v2_OpenEnded_mscoco_test2015_questions.json",
                   "v2_OpenEnded_mscoco_test-dev2015_questions.json"
@@ -157,6 +163,8 @@ dag:
                 "Training questions 2017 v2.0",
                 "https://s3.amazonaws.com/cvmlp/vqa/mscoco/vqa/v2_Questions_Train_mscoco.zip",
                 "training_questions_2017",
+                "vqa_questions_schema.json",
+                "vqa_questions_detail_schema.json"
                 [
                   "v2_OpenEnded_mscoco_train2014_questions.json"
                 ]
@@ -221,6 +229,8 @@ dag:
                 "Training complementary pairs",
                 "https://s3.amazonaws.com/cvmlp/vqa/mscoco/vqa/v2_Complementary_Pairs_Train_mscoco.zip",
                 "training_complimentary_pairs",
+                "vqa_complementary_pairs_schema.json",
+                "",
                 [
                   "v2_mscoco_train2014_complementary_pairs.json"
                 ]
@@ -229,6 +239,8 @@ dag:
                 "Validation complementary pairs",
                 "https://s3.amazonaws.com/cvmlp/vqa/mscoco/vqa/v2_Complementary_Pairs_Val_mscoco.zip",
                 "validation_complimentary_pairs",
+                "vqa_complementary_pairs_schema.json",
+                "",
                 [
                   "v2_mscoco_val2014_complementary_pairs.json"
                 ]

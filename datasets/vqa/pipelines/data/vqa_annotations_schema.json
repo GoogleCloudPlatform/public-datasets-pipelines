@@ -1,0 +1,74 @@
+[
+  {
+    "name": "data_subtype",
+    "type": "string",
+    "description": "type of data subtype (e.g. train2014/val2014/test2015 for mscoco, train2015/val2015 for abstract_v002).",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "data_type",
+    "type": "string",
+    "description": "source of the images (mscoco or abstract_v002)",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "info_description",
+    "type": "string",
+    "description": "",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "info_url",
+    "type": "string",
+    "description": "",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "info_version",
+    "type": "string",
+    "description": "",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "info_year",
+    "type": "string",
+    "description": "",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "info_contributor",
+    "type": "string",
+    "description": "",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "info_date_created",
+    "type": "string",
+    "description": "",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "license_url",
+    "type": "string",
+    "description": "",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "license_name",
+    "type": "string",
+    "description": "",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "source_url",
+    "type": "string",
+    "description": "Original URL location of source file",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "etl_timestamp",
+    "type": "string",
+    "description": "Date and time this data was loaded to BQ",
+    "mode": "NULLABLE"
+  }
+]
