@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import datetime
+from datetime import datetime
 import json
 import logging
 import os
@@ -206,31 +206,21 @@ def extract_transform_file(
         return False
 
 
-def convert_comp_pairs_file_to_csv(src_json: str, destination_csv: str, url: str = "") -> str:
+def convert_comp_pairs_file_to_csv(src_json: str, destination_csv: str, source_url: str = "") -> str:
+    source_url = str.replace(source_url, "/", "\/")
+    etl_timestamp = datetime.today().isoformat().replace('T', ' ')
     command = ( f"sed -i -e 's/\\], \\[/\\n/g' {src_json} "
                 f"&& sed -i -e 's/,/\\|/g' {src_json} "
                 f"&& sed -i -e 's/\\[//g' {src_json} "
                 f"&& sed -i -e 's/\\]//g' {src_json} "
                 f"&& sed -i -e 's/ //g' {src_json} "
-                f"&& sed -i -e 's/$/({url})|($(date +\"%Y-%m-%d %H:%M:%S.%6N\"))/g' "
+                f"&& sed -i -e 's/$/|{source_url}/g' {src_json} "
+                f"&& sed -i -e 's/$/|{etl_timestamp}/g' {src_json} "
                 f"&& echo 'question_id_1|question_id_2|source_url|etl_timestamp' > {destination_csv}"
-                f"&& cat {src_json} >> {destination_csv}" )
+                f"&& cat {src_json} >> {destination_csv}"
+                )
     logging.info(command)
     os.system(command)
-    # command = f"sed -i -e 's/,/\\|/g' {src_json}"
-    # logging.info(command)
-    # os.system(command)
-    # command = f"sed -i -e 's/\\[//g' {src_json}"
-    # logging.info(command)
-    # os.system(command)
-    # command = f"sed -i -e 's/\\]//g' {src_json}"
-    # logging.info(command)
-    # os.system(command)
-    # command = f"sed -i -e 's/ //g' {src_json}"
-    # logging.info(command)
-    # os.system(command)
-    # os.system(f"echo 'question_id_1|question_id_2' > {destination_csv}")
-    # os.system(f"cat {src_json} >> {destination_csv}")
     if os.path.exists(destination_csv):
         return destination_csv
     else:
