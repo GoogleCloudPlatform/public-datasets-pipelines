@@ -171,11 +171,11 @@ def extract_transform_file(
         logging.info(f"    ... Processing file {root_path}/{src}")
         data = json.load(open(f"{root_path}/{src}"))
         df_main = pd.json_normalize(data)
-        df_main = rename_headers(df_main)
         df_detail = pd.DataFrame()
-        df_detail[normalize_tag_dest] = df_main[normalize_tag_source].apply(
+        df_detail = df_main[normalize_tag_source].apply(
             lambda x: pd.json_normalize(x)
-        )
+        )[0][:][detail_data_headers_list]
+        df_main = rename_headers(df_main)
         df_main = df_main[reorder_headers_list]
         target_file_path_detail = str.replace(
             str(target_file), ".csv", f"_{table_name}_{normalize_tag_dest}.csv"
@@ -190,7 +190,7 @@ def extract_transform_file(
             )
         df_detail = add_metadata_cols(df_detail, url)
         save_to_new_file(
-            df_detail[normalize_tag_dest][0][:][detail_data_headers_list],
+            df_detail,
             target_file_path_detail,
             sep="|",
             include_headers=(file_counter == 0),
