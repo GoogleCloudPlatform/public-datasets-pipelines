@@ -130,11 +130,9 @@ def execute_pipeline(
             elif pipeline_name == "Extract Complementary Pairs":
                 for src in src_filename:
                     logging.info(f"    ... Processing file {root_path}/{src}")
-                    target_file_path_pairs = target_file.replace(
-                        ".csv", "_{table_name}_pairs.csv"
-                    )
+                    target_file_path_pairs = str.replace( str(target_file), ".csv", f"_{table_name}_pairs.csv")
                     if (
-                        convert_comp_pairs_file_to_csv(src, target_file_path_pairs)
+                        convert_comp_pairs_file_to_csv(f"{root_path}/{src}", target_file_path_pairs, url)
                         != ""
                     ):
                         logging.info(
@@ -208,14 +206,31 @@ def extract_transform_file(
         return False
 
 
-def convert_comp_pairs_file_to_csv(src_json: str, destination_csv: str) -> str:
-    subprocess.check_call(f"sed -i -e 's/\\], \\[/\n/g' {src_json}")
-    subprocess.check_call(f"sed -i -e 's/,/\\|/g' {src_json}")
-    subprocess.check_call(f"sed -i -e 's/\\[//g' {src_json}")
-    subprocess.check_call(f"sed -i -e 's/\\]//g' {src_json}")
-    subprocess.check_call(f"sed -i -e 's/ //g' {src_json}")
-    subprocess.check_call(f"echo 'question_id_1|question_id_2' > {destination_csv}")
-    subprocess.check_call(f"cat {src_json} >> {destination_csv}")
+def convert_comp_pairs_file_to_csv(src_json: str, destination_csv: str, url: str = "") -> str:
+    command = ( f"sed -i -e 's/\\], \\[/\\n/g' {src_json} "
+                f"&& sed -i -e 's/,/\\|/g' {src_json} "
+                f"&& sed -i -e 's/\\[//g' {src_json} "
+                f"&& sed -i -e 's/\\]//g' {src_json} "
+                f"&& sed -i -e 's/ //g' {src_json} "
+                f"&& sed -i -e 's/$/({url})|($(date +\"%Y-%m-%d %H:%M:%S.%6N\"))/g' "
+                f"&& echo 'question_id_1|question_id_2|source_url|etl_timestamp' > {destination_csv}"
+                f"&& cat {src_json} >> {destination_csv}" )
+    logging.info(command)
+    os.system(command)
+    # command = f"sed -i -e 's/,/\\|/g' {src_json}"
+    # logging.info(command)
+    # os.system(command)
+    # command = f"sed -i -e 's/\\[//g' {src_json}"
+    # logging.info(command)
+    # os.system(command)
+    # command = f"sed -i -e 's/\\]//g' {src_json}"
+    # logging.info(command)
+    # os.system(command)
+    # command = f"sed -i -e 's/ //g' {src_json}"
+    # logging.info(command)
+    # os.system(command)
+    # os.system(f"echo 'question_id_1|question_id_2' > {destination_csv}")
+    # os.system(f"cat {src_json} >> {destination_csv}")
     if os.path.exists(destination_csv):
         return destination_csv
     else:
