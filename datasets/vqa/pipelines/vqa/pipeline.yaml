@@ -151,8 +151,8 @@ dag:
                 "Testing questions 2017 v2.0",
                 "https://s3.amazonaws.com/cvmlp/vqa/mscoco/vqa/v2_Questions_Test_mscoco.zip",
                 "testing_questions_2017",
-                "vqa_questions_schema.json",
-                "vqa_questions_detail_schema.json"
+                "data/vqa/schema/vqa_questions_schema.json",
+                "data/vqa/schema/vqa_questions_detail_schema.json",
                 [
                   "v2_OpenEnded_mscoco_test2015_questions.json",
                   "v2_OpenEnded_mscoco_test-dev2015_questions.json"
@@ -162,8 +162,8 @@ dag:
                 "Training questions 2017 v2.0",
                 "https://s3.amazonaws.com/cvmlp/vqa/mscoco/vqa/v2_Questions_Train_mscoco.zip",
                 "training_questions_2017",
-                "vqa_questions_schema.json",
-                "vqa_questions_detail_schema.json"
+                "data/vqa/schema/vqa_questions_schema.json",
+                "data/vqa/schema/vqa_questions_detail_schema.json",
                 [
                   "v2_OpenEnded_mscoco_train2014_questions.json"
                 ]
@@ -172,6 +172,8 @@ dag:
                 "Validation questions 2017 v2.0",
                 "https://s3.amazonaws.com/cvmlp/vqa/mscoco/vqa/v2_Questions_Val_mscoco.zip",
                 "validation_questions_2017",
+                "data/vqa/schema/vqa_questions_schema.json",
+                "data/vqa/schema/vqa_questions_detail_schema.json",
                 [ "v2_OpenEnded_mscoco_val2014_questions.json" ]
               ]
             ]
@@ -182,7 +184,6 @@ dag:
           DATASET_ID: "vqa"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/vqa/data_output.csv"
-          SCHEMA_PATH: "data/vqa/schema/questions_schema.json"
           DROP_DEST_TABLE: "N"
           REMOVE_SOURCE_FILE: "Y"
           DELETE_TARGET_FILE: "Y"
