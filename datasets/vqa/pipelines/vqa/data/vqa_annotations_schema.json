@@ -1,73 +1,73 @@
 [
   {
     "name": "data_subtype",
-    "type": "string",
+    "type": "STRING",
     "description": "type of data subtype (e.g. train2014/val2014/test2015 for mscoco, train2015/val2015 for abstract_v002).",
     "mode": "NULLABLE"
   },
   {
     "name": "data_type",
-    "type": "string",
+    "type": "STRING",
     "description": "source of the images (mscoco or abstract_v002)",
     "mode": "NULLABLE"
   },
   {
     "name": "info_description",
-    "type": "string",
+    "type": "STRING",
     "description": "",
     "mode": "NULLABLE"
   },
   {
     "name": "info_url",
-    "type": "string",
+    "type": "STRING",
     "description": "",
     "mode": "NULLABLE"
   },
   {
     "name": "info_version",
-    "type": "string",
+    "type": "STRING",
     "description": "",
     "mode": "NULLABLE"
   },
   {
     "name": "info_year",
-    "type": "string",
+    "type": "INTEGER",
     "description": "",
     "mode": "NULLABLE"
   },
   {
     "name": "info_contributor",
-    "type": "string",
+    "type": "STRING",
     "description": "",
     "mode": "NULLABLE"
   },
   {
     "name": "info_date_created",
-    "type": "string",
+    "type": "TIMESTAMP",
     "description": "",
     "mode": "NULLABLE"
   },
   {
     "name": "license_url",
-    "type": "string",
+    "type": "STRING",
     "description": "",
     "mode": "NULLABLE"
   },
   {
     "name": "license_name",
-    "type": "string",
+    "type": "STRING",
     "description": "",
     "mode": "NULLABLE"
   },
   {
     "name": "source_url",
-    "type": "string",
+    "type": "STRING",
     "description": "Original URL location of source file",
     "mode": "NULLABLE"
   },
   {
     "name": "etl_timestamp",
-    "type": "string",
+    "type": "TIMESTAMP",
     "description": "Date and time this data was loaded to BQ",
     "mode": "NULLABLE"
   }

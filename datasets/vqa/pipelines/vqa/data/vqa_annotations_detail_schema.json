@@ -19,7 +19,7 @@
   },
   {
     "name": "question_id",
-    "type": "STRING",
+    "type": "INTEGER",
     "description": "Unique surrogate ID of question",
     "mode": "NULLABLE"
   },
@@ -31,7 +31,7 @@
   },
   {
     "name": "etl_timestamp",
-    "type": "STRING",
+    "type": "TIMESTAMP",
     "description": "Date and time this data was loaded to BQ",
     "mode": "NULLABLE"
   }

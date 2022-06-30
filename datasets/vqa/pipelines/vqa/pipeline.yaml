@@ -86,16 +86,16 @@ dag:
                 "Training annotations 2017 v2.0",
                 "https://s3.amazonaws.com/cvmlp/vqa/mscoco/vqa/v2_Annotations_Train_mscoco.zip",
                 "training_ann_2017",
-                "vqa_annotations_schema.json",
-                "vqa_annotations_detail_schema.json"
+                "data/vqa/schema/vqa_annotations_schema.json",
+                "data/vqa/schema/vqa_annotations_detail_schema.json",
                 [ "v2_mscoco_train2014_annotations.json" ]
               ],
               [
                 "Validation annotations 2017 v2.0",
                 "https://s3.amazonaws.com/cvmlp/vqa/mscoco/vqa/v2_Annotations_Val_mscoco.zip",
                 "validation_ann_2017",
-                "vqa_annotations_schema.json",
-                "vqa_annotations_detail_schema.json"
+                "data/vqa/schema/vqa_annotations_schema.json",
+                "data/vqa/schema/vqa_annotations_detail_schema.json",
                 [ "v2_mscoco_val2014_annotations.json" ]
               ]
             ]
@@ -106,7 +106,6 @@ dag:
           DATASET_ID: "vqa"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/vqa/data_output.csv"
-          SCHEMA_PATH: "data/vqa/schema/annotations_schema.json"
           DROP_DEST_TABLE: "N"
           REMOVE_SOURCE_FILE: "Y"
           DELETE_TARGET_FILE: "Y"

@@ -38,12 +38,12 @@ def main(
     source_file: pathlib.Path,
     target_file: pathlib.Path,
     load_file_list: dict,
-    chunksize: str,
     project_id: str,
     dataset_id: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
     schema_path: str,
+    schema_detail_data_path: str,
     drop_dest_table: str,
     remove_source_file: str,
     delete_target_file: str,
@@ -58,12 +58,12 @@ def main(
         source_file=source_file,
         target_file=target_file,
         load_file_list=load_file_list,
-        chunksize=chunksize,
         project_id=project_id,
         dataset_id=dataset_id,
         target_gcs_bucket=target_gcs_bucket,
         target_gcs_path=target_gcs_path,
-        schema_path=schema_path,
+        schema_filepath=schema_path,
+        schema_detail_data_filepath=schema_detail_data_path,
         drop_dest_table=drop_dest_table,
         remove_source_file=(remove_source_file == "Y"),
         delete_target_file=(delete_target_file == "Y"),
@@ -79,12 +79,12 @@ def execute_pipeline(
     source_file: pathlib.Path,
     target_file: pathlib.Path,
     load_file_list: typing.List[dict],
-    chunksize: str,
     project_id: str,
     dataset_id: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
-    schema_path: str,
+    schema_filepath: str,
+    schema_detail_data_filepath: str,
     drop_dest_table: str,
     remove_source_file: bool,
     delete_target_file: bool,
@@ -92,7 +92,7 @@ def execute_pipeline(
     detail_data_headers_list: typing.List[str],
 ) -> None:
     if "Extract " in pipeline_name:
-        for subtask, url, table_name, schema_filepath, schema_filepath_detail, src_filename in source_url:
+        for subtask, url, table_name, schema_filepath, schema_detail_data_filepath, src_filename in source_url:
             logging.info(f"... Executing Extraction Process for {subtask}")
             source_zipfile = str.replace(str(source_file), ".csv", f"{table_name}.zip")
             root_path = os.path.split(source_zipfile)[0]
@@ -110,10 +110,8 @@ def execute_pipeline(
                 extract_transform_file(
                     url=url,
                     src_filename=src_filename,
-                    target_file=target_file,
                     target_file_path_main=target_file_path_main,
                     target_file_path_detail=target_file_path_detail,
-                    table_name=table_name,
                     root_path=root_path,
                     reorder_headers_list=reorder_headers_list,
                     detail_data_headers_list=detail_data_headers_list,
@@ -136,7 +134,7 @@ def execute_pipeline(
                     project_id=project_id,
                     dataset_id=dataset_id,
                     destination_table=f"{table_name}_detail",
-                    schema_filepath=schema_filepath_detail,
+                    schema_filepath=schema_detail_data_filepath,
                     source_url=url
                 )
             elif pipeline_name == "Extract Questions":
@@ -148,7 +146,6 @@ def execute_pipeline(
                 extract_transform_file(
                     url=url,
                     src_filename=src_filename,
-                    target_file=target_file,
                     target_file_path_main=target_file_path_main,
                     target_file_path_detail=target_file_path_detail,
                     table_name=table_name,
@@ -384,7 +381,7 @@ def add_metadata_cols(df: pd.DataFrame, source_url: str) -> pd.DataFrame:
     logging.info("        ... Adding metadata columns")
     df["source_url"] = source_url
     df["etl_timestamp"] = pd.to_datetime(
-        datetime.datetime.now(), format="%Y-%m-%d %H:%M:%S", infer_datetime_format=True
+        datetime.now(), format="%Y-%m-%d %H:%M:%S", infer_datetime_format=True
     )
     return df
 
@@ -1023,11 +1020,11 @@ if __name__ == "__main__":
         source_file=pathlib.Path(os.environ.get("SOURCE_FILE", "")).expanduser(),
         target_file=pathlib.Path(os.environ.get("TARGET_FILE", "")).expanduser(),
         load_file_list=json.loads(os.environ.get("LOAD_FILE_LIST", r"{}")),
-        chunksize=os.environ.get("CHUNKSIZE", "100000"),
         project_id=os.environ.get("PROJECT_ID", ""),
         dataset_id=os.environ.get("DATASET_ID", ""),
         drop_dest_table=os.environ.get("DROP_DEST_TABLE", "N"),
         schema_path=os.environ.get("SCHEMA_PATH", ""),
+        schema_detail_data_path=os.environ.get("SCHEMA_DETAIL_DATA_PATH", ""),
         target_gcs_bucket=os.environ.get("TARGET_GCS_BUCKET", ""),
         target_gcs_path=os.environ.get("TARGET_GCS_PATH", ""),
         remove_source_file=os.environ.get("REMOVE_SOURCE_FILE", "N"),
