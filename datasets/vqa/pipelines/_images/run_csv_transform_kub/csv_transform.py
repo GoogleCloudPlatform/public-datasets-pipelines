@@ -188,6 +188,17 @@ def execute_pipeline(
                         logging.info(
                             f"        ... {target_file_path_pairs} was not created."
                         )
+                    # import pdb; pdb.set_trace()
+                    load_target_file(
+                        target_file=target_file_path_pairs,
+                        target_gcs_bucket=target_gcs_bucket,
+                        target_gcs_path=target_gcs_path,
+                        project_id=project_id,
+                        dataset_id=dataset_id,
+                        destination_table=f"{table_name}",
+                        schema_filepath=schema_filepath,
+                        source_url=url
+                    )
             else:
                 pass
         else:

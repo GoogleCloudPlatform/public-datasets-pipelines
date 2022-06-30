@@ -229,7 +229,7 @@ dag:
                 "Training complementary pairs",
                 "https://s3.amazonaws.com/cvmlp/vqa/mscoco/vqa/v2_Complementary_Pairs_Train_mscoco.zip",
                 "training_complimentary_pairs",
-                "vqa_complementary_pairs_schema.json",
+                "data/vqa/schema/vqa_complementary_pairs_schema.json",
                 "",
                 [
                   "v2_mscoco_train2014_complementary_pairs.json"
@@ -239,7 +239,7 @@ dag:
                 "Validation complementary pairs",
                 "https://s3.amazonaws.com/cvmlp/vqa/mscoco/vqa/v2_Complementary_Pairs_Val_mscoco.zip",
                 "validation_complimentary_pairs",
-                "vqa_complementary_pairs_schema.json",
+                "data/vqa/schema/vqa_complementary_pairs_schema.json",
                 "",
                 [
                   "v2_mscoco_val2014_complementary_pairs.json"
@@ -257,20 +257,6 @@ dag:
           DROP_DEST_TABLE: "N"
           REMOVE_SOURCE_FILE: "Y"
           DELETE_TARGET_FILE: "Y"
-          REORDER_HEADERS_LIST: >-
-            [
-              'task_type',
-              'data_type',
-              'data_subtype',
-              'info_description',
-              'info_url',
-              'info_version',
-              'info_year',
-              'info_contributor',
-              'info_date_created',
-              'license_url',
-              'license_name'
-            ]
         resources:
           limit_memory: "16G"
           limit_cpu: "3"
