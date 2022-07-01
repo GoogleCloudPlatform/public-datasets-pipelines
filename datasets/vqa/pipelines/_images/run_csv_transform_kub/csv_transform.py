@@ -23,7 +23,8 @@ import typing
 # from shutil import move
 # from urllib.request import Request, urlopen
 from zipfile import ZipFile
-
+from zipfile import is_zipfile
+import io
 import pandas as pd
 import requests
 
@@ -201,13 +202,23 @@ def execute_pipeline(
                     )
             else:
                 pass
-        else:
-            pass
-        if pipeline_name == "Load Data":
-            for domain_list in load_file_list:
-                for domain in domain_list:
-                    print(domain)
-
+    else:
+        pass
+    if pipeline_name == "Load Images":
+        for subtask, url, dest_gcs_bucket, dest_gcs_path in source_url:
+            source_zipfile_filename = os.path.split(url)[1]
+            dest_zipfile_path = os.path.split(source_file)[0]
+            source_zipfile = f"{dest_zipfile_path}/{source_zipfile_filename}"
+            # download_file(url, source_zipfile)
+            # upload_file_to_gcs(
+            #     file_path=source_zipfile,
+            #     target_gcs_bucket=dest_gcs_bucket,
+            #     target_gcs_path=dest_gcs_path,
+            # )
+            # os.system(f"gsutil cat gs://bucket/obj.csv.gz | zcat |  gsutil cp - gs://bucket/obj.csv")
+            # zip_decompress(source_zipfile, root_path, False)
+            # zip_extract_in_gcs(dest_gcs_bucket, f"{dest_gcs_path}/{source_zipfile_filename}")
+            import pdb; pdb.set_trace()
 
 def extract_transform_file(
     url: str,
@@ -344,6 +355,21 @@ def zip_decompress(infile: str, topath: str, remove_zipfile: bool = False) -> No
         zip.extractall(topath)
     if remove_zipfile:
         os.unlink(infile)
+
+
+def zip_extract_in_gcs(bucketname: str, zipfilename_with_path: str):
+    logging.info(f"    ... Extracting {zipfilename_with_path} to {bucketname}")
+    # storage_client = storage.Client()
+    # bucket = storage_client.get_bucket(bucketname)
+    # destination_blob_pathname = zipfilename_with_path
+    # blob = bucket.blob(destination_blob_pathname)
+    # zipbytes = io.BytesIO(blob.download_as_string())
+    # if is_zipfile(zipbytes):
+    #     with ZipFile(zipbytes, 'r') as myzip:
+    #         for contentfilename in myzip.namelist():
+    #             contentfile = myzip.read(contentfilename)
+    #             blob = bucket.blob(zipfilename_with_path + "/" + contentfilename)
+    #             blob.upload_from_string(contentfile)
 
 
 def rename_headers(df: pd.DataFrame) -> pd.DataFrame:

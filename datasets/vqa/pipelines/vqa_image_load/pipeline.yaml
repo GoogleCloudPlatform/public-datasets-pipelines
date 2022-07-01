@@ -1,0 +1,95 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+resources: ~
+
+dag:
+  airflow_version: 2
+  initialize:
+    dag_id: vqa
+    default_args:
+      owner: "Google"
+      depends_on_past: False
+      start_date: '2021-03-01'
+    max_active_runs: 1
+    schedule_interval: "0 1 0 0 6"
+    catchup: False
+    default_view: graph
+
+  tasks:
+    - operator: "GKECreateClusterOperator"
+      args:
+        task_id: "create_cluster"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        body:
+          name: pubds-vqa
+          initial_node_count: 2
+          network: "{{ var.value.vpc_network }}"
+          node_config:
+            machine_type: e2-standard-16
+            oauth_scopes:
+              - https://www.googleapis.com/auth/devstorage.read_write
+              - https://www.googleapis.com/auth/cloud-platform
+    - operator: "GKEStartPodOperator"
+      description: "Run VQA images load processes"
+      args:
+        task_id: "extract_images"
+        name: "vqa.extract_annotations"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: pubds-vqa
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.vqa.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "Load Images"
+          SOURCE_URL: >- # [ [subtask name, url, destination gcs bucket, destination gcs path ], [ ... ], ... ]
+            [
+              [
+                "Images Extraction (Testing Set)",
+                "http://images.cocodataset.org/zips/test2015.zip",
+                "{{ var.value.composer_bucket }}",
+                "data/vqa/images/testing"
+              ],
+              [
+                "Images Extraction (Training Set)",
+                "http://images.cocodataset.org/zips/train2014.zip",
+                "{{ var.value.composer_bucket }}",
+                "data/vqa/images/training"
+              ],
+              [
+                "Images Extraction (Validation Set)",
+                "http://images.cocodataset.org/zips/val2014.zip",
+                "{{ var.value.composer_bucket }}",
+                "data/vqa/images/validation"
+              ]
+            ]
+          SOURCE_FILE: "files/data.csv"
+          TARGET_FILE: "files/data_output.csv"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/vqa/data_output.csv"
+        resources:
+          limit_memory: "16G"
+          limit_cpu: "3"
+    - operator: "GKEDeleteClusterOperator"
+      args:
+        task_id: "delete_cluster"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        name: pubds-vqa
+
+  graph_paths:
+    - "create_cluster >> [ load_annotations, load_questions, load_complementary_pairs ] >> delete_cluster"
