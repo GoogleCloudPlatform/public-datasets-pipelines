@@ -30,8 +30,6 @@ from google.api_core.exceptions import NotFound
 from google.cloud import bigquery, storage
 from requests.sessions import Session
 
-#from sqlalchemy import column
-
 def main(
     source_url: str,
     source_file: pathlib.Path,
@@ -55,7 +53,7 @@ def main(
     output_csv_headers: typing.List[str]
 ) -> None:
 
-  
+
     logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
 
@@ -89,8 +87,8 @@ def execute_pipeline(
     source_file: str,
     chunksize: str,
     report_level: str,
-    year_report: str, 
-    api_naming_convention: str, 
+    year_report: str,
+    api_naming_convention: str,
     source_url: str,
     data_dtypes: dict,
     rename_mappings_list: dict,
@@ -119,7 +117,7 @@ def execute_pipeline(
         df = extract_data_and_convert_to_df_state_level(
             group_id, state_code, year_report, api_naming_convention, source_url, destination_table
         )
-    
+
     save_to_new_file(df, source_file, sep=",")
     process_source_file(
         source_file=source_file,
@@ -230,10 +228,6 @@ def process_source_file(
                 group_id=group_id,
                 state_code=state_code,
             )
-    # df = df[output_csv_headers]
-    #print("target df after all chunks are concatenated -->")
-    #print(target_df)
-    #target_df.to_csv(target_file)
 
     dfcolumns=list(target_df.columns)
     i=0                                    # edit output csv headers
@@ -243,15 +237,11 @@ def process_source_file(
             i-=1
         i+=1
 
-    #print(f"SIZE --> df columns :{len(dfcolumns)} and output csv headers: {len(output_csv_headers)}")
-    # print(dfcolumns)
-    # print()
-    # print(output_csv_headers)
     logging.info("Reordering headers...")
-    final_df=target_df[output_csv_headers]      
+    final_df=target_df[output_csv_headers]
     save_to_new_file(final_df, target_file, sep='|')  #save the reordered file
     print("final df -->")
-    print(final_df)   
+    print(final_df)
     print("Opening final file  -->")
     print(pd.read_csv(target_file, sep="|"))
 
@@ -326,7 +316,7 @@ def process_chunk(
         df["county"] = df["county"].apply(pad_zeroes_to_the_left, args=(3,))
     df = create_geo_id(df, concat_col_list)
     df = pivot_dataframe(df)
- 
+
     save_to_new_file(df, file_path=str(target_file_batch), sep="|")
     df=append_batch_file(df, chunk_number, target_file_batch, target_file, skip_header, not (skip_header))
     logging.info(f"Processing batch file {target_file_batch} completed")
@@ -416,7 +406,7 @@ def check_gcs_file_exists(file_path: str, bucket_name: str) -> bool:
 
 
 def create_table_schema(
-    schema_structure: list, bucket_name: str = "", schema_filepath: str = "", 
+    schema_structure: list, bucket_name: str = "", schema_filepath: str = "",
 ) -> list:
     logging.info(f"Defining table schema... {bucket_name} ... {schema_filepath}")
     schema = []
@@ -428,7 +418,7 @@ def create_table_schema(
         blob = bucket.blob(schema_filepath)
         schema_struct = json.loads(blob.download_as_string(client=None))
 
-    
+
     #remove extra cols in schema which are not found in df
     i=0
     dfcolumns=list(target_df.columns)
@@ -437,7 +427,6 @@ def create_table_schema(
             schema_struct.pop(i)
             i-=1
         i+=1
-    #print(f"SIZE --> df columns{len(dfcolumns)} and schema {len(schema_struct)}")
 
     for schema_field in schema_struct:
         fld_name = schema_field["name"]
@@ -493,14 +482,14 @@ def extract_data_and_convert_to_df_national_level(
                 frame["KPI_Name"] = key
                 list_temp.append(frame)
             elif 400>= r.status_code <=499:      #Unable to download data
-                logging.info(r.status_code)      
+                logging.info(r.status_code)
             else:
                 logging.info(f"Source url : {source_url_new}")
                 logging.info(f"status code : {r.status_code}")
         except OSError as e:
             logging.info(f"error : {e}")
     if flag==0:
-        logging.info(f"Data not available for {destination_table} yet") 
+        logging.info(f"Data not available for {destination_table} yet")
         sys.exit(0)
     logging.info("creating the dataframe...")
     df = pd.concat(list_temp)
@@ -535,12 +524,12 @@ def extract_data_and_convert_to_df_state_level(
             try:
                 r = requests.get(source_url_new, stream=True, verify=False, timeout=200)
                 if r.status_code == 200:
-                    logging.info("Data source valid for at least one entity")       
-                    flag=1       
+                    logging.info("Data source valid for at least one entity")
+                    flag=1
                     text = r.json()
                     frame = load_nested_list_into_df_without_headers(text)
                     frame["KPI_Name"] = key
-                    list_temp.append(frame)          
+                    list_temp.append(frame)
                 elif 400>= r.status_code <=499:      #Unable to download data
                     logging.info(r.status_code)
                 else:
@@ -550,7 +539,7 @@ def extract_data_and_convert_to_df_state_level(
             except OSError as e:
                 logging.info(f"error : {e}")
     if flag==0:
-      logging.info(f"Data not available for {destination_table} yet") 
+      logging.info(f"Data not available for {destination_table} yet")
       sys.exit(0)
     logging.info("creating the dataframe...")
     df = pd.concat(list_temp)
@@ -604,7 +593,7 @@ def append_batch_file(
 
             batch_df=pd.read_csv(data_file, sep='|')
             logging.info("Making batch df -- >")
-            
+
 
             if chunk_number==1:
                 target_df=batch_df
@@ -620,18 +609,12 @@ def append_batch_file(
 
                 target_df=pd.concat([target_df,batch_df], axis=1, ignore_index=False)
                 target_df.to_csv(target_file_path, index=False, sep='|')
-                
-            #target_file.write(data_file.read())
-            # if os.path.exists(batch_file_path):
-            #     os.remove(batch_file_path)
-            #print(f"Checking target file after each batch df, chunk number: {chunk_number} -->")
-            #print(pd.read_csv(target_file_path))
 
         return target_df
 
 def upload_file_to_gcs(
-    file_path: pathlib.Path, 
-    target_gcs_bucket: str, 
+    file_path: pathlib.Path,
+    target_gcs_bucket: str,
     target_gcs_path: str,
     project_id: str
 ) -> None:
