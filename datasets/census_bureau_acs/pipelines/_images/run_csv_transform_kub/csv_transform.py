@@ -22,7 +22,6 @@ import pathlib
 import sys
 import typing
 from operator import index
-
 import numpy as np
 import pandas as pd
 import requests
