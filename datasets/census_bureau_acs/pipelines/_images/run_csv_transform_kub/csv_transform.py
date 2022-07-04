@@ -29,6 +29,7 @@ from google.api_core.exceptions import NotFound
 from google.cloud import bigquery, storage
 from requests.sessions import Session
 
+
 def main(
     source_url: str,
     source_file: pathlib.Path,
@@ -49,9 +50,8 @@ def main(
     data_dtypes: str,
     rename_mappings_list: dict,
     input_csv_headers: typing.List[str],
-    output_csv_headers: typing.List[str]
+    output_csv_headers: typing.List[str],
 ) -> None:
-
 
     logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
@@ -59,25 +59,25 @@ def main(
     logging.info(f"{pipeline_name} process started")
 
     execute_pipeline(
-    source_file=source_file,
-    chunksize=chunksize,
-    report_level=report_level,
-    year_report=year_report,
-    api_naming_convention=api_naming_convention,
-    source_url=source_url,
-    data_dtypes=data_dtypes,
-    rename_mappings_list=rename_mappings_list,
-    geography=geography,
-    concat_col_list=concat_col_list,
-    input_csv_headers=input_csv_headers,
-    output_csv_headers=output_csv_headers,
-    target_file=target_file,
-    target_gcs_bucket=target_gcs_bucket,
-    target_gcs_path=target_gcs_path,
-    project_id=project_id,
-    dataset_id=dataset_id,
-    destination_table=table_id,
-    schema_path=schema_path
+        source_file=source_file,
+        chunksize=chunksize,
+        report_level=report_level,
+        year_report=year_report,
+        api_naming_convention=api_naming_convention,
+        source_url=source_url,
+        data_dtypes=data_dtypes,
+        rename_mappings_list=rename_mappings_list,
+        geography=geography,
+        concat_col_list=concat_col_list,
+        input_csv_headers=input_csv_headers,
+        output_csv_headers=output_csv_headers,
+        target_file=target_file,
+        target_gcs_bucket=target_gcs_bucket,
+        target_gcs_path=target_gcs_path,
+        project_id=project_id,
+        dataset_id=dataset_id,
+        destination_table=table_id,
+        schema_path=schema_path,
     )
     logging.info(f"{pipeline_name} --> ETL process completed")
 
@@ -101,7 +101,7 @@ def execute_pipeline(
     project_id: str,
     dataset_id: str,
     destination_table: str,
-    schema_path: str
+    schema_path: str,
 ) -> None:
     json_obj_group_id = open("group_ids.json")
     group_id = json.load(json_obj_group_id)
@@ -114,7 +114,12 @@ def execute_pipeline(
         )
     elif report_level == "state_level":
         df = extract_data_and_convert_to_df_state_level(
-            group_id, state_code, year_report, api_naming_convention, source_url, destination_table
+            group_id,
+            state_code,
+            year_report,
+            api_naming_convention,
+            source_url,
+            destination_table,
         )
 
     save_to_new_file(df, source_file, sep=",")
@@ -137,7 +142,7 @@ def execute_pipeline(
             file_path=target_file,
             target_gcs_bucket=target_gcs_bucket,
             target_gcs_path=target_gcs_path,
-            project_id=project_id
+            project_id=project_id,
         )
         table_exists = create_dest_table(
             project_id=project_id,
@@ -180,21 +185,14 @@ def process_source_file(
     state_code: str,
 ) -> None:
     logging.info(f"Opening source file {source_file}")
-    csv.field_size_limit(512<<10)
-    csv.register_dialect(
-        'TabDialect',
-        quotechar='"',
-        delimiter=',',
-        strict=True
-    )
-    with open(
-        source_file
-    ) as reader:
+    csv.field_size_limit(512 << 10)
+    csv.register_dialect("TabDialect", quotechar='"', delimiter=",", strict=True)
+    with open(source_file) as reader:
         data = []
         chunk_number = 1
-        for index, line in enumerate(csv.reader(reader, 'TabDialect'), 0):
+        for index, line in enumerate(csv.reader(reader, "TabDialect"), 0):
             data.append(line)
-            if (index % int(chunksize) == 0 and index > 0):
+            if index % int(chunksize) == 0 and index > 0:
                 process_dataframe_chunk(
                     data=data,
                     input_headers=input_headers,
@@ -228,21 +226,22 @@ def process_source_file(
                 state_code=state_code,
             )
 
-    dfcolumns=list(target_df.columns)
-    i=0                                    # edit output csv headers
+    dfcolumns = list(target_df.columns)
+    i = 0  # edit output csv headers
     while i < (len(output_csv_headers)):
         if output_csv_headers[i] not in dfcolumns:
             output_csv_headers.pop(i)
-            i-=1
-        i+=1
+            i -= 1
+        i += 1
 
     logging.info("Reordering headers...")
-    final_df=target_df[output_csv_headers]
-    save_to_new_file(final_df, target_file, sep='|')  #save the reordered file
+    final_df = target_df[output_csv_headers]
+    save_to_new_file(final_df, target_file, sep="|")  # save the reordered file
     print("final df -->")
     print(final_df)
     print("Opening final file  -->")
     print(pd.read_csv(target_file, sep="|"))
+
 
 def process_dataframe_chunk(
     data: typing.List[str],
@@ -258,10 +257,7 @@ def process_dataframe_chunk(
     group_id: str,
     state_code: str,
 ) -> None:
-    df = pd.DataFrame(
-                data,
-                columns=input_headers
-            )
+    df = pd.DataFrame(data, columns=input_headers)
     # set_df_datatypes(df, data_dtypes)
     target_file_batch = str(target_file).replace(
         ".csv", "-" + str(chunk_number) + ".csv"
@@ -281,10 +277,8 @@ def process_dataframe_chunk(
         state_code=state_code,
     )
 
-def set_df_datatypes(
-    df: pd.DataFrame,
-    data_dtypes: dict
-) -> pd.DataFrame:
+
+def set_df_datatypes(df: pd.DataFrame, data_dtypes: dict) -> pd.DataFrame:
     logging.info("Setting data types")
     for key, item in data_dtypes.items():
         df[key] = df[key].astype(item)
@@ -317,7 +311,9 @@ def process_chunk(
     df = pivot_dataframe(df)
 
     save_to_new_file(df, file_path=str(target_file_batch), sep="|")
-    df=append_batch_file(df, chunk_number, target_file_batch, target_file, skip_header, not (skip_header))
+    df = append_batch_file(
+        df, chunk_number, target_file_batch, target_file, skip_header, not (skip_header)
+    )
     logging.info(f"Processing batch file {target_file_batch} completed")
 
 
@@ -405,7 +401,9 @@ def check_gcs_file_exists(file_path: str, bucket_name: str) -> bool:
 
 
 def create_table_schema(
-    schema_structure: list, bucket_name: str = "", schema_filepath: str = "",
+    schema_structure: list,
+    bucket_name: str = "",
+    schema_filepath: str = "",
 ) -> list:
     logging.info(f"Defining table schema... {bucket_name} ... {schema_filepath}")
     schema = []
@@ -417,15 +415,14 @@ def create_table_schema(
         blob = bucket.blob(schema_filepath)
         schema_struct = json.loads(blob.download_as_string(client=None))
 
-
-    #remove extra cols in schema which are not found in df
-    i=0
-    dfcolumns=list(target_df.columns)
-    while i< len(schema_struct):
+    # remove extra cols in schema which are not found in df
+    i = 0
+    dfcolumns = list(target_df.columns)
+    while i < len(schema_struct):
         if schema_struct[i].get("name") not in dfcolumns:
             schema_struct.pop(i)
-            i-=1
-        i+=1
+            i -= 1
+        i += 1
 
     for schema_field in schema_struct:
         fld_name = schema_field["name"]
@@ -443,9 +440,7 @@ def create_table_schema(
     return schema
 
 
-def pivot_dataframe(
-    df: pd.DataFrame
-) -> pd.DataFrame:
+def pivot_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     logging.info("Pivoting the dataframe...")
     df = df[["geo_id", "KPI_Name", "KPI_Value"]]
     df = df.pivot_table(
@@ -461,10 +456,14 @@ def string_replace(source_url, replace: dict) -> str:
 
 
 def extract_data_and_convert_to_df_national_level(
-    group_id: dict, year_report: str, api_naming_convention: str, source_url: str, destination_table: str
-) -> pd.DataFrame :
+    group_id: dict,
+    year_report: str,
+    api_naming_convention: str,
+    source_url: str,
+    destination_table: str,
+) -> pd.DataFrame:
     list_temp = []
-    flag=0
+    flag = 0
     for key in group_id:
         logging.info(f"reading data from API for KPI {key}...")
         str1 = source_url.replace("~year_report~", year_report)
@@ -475,19 +474,19 @@ def extract_data_and_convert_to_df_national_level(
             r = requests.get(source_url_new, stream=True, verify=False, timeout=200)
             if r.status_code == 200:
                 logging.info("Data source valid for at least one entity")
-                flag=1
+                flag = 1
                 text = r.json()
                 frame = load_nested_list_into_df_without_headers(text)
                 frame["KPI_Name"] = key
                 list_temp.append(frame)
-            elif 400>= r.status_code <=499:      #Unable to download data
+            elif 400 >= r.status_code <= 499:  # Unable to download data
                 logging.info(r.status_code)
             else:
                 logging.info(f"Source url : {source_url_new}")
                 logging.info(f"status code : {r.status_code}")
         except OSError as e:
             logging.info(f"error : {e}")
-    if flag==0:
+    if flag == 0:
         logging.info(f"Data not available for {destination_table} yet")
         sys.exit(0)
     logging.info("creating the dataframe...")
@@ -507,10 +506,10 @@ def extract_data_and_convert_to_df_state_level(
     year_report: str,
     api_naming_convention: str,
     source_url: str,
-    destination_table: str
-) -> pd.DataFrame :
+    destination_table: str,
+) -> pd.DataFrame:
     list_temp = []
-    flag=0
+    flag = 0
     for key in group_id:
         for sc in state_code:
             logging.info(f"reading data from API for KPI {key}...")
@@ -524,12 +523,12 @@ def extract_data_and_convert_to_df_state_level(
                 r = requests.get(source_url_new, stream=True, verify=False, timeout=200)
                 if r.status_code == 200:
                     logging.info("Data source valid for at least one entity")
-                    flag=1
+                    flag = 1
                     text = r.json()
                     frame = load_nested_list_into_df_without_headers(text)
                     frame["KPI_Name"] = key
                     list_temp.append(frame)
-                elif 400>= r.status_code <=499:      #Unable to download data
+                elif 400 >= r.status_code <= 499:  # Unable to download data
                     logging.info(r.status_code)
                 else:
                     logging.info(f"Source url : {source_url_new}")
@@ -537,9 +536,9 @@ def extract_data_and_convert_to_df_state_level(
 
             except OSError as e:
                 logging.info(f"error : {e}")
-    if flag==0:
-      logging.info(f"Data not available for {destination_table} yet")
-      sys.exit(0)
+    if flag == 0:
+        logging.info(f"Data not available for {destination_table} yet")
+        sys.exit(0)
     logging.info("creating the dataframe...")
     df = pd.concat(list_temp)
     return df
@@ -547,8 +546,8 @@ def extract_data_and_convert_to_df_state_level(
 
 def create_geo_id(df: pd.DataFrame, concat_col: str) -> pd.DataFrame:
     logging.info("Creating column geo_id...")
-    df=df.drop(0,axis=0)
-    df["geo_id"] = ''
+    df = df.drop(0, axis=0)
+    df["geo_id"] = ""
     for col in concat_col:
         df["geo_id"] = df["geo_id"] + df[col]
     return df
@@ -563,7 +562,7 @@ def pad_zeroes_to_the_left(val: str, length: int) -> str:
 
 def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
     logging.info("Renaming headers...")
-    #rename_mappings = {int(k): str(v) for k, v in rename_mappings
+    # rename_mappings = {int(k): str(v) for k, v in rename_mappings
     df.rename(columns=rename_mappings, inplace=True)
 
 
@@ -571,11 +570,17 @@ def save_to_new_file(df: pd.DataFrame, file_path: str, sep: str = ",") -> None:
     logging.info(f"Saving data to target file.. {file_path} ...")
     df.to_csv(file_path, index=False, sep=sep)
 
+
 def append_batch_file(
-    df: pd.DataFrame, chunk_number: int, batch_file_path: str, target_file_path: str, skip_header: bool, truncate_file: bool
+    df: pd.DataFrame,
+    chunk_number: int,
+    batch_file_path: str,
+    target_file_path: str,
+    skip_header: bool,
+    truncate_file: bool,
 ) -> pd.DataFrame:
     global target_df
-    truncate_file=True
+    truncate_file = True
     with open(batch_file_path, "r") as data_file:
         if truncate_file:
             target_file = open(target_file_path, "w+").close()
@@ -590,32 +595,34 @@ def append_batch_file(
                     f"Appending batch file {batch_file_path} to {target_file_path}"
                 )
 
-            batch_df=pd.read_csv(data_file, sep='|')
+            batch_df = pd.read_csv(data_file, sep="|")
             logging.info("Making batch df -- >")
 
-
-            if chunk_number==1:
-                target_df=batch_df
-                target_df.to_csv(target_file_path, index=False, sep='|')
+            if chunk_number == 1:
+                target_df = batch_df
+                target_df.to_csv(target_file_path, index=False, sep="|")
 
             else:
-                batchdfcols=list(batch_df.columns)
-                targetdfcols=dict.fromkeys(list(target_df.columns))
+                batchdfcols = list(batch_df.columns)
+                targetdfcols = dict.fromkeys(list(target_df.columns))
                 logging.info(f"Removing common columns from batch : {chunk_number}")
                 for columns in batchdfcols:
                     if columns in targetdfcols:
-                        batch_df.drop(columns,axis=1,inplace=True)      # Removing common columns from each batch
+                        batch_df.drop(
+                            columns, axis=1, inplace=True
+                        )  # Removing common columns from each batch
 
-                target_df=pd.concat([target_df,batch_df], axis=1, ignore_index=False)
-                target_df.to_csv(target_file_path, index=False, sep='|')
+                target_df = pd.concat([target_df, batch_df], axis=1, ignore_index=False)
+                target_df.to_csv(target_file_path, index=False, sep="|")
 
         return target_df
+
 
 def upload_file_to_gcs(
     file_path: pathlib.Path,
     target_gcs_bucket: str,
     target_gcs_path: str,
-    project_id: str
+    project_id: str,
 ) -> None:
     if os.path.exists(file_path):
         logging.info(
@@ -635,24 +642,24 @@ if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
 
     main(
-        source_url=os.environ.get("SOURCE_URL",""),
-        chunksize=os.environ.get("CHUNKSIZE",""),
-        source_file=pathlib.Path(os.environ.get("SOURCE_FILE","")).expanduser(),
-        target_file=pathlib.Path(os.environ.get("TARGET_FILE","")).expanduser(),
-        project_id=os.environ.get("PROJECT_ID",""),
-        dataset_id=os.environ.get("DATASET_ID",""),
-        table_id=os.environ.get("TABLE_ID",""),
-        schema_path=os.environ.get("SCHEMA_PATH",""),
-        pipeline_name=os.environ.get("PIPELINE_NAME",""),
-        target_gcs_bucket=os.environ.get("TARGET_GCS_BUCKET",""),
-        target_gcs_path=os.environ.get("TARGET_GCS_PATH",""),
-        year_report=os.environ.get("YEAR_REPORT",""),
-        api_naming_convention=os.environ.get("API_NAMING_CONVENTION",""),
-        geography=os.environ.get("GEOGRAPHY",""),
-        report_level=os.environ.get("REPORT_LEVEL",""),
-        concat_col_list=json.loads(os.environ.get("CONCAT_COL_LIST",r"[]")),
-        data_dtypes=json.loads(os.environ.get("DATA_DTYPES",r"{}")),
-        rename_mappings_list=json.loads(os.environ.get("RENAME_MAPPINGS_LIST",r"{}")),
-        input_csv_headers=json.loads(os.environ.get("INPUT_CSV_HEADERS",r"[]")),
-        output_csv_headers=json.loads(os.environ.get("OUTPUT_CSV_HEADERS",r"[]"))
+        source_url=os.environ.get("SOURCE_URL", ""),
+        chunksize=os.environ.get("CHUNKSIZE", ""),
+        source_file=pathlib.Path(os.environ.get("SOURCE_FILE", "")).expanduser(),
+        target_file=pathlib.Path(os.environ.get("TARGET_FILE", "")).expanduser(),
+        project_id=os.environ.get("PROJECT_ID", ""),
+        dataset_id=os.environ.get("DATASET_ID", ""),
+        table_id=os.environ.get("TABLE_ID", ""),
+        schema_path=os.environ.get("SCHEMA_PATH", ""),
+        pipeline_name=os.environ.get("PIPELINE_NAME", ""),
+        target_gcs_bucket=os.environ.get("TARGET_GCS_BUCKET", ""),
+        target_gcs_path=os.environ.get("TARGET_GCS_PATH", ""),
+        year_report=os.environ.get("YEAR_REPORT", ""),
+        api_naming_convention=os.environ.get("API_NAMING_CONVENTION", ""),
+        geography=os.environ.get("GEOGRAPHY", ""),
+        report_level=os.environ.get("REPORT_LEVEL", ""),
+        concat_col_list=json.loads(os.environ.get("CONCAT_COL_LIST", r"[]")),
+        data_dtypes=json.loads(os.environ.get("DATA_DTYPES", r"{}")),
+        rename_mappings_list=json.loads(os.environ.get("RENAME_MAPPINGS_LIST", r"{}")),
+        input_csv_headers=json.loads(os.environ.get("INPUT_CSV_HEADERS", r"[]")),
+        output_csv_headers=json.loads(os.environ.get("OUTPUT_CSV_HEADERS", r"[]")),
     )
