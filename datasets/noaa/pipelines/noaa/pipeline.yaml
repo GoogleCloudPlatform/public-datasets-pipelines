@@ -355,7 +355,7 @@ dag:
               "state",
               "name",
               "gsn_flag",
-              "hcn_cm_flag",
+              "hcn_crn_flag",
               "wmoid",
               "source_url",
               "etl_timestamp"
