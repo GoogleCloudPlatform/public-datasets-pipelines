@@ -16,10 +16,29 @@
 resources:
   - type: bigquery_table
     table_id: landsat_index
-    description: "Landsat_Index Dataset"
+    description: "Landsat index table"
+    time_partitioning:
+      type: MONTH
+      field: sensing_time
+      require_partition_filter: false
+    clustering:
+      - "spacecraft_id"
+      - "sensor_id"
+      - "wrs_path"
+      - "wrs_row"
+    deletion_protection: true
   - type: bigquery_table
     table_id: sentinel_2_index
-    description: "Sentinel_2_Index Dataset"
+    description: "Sentinel 2 table"
+    time_partitioning:
+      type: MONTH
+      field: sensing_time
+      require_partition_filter: false
+    clustering:
+      - "product_id"
+      - "mgrs_tile"
+      - "generation_time"
+      - "datatake_identifier"
 
 dag:
   airflow_version: 2
