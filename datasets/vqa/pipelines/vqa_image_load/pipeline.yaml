@@ -18,40 +18,24 @@ resources: ~
 dag:
   airflow_version: 2
   initialize:
-    dag_id: vqa
+    dag_id: vqa_image_load
     default_args:
       owner: "Google"
       depends_on_past: False
       start_date: '2021-03-01'
     max_active_runs: 1
-    schedule_interval: "0 1 0 0 6"
+    schedule_interval: "@once"
     catchup: False
     default_view: graph
 
   tasks:
-    - operator: "GKECreateClusterOperator"
-      args:
-        task_id: "create_cluster"
-        project_id: "{{ var.value.gcp_project }}"
-        location: "us-central1-c"
-        body:
-          name: pubds-vqa
-          initial_node_count: 2
-          network: "{{ var.value.vpc_network }}"
-          node_config:
-            machine_type: e2-standard-16
-            oauth_scopes:
-              - https://www.googleapis.com/auth/devstorage.read_write
-              - https://www.googleapis.com/auth/cloud-platform
-    - operator: "GKEStartPodOperator"
+    - operator: "KubernetesPodOperator"
       description: "Run VQA images load processes"
       args:
-        task_id: "extract_images"
-        name: "vqa.extract_annotations"
-        project_id: "{{ var.value.gcp_project }}"
-        location: "us-central1-c"
-        cluster_name: pubds-vqa
-        namespace: "default"
+        task_id: "load_images"
+        name: "vqa.load_annotations"
+        namespace: "composer"
+        service_account_name: "datasets"
         image_pull_policy: "Always"
         image: "{{ var.json.vqa.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -84,12 +68,6 @@ dag:
         resources:
           limit_memory: "16G"
           limit_cpu: "3"
-    - operator: "GKEDeleteClusterOperator"
-      args:
-        task_id: "delete_cluster"
-        project_id: "{{ var.value.gcp_project }}"
-        location: "us-central1-c"
-        name: pubds-vqa
 
   graph_paths:
-    - "create_cluster >> [ load_annotations, load_questions, load_complementary_pairs ] >> delete_cluster"
+    - "load_images"

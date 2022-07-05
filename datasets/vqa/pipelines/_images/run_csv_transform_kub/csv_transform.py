@@ -12,23 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from datetime import datetime
+import io
 import json
 import logging
 import os
 import pathlib
-import subprocess
 import typing
-
-# from shutil import move
-# from urllib.request import Request, urlopen
+from datetime import datetime
 from zipfile import ZipFile
-from zipfile import is_zipfile
-import io
+
 import pandas as pd
 import requests
-
-# from bs4 import BeautifulSoup
 from google.api_core.exceptions import NotFound
 from google.cloud import bigquery, storage
 
@@ -209,16 +203,13 @@ def execute_pipeline(
             source_zipfile_filename = os.path.split(url)[1]
             dest_zipfile_path = os.path.split(source_file)[0]
             source_zipfile = f"{dest_zipfile_path}/{source_zipfile_filename}"
-            # download_file(url, source_zipfile)
-            # upload_file_to_gcs(
-            #     file_path=source_zipfile,
-            #     target_gcs_bucket=dest_gcs_bucket,
-            #     target_gcs_path=dest_gcs_path,
-            # )
-            # os.system(f"gsutil cat gs://bucket/obj.csv.gz | zcat |  gsutil cp - gs://bucket/obj.csv")
-            # zip_decompress(source_zipfile, root_path, False)
-            # zip_extract_in_gcs(dest_gcs_bucket, f"{dest_gcs_path}/{source_zipfile_filename}")
-            import pdb; pdb.set_trace()
+            download_file(url, source_zipfile)
+            upload_file_to_gcs(
+                file_path=source_zipfile,
+                target_gcs_bucket=dest_gcs_bucket,
+                target_gcs_path=dest_gcs_path,
+            )
+            zip_extract_in_gcs(dest_gcs_bucket, f"{dest_gcs_path}/{source_zipfile_filename}")
 
 def extract_transform_file(
     url: str,
@@ -357,19 +348,36 @@ def zip_decompress(infile: str, topath: str, remove_zipfile: bool = False) -> No
         os.unlink(infile)
 
 
-def zip_extract_in_gcs(bucketname: str, zipfilename_with_path: str):
+def zip_extract_in_gcs(bucketname: str, zipfilename_with_path: str) -> None:
     logging.info(f"    ... Extracting {zipfilename_with_path} to {bucketname}")
-    # storage_client = storage.Client()
-    # bucket = storage_client.get_bucket(bucketname)
-    # destination_blob_pathname = zipfilename_with_path
-    # blob = bucket.blob(destination_blob_pathname)
-    # zipbytes = io.BytesIO(blob.download_as_string())
-    # if is_zipfile(zipbytes):
-    #     with ZipFile(zipbytes, 'r') as myzip:
-    #         for contentfilename in myzip.namelist():
-    #             contentfile = myzip.read(contentfilename)
-    #             blob = bucket.blob(zipfilename_with_path + "/" + contentfilename)
-    #             blob.upload_from_string(contentfile)
+    storage_client = storage.Client()
+    bucket = storage_client.get_bucket(bucketname)
+    blob = bucket.blob(zipfilename_with_path)
+    logging.info("        ... Reading zipfile data")
+    zipbytes = io.BytesIO(blob.download_as_string())
+    with ZipFile(zipbytes, 'r') as myzip:
+        file_count = len(myzip.infolist())
+        logging.info(f"            ... Count of files to extract: {file_count} ")
+        process_file_counter = 0
+        for contentfilename in myzip.namelist():
+            # if process_file_counter == 0 or (((process_file_counter / file_count) * 100 ) % 1 == 0):
+            progress_bar(process_file_counter, file_count)
+        #    import pdb; pdb.set_trace()
+            contentfile = myzip.read(contentfilename)
+            contentzippath = f"{zipfilename_with_path}/{contentfilename}"
+            blob = bucket.blob(contentzippath)
+            blob.upload_from_string(contentfile)
+            process_file_counter += 1
+        import pdb; pdb.set_trace()
+
+# for dir in zip_ref.namelist():
+#     if dir.endswith('/'):
+#         subdirs_list.append(os.path.basename(os.path.normpath(dir)))
+
+def progress_bar(progress: float, total: float) -> None:
+    percent = (100 * (progress / float(total)))
+    bar = '*' * int(percent) + '-' * (100 - int(percent))
+    print(f"\r|{bar}| {percent:.2f}", end="\r")
 
 
 def rename_headers(df: pd.DataFrame) -> pd.DataFrame:
