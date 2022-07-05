@@ -14,20 +14,18 @@
 
 
 import csv
-import datetime as dt
 import json
 import logging
 import os
 import pathlib
 import sys
 import typing
-from operator import index
+
 import numpy as np
 import pandas as pd
 import requests
 from google.api_core.exceptions import NotFound
 from google.cloud import bigquery, storage
-from requests.sessions import Session
 
 
 def main(
@@ -583,8 +581,8 @@ def append_batch_file(
     truncate_file = True
     with open(batch_file_path, "r") as data_file:
         if truncate_file:
-            target_file = open(target_file_path, "w+").close()
-        with open(target_file_path, "w") as target_file:
+            open(target_file_path, "w+").close()
+        with open(target_file_path, "w"):
             if skip_header:
                 logging.info(
                     f"Appending batch file {batch_file_path} to {target_file_path} with skip header"
