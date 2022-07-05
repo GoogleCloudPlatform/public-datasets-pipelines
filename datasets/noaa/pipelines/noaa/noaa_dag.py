@@ -27,7 +27,7 @@ with DAG(
     dag_id="noaa.noaa",
     default_args=default_args,
     max_active_runs=1,
-    schedule_interval="0 1 0 0 6",
+    schedule_interval="0 6 * * 1",
     catchup=False,
     default_view="graph",
 ) as dag:
@@ -38,7 +38,6 @@ with DAG(
         body={
             "name": "noaa",
             "initial_node_count": 2,
-            "network": "{{ var.value.vpc_network }}",
             "node_config": {
                 "machine_type": "e2-standard-16",
                 "oauth_scopes": [

@@ -1,5 +1,35 @@
 # Changelog
 
+## [4.2.0](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v4.1.1...v4.2.0) (2022-06-25)
+
+
+### Datasets
+
+* Onboard COVID-19 dataset from The New York Times ([#383](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/383)) ([9aac451](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/9aac4519bd732fa903113846b6438ffe2ab77e5c))
+* Onboard NOAA dataset ([#378](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/378)) ([02cc038](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/02cc038bc108ee96f33ff4b476de282cb9341fb9))
+* Onboard San Jose Translation dataset ([#377](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/377)) ([63ea9b9](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/63ea9b9e62bf74f1ebb9e70f52cb8a5298e85753))
+* Onboarding MIMIC-III dataset ([#389](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/389)) ([baf6b8d](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/baf6b8d2535f11743de30b462b84811070d50857))
+* [datasets/gbif] Add a query to uncover species found in one region only ([#388](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/388)) ([bd5a135](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/bd5a135ef3d67374ea15ebbb6a9f29472fedf79a))
+
+
+### Features
+
+* Manage local and remote Airflow variables during deployment ([#392](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/392)) ([f26db3a](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/f26db3a30806b17e8386e72b440a7909022f798a))
+
+## [4.1.1](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v4.1.0...v4.1.1) (2022-06-16)
+
+
+### Datasets
+
+* Onboard IMDB dataset ([#382](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/382)) ([8bf7065](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/8bf7065699ef9519778e640c5168fc876e1f8081))
+* Onboard MNIST dataset ([#379](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/379)) ([9809935](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/9809935936866332e425f278ec97b935bdf4a65d))
+* Onboard New York Taxi Trips dataset ([#381](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/381)) ([897ac3f](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/897ac3f3352e5dc40e08c5c80e223f877a406394))
+
+
+### Bug Fixes
+
+* Fixed variable reference to container images for New York dataset ([#380](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/380)) ([e4a6718](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/e4a671850d0eb2512f904d508d739c1aefa16e8c))
+
 ## [4.1.0](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v4.0.0...v4.1.0) (2022-06-10)
 
 
