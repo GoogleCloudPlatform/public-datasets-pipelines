@@ -52,16 +52,12 @@ def main(
         source_url=source_url,
         source_file=source_file,
         target_file=target_file,
-        load_file_list=load_file_list,
         project_id=project_id,
         dataset_id=dataset_id,
         target_gcs_bucket=target_gcs_bucket,
         target_gcs_path=target_gcs_path,
         schema_filepath=schema_path,
         schema_detail_data_filepath=schema_detail_data_path,
-        drop_dest_table=drop_dest_table,
-        remove_source_file=(remove_source_file == "Y"),
-        delete_target_file=(delete_target_file == "Y"),
         reorder_headers_list=reorder_headers_list,
         detail_data_headers_list=detail_data_headers_list,
     )
@@ -73,16 +69,12 @@ def execute_pipeline(
     source_url: typing.List[typing.List[str]],
     source_file: pathlib.Path,
     target_file: pathlib.Path,
-    load_file_list: typing.List[dict],
     project_id: str,
     dataset_id: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
     schema_filepath: str,
     schema_detail_data_filepath: str,
-    drop_dest_table: str,
-    remove_source_file: bool,
-    delete_target_file: bool,
     reorder_headers_list: typing.List[str],
     detail_data_headers_list: typing.List[str],
 ) -> None:
@@ -183,7 +175,6 @@ def execute_pipeline(
                         logging.info(
                             f"        ... {target_file_path_pairs} was not created."
                         )
-                    # import pdb; pdb.set_trace()
                     load_target_file(
                         target_file=target_file_path_pairs,
                         target_gcs_bucket=target_gcs_bucket,
@@ -219,8 +210,7 @@ def extract_transform_file(
     root_path: str,
     reorder_headers_list: typing.List[str],
     detail_data_headers_list: typing.List[str],
-    normalize_tag_source: str #,
-    # normalize_tag_dest: str,
+    normalize_tag_source: str
 ) -> bool:
     file_counter = 0
     for src in src_filename:
@@ -360,24 +350,18 @@ def zip_extract_in_gcs(bucketname: str, zipfilename_with_path: str) -> None:
         logging.info(f"            ... Count of files to extract: {file_count} ")
         process_file_counter = 0
         for contentfilename in myzip.namelist():
-            # if process_file_counter == 0 or (((process_file_counter / file_count) * 100 ) % 1 == 0):
             progress_bar(process_file_counter, file_count)
-        #    import pdb; pdb.set_trace()
             contentfile = myzip.read(contentfilename)
             contentzippath = f"{zipfilename_with_path}/{contentfilename}"
             blob = bucket.blob(contentzippath)
             blob.upload_from_string(contentfile)
             process_file_counter += 1
-        import pdb; pdb.set_trace()
-
-# for dir in zip_ref.namelist():
-#     if dir.endswith('/'):
-#         subdirs_list.append(os.path.basename(os.path.normpath(dir)))
 
 def progress_bar(progress: float, total: float) -> None:
     percent = (100 * (progress / float(total)))
     bar = '*' * int(percent) + '-' * (100 - int(percent))
-    print(f"\r|{bar}| {percent:.2f}", end="\r")
+    if percent % 10 == 0:
+        print(f"\r|{bar}| {percent:.2f}", end="\r")
 
 
 def rename_headers(df: pd.DataFrame) -> pd.DataFrame:
