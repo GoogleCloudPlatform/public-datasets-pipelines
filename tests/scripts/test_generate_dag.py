@@ -282,8 +282,8 @@ def test_check_custom_yaml_loader(
         (pipeline_path / "pipeline.yaml")
         .read_text()
         .replace(
-            f'image: "{{{{ var.json.DATASET_FOLDER_NAME.container_registry.IMAGE_REPOSITORY }}}}"',
-            f"image: !IMAGE IMAGE_REPOSITORY",
+            'image: "{{{{ var.json.DATASET_FOLDER_NAME.container_registry.IMAGE_REPOSITORY }}}}"',
+            "image: !IMAGE IMAGE_REPOSITORY",
         )
     )
 
