@@ -152,9 +152,7 @@ def check_and_configure_airflow_variables(
         local_vars,
         composer_env,
         composer_region,
-        composer_bucket,
         dataset_id,
-        cwd,
         vars_json_path,
     )
     if overwrite_remote_vars:
@@ -196,18 +194,16 @@ def get_airflow_var_from_composer_env(
         return
     else:
         print(
-            f"Airflow variable `{dataset_id}` exists in Composer environment `{composer_env}`"
+            f"Airflow variable `{dataset_id}` found in Composer environment `{composer_env}`"
         )
         return {dataset_id: json.loads(result.stdout.strip())}
 
 
 def compare_and_set_airflow_variables(
-    local_vars: dict,
+    local_vars: typing.Union[dict, None],
     composer_env: str,
     composer_region: str,
-    composer_bucket: str,
     dataset_id: str,
-    cwd: pathlib.Path,
     vars_json_path: pathlib.Path,
 ) -> bool:
     if not local_vars:
@@ -257,6 +253,10 @@ def compare_and_set_airflow_variables(
         vars_to_use = local_vars
         import_to_composer = True
     else:  # remote vars exists and local vars is None
+        print(
+            f"Setting local variable `{dataset_id}` to\n"
+            f"{json.dumps(remote_vars, indent=2)}\n\n"
+        )
         vars_to_use = remote_vars
         import_to_composer = False
 
