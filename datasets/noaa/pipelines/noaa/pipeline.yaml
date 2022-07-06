@@ -48,7 +48,7 @@ dag:
       depends_on_past: False
       start_date: '2021-03-01'
     max_active_runs: 1
-    schedule_interval: "0 6 * * 1"  # 06:00 on Monday
+    schedule_interval: "* 1 * * 6"
     catchup: False
     default_view: graph
 
@@ -355,7 +355,7 @@ dag:
               "state",
               "name",
               "gsn_flag",
-              "hcn_cm_flag",
+              "hcn_crn_flag",
               "wmoid",
               "source_url",
               "etl_timestamp"
@@ -369,7 +369,7 @@ dag:
               "state": ["textdata", "38", "40"],
               "name": ["textdata", "41", "71"],
               "gsn_flag": ["textdata", "72", "75"],
-              "hcn_cm_flag": ["textdata", "76", "79"],
+              "hcn_crn_flag": ["textdata", "76", "79"],
               "wmoid": ["textdata", "80", "85"]
             }
         resources:
