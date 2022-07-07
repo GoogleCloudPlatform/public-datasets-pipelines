@@ -79,7 +79,14 @@ def execute_pipeline(
     detail_data_headers_list: typing.List[str],
 ) -> None:
     if "Extract " in pipeline_name:
-        for subtask, url, table_name, schema_filepath, schema_detail_data_filepath, src_filename in source_url:
+        for (
+            subtask,
+            url,
+            table_name,
+            schema_filepath,
+            schema_detail_data_filepath,
+            src_filename,
+        ) in source_url:
             logging.info(f"... Executing Extraction Process for {subtask}")
             source_zipfile = str.replace(str(source_file), ".csv", f"{table_name}.zip")
             root_path = os.path.split(source_zipfile)[0]
@@ -90,7 +97,7 @@ def execute_pipeline(
             zip_decompress(source_zipfile, root_path, False)
             if pipeline_name == "Extract Annotations":
                 normalize_tag_source = "annotations"
-                normalize_tag_dest="annot_norm"
+                normalize_tag_dest = "annot_norm"
                 target_file_path_detail = str.replace(
                     str(target_file), ".csv", f"_{table_name}_{normalize_tag_dest}.csv"
                 )
@@ -102,7 +109,7 @@ def execute_pipeline(
                     root_path=root_path,
                     reorder_headers_list=reorder_headers_list,
                     detail_data_headers_list=detail_data_headers_list,
-                    normalize_tag_source=normalize_tag_source
+                    normalize_tag_source=normalize_tag_source,
                 )
                 load_target_file(
                     target_file=target_file_path_main,
@@ -112,7 +119,7 @@ def execute_pipeline(
                     dataset_id=dataset_id,
                     destination_table=table_name,
                     schema_filepath=schema_filepath,
-                    source_url=url
+                    source_url=url,
                 )
                 load_target_file(
                     target_file=target_file_path_detail,
@@ -122,11 +129,11 @@ def execute_pipeline(
                     dataset_id=dataset_id,
                     destination_table=f"{table_name}_detail",
                     schema_filepath=schema_detail_data_filepath,
-                    source_url=url
+                    source_url=url,
                 )
             elif pipeline_name == "Extract Questions":
                 normalize_tag_source = "questions"
-                normalize_tag_dest="questions"
+                normalize_tag_dest = "questions"
                 target_file_path_detail = str.replace(
                     str(target_file), ".csv", f"_{table_name}_{normalize_tag_dest}.csv"
                 )
@@ -138,7 +145,7 @@ def execute_pipeline(
                     root_path=root_path,
                     reorder_headers_list=reorder_headers_list,
                     detail_data_headers_list=detail_data_headers_list,
-                    normalize_tag_source=normalize_tag_source
+                    normalize_tag_source=normalize_tag_source,
                 )
                 load_target_file(
                     target_file=target_file_path_main,
@@ -148,7 +155,7 @@ def execute_pipeline(
                     dataset_id=dataset_id,
                     destination_table=table_name,
                     schema_filepath=schema_filepath,
-                    source_url=url
+                    source_url=url,
                 )
                 load_target_file(
                     target_file=target_file_path_detail,
@@ -158,14 +165,18 @@ def execute_pipeline(
                     dataset_id=dataset_id,
                     destination_table=f"{table_name}_detail",
                     schema_filepath=schema_detail_data_filepath,
-                    source_url=url
+                    source_url=url,
                 )
             elif pipeline_name == "Extract Complementary Pairs":
                 for src in src_filename:
                     logging.info(f"    ... Processing file {root_path}/{src}")
-                    target_file_path_pairs = str.replace( str(target_file), ".csv", f"_{table_name}_pairs.csv")
+                    target_file_path_pairs = str.replace(
+                        str(target_file), ".csv", f"_{table_name}_pairs.csv"
+                    )
                     if (
-                        convert_comp_pairs_file_to_csv(f"{root_path}/{src}", target_file_path_pairs, url)
+                        convert_comp_pairs_file_to_csv(
+                            f"{root_path}/{src}", target_file_path_pairs, url
+                        )
                         != ""
                     ):
                         logging.info(
@@ -183,7 +194,7 @@ def execute_pipeline(
                         dataset_id=dataset_id,
                         destination_table=f"{table_name}",
                         schema_filepath=schema_filepath,
-                        source_url=url
+                        source_url=url,
                     )
             else:
                 pass
@@ -200,7 +211,10 @@ def execute_pipeline(
                 target_gcs_bucket=dest_gcs_bucket,
                 target_gcs_path=dest_gcs_path,
             )
-            zip_extract_in_gcs(dest_gcs_bucket, f"{dest_gcs_path}/{source_zipfile_filename}")
+            zip_extract_in_gcs(
+                dest_gcs_bucket, f"{dest_gcs_path}/{source_zipfile_filename}"
+            )
+
 
 def extract_transform_file(
     url: str,
@@ -210,7 +224,7 @@ def extract_transform_file(
     root_path: str,
     reorder_headers_list: typing.List[str],
     detail_data_headers_list: typing.List[str],
-    normalize_tag_source: str
+    normalize_tag_source: str,
 ) -> bool:
     file_counter = 0
     for src in src_filename:
@@ -218,9 +232,9 @@ def extract_transform_file(
         data = json.load(open(f"{root_path}/{src}"))
         df_main = pd.json_normalize(data)
         df_detail = pd.DataFrame()
-        df_detail = df_main[normalize_tag_source].apply(
-            lambda x: pd.json_normalize(x)
-        )[0][:][detail_data_headers_list]
+        df_detail = df_main[normalize_tag_source].apply(lambda x: pd.json_normalize(x))[
+            0
+        ][:][detail_data_headers_list]
         df_main = rename_headers(df_main)
         df_main = df_main[reorder_headers_list]
         df_main = add_metadata_cols(df_main, url)
@@ -259,7 +273,7 @@ def load_target_file(
     dataset_id: str,
     destination_table: str,
     schema_filepath: str,
-    source_url: str
+    source_url: str,
 ) -> None:
     if os.path.exists(target_file):
         upload_file_to_gcs(
@@ -287,7 +301,7 @@ def load_target_file(
                 table_id=destination_table,
                 file_path=target_file,
                 truncate_table=True,
-                field_delimiter="|"
+                field_delimiter="|",
             )
         else:
             error_msg = f"Error: Data was not loaded because the destination table {project_id}.{dataset_id}.{destination_table} does not exist and/or could not be created."
@@ -298,19 +312,22 @@ def load_target_file(
         )
 
 
-def convert_comp_pairs_file_to_csv(src_json: str, destination_csv: str, source_url: str = "") -> str:
-    source_url = str.replace(source_url, "/", "\/")
-    etl_timestamp = datetime.today().isoformat().replace('T', ' ')
-    command = ( f"sed -i -e 's/\\], \\[/\\n/g' {src_json} "
-                f"&& sed -i -e 's/,/\\|/g' {src_json} "
-                f"&& sed -i -e 's/\\[//g' {src_json} "
-                f"&& sed -i -e 's/\\]//g' {src_json} "
-                f"&& sed -i -e 's/ //g' {src_json} "
-                f"&& sed -i -e 's/$/|{source_url}/g' {src_json} "
-                f"&& sed -i -e 's/$/|{etl_timestamp}/g' {src_json} "
-                f"&& echo 'question_id_1|question_id_2|source_url|etl_timestamp' > {destination_csv}"
-                f"&& cat {src_json} >> {destination_csv}"
-                )
+def convert_comp_pairs_file_to_csv(
+    src_json: str, destination_csv: str, source_url: str = ""
+) -> str:
+    source_url = str.replace(source_url, "/", "\\/")
+    etl_timestamp = datetime.today().isoformat().replace("T", " ")
+    command = (
+        f"sed -i -e 's/\\], \\[/\\n/g' {src_json} "
+        f"&& sed -i -e 's/,/\\|/g' {src_json} "
+        f"&& sed -i -e 's/\\[//g' {src_json} "
+        f"&& sed -i -e 's/\\]//g' {src_json} "
+        f"&& sed -i -e 's/ //g' {src_json} "
+        f"&& sed -i -e 's/$/|{source_url}/g' {src_json} "
+        f"&& sed -i -e 's/$/|{etl_timestamp}/g' {src_json} "
+        f"&& echo 'question_id_1|question_id_2|source_url|etl_timestamp' > {destination_csv}"
+        f"&& cat {src_json} >> {destination_csv}"
+    )
     logging.info(command)
     os.system(command)
     if os.path.exists(destination_csv):
@@ -345,7 +362,7 @@ def zip_extract_in_gcs(bucketname: str, zipfilename_with_path: str) -> None:
     blob = bucket.blob(zipfilename_with_path)
     logging.info("        ... Reading zipfile data")
     zipbytes = io.BytesIO(blob.download_as_string())
-    with ZipFile(zipbytes, 'r') as myzip:
+    with ZipFile(zipbytes, "r") as myzip:
         file_count = len(myzip.infolist())
         logging.info(f"            ... Count of files to extract: {file_count} ")
         process_file_counter = 0
@@ -357,9 +374,10 @@ def zip_extract_in_gcs(bucketname: str, zipfilename_with_path: str) -> None:
             blob.upload_from_string(contentfile)
             process_file_counter += 1
 
+
 def progress_bar(progress: float, total: float) -> None:
-    percent = (100 * (progress / float(total)))
-    bar = '*' * int(percent) + '-' * (100 - int(percent))
+    percent = 100 * (progress / float(total))
+    bar = "*" * int(percent) + "-" * (100 - int(percent))
     if percent % 10 == 0:
         print(f"\r|{bar}| {percent:.2f}", end="\r")
 
@@ -556,9 +574,7 @@ def upload_file_to_gcs(
         target_path = os.path.split(target_gcs_path)[0]
         filename = os.path.split(file_path)[1]
         target_filepath = f"{target_path}/{filename}"
-        logging.info(
-            f"Uploading output file to gs://{target_filepath}"
-        )
+        logging.info(f"Uploading output file to gs://{target_filepath}")
         storage_client = storage.Client()
         bucket = storage_client.bucket(target_gcs_bucket)
         blob = bucket.blob(target_filepath)
