@@ -48,7 +48,11 @@ with DAG(
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/vqa/data_output.csv",
         },
-        resources={"limit_memory": "16G", "limit_cpu": "3"},
+        resources={
+            "request_ephemeral_storage": "32G",
+            "limit_memory": "16G",
+            "limit_cpu": "3",
+        },
     )
 
     load_images
