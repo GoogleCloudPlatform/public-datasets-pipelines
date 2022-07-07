@@ -1,5 +1,21 @@
 # Changelog
 
+## [4.2.0](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v4.1.1...v4.2.0) (2022-06-25)
+
+
+### Datasets
+
+* Onboard COVID-19 dataset from The New York Times ([#383](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/383)) ([9aac451](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/9aac4519bd732fa903113846b6438ffe2ab77e5c))
+* Onboard NOAA dataset ([#378](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/378)) ([02cc038](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/02cc038bc108ee96f33ff4b476de282cb9341fb9))
+* Onboard San Jose Translation dataset ([#377](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/377)) ([63ea9b9](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/63ea9b9e62bf74f1ebb9e70f52cb8a5298e85753))
+* Onboarding MIMIC-III dataset ([#389](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/389)) ([baf6b8d](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/baf6b8d2535f11743de30b462b84811070d50857))
+* [datasets/gbif] Add a query to uncover species found in one region only ([#388](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/388)) ([bd5a135](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/bd5a135ef3d67374ea15ebbb6a9f29472fedf79a))
+
+
+### Features
+
+* Manage local and remote Airflow variables during deployment ([#392](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/392)) ([f26db3a](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/f26db3a30806b17e8386e72b440a7909022f798a))
+
 ## [4.1.1](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v4.1.0...v4.1.1) (2022-06-16)
 
 

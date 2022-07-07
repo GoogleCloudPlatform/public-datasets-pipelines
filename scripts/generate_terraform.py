@@ -50,6 +50,7 @@ def main(
     tf_state_bucket: str,
     tf_state_prefix: str,
     tf_apply: bool = False,
+    format_code: bool = True,
 ):
     validate_bucket_name(bucket_name_prefix)
 
@@ -77,6 +78,12 @@ def main(
         env_path,
         infra_vars,
     )
+
+    if format_code and (env_path / "datasets" / dataset_id / "infra").exists():
+        terraform_fmt(env_path / "datasets" / dataset_id / "infra")
+
+    if format_code and (DATASETS_PATH / dataset_id / "infra").exists():
+        terraform_fmt(DATASETS_PATH / dataset_id / "infra")
 
     if tf_apply:
         actuate_terraform_resources(dataset_id, env_path)
@@ -215,7 +222,6 @@ def generate_tfvars_file(
 
     target_path = env_path / "datasets" / dataset_id / "infra" / "terraform.tfvars"
     write_to_file(contents + "\n", target_path)
-    terraform_fmt(target_path)
     print_created_files([target_path])
 
 
@@ -305,7 +311,6 @@ def create_file_in_dir_tree(
 
         target_path = prefix / filename
         write_to_file(contents + "\n", target_path)
-        terraform_fmt(target_path)
         filepaths.append(target_path)
 
     print_created_files(filepaths)
