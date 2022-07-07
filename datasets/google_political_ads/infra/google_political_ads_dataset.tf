@@ -21,6 +21,20 @@ resource "google_bigquery_dataset" "google_political_ads" {
   description = "Overview: This dataset contains information on how much money is spent by verified advertisers on political advertising across Google Ad Services. In addition, insights on demographic targeting used in political ad campaigns by these advertisers are also provided. Finally, links to the actual political ad in the Google Transparency Report (https://adstransparency.google.com) are provided. Data for an election expires 7 years after the election. After this point, the data are removed from the dataset and are no longer available.\n\nUpdate frequency: Daily\n\nDataset source: Transparency Report: Political Advertising on Google\n\nTerms of use:\n\nSee the GCP Marketplace listing for more details and sample queries: https://console.cloud.google.com/marketplace/details/transparency-report/google-political-ads\n\nFor more information see:\nThe Political Advertising on Google Transparency Report at\nhttps://adstransparency.google.com\n\nThe supporting Frequently Asked Questions at\nhttps://support.google.com/transparencyreport/answer/9575640?hl=en\u0026ref_topic=7295796"
 }
 
+data "google_iam_policy" "bq_ds__google_political_ads" {
+  dynamic "binding" {
+    for_each = var.iam_policies["bigquery_datasets"]["google_political_ads"]
+    content {
+      role    = binding.value["role"]
+      members = binding.value["members"]
+    }
+  }
+}
+
+resource "google_bigquery_dataset_iam_policy" "google_political_ads" {
+  dataset_id  = google_bigquery_dataset.google_political_ads.dataset_id
+  policy_data = data.google_iam_policy.bq_ds__google_political_ads.policy_data
+}
 output "bigquery_dataset-google_political_ads-dataset_id" {
   value = google_bigquery_dataset.google_political_ads.dataset_id
 }

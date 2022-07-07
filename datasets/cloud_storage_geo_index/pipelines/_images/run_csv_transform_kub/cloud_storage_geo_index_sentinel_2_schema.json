@@ -1,0 +1,84 @@
+[
+    {
+        "name": "granule_id",
+        "type": "STRING",
+        "mode": "REQUIRED"
+    },
+    {
+        "name": "product_id",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "datatake_identifier",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "mgrs_tile",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "sensing_time",
+        "type": "TIMESTAMP",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "geometric_quality_flag",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "generation_time",
+        "type": "TIMESTAMP",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "north_lat",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "south_lat",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "west_lon",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "east_lon",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "base_url",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "total_size",
+        "type": "INTEGER",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "cloud_cover",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "source_url",
+        "type": "STRING",
+        "description": "Source ",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "etl_timestamp",
+        "type": "TIMESTAMP",
+        "description": "Load time for this data row",
+        "mode": "NULLABLE"
+    }
+]

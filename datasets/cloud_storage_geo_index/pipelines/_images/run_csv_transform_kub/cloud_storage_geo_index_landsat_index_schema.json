@@ -1,0 +1,104 @@
+[
+    {
+        "name": "scene_id",
+        "type": "STRING",
+        "mode": "REQUIRED"
+    },
+    {
+        "name": "product_id",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "spacecraft_id",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "sensor_id",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "date_acquired",
+        "type": "DATE",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "sensing_time",
+        "type": "TIMESTAMP",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "collection_number",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "collection_category",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "data_type",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "wrs_path",
+        "type": "INTEGER",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "wrs_row",
+        "type": "INTEGER",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "cloud_cover",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "north_lat",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "south_lat",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "west_lon",
+        "type": "FLOAt",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "east_lon",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "total_size",
+        "type": "INTEGER",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "base_url",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "source_url",
+        "type": "STRING",
+        "description": "Source ",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "etl_timestamp",
+        "type": "TIMESTAMP",
+        "description": "Load time for this data row",
+        "mode": "NULLABLE"
+    }
+]
