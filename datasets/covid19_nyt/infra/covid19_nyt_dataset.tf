@@ -15,12 +15,12 @@
  */
 
 
-variable "project_id" {}
-variable "bucket_name_prefix" {}
-variable "impersonating_acct" {}
-variable "region" {}
-variable "env" {}
-variable "iam_policies" {
-  default = {}
+resource "google_bigquery_dataset" "covid19_nyt" {
+  dataset_id  = "covid19_nyt"
+  project     = var.project_id
+  description = "Data on coronavirus cases and deaths in the U.S. published by The New York Times.\n\nSourced from https://github.com/nytimes/covid-19-data."
 }
 
+output "bigquery_dataset-covid19_nyt-dataset_id" {
+  value = google_bigquery_dataset.covid19_nyt.dataset_id
+}

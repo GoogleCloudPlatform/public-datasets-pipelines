@@ -27,7 +27,7 @@ with DAG(
     dag_id="noaa.noaa",
     default_args=default_args,
     max_active_runs=1,
-    schedule_interval="0 1 0 0 6",
+    schedule_interval="* 1 * * 6",
     catchup=False,
     default_view="graph",
 ) as dag:
@@ -38,7 +38,6 @@ with DAG(
         body={
             "name": "noaa",
             "initial_node_count": 2,
-            "network": "{{ var.value.vpc_network }}",
             "node_config": {
                 "machine_type": "e2-standard-16",
                 "oauth_scopes": [
@@ -228,8 +227,8 @@ with DAG(
             "DELETE_TARGET_FILE": "Y",
             "INPUT_CSV_HEADERS": '[\n  "textdata"\n]',
             "DATA_DTYPES": '{\n  "textdata": "str"\n}',
-            "REORDER_HEADERS_LIST": '[\n  "id",\n  "latitude",\n  "longitude",\n  "elevation",\n  "state",\n  "name",\n  "gsn_flag",\n  "hcn_cm_flag",\n  "wmoid",\n  "source_url",\n  "etl_timestamp"\n]',
-            "SLICE_COLUMN_LIST": '{\n  "id": ["textdata", "0", "11"],\n  "latitude": ["textdata", "12", "20"],\n  "longitude": ["textdata", "21", "30"],\n  "elevation": ["textdata", "31", "37"],\n  "state": ["textdata", "38", "40"],\n  "name": ["textdata", "41", "71"],\n  "gsn_flag": ["textdata", "72", "75"],\n  "hcn_cm_flag": ["textdata", "76", "79"],\n  "wmoid": ["textdata", "80", "85"]\n}',
+            "REORDER_HEADERS_LIST": '[\n  "id",\n  "latitude",\n  "longitude",\n  "elevation",\n  "state",\n  "name",\n  "gsn_flag",\n  "hcn_crn_flag",\n  "wmoid",\n  "source_url",\n  "etl_timestamp"\n]',
+            "SLICE_COLUMN_LIST": '{\n  "id": ["textdata", "0", "11"],\n  "latitude": ["textdata", "12", "20"],\n  "longitude": ["textdata", "21", "30"],\n  "elevation": ["textdata", "31", "37"],\n  "state": ["textdata", "38", "40"],\n  "name": ["textdata", "41", "71"],\n  "gsn_flag": ["textdata", "72", "75"],\n  "hcn_crn_flag": ["textdata", "76", "79"],\n  "wmoid": ["textdata", "80", "85"]\n}',
         },
         resources={"request_ephemeral_storage": "4G", "limit_cpu": "3"},
     )

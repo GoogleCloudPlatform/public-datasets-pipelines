@@ -15,12 +15,12 @@
  */
 
 
-variable "project_id" {}
-variable "bucket_name_prefix" {}
-variable "impersonating_acct" {}
-variable "region" {}
-variable "env" {}
-variable "iam_policies" {
-  default = {}
+resource "google_bigquery_dataset" "usa_cities" {
+  dataset_id  = "usa_cities"
+  project     = var.project_id
+  description = "Tables for different information about cities in USA."
 }
 
+output "bigquery_dataset-usa_cities-dataset_id" {
+  value = google_bigquery_dataset.usa_cities.dataset_id
+}

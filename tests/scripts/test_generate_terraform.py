@@ -169,6 +169,7 @@ def test_main_generates_tf_files(
         env,
         tf_state_bucket,
         tf_state_prefix,
+        format_code=False,
     )
 
     for path_prefix in (
@@ -218,6 +219,7 @@ def test_main_without_tf_remote_state_generates_tf_files_except_backend_tf(
         env,
         None,
         None,
+        format_code=False,
     )
 
     for path_prefix in (
@@ -272,6 +274,7 @@ def test_main_with_multiple_pipelines(
         env,
         tf_state_bucket,
         tf_state_prefix,
+        format_code=False,
     )
 
     for path_prefix in (
@@ -343,6 +346,7 @@ def test_main_with_multiple_bq_dataset_ids(
         env,
         None,
         None,
+        format_code=False,
     )
 
     for path_prefix in (
@@ -400,6 +404,7 @@ def test_dataset_without_any_pipelines(
         env,
         tf_state_bucket,
         tf_state_prefix,
+        format_code=False,
     )
 
     for path_prefix in (
@@ -471,6 +476,7 @@ def test_generated_tf_files_contain_license_headers(
         env,
         tf_state_bucket,
         tf_state_prefix,
+        format_code=False,
     )
 
     license_header = pathlib.Path(
@@ -519,6 +525,7 @@ def test_dataset_tf_file_contains_description_when_specified(
         env,
         None,
         None,
+        format_code=False,
     )
 
     config = yaml.load(open(dataset_path / "pipelines" / "dataset.yaml"))
@@ -577,6 +584,7 @@ def test_bq_dataset_can_have_a_description_with_newlines_and_quotes(
         env,
         None,
         None,
+        format_code=False,
     )
 
     env_dataset_path = ENV_DATASETS_PATH / dataset_path.name
@@ -872,7 +880,9 @@ def test_infra_vars_without_iam_policies_generate_tf_without_iam_policies(
     }
     yaml.dump(env_vars, dataset_path / f".vars.{env}.yaml")
 
-    generate_terraform.main(dataset_path.name, "", "", "", "", env, "", "")
+    generate_terraform.main(
+        dataset_path.name, "", "", "", "", env, "", "", format_code=False
+    )
 
     dataset_tf_file = dataset_path / "infra" / f"{dataset_path.name}_dataset.tf"
     assert dataset_tf_file.exists()
@@ -969,6 +979,7 @@ def test_bq_table_can_have_a_description_with_newlines_and_quotes(
         env,
         None,
         None,
+        format_code=False,
     )
 
     env_dataset_path = ENV_DATASETS_PATH / dataset_path.name
@@ -1084,6 +1095,7 @@ def test_bucket_prefixes_must_use_hyphens_instead_of_underscores(
                 env,
                 tf_state_bucket,
                 tf_state_prefix,
+                format_code=False,
             )
 
 
@@ -1107,6 +1119,7 @@ def test_validation_on_generated_tf_files_in_dot_env_dir(
         env,
         None,
         None,
+        format_code=False,
     )
     env_dataset_path = ENV_DATASETS_PATH / dataset_path.name
 
@@ -1134,6 +1147,7 @@ def test_validation_on_generated_tf_files_in_project_dir(
         env,
         None,
         None,
+        format_code=False,
     )
     project_dataset_path = generate_terraform.DATASETS_PATH / dataset_path.name
 
