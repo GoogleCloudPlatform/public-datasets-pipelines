@@ -49,11 +49,9 @@ def main(
     input_csv_headers: typing.List[str],
     output_csv_headers: typing.List[str],
 ) -> None:
-
     logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
     logging.info(f"{pipeline_name} process started")
-
     execute_pipeline(
         source_file=source_file,
         chunksize=chunksize,
