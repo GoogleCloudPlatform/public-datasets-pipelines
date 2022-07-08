@@ -16,7 +16,41 @@
 resources:
   - type: bigquery_table
     table_id: reviews
-    description: "Reviews table"
+    description: |
+      Large Movie Review Dataset v1.0
+
+      Overview
+
+      This dataset contains movie reviews along with their associated binary
+      sentiment polarity labels. It is intended to serve as a benchmark for
+      sentiment classification. This document outlines how the dataset was
+      gathered, and how to use the files provided.
+
+      Dataset
+
+      The core dataset contains 50,000 reviews split evenly into 25k train
+      and 25k test sets. The overall distribution of labels is balanced (25k
+      pos and 25k neg). We also include an additional 50,000 unlabeled
+      documents for unsupervised learning.
+
+      In the entire collection, no more than 30 reviews are allowed for any
+      given movie because reviews for the same movie tend to have correlated
+      ratings. Further, the train and test sets contain a disjoint set of
+      movies, so no significant performance is obtained by memorizing
+      movie-unique terms and their associated with observed labels.  In the
+      labeled train/test sets, a negative review has a score <= 4 out of 10,
+      and a positive review has a score >= 7 out of 10. Thus reviews with
+      more neutral ratings are not included in the train/test sets. In the
+      unsupervised set, reviews of any rating are included and there are an
+      even number of reviews > 5 and <= 5.
+
+      Columns
+      split - it has test(25K) / train(75K) records.
+      label - Negative(25K)     --> test(12.5K) and train (12.5K)
+              Positive(25K)     --> test(12.5K) and train (12.5K)
+              Unsupervised(50K) --> train(50K)
+
+      For Unsupervised label, reviewer_rating is NaN.
 
 dag:
   airflow_version: 2
@@ -42,17 +76,23 @@ dag:
         image_pull_policy: "Always"
         image: "{{ var.json.imdb.container_registry.run_csv_transform_kub }}"
         env_vars:
-          SOURCE_URL: "https://ai.stanford.edu/~amaas/data/sentiment/aclImdb_v1.tar.gz"
-          SOURCE_FILE: "./files/data.tar.gz"
+          SOURCE_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          SOURCE_GCS_OBJECT: "data/imdb/reviews/aclImdb_v1.tar.gz"
+          SOURCE_URL: >-
+            {"title_link": "https://datasets.imdbws.com/title.basics.tsv.gz"}
+          SOURCE_FILE: >-
+            {"user_review_data": "./files/aclImdb_v1.tar.gz",
+            "title_data": "./files/title_basics.tsv.gz"}
           EXTRACT_HERE: "./files"
-          TARGET_FILE: "./files/data_output.csv"
+          TARGET_CSV_FILE: "./files/data_output.csv"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/imdb/reviews/data_output.csv"
           PIPELINE_NAME: "reviews"
           CSV_HEADERS: >-
-            ["review", "label"]
+            ["review", "split", "label", "movie_id", "reviewer_rating", "movie_url", "title"]
           RENAME_MAPPINGS: >-
-            {"review": "review", "label": "label"}
+            {"review": "review", "split": "split", "label": "label", "movie_id": "movie_id",
+            "reviewer_rating": "reviewer_rating", "movie_url": "movie_url", "title": "title"}
         resources:
           request_memory: "4G"
           request_cpu: "1"
@@ -71,11 +111,31 @@ dag:
         schema_fields:
           - name: "review"
             type: "STRING"
-            description: "User review's in IMDb"
+            description: "User review's in IMDb."
+            mode: "NULLABLE"
+          - name: "split"
+            type: "STRING"
+            description: "It has two categories test and train."
             mode: "NULLABLE"
           - name: "label"
             type: "STRING"
-            description: "Type of the review"
+            description: "It has three categories Negative, Positive and Unsupervised. All Unsupervised label has only split equals-to train."
+            mode: "NULLABLE"
+          - name: "movie_id"
+            type: "STRING"
+            description: "UniqueId for the movie in IMDb."
+            mode: "NULLABLE"
+          - name: "reviewer_rating"
+            type: "INTEGER"
+            description: "Reviewer rating for particular movie in IMDb. For train-unsupervised, reviewer_rating is NULL."
+            mode: "NULLABLE"
+          - name: "movie_url"
+            type: "STRING"
+            description: "Movie url for corresponding movie_id"
+            mode: "NULLABLE"
+          - name: "title"
+            type: "STRING"
+            description: "Title of the movie for corresponding movie_id"
             mode: "NULLABLE"
 
   graph_paths:
