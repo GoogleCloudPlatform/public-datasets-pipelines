@@ -19,6 +19,7 @@ import os
 import pathlib
 import sys
 import typing
+
 import numpy as np
 import pandas as pd
 import requests
