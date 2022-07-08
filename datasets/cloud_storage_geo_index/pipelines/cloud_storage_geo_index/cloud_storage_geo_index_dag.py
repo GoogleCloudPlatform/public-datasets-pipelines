@@ -27,7 +27,7 @@ with DAG(
     dag_id="cloud_storage_geo_index.cloud_storage_geo_index",
     default_args=default_args,
     max_active_runs=1,
-    schedule_interval="0 1 0 0 6",
+    schedule_interval="0 6 * * 1",
     catchup=False,
     default_view="graph",
 ) as dag:
@@ -89,9 +89,9 @@ with DAG(
     )
 
     # Run CSV transform within kubernetes pod
-    sentinel_2 = kubernetes_engine.GKEStartPodOperator(
-        task_id="sentinel_2",
-        name="sentinel_2",
+    sentinel_2_index = kubernetes_engine.GKEStartPodOperator(
+        task_id="sentinel_2_index",
+        name="sentinel_2_index",
         project_id="{{ var.value.gcp_project }}",
         location="us-central1-c",
         cluster_name="cloud-storage-geo-index",
@@ -109,7 +109,7 @@ with DAG(
             "DATASET_ID": "cloud_storage_geo_index",
             "TABLE_ID": "sentinel_2_index",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
-            "TARGET_GCS_PATH": "data/cloud_storage_geo_index/sentinel_2/data_output.csv",
+            "TARGET_GCS_PATH": "data/cloud_storage_geo_index/sentinel_2_index/data_output.csv",
             "SCHEMA_PATH": "data/cloud_storage_geo_index/schema/cloud_storage_geo_index_sentinel_2_schema.json",
             "DROP_DEST_TABLE": "Y",
             "INPUT_FIELD_DELIMITER": ",",
@@ -133,4 +133,4 @@ with DAG(
         name="cloud-storage-geo-index",
     )
 
-    create_cluster >> [landsat_index, sentinel_2] >> delete_cluster
+    create_cluster >> [landsat_index, sentinel_2_index] >> delete_cluster

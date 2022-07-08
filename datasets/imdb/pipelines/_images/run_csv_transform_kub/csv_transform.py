@@ -27,6 +27,7 @@ import pandas as pd
 import requests
 from google.cloud import storage
 
+
 TEST_TRAIN = ["test", "train"]
 NEG_POS_UNSUP = ["neg", "pos", "unsup"]
 REVIEW_COLS = ["review", "split", "label", "id_tag", "path", "reviewer_rating"]
@@ -50,7 +51,6 @@ def main(
     table_name: str,
     chunk_size: int,
 ) -> None:
-
     logging.info(
         f"IMDb Dataset {pipeline_name} pipeline process started at "
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))

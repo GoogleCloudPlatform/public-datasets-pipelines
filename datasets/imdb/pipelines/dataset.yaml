@@ -16,7 +16,7 @@ dataset:
   friendly_name: imdb
   description: IMDb reviews dataset
   dataset_sources: ~
-  terms_of_use: ~
+  terms_of_use: "When using this dataset, please cite our ACL 2011 paper [ https://ai.stanford.edu/~amaas/papers/wvSent_acl2011.bib ]."
 
 resources:
   - type: bigquery_dataset
