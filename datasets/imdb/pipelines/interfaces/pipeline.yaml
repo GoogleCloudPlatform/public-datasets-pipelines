@@ -43,7 +43,6 @@ resources:
     table_id: title_ratings
     description: "Contains the IMDb rating and votes information for titles."
 
-
 dag:
   airflow_version: 2
   initialize:
