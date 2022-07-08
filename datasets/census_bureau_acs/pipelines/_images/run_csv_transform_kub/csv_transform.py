@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import csv
 import json
 import logging
@@ -20,13 +19,11 @@ import os
 import pathlib
 import sys
 import typing
-
 import numpy as np
 import pandas as pd
 import requests
 from google.api_core.exceptions import NotFound
 from google.cloud import bigquery, storage
-
 
 def main(
     source_url: str,
@@ -53,7 +50,6 @@ def main(
 
     logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
-
     logging.info(f"{pipeline_name} process started")
 
     execute_pipeline(
@@ -78,7 +74,6 @@ def main(
         schema_path=schema_path,
     )
     logging.info(f"{pipeline_name} --> ETL process completed")
-
 
 def execute_pipeline(
     source_file: str,
@@ -167,7 +162,6 @@ def execute_pipeline(
             f"Informational: The data file {target_file} was not generated because no data file was available.  Continuing."
         )
 
-
 def process_source_file(
     source_file: str,
     target_file: str,
@@ -225,7 +219,7 @@ def process_source_file(
             )
 
     dfcolumns = list(target_df.columns)
-    i = 0  # edit output csv headers
+    i = 0
     while i < (len(output_csv_headers)):
         if output_csv_headers[i] not in dfcolumns:
             output_csv_headers.pop(i)
@@ -234,12 +228,11 @@ def process_source_file(
 
     logging.info("Reordering headers...")
     final_df = target_df[output_csv_headers]
-    save_to_new_file(final_df, target_file, sep="|")  # save the reordered file
+    save_to_new_file(final_df, target_file, sep="|")
     print("final df -->")
     print(final_df)
     print("Opening final file  -->")
     print(pd.read_csv(target_file, sep="|"))
-
 
 def process_dataframe_chunk(
     data: typing.List[str],
@@ -256,7 +249,6 @@ def process_dataframe_chunk(
     state_code: str,
 ) -> None:
     df = pd.DataFrame(data, columns=input_headers)
-    # set_df_datatypes(df, data_dtypes)
     target_file_batch = str(target_file).replace(
         ".csv", "-" + str(chunk_number) + ".csv"
     )
@@ -275,13 +267,11 @@ def process_dataframe_chunk(
         state_code=state_code,
     )
 
-
 def set_df_datatypes(df: pd.DataFrame, data_dtypes: dict) -> pd.DataFrame:
     logging.info("Setting data types")
     for key, item in data_dtypes.items():
         df[key] = df[key].astype(item)
     return df
-
 
 def process_chunk(
     df: pd.DataFrame,
@@ -307,13 +297,11 @@ def process_chunk(
         df["county"] = df["county"].apply(pad_zeroes_to_the_left, args=(3,))
     df = create_geo_id(df, concat_col_list)
     df = pivot_dataframe(df)
-
     save_to_new_file(df, file_path=str(target_file_batch), sep="|")
     df = append_batch_file(
         df, chunk_number, target_file_batch, target_file, skip_header, not (skip_header)
     )
     logging.info(f"Processing batch file {target_file_batch} completed")
-
 
 def load_data_to_bq(
     project_id: str,
@@ -335,7 +323,7 @@ def load_data_to_bq(
         job_config.write_disposition = "WRITE_TRUNCATE"
     else:
         job_config.write_disposition = "WRITE_APPEND"
-    job_config.skip_leading_rows = 1  # ignore the header
+    job_config.skip_leading_rows = 1
     job_config.autodetect = False
     with open(file_path, "rb") as source_file:
         job = client.load_table_from_file(source_file, table_ref, job_config=job_config)
@@ -343,7 +331,6 @@ def load_data_to_bq(
     logging.info(
         f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} completed"
     )
-
 
 def create_dest_table(
     project_id: str,
@@ -390,13 +377,11 @@ def create_dest_table(
         table_exists = True
     return table_exists
 
-
 def check_gcs_file_exists(file_path: str, bucket_name: str) -> bool:
     storage_client = storage.Client()
     bucket = storage_client.bucket(bucket_name)
     exists = storage.Blob(bucket=bucket, name=file_path).exists(storage_client)
     return exists
-
 
 def create_table_schema(
     schema_structure: list,
@@ -413,7 +398,6 @@ def create_table_schema(
         blob = bucket.blob(schema_filepath)
         schema_struct = json.loads(blob.download_as_string(client=None))
 
-    # remove extra cols in schema which are not found in df
     i = 0
     dfcolumns = list(target_df.columns)
     while i < len(schema_struct):
@@ -437,7 +421,6 @@ def create_table_schema(
         )
     return schema
 
-
 def pivot_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     logging.info("Pivoting the dataframe...")
     df = df[["geo_id", "KPI_Name", "KPI_Value"]]
@@ -446,12 +429,10 @@ def pivot_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     ).reset_index()
     return df
 
-
 def string_replace(source_url, replace: dict) -> str:
     for k, v in replace.items():
         source_url_new = source_url.replace(k, v)
     return source_url_new
-
 
 def extract_data_and_convert_to_df_national_level(
     group_id: dict,
@@ -477,7 +458,7 @@ def extract_data_and_convert_to_df_national_level(
                 frame = load_nested_list_into_df_without_headers(text)
                 frame["KPI_Name"] = key
                 list_temp.append(frame)
-            elif 400 >= r.status_code <= 499:  # Unable to download data
+            elif 400 >= r.status_code <= 499:
                 logging.info(r.status_code)
             else:
                 logging.info(f"Source url : {source_url_new}")
@@ -491,12 +472,10 @@ def extract_data_and_convert_to_df_national_level(
     df = pd.concat(list_temp)
     return df
 
-
 def load_nested_list_into_df_without_headers(text: typing.List) -> pd.DataFrame:
     frame = pd.DataFrame(text)
     frame = frame.iloc[1:, :]
     return frame
-
 
 def extract_data_and_convert_to_df_state_level(
     group_id: dict,
@@ -526,7 +505,7 @@ def extract_data_and_convert_to_df_state_level(
                     frame = load_nested_list_into_df_without_headers(text)
                     frame["KPI_Name"] = key
                     list_temp.append(frame)
-                elif 400 >= r.status_code <= 499:  # Unable to download data
+                elif 400 >= r.status_code <= 499:
                     logging.info(r.status_code)
                 else:
                     logging.info(f"Source url : {source_url_new}")
@@ -541,7 +520,6 @@ def extract_data_and_convert_to_df_state_level(
     df = pd.concat(list_temp)
     return df
 
-
 def create_geo_id(df: pd.DataFrame, concat_col: str) -> pd.DataFrame:
     logging.info("Creating column geo_id...")
     df = df.drop(0, axis=0)
@@ -550,24 +528,19 @@ def create_geo_id(df: pd.DataFrame, concat_col: str) -> pd.DataFrame:
         df["geo_id"] = df["geo_id"] + df[col]
     return df
 
-
 def pad_zeroes_to_the_left(val: str, length: int) -> str:
     if len(str(val)) < length:
         return ("0" * (length - len(str(val)))) + str(val)
     else:
         return str(val)
 
-
 def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
     logging.info("Renaming headers...")
-    # rename_mappings = {int(k): str(v) for k, v in rename_mappings
     df.rename(columns=rename_mappings, inplace=True)
-
 
 def save_to_new_file(df: pd.DataFrame, file_path: str, sep: str = ",") -> None:
     logging.info(f"Saving data to target file.. {file_path} ...")
     df.to_csv(file_path, index=False, sep=sep)
-
 
 def append_batch_file(
     df: pd.DataFrame,
@@ -608,13 +581,10 @@ def append_batch_file(
                     if columns in targetdfcols:
                         batch_df.drop(
                             columns, axis=1, inplace=True
-                        )  # Removing common columns from each batch
-
+                        )
                 target_df = pd.concat([target_df, batch_df], axis=1, ignore_index=False)
                 target_df.to_csv(target_file_path, index=False, sep="|")
-
         return target_df
-
 
 def upload_file_to_gcs(
     file_path: pathlib.Path,
@@ -634,7 +604,6 @@ def upload_file_to_gcs(
         logging.info(
             f"Cannot upload file to gs://{target_gcs_bucket}/{target_gcs_path} as it does not exist."
         )
-
 
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
