@@ -25,6 +25,7 @@ import requests
 from google.api_core.exceptions import NotFound
 from google.cloud import bigquery, storage
 
+
 def main(
     source_url: str,
     source_file: pathlib.Path,
@@ -74,6 +75,7 @@ def main(
         schema_path=schema_path,
     )
     logging.info(f"{pipeline_name} --> ETL process completed")
+
 
 def execute_pipeline(
     source_file: str,
@@ -162,6 +164,7 @@ def execute_pipeline(
             f"Informational: The data file {target_file} was not generated because no data file was available.  Continuing."
         )
 
+
 def process_source_file(
     source_file: str,
     target_file: str,
@@ -234,6 +237,7 @@ def process_source_file(
     print("Opening final file  -->")
     print(pd.read_csv(target_file, sep="|"))
 
+
 def process_dataframe_chunk(
     data: typing.List[str],
     input_headers: typing.List[str],
@@ -267,11 +271,13 @@ def process_dataframe_chunk(
         state_code=state_code,
     )
 
+
 def set_df_datatypes(df: pd.DataFrame, data_dtypes: dict) -> pd.DataFrame:
     logging.info("Setting data types")
     for key, item in data_dtypes.items():
         df[key] = df[key].astype(item)
     return df
+
 
 def process_chunk(
     df: pd.DataFrame,
@@ -303,6 +309,7 @@ def process_chunk(
     )
     logging.info(f"Processing batch file {target_file_batch} completed")
 
+
 def load_data_to_bq(
     project_id: str,
     dataset_id: str,
@@ -331,6 +338,7 @@ def load_data_to_bq(
     logging.info(
         f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} completed"
     )
+
 
 def create_dest_table(
     project_id: str,
@@ -377,11 +385,13 @@ def create_dest_table(
         table_exists = True
     return table_exists
 
+
 def check_gcs_file_exists(file_path: str, bucket_name: str) -> bool:
     storage_client = storage.Client()
     bucket = storage_client.bucket(bucket_name)
     exists = storage.Blob(bucket=bucket, name=file_path).exists(storage_client)
     return exists
+
 
 def create_table_schema(
     schema_structure: list,
@@ -397,7 +407,6 @@ def create_table_schema(
         bucket = storage_client.get_bucket(bucket_name)
         blob = bucket.blob(schema_filepath)
         schema_struct = json.loads(blob.download_as_string(client=None))
-
     i = 0
     dfcolumns = list(target_df.columns)
     while i < len(schema_struct):
@@ -405,7 +414,6 @@ def create_table_schema(
             schema_struct.pop(i)
             i -= 1
         i += 1
-
     for schema_field in schema_struct:
         fld_name = schema_field["name"]
         fld_type = schema_field["type"]
@@ -421,6 +429,7 @@ def create_table_schema(
         )
     return schema
 
+
 def pivot_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     logging.info("Pivoting the dataframe...")
     df = df[["geo_id", "KPI_Name", "KPI_Value"]]
@@ -429,10 +438,12 @@ def pivot_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     ).reset_index()
     return df
 
+
 def string_replace(source_url, replace: dict) -> str:
     for k, v in replace.items():
         source_url_new = source_url.replace(k, v)
     return source_url_new
+
 
 def extract_data_and_convert_to_df_national_level(
     group_id: dict,
@@ -472,10 +483,12 @@ def extract_data_and_convert_to_df_national_level(
     df = pd.concat(list_temp)
     return df
 
+
 def load_nested_list_into_df_without_headers(text: typing.List) -> pd.DataFrame:
     frame = pd.DataFrame(text)
     frame = frame.iloc[1:, :]
     return frame
+
 
 def extract_data_and_convert_to_df_state_level(
     group_id: dict,
@@ -520,6 +533,7 @@ def extract_data_and_convert_to_df_state_level(
     df = pd.concat(list_temp)
     return df
 
+
 def create_geo_id(df: pd.DataFrame, concat_col: str) -> pd.DataFrame:
     logging.info("Creating column geo_id...")
     df = df.drop(0, axis=0)
@@ -528,19 +542,23 @@ def create_geo_id(df: pd.DataFrame, concat_col: str) -> pd.DataFrame:
         df["geo_id"] = df["geo_id"] + df[col]
     return df
 
+
 def pad_zeroes_to_the_left(val: str, length: int) -> str:
     if len(str(val)) < length:
         return ("0" * (length - len(str(val)))) + str(val)
     else:
         return str(val)
 
+
 def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
     logging.info("Renaming headers...")
     df.rename(columns=rename_mappings, inplace=True)
 
+
 def save_to_new_file(df: pd.DataFrame, file_path: str, sep: str = ",") -> None:
     logging.info(f"Saving data to target file.. {file_path} ...")
     df.to_csv(file_path, index=False, sep=sep)
+
 
 def append_batch_file(
     df: pd.DataFrame,
@@ -565,26 +583,22 @@ def append_batch_file(
                 logging.info(
                     f"Appending batch file {batch_file_path} to {target_file_path}"
                 )
-
             batch_df = pd.read_csv(data_file, sep="|")
             logging.info("Making batch df -- >")
-
             if chunk_number == 1:
                 target_df = batch_df
                 target_df.to_csv(target_file_path, index=False, sep="|")
-
             else:
                 batchdfcols = list(batch_df.columns)
                 targetdfcols = dict.fromkeys(list(target_df.columns))
                 logging.info(f"Removing common columns from batch : {chunk_number}")
                 for columns in batchdfcols:
                     if columns in targetdfcols:
-                        batch_df.drop(
-                            columns, axis=1, inplace=True
-                        )
+                        batch_df.drop(columns, axis=1, inplace=True)
                 target_df = pd.concat([target_df, batch_df], axis=1, ignore_index=False)
                 target_df.to_csv(target_file_path, index=False, sep="|")
         return target_df
+
 
 def upload_file_to_gcs(
     file_path: pathlib.Path,
@@ -604,6 +618,7 @@ def upload_file_to_gcs(
         logging.info(
             f"Cannot upload file to gs://{target_gcs_bucket}/{target_gcs_path} as it does not exist."
         )
+
 
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
