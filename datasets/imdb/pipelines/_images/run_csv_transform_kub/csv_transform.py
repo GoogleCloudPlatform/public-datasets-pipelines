@@ -27,7 +27,6 @@ import pandas as pd
 import requests
 from google.cloud import storage
 
-
 TEST_TRAIN = ["test", "train"]
 NEG_POS_UNSUP = ["neg", "pos", "unsup"]
 REVIEW_COLS = ["review", "split", "label", "id_tag", "path", "reviewer_rating"]
