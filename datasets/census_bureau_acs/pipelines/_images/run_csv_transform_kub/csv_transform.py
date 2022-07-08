@@ -117,7 +117,6 @@ def execute_pipeline(
             source_url,
             destination_table,
         )
-
     save_to_new_file(df, source_file, sep=",")
     process_source_file(
         source_file=source_file,
@@ -205,7 +204,6 @@ def process_source_file(
                 )
                 data = []
                 chunk_number += 1
-
         if index % int(chunksize) != 0 and index > 0:
             process_dataframe_chunk(
                 data=data,
@@ -221,7 +219,6 @@ def process_source_file(
                 group_id=group_id,
                 state_code=state_code,
             )
-
     dfcolumns = list(target_df.columns)
     i = 0
     while i < (len(output_csv_headers)):
@@ -229,7 +226,6 @@ def process_source_file(
             output_csv_headers.pop(i)
             i -= 1
         i += 1
-
     logging.info("Reordering headers...")
     final_df = target_df[output_csv_headers]
     save_to_new_file(final_df, target_file, sep="|")
@@ -623,7 +619,6 @@ def upload_file_to_gcs(
 
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
-
     main(
         source_url=os.environ.get("SOURCE_URL", ""),
         chunksize=os.environ.get("CHUNKSIZE", ""),
