@@ -95,16 +95,16 @@ dag:
           DELETE_TARGET_FILE: "Y"
           REORDER_HEADERS_LIST: >-
             [
-              'data_subtype',
-              'data_type',
-              'info_description',
-              'info_url',
-              'info_version',
-              'info_year',
-              'info_contributor',
-              'info_date_created',
-              'license_url',
-              'license_name'
+              "data_subtype",
+              "data_type",
+              "info_description",
+              "info_url",
+              "info_version",
+              "info_year",
+              "info_contributor",
+              "info_date_created",
+              "license_url",
+              "license_name"
             ]
           DETAIL_DATA_HEADERS_LIST: >-
             [
@@ -171,17 +171,17 @@ dag:
           DELETE_TARGET_FILE: "Y"
           REORDER_HEADERS_LIST: >-
             [
-              'task_type',
-              'data_type',
-              'data_subtype',
-              'info_description',
-              'info_url',
-              'info_version',
-              'info_year',
-              'info_contributor',
-              'info_date_created',
-              'license_url',
-              'license_name'
+              "task_type",
+              "data_type",
+              "data_subtype",
+              "info_description",
+              "info_url",
+              "info_version",
+              "info_year",
+              "info_contributor",
+              "info_date_created",
+              "license_url",
+              "license_name"
             ]
           DETAIL_DATA_HEADERS_LIST: >-
             [
@@ -237,6 +237,11 @@ dag:
           DROP_DEST_TABLE: "N"
           REMOVE_SOURCE_FILE: "Y"
           DELETE_TARGET_FILE: "Y"
+          REORDER_HEADERS_LIST: >-
+            [
+              "question_id_1",
+              "question_id_2"
+            ]
         resources:
           limit_memory: "16G"
           limit_cpu: "3"
