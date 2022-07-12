@@ -1,0 +1,104 @@
+[
+    {
+        "name": "country_region_code",
+        "type": "string",
+        "description": "2 letter alpha code for the country/region in which changes are measured relative to the baseline. These values correspond with the ISO 3166-1 alpha-2 codes",
+        "mode": "nullable"
+    },
+    {
+        "name": "country_region",
+        "type": "string",
+        "description": "The country/region in which changes are measured relative to the baseline",
+        "mode": "nullable"
+    },
+    {
+        "name": "sub_region_1",
+        "type": "string",
+        "description": "First geographic sub-region in which the data is aggregated. This varies by country/region to ensure privacy and public health value in consultation with local public health authorities",
+        "mode": "nullable"
+    },
+    {
+        "name": "sub_region_2",
+        "type": "string",
+        "description": "Second geographic sub-region in which the data is aggregated. This varies by country/region to ensure privacy and public health value in consultation with local public health authorities",
+        "mode": "nullable"
+    },
+    {
+        "name": "metro_area",
+        "type": "string",
+        "description": "A specific metro area to measure mobility within a given city/metro area. This varies by country/region to ensure privacy and public health value in consultation with local public health authorities",
+        "mode": "nullable"
+    },
+    {
+        "name": "iso_3166_2_code",
+        "type": "string",
+        "description": "Unique identifier for the geographic region as defined by ISO Standard 3166-2.",
+        "mode": "nullable"
+    },
+    {
+        "name": "census_fips_code",
+        "type": "string",
+        "description": "Unique identifier for each US county as defined by the US Census Bureau. Maps to county_fips_code in other tables",
+        "mode": "nullable"
+    },
+    {
+        "name": "place_id",
+        "type": "string",
+        "description": "A textual identifier that uniquely identifies a place in the Google Places database and on Google Maps (details). For example ChIJd_Y0eVIvkIARuQyDN0F1LBA. For details see the following link: https://developers.google.com/places/web-service/place-id",
+        "mode": "nullable"
+    },
+    {
+        "name": "date",
+        "type": "date",
+        "description": "Changes for a given date as compared to baseline. Baseline is the median value for the corresponding day of the week during the 5-week period Jan 3–Feb 6 2020.",
+        "mode": "nullable"
+    },
+    {
+        "name": "retail_and_recreation_percent_change_from_baseline",
+        "type": "integer",
+        "description": "Mobility trends for places like restaurants cafes shopping centers theme parks museums libraries and movie theaters.",
+        "mode": "nullable"
+    },
+    {
+        "name": "grocery_and_pharmacy_percent_change_from_baseline",
+        "type": "integer",
+        "description": "Mobility trends for places like grocery markets food warehouses farmers markets specialty food shops drug stores and pharmacies.",
+        "mode": "nullable"
+    },
+    {
+        "name": "parks_percent_change_from_baseline",
+        "type": "integer",
+        "description": "Mobility trends for places like local parks national parks public beaches marinas dog parks plazas and public gardens.",
+        "mode": "nullable"
+    },
+    {
+        "name": "transit_stations_percent_change_from_baseline",
+        "type": "integer",
+        "description": "Mobility trends for places like public transport hubs such as subway bus and train stations.",
+        "mode": "nullable"
+    },
+    {
+        "name": "workplaces_percent_change_from_baseline",
+        "type": "integer",
+        "description": "Mobility trends for places of work.",
+        "mode": "nullable"
+    },
+    {
+        "name": "residential_percent_change_from_baseline",
+        "type": "integer",
+        "description": "Mobility trends for places of residence.",
+        "mode": "nullable"
+    },
+    {
+        "name": "source_url",
+        "type": "STRING",
+        "description": "Source ",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "etl_timestamp",
+        "type": "TIMESTAMP",
+        "description": "Load time for this data row",
+        "mode": "NULLABLE"
+    }
+]

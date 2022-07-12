@@ -79,11 +79,17 @@ dag:
 
         # Set the environment variables you need initialized in the container. Use these as input variables for the script your container is expected to perform.
         env_vars:
-          NUM_OF_USERS: "15000"
+          NUM_OF_USERS: "100000"
+          NUM_OF_GHOST_EVENTS: "5"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PREFIX: "data/thelook_ecommerce"
           SOURCE_DIR: "data"
           EXTRANEOUS_HEADERS: "[\"event_type\", \"ip_address\", \"browser\", \"traffic_source\", \"session_id\", \"sequence_number\", \"uri\", \"is_sold\"]"
+
+        resources:
+          request_memory: "8G"
+          request_cpu: "2"
+          request_ephemeral_storage: "10G"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load Products data to a BigQuery table"
@@ -308,6 +314,9 @@ dag:
             mode: "NULLABLE"
           - name: "inventory_item_id"
             type: "INTEGER"
+            mode: "NULLABLE"
+          - name: "status"
+            type: "STRING"
             mode: "NULLABLE"
           - name: "created_at"
             type: "TIMESTAMP"

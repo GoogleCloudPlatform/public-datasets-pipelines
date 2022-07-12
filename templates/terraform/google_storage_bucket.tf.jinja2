@@ -31,7 +31,7 @@ resource "google_storage_bucket" "{{ name }}" {
   }
 }
 
-{% if iam_policies -%}
+{% if iam_policies and iam_policies["storage_buckets"] and (name in iam_policies["storage_buckets"]) -%}
 data "google_iam_policy" "storage_bucket__{{ name }}" {
   dynamic "binding" {
     for_each = var.iam_policies["storage_buckets"]["{{ name }}"]
