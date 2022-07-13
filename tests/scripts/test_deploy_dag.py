@@ -720,7 +720,8 @@ def test_script_copy_files_in_data_folder_to_composer_with_folder_created(
 
     data_folder = pipeline_path / "data"
     data_folder.mkdir(parents=True)
-    assert data_folder.exists() and data_folder.is_dir()
+    (data_folder / "test_file.txt").touch()
+    assert data_folder.exists() and data_folder.is_dir() and any(data_folder.iterdir())
 
     airflow_version = 2
     mocker.patch("scripts.deploy_dag.check_and_configure_airflow_variables")

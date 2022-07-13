@@ -15,12 +15,12 @@
  */
 
 
-resource "google_bigquery_dataset" "imdb" {
-  dataset_id  = "imdb"
-  project     = var.project_id
-  description = "It consistes of reviews dataset along with all IMDb interfaces(7 - datasets)."
+variable "project_id" {}
+variable "bucket_name_prefix" {}
+variable "impersonating_acct" {}
+variable "region" {}
+variable "env" {}
+variable "iam_policies" {
+  default = {}
 }
 
-output "bigquery_dataset-imdb-dataset_id" {
-  value = google_bigquery_dataset.imdb.dataset_id
-}

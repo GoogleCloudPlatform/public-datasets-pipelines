@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,14 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 dataset:
-  name: imdb
-  friendly_name: imdb
-  description: IMDb reviews dataset
+  name: fashion_mnist
+  friendly_name: fashion_mnist
+  description: ~
   dataset_sources: ~
-  terms_of_use: "When using this dataset, please cite our ACL 2011 paper [ https://ai.stanford.edu/~amaas/papers/wvSent_acl2011.bib ]."
+  terms_of_use: ~
 
 resources:
-  - type: bigquery_dataset
-    dataset_id: imdb
-    description: "It consistes of reviews dataset along with all IMDb interfaces(7 - datasets)."
+  - type: storage_bucket
+    name: fashion-mnist
+    uniform_bucket_level_access: True
+    location: US

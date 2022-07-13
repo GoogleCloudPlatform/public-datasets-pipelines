@@ -15,12 +15,18 @@
  */
 
 
-resource "google_bigquery_dataset" "imdb" {
-  dataset_id  = "imdb"
-  project     = var.project_id
-  description = "It consistes of reviews dataset along with all IMDb interfaces(7 - datasets)."
+resource "google_storage_bucket" "fashion-mnist" {
+  name                        = "${var.bucket_name_prefix}-fashion-mnist"
+  force_destroy               = true
+  location                    = "US"
+  uniform_bucket_level_access = true
+  lifecycle {
+    ignore_changes = [
+      logging,
+    ]
+  }
 }
 
-output "bigquery_dataset-imdb-dataset_id" {
-  value = google_bigquery_dataset.imdb.dataset_id
+output "storage_bucket-fashion-mnist-name" {
+  value = google_storage_bucket.fashion-mnist.name
 }

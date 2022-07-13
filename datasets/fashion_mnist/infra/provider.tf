@@ -15,12 +15,14 @@
  */
 
 
-resource "google_bigquery_dataset" "imdb" {
-  dataset_id  = "imdb"
-  project     = var.project_id
-  description = "It consistes of reviews dataset along with all IMDb interfaces(7 - datasets)."
+provider "google" {
+  project                     = var.project_id
+  impersonate_service_account = var.impersonating_acct
+  region                      = var.region
 }
 
-output "bigquery_dataset-imdb-dataset_id" {
-  value = google_bigquery_dataset.imdb.dataset_id
+data "google_client_openid_userinfo" "me" {}
+
+output "impersonating-account" {
+  value = data.google_client_openid_userinfo.me.email
 }
