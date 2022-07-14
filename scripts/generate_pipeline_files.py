@@ -1,3 +1,5 @@
+import itertools
+import json
 import os
 import pathlib
 
@@ -28,7 +30,7 @@ AIRFLOW_TEMPLATES_PATH = PROJECT_ROOT / "templates" / "airflow"
     type=str,
     help="The name of your pipeline",
 )
-def create_pipeline_folder(dataset_id: str, pipeline_id: str):
+def create_pipeline(dataset_id: str, pipeline_id: str):
     new_pipeline_path = f"{DATASETS_PATH}/{dataset_id}/pipelines/{pipeline_id}/"
     dir = os.path.dirname(new_pipeline_path)
     if not os.path.exists(dir):
@@ -39,6 +41,7 @@ def create_pipeline_folder(dataset_id: str, pipeline_id: str):
     else:
         click.echo(f"{new_pipeline_path} already exists")
     create_dataset_yaml(dir, dataset_id)
+    create_pipeline_yaml(dir, dataset_id)
 
 
 def create_dataset_yaml(dir: str, dataset_id: str):
@@ -102,5 +105,65 @@ def create_dataset_yaml(dir: str, dataset_id: str):
                 break
 
 
+def create_pipeline_yaml(dir: str, pipeline_id: str):
+    sample_yaml = None
+    output = {}
+    resources = []
+    with open(f"{PROJECT_ROOT}/samples/pipeline.yaml", "r") as sample_pipeline_yaml:
+        try:
+            sample_yaml = yaml.safe_load(sample_pipeline_yaml)
+            tables = click.prompt(
+                "Input your BigQuery Table name(s) required for your pipeline\n"
+                "If you have multiple tables, please use a comma-seperated list. (eg. table1, table2, table3)"
+            )
+            for table_name in tables.split(","):
+                print(table_name)
+                sample_yaml["resources"][0]["table_id"] = table_name
+                bq_resource = sample_yaml["resources"][0]
+                resources.append(bq_resource.copy())
+            output["resources"] = resources
+
+        except yaml.YAMLError as exc:
+            print(exc)
+
+    tasks = []
+    with open(f"{PROJECT_ROOT}/scripts/dag_imports.json", "r") as dag_imports:
+        airflow_operators = json.load(dag_imports)
+        airflow_version = click.prompt(
+            "Which Airflow Version does your pipeline use?",
+            type=click.Choice(["1", "2"], case_sensitive=False),
+        )
+        if airflow_version == "1":
+            operators = airflow_operators[airflow_version]
+            while True:
+                operator = click.prompt(
+                    "Which operator would you like to add?",
+                    type=click.Choice(list(operators), case_sensitive=False),
+                )
+                t = [task["operator"] for task in sample_yaml["dag"]["tasks"]]
+                operator_idx = t.index(operator)
+                tasks.append(sample_yaml["dag"]["tasks"][operator_idx])
+                if not click.confirm("Would you like to add another operator?"):
+                    sample_yaml["dag"]["tasks"] = tasks
+                    output["dag"] = sample_yaml["dag"]
+                    print(output)
+                    break
+        if airflow_version == "2":
+            operators = airflow_operators[airflow_version]
+            while True:
+                operator = click.prompt(
+                    "Which operator would you like to add?",
+                    type=click.Choice(list(operators), case_sensitive=False),
+                )
+                t = [task["operator"] for task in sample_yaml["dag"]["tasks"]]
+                operator_idx = t.index(operator)
+                tasks.append(sample_yaml["dag"]["tasks"][operator_idx])
+                if not click.confirm("Would you like to add another operator?"):
+                    sample_yaml["dag"]["tasks"] = tasks
+                    output["dag"] = sample_yaml["dag"]
+                    print(output)
+                    break
+
+
 if __name__ == "__main__":
-    create_pipeline_folder()
+    create_pipeline()
