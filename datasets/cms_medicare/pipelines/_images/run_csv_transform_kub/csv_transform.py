@@ -69,8 +69,8 @@ def main(
     filter_null_rows(
         df, PIPELINES_NAME_INPATIENT, PIPELINES_NAME_OUTPATIENT, pipeline_name
     )
-    if pipeline_name in ( PIPELINES_NAME_INPATIENT + PIPELINES_NAME_OUTPATIENT ):
-        df['provider_zipcode'] = df['provider_zipcode'].apply(lambda x: str(x).zfill(5))
+    if pipeline_name in (PIPELINES_NAME_INPATIENT + PIPELINES_NAME_OUTPATIENT):
+        df["provider_zipcode"] = df["provider_zipcode"].apply(lambda x: str(x).zfill(5))
     df = df[headers]
     logging.info(f"Transformation Process complete .. {source_file}")
     logging.info(f"Saving to output file.. {target_file}")
