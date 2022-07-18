@@ -16,15 +16,10 @@
 
 
 resource "google_bigquery_table" "cms_medicare_hospital_general_info" {
-  project    = var.project_id
-  dataset_id = "cms_medicare"
-  table_id   = "hospital_general_info"
-
+  project     = var.project_id
+  dataset_id  = "cms_medicare"
+  table_id    = "hospital_general_info"
   description = "CMS Medicare Hospital General Info"
-
-
-
-
   depends_on = [
     google_bigquery_dataset.cms_medicare
   ]
