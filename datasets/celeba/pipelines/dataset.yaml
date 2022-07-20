@@ -15,12 +15,9 @@
 dataset:
   name: celeba
   friendly_name: Celebrity Attributes
-  description: Dataset of images of the facial attributes of various celebrities. 
+  description: Dataset of images of the facial attributes of various celebrities.
   dataset_sources: ~
   terms_of_use: ~
 
 
 resources: ~
-  # - type: storage_bucket
-  #   dataset_id: celeba
-  #   description: ~
