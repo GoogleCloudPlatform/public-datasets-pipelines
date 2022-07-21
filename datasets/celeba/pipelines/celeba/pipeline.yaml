@@ -22,7 +22,7 @@ dag:
     default_args:
       owner: "Google"
       depends_on_past: False
-      start_date: "2022-07-20"
+      start_date: "2022-07-21"
     max_active_runs: 1
     schedule_interval: "@once"
     catchup: False
@@ -35,8 +35,8 @@ dag:
         task_id: "GCStoGCS_transfer"
         source_bucket: "{{ var.json.celeba.source_bucket }}"
         source_object: "{{ var.json.celeba.source_object }}"
-        destination_bucket: "{{ var.json.celeba.destination_bucket }}"
-        destination_object: "{{ var.json.celeba.destination_object }}"
+        destination_bucket: "{{ var.value.composer_bucket }}"
+        destination_object: "{{ var.value.composer_bucket }}"
 
   graph_paths:
     - "GCStoGCS_transfer"
