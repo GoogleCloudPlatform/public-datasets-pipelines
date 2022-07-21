@@ -12,12 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 artifact:
-  title: Iowa Liquor sales predictions
-  description:  Predict a liquor sales price based previous years sales data using a tree based ML estimators such as Random Forest
+  title: "Iowa Liquor sales predictions"
+  description:  "Predict a liquor sales price based previous years sales data using a tree based ML estimators such as Random Forest"
   tags:
-    - libraries: sklearn,matplotlib,pandas,numpy
-    - ml: regression
-    - vertical: retail
-    - tier: free
+    - libraries:sklearn, matplotlib, pandas, numpy
+    - ml:regression
+    - vertical:retail
+    - tier:free
