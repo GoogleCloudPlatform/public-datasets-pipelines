@@ -41,6 +41,25 @@ def env() -> str:
 
 
 @pytest.fixture
+def click_flow() -> dict:
+    test_flow = {
+        "friendly_dataset_name": "my friendly dataset_description",
+        "resource_needed1": "y",
+        "resource1": "bq",
+        "bq_description": "dataset.yaml bq description",
+        "resource_needed2": "y",
+        "resource2": "gcs",
+        "gcs_bucket_name": "my-pipeline-test-bucket",
+        "gcs_bucket_location": "US",
+        "resource_needed3": "n",
+        "bq_tables": "table1, table2, table3",
+        "operators": "BashOperator",
+        "add_another_operator": "n",
+    }
+    return test_flow
+
+
+@pytest.fixture
 def dataset_path() -> typing.Iterator[pathlib.Path]:
     with tempfile.TemporaryDirectory(
         dir=generate_dag.DATASETS_PATH, suffix="_dataset"
@@ -66,28 +85,12 @@ def all_pipelines() -> typing.Iterator[typing.Tuple[pathlib.Path, pathlib.Path]]
             yield dataset_path_, pipeline_path_
 
 
-test_flow = {
-    "friendly_dataset_name": "my friendly dataset_description",
-    "resource_needed1": "y",
-    "resource1": "bq",
-    "bq_description": "dataset.yaml bq description",
-    "resource_needed2": "y",
-    "resource2": "gcs",
-    "gcs_bucket_name": "my-pipeline-test-bucket",
-    "gcs_bucket_location": "US",
-    "resource_needed3": "n",
-    "bq_tables": "table1, table2, table3",
-    "operators": "BashOperator",
-    "add_another_operator": "n",
-}
-
-
-def test_pipeline_directory():
+def test_pipeline_directory_is_created(click_flow: dict):
     runner = CliRunner()
     runner.invoke(
         create_pipeline,
         "--dataset_id test_dataset --pipeline_id test_pipeline",
-        input="\n".join(list(test_flow.values())),
+        input="\n".join(list(click_flow.values())),
     )
 
     assert (DATASETS_PATH / "test_dataset" / "pipelines" / "test_pipeline").exists()
@@ -96,23 +99,23 @@ def test_pipeline_directory():
     assert (DATASETS_PATH / "test_dataset" / "pipelines").is_dir()
 
 
-def test_dataset_yaml_exists():
+def test_dataset_yaml_exists(click_flow: dict):
     runner = CliRunner()
     runner.invoke(
         create_pipeline,
         "--dataset_id test_dataset --pipeline_id test_pipeline",
-        input="\n".join(list(test_flow.values())),
+        input="\n".join(list(click_flow.values())),
     )
     assert (DATASETS_PATH / "test_dataset" / "pipelines" / "dataset.yaml").exists()
     assert (DATASETS_PATH / "test_dataset" / "pipelines" / "dataset.yaml").is_file()
 
 
-def test_dataset_yaml_content():
+def test_dataset_yaml_content(click_flow: dict):
     runner = CliRunner()
     runner.invoke(
         create_pipeline,
         "--dataset_id test_dataset --pipeline_id test_pipeline",
-        input="\n".join(list(test_flow.values())),
+        input="\n".join(list(click_flow.values())),
     )
     dataset_yaml_file = (
         DATASETS_PATH / "test_dataset" / "pipelines" / "dataset.yaml"
@@ -122,7 +125,7 @@ def test_dataset_yaml_content():
         PROJECT_ROOT / "templates" / "airflow" / "license_header.py.jinja2"
     ).read_text()
 
-    assert license_header in dataset_yaml_file  # test for license header
+    assert (license_header in dataset_yaml_file)  # test for license header
     assert (
         len(dataset_yaml["resources"]) == 2
     )  # test dataset yaml has 2 resources added (bq, gcs)
@@ -134,12 +137,12 @@ def test_dataset_yaml_content():
     )  # confirm keys of yaml file are correct
 
 
-def test_pipeline_yaml_exists():
+def test_pipeline_yaml_exists(click_flow: dict):
     runner = CliRunner()
     runner.invoke(
         create_pipeline,
         "--dataset_id test_dataset --pipeline_id test_pipeline",
-        input="\n".join(list(test_flow.values())),
+        input="\n".join(list(click_flow.values())),
     )
     assert (
         DATASETS_PATH / "test_dataset" / "pipelines" / "test_pipeline" / "pipeline.yaml"
@@ -149,12 +152,12 @@ def test_pipeline_yaml_exists():
     ).is_file()
 
 
-def test_pipeline_yaml_content():
+def test_pipeline_yaml_content(click_flow: dict):
     runner = CliRunner()
     runner.invoke(
         create_pipeline,
         "--dataset_id test_dataset --pipeline_id test_pipeline",
-        input="\n".join(list(test_flow.values())),
+        input="\n".join(list(click_flow.values())),
     )
     pipeline_yaml_file = (
         DATASETS_PATH / "test_dataset" / "pipelines" / "test_pipeline" / "pipeline.yaml"
