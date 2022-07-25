@@ -50,4 +50,22 @@ with DAG(
         resources={"request_memory": "128M", "request_cpu": "200m"},
     )
 
-    copy_bq_datasets
+    # Generate BQ views
+    generate_bq_views = kubernetes_pod.KubernetesPodOperator(
+        task_id="generate_bq_views",
+        name="generate_bq_views",
+        namespace="composer",
+        service_account_name="datasets",
+        image_pull_policy="Always",
+        image="{{ var.json.scalable_open_source.container_registry.generate_bq_views }}",
+        env_vars={
+            "SOURCE_PROJECT_ID": "{{ var.json.scalable_open_source.source_project_id }}",
+            "TARGET_PROJECT_ID": "{{ var.json.scalable_open_source.target_project_id }}",
+            "SOURCE_DATASET": "{{ var.json.scalable_open_source.source_bq_dataset }}",
+            "TARGET_DATASET": "deps_dev_v1",
+            "SERVICE_ACCOUNT": "{{ var.json.scalable_open_source.service_account }}",
+        },
+        resources={"request_memory": "128M", "request_cpu": "200m"},
+    )
+
+    copy_bq_datasets >> generate_bq_views
