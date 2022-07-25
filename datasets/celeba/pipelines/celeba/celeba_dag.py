@@ -19,7 +19,7 @@ from airflow.providers.google.cloud.transfers import gcs_to_gcs
 default_args = {
     "owner": "Google",
     "depends_on_past": False,
-    "start_date": "2022-07-20",
+    "start_date": "2022-07-22",
 }
 
 
@@ -35,9 +35,9 @@ with DAG(
     # Transfer data from source to destination in GCS
     GCStoGCS_transfer = gcs_to_gcs.GCSToGCSOperator(
         task_id="GCStoGCS_transfer",
-        source_bucket="{{ var.json.celeba.source_bucket }}",
+        source_bucket="{{ var.value.composer_bucket }}",
         source_object="{{ var.json.celeba.source_object }}",
-        destination_bucket="{{ var.json.celeba.destination_bucket }}",
+        destination_bucket="{{ var.value.composer_bucket }}",
         destination_object="{{ var.json.celeba.destination_object }}",
     )
 
