@@ -27,7 +27,7 @@ with DAG(
     dag_id="cloud_storage_geo_index.cloud_storage_geo_index",
     default_args=default_args,
     max_active_runs=1,
-    schedule_interval="0 6 * * 1",
+    schedule_interval="* 1 * * 6",
     catchup=False,
     default_view="graph",
 ) as dag:
