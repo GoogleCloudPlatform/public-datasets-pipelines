@@ -30,24 +30,22 @@ def main(
     target_gcs_path: str,
     pipeline_english_name: str,
     transform_list: list,
-    reorder_header_list: list
+    reorder_header_list: list,
 ) -> None:
 
-    logging.info(
-        f"{pipeline_english_name} process started"
-    )
-    if('obtain_country' in transform_list):
+    logging.info(f"{pipeline_english_name} process started")
+    if "obtain_country" in transform_list:
         logging.info("Obtaining country data")
         df_country = obtain_source_data(
             source_url, source_file, ["country_code"], "_country_data.csv", 1, ","
         )
         df = df_country
-    if('obtain_population' in transform_list):
+    if "obtain_population" in transform_list:
         logging.info("Obtaining population data")
         df_pop = obtain_source_data(
             source_url, source_file, ["country_code", "year"], "_pop_data.csv", 0, ","
         )
-    if(set(['obtain_population', 'obtain_country']).issubset(transform_list)):
+    if set(["obtain_population", "obtain_country"]).issubset(transform_list):
         logging.info("Merging population and country data")
         df = pd.merge(
             df_pop,
@@ -56,17 +54,15 @@ def main(
             right_on="country_code",
             how="left",
         )
-    if('unpivot_population_data' in transform_list):
+    if "unpivot_population_data" in transform_list:
         df = unpivot_population_data(df)
-    if('resolve_sex' in transform_list):
+    if "resolve_sex" in transform_list:
         df = resolve_sex(df)
-    if('reorder_headers' in transform_list):
+    if "reorder_headers" in transform_list:
         df = reorder_headers(df, reorder_header_list)
     save_to_new_file(df, target_file, ",")
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
-    logging.info(
-        f"{pipeline_english_name} process completed"
-    )
+    logging.info(f"{pipeline_english_name} process completed")
 
 
 def obtain_source_data(
@@ -77,6 +73,8 @@ def obtain_source_data(
     path_ordinal: int,
     separator: str = ",",
 ) -> pd.DataFrame:
+    source_file_path = os.path.split(source_file)[0]
+    pathlib.Path(source_file_path).mkdir(parents=True, exist_ok=True)
     source_data_filepath = str(source_file).replace(".csv", file_suffix)
     if '"' in source_url:
         download_file_gs(
@@ -97,7 +95,9 @@ def obtain_source_data(
     )
     if not key_list == []:
         df = add_key(df, key_list)
-        df.drop_duplicates(subset=["key"], keep="last", inplace=True, ignore_index=False)
+        df.drop_duplicates(
+            subset=["key"], keep="last", inplace=True, ignore_index=False
+        )
     return df
 
 
@@ -109,6 +109,7 @@ def unpivot_population_data(df: pd.DataFrame) -> pd.DataFrame:
     df_exp_unpivot["age_exp"] = df_exp_unpivot.groupby("key_val_x").cumcount()
     df_exp_unpivot = df_exp_unpivot.drop(columns=["population", "age"])
     return df_exp_unpivot
+
 
 def resolve_sex(df: pd.DataFrame) -> pd.DataFrame:
     logging.info("Resolving gender data point")
@@ -167,5 +168,5 @@ if __name__ == "__main__":
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
         pipeline_english_name=os.environ["PIPELINE_ENGLISH_NAME"],
         transform_list=json.loads(os.environ["TRANSFORM_LIST"]),
-        reorder_header_list=json.loads(os.environ["REORDER_HEADERS"])
+        reorder_header_list=json.loads(os.environ["REORDER_HEADERS"]),
     )
