@@ -16,6 +16,7 @@ artifact:
   title: "Biodiversity Map of Australia"
   description: "Plot the map Australia and look at how different organisms are spread and/or found in Australia."
   tags:
-    - libraries:matplotlib
-    - vertical:environment
-    - tier:free
+    - techniques: [visualization]
+    - libraries: [matplotlib, geopandas, pandas]
+    - vertical: environment
+    - tier: free
