@@ -374,11 +374,56 @@ def test_build_images_called_when_dataset_has_images_dir(
     dataset_path: pathlib.Path, pipeline_path: pathlib.Path, env: str, mocker
 ):
     copy_config_files_and_set_tmp_folder_names_as_ids(dataset_path, pipeline_path)
+    num_containers = random.randint(1, 3)
+    generate_image_files(dataset_path, num_containers=num_containers)
+    assert (
+        sum([f.is_dir() for f in (dataset_path / "pipelines" / "_images").iterdir()])
+        == num_containers
+    )
+
+    mocker.patch("scripts.generate_dag.build_images")
+    generate_dag.main(dataset_path.name, pipeline_path.name, env, format_code=False)
+
+    async_builds_default = False
+    generate_dag.build_images.assert_called_once_with(
+        dataset_path.name, env, async_builds_default
+    )
+
+
+def test_build_images_called_with_async_false_by_default(
+    dataset_path: pathlib.Path, pipeline_path: pathlib.Path, env: str, mocker
+):
+    copy_config_files_and_set_tmp_folder_names_as_ids(dataset_path, pipeline_path)
     generate_image_files(dataset_path, num_containers=random.randint(1, 3))
 
     mocker.patch("scripts.generate_dag.build_images")
     generate_dag.main(dataset_path.name, pipeline_path.name, env, format_code=False)
-    generate_dag.build_images.assert_called_once_with(dataset_path.name, env)
+
+    async_builds_default = False
+    generate_dag.build_images.assert_called_once_with(
+        dataset_path.name, env, async_builds_default
+    )
+
+
+def test_build_images_called_with_async_builds(
+    dataset_path: pathlib.Path, pipeline_path: pathlib.Path, env: str, mocker
+):
+    copy_config_files_and_set_tmp_folder_names_as_ids(dataset_path, pipeline_path)
+    generate_image_files(dataset_path, num_containers=random.randint(1, 3))
+
+    mocker.patch("scripts.generate_dag.build_images")
+    async_builds = True
+    generate_dag.main(
+        dataset_path.name,
+        pipeline_path.name,
+        env,
+        async_builds=async_builds,
+        format_code=False,
+    )
+
+    generate_dag.build_images.assert_called_once_with(
+        dataset_path.name, env, async_builds
+    )
 
 
 def test_build_images_not_called_given_skip_builds_argument(

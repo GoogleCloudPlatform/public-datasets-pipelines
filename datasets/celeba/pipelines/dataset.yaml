@@ -13,16 +13,11 @@
 # limitations under the License.
 
 dataset:
-  name: google_cfe
-  friendly_name: ~
-  description: ~
+  name: celeba
+  friendly_name: Celebrity Attributes
+  description: Dataset of images of the facial attributes of various celebrities.
   dataset_sources: ~
   terms_of_use: ~
 
-resources:
-  - type: bigquery_dataset
-    dataset_id: google_cfe
-    description: "Carbon-free energy (CFE) scores for Google Cloud regions and other Google data center regions"
-  - type: storage_bucket
-    name: datacenter-cfe
-    location: US
+
+resources: ~

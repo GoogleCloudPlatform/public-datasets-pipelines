@@ -12,17 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-dataset:
-  name: google_cfe
-  friendly_name: ~
-  description: ~
-  dataset_sources: ~
-  terms_of_use: ~
-
-resources:
-  - type: bigquery_dataset
-    dataset_id: google_cfe
-    description: "Carbon-free energy (CFE) scores for Google Cloud regions and other Google data center regions"
-  - type: storage_bucket
-    name: datacenter-cfe
-    location: US
+FROM python:3.8
+ENV PYTHONUNBUFFERED True
+COPY requirements.txt ./
+RUN python3 -m pip install --no-cache-dir -r requirements.txt
+WORKDIR /custom
+COPY . .
+CMD ["python3", "script.py"]

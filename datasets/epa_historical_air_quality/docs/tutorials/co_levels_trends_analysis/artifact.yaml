@@ -12,17 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-dataset:
-  name: google_cfe
-  friendly_name: ~
-  description: ~
-  dataset_sources: ~
-  terms_of_use: ~
-
-resources:
-  - type: bigquery_dataset
-    dataset_id: google_cfe
-    description: "Carbon-free energy (CFE) scores for Google Cloud regions and other Google data center regions"
-  - type: storage_bucket
-    name: datacenter-cfe
-    location: US
+artifact:
+  title: "Trend analysis of CO levels in the US"
+  description: "Analysis of trends and seasonality of the CO levels in the US."
+  tags:
+    - techniques: [trend analysis, visualization, time series analysis]
+    - libraries: [statsmodel, matplotlib, pandas]
+    - vertical: government
+    - tier: free
