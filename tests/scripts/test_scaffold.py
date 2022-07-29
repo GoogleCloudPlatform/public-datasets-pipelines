@@ -18,12 +18,12 @@ import pytest
 from click.testing import CliRunner
 from ruamel import yaml
 
-from scripts import generate_dag, generate_pipeline_files, generate_terraform
-from scripts.generate_pipeline_files import create_pipeline
+from scripts import generate_dag, generate_terraform, scaffold
+from scripts.scaffold import create_pipeline
 
 yaml = yaml.YAML(typ="safe")
 
-PROJECT_ROOT = generate_pipeline_files.PROJECT_ROOT
+PROJECT_ROOT = scaffold.PROJECT_ROOT
 DATASETS_PATH = PROJECT_ROOT / "datasets"
 
 SAMPLE_YAML_PATHS = {
@@ -31,7 +31,7 @@ SAMPLE_YAML_PATHS = {
     "pipeline": PROJECT_ROOT / "samples" / "pipeline.yaml",
 }
 
-ENV_PATH = generate_pipeline_files.PROJECT_ROOT / ".test"
+ENV_PATH = scaffold.PROJECT_ROOT / ".test"
 ENV_DATASETS_PATH = ENV_PATH / "datasets"
 
 
@@ -44,14 +44,12 @@ def env() -> str:
 def click_flow() -> dict:
     test_flow = {
         "friendly_dataset_name": "my friendly dataset_description",
-        "resource_needed1": "y",
         "resource1": "bq",
         "bq_description": "dataset.yaml bq description",
-        "resource_needed2": "y",
         "resource2": "gcs",
         "gcs_bucket_name": "my-pipeline-test-bucket",
         "gcs_bucket_location": "US",
-        "resource_needed3": "n",
+        "resource_needed3": "None",
         "bq_tables": "table1, table2, table3",
         "operators": "BashOperator",
         "add_another_operator": "n",

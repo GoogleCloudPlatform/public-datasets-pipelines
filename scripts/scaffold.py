@@ -10,7 +10,6 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 
 import json
-import os
 import pathlib
 
 import click
