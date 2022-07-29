@@ -99,7 +99,7 @@ def test_pipeline_directory_is_created(click_flow: dict):
     assert (DATASETS_PATH / "test_dataset" / "pipelines").is_dir()
 
 
-def test_dataset_yaml_exists(click_flow: dict):
+def test_dataset_yaml_file_created(click_flow: dict):
     runner = CliRunner()
     runner.invoke(
         create_pipeline,
@@ -110,7 +110,7 @@ def test_dataset_yaml_exists(click_flow: dict):
     assert (DATASETS_PATH / "test_dataset" / "pipelines" / "dataset.yaml").is_file()
 
 
-def test_dataset_yaml_content(click_flow: dict):
+def test_dataset_yaml_contains_proper_sample_templates(click_flow: dict):
     runner = CliRunner()
     runner.invoke(
         create_pipeline,
@@ -137,7 +137,7 @@ def test_dataset_yaml_content(click_flow: dict):
     )  # confirm keys of yaml file are correct
 
 
-def test_pipeline_yaml_exists(click_flow: dict):
+def test_pipeline_yaml_file_created(click_flow: dict):
     runner = CliRunner()
     runner.invoke(
         create_pipeline,
@@ -152,7 +152,7 @@ def test_pipeline_yaml_exists(click_flow: dict):
     ).is_file()
 
 
-def test_pipeline_yaml_content(click_flow: dict):
+def test_pipeline_yaml_contains_proper_sample_templates(click_flow: dict):
     runner = CliRunner()
     runner.invoke(
         create_pipeline,

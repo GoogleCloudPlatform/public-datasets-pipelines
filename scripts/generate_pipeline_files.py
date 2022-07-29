@@ -47,82 +47,80 @@ license_header = (
     help="The name of your pipeline",
 )
 def create_pipeline(dataset_id: str, pipeline_id: str):
-    new_pipeline_path = f"{DATASETS_PATH}/{dataset_id}/pipelines/{pipeline_id}/"
-    dir = os.path.dirname(new_pipeline_path)
-    if not os.path.exists(dir):
-        os.makedirs(dir)
-        click.echo(
+    dir = f"{DATASETS_PATH}/{dataset_id}/pipelines/{pipeline_id}/"
+    new_pipeline_path = pathlib.Path(dir)
+    new_pipeline_path.mkdir(parents=True, exist_ok=True)
+    click.echo(
             f"\n{DATASETS_PATH}/{dataset_id}/pipelines/{pipeline_id} has been created\n"
         )
-    else:
-        click.echo(f"\n{new_pipeline_path} already exists\n")
+
     create_dataset_yaml(dataset_id)
     create_pipeline_yaml(dir)
 
 
 def create_dataset_yaml(dataset_id: str):
-    output = {}
+    dataset_yaml = {}
     sample_yaml = yaml.load((PROJECT_ROOT / "samples" / "dataset.yaml").read_text())
     sample_yaml["dataset"]["name"] = dataset_id
     sample_yaml["dataset"]["friendly_name"] = dataset_id
     dataset_desc = click.prompt("A user-friendly description of the dataset", type=str)
     sample_yaml["dataset"]["description"] = dataset_desc
-    output["dataset"] = sample_yaml["dataset"]
+    dataset_yaml["dataset"] = sample_yaml["dataset"]
 
     resources = []
-    if click.confirm("\nWill you need GCP Resource(s) for your pipeline?"):
-        while True:
-            resource = click.prompt(
-                (
-                    "\nWhich GCP Resource(s) are required for your pipeline\n"
-                    "Select Resources Needed: BigQuery (BQ), Google Cloud Storage (GCS)?"
-                ),
-                type=click.Choice(["BQ", "GCS"], case_sensitive=False),
-                default="r",
+    # if click.confirm("\nWill you need GCP Resource(s) for your pipeline?"):
+    while True:
+        resource = click.prompt(
+            (
+                "\nWhich GCP Resource(s) are required for your pipeline\n"
+                "Select Resources Needed: BigQuery (BQ), Google Cloud Storage (GCS)?"
+            ),
+            type=click.Choice(["BQ", "GCS", "None"], case_sensitive=False),
+            default="r",
+        )
+        if resource == "BQ":
+            resource = next(res for res in sample_yaml["resources"] if res["type"] == "bigquery_dataset")
+            resource["dataset_id"] = dataset_id
+            bq_desc = click.prompt(
+                "\nA user-friendly description of the dataset", type=str
             )
-            if resource == "BQ":
-                bq_yaml = sample_yaml["resources"][0]
-                bq_yaml["dataset_id"] = dataset_id
-                bq_desc = click.prompt(
-                    "\nA user-friendly description of the dataset", type=str
-                )
-                bq_yaml["description"] = bq_desc
-                resources.append(bq_yaml)
-            if resource == "GCS":
-                gcs_yaml = sample_yaml["resources"][1]
-                gcs_bucket_name = click.prompt(
-                    "\nYour Cloud Storage Bucket Name\n"
-                    "Use hyphenated syntax, e.g. `some-prefix-123`, for the names.\n"
-                    "Note that bucket names must not contain 'google' or close misspellings, such as 'g00gle'.",
-                    type=str,
-                )
-                location = click.prompt(
-                    (
-                        "\nThe location of the bucket.\n"
-                        "Object data for objects in the bucket resides in physical storage within this region.\n"
-                        "Defaults to US."
-                    ),
-                    type=click.Choice(["US", "EU", "ASIA"], case_sensitive=False),
-                    default="US",
-                )
-                gcs_yaml["name"] = gcs_bucket_name
-                gcs_yaml["location"] = location
-                resources.append(gcs_yaml)
-            if not click.confirm("\nWould you like to add another resource"):
-                output["resources"] = resources
-                with open(
-                    f"{DATASETS_PATH}/{dataset_id}/pipelines/dataset.yaml", "w"
-                ) as dataset_out:
-                    dataset_out.write(license_header)
-                    yaml.dump(CommentedMap(output), dataset_out)
-                    click.echo(
-                        f"\n{DATASETS_PATH}/{dataset_id}/pipelines/dataset.yaml has been created\n"
-                    )
-                break
+            resource["description"] = bq_desc
+            resources.append(resource)
+        if resource == "GCS":
+            resource = next(res for res in sample_yaml["resources"] if res["type"] == "storage_bucket")
+            gcs_bucket_name = click.prompt(
+                "\nYour Cloud Storage Bucket Name\n"
+                "Use hyphenated syntax, e.g. `some-prefix-123`, for the names.\n"
+                "Note that bucket names must not contain 'google' or close misspellings, such as 'g00gle'.",
+                type=str,
+            )
+            location = click.prompt(
+                (
+                    "\nThe location of the bucket.\n"
+                    "Object data for objects in the bucket resides in physical storage within this region.\n"
+                    "Defaults to US."
+                ),
+                type=click.Choice(["US", "EU", "ASIA"], case_sensitive=False),
+                default="US",
+            )
+            resource["name"] = gcs_bucket_name
+            resource["location"] = location
+            resources.append(resource)
+        if resource == "None":
+            break
+    dataset_yaml["resources"] = resources
+    with open(
+        f"{DATASETS_PATH}/{dataset_id}/pipelines/dataset.yaml", "w"
+    ) as dataset_out:
+        dataset_out.write(license_header)
+        yaml.dump(CommentedMap(dataset_yaml), dataset_out)
+        click.echo(
+            f"\n{DATASETS_PATH}/{dataset_id}/pipelines/dataset.yaml has been created\n"
+        )
 
 
 def create_pipeline_yaml(dir: str):
-    output = {}
+    pipeline_yaml = {}
     resources = []
     sample_yaml = yaml.load((PROJECT_ROOT / "samples" / "pipeline.yaml").read_text())
     tables = click.prompt(
@@ -133,7 +131,7 @@ def create_pipeline_yaml(dir: str):
         sample_yaml["resources"][0]["table_id"] = table_name.strip()
         bq_resource = sample_yaml["resources"][0]
         resources.append(bq_resource.copy())
-    output["resources"] = resources
+    pipeline_yaml["resources"] = resources
 
     tasks = []
     airflow_operators = json.loads(
@@ -150,10 +148,10 @@ def create_pipeline_yaml(dir: str):
         tasks.append(sample_yaml["dag"]["tasks"][operator_idx])
         if not click.confirm("\nWould you like to add another operator?"):
             sample_yaml["dag"]["tasks"] = tasks
-            output["dag"] = sample_yaml["dag"]
+            pipeline_yaml["dag"] = sample_yaml["dag"]
             with open(f"{dir}/pipeline.yaml", "w") as pipeline_out:
                 pipeline_out.write(license_header)
-                yaml.dump(CommentedMap(output), pipeline_out)
+                yaml.dump(CommentedMap(pipeline_yaml), pipeline_out)
                 click.echo(f"\n{dir}/pipeline.yaml has been created\n")
             break
 
