@@ -16,15 +16,10 @@
 
 
 resource "google_bigquery_table" "google_cfe_datacenter_cfe" {
-  project    = var.project_id
-  dataset_id = "google_cfe"
-  table_id   = "datacenter_cfe"
-
+  project     = var.project_id
+  dataset_id  = "google_cfe"
+  table_id    = "datacenter_cfe"
   description = "Carbon-free energy (CFE) scores for Google Cloud regions and other Google data center regions"
-
-
-
-
   depends_on = [
     google_bigquery_dataset.google_cfe
   ]
