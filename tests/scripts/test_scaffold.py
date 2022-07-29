@@ -125,7 +125,7 @@ def test_dataset_yaml_contains_proper_sample_templates(click_flow: dict):
         PROJECT_ROOT / "templates" / "airflow" / "license_header.py.jinja2"
     ).read_text()
 
-    assert (license_header in dataset_yaml_file)  # test for license header
+    assert license_header in dataset_yaml_file  # test for license header
     assert (
         len(dataset_yaml["resources"]) == 2
     )  # test dataset yaml has 2 resources added (bq, gcs)

@@ -51,8 +51,8 @@ def create_pipeline(dataset_id: str, pipeline_id: str):
     new_pipeline_path = pathlib.Path(dir)
     new_pipeline_path.mkdir(parents=True, exist_ok=True)
     click.echo(
-            f"\n{DATASETS_PATH}/{dataset_id}/pipelines/{pipeline_id} has been created\n"
-        )
+        f"\n{DATASETS_PATH}/{dataset_id}/pipelines/{pipeline_id} has been created\n"
+    )
 
     create_dataset_yaml(dataset_id)
     create_pipeline_yaml(dir)
@@ -68,7 +68,6 @@ def create_dataset_yaml(dataset_id: str):
     dataset_yaml["dataset"] = sample_yaml["dataset"]
 
     resources = []
-    # if click.confirm("\nWill you need GCP Resource(s) for your pipeline?"):
     while True:
         resource = click.prompt(
             (
@@ -79,7 +78,11 @@ def create_dataset_yaml(dataset_id: str):
             default="r",
         )
         if resource == "BQ":
-            resource = next(res for res in sample_yaml["resources"] if res["type"] == "bigquery_dataset")
+            resource = next(
+                res
+                for res in sample_yaml["resources"]
+                if res["type"] == "bigquery_dataset"
+            )
             resource["dataset_id"] = dataset_id
             bq_desc = click.prompt(
                 "\nA user-friendly description of the dataset", type=str
@@ -87,7 +90,11 @@ def create_dataset_yaml(dataset_id: str):
             resource["description"] = bq_desc
             resources.append(resource)
         if resource == "GCS":
-            resource = next(res for res in sample_yaml["resources"] if res["type"] == "storage_bucket")
+            resource = next(
+                res
+                for res in sample_yaml["resources"]
+                if res["type"] == "storage_bucket"
+            )
             gcs_bucket_name = click.prompt(
                 "\nYour Cloud Storage Bucket Name\n"
                 "Use hyphenated syntax, e.g. `some-prefix-123`, for the names.\n"
