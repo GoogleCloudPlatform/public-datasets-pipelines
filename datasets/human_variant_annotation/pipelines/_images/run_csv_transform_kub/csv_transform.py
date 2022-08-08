@@ -22,7 +22,10 @@ from google.cloud import storage
 
 
 def main(base_url, folder, version, gcs_bucket, target_gcs_folder, pipeline):
-    logging.info(f"Human Variant Annotation Dataset {pipeline} pipeline process started at " + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+    logging.info(
+        f"Human Variant Annotation Dataset {pipeline} pipeline process started at "
+        + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    )
     logging.info(f"Creating './files/{folder}'")
     pathlib.Path(f"./files/{folder}").mkdir(parents=True, exist_ok=True)
     date_time = datetime.datetime.now()
@@ -33,9 +36,12 @@ def main(base_url, folder, version, gcs_bucket, target_gcs_folder, pipeline):
     if status_code == 200:
         target_gcs_path = f"{target_gcs_folder}{file_name}"
         upload_file_to_gcs(source_file, gcs_bucket, target_gcs_path)
-    logging.info(f"Human Variant Annotation Dataset {pipeline} pipeline process completed at " + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
-      
-    
+    logging.info(
+        f"Human Variant Annotation Dataset {pipeline} pipeline process completed at "
+        + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    )
+
+
 def download_gzfile(source_url: str, source_file: str):
     logging.info(f"Downloading data from {source_url} to {source_file} .")
     res = requests.get(source_url, stream=True)
@@ -45,10 +51,15 @@ def download_gzfile(source_url: str, source_file: str):
                 fb.write(chunk)
         logging.info(f"Downloaded data from {source_url} into {source_file}")
     else:
-        logging.info(f"\n\tCouldn't download {source_url}: Error {res.status_code}\n**** No new data added to FTP(source url) from last 24 hours **** ")
+        logging.info(
+            f"\n\tCouldn't download {source_url}: Error {res.status_code}\n**** No new data added to FTP(source url) from last 24 hours **** "
+        )
     return res.status_code
 
-def upload_file_to_gcs(source_file: pathlib.Path, target_gcs_bucket: str, target_gcs_path: str) -> None:
+
+def upload_file_to_gcs(
+    source_file: pathlib.Path, target_gcs_bucket: str, target_gcs_path: str
+) -> None:
     logging.info(f"Uploading output file to gs://{target_gcs_bucket}/{target_gcs_path}")
     storage_client = storage.Client()
     bucket = storage_client.bucket(target_gcs_bucket)
@@ -60,10 +71,10 @@ def upload_file_to_gcs(source_file: pathlib.Path, target_gcs_bucket: str, target
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
     main(
-        base_url=os.environ.get("BASE_URL",""),
-        folder=pathlib.Path(os.environ.get("FOLDER","")).expanduser(),
-        version=os.environ.get("VERSION","2.0"),
-        gcs_bucket=os.environ.get("GCS_BUCKET",""),
-        target_gcs_folder=os.environ.get("TARGET_GCS_FOLDER",""),
-        pipeline=os.environ.get("PIPELINE","")
+        base_url=os.environ.get("BASE_URL", ""),
+        folder=pathlib.Path(os.environ.get("FOLDER", "")).expanduser(),
+        version=os.environ.get("VERSION", "2.0"),
+        gcs_bucket=os.environ.get("GCS_BUCKET", ""),
+        target_gcs_folder=os.environ.get("TARGET_GCS_FOLDER", ""),
+        pipeline=os.environ.get("PIPELINE", ""),
     )
