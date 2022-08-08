@@ -81,9 +81,6 @@ dag:
         move_object: False
         replace: False
 
-
   graph_paths:
     - "download_dbsnp_v1_files >> copy_dbsnp_v1_to_gcs_destination_bucket"
     - "download_dbsnp_v2_files >> copy_dbsnp_v2_to_gcs_destination_bucket"
-
-          # curl -o $data_dir/$target_dir/All_20180423.vcf.gz -L $source_url_2018
