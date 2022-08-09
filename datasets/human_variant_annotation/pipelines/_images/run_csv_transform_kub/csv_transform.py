@@ -76,7 +76,7 @@ def get_files(
         upload_file_to_gcs(source_file, gcs_bucket, target_gcs_path)
 
 
-def download_gzfile(source_url: str, source_file: str):
+def download_gzfile(source_url: str, source_file: str) -> int:
     logging.info(f"Downloading data from {source_url} to {source_file} .")
     res = requests.get(source_url, stream=True)
     if res.status_code == 200:
