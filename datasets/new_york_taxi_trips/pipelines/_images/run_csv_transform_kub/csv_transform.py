@@ -19,7 +19,6 @@ import pathlib
 import typing
 from datetime import datetime
 
-import numpy as np
 import pandas as pd
 import requests
 from google.cloud import bigquery, storage
@@ -337,11 +336,11 @@ def process_month(
     if successful_download:
         try:
             df_parquet = pd.read_parquet(source_parquet_file)
-        except:
-            logging.info(" ... Unable to obtain or read parquet file")
+        except BaseException as error:
+            logging.info(f" ... Unable to obtain or read parquet file ... {error}")
             logging.info(f"Processing {process_year_month} failed")
         else:
-            df_parquet.to_csv(source_file_to_process, sep = "|", index=False)
+            df_parquet.to_csv(source_file_to_process, sep="|", index=False)
             with pd.read_csv(
                 source_file_to_process,
                 engine="python",
@@ -444,7 +443,7 @@ def process_chunk(
     df["data_file_month"] = month_number
     df = format_date_time(df, "pickup_datetime", "strftime", "%Y-%m-%d %H:%M:%S")
     df = format_date_time(df, "dropoff_datetime", "strftime", "%Y-%m-%d %H:%M:%S")
-    df["passenger_count"] = df["passenger_count"].apply(lambda x: str(int(float(str(x)))) if str(x).replace('.','',1).isdigit() else "")
+    df["passenger_count"] = df["passenger_count"].apply(lambda x: str(int(float(str(x)))) if str(x).replace('.', '', 1).isdigit() else "")
     df = remove_null_rows(df)
     df = df[output_headers]
     save_to_new_file(df, file_path=str(target_file_batch))
