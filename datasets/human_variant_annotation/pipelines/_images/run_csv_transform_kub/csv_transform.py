@@ -29,7 +29,7 @@ def main(
     gcs_bucket: str,
     target_gcs_folder: str,
     pipeline: str,
-):
+) -> None:
     logging.info(
         f"Human Variant Annotation Dataset {pipeline} pipeline process started at "
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
@@ -66,7 +66,7 @@ def get_files(
     folder: pathlib.Path,
     gcs_bucket: str,
     target_gcs_folder: str,
-):
+) -> None:
     file_name = f"clinvar_{date_time.strftime('%Y%m%d')}.vcf.gz"
     source_url = base_url + f"archive_{version}/{date_time.strftime('%Y')}/{file_name}"
     source_file = f"./files/{folder}/{file_name}"
@@ -74,6 +74,8 @@ def get_files(
     if status_code == 200:
         target_gcs_path = f"{target_gcs_folder}{file_name}"
         upload_file_to_gcs(source_file, gcs_bucket, target_gcs_path)
+    else:
+        pass
 
 
 def download_gzfile(source_url: str, source_file: str) -> int:
