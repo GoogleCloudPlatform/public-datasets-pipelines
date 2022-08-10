@@ -110,8 +110,12 @@ def setup_dag_and_variables(
     pipeline_path: pathlib.Path,
     env: str,
     variables_filename: str,
+    mocker,
 ):
     copy_config_files_and_set_tmp_folder_names_as_ids(dataset_path, pipeline_path)
+
+    # Optimize test runtimes by skipping code formatting
+    mocker.patch("scripts.generate_dag.format_python_code")
 
     generate_dag.main(
         dataset_id=dataset_path.name, pipeline_id=pipeline_path.name, env=env
@@ -127,12 +131,14 @@ def test_script_always_requires_dataset_arg(
     dataset_path: pathlib.Path,
     pipeline_path: pathlib.Path,
     env: str,
+    mocker,
 ):
     setup_dag_and_variables(
         dataset_path,
         pipeline_path,
         env,
         f"{dataset_path.name}_variables.json",
+        mocker,
     )
     with pytest.raises(subprocess.CalledProcessError):
         subprocess.check_call(
@@ -160,6 +166,7 @@ def test_script_can_deploy_without_variables_files(
         pipeline_path,
         env,
         f"{dataset_path.name}_variables.json",
+        mocker,
     )
 
     # Delete the dataset-specific variables file
@@ -202,6 +209,7 @@ def test_vars_yaml_generates_pipeline_vars_json_file(
         pipeline_path,
         env,
         variables_filename,
+        mocker,
     )
 
     # Delete the variables JSON file
@@ -220,8 +228,14 @@ def test_vars_yaml_generates_pipeline_vars_json_file(
     }
     yaml.dump({"pipelines": pipeline_vars}, dataset_path / f".vars.{env}.yaml")
 
-    mocker.patch("scripts.deploy_dag.run_gsutil_cmd")
+    # Local variables will be used. Assum remote vars do not yet exist.
+    mocker.patch(
+        "scripts.deploy_dag.get_airflow_var_from_composer_env", return_value=None
+    )
+
+    # Patch remote calls
     mocker.patch("scripts.deploy_dag.run_cloud_composer_vars_import")
+    mocker.patch("scripts.deploy_dag.run_gsutil_cmd")
     mocker.patch("scripts.deploy_dag.composer_airflow_version", return_value=2)
 
     deploy_dag.main(
@@ -237,6 +251,300 @@ def test_vars_yaml_generates_pipeline_vars_json_file(
     assert json.loads(variables_json.read_text()) == pipeline_vars
 
 
+def test_import_vars_works_with_only_vars_json():
+    pass
+
+
+def test_vars_not_imported_to_composer_when_local_and_remote_vars_are_equal(
+    dataset_path: pathlib.Path,
+    pipeline_path: pathlib.Path,
+    env: str,
+    mocker,
+):
+    variables_filename = f"{dataset_path.name}_variables.json"
+    setup_dag_and_variables(
+        dataset_path,
+        pipeline_path,
+        env,
+        variables_filename,
+        mocker,
+    )
+
+    # Set variables
+    vars_ = {
+        f"{dataset_path.name}": {
+            "airflow_var": f"var-{uuid.uuid4()}",
+            "constant_var": 1234,
+        }
+    }
+
+    # Set local variables to `vars_`
+    variables_json = (
+        ENV_DATASETS_PATH / dataset_path.name / "pipelines" / variables_filename
+    )
+    variables_json.write_text(json.dumps(vars_))
+    assert variables_json.stat().st_size > 0
+
+    # Set remote variables to `vars_`
+    mocker.patch(
+        "scripts.deploy_dag.get_airflow_var_from_composer_env", return_value=vars_
+    )
+
+    # Patch remote calls
+    mocker.patch("scripts.deploy_dag.run_cloud_composer_vars_import")
+    mocker.patch("scripts.deploy_dag.run_gsutil_cmd")
+    mocker.patch("scripts.deploy_dag.composer_airflow_version", return_value=2)
+
+    deploy_dag.main(
+        env_path=ENV_PATH,
+        dataset_id=dataset_path.name,
+        pipeline=pipeline_path.name,
+        composer_env="test-env",
+        composer_bucket="test-bucket",
+        composer_region="test-region",
+    )
+
+    assert not deploy_dag.run_cloud_composer_vars_import.called
+
+
+def test_vars_not_imported_to_composer_when_local_and_remote_vars_are_null(
+    dataset_path: pathlib.Path,
+    pipeline_path: pathlib.Path,
+    env: str,
+    mocker,
+):
+    variables_filename = f"{dataset_path.name}_variables.json"
+    setup_dag_and_variables(
+        dataset_path,
+        pipeline_path,
+        env,
+        variables_filename,
+        mocker,
+    )
+
+    # Remove local variables
+    variables_json = (
+        ENV_DATASETS_PATH / dataset_path.name / "pipelines" / variables_filename
+    )
+    variables_json.unlink()
+    assert not variables_json.exists()
+
+    # Remove remote variables
+    mocker.patch(
+        "scripts.deploy_dag.get_airflow_var_from_composer_env", return_value=None
+    )
+
+    # Patch remote calls
+    mocker.patch("scripts.deploy_dag.run_cloud_composer_vars_import")
+    mocker.patch("scripts.deploy_dag.run_gsutil_cmd")
+    mocker.patch("scripts.deploy_dag.composer_airflow_version", return_value=2)
+
+    deploy_dag.main(
+        env_path=ENV_PATH,
+        dataset_id=dataset_path.name,
+        pipeline=pipeline_path.name,
+        composer_env="test-env",
+        composer_bucket="test-bucket",
+        composer_region="test-region",
+    )
+
+    assert not deploy_dag.run_cloud_composer_vars_import.called
+
+
+def test_vars_not_imported_to_composer_when_local_vars_are_null_but_remote_vars_exist(
+    dataset_path: pathlib.Path,
+    pipeline_path: pathlib.Path,
+    env: str,
+    mocker,
+):
+    variables_filename = f"{dataset_path.name}_variables.json"
+    setup_dag_and_variables(
+        dataset_path,
+        pipeline_path,
+        env,
+        variables_filename,
+        mocker,
+    )
+
+    # Delete local variables
+    variables_json = (
+        ENV_DATASETS_PATH / dataset_path.name / "pipelines" / variables_filename
+    )
+    variables_json.unlink()
+    assert not variables_json.exists()
+
+    # Set remote variables to some value
+    remote_vars = {dataset_path.name: {"test-var": f"val-{uuid.uuid4()}"}}
+    mocker.patch(
+        "scripts.deploy_dag.get_airflow_var_from_composer_env", return_value=remote_vars
+    )
+
+    # Patch remote calls
+    mocker.patch("scripts.deploy_dag.run_cloud_composer_vars_import")
+    mocker.patch("scripts.deploy_dag.run_gsutil_cmd")
+    mocker.patch("scripts.deploy_dag.composer_airflow_version", return_value=2)
+
+    deploy_dag.main(
+        env_path=ENV_PATH,
+        dataset_id=dataset_path.name,
+        pipeline=pipeline_path.name,
+        composer_env="test-env",
+        composer_bucket="test-bucket",
+        composer_region="test-region",
+    )
+
+    assert not deploy_dag.run_cloud_composer_vars_import.called
+
+
+def test_resulting_vars_when_user_gets_prompted_and_chooses_remote_vars(
+    dataset_path: pathlib.Path,
+    pipeline_path: pathlib.Path,
+    env: str,
+    mocker,
+):
+    variables_filename = f"{dataset_path.name}_variables.json"
+    setup_dag_and_variables(
+        dataset_path,
+        pipeline_path,
+        env,
+        variables_filename,
+        mocker,
+    )
+
+    # Set local variables to some value
+    local_vars = {dataset_path.name: {"local": str(uuid.uuid4())}}
+    variables_json = (
+        ENV_DATASETS_PATH / dataset_path.name / "pipelines" / variables_filename
+    )
+    variables_json.write_text(json.dumps(local_vars))
+
+    # Set remote variables to a different value
+    remote_vars = {dataset_path.name: {"remote_var": f"remote-val-{uuid.uuid4()}"}}
+    mocker.patch(
+        "scripts.deploy_dag.get_airflow_var_from_composer_env", return_value=remote_vars
+    )
+
+    # Patch remote calls
+    mocker.patch("scripts.deploy_dag.run_cloud_composer_vars_import")
+    mocker.patch("scripts.deploy_dag.run_gsutil_cmd")
+    mocker.patch("scripts.deploy_dag.composer_airflow_version", return_value=2)
+
+    # User chooses to use remote variable
+    mocker.patch(
+        "scripts.deploy_dag.prompt_strategy_for_local_and_remote_vars", return_value="r"
+    )
+    deploy_dag.main(
+        env_path=ENV_PATH,
+        dataset_id=dataset_path.name,
+        pipeline=pipeline_path.name,
+        composer_env="test-env",
+        composer_bucket="test-bucket",
+        composer_region="test-region",
+    )
+    assert not deploy_dag.run_cloud_composer_vars_import.called
+    assert json.loads(variables_json.read_text()) == remote_vars
+
+
+def test_resulting_vars_when_user_gets_prompted_and_chooses_local_vars(
+    dataset_path: pathlib.Path,
+    pipeline_path: pathlib.Path,
+    env: str,
+    mocker,
+):
+    variables_filename = f"{dataset_path.name}_variables.json"
+    setup_dag_and_variables(
+        dataset_path,
+        pipeline_path,
+        env,
+        variables_filename,
+        mocker,
+    )
+
+    # Set local variables to some value
+    local_vars = {dataset_path.name: {"local": str(uuid.uuid4())}}
+    variables_json = (
+        ENV_DATASETS_PATH / dataset_path.name / "pipelines" / variables_filename
+    )
+    variables_json.write_text(json.dumps(local_vars))
+
+    # Set remote variables to a different value
+    remote_vars = {dataset_path.name: {"remote_var": f"remote-val-{uuid.uuid4()}"}}
+    mocker.patch(
+        "scripts.deploy_dag.get_airflow_var_from_composer_env", return_value=remote_vars
+    )
+
+    # Patch remote calls
+    mocker.patch("scripts.deploy_dag.run_cloud_composer_vars_import")
+    mocker.patch("scripts.deploy_dag.run_gsutil_cmd")
+    mocker.patch("scripts.deploy_dag.composer_airflow_version", return_value=2)
+
+    # User chooses to use local variable
+    mocker.patch(
+        "scripts.deploy_dag.prompt_strategy_for_local_and_remote_vars", return_value="l"
+    )
+    deploy_dag.main(
+        env_path=ENV_PATH,
+        dataset_id=dataset_path.name,
+        pipeline=pipeline_path.name,
+        composer_env="test-env",
+        composer_bucket="test-bucket",
+        composer_region="test-region",
+    )
+    deploy_dag.run_cloud_composer_vars_import.assert_called_once()
+    assert json.loads(variables_json.read_text()) == local_vars
+
+
+def test_resulting_vars_when_user_gets_prompted_and_chooses_to_merge_local_and_remote_vars(
+    dataset_path: pathlib.Path,
+    pipeline_path: pathlib.Path,
+    env: str,
+    mocker,
+):
+    variables_filename = f"{dataset_path.name}_variables.json"
+    setup_dag_and_variables(
+        dataset_path,
+        pipeline_path,
+        env,
+        variables_filename,
+        mocker,
+    )
+
+    # Set local variables to some value
+    local_vars = {dataset_path.name: {"local": str(uuid.uuid4())}}
+    variables_json = (
+        ENV_DATASETS_PATH / dataset_path.name / "pipelines" / variables_filename
+    )
+    variables_json.write_text(json.dumps(local_vars))
+
+    # Set remote variables to a different value
+    remote_vars = {dataset_path.name: {"remote_var": f"remote-val-{uuid.uuid4()}"}}
+    mocker.patch(
+        "scripts.deploy_dag.get_airflow_var_from_composer_env", return_value=remote_vars
+    )
+
+    # Patch remote calls
+    mocker.patch("scripts.deploy_dag.run_cloud_composer_vars_import")
+    mocker.patch("scripts.deploy_dag.run_gsutil_cmd")
+    mocker.patch("scripts.deploy_dag.composer_airflow_version", return_value=2)
+
+    # User chooses to merge local and remote variables
+    mocker.patch(
+        "scripts.deploy_dag.prompt_strategy_for_local_and_remote_vars", return_value="m"
+    )
+    deploy_dag.main(
+        env_path=ENV_PATH,
+        dataset_id=dataset_path.name,
+        pipeline=pipeline_path.name,
+        composer_env="test-env",
+        composer_bucket="test-bucket",
+        composer_region="test-region",
+    )
+    deploy_dag.run_cloud_composer_vars_import.assert_called_once()
+    assert json.loads(variables_json.read_text()) == deploy_dag.merge_nested_dicts(
+        remote_vars, local_vars
+    )
+
+
 def test_script_errors_out_when_deploying_airflow2_dag_to_airflow1_env(
     dataset_path: pathlib.Path,
     pipeline_path: pathlib.Path,
@@ -248,6 +556,7 @@ def test_script_errors_out_when_deploying_airflow2_dag_to_airflow1_env(
         pipeline_path,
         env,
         f"{dataset_path.name}_variables.json",
+        mocker,
     )
 
     mocker.patch("scripts.deploy_dag.get_dag_airflow_version", return_value=2)
@@ -276,6 +585,7 @@ def test_script_without_pipeline_arg_deploys_all_pipelines_under_the_dataset(
         pipeline_path,
         env,
         f"{dataset_path.name}_variables.json",
+        mocker,
     )
 
     setup_dag_and_variables(
@@ -283,11 +593,11 @@ def test_script_without_pipeline_arg_deploys_all_pipelines_under_the_dataset(
         pipeline_path_2,
         env,
         f"{dataset_path.name}_variables.json",
+        mocker,
     )
 
     airflow_version = 2
-    mocker.patch("scripts.deploy_dag.copy_variables_to_airflow_data_folder")
-    mocker.patch("scripts.deploy_dag.import_variables_to_airflow_env")
+    mocker.patch("scripts.deploy_dag.check_and_configure_airflow_variables")
     mocker.patch(
         "scripts.deploy_dag.composer_airflow_version", return_value=airflow_version
     )
@@ -325,6 +635,7 @@ def test_script_with_pipeline_arg_deploys_only_that_pipeline(
         pipeline_path,
         env,
         f"{dataset_path.name}_variables.json",
+        mocker,
     )
 
     setup_dag_and_variables(
@@ -332,11 +643,11 @@ def test_script_with_pipeline_arg_deploys_only_that_pipeline(
         pipeline_path_2,
         env,
         f"{dataset_path.name}_variables.json",
+        mocker,
     )
 
     airflow_version = 2
-    mocker.patch("scripts.deploy_dag.copy_variables_to_airflow_data_folder")
-    mocker.patch("scripts.deploy_dag.import_variables_to_airflow_env")
+    mocker.patch("scripts.deploy_dag.check_and_configure_airflow_variables")
     mocker.patch(
         "scripts.deploy_dag.composer_airflow_version", return_value=airflow_version
     )
@@ -367,11 +678,11 @@ def test_script_with_pipeline_arg_deploys_without_gcs_bucket_param(
         pipeline_path,
         env,
         f"{dataset_path.name}_variables.json",
+        mocker,
     )
 
     airflow_version = 2
-    mocker.patch("scripts.deploy_dag.copy_variables_to_airflow_data_folder")
-    mocker.patch("scripts.deploy_dag.import_variables_to_airflow_env")
+    mocker.patch("scripts.deploy_dag.check_and_configure_airflow_variables")
     mocker.patch(
         "scripts.deploy_dag.composer_airflow_version", return_value=airflow_version
     )
@@ -404,15 +715,16 @@ def test_script_copy_files_in_data_folder_to_composer_with_folder_created(
         pipeline_path,
         env,
         f"{dataset_path.name}_variables.json",
+        mocker,
     )
 
     data_folder = pipeline_path / "data"
     data_folder.mkdir(parents=True)
-    assert data_folder.exists() and data_folder.is_dir()
+    (data_folder / "test_file.txt").touch()
+    assert data_folder.exists() and data_folder.is_dir() and any(data_folder.iterdir())
 
     airflow_version = 2
-    mocker.patch("scripts.deploy_dag.copy_variables_to_airflow_data_folder")
-    mocker.patch("scripts.deploy_dag.import_variables_to_airflow_env")
+    mocker.patch("scripts.deploy_dag.check_and_configure_airflow_variables")
     mocker.patch(
         "scripts.deploy_dag.composer_airflow_version", return_value=airflow_version
     )
@@ -444,11 +756,11 @@ def test_script_copy_files_in_data_folder_to_composer_data_folder_without_folder
         pipeline_path,
         env,
         f"{dataset_path.name}_variables.json",
+        mocker,
     )
 
     airflow_version = 2
-    mocker.patch("scripts.deploy_dag.copy_variables_to_airflow_data_folder")
-    mocker.patch("scripts.deploy_dag.import_variables_to_airflow_env")
+    mocker.patch("scripts.deploy_dag.check_and_configure_airflow_variables")
     mocker.patch(
         "scripts.deploy_dag.composer_airflow_version", return_value=airflow_version
     )
@@ -469,7 +781,7 @@ def test_script_copy_files_in_data_folder_to_composer_data_folder_without_folder
     deploy_dag.copy_data_folder_to_composer_bucket.assert_not_called()
 
 
-def test_script_without_local_flag_requires_cloud_composer_args(env: str):
+def test_script_without_composer_env_or_region_fails(env: str):
     with pytest.raises(subprocess.CalledProcessError):
         # No --composer-env parameter
         subprocess.check_call(

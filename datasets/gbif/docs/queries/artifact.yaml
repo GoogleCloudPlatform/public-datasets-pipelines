@@ -1,0 +1,5 @@
+artifact:
+  title: Species Found Only in One Region
+  description: Using this query, we uncover which species have only been found in one single region.
+  vertical: environment
+  tier: free

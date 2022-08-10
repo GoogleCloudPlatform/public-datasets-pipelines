@@ -186,7 +186,7 @@ with DAG(
             {
                 "description": "The zip code in which the provider is physically located",
                 "name": "provider_zipcode",
-                "type": "INTEGER",
+                "type": "STRING",
                 "mode": "NULLABLE",
             },
             {
@@ -271,7 +271,7 @@ with DAG(
             {
                 "description": "The zip code in which the provider is physically located",
                 "name": "provider_zipcode",
-                "type": "INTEGER",
+                "type": "STRING",
                 "mode": "NULLABLE",
             },
             {
@@ -356,7 +356,7 @@ with DAG(
             {
                 "description": "The zip code in which the provider is physically located",
                 "name": "provider_zipcode",
-                "type": "INTEGER",
+                "type": "STRING",
                 "mode": "NULLABLE",
             },
             {
@@ -441,7 +441,7 @@ with DAG(
             {
                 "description": "The zip code in which the provider is physically located",
                 "name": "provider_zipcode",
-                "type": "INTEGER",
+                "type": "STRING",
                 "mode": "NULLABLE",
             },
             {
@@ -526,7 +526,7 @@ with DAG(
             {
                 "description": "The zip code in which the provider is physically located",
                 "name": "provider_zipcode",
-                "type": "INTEGER",
+                "type": "STRING",
                 "mode": "NULLABLE",
             },
             {

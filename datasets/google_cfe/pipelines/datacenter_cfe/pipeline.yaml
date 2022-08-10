@@ -13,25 +13,12 @@
 # limitations under the License.
 ---
 resources:
-  # A list of GCP resources that are unique and specific to your pipeline.
-  #
-  # The currently supported resources are shown below. Use only the resources
-  # needed by your pipeline, and delete the rest of the examples.
-  #
-  # We will keep adding to the list below to support more Google Cloud resources
-  # over time. If a resource you need isn't supported, please file an issue on
-  # the repository.
   - type: bigquery_table
-    # A Google BigQuery table to store your data. Requires a `bigquery_dataset`
-    # to be specified in the config (i.e. `dataset.yaml) for the dataset that
-    # this pipeline belongs in.
     table_id: datacenter_cfe
     description: "Carbon-free energy (CFE) scores for Google Cloud regions and other Google data center regions"
 
 dag:
-  # [Required] Specify the Airflow version of the operators used by the DAG.
   airflow_version: 2
-
   initialize:
     dag_id: datacenter_cfe
     default_args:
@@ -45,32 +32,15 @@ dag:
 
   tasks:
     - operator: "GoogleCloudStorageToBigQueryOperator"
-      # Initializes GCS to BQ task for the DAG. This operator is used to load a
-      # JSON, CSV, Avro, ORC, or Parquet data from GCS into a BigQuery table.
-
-      # Task description
       description: "Task to load CSV data to a BigQuery table"
-
-      # Arguments supported by this operator:
-      # http://airflow.apache.org/docs/apache-airflow/stable/howto/operator/gcp/gcs.html#googlecloudstoragetobigqueryoperator
       args:
         task_id: "cfe_gcs_to_bq"
-
-        # The GCS bucket where the CSV file is located in.
         bucket: "{{ var.json.google_cfe.source_bucket }}"
-
-        # Use the CSV file containing data from 2019 up to the previous year
         source_objects: ["data/2019-to-{{ macros.ds_format(macros.ds_add(ds, -366), '%Y-%m-%d', '%Y') }}.csv"]
         source_format: "CSV"
         destination_project_dataset_table: "google_cfe.datacenter_cfe"
-
-        # Use this if your CSV file contains a header row
         skip_leading_rows: 1
-
-        # How to write data to the table: overwrite, append, or write if empty
-        # See https://cloud.google.com/bigquery/docs/reference/auditlogs/rest/Shared.Types/WriteDisposition
         write_disposition: "WRITE_TRUNCATE"
-
         schema_fields:
           - name: "year"
             type: "INTEGER"
