@@ -1,0 +1,76 @@
+# Copyright 2022 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# requestations under the License.
+
+---
+resources:
+
+
+dag:
+  airflow_version: 2
+  initialize:
+    dag_id: open_buildings
+    default_args:
+      owner: "Google"
+      depends_on_past: False
+      start_date: "2022-08-12"
+    max_active_runs: 1
+    schedule_interval: "@yearly"
+    catchup: False
+    default_view: graph
+
+  tasks:
+    # - operator: "BashOperator"
+    #   description: "Fetch data gcs - gcs"
+    #   args:
+    #     task_id: "bash_gcs_to_gcs"
+    #     bash_command: "gsutil cp -R gs://open-buildings-data/v1/polygons_s2_level_4_gzip gs://us-central1-dev-v2-cd7f5f38-bucket/data/open_buildings/source_files/"
+
+    - operator: "BashOperator"
+      description: "Unzip data"
+      args:
+        task_id: "bash_gunzip"
+        bash_command: "gunzip -v /home/airflow/gcs/data/open_buildings/source_files/polygons_s2_level_4_gzip/*"
+
+    - operator: "BashOperator"
+      description: "test"
+      args:
+        task_id: "test"
+        bash_command: "gunzip -v -k /home/airflow/gcs/data/open_buildings/source_files/0c3_buildings.csv.gz"
+
+    - operator: "KubernetesPodOperator"
+      description: "ETL within the kubernetes pod"
+      args:
+        task_id: "py_gcs_to_bq"
+        startup_timeout_seconds: 1000
+        name: "load_data"
+        namespace: "composer"
+        service_account_name: "datasets"
+        image_pull_policy: "Always"
+        image: "{{ var.json.open_buildings.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_GCS_PATH: "{{ var.json.open_buildings.source_gcs_path }}"
+          PROJECT_ID: "{{ var.json.open_buildings.project_id }}"
+          DATASET_ID: "{{ var.json.open_buildings.dataset_id }}"
+          GCS_BUCKET: "{{ var.json.open_buildings.gcs_bucket }}"
+          SCHEMA_FILEPATH: "schema.json"
+        resources:
+          request_memory: "2G"
+          request_cpu: "1"
+          request_ephemeral_storage: "10G"
+
+  graph_paths:
+    - "test"
+    - "bash_gunzip >> py_gcs_to_bq"
+    - "test"
+    # - "bash_gcs_to_gcs >> bash_gunzip >> py_gcs_to_bq"
