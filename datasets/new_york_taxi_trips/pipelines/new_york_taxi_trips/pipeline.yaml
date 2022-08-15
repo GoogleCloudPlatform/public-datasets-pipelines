@@ -74,6 +74,7 @@ dag:
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "{{ var.json.new_york_taxi_trips.container_registry.green_trips_target_gcs_path }}"
           PIPELINE_NAME: "tlc_green_trips"
+          START_YEAR: "2009"
           INPUT_CSV_HEADERS: >-
             ["vendor_id", "pickup_datetime", "dropoff_datetime", "store_and_fwd_flag", "rate_code",
              "pickup_location_id", "dropoff_location_id", "passenger_count", "trip_distance", "fare_amount",
@@ -136,6 +137,7 @@ dag:
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_target_gcs_path }}"
           PIPELINE_NAME: "tlc_yellow_trips"
+          START_YEAR: "2009"
           INPUT_CSV_HEADERS: >-
             [ "vendor_id", "pickup_datetime", "dropoff_datetime", "passenger_count", "trip_distance",
               "rate_code", "store_and_fwd_flag", "pickup_location_id", "dropoff_location_id",
