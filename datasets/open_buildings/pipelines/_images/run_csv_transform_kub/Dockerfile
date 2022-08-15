@@ -32,6 +32,7 @@ WORKDIR /custom
 
 # Copy the specific data processing script/s in the image under /custom/*
 COPY ./csv_transform.py .
+COPY ./schema.json .
 
 # Command to run the data processing script when the container is run
 CMD ["python3", "csv_transform.py"]

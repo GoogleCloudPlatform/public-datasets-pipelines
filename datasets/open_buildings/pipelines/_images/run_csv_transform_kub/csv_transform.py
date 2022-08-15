@@ -1,17 +1,18 @@
-import csv
 import json
 import logging
 import os
 import pathlib
-import sys
-import typing
 
-import pandas as pd
 from google.api_core.exceptions import NotFound
 from google.cloud import bigquery, storage
 
 
-def main(source_gcs_path, project_id, dataset_id, gcs_bucket, schema_filepath):
+def main(
+    source_gcs_path,
+    project_id,
+    dataset_id,
+    gcs_bucket,
+    schema_filepath) ->None:
     logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
     print()
@@ -38,6 +39,9 @@ def main(source_gcs_path, project_id, dataset_id, gcs_bucket, schema_filepath):
         )
         logging.info(f"Finished ETL for ---> {pipeline_name}")
         print()
+
+    logging.info("Cleaning up extracted csv files in GCS. Source csv.gz files present.")
+    cleanup(gcs_bucket, source_gcs_path)
 
 
 def fetch_gcs_file_names(source_gcs_path, gcs_bucket):
@@ -131,7 +135,7 @@ def create_dest_table(
 
 
 def create_table_schema(schema_filepath) -> list:
-    logging.info(f"Defining table schema")
+    logging.info("Defining table schema")
     schema = []
     with open(schema_filepath) as f:
         sc = f.read()
@@ -175,7 +179,17 @@ def load_data_to_bq(
         job_config=job_config,
     )
     logging.info(job.result())
-    logging.info(f"Loading table completed")
+    logging.info("Loading table completed")
+
+
+def cleanup(gcs_bucket, source_gcs_path):
+    client = storage.Client()
+    pre = client.list_blobs(gcs_bucket, prefix=source_gcs_path)
+    bucket = client.bucket(gcs_bucket)
+    for i in pre:
+        if i.name.endswith(".csv"):
+            delblob = bucket.blob(i.name)
+            delblob.delete()
 
 
 if __name__ == "__main__":
