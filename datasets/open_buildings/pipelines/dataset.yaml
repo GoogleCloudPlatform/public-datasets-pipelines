@@ -19,10 +19,7 @@ dataset:
   dataset_sources: https://sites.research.google/open-buildings/#download
   terms_of_use: ~
 
-
 resources:
   - type: bigquery_dataset
     dataset_id: open_buildings
     description: A dataset of building footprints to support social good applications. This large-scale open dataset contains the outlines of buildings derived from high-resolution satellite imagery in order to support these types of uses. The project being based in Ghana, the current focus is on the continent of Africa.
-
-
