@@ -51,13 +51,14 @@ def main(
     env: str,
     all_pipelines: bool = False,
     skip_builds: bool = False,
+    async_builds: bool = False,
     format_code: bool = True,
 ):
     custom_yaml_constructor = CustomYAMLTags()
     custom_yaml_constructor.dataset = dataset_id
 
     if not skip_builds:
-        build_images(dataset_id, env)
+        build_images(dataset_id, env, async_builds)
 
     if all_pipelines:
         for pipeline_dir in list_subdirs(DATASETS_PATH / dataset_id / "pipelines"):
@@ -231,7 +232,7 @@ def copy_files_to_dot_dir(dataset_id: str, pipeline_id: str, env_dir: pathlib.Pa
     )
 
 
-def build_images(dataset_id: str, env: str):
+def build_images(dataset_id: str, env: str, async_builds: bool):
     parent_dir = DATASETS_PATH / dataset_id / "pipelines" / "_images"
     if not parent_dir.exists():
         return
@@ -240,7 +241,7 @@ def build_images(dataset_id: str, env: str):
         dataset_id, parent_dir, PROJECT_ROOT / f".{env}"
     )
     for image_dir in image_dirs:
-        build_and_push_image(dataset_id, image_dir)
+        build_and_push_image(dataset_id, image_dir, async_builds)
 
 
 def copy_image_files_to_dot_dir(
@@ -255,24 +256,27 @@ def copy_image_files_to_dot_dir(
     return list_subdirs(target_dir / "_images")
 
 
-def build_and_push_image(dataset_id: str, image_dir: pathlib.Path):
+def build_and_push_image(
+    dataset_id: str, image_dir: pathlib.Path, async_builds: bool = False
+):
     image_name = f"{dataset_id}__{image_dir.name}"
-    tag = f"gcr.io/{gcp_project_id()}/{image_name}"
+    command = [
+        "gcloud",
+        "builds",
+        "submit",
+        "--async",
+        "--tag",
+        f"gcr.io/{gcp_project_id()}/{image_name}",
+    ]
+
+    if not async_builds:
+        command.remove("--async")
 
     # gcloud builds submit --tag gcr.io/PROJECT_ID/IMAGE_NAME
-    subprocess.check_call(
-        [
-            "gcloud",
-            "builds",
-            "submit",
-            "--tag",
-            str(tag),
-        ],
-        cwd=image_dir,
-    )
+    subprocess.check_call(command, cwd=image_dir)
 
 
-def gcp_project_id(project_id: str = None) -> str:
+def gcp_project_id() -> str:
     _, project_id = google.auth.default()
     return project_id
 
@@ -321,7 +325,17 @@ if __name__ == "__main__":
     parser.add_argument(
         "--skip-builds", required=False, dest="skip_builds", action="store_true"
     )
+    parser.add_argument(
+        "--async-builds", required=False, dest="async_builds", action="store_false"
+    )
 
     args = parser.parse_args()
 
-    main(args.dataset, args.pipeline, args.env, args.all_pipelines, args.skip_builds)
+    main(
+        args.dataset,
+        args.pipeline,
+        args.env,
+        args.all_pipelines,
+        args.skip_builds,
+        args.async_builds,
+    )
