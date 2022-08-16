@@ -20,8 +20,6 @@ from ruamel import yaml
 
 from scripts import generate_dag, generate_terraform
 
-yaml = yaml.YAML(typ="safe")
-
 PROJECT_ROOT = generate_dag.PROJECT_ROOT
 SAMPLE_YAML_PATHS = {
     "dataset": PROJECT_ROOT / "samples" / "dataset.yaml",

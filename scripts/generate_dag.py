@@ -24,9 +24,6 @@ import google.auth
 import jinja2
 from ruamel import yaml
 
-# yaml = yaml.YAML(typ="safe")
-
-
 CURRENT_PATH = pathlib.Path(__file__).resolve().parent
 PROJECT_ROOT = CURRENT_PATH.parent
 DATASETS_PATH = PROJECT_ROOT / "datasets"
