@@ -87,7 +87,7 @@ def execute_pipeline(
     data_dtypes: dict,
     output_headers: typing.List[str],
 ) -> None:
-    for year_number in range(datetime.now().year, start_year, -1):
+    for year_number in range(datetime.now().year, (start_year - 1), -1):
         process_year_data(
             source_url=source_url,
             year_number=int(year_number),
