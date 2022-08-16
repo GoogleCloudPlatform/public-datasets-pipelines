@@ -443,7 +443,11 @@ def process_chunk(
     df["data_file_month"] = month_number
     df = format_date_time(df, "pickup_datetime", "strftime", "%Y-%m-%d %H:%M:%S")
     df = format_date_time(df, "dropoff_datetime", "strftime", "%Y-%m-%d %H:%M:%S")
-    df["passenger_count"] = df["passenger_count"].apply(lambda x: str(int(float(str(x)))) if str(x).replace('.', '', 1).isdigit() else "")
+    df["passenger_count"] = df["passenger_count"].apply(
+        lambda x: str(int(float(str(x))))
+        if str(x).replace(".", "", 1).isdigit()
+        else ""
+    )
     df = remove_null_rows(df)
     df = df[output_headers]
     save_to_new_file(df, file_path=str(target_file_batch))
