@@ -27,7 +27,7 @@ dag:
       depends_on_past: False
       start_date: '2021-03-01'
     max_active_runs: 1
-    schedule_interval: "* 1 * * 6"
+    schedule_interval: "0 * * * *"
     catchup: False
     default_view: graph
 
@@ -130,10 +130,6 @@ dag:
             type: STRING
             mode: NULLABLE
             description: ""
-
-
-
-
           - name: "HLY-DEWP-10PCTL"
             type: INTEGER
             mode: NULLABLE
@@ -142,152 +138,156 @@ dag:
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: ""
+          - name: "HLY-DEWP-90PCTL"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: ""
+          - name: "HLY-DEWP-90PCTL_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: ""
+          - name: "HLY-DEWP-NORMAL"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: ""
+          - name: "HLY-DEWP-NORMAL_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: ""
+          - name: "HLY-HIDX-NORMAL"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: ""
+          - name: "HLY-HIDX-NORMAL_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: ""
+          - name: "HLY-HTDH-NORMAL"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: ""
+          - name: "HLY-HTDH-NORMAL_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: ""
+          - name: "HLY-PRES-10PCTL"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: ""
+          - name: "HLY-PRES-10PCTL_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: ""
+          - name: "HLY-PRES-90PCTL"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: ""
+          - name: "HLY-PRES-90PCTL_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: ""
+          - name: "HLY-PRES-NORMAL"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: ""
+          - name: "HLY-PRES-NORMAL_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: ""
+          - name: "HLY-TEMP-10PCTL"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: ""
+          - name: "HLY-TEMP-10PCTL_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: ""
+          - name: "HLY-TEMP-90PCTL"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: ""
+          - name: "HLY-TEMP-90PCTL_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: ""
+          - name: "HLY-TEMP-NORMAL"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: ""
+          - name: "HLY-TEMP-NORMAL_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: ""
+          - name: "HLY-WCHL-NORMAL"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: ""
+          - name: "HLY-WCHL-NORMAL_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: ""
+          - name: "HLY-WIND-1STDIR"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: ""
+          - name: "HLY-WIND-1STDIR_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: ""
+          - name: "HLY-WIND-1STPCT"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: ""
+          - name: "HLY-WIND-1STPCT_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: ""
+          - name: "HLY-WIND-2NDDIR"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: ""
+          - name: "HLY-WIND-2NDDIR_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: ""
+          - name: "HLY-WIND-2NDPCT"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: ""
+          - name: "HLY-WIND-2NDPCT_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: ""
+          - name: "HLY-WIND-AVGSPD"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: ""
+          - name: "HLY-WIND-AVGSPD_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: ""
+          - name: "HLY-WIND-PCTCLM"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: ""
+          - name: "HLY-WIND-PCTCLM_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: ""
+          - name: "HLY-WIND-VCTDIR"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: ""
+          - name: "HLY-WIND-VCTDIR_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: ""
+          - name: "HLY-WIND-VCTSPD"
             type: INTEGER
+            mode: NULLABLE
+            description: ""
+          - name: "HLY-WIND-VCTSPD_ATTRIBUTES"
+            type: STRING
             mode: NULLABLE
             description: ""
         resources:
