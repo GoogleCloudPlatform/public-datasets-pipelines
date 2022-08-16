@@ -54,9 +54,6 @@ def main(
     async_builds: bool = False,
     format_code: bool = True,
 ):
-    custom_yaml_constructor = CustomYAMLTags()
-    custom_yaml_constructor.dataset = dataset_id
-
     if not skip_builds:
         build_images(dataset_id, env, async_builds)
 
@@ -70,6 +67,7 @@ def main(
 def generate_pipeline_dag(
     dataset_id: str, pipeline_id: str, env: str, format_code: bool
 ):
+    CustomYAMLTags(dataset_id)
     pipeline_dir = DATASETS_PATH / dataset_id / "pipelines" / pipeline_id
     config = yaml.load((pipeline_dir / "pipeline.yaml").read_text(), Loader=yaml.Loader)
     validate_airflow_version_existence_and_value(config)
@@ -282,8 +280,8 @@ def gcp_project_id() -> str:
 
 
 class CustomYAMLTags(yaml.YAMLObject):
-    def __init__(self):
-        self.dataset = None
+    def __init__(self, dataset):
+        self.dataset = dataset
         yaml.add_constructor("!IMAGE", self.image_constructor)
 
     def image_constructor(self, loader, node):

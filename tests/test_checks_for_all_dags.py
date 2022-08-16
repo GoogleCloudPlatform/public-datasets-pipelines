@@ -56,6 +56,7 @@ def all_pipelines() -> typing.Iterator[typing.Tuple[pathlib.Path, pathlib.Path]]
 def test_all_dag_ids_are_unique():
     dag_ids = set()
     for dataset_path, pipeline_path in all_pipelines():
+        generate_dag.CustomYAMLTags(dataset_path.name)
         dag_config = yaml.load(open(pipeline_path / "pipeline.yaml"))
 
         config_dag_id = generate_dag.dag_init(dag_config)["dag_id"]
@@ -82,6 +83,7 @@ def test_non_unique_dag_id_will_fail_validation(
     dag_ids = set()
     all_unique = True
     for dataset_path, pipeline_path in all_pipelines():
+        generate_dag.CustomYAMLTags(dataset_path.name)
         dag_config = yaml.load(open(pipeline_path / "pipeline.yaml"))
 
         config_dag_id = generate_dag.dag_init(dag_config)["dag_id"]
