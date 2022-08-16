@@ -276,19 +276,20 @@ def test_check_custom_yaml_loader(
     dataset_path: pathlib.Path, pipeline_path: pathlib.Path, env: str
 ):
     copy_config_files_and_set_tmp_folder_names_as_ids(dataset_path, pipeline_path)
-    generate_dag.main(dataset_path.name, pipeline_path.name, env)
+    custom_yaml_tag = "image: !IMAGE IMAGE_REPOSITORY"
 
     pipeline_yaml_str = (
         (pipeline_path / "pipeline.yaml")
         .read_text()
         .replace(
-            'image: "{{{{ var.json.DATASET_FOLDER_NAME.container_registry.IMAGE_REPOSITORY }}}}"',
-            "image: !IMAGE IMAGE_REPOSITORY",
+            'image: "{{ var.json.DATASET_FOLDER_NAME.container_registry.IMAGE_REPOSITORY }}"',
+            custom_yaml_tag,
         )
     )
+    assert custom_yaml_tag in pipeline_yaml_str
 
     generate_dag.write_to_file(pipeline_yaml_str, pipeline_path / "pipeline.yaml")
-    generate_dag.main(dataset_path.name, pipeline_path.name, env)
+    generate_dag.main(dataset_path.name, pipeline_path.name, env, format_code=False)
 
     for path_prefix in (
         pipeline_path,
