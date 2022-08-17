@@ -39,9 +39,12 @@ dag:
         timeout: 43200  # 12 hours
         retries: 0
         wait: True
-        project_id: "{{ var.value.gcp_project }}"
-        source_bucket: "{{ var.json.us_climate_normals.normals_hourly.source_gcs_bucket }}"
-        source_path: "{{ var.json.us_climate_normals.normals_hourly.source_gcs_path }}"
+        # project_id: "{{ var.value.gcp_project }}"
+        project_id: "bigquery-public-data-dev"
+        # source_bucket: "{{ var.json.us_climate_normals.normals_hourly.source_gcs_bucket }}"
+        source_bucket: "normals"
+        # source_path: "{{ var.json.us_climate_normals.normals_hourly.source_gcs_path }}"
+        source_path: "normals-hourly/access"
         destination_bucket: "{{ var.value.composer_bucket }}"
         destination_path: "data/us_climate_normals/hourly_access"
         transfer_options:
@@ -52,8 +55,8 @@ dag:
         task_id: "hourly_access"
         bucket: "{{ var.value.composer_bucket }}"
         source_objects: ["data/us_climate_normals/hourly_access/*.csv"]
-        name: "us_climate_normals.hourly_access"
-        destination_project_dataset_table: '{{ var.json.us_climate_normals.normals_hourly.destination_dataset_table }}'
+        # destination_project_dataset_table: '{{ var.json.us_climate_normals.normals_hourly.destination_dataset_table }}'
+        destination_project_dataset_table:  "us_climate_normals.hourly_access"
         source_format: 'CSV'
         create_disposition: 'CREATE_IF_NEEDED'
         write_disposition: 'WRITE_TRUNCATE'
@@ -290,9 +293,6 @@ dag:
             type: STRING
             mode: NULLABLE
             description: ""
-        resources:
-          request_ephemeral_storage: "16G"
-          limit_cpu: "3"
 
   graph_paths:
-    - "hourly_access"
+    - "copy_source_files_to_public_bucket >> hourly_access"
