@@ -1,0 +1,58 @@
+# Copyright 2022 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+resources: ~
+
+dag:
+  airflow_version: 2
+  initialize:
+    dag_id: deps_dev
+    default_args:
+      owner: "Google"
+      depends_on_past: False
+      start_date: '2022-08-20'
+    max_active_runs: 1
+    schedule_interval: "@daily"
+    catchup: False
+    default_view: graph
+
+  tasks:
+    - operator: "KubernetesPodOperator"
+      description: "Extract the metadata for tabular datasets"
+      args:
+        task_id: "extract_tabular_metadata"
+        name: "extract_tabular_metadata"
+        namespace: "composer"
+        service_account_name: "datasets"
+        image_pull_policy: "Always"
+        image: "{{ var.json.scalable_open_source.container_registry.generate_bq_views }}"
+        env_vars:
+          SOURCE_PROJECTS: "{{ var.json.scalable_open_source.source_projects }}"
+          TARGET_PROJECT: "{{ var.json.scalable_open_source.target_project }}"
+          TARGET_DATASET: _cloud_datasets
+
+          TABULAR_DATASET_TABLE_NAME: "{{ var.json.scalable_open_source.tabular_dataset_table_name }}"
+          TABLES_TABLE_NAME: "{{ var.json.scalable_open_source.tables_table_name }}"
+          TABLES_FIELDS_TABLE_NAME: "{{ var.json.scalable_open_source.tables_fields_table_name }}"
+          MAX_ADD_TABULAR_DATASET: "{{ var.json.scalable_open_source.max_add_tabular_dataset }}"
+          MAX_ADD_TABLES: "{{ var.json.scalable_open_source.max_add_tables }}"
+          NUM_THREADS: 5
+
+        resources:
+          request_memory: "128M"
+          request_cpu: "200m"
+
+  graph_paths:
+    - "extract_tabular_metadata"
