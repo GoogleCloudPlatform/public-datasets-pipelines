@@ -1,0 +1,28 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+dataset:
+  name: National Highway Traffic Safety Administration
+  friendly_name: NHTSA Traffic Fatalities
+  description: |-
+    This public dataset was created by the Unites States Department of Transportation's National Highway Traffic Safety Administration (NHTSA) and includes 20 tables that describe numerous aspects of traffic accidents that resulted in fatalities. Aspects of traffic accidents include: the types of cars and roads, the maneuvers that preceded the accident, and the involvement of pedestrians and cyclists.
+  dataset_sources: ~
+  terms_of_use: ~
+
+
+resources:
+  - type: bigquery_dataset
+    dataset_id: nhtsa_traffic_fatalities
+    description: |-
+    This public dataset was created by the Unites States Department of Transportation's National Highway Traffic Safety Administration (NHTSA) and includes 20 tables that describe numerous aspects of traffic accidents that resulted in fatalities. Aspects of traffic accidents include: the types of cars and roads, the maneuvers that preceded the accident, and the involvement of pedestrians and cyclists.
