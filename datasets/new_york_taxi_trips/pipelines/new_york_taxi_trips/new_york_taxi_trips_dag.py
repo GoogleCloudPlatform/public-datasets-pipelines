@@ -37,7 +37,7 @@ with DAG(
         location="us-central1-c",
         body={
             "name": "new-york-taxi-trips",
-            "initial_node_count": 2,
+            "initial_node_count": 3,
             "network": "{{ var.value.vpc_network }}",
             "node_config": {
                 "machine_type": "e2-standard-4",
@@ -70,7 +70,7 @@ with DAG(
             "DATA_FILE_YEAR_FIELD": "data_file_year",
             "DATA_FILE_MONTH_FIELD": "data_file_month",
             "SCHEMA_PATH": "{{ var.json.new_york_taxi_trips.container_registry.green_trips_schema_path }}",
-            "CHUNKSIZE": "{{ var.json.new_york_taxi_trips.container_registry.green_trips_chunk_size }}",
+            "CHUNKSIZE": "500000",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "{{ var.json.new_york_taxi_trips.container_registry.green_trips_target_gcs_path }}",
             "PIPELINE_NAME": "tlc_green_trips",
@@ -107,7 +107,7 @@ with DAG(
             "DATASET_ID": "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_dataset_id }}",
             "TABLE_ID": "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_table_id }}",
             "SCHEMA_PATH": "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_schema_path }}",
-            "CHUNKSIZE": "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_chunk_size }}",
+            "CHUNKSIZE": "500000",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_target_gcs_path }}",
             "PIPELINE_NAME": "tlc_yellow_trips",
@@ -115,6 +115,11 @@ with DAG(
             "INPUT_CSV_HEADERS": '[ "vendor_id", "pickup_datetime", "dropoff_datetime", "passenger_count", "trip_distance",\n  "rate_code", "store_and_fwd_flag", "pickup_location_id", "dropoff_location_id",\n  "payment_type", "fare_amount", "extra", "mta_tax", "tip_amount",\n  "tolls_amount", "imp_surcharge", "total_amount", "congestion_surcharge" ]',
             "DATA_DTYPES": '{ "vendor_id": "str",\n  "pickup_datetime": "datetime64[ns]",\n  "dropoff_datetime": "datetime64[ns]",\n  "passenger_count": "str",\n  "trip_distance": "float64",\n  "rate_code": "str",\n  "store_and_fwd_flag": "str",\n  "pickup_location_id": "str",\n  "dropoff_location_id": "str",\n  "payment_type": "str",\n  "fare_amount": "float64",\n  "extra": "float64",\n  "mta_tax": "float64",\n  "tip_amount": "float64",\n  "tolls_amount": "float64",\n  "imp_surcharge": "float64",\n  "total_amount": "float64",\n  "congestion_surcharge": "float64" }',
             "OUTPUT_CSV_HEADERS": '[ "vendor_id", "pickup_datetime", "dropoff_datetime", "passenger_count", "trip_distance",\n  "rate_code", "store_and_fwd_flag", "payment_type", "fare_amount", "extra",\n  "mta_tax", "tip_amount", "tolls_amount", "imp_surcharge", "total_amount",\n  "pickup_location_id", "dropoff_location_id", "data_file_year", "data_file_month" ]',
+        },
+        resources={
+            "request_memory": "12G",
+            "request_cpu": "1",
+            "request_ephemeral_storage": "16G",
         },
     )
     delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
