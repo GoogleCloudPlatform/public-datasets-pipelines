@@ -2,7 +2,7 @@ import logging
 import os
 
 from google.api_core.exceptions import NotFound
-from google.cloud import bigquery, storage
+from google.cloud import bigquery
 
 
 def main(
