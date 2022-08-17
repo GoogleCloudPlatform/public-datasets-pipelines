@@ -24,9 +24,6 @@ import google.auth
 import jinja2
 from ruamel import yaml
 
-yaml = yaml.YAML(typ="safe")
-
-
 CURRENT_PATH = pathlib.Path(__file__).resolve().parent
 PROJECT_ROOT = CURRENT_PATH.parent
 DATASETS_PATH = PROJECT_ROOT / "datasets"
@@ -67,9 +64,9 @@ def main(
 def generate_pipeline_dag(
     dataset_id: str, pipeline_id: str, env: str, format_code: bool
 ):
+    CustomYAMLTags(dataset_id)
     pipeline_dir = DATASETS_PATH / dataset_id / "pipelines" / pipeline_id
-    config = yaml.load((pipeline_dir / "pipeline.yaml").read_text())
-
+    config = yaml.load((pipeline_dir / "pipeline.yaml").read_text(), Loader=yaml.Loader)
     validate_airflow_version_existence_and_value(config)
     validate_dag_id_existence_and_format(config)
     dag_contents = generate_dag(config, dataset_id)
@@ -279,6 +276,17 @@ def gcp_project_id() -> str:
     return project_id
 
 
+class CustomYAMLTags(yaml.YAMLObject):
+    def __init__(self, dataset):
+        self.dataset = dataset
+        yaml.add_constructor("!IMAGE", self.image_constructor)
+
+    def image_constructor(self, loader, node):
+        value = loader.construct_scalar(node)
+        value = f"gcr.io/{{{{ var.value.gcp_project }}}}/{self.dataset}__{value}"
+        return value
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Generate Terraform infra code for BigQuery datasets"
@@ -317,6 +325,7 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
+
     main(
         args.dataset,
         args.pipeline,
