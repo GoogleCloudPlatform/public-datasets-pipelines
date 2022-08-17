@@ -9,7 +9,7 @@ def main(
     source_project, destination_project, source_dataset, destination_dataset, gcs_bucket
 ):
     logging.info(
-        "Fetching the source tables from bq. Each table/pipeline will be undergoing ETL"
+        "Fetching the source tables from bq. Each pipeline will be undergoing ETL"
     )
     source_table_names = fetch_source_tables(source_project, source_dataset)
 
