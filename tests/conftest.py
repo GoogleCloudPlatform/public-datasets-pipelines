@@ -24,3 +24,8 @@ def pytest_sessionfinish(session, exitstatus):
     test_folder = PROJECT_ROOT / ".test"
     if test_folder.exists():
         shutil.rmtree(test_folder)
+
+    # clean up generated directories created from test/test_generate_pipeline.py
+    test_dataset_folder = PROJECT_ROOT / "datasets" / "test_dataset"
+    if test_dataset_folder.exists():
+        shutil.rmtree(test_dataset_folder)

@@ -24,19 +24,3 @@ resource "google_bigquery_dataset" "census_bureau_acs" {
 output "bigquery_dataset-census_bureau_acs-dataset_id" {
   value = google_bigquery_dataset.census_bureau_acs.dataset_id
 }
-
-resource "google_storage_bucket" "census-bureau-acs" {
-  name                        = "${var.bucket_name_prefix}-census-bureau-acs"
-  force_destroy               = true
-  location                    = "US"
-  uniform_bucket_level_access = true
-  lifecycle {
-    ignore_changes = [
-      logging,
-    ]
-  }
-}
-
-output "storage_bucket-census-bureau-acs-name" {
-  value = google_storage_bucket.census-bureau-acs.name
-}

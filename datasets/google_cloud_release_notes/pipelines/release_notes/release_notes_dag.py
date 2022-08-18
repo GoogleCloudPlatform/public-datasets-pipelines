@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 
 
 from airflow import DAG
-from airflow.contrib.operators import bigquery_to_bigquery
+from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
 
 default_args = {
     "owner": "Google",
@@ -32,16 +32,22 @@ with DAG(
     default_view="graph",
 ) as dag:
 
-    # Task to run a BQ to BQ operator
-    google_cloud_release_notes = bigquery_to_bigquery.BigQueryToBigQueryOperator(
-        task_id="google_cloud_release_notes",
-        source_project_dataset_tables=[
-            "{{ var.json.google_cloud_release_notes.release_notes.source_project_dataset_table }}"
-        ],
-        destination_project_dataset_table="{{ var.json.google_cloud_release_notes.release_notes.destination_project_dataset_table }}",
-        impersonation_chain="{{ var.json.google_cloud_release_notes.service_account }}",
-        write_disposition="WRITE_TRUNCATE",
-        gcp_conn_id="google_cloud_release_notes_conn",
+    # Copy GCP release notes dataset
+    copy_bq_dataset = kubernetes_pod.KubernetesPodOperator(
+        task_id="copy_bq_dataset",
+        name="copy_bq_dataset",
+        namespace="composer",
+        service_account_name="datasets",
+        image_pull_policy="Always",
+        image="{{ var.json.google_cloud_release_notes.container_registry.copy_bq_dataset }}",
+        env_vars={
+            "SOURCE_PROJECT_ID": "{{ var.json.google_cloud_release_notes.source_project_id }}",
+            "SOURCE_BQ_DATASET": "{{ var.json.google_cloud_release_notes.source_bq_dataset }}",
+            "TARGET_PROJECT_ID": "{{ var.value.gcp_project }}",
+            "TARGET_BQ_DATASET": "google_cloud_release_notes",
+            "SERVICE_ACCOUNT": "{{ var.json.google_cloud_release_notes.service_account }}",
+        },
+        resources={"request_memory": "128M", "request_cpu": "200m"},
     )
 
-    google_cloud_release_notes
+    copy_bq_dataset
