@@ -14,7 +14,6 @@
 
 ---
 resources:
-
   - type: bigquery_table
     table_id: products
     description: "The Look fictitious e-commerce dataset - products table"
@@ -52,9 +51,9 @@ dag:
 
       # When set to True, keeps a task from getting triggered if the previous schedule for the task hasn’t succeeded
       depends_on_past: False
-      start_date: '2021-02-09'
+      start_date: "2021-02-09"
     max_active_runs: 1
-    schedule_interval: "@daily"  # runs everyday at 6am EST
+    schedule_interval: "@daily" # runs everyday at 6am EST
     catchup: False
     default_view: graph
 
@@ -65,7 +64,6 @@ dag:
       description: "Run CSV transform within kubernetes pod"
 
       args:
-
         task_id: "generate_thelook"
         is_delete_operator_pod: False
         # The name of the pod in which the task will run. This will be used (plus a random suffix) to generate a pod id
@@ -75,7 +73,8 @@ dag:
         image_pull_policy: "Always"
 
         # Docker images will be built and pushed to GCR by default whenever the `scripts/generate_dag.py` is run. To skip building and pushing images, use the optional `--skip-builds` flag.
-        image: "{{ var.json.thelook_ecommerce.docker_image }}"
+        # image: "{{ var.json.thelook_ecommerce.docker_image }}"
+        image: !IMAGE run_thelook_kub
 
         # Set the environment variables you need initialized in the container. Use these as input variables for the script your container is expected to perform.
         env_vars:
@@ -84,7 +83,7 @@ dag:
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PREFIX: "data/thelook_ecommerce"
           SOURCE_DIR: "data"
-          EXTRANEOUS_HEADERS: "[\"event_type\", \"ip_address\", \"browser\", \"traffic_source\", \"session_id\", \"sequence_number\", \"uri\", \"is_sold\"]"
+          EXTRANEOUS_HEADERS: '["event_type", "ip_address", "browser", "traffic_source", "session_id", "sequence_number", "uri", "is_sold"]'
 
         resources:
           request_memory: "8G"
