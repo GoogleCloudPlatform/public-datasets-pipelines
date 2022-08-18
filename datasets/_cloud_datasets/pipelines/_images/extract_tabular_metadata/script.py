@@ -25,6 +25,8 @@ from google.cloud import bigquery
 import numpy as np
 import pandas as pd
 
+NUM_THREADS = 5
+
 
 def is_empty(s: str) -> bool:
     """Return True if s is None or an empty string."""
@@ -127,15 +129,13 @@ class DatasetsTablesInfoExtractor:
     def __init__(self,
                  project: str,
                  out_project: str,
-                 out_dataset: str,
-                 num_threads: int = 5):
+                 out_dataset: str):
         self.client = bigquery.Client(project)
         self.out_project = out_project
         self.out_dataset = out_dataset
         self.datasets = []
         self.tables = []
         self.tables_fields = []
-        self.num_threads = num_threads
 
     def _read_tables_and_schema(self, full_table_ids: List[str]):
         """Read the tables metadata and the schema of each table."""
@@ -153,8 +153,8 @@ class DatasetsTablesInfoExtractor:
     def parallel_read_tables(self, full_table_ids: List[str]):
         """Read tables metadata in parallel."""
         num_tables = len(full_table_ids)
-        potential_interval_size = (num_tables // self.num_threads)
-        residual = num_tables % self.num_threads
+        potential_interval_size = (num_tables // NUM_THREADS)
+        residual = num_tables % NUM_THREADS
         index = 0
         threads = []
         while index < num_tables:
@@ -190,11 +190,10 @@ class DatasetsTablesInfoExtractor:
     def get_tables_fields_as_dataframe(self) -> pd.DataFrame:
         return pd.DataFrame(self.get_tables_fields_as_dict())
 
-    def read_datasets(self, max_add_tabular_dataset: int, max_add_tables: int):
+    def read_datasets(self):
         """Read the datasets and tables metadata."""
         datasets_list = list(self.client.list_datasets())
         full_table_ids = []
-        datasets_list = datasets_list[:max_add_tabular_dataset]
         print(f'Enlisted Datasets: {len(datasets_list)}')
         for dataset_item in datasets_list:
             dataset_reference = self.client.get_dataset(dataset_item.reference)
@@ -206,7 +205,6 @@ class DatasetsTablesInfoExtractor:
 
             self.datasets.append(dataset)
 
-        full_table_ids = full_table_ids[:max_add_tables]
         self.parallel_read_tables(full_table_ids)
         print(f'Extracted Datasets: {len(self.datasets)}')
         print(f'Extracted Tables: {len(self.tables)}')
@@ -419,16 +417,12 @@ def main(
     tabular_dataset_table_name: str,
     tables_table_name: str,
     tables_fields_table_name: str,
-    max_add_tabular_dataset: int,
-    max_add_tables: int,
-    num_threads: int,
 ):
     """Entry point for this cloud function."""
     st = time.time()
     for project in source_projects:
-        extractor = DatasetsTablesInfoExtractor(project, target_project, target_dataset,
-                                                num_threads)
-        extractor.read_datasets(max_add_tabular_dataset, max_add_tables)
+        extractor = DatasetsTablesInfoExtractor(project, target_project, target_dataset)
+        extractor.read_datasets()
         extracted = datetime.datetime.now()
         extractor.write_datasets_to_bq(tabular_dataset_table_name, extracted)
         extractor.write_tables_to_bq(tables_table_name, extracted)
@@ -446,7 +440,4 @@ if __name__ == "__main__":
         tabular_dataset_table_name=os.environ["TABULAR_DATASET_TABLE_NAME"],
         tables_table_name=os.environ["TABLES_TABLE_NAME"],
         tables_fields_table_name=os.environ["TABLES_FIELDS_TABLE_NAME"],
-        max_add_tabular_dataset=int(os.environ["MAX_ADD_TABULAR_DATASET"]),
-        max_add_tables=int(os.environ["MAX_ADD_TABLES"]),
-        num_threadz=int(os.environ["NUM_THREADS"]),
     )
