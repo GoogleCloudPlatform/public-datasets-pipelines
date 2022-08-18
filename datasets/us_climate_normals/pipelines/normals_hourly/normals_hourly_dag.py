@@ -14,8 +14,7 @@
 
 
 from airflow import DAG
-from airflow.providers.google.cloud.operators import cloud_storage_transfer_service
-from airflow.providers.google.cloud.transfers import gcs_to_bigquery
+from airflow.providers.google.cloud.transfers import gcs_to_bigquery, gcs_to_gcs
 
 default_args = {
     "owner": "Google",
@@ -34,19 +33,13 @@ with DAG(
 ) as dag:
 
     # Copy source files to public bucket
-    copy_source_files_to_public_bucket = (
-        cloud_storage_transfer_service.CloudDataTransferServiceGCSToGCSOperator(
-            task_id="copy_source_files_to_public_bucket",
-            timeout=43200,
-            retries=0,
-            wait=True,
-            project_id="bigquery-public-data-dev",
-            source_bucket="normals",
-            source_path="normals-hourly/access",
-            destination_bucket="{{ var.value.composer_bucket }}",
-            destination_path="data/us_climate_normals/hourly_access",
-            transfer_options={"overwriteWhen": "DIFFERENT"},
-        )
+    copy_source_files_to_public_bucket = gcs_to_gcs.GCSToGCSOperator(
+        task_id="copy_source_files_to_public_bucket",
+        source_bucket="normals",
+        source_object="normals-hourly/access/*.csv",
+        destination_bucket="{{ var.value.composer_bucket }}",
+        destination_object="data/us_climate_normals/hourly_access/",
+        move_object=False,
     )
 
     # Load U.S. Climate Normals Hourly Data (Most Recent)

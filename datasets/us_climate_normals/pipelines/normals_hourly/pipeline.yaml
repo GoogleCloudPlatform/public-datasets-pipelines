@@ -32,23 +32,15 @@ dag:
     default_view: graph
 
   tasks:
-    - operator: "CloudDataTransferServiceGCSToGCSOperator"
+    - operator: "GoogleCloudStorageToGoogleCloudStorageOperator"
       description: "Copy source files to public bucket"
       args:
         task_id: copy_source_files_to_public_bucket
-        timeout: 43200  # 12 hours
-        retries: 0
-        wait: True
-        # project_id: "{{ var.value.gcp_project }}"
-        project_id: "bigquery-public-data-dev"
-        # source_bucket: "{{ var.json.us_climate_normals.normals_hourly.source_gcs_bucket }}"
         source_bucket: "normals"
-        # source_path: "{{ var.json.us_climate_normals.normals_hourly.source_gcs_path }}"
-        source_path: "normals-hourly/access"
+        source_object: "normals-hourly/access/*.csv"
         destination_bucket: "{{ var.value.composer_bucket }}"
-        destination_path: "data/us_climate_normals/hourly_access"
-        transfer_options:
-          overwriteWhen: DIFFERENT
+        destination_object: "data/us_climate_normals/hourly_access/"
+        move_object: False
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Load U.S. Climate Normals Hourly Data (Most Recent)"
       args:
