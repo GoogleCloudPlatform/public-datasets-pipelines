@@ -4223,7 +4223,6 @@ dag:
           request_ephemeral_storage: "10G"
           request_cpu: "1"
 
-
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod for person pipelines"
       args:
@@ -6390,7 +6389,6 @@ dag:
           request_ephemeral_storage: "10G"
           request_cpu: "1"
 
-
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod for vehicle pipelines"
       args:
@@ -7663,7 +7661,91 @@ dag:
           request_ephemeral_storage: "10G"
           request_cpu: "1"
 
+    - operator: "KubernetesPodOperator"
+      description: "Run CSV transform within kubernetes pod for vevent pipelines"
+      args:
+        task_id: "vevent_2015_2020_transform_csv"
+        startup_timeout_seconds: 600
+        name: "vevent"
+        namespace: "composer"
+        service_account_name: "datasets"
+        image_pull_policy: "Always"
+        image: "{{ var.json.nhtsa_traffic_fatalities.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "{{ var.json.nhtsa_traffic_fatalities.vevent_2015_2020.pipeline_name }}"
+          SOURCE_URL: "{{ var.json.nhtsa_traffic_fatalities.vevent_2015_2020.source_url }}"
+          CHUNKSIZE: "{{ var.json.nhtsa_traffic_fatalities.vevent_2015_2020.chunksize }}"
+          SOURCE_ZIPFILE_EXTRACTED: "vevent_2015_2020.csv"
+          SOURCE_FILE: "{{ var.json.nhtsa_traffic_fatalities.vevent_2015_2020.source_file }}"
+          # TARGET_FILE: "{{ var.json.nhtsa_traffic_fatalities.vevent_2015_2020.target_file }}"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "{{ var.json.nhtsa_traffic_fatalities.vevent_2015_2020.dataset_id }}"
+          TABLE_ID: "{{ var.json.nhtsa_traffic_fatalities.vevent_2015_2020.destination_table }}"
+          START_YEAR: "{{ var.json.nhtsa_traffic_fatalities.vevent_2015_2020.start_year }}"
+          END_YEAR: "{{ var.json.nhtsa_traffic_fatalities.vevent_2015_2020.end_year }}"
+          DROP_DEST_TABLE: "{{ var.json.nhtsa_traffic_fatalities.vevent_2015_2020.drop_dest_table }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "{{ var.json.nhtsa_traffic_fatalities.vevent_2015_2020.target_gcs_path }}"
+          SCHEMA_PATH: "{{ var.json.nhtsa_traffic_fatalities.vevent_2015_2020.schema_path }}"
+          INPUT_CSV_HEADERS: >-
+            [
+              "state_number",
+              "state_name",
+              "consecutive_number",
+              "event_number",
+              "vehicle_number",
+              "vehicle_event_number",
+              "vehicle_number_this_vehicle",
+              "area_of_impact_this_vehicle",
+              "area_of_impact_this_vehicle_name",
+              "sequence_of_events",
+              "sequence_of_events_name",
+              "vehicle_number_other_vehicle",
+              "vehicle_number_other_vehicle_name",
+              "area_of_impact_other_vehicle",
+              "area_of_impact_other_vehicle_name"
+            ]
+          INPUT_DTYPES: >-
+            {
+              "state_number": "str",
+              "state_name": "str",
+              "consecutive_number": "str",
+              "event_number": "str",
+              "vehicle_number": "str",
+              "vehicle_event_number": "str",
+              "vehicle_number_this_vehicle": "str",
+              "area_of_impact_this_vehicle": "str",
+              "area_of_impact_this_vehicle_name": "str",
+              "sequence_of_events": "str",
+              "sequence_of_events_name": "str",
+              "vehicle_number_other_vehicle": "str",
+              "vehicle_number_other_vehicle_name": "str",
+              "area_of_impact_other_vehicle": "str",
+              "area_of_impact_other_vehicle_name": "str"
+            }
+          RENAME_MAPPINGS_LIST: >-
+            {
+              "STATE": "state_number",
+              "STATENAME": "state_name",
+              "ST_CASE": "consecutive_number",
+              "EVENTNUM": "event_number",
+              "VEH_NO": "vehicle_number",
+              "VEVENTNUM": "vehicle_event_number",
+              "VNUMBER1": "vehicle_number_this_vehicle",
+              "AOI1": "area_of_impact_this_vehicle",
+              "AOI1NAME": "area_of_impact_this_vehicle_name",
+              "SOE": "sequence_of_events",
+              "SOENAME": "sequence_of_events_name",
+              "VNUMBER2": "vehicle_number_other_vehicle",
+              "VNUMBER2NAME": "vehicle_number_other_vehicle_name",
+              "AOI2": "area_of_impact_other_vehicle",
+              "AOI2NAME": "area_of_impact_other_vehicle_name"
+            }
+        resources:
+          request_ephemeral_storage: "10G"
+          request_cpu: "1"
+
 
 
   graph_paths:
-    - "create_cluster >> [ accident_2015_transform_csv,accident_2016_2019_transform_csv,accident_2020_transform_csv,cevent_2015_2020_transform_csv,damage_2015_2020_transform_csv,distract_2015_2020_transform_csv,drimpair_2015_2020_transform_csv,factor_2015_2020_transform_csv,maneuver_2015_2020_transform_csv,nmcrash_2015_2020_transform_csv,nmimpair_2015_2020_transform_csv,parkwork_2015_transform_csv,parkwork_2016_2017_transform_csv,parkwork_2018_transform_csv,parkwork_2019_transform_csv,parkwork_2020_transform_csv,pbtype_transform_csv,person_2015_2017_transform_csv,person_2018_transform_csv,person_2019_transform_csv,person_2020_transform_csv,safetyeq_2015_2016_transform_csv,safetyeq_2017_2020_transform_csv,vehicle_2015_transform_csv,vehicle_2016_2017_transform_csv,vehicle_2018_2019_transform_csv,vehicle_2020_transform_csv ] >> delete_cluster"
+    - "create_cluster >> [ accident_2015_transform_csv,accident_2016_2019_transform_csv,accident_2020_transform_csv,cevent_2015_2020_transform_csv,damage_2015_2020_transform_csv,distract_2015_2020_transform_csv,drimpair_2015_2020_transform_csv,factor_2015_2020_transform_csv,maneuver_2015_2020_transform_csv,nmcrash_2015_2020_transform_csv,nmimpair_2015_2020_transform_csv,parkwork_2015_transform_csv,parkwork_2016_2017_transform_csv,parkwork_2018_transform_csv,parkwork_2019_transform_csv,parkwork_2020_transform_csv,pbtype_transform_csv,person_2015_2017_transform_csv,person_2018_transform_csv,person_2019_transform_csv,person_2020_transform_csv,safetyeq_2015_2016_transform_csv,safetyeq_2017_2020_transform_csv,vehicle_2015_transform_csv,vehicle_2016_2017_transform_csv,vehicle_2018_2019_transform_csv,vehicle_2020_transform_csv,vevent_2015_2020_transform_csv ] >> delete_cluster"
