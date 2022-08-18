@@ -77,211 +77,211 @@ dag:
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: "HLY-CLDH-NORMAL"
+          - name: "HLY_CLDH_NORMAL"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: "HLY-CLDH-NORMAL_ATTRIBUTES"
+          - name: "HLY_CLDH_NORMAL_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: "HLY-CLOD-PCTBKN"
+          - name: "HLY_CLOD_PCTBKN"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: "HLY-CLOD-PCTBKN_ATTRIBUTES"
+          - name: "HLY_CLOD_PCTBKN_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: "HLY-CLOD-PCTCLR"
+          - name: "HLY_CLOD_PCTCLR"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: "HLY-CLOD-PCTCLR_ATTRIBUTES"
+          - name: "HLY_CLOD_PCTCLR_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: "HLY-CLOD-PCTFEW"
+          - name: "HLY_CLOD_PCTFEW"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: "HLY-CLOD-PCTFEW_ATTRIBUTES"
+          - name: "HLY_CLOD_PCTFEW_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: "HLY-CLOD-PCTOVC"
+          - name: "HLY_CLOD_PCTOVC"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: "HLY-CLOD-PCTOVC_ATTRIBUTES"
+          - name: "HLY_CLOD_PCTOVC_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: "HLY-CLOD-PCTSCT"
+          - name: "HLY_CLOD_PCTSCT"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: "HLY-CLOD-PCTSCT_ATTRIBUTES"
+          - name: "HLY_CLOD_PCTSCT_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: "HLY-DEWP-10PCTL"
+          - name: "HLY_DEWP_10PCTL"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: "HLY-DEWP-10PCTL_ATTRIBUTES"
+          - name: "HLY_DEWP_10PCTL_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: "HLY-DEWP-90PCTL"
+          - name: "HLY_DEWP_90PCTL"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: "HLY-DEWP-90PCTL_ATTRIBUTES"
+          - name: "HLY_DEWP_90PCTL_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: "HLY-DEWP-NORMAL"
+          - name: "HLY_DEWP_NORMAL"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: "HLY-DEWP-NORMAL_ATTRIBUTES"
+          - name: "HLY_DEWP_NORMAL_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: "HLY-HIDX-NORMAL"
+          - name: "HLY_HIDX_NORMAL"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: "HLY-HIDX-NORMAL_ATTRIBUTES"
+          - name: "HLY_HIDX_NORMAL_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: "HLY-HTDH-NORMAL"
+          - name: "HLY_HTDH_NORMAL"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: "HLY-HTDH-NORMAL_ATTRIBUTES"
+          - name: "HLY_HTDH_NORMAL_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: "HLY-PRES-10PCTL"
+          - name: "HLY_PRES_10PCTL"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: "HLY-PRES-10PCTL_ATTRIBUTES"
+          - name: "HLY_PRES_10PCTL_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: "HLY-PRES-90PCTL"
+          - name: "HLY_PRES_90PCTL"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: "HLY-PRES-90PCTL_ATTRIBUTES"
+          - name: "HLY_PRES_90PCTL_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: "HLY-PRES-NORMAL"
+          - name: "HLY_PRES_NORMAL"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: "HLY-PRES-NORMAL_ATTRIBUTES"
+          - name: "HLY_PRES_NORMAL_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: "HLY-TEMP-10PCTL"
+          - name: "HLY_TEMP_10PCTL"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: "HLY-TEMP-10PCTL_ATTRIBUTES"
+          - name: "HLY_TEMP_10PCTL_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: "HLY-TEMP-90PCTL"
+          - name: "HLY_TEMP_90PCTL"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: "HLY-TEMP-90PCTL_ATTRIBUTES"
+          - name: "HLY_TEMP_90PCTL_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: "HLY-TEMP-NORMAL"
+          - name: "HLY_TEMP_NORMAL"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: "HLY-TEMP-NORMAL_ATTRIBUTES"
+          - name: "HLY_TEMP_NORMAL_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: "HLY-WCHL-NORMAL"
+          - name: "HLY_WCHL_NORMAL"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: "HLY-WCHL-NORMAL_ATTRIBUTES"
+          - name: "HLY_WCHL_NORMAL_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: "HLY-WIND-1STDIR"
+          - name: "HLY_WIND_1STDIR"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: "HLY-WIND-1STDIR_ATTRIBUTES"
+          - name: "HLY_WIND_1STDIR_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: "HLY-WIND-1STPCT"
+          - name: "HLY_WIND_1STPCT"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: "HLY-WIND-1STPCT_ATTRIBUTES"
+          - name: "HLY_WIND_1STPCT_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: "HLY-WIND-2NDDIR"
+          - name: "HLY_WIND_2NDDIR"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: "HLY-WIND-2NDDIR_ATTRIBUTES"
+          - name: "HLY_WIND_2NDDIR_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: "HLY-WIND-2NDPCT"
+          - name: "HLY_WIND_2NDPCT"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: "HLY-WIND-2NDPCT_ATTRIBUTES"
+          - name: "HLY_WIND_2NDPCT_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: "HLY-WIND-AVGSPD"
+          - name: "HLY_WIND_AVGSPD"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: "HLY-WIND-AVGSPD_ATTRIBUTES"
+          - name: "HLY_WIND_AVGSPD_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: "HLY-WIND-PCTCLM"
+          - name: "HLY_WIND_PCTCLM"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: "HLY-WIND-PCTCLM_ATTRIBUTES"
+          - name: "HLY_WIND_PCTCLM_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: "HLY-WIND-VCTDIR"
+          - name: "HLY_WIND_VCTDIR"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: "HLY-WIND-VCTDIR_ATTRIBUTES"
+          - name: "HLY_WIND_VCTDIR_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
-          - name: "HLY-WIND-VCTSPD"
+          - name: "HLY_WIND_VCTSPD"
             type: INTEGER
             mode: NULLABLE
             description: ""
-          - name: "HLY-WIND-VCTSPD_ATTRIBUTES"
+          - name: "HLY_WIND_VCTSPD_ATTRIBUTES"
             type: STRING
             mode: NULLABLE
             description: ""
