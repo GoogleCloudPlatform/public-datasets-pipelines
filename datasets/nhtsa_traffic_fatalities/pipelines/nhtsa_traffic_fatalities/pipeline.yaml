@@ -8096,7 +8096,64 @@ dag:
           request_ephemeral_storage: "10G"
           request_cpu: "1"
 
+    - operator: "KubernetesPodOperator"
+      description: "Run CSV transform within kubernetes pod for violatn pipelines"
+      args:
+        task_id: "violatn_2015_2020_transform_csv"
+        startup_timeout_seconds: 600
+        name: "violatn"
+        namespace: "composer"
+        service_account_name: "datasets"
+        image_pull_policy: "Always"
+        image: "{{ var.json.nhtsa_traffic_fatalities.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "{{ var.json.nhtsa_traffic_fatalities.violatn_2015_2020.pipeline_name }}"
+          SOURCE_URL: "{{ var.json.nhtsa_traffic_fatalities.violatn_2015_2020.source_url }}"
+          CHUNKSIZE: "{{ var.json.nhtsa_traffic_fatalities.violatn_2015_2020.chunksize }}"
+          SOURCE_ZIPFILE_EXTRACTED: "violatn_2015_2020.csv"
+          SOURCE_FILE: "{{ var.json.nhtsa_traffic_fatalities.violatn_2015_2020.source_file }}"
+          # TARGET_FILE: "{{ var.json.nhtsa_traffic_fatalities.violatn_2015_2020.target_file }}"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "{{ var.json.nhtsa_traffic_fatalities.violatn_2015_2020.dataset_id }}"
+          TABLE_ID: "{{ var.json.nhtsa_traffic_fatalities.violatn_2015_2020.destination_table }}"
+          START_YEAR: "{{ var.json.nhtsa_traffic_fatalities.violatn_2015_2020.start_year }}"
+          END_YEAR: "{{ var.json.nhtsa_traffic_fatalities.violatn_2015_2020.end_year }}"
+          DROP_DEST_TABLE: "{{ var.json.nhtsa_traffic_fatalities.violatn_2015_2020.drop_dest_table }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "{{ var.json.nhtsa_traffic_fatalities.violatn_2015_2020.target_gcs_path }}"
+          SCHEMA_PATH: "{{ var.json.nhtsa_traffic_fatalities.violatn_2015_2020.schema_path }}"
+          INPUT_CSV_HEADERS: >-
+            [
+              "state_number",
+              "state_name",
+              "consecutive_number",
+              "vehicle_number",
+              "violations_charged",
+              "violations_charged_name"
+            ]
+          INPUT_DTYPES: >-
+            {
+              "state_number": "str",
+              "state_name": "str",
+              "consecutive_number": "str",
+              "vehicle_number": "str",
+              "violations_charged": "str",
+              "violations_charged_name": "str"
+            }
+          RENAME_MAPPINGS_LIST: >-
+            {
+              "STATE": "state_number",
+              "STATENAME": "state_name",
+              "ST_CASE": "consecutive_number",
+              "VEH_NO": "vehicle_number",
+              "MVIOLATN": "violations_charged",
+              "MVIOLATNNAME": "violations_charged_name"
+            }
+        resources:
+          request_ephemeral_storage: "10G"
+          request_cpu: "1"
+
 
 
   graph_paths:
-    - "create_cluster >> [ accident_2015_transform_csv,accident_2016_2019_transform_csv,accident_2020_transform_csv,cevent_2015_2020_transform_csv,damage_2015_2020_transform_csv,distract_2015_2020_transform_csv,drimpair_2015_2020_transform_csv,factor_2015_2020_transform_csv,maneuver_2015_2020_transform_csv,nmcrash_2015_2020_transform_csv,nmimpair_2015_2020_transform_csv,parkwork_2015_transform_csv,parkwork_2016_2017_transform_csv,parkwork_2018_transform_csv,parkwork_2019_transform_csv,parkwork_2020_transform_csv,pbtype_transform_csv,person_2015_2017_transform_csv,person_2018_transform_csv,person_2019_transform_csv,person_2020_transform_csv,safetyeq_2015_2016_transform_csv,safetyeq_2017_2020_transform_csv,vehicle_2015_transform_csv,vehicle_2016_2017_transform_csv,vehicle_2018_2019_transform_csv,vehicle_2020_transform_csv,vevent_2015_2020_transform_csv,vindecode_2015_transform_csv ] >> delete_cluster"
+    - "create_cluster >> [ accident_2015_transform_csv,accident_2016_2019_transform_csv,accident_2020_transform_csv,cevent_2015_2020_transform_csv,damage_2015_2020_transform_csv,distract_2015_2020_transform_csv,drimpair_2015_2020_transform_csv,factor_2015_2020_transform_csv,maneuver_2015_2020_transform_csv,nmcrash_2015_2020_transform_csv,nmimpair_2015_2020_transform_csv,parkwork_2015_transform_csv,parkwork_2016_2017_transform_csv,parkwork_2018_transform_csv,parkwork_2019_transform_csv,parkwork_2020_transform_csv,pbtype_transform_csv,person_2015_2017_transform_csv,person_2018_transform_csv,person_2019_transform_csv,person_2020_transform_csv,safetyeq_2015_2016_transform_csv,safetyeq_2017_2020_transform_csv,vehicle_2015_transform_csv,vehicle_2016_2017_transform_csv,vehicle_2018_2019_transform_csv,vehicle_2020_transform_csv,vevent_2015_2020_transform_csv,vindecode_2015_transform_csv,violatn_2015_2020_transform_csv ] >> delete_cluster"
