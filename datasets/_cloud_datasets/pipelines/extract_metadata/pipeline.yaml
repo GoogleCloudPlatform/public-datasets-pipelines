@@ -40,7 +40,7 @@ dag:
         image: "{{ var.json._cloud_datasets.container_registry.extract_tabular_metadata }}"
         env_vars:
           SOURCE_PROJECTS_IDS: "{{ var.json._cloud_datasets.extract_tabular_metadata.source_projects_ids }}"
-          TARGET_PROJECT_ID: "{{ var.json._cloud_datasets.extract_tabular_metadata.target_project_id }}"
+          TARGET_PROJECT_ID: "{{ var.value.gcp_project }}"
           TARGET_DATASET: "{{ var.json._cloud_datasets.extract_tabular_metadata.target_dataset }}"
           TABULAR_DATASET_TABLE_NAME: "{{ var.json._cloud_datasets.extract_tabular_metadata.tabular_dataset_table_name }}"
           TABLES_TABLE_NAME: "{{ var.json._cloud_datasets.extract_tabular_metadata.tables_table_name }}"
