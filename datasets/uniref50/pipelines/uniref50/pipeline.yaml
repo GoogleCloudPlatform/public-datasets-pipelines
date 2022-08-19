@@ -610,4 +610,4 @@ dag:
             description: ""
             mode: "NULLABLE"
   graph_paths:
-    - "uniref50_transform_csv_1 >> load_uniref50_to_bq_1 >> uniref50_transform_csv_2 >> load_uniref50_to_bq_2 >> uniref50_transform_csv_3 >> load_uniref50_to_bq_3 >> uniref50_transform_csv_4 >> load_uniref50_to_bq_4 >> uniref50_transform_csv_5 >> load_uniref50_to_bq_5 >> uniref50_transform_csv_6 >> load_uniref50_to_bq_6 >> uniref50_transform_csv_7 >> load_uniref50_to_bq_7 >> uniref50_transform_csv_8 >> load_uniref50_to_bq_8"
+    - "download_zip_file >> uniref50_transform_csv_1 >> load_uniref50_to_bq_1 >> uniref50_transform_csv_2 >> load_uniref50_to_bq_2 >> uniref50_transform_csv_3 >> load_uniref50_to_bq_3 >> uniref50_transform_csv_4 >> load_uniref50_to_bq_4 >> uniref50_transform_csv_5 >> load_uniref50_to_bq_5 >> uniref50_transform_csv_6 >> load_uniref50_to_bq_6 >> uniref50_transform_csv_7 >> load_uniref50_to_bq_7 >> uniref50_transform_csv_8 >> load_uniref50_to_bq_8"

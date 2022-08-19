@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,6 +14,7 @@
 
 
 from airflow import DAG
+from airflow.operators import bash
 from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
 from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
@@ -32,6 +33,16 @@ with DAG(
     catchup=False,
     default_view="graph",
 ) as dag:
+
+    # Task to copy `uniref50.fasta` to gcs
+    download_zip_file = bash.BashOperator(
+        task_id="download_zip_file",
+        bash_command='mkdir -p $data_dir/uniref\ncurl -o $data_dir/uniref/uniref50.fasta.gz -L $uniref50\ngunzip $data_dir/uniref/uniref50.fasta.gz\nawk \u0027BEGIN {n_seq=0;} /^\u003e/ {if(n_seq%10000000==0){file=sprintf("/home/airflow/gcs/data/uniref50/uniref/myseq%d.fa",n_seq);}\nprint \u003e\u003e file; n_seq++; next;} { print \u003e\u003e file; }\u0027 \u003c $data_dir/uniref/uniref50.fasta\nawk \u0027BEGIN {n_seq=0;} /^\u003e/ {if(n_seq%3500000==0){file=sprintf("/home/airflow/gcs/data/uniref50/uniref/myseq_1%d.fa",n_seq);}\nprint \u003e\u003e file; n_seq++; next;} { print \u003e\u003e file; }\u0027 \u003c $data_dir/uniref/myseq0.fa\n',
+        env={
+            "data_dir": "/home/airflow/gcs/data/uniref50",
+            "uniref50": "https://ftp.uniprot.org/pub/databases/uniprot/uniref/uniref50/uniref50.fasta.gz",
+        },
+    )
 
     # Run CSV transform within kubernetes pod
     uniref50_transform_csv_1 = kubernetes_pod.KubernetesPodOperator(
@@ -73,7 +84,7 @@ with DAG(
         destination_project_dataset_table="uniref50.uniref50",
         skip_leading_rows=0,
         allow_quoted_newlines=True,
-        write_disposition="WRITE_APPEND",
+        write_disposition="WRITE_TRUNCATE",
         schema_fields=[
             {
                 "name": "ClusterID",
@@ -610,7 +621,8 @@ with DAG(
     )
 
     (
-        uniref50_transform_csv_1
+        download_zip_file
+        >> uniref50_transform_csv_1
         >> load_uniref50_to_bq_1
         >> uniref50_transform_csv_2
         >> load_uniref50_to_bq_2
