@@ -89,7 +89,7 @@ dag:
         destination_project_dataset_table: "uniref50.uniref50"
         skip_leading_rows: 0
         allow_quoted_newlines: True
-        write_disposition: "WRITE_APPEND"
+        write_disposition: "WRITE_TRUNCATE"
         schema_fields:
           - name: "ClusterID"
             type: "STRING"
