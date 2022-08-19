@@ -36,11 +36,11 @@ with DAG(
     # Task to archive the CSV file in the destination bucket
     download_zip_file_to_composer_bucket = gcs_to_gcs.GCSToGCSOperator(
         task_id="download_zip_file_to_composer_bucket",
-        source_bucket="pdp-feeds-staging/FEC/unzipped",
-        source_object="indiv20",
+        source_bucket="pdp-feeds-staging",
+        source_object="/FEC/unzipped/indiv20",
         destination_bucket="{{ var.value.composer_bucket }}",
         destination_object="data/fec/individuals/indiv20.txt",
-        impersonation_chain="{{ var.json.google_political_ads.service_account }}",
+        impersonation_chain="{{ var.json.fec.service_account }}",
         move_object=False,
     )
 

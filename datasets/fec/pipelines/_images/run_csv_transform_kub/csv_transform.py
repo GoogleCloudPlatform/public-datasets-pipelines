@@ -127,14 +127,14 @@ def main(
 
         logging.info(f"Opening file...{source_file}")
         df = pd.read_table(
-            source_file, dtype=object, index_col=False, names=csv_headers
+            source_file, dtype=object, index_col=False, names=csv_headers, sep="|"
         )
 
         logging.info(f"Transforming.. {source_file}")
 
         df["transaction_dt"] = df["transaction_dt"].astype(str)
         date_for_length(df, "transaction_dt")
-        df = resolve_date_format(df, "transaction_dt")
+        df = resolve_date_format(df, "transaction_dt", pipeline_name)
         df = df.rename(columns=lambda x: x.strip())
 
         logging.info(f"Saving to output file.. {target_file}")
@@ -213,7 +213,7 @@ def date_for_length(df: pd.DataFrame, field_name: str):
     date_list = df[field_name].values
     new_date_list = []
     for item in date_list:
-        if item != "NaN":
+        if item != "NaN" and len(item) >= 6:
             if len(item) == 7:
                 item = "0" + item
                 new_date_list.append(item)
@@ -223,6 +223,9 @@ def date_for_length(df: pd.DataFrame, field_name: str):
             else:
                 new_date_list.append(item)
                 continue
+        elif len(item) < 6:
+            item = "NaN"
+            new_date_list.append(item)
         else:
             new_date_list.append(item)
     df[field_name] = new_date_list
