@@ -40,7 +40,7 @@ dag:
           mkdir -p $data_dir/individuals
           curl -o $data_dir/individuals/indiv16.zip -L $fec
           unzip $data_dir/individuals/indiv16.zip -d $data_dir/individuals/
-          awk 'NR%7000000==1{x="/home/airflow/gcs/data/fec/individuals/F"++i;}{print > x}'  $data_dir/individuals/itcont.txt
+          split -l 7000000 --additional-suffix=.txt "$data_dir/individuals/itcont.txt" "$data_dir/individuals/F_"
 
         env:
           data_dir: /home/airflow/gcs/data/fec
@@ -56,15 +56,15 @@ dag:
         namespace: "composer"
         service_account_name: "datasets"
         image_pull_policy: "Always"
-        image: "{{ var.json.fec.container_registry.run_csv_transform_kub_2 }}"
+        image: "{{ var.json.fec.container_registry.run_csv_transform_kub }}"
         env_vars:
           SOURCE_GCS_BUCKET: "{{ var.value.composer_bucket }}"
-          SOURCE_GCS_OBJECT: "data/fec/individuals/F1.txt"
+          SOURCE_GCS_OBJECT: "data/fec/individuals/F_aa.txt"
           SOURCE_FILE: "files/F1.txt"
           TARGET_FILE: "files/data_output.csv"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/fec/individuals/data_output_1.csv"
-          TABLE_NAME: "individuals_2016"
+          PIPELINE_NAME: "individuals_2016"
           CSV_HEADERS: >-
             ["cmte_id","amndt_ind","rpt_tp","transaction_pgi","image_num","transaction_tp","entity_tp","name","city","state",
             "zip_code","employer","occupation","transaction_dt","transaction_amt","other_id","tran_id","file_num",
@@ -187,15 +187,15 @@ dag:
         namespace: "composer"
         service_account_name: "datasets"
         image_pull_policy: "Always"
-        image: "{{ var.json.fec.container_registry.run_csv_transform_kub_2 }}"
+        image: "{{ var.json.fec.container_registry.run_csv_transform_kub }}"
         env_vars:
           SOURCE_GCS_BUCKET: "{{ var.value.composer_bucket }}"
-          SOURCE_GCS_OBJECT: "data/fec/individuals/F2.txt"
+          SOURCE_GCS_OBJECT: "data/fec/individuals/F_ab.txt"
           SOURCE_FILE: "files/F2.txt"
           TARGET_FILE: "files/data_output.csv"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/fec/individuals/data_output_2.csv"
-          TABLE_NAME: "individuals_2016"
+          PIPELINE_NAMEME: "individuals_2016"
           CSV_HEADERS: >-
             ["cmte_id","amndt_ind","rpt_tp","transaction_pgi","image_num","transaction_tp","entity_tp","name","city","state",
             "zip_code","employer","occupation","transaction_dt","transaction_amt","other_id","tran_id","file_num",
@@ -314,15 +314,15 @@ dag:
         namespace: "composer"
         service_account_name: "datasets"
         image_pull_policy: "Always"
-        image: "{{ var.json.fec.container_registry.run_csv_transform_kub_2 }}"
+        image: "{{ var.json.fec.container_registry.run_csv_transform_kub }}"
         env_vars:
           SOURCE_GCS_BUCKET: "{{ var.value.composer_bucket }}"
-          SOURCE_GCS_OBJECT: "data/fec/individuals/F3.txt"
+          SOURCE_GCS_OBJECT: "data/fec/individuals/F_ac.txt"
           SOURCE_FILE: "files/F3.txt"
           TARGET_FILE: "files/data_output.csv"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/fec/individuals/data_output_3.csv"
-          TABLE_NAME: "individuals_2016"
+          PIPELINE_NAME: "individuals_2016"
           CSV_HEADERS: >-
             ["cmte_id","amndt_ind","rpt_tp","transaction_pgi","image_num","transaction_tp","entity_tp","name","city","state",
             "zip_code","employer","occupation","transaction_dt","transaction_amt","other_id","tran_id","file_num",

@@ -29,6 +29,8 @@ from google.cloud import storage
 
 
 def main(
+    source_bucket: str,
+    source_object: str,
     source_url: str,
     source_file_zip_file: pathlib.Path,
     source_file_path: pathlib.Path,
@@ -49,75 +51,115 @@ def main(
     logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
 
-    logging.info(f"Downloading file from {source_url}...")
-    download_file(source_url, source_file_zip_file)
-    unzip_file(source_file_zip_file, source_file_path)
+    if "individuals" not in pipeline_name:
+        logging.info(f"Downloading file from {source_url}...")
+        download_file(source_url, source_file_zip_file)
+        unzip_file(source_file_zip_file, source_file_path)
 
-    logging.info(f"Opening file {source_file}...")
-    df = pd.read_table(
-        source_file,
-        sep="|",
-        header=None,
-        names=csv_headers,
-        dtype=object,
-        index_col=False,
-    )
+        logging.info(f"Opening file {source_file}...")
+        df = pd.read_table(
+            source_file,
+            sep="|",
+            header=None,
+            names=csv_headers,
+            dtype=object,
+            index_col=False,
+        )
 
-    logging.info(f"Transforming {source_file}... ")
+        logging.info(f"Transforming {source_file}... ")
 
-    # logging.info("Transform: Rename columns... ")
-    # rename_headers(df, rename_mappings)
+        # logging.info("Transform: Rename columns... ")
+        # rename_headers(df, rename_mappings)
 
-    if "candidate_20" in pipeline_name:
-        logging.info("Transform: Trimming white spaces in headers... ")
+        if "candidate_20" in pipeline_name:
+            logging.info("Transform: Trimming white spaces in headers... ")
+            df = df.rename(columns=lambda x: x.strip())
+
+        elif "committee_20" in pipeline_name:
+            df.drop(df[df["cmte_id"] == "C00622357"].index, inplace=True)
+
+        elif "committee_contributions_20" in pipeline_name:
+            df["transaction_dt"] = df["transaction_dt"].astype(str)
+            # df["transaction_dt"] = df["transaction_dt"].str[:-2]
+            date_for_length(df, "transaction_dt")
+            df = resolve_date_format(df, "transaction_dt", pipeline_name)
+
+        elif "other_committee_tx_20" in pipeline_name:
+            df["transaction_dt"] = df["transaction_dt"].astype(str)
+            # df["transaction_dt"] = df["transaction_dt"].str[:-2]
+            date_for_length(df, "transaction_dt")
+            df = resolve_date_format(df, "transaction_dt", pipeline_name)
+
+        elif "opex" in pipeline_name:
+            df["transaction_dt"] = df["transaction_dt"].astype(str)
+            # df["transaction_dt"] = df["transaction_dt"].str[:-2]
+            date_for_length(df, "transaction_dt")
+            df = resolve_date_format(df, "transaction_dt", pipeline_name)
+
+        # elif pipeline_name == "individuals_":
+        #     df["transaction_dt"] = df["transaction_dt"].astype(str)
+        #     #df["transaction_dt"] = df["transaction_dt"].str[:-2]
+        #     date_for_length(df, "transaction_dt")
+        #     df = resolve_date_format(df, "transaction_dt", pipeline_name)
+        #     df = df.rename(columns=lambda x: x.strip())
+
+        else:
+            pass
+
+        logging.info(f"Saving to output file.. {target_file}")
+        try:
+            save_to_new_file(df, file_path=str(target_file))
+        except Exception as e:
+            logging.error(f"Error saving output file: {e}.")
+
+        logging.info(
+            f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
+        )
+        upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
+
+        logging.info(
+            f"FEC {pipeline_name} process completed at "
+            + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        )
+    else:
+        logging.info(f"Downloading file gs://{source_bucket}/{source_object}")
+        download_blob(source_bucket, source_object, source_file)
+
+        logging.info(f"Opening file...{source_file}")
+        df = pd.read_table(
+            source_file, dtype=object, index_col=False, names=csv_headers
+        )
+
+        logging.info(f"Transforming.. {source_file}")
+
+        df["transaction_dt"] = df["transaction_dt"].astype(str)
+        date_for_length(df, "transaction_dt")
+        df = resolve_date_format(df, "transaction_dt")
         df = df.rename(columns=lambda x: x.strip())
 
-    elif "committee_20" in pipeline_name:
-        df.drop(df[df["cmte_id"] == "C00622357"].index, inplace=True)
+        logging.info(f"Saving to output file.. {target_file}")
+        try:
+            save_to_new_file(df, file_path=str(target_file))
+        except Exception as e:
+            logging.error(f"Error saving output file: {e}.")
 
-    elif "committee_contributions_20" in pipeline_name:
-        df["transaction_dt"] = df["transaction_dt"].astype(str)
-        # df["transaction_dt"] = df["transaction_dt"].str[:-2]
-        date_for_length(df, "transaction_dt")
-        df = resolve_date_format(df, "transaction_dt", pipeline_name)
+        logging.info(
+            f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
+        )
+        upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
-    elif "other_committee_tx_20" in pipeline_name:
-        df["transaction_dt"] = df["transaction_dt"].astype(str)
-        # df["transaction_dt"] = df["transaction_dt"].str[:-2]
-        date_for_length(df, "transaction_dt")
-        df = resolve_date_format(df, "transaction_dt", pipeline_name)
+        logging.info(
+            f"FEC {pipeline_name} process completed at "
+            + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        )
 
-    elif "opex" in pipeline_name:
-        df["transaction_dt"] = df["transaction_dt"].astype(str)
-        # df["transaction_dt"] = df["transaction_dt"].str[:-2]
-        date_for_length(df, "transaction_dt")
-        df = resolve_date_format(df, "transaction_dt", pipeline_name)
 
-    # elif pipeline_name == "individuals_":
-    #     df["transaction_dt"] = df["transaction_dt"].astype(str)
-    #     #df["transaction_dt"] = df["transaction_dt"].str[:-2]
-    #     date_for_length(df, "transaction_dt")
-    #     df = resolve_date_format(df, "transaction_dt", pipeline_name)
-    #     df = df.rename(columns=lambda x: x.strip())
-
-    else:
-        pass
-
-    logging.info(f"Saving to output file.. {target_file}")
-    try:
-        save_to_new_file(df, file_path=str(target_file))
-    except Exception as e:
-        logging.error(f"Error saving output file: {e}.")
-
-    logging.info(
-        f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
-    )
-    upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
-
-    logging.info(
-        f"FEC {pipeline_name} process completed at "
-        + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    )
+def download_blob(bucket, object, target_file):
+    """Downloads a blob from the bucket."""
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(bucket)
+    blob = bucket.blob(object)
+    blob.download_to_filename(target_file)
 
 
 def resolve_date_format(
@@ -225,16 +267,16 @@ if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
 
     main(
-        source_url=os.environ["SOURCE_URL"],
+        source_bucket=os.environ.get("SOURCE_GCS_BUCKET", ""),
+        source_object=os.environ.get("SOURCE_GCS_OBJECT", ""),
+        source_url=os.environ.get("SOURCE_URL", ""),
         source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
-        source_file_zip_file=pathlib.Path(
-            os.environ["SOURCE_FILE_ZIP_FILE"]
-        ).expanduser(),
-        source_file_path=pathlib.Path(os.environ["SOURCE_FILE_PATH"]).expanduser(),
+        source_file_zip_file=os.environ.get("SOURCE_FILE_ZIP_FILE", ""),
+        source_file_path=os.environ.get("SOURCE_FILE_PATH", ""),
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
-        target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
-        target_gcs_path=os.environ["TARGET_GCS_PATH"],
+        target_gcs_bucket=os.environ.get("TARGET_GCS_BUCKET", ""),
+        target_gcs_path=os.environ.get("TARGET_GCS_PATH", ""),
         csv_headers=json.loads(os.environ["CSV_HEADERS"]),
         # rename_mappings=json.loads(os.environ["RENAME_MAPPINGS"]),
-        pipeline_name=os.environ["PIPELINE_NAME"],
+        pipeline_name=os.environ.get("PIPELINE_NAME", ""),
     )
