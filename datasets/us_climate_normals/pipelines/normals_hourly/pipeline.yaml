@@ -32,259 +32,143 @@ dag:
     default_view: graph
 
   tasks:
-    - operator: "GoogleCloudStorageToGoogleCloudStorageOperator"
-      description: "Copy source files to public bucket"
+    - operator: "GKECreateClusterOperator"
       args:
-        task_id: copy_source_files_to_public_bucket
-        source_bucket: "normals"
-        source_object: "normals-hourly/access/*.csv"
-        destination_bucket: "{{ var.value.composer_bucket }}"
-        destination_object: "data/us_climate_normals/hourly_access/"
-        move_object: False
-    - operator: "GoogleCloudStorageToBigQueryOperator"
-      description: "Load U.S. Climate Normals Hourly Data (Most Recent)"
+        task_id: "create_cluster"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        body:
+          name: us-climate-normals
+          initial_node_count: 2
+          network: "{{ var.value.vpc_network }}"
+          node_config:
+            machine_type: e2-standard-4
+            oauth_scopes:
+              - https://www.googleapis.com/auth/devstorage.read_write
+              - https://www.googleapis.com/auth/cloud-platform
+    - operator: "GKEStartPodOperator"
+      description: "Run CSV transform within kubernetes pod"
       args:
-        task_id: "hourly_access"
-        bucket: "{{ var.value.composer_bucket }}"
-        source_objects: ["data/us_climate_normals/hourly_access/*.csv"]
-        # destination_project_dataset_table: '{{ var.json.us_climate_normals.normals_hourly.destination_dataset_table }}'
-        destination_project_dataset_table:  "us_climate_normals.hourly_access"
-        source_format: 'CSV'
-        create_disposition: 'CREATE_IF_NEEDED'
-        write_disposition: 'WRITE_TRUNCATE'
-        schema_fields:
-          - name: "STATION"
-            type: STRING
-            mode: NULLABLE
-            description: ""
-          - name: "DATE"
-            type: TIMESTAMP
-            mode: NULLABLE
-            description: ""
-          - name: "LATITUDE"
-            type: FLOAT
-            mode: NULLABLE
-            description: ""
-          - name: "LONGITUDE"
-            type: FLOAT
-            mode: NULLABLE
-            description: ""
-          - name: "ELEVATION"
-            type: FLOAT
-            mode: NULLABLE
-            description: ""
-          - name: "NAME"
-            type: STRING
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_CLDH_NORMAL"
-            type: INTEGER
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_CLDH_NORMAL_ATTRIBUTES"
-            type: STRING
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_CLOD_PCTBKN"
-            type: INTEGER
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_CLOD_PCTBKN_ATTRIBUTES"
-            type: STRING
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_CLOD_PCTCLR"
-            type: INTEGER
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_CLOD_PCTCLR_ATTRIBUTES"
-            type: STRING
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_CLOD_PCTFEW"
-            type: INTEGER
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_CLOD_PCTFEW_ATTRIBUTES"
-            type: STRING
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_CLOD_PCTOVC"
-            type: INTEGER
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_CLOD_PCTOVC_ATTRIBUTES"
-            type: STRING
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_CLOD_PCTSCT"
-            type: INTEGER
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_CLOD_PCTSCT_ATTRIBUTES"
-            type: STRING
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_DEWP_10PCTL"
-            type: INTEGER
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_DEWP_10PCTL_ATTRIBUTES"
-            type: STRING
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_DEWP_90PCTL"
-            type: INTEGER
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_DEWP_90PCTL_ATTRIBUTES"
-            type: STRING
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_DEWP_NORMAL"
-            type: INTEGER
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_DEWP_NORMAL_ATTRIBUTES"
-            type: STRING
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_HIDX_NORMAL"
-            type: INTEGER
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_HIDX_NORMAL_ATTRIBUTES"
-            type: STRING
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_HTDH_NORMAL"
-            type: INTEGER
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_HTDH_NORMAL_ATTRIBUTES"
-            type: STRING
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_PRES_10PCTL"
-            type: INTEGER
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_PRES_10PCTL_ATTRIBUTES"
-            type: STRING
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_PRES_90PCTL"
-            type: INTEGER
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_PRES_90PCTL_ATTRIBUTES"
-            type: STRING
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_PRES_NORMAL"
-            type: INTEGER
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_PRES_NORMAL_ATTRIBUTES"
-            type: STRING
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_TEMP_10PCTL"
-            type: INTEGER
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_TEMP_10PCTL_ATTRIBUTES"
-            type: STRING
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_TEMP_90PCTL"
-            type: INTEGER
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_TEMP_90PCTL_ATTRIBUTES"
-            type: STRING
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_TEMP_NORMAL"
-            type: INTEGER
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_TEMP_NORMAL_ATTRIBUTES"
-            type: STRING
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_WCHL_NORMAL"
-            type: INTEGER
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_WCHL_NORMAL_ATTRIBUTES"
-            type: STRING
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_WIND_1STDIR"
-            type: INTEGER
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_WIND_1STDIR_ATTRIBUTES"
-            type: STRING
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_WIND_1STPCT"
-            type: INTEGER
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_WIND_1STPCT_ATTRIBUTES"
-            type: STRING
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_WIND_2NDDIR"
-            type: INTEGER
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_WIND_2NDDIR_ATTRIBUTES"
-            type: STRING
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_WIND_2NDPCT"
-            type: INTEGER
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_WIND_2NDPCT_ATTRIBUTES"
-            type: STRING
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_WIND_AVGSPD"
-            type: INTEGER
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_WIND_AVGSPD_ATTRIBUTES"
-            type: STRING
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_WIND_PCTCLM"
-            type: INTEGER
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_WIND_PCTCLM_ATTRIBUTES"
-            type: STRING
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_WIND_VCTDIR"
-            type: INTEGER
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_WIND_VCTDIR_ATTRIBUTES"
-            type: STRING
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_WIND_VCTSPD"
-            type: INTEGER
-            mode: NULLABLE
-            description: ""
-          - name: "HLY_WIND_VCTSPD_ATTRIBUTES"
-            type: STRING
-            mode: NULLABLE
-            description: ""
+        task_id: "green_trips"
+        startup_timeout_seconds: 600
+        name: "load_tlc_green_trips"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: new-york-taxi-trips
+        image_pull_policy: "Always"
+        image: "{{ var.json.new_york_taxi_trips.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "{{ var.json.new_york_taxi_trips.container_registry.green_trips_source_url }}"
+          SOURCE_FILE: "files/data_green_trips.csv"
+          TARGET_FILE: "files/data_output_green_trips.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "{{ var.json.new_york_taxi_trips.container_registry.green_trips_dataset_id }}"
+          TABLE_ID: "{{ var.json.new_york_taxi_trips.container_registry.green_trips_table_id }}"
+          DATA_FILE_YEAR_FIELD: "data_file_year"
+          DATA_FILE_MONTH_FIELD: "data_file_month"
+          SCHEMA_PATH: "{{ var.json.new_york_taxi_trips.container_registry.green_trips_schema_path }}"
+          CHUNKSIZE: "{{ var.json.new_york_taxi_trips.container_registry.green_trips_chunk_size }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "{{ var.json.new_york_taxi_trips.container_registry.green_trips_target_gcs_path }}"
+          PIPELINE_NAME: "tlc_green_trips"
+          INPUT_CSV_HEADERS: >-
+            ["vendor_id", "pickup_datetime", "dropoff_datetime", "store_and_fwd_flag", "rate_code",
+             "pickup_location_id", "dropoff_location_id", "passenger_count", "trip_distance", "fare_amount",
+             "extra", "mta_tax", "tip_amount", "tolls_amount", "ehail_fee",
+             "imp_surcharge", "total_amount", "payment_type", "trip_type", "congestion_surcharge" ]
+          DATA_DTYPES: >-
+            { "vendor_id": "str",
+              "pickup_datetime": "datetime64[ns]",
+              "dropoff_datetime": "datetime64[ns]",
+              "store_and_fwd_flag": "str",
+              "rate_code": "str",
+              "pickup_location_id": "str",
+              "dropoff_location_id": "str",
+              "passenger_count": "str",
+              "trip_distance": "float64",
+              "fare_amount": "float64",
+              "extra": "float64",
+              "mta_tax": "float64",
+              "tip_amount": "float64",
+              "tolls_amount": "float64",
+              "ehail_fee": "float64",
+              "imp_surcharge": "float64",
+              "total_amount": "float64",
+              "payment_type": "str",
+              "trip_type": "str",
+              "congestion_surcharge": "float64" }
+          OUTPUT_CSV_HEADERS: >-
+            [ "vendor_id", "pickup_datetime", "dropoff_datetime", "store_and_fwd_flag", "rate_code",
+              "passenger_count", "trip_distance", "fare_amount", "extra", "mta_tax",
+              "tip_amount", "tolls_amount", "ehail_fee", "total_amount", "payment_type",
+              "distance_between_service", "time_between_service", "trip_type", "imp_surcharge", "pickup_location_id",
+              "dropoff_location_id", "data_file_year", "data_file_month" ]
+        resources:
+          request_memory: "12G"
+          request_cpu: "1"
+          request_ephemeral_storage: "16G"
+    - operator: "GKEStartPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "yellow_trips"
+        startup_timeout_seconds: 600
+        name: "load_tlc_yellow_trips"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: new-york-taxi-trips
+        image_pull_policy: "Always"
+        image: "{{ var.json.new_york_taxi_trips.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_source_url }}"
+          SOURCE_FILE: "files/data_yellow_trips.csv"
+          TARGET_FILE: "files/data_output_yellow_trips.csv"
+          DATA_FILE_YEAR_FIELD: "data_file_year"
+          DATA_FILE_MONTH_FIELD: "data_file_month"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_dataset_id }}"
+          TABLE_ID: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_table_id }}"
+          SCHEMA_PATH: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_schema_path }}"
+          CHUNKSIZE: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_chunk_size }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_target_gcs_path }}"
+          PIPELINE_NAME: "tlc_yellow_trips"
+          INPUT_CSV_HEADERS: >-
+            [ "vendor_id", "pickup_datetime", "dropoff_datetime", "passenger_count", "trip_distance",
+              "rate_code", "store_and_fwd_flag", "pickup_location_id", "dropoff_location_id",
+              "payment_type", "fare_amount", "extra", "mta_tax", "tip_amount",
+              "tolls_amount", "imp_surcharge", "total_amount", "congestion_surcharge" ]
+          DATA_DTYPES: >-
+            { "vendor_id": "str",
+              "pickup_datetime": "datetime64[ns]",
+              "dropoff_datetime": "datetime64[ns]",
+              "passenger_count": "str",
+              "trip_distance": "float64",
+              "rate_code": "str",
+              "store_and_fwd_flag": "str",
+              "pickup_location_id": "str",
+              "dropoff_location_id": "str",
+              "payment_type": "str",
+              "fare_amount": "float64",
+              "extra": "float64",
+              "mta_tax": "float64",
+              "tip_amount": "float64",
+              "tolls_amount": "float64",
+              "imp_surcharge": "float64",
+              "total_amount": "float64",
+              "congestion_surcharge": "float64" }
+          OUTPUT_CSV_HEADERS: >-
+            [ "vendor_id", "pickup_datetime", "dropoff_datetime", "passenger_count", "trip_distance",
+              "rate_code", "store_and_fwd_flag", "payment_type", "fare_amount", "extra",
+              "mta_tax", "tip_amount", "tolls_amount", "imp_surcharge", "total_amount",
+              "pickup_location_id", "dropoff_location_id", "data_file_year", "data_file_month" ]
+    - operator: "GKEDeleteClusterOperator"
+      args:
+        task_id: "delete_cluster"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        name: us-climate-normals
 
   graph_paths:
     - "copy_source_files_to_public_bucket >> hourly_access"
