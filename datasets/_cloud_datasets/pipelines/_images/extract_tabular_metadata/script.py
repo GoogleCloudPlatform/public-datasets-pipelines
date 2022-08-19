@@ -12,18 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import logging
-import os
-
 import dataclasses
 import datetime
+import logging
+import os
 import threading
 import time
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
-from google.cloud import bigquery
 import numpy as np
 import pandas as pd
+from google.cloud import bigquery
 
 NUM_THREADS = 5
 
@@ -127,12 +126,12 @@ class DatasetsTablesInfoExtractor:
     """Extracts BQ datasets and tables metadata and stores them in BQ."""
 
     def __init__(self,
-                 project: str,
-                 out_project: str,
-                 out_dataset: str):
-        self.client = bigquery.Client(project)
-        self.out_project = out_project
-        self.out_dataset = out_dataset
+                 project_id: str,
+                 target_project_id: str,
+                 target_dataset: str):
+        self.client = bigquery.Client(project_id)
+        self.target_project_id = target_project_id
+        self.target_dataset = target_dataset
         self.datasets = []
         self.tables = []
         self.tables_fields = []
@@ -213,7 +212,7 @@ class DatasetsTablesInfoExtractor:
     def write_datasets_to_bq(self, table_name: str,
                              extracted_time: datetime.datetime):
         """Write datasets metadata to BQ."""
-        dataset_ref = bigquery.DatasetReference(self.out_project, self.out_dataset)
+        dataset_ref = bigquery.DatasetReference(self.target_project_id, self.target_dataset)
         table_id = bigquery.TableReference(dataset_ref, table_name)
         print(f'Writing to {table_id}...')
 
@@ -267,7 +266,7 @@ class DatasetsTablesInfoExtractor:
     def write_tables_to_bq(self, table_name: str,
                            extracted_time: datetime.datetime):
         """Write tables metadata to BQ."""
-        dataset_ref = bigquery.DatasetReference(self.out_project, self.out_dataset)
+        dataset_ref = bigquery.DatasetReference(self.target_project_id, self.target_dataset)
         table_id = bigquery.TableReference(dataset_ref, table_name)
         print(f'Writing to {table_id}...')
 
@@ -341,7 +340,7 @@ class DatasetsTablesInfoExtractor:
     def write_tables_fields_to_bq(self, table_name: str,
                                   extracted_time: datetime.datetime):
         """Write tables_fields to BQ."""
-        dataset_ref = bigquery.DatasetReference(self.out_project, self.out_dataset)
+        dataset_ref = bigquery.DatasetReference(self.target_project_id, self.target_dataset)
         table_id = bigquery.TableReference(dataset_ref, table_name)
         print(f'Writing to {table_id}...')
 
@@ -411,8 +410,8 @@ class DatasetsTablesInfoExtractor:
 
 
 def main(
-    source_projects: List[str],
-    target_project: str,
+    source_projects_ids: List[str],
+    target_project_id: str,
     target_dataset: str,
     tabular_dataset_table_name: str,
     tables_table_name: str,
@@ -420,8 +419,8 @@ def main(
 ):
     """Entry point for this cloud function."""
     st = time.time()
-    for project in source_projects:
-        extractor = DatasetsTablesInfoExtractor(project, target_project, target_dataset)
+    for project_id in source_projects_ids.split(','):
+        extractor = DatasetsTablesInfoExtractor(project_id, target_project_id, target_dataset)
         extractor.read_datasets()
         extracted = datetime.datetime.now()
         extractor.write_datasets_to_bq(tabular_dataset_table_name, extracted)
@@ -434,8 +433,8 @@ if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
 
     main(
-        source_projects=os.environ["SOURCE_PROJECTS"],
-        target_project=os.environ["TARGET_PROJECT"],
+        source_projects_ids=os.environ["SOURCE_PROJECTS_IDS"],
+        target_project_id=os.environ["TARGET_PROJECT_ID"],
         target_dataset=os.environ["TARGET_DATASET"],
         tabular_dataset_table_name=os.environ["TABULAR_DATASET_TABLE_NAME"],
         tables_table_name=os.environ["TABLES_TABLE_NAME"],
