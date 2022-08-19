@@ -90,7 +90,7 @@ dag:
         destination_project_dataset_table: "fec.individuals_2016"
         skip_leading_rows: 1
         allow_quoted_newlines: True
-        write_disposition: "WRITE_APPEND"
+        write_disposition: "WRITE_TRUNCATE"
 
         schema_fields:
           - name: "cmte_id"
