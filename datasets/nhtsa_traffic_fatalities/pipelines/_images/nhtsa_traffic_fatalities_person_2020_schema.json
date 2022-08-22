@@ -656,73 +656,73 @@
 	{
 		"name": "helm_use",
 		"type": "string",
-		"description": " ",
+		"description": "This data element records the helmet use by this occupant at the time of the crash.",
 		"mode": "NULLABLE"
 	},
 	{
 		"name": "helm_usename",
 		"type": "string",
-		"description": " ",
+		"description": "This data element records the helmet use by this occupant at the time of the crash.",
 		"mode": "NULLABLE"
 	},
 	{
 		"name": "helm_mis",
 		"type": "string",
-		"description": " ",
+		"description": "This data element identifies any mis-use of the helmet used by this person.",
 		"mode": "NULLABLE"
 	},
 	{
 		"name": "helm_misname",
 		"type": "string",
-		"description": " ",
+		"description": "This data element identifies any mis-use of the helmet used by this person.",
 		"mode": "NULLABLE"
 	},
 	{
 		"name": "vpic_make",
 		"type": "string",
-		"description": " ",
+		"description": "This element identifies the Make (manufacturer brand name) of this vehicle as per NHTSA vPIC submissions.",
 		"mode": "NULLABLE"
 	},
 	{
 		"name": "vpic_make_name",
 		"type": "string",
-		"description": " ",
+		"description": "This element identifies the Make (manufacturer brand name) of this vehicle as per NHTSA vPIC submissions.",
 		"mode": "NULLABLE"
 	},
 	{
 		"name": "vpic_model",
 		"type": "string",
-		"description": " ",
+		"description": "This element identifies the Model of this vehicle using NHTSA’s VIN decoder application, vPIC.",
 		"mode": "NULLABLE"
 	},
 	{
 		"name": "vpic_model_name",
 		"type": "string",
-		"description": " ",
+		"description": "This element identifies the Model of this vehicle using NHTSA’s VIN decoder application, vPIC.",
 		"mode": "NULLABLE"
 	},
 	{
 		"name": "vpic_body_class",
 		"type": "string",
-		"description": " ",
+		"description": "This element identifies a classification of this vehicle based on its general body configuration, size, shape, doors, etc., as defined by the manufacturer.",
 		"mode": "NULLABLE"
 	},
 	{
 		"name": "vpic_body_class_name",
 		"type": "string",
-		"description": " ",
+		"description": "This element identifies a classification of this vehicle based on its general body configuration, size, shape, doors, etc., as defined by the manufacturer.",
 		"mode": "NULLABLE"
 	},
 	{
 		"name": "icfinal_body",
 		"type": "string",
-		"description": " ",
+		"description": "This element captures the completed/finished body class for an incomplete vehicle. An incomplete vehicle is completed by a final stage manufacturer. The intent of this data element is to capture the body class for incomplete vehicles when they are finished for road-use.",
 		"mode": "NULLABLE"
 	},
 	{
 		"name": "icfinalbody_name",
 		"type": "string",
-		"description": " ",
+		"description": "This element captures the completed/finished body class for an incomplete vehicle. An incomplete vehicle is completed by a final stage manufacturer. The intent of this data element is to capture the body class for incomplete vehicles when they are finished for road-use.",
 		"mode": "NULLABLE"
 	}
 ]

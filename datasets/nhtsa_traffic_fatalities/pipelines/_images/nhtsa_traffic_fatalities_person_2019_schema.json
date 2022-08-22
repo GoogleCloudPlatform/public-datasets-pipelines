@@ -692,25 +692,25 @@
 	{
 		"name": "helm_use",
 		"type": "string",
-		"description": " ",
+		"description": "This data element records the helmet use by this occupant at the time of the crash.",
 		"mode": "NULLABLE"
 	},
 	{
 		"name": "helm_usename",
 		"type": "string",
-		"description": " ",
+		"description": "This data element records the helmet use by this occupant at the time of the crash.",
 		"mode": "NULLABLE"
 	},
 	{
 		"name": "helm_mis",
 		"type": "string",
-		"description": " ",
+		"description": "This data element identifies any mis-use of the helmet used by this person.",
 		"mode": "NULLABLE"
 	},
 	{
 		"name": "helm_misname",
 		"type": "string",
-		"description": " ",
+		"description": "This data element identifies any mis-use of the helmet used by this person.",
 		"mode": "NULLABLE"
 	}
 ]

@@ -21,7 +21,6 @@ import typing
 import zipfile as zip
 from datetime import date
 
-
 import pandas as pd
 import requests
 from google.api_core.exceptions import NotFound
@@ -51,12 +50,8 @@ def main(
     logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
     process_year = int(start_year)
-    todays_date = date.today()
-    current_year = todays_date.year
-    # max_year = 2020
     max_year = int(end_year)
     for processing_year in range(process_year, max_year+1):
-        # source_url = source_url.replace("<<YEAR>>", str(processing_year))
         source_url = build_source_url(source_url,processing_year)
         source_file = str.replace(str(source_file),".zip", f"_{processing_year}.zip")
         execute_pipeline(
@@ -135,8 +130,6 @@ def execute_pipeline(
         else:
             drop_table = False
         destination_table = (pipeline_name.split('-')[1]).lower()+f"_{process_year}"
-        # f"destination_table_{process_year}"
-        # eg. "accident_" & "2015" = "accident_2015"
         table_exists = create_dest_table(
             project_id=project_id,
             dataset_id=dataset_id,
@@ -257,10 +250,16 @@ def process_chunk(
 ) -> None:
     logging.info(f"Processing batch file {target_file_batch}")
     df = rename_headers(df, rename_headers_list)
+    # pipeline_name= 'Accident'
+    # if pipeline_name == 'Accident':
+        # create_new_timestamp_column(df)
     save_to_new_file(df, file_path=str(target_file_batch), sep="|")
     append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
     logging.info(f"Processing batch file {target_file_batch} completed")
 
+def create_new_timestamp_column(df: pd.DataFrame):
+  df['timestamp_of_crash']=df['year_of_crash'].apply(lambda x : str(x))+'-'+df['month_of_crash'].apply(lambda x : "0"+str(x) if len(str(x))==1  else str(x))+'-'+df['day_of_crash'].apply(lambda x : "0"+str(x) if len(str(x))==1  else str(x))+' '+df['hour_of_crash'].apply(lambda x : "0"+str(x) if len(str(x))==1  else str(x))+':'+df['minute_of_crash'].apply(lambda x : "0"+str(x) if len(str(x))==1  else str(x))+':'+'00'+' UTC'
+  return df
 
 def unpack_file(infile: str, dest_path: str, compression_type: str = "zip") -> None:
     if compression_type == "zip":
@@ -276,8 +275,6 @@ def zip_decompress(infile: str, dest_path: str) -> None:
     with zip.ZipFile(infile, mode="r") as zipf:
         zipf.extractall(dest_path)
         for fileame in os.listdir(dest_path):
-            # file_ext = fileame.split('.')[1]
-            # if file_ext == 'CSV':
             file_name, file_extension = os.path.splitext(fileame)
             os.rename(os.path.join(dest_path, fileame), os.path.join(dest_path, file_name.lower() + file_extension.lower()))
 
@@ -344,7 +341,7 @@ def create_dest_table(
             schema = create_table_schema([], bucket_name, schema_filepath)
             table = bigquery.Table(table_ref, schema=schema)
             client.create_table(table)
-            print(f"Table {table_ref} was created".format(table_id))
+            logging.info(f"Table {table_ref} was created".format(table_id))
             table_exists = True
         else:
             file_name = os.path.split(schema_filepath)[1]
@@ -462,7 +459,6 @@ if __name__ == "__main__":
         chunksize=os.environ["CHUNKSIZE"],
         source_zipfile_extracted=os.environ["SOURCE_ZIPFILE_EXTRACTED"],
         source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
-        # target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
         project_id=os.environ["PROJECT_ID"],
         dataset_id=os.environ["DATASET_ID"],
         destination_table=os.environ["TABLE_ID"],

@@ -32,73 +32,73 @@
 	{
 		"name": "nm_helmet",
 		"type": "string",
-		"description": " ",
+		"description": "This data element indicates if the non-motorist was wearing a safety helmet.",
 		"mode": "NULLABLE"
 	},
 	{
 		"name": "nm_helmet_name",
 		"type": "string",
-		"description": " ",
+		"description": "This data element indicates if the non-motorist was wearing a safety helmet.",
 		"mode": "NULLABLE"
 	},
 	{
 		"name": "nm_propad",
 		"type": "string",
-		"description": " ",
+		"description": "This data element indicates if the non-motorist was wearing padded, shaped attachments to protect specific areas of the body (e.g., elbows, knees, shins) from injury.",
 		"mode": "NULLABLE"
 	},
 	{
 		"name": "nm_propad_name",
 		"type": "string",
-		"description": " ",
+		"description": "This data element indicates if the non-motorist was wearing padded, shaped attachments to protect specific areas of the body (e.g., elbows, knees, shins) from injury.",
 		"mode": "NULLABLE"
 	},
 	{
 		"name": "nm_othpro",
 		"type": "string",
-		"description": " ",
+		"description": "This data element indicates if the non-motorist was using protective safety equipment other than a helmet or pads (e.g., eye wear/face shields, gloves, wrist guards).",
 		"mode": "NULLABLE"
 	},
 	{
 		"name": "nm_othpro_name",
 		"type": "string",
-		"description": " ",
+		"description": "This data element indicates if the non-motorist was using protective safety equipment other than a helmet or pads (e.g., eye wear/face shields, gloves, wrist guards).",
 		"mode": "NULLABLE"
 	},
 	{
 		"name": "nm_refclo",
 		"type": "string",
-		"description": " ",
+		"description": "This data element indicates if the non-motorist was wearing or carrying some type of reflective item (e.g., jacket, backpack, vest).",
 		"mode": "NULLABLE"
 	},
 	{
 		"name": "nm_refclo_name",
 		"type": "string",
-		"description": " ",
+		"description": "This data element indicates if the non-motorist was wearing or carrying some type of reflective item (e.g., jacket, backpack, vest).",
 		"mode": "NULLABLE"
 	},
 	{
 		"name": "nm_light",
 		"type": "string",
-		"description": " ",
+		"description": "This data element indicates if the non-motorist was using a light on his/her person or on a pedalcycle or personal conveyance for safety purposes, to include flashlights.",
 		"mode": "NULLABLE"
 	},
 	{
 		"name": "nm_light_name",
 		"type": "string",
-		"description": " ",
+		"description": "This data element indicates if the non-motorist was using a light on his/her person or on a pedalcycle or personal conveyance for safety purposes, to include flashlights.",
 		"mode": "NULLABLE"
 	},
 	{
 		"name": "nm_othpre",
 		"type": "string",
-		"description": " ",
+		"description": "This data element indicates if the non-motorist was using preventive safety equipment other than a reflective clothing/carried item or light (e.g., bicycle reflectors and flags, reflectors and triangles on a buggy, hi-glo orange clothing, rollerblade stoppers).",
 		"mode": "NULLABLE"
 	},
 	{
 		"name": "nm_othpre_name",
 		"type": "string",
-		"description": " ",
+		"description": "This data element indicates if the non-motorist was using preventive safety equipment other than a reflective clothing/carried item or light (e.g., bicycle reflectors and flags, reflectors and triangles on a buggy, hi-glo orange clothing, rollerblade stoppers).",
 		"mode": "NULLABLE"
 	}
 

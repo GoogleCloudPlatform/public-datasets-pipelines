@@ -2,3 +2,5 @@ google-cloud-storage
 numpy
 pandas
 requests
+bigquery
+storage

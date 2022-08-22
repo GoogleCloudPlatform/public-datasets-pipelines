@@ -578,37 +578,37 @@
 	{
 		"name": "ptrlr1vin",
 		"type": "string",
-		"description": " ",
+		"description": "This data element records the vehicle identification number (VIN) of any trailing units of a combination vehicle.",
 		"mode": "NULLABLE"
 	},
 	{
 		"name": "ptrlr1vinname",
 		"type": "string",
-		"description": " ",
+		"description": "This data element records the vehicle identification number (VIN) of any trailing units of a combination vehicle.",
 		"mode": "NULLABLE"
 	},
 	{
 		"name": "ptrlr2vin",
 		"type": "string",
-		"description": " ",
+		"description": "This data element records the vehicle identification number (VIN) of any trailing units of a combination vehicle.",
 		"mode": "NULLABLE"
 	},
 	{
 		"name": "ptrlr2vinname",
 		"type": "string",
-		"description": " ",
+		"description": "This data element records the vehicle identification number (VIN) of any trailing units of a combination vehicle.",
 		"mode": "NULLABLE"
 	},
 	{
 		"name": "ptrlr3vin",
 		"type": "string",
-		"description": " ",
+		"description": "This data element records the vehicle identification number (VIN) of any trailing units of a combination vehicle.",
 		"mode": "NULLABLE"
 	},
 	{
 		"name": "ptrlr3vinname",
 		"type": "string",
-		"description": " ",
+		"description": "This data element records the vehicle identification number (VIN) of any trailing units of a combination vehicle.",
 		"mode": "NULLABLE"
 	}
 ]

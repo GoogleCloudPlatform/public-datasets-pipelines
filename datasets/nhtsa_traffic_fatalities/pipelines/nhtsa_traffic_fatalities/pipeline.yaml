@@ -13,6 +13,8 @@
 # limitations under the License.
 
 ---
+resources: ~
+
 dag:
   airflow_version: 2
   initialize:
@@ -20,7 +22,7 @@ dag:
     default_args:
       owner: "Google"
       depends_on_past: False
-      start_date: "2021-03-01"
+      start_date: "2022-03-01"
     max_active_runs: 1
     schedule_interval: "@daily"
     catchup: False
@@ -33,7 +35,7 @@ dag:
         location: "us-central1-c"
         body:
           name: nhtsa-traffic-fatalities
-          initial_node_count: 8
+          initial_node_count: 2
           network: "{{ var.value.vpc_network }}"
           node_config:
             machine_type: e2-standard-16
@@ -42,7 +44,7 @@ dag:
               - https://www.googleapis.com/auth/cloud-platform
 
     - operator: "KubernetesPodOperator"
-      description: "Run CSV transform within kubernetes pod"
+      description: "Run CSV transform within kubernetes pod for accident pipeline"
       args:
         task_id: "accident_2015_transform_csv"
         startup_timeout_seconds: 600
@@ -55,9 +57,8 @@ dag:
           PIPELINE_NAME: "{{ var.json.nhtsa_traffic_fatalities.accident_2015.pipeline_name }}"
           SOURCE_URL: "{{ var.json.nhtsa_traffic_fatalities.accident_2015.source_url }}"
           CHUNKSIZE: "{{ var.json.nhtsa_traffic_fatalities.accident_2015.chunksize }}"
-          SOURCE_ZIPFILE_EXTRACTED: "accident_2015.csv"
+          SOURCE_ZIPFILE_EXTRACTED: "accident.csv"
           SOURCE_FILE: "{{ var.json.nhtsa_traffic_fatalities.accident_2015.source_file }}"
-          # TARGET_FILE: "{{ var.json.nhtsa_traffic_fatalities.accident_2015.target_file }}"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.nhtsa_traffic_fatalities.accident_2015.dataset_id }}"
           TABLE_ID: "{{ var.json.nhtsa_traffic_fatalities.accident_2015.destination_table }}"
@@ -344,11 +345,13 @@ dag:
               "DRUNK_DR": "number_of_drunk_drivers"
             }
         resources:
-          request_ephemeral_storage: "10G"
+          request_ephemeral_storage: "4G"
           request_cpu: "1"
+          request_memory: "4G"
+
 
     - operator: "KubernetesPodOperator"
-      description: "Run CSV transform within kubernetes pod"
+      description: "Run CSV transform within kubernetes pod for accident pipeline"
       args:
         task_id: "accident_2016_2019_transform_csv"
         startup_timeout_seconds: 600
@@ -361,9 +364,8 @@ dag:
           PIPELINE_NAME: "{{ var.json.nhtsa_traffic_fatalities.accident_2016_2019.pipeline_name }}"
           SOURCE_URL: "{{ var.json.nhtsa_traffic_fatalities.accident_2016_2019.source_url }}"
           CHUNKSIZE: "{{ var.json.nhtsa_traffic_fatalities.accident_2016_2019.chunksize }}"
-          SOURCE_ZIPFILE_EXTRACTED: "accident_2016_2019.csv"
+          SOURCE_ZIPFILE_EXTRACTED: "accident.csv"
           SOURCE_FILE: "{{ var.json.nhtsa_traffic_fatalities.accident_2016_2019.source_file }}"
-          # TARGET_FILE: "{{ var.json.nhtsa_traffic_fatalities.accident_2016_2019.target_file }}"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.nhtsa_traffic_fatalities.accident_2016_2019.dataset_id }}"
           TABLE_ID: "{{ var.json.nhtsa_traffic_fatalities.accident_2016_2019.destination_table }}"
@@ -656,11 +658,12 @@ dag:
               "DRUNK_DR": "number_of_drunk_drivers"
             }
         resources:
-          request_ephemeral_storage: "10G"
+          request_ephemeral_storage: "4G"
           request_cpu: "1"
+          request_memory: "4G"
 
     - operator: "KubernetesPodOperator"
-      description: "Run CSV transform within kubernetes pod"
+      description: "Run CSV transform within kubernetes pod for accident pipeline"
       args:
         task_id: "accident_2020_transform_csv"
         startup_timeout_seconds: 600
@@ -673,9 +676,8 @@ dag:
           PIPELINE_NAME: "{{ var.json.nhtsa_traffic_fatalities.accident_2020.pipeline_name }}"
           SOURCE_URL: "{{ var.json.nhtsa_traffic_fatalities.accident_2020.source_url }}"
           CHUNKSIZE: "{{ var.json.nhtsa_traffic_fatalities.accident_2020.chunksize }}"
-          SOURCE_ZIPFILE_EXTRACTED: "accident_2020.csv"
+          SOURCE_ZIPFILE_EXTRACTED: "accident.csv"
           SOURCE_FILE: "{{ var.json.nhtsa_traffic_fatalities.accident_2020.source_file }}"
-          # TARGET_FILE: "{{ var.json.nhtsa_traffic_fatalities.accident_2020.target_file }}"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.nhtsa_traffic_fatalities.accident_2020.dataset_id }}"
           TABLE_ID: "{{ var.json.nhtsa_traffic_fatalities.accident_2020.destination_table }}"
@@ -938,11 +940,12 @@ dag:
               "DRUNK_DR": "number_of_drunk_drivers"
             }
         resources:
-          request_ephemeral_storage: "10G"
+          request_ephemeral_storage: "4G"
           request_cpu: "1"
+          request_memory: "4G"
 
     - operator: "KubernetesPodOperator"
-      description: "Run CSV transform within kubernetes pod"
+      description: "Run CSV transform within kubernetes pod for cevent pipeline"
       args:
         task_id: "cevent_2015_2020_transform_csv"
         startup_timeout_seconds: 600
@@ -955,9 +958,8 @@ dag:
           PIPELINE_NAME: "{{ var.json.nhtsa_traffic_fatalities.cevent_2015_2020.pipeline_name }}"
           SOURCE_URL: "{{ var.json.nhtsa_traffic_fatalities.cevent_2015_2020.source_url }}"
           CHUNKSIZE: "{{ var.json.nhtsa_traffic_fatalities.cevent_2015_2020.chunksize }}"
-          SOURCE_ZIPFILE_EXTRACTED: "cevent_2015_2020.csv"
+          SOURCE_ZIPFILE_EXTRACTED: "cevent.csv"
           SOURCE_FILE: "{{ var.json.nhtsa_traffic_fatalities.cevent_2015_2020.source_file }}"
-          # TARGET_FILE: "{{ var.json.nhtsa_traffic_fatalities.cevent_2015_2020.target_file }}"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.nhtsa_traffic_fatalities.cevent_2015_2020.dataset_id }}"
           TABLE_ID: "{{ var.json.nhtsa_traffic_fatalities.cevent_2015_2020.destination_table }}"
@@ -1016,11 +1018,12 @@ dag:
               "AOI2NAME": "area_of_impact_other_vehicle_name"
             }
         resources:
-          request_ephemeral_storage: "10G"
+          request_ephemeral_storage: "4G"
           request_cpu: "1"
+          request_memory: "4G"
 
     - operator: "KubernetesPodOperator"
-      description: "Run CSV transform within kubernetes pod"
+      description: "Run CSV transform within kubernetes pod for damage pipeline"
       args:
         task_id: "damage_2015_2020_transform_csv"
         startup_timeout_seconds: 600
@@ -1033,9 +1036,8 @@ dag:
           PIPELINE_NAME: "{{ var.json.nhtsa_traffic_fatalities.damage_2015_2020.pipeline_name }}"
           SOURCE_URL: "{{ var.json.nhtsa_traffic_fatalities.damage_2015_2020.source_url }}"
           CHUNKSIZE: "{{ var.json.nhtsa_traffic_fatalities.damage_2015_2020.chunksize }}"
-          SOURCE_ZIPFILE_EXTRACTED: "damage_2015_2020.csv"
+          SOURCE_ZIPFILE_EXTRACTED: "damage.csv"
           SOURCE_FILE: "{{ var.json.nhtsa_traffic_fatalities.damage_2015_2020.source_file }}"
-          # TARGET_FILE: "{{ var.json.nhtsa_traffic_fatalities.damage_2015_2020.target_file }}"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.nhtsa_traffic_fatalities.damage_2015_2020.dataset_id }}"
           TABLE_ID: "{{ var.json.nhtsa_traffic_fatalities.damage_2015_2020.destination_table }}"
@@ -1073,11 +1075,12 @@ dag:
               "MDAREASNAME": "area_of_impact_this_vehicle"
             }
         resources:
-          request_ephemeral_storage: "10G"
+          request_ephemeral_storage: "4G"
           request_cpu: "1"
+          request_memory: "4G"
 
     - operator: "KubernetesPodOperator"
-      description: "Run CSV transform within kubernetes pod"
+      description: "Run CSV transform within kubernetes pod for distract pipeline"
       args:
         task_id: "distract_2015_2020_transform_csv"
         startup_timeout_seconds: 600
@@ -1090,9 +1093,8 @@ dag:
           PIPELINE_NAME: "{{ var.json.nhtsa_traffic_fatalities.distract_2015_2020.pipeline_name }}"
           SOURCE_URL: "{{ var.json.nhtsa_traffic_fatalities.distract_2015_2020.source_url }}"
           CHUNKSIZE: "{{ var.json.nhtsa_traffic_fatalities.distract_2015_2020.chunksize }}"
-          SOURCE_ZIPFILE_EXTRACTED: "distract_2015_2020.csv"
+          SOURCE_ZIPFILE_EXTRACTED: "distract.csv"
           SOURCE_FILE: "{{ var.json.nhtsa_traffic_fatalities.distract_2015_2020.source_file }}"
-          # TARGET_FILE: "{{ var.json.nhtsa_traffic_fatalities.distract_2015_2020.target_file }}"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.nhtsa_traffic_fatalities.distract_2015_2020.dataset_id }}"
           TABLE_ID: "{{ var.json.nhtsa_traffic_fatalities.distract_2015_2020.destination_table }}"
@@ -1130,11 +1132,12 @@ dag:
               "MDRDSTRDNAME": "driver_distracted_by_name"
             }
         resources:
-          request_ephemeral_storage: "10G"
+          request_ephemeral_storage: "4G"
           request_cpu: "1"
+          request_memory: "4G"
 
     - operator: "KubernetesPodOperator"
-      description: "Run CSV transform within kubernetes pod"
+      description: "Run CSV transform within kubernetes pod for drimpair pipeline"
       args:
         task_id: "drimpair_2015_2020_transform_csv"
         startup_timeout_seconds: 600
@@ -1147,9 +1150,8 @@ dag:
           PIPELINE_NAME: "{{ var.json.nhtsa_traffic_fatalities.drimpair_2015_2020.pipeline_name }}"
           SOURCE_URL: "{{ var.json.nhtsa_traffic_fatalities.drimpair_2015_2020.source_url }}"
           CHUNKSIZE: "{{ var.json.nhtsa_traffic_fatalities.drimpair_2015_2020.chunksize }}"
-          SOURCE_ZIPFILE_EXTRACTED: "drimpair_2015_2020.csv"
+          SOURCE_ZIPFILE_EXTRACTED: "drimpair.csv"
           SOURCE_FILE: "{{ var.json.nhtsa_traffic_fatalities.drimpair_2015_2020.source_file }}"
-          # TARGET_FILE: "{{ var.json.nhtsa_traffic_fatalities.drimpair_2015_2020.target_file }}"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.nhtsa_traffic_fatalities.drimpair_2015_2020.dataset_id }}"
           TABLE_ID: "{{ var.json.nhtsa_traffic_fatalities.drimpair_2015_2020.destination_table }}"
@@ -1187,11 +1189,12 @@ dag:
               "DRIMPAIRNAME": "condition_impairment_at_time_of_crash_driver_name"
             }
         resources:
-          request_ephemeral_storage: "10G"
+          request_ephemeral_storage: "4G"
           request_cpu: "1"
+          request_memory: "4G"
 
     - operator: "KubernetesPodOperator"
-      description: "Run CSV transform within kubernetes pod"
+      description: "Run CSV transform within kubernetes pod for factor pipeline"
       args:
         task_id: "factor_2015_2020_transform_csv"
         startup_timeout_seconds: 600
@@ -1204,9 +1207,8 @@ dag:
           PIPELINE_NAME: "{{ var.json.nhtsa_traffic_fatalities.factor_2015_2020.pipeline_name }}"
           SOURCE_URL: "{{ var.json.nhtsa_traffic_fatalities.factor_2015_2020.source_url }}"
           CHUNKSIZE: "{{ var.json.nhtsa_traffic_fatalities.factor_2015_2020.chunksize }}"
-          SOURCE_ZIPFILE_EXTRACTED: "factor_2015_2020.csv"
+          SOURCE_ZIPFILE_EXTRACTED: "factor.csv"
           SOURCE_FILE: "{{ var.json.nhtsa_traffic_fatalities.factor_2015_2020.source_file }}"
-          # TARGET_FILE: "{{ var.json.nhtsa_traffic_fatalities.factor_2015_2020.target_file }}"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.nhtsa_traffic_fatalities.factor_2015_2020.dataset_id }}"
           TABLE_ID: "{{ var.json.nhtsa_traffic_fatalities.factor_2015_2020.destination_table }}"
@@ -1244,8 +1246,9 @@ dag:
               "MFACTORNAME": "contributing_circumstances_motor_vehicle_name"
             }
         resources:
-          request_ephemeral_storage: "10G"
+          request_ephemeral_storage: "4G"
           request_cpu: "1"
+          request_memory: "4G"
 
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod for maneuver pipeline"
@@ -1261,9 +1264,8 @@ dag:
           PIPELINE_NAME: "{{ var.json.nhtsa_traffic_fatalities.maneuver_2015_2020.pipeline_name }}"
           SOURCE_URL: "{{ var.json.nhtsa_traffic_fatalities.maneuver_2015_2020.source_url }}"
           CHUNKSIZE: "{{ var.json.nhtsa_traffic_fatalities.maneuver_2015_2020.chunksize }}"
-          SOURCE_ZIPFILE_EXTRACTED: "maneuver_2015_2020.csv"
+          SOURCE_ZIPFILE_EXTRACTED: "maneuver.csv"
           SOURCE_FILE: "{{ var.json.nhtsa_traffic_fatalities.maneuver_2015_2020.source_file }}"
-          # TARGET_FILE: "{{ var.json.nhtsa_traffic_fatalities.maneuver_2015_2020.target_file }}"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.nhtsa_traffic_fatalities.maneuver_2015_2020.dataset_id }}"
           TABLE_ID: "{{ var.json.nhtsa_traffic_fatalities.maneuver_2015_2020.destination_table }}"
@@ -1301,8 +1303,9 @@ dag:
               "MDRMANAVNAME": "driver_maneuvered_to_avoid_name"
             }
         resources:
-          request_ephemeral_storage: "10G"
+          request_ephemeral_storage: "4G"
           request_cpu: "1"
+          request_memory: "4G"
 
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod for nmcrash pipeline"
@@ -1318,9 +1321,8 @@ dag:
           PIPELINE_NAME: "{{ var.json.nhtsa_traffic_fatalities.nmcrash_2015_2020.pipeline_name }}"
           SOURCE_URL: "{{ var.json.nhtsa_traffic_fatalities.nmcrash_2015_2020.source_url }}"
           CHUNKSIZE: "{{ var.json.nhtsa_traffic_fatalities.nmcrash_2015_2020.chunksize }}"
-          SOURCE_ZIPFILE_EXTRACTED: "nmcrash_2015_2020.csv"
+          SOURCE_ZIPFILE_EXTRACTED: "nmcrash.csv"
           SOURCE_FILE: "{{ var.json.nhtsa_traffic_fatalities.nmcrash_2015_2020.source_file }}"
-          # TARGET_FILE: "{{ var.json.nhtsa_traffic_fatalities.nmcrash_2015_2020.target_file }}"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.nhtsa_traffic_fatalities.nmcrash_2015_2020.dataset_id }}"
           TABLE_ID: "{{ var.json.nhtsa_traffic_fatalities.nmcrash_2015_2020.destination_table }}"
@@ -1361,8 +1363,9 @@ dag:
               "MTM_CRSHNAME": "non_motorist_contributing_circumstances_name"
             }
         resources:
-          request_ephemeral_storage: "10G"
+          request_ephemeral_storage: "4G"
           request_cpu: "1"
+          request_memory: "4G"
 
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod for nmimpair pipeline"
@@ -1378,9 +1381,8 @@ dag:
           PIPELINE_NAME: "{{ var.json.nhtsa_traffic_fatalities.nmimpair_2015_2020.pipeline_name }}"
           SOURCE_URL: "{{ var.json.nhtsa_traffic_fatalities.nmimpair_2015_2020.source_url }}"
           CHUNKSIZE: "{{ var.json.nhtsa_traffic_fatalities.nmimpair_2015_2020.chunksize }}"
-          SOURCE_ZIPFILE_EXTRACTED: "nmimpair_2015_2020.csv"
+          SOURCE_ZIPFILE_EXTRACTED: "nmimpair.csv"
           SOURCE_FILE: "{{ var.json.nhtsa_traffic_fatalities.nmimpair_2015_2020.source_file }}"
-          # TARGET_FILE: "{{ var.json.nhtsa_traffic_fatalities.nmimpair_2015_2020.target_file }}"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.nhtsa_traffic_fatalities.nmimpair_2015_2020.dataset_id }}"
           TABLE_ID: "{{ var.json.nhtsa_traffic_fatalities.nmimpair_2015_2020.destination_table }}"
@@ -1421,8 +1423,10 @@ dag:
               "NMIMPAIRNAME": "condition_impairment_at_time_of_crash_non_motorist_name"
             }
         resources:
-          request_ephemeral_storage: "10G"
+          request_ephemeral_storage: "4G"
           request_cpu: "1"
+          request_memory: "4G"
+
 
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod for nmprior pipeline"
@@ -1438,9 +1442,8 @@ dag:
           PIPELINE_NAME: "{{ var.json.nhtsa_traffic_fatalities.nmprior_2015_2020.pipeline_name }}"
           SOURCE_URL: "{{ var.json.nhtsa_traffic_fatalities.nmprior_2015_2020.source_url }}"
           CHUNKSIZE: "{{ var.json.nhtsa_traffic_fatalities.nmprior_2015_2020.chunksize }}"
-          SOURCE_ZIPFILE_EXTRACTED: "nmprior_2015_2020.csv"
+          SOURCE_ZIPFILE_EXTRACTED: "nmprior.csv"
           SOURCE_FILE: "{{ var.json.nhtsa_traffic_fatalities.nmprior_2015_2020.source_file }}"
-          # TARGET_FILE: "{{ var.json.nhtsa_traffic_fatalities.nmprior_2015_2020.target_file }}"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.nhtsa_traffic_fatalities.nmprior_2015_2020.dataset_id }}"
           TABLE_ID: "{{ var.json.nhtsa_traffic_fatalities.nmprior_2015_2020.destination_table }}"
@@ -1481,8 +1484,9 @@ dag:
               "NMIMPAIRNAME": "non_motorist_action_circumstances_name"
             }
         resources:
-          request_ephemeral_storage: "10G"
+          request_ephemeral_storage: "4G"
           request_cpu: "1"
+          request_memory: "4G"
 
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod for parkwork_2015 pipeline"
@@ -1498,9 +1502,8 @@ dag:
           PIPELINE_NAME: "{{ var.json.nhtsa_traffic_fatalities.parkwork_2015.pipeline_name }}"
           SOURCE_URL: "{{ var.json.nhtsa_traffic_fatalities.parkwork_2015.source_url }}"
           CHUNKSIZE: "{{ var.json.nhtsa_traffic_fatalities.parkwork_2015.chunksize }}"
-          SOURCE_ZIPFILE_EXTRACTED: "parkwork_2015.csv"
+          SOURCE_ZIPFILE_EXTRACTED: "parkwork.csv"
           SOURCE_FILE: "{{ var.json.nhtsa_traffic_fatalities.parkwork_2015.source_file }}"
-          # TARGET_FILE: "{{ var.json.nhtsa_traffic_fatalities.parkwork_2015.target_file }}"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.nhtsa_traffic_fatalities.parkwork_2015.dataset_id }}"
           TABLE_ID: "{{ var.json.nhtsa_traffic_fatalities.parkwork_2015.destination_table }}"
@@ -1808,8 +1811,9 @@ dag:
               "PDEATHS": "fatalities_in_vehicle"
             }
         resources:
-          request_ephemeral_storage: "10G"
+          request_ephemeral_storage: "4G"
           request_cpu: "1"
+          request_memory: "4G"
 
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod for parkwork_2016_2017 pipelines"
@@ -1825,9 +1829,8 @@ dag:
           PIPELINE_NAME: "{{ var.json.nhtsa_traffic_fatalities.parkwork_2016_2017.pipeline_name }}"
           SOURCE_URL: "{{ var.json.nhtsa_traffic_fatalities.parkwork_2016_2017.source_url }}"
           CHUNKSIZE: "{{ var.json.nhtsa_traffic_fatalities.parkwork_2016_2017.chunksize }}"
-          SOURCE_ZIPFILE_EXTRACTED: "parkwork_2016_2017.csv"
+          SOURCE_ZIPFILE_EXTRACTED: "parkwork.csv"
           SOURCE_FILE: "{{ var.json.nhtsa_traffic_fatalities.parkwork_2016_2017.source_file }}"
-          # TARGET_FILE: "{{ var.json.nhtsa_traffic_fatalities.parkwork_2016_2017.target_file }}"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.nhtsa_traffic_fatalities.parkwork_2016_2017.dataset_id }}"
           TABLE_ID: "{{ var.json.nhtsa_traffic_fatalities.parkwork_2016_2017.destination_table }}"
@@ -2153,8 +2156,9 @@ dag:
               "PTRLR3VINNAME": "ptrlr3vinname"
             }
         resources:
-          request_ephemeral_storage: "10G"
+          request_ephemeral_storage: "4G"
           request_cpu: "1"
+          request_memory: "4G"
 
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod for parkwork_2018 pipelines"
@@ -2170,9 +2174,8 @@ dag:
           PIPELINE_NAME: "{{ var.json.nhtsa_traffic_fatalities.parkwork_2018.pipeline_name }}"
           SOURCE_URL: "{{ var.json.nhtsa_traffic_fatalities.parkwork_2018.source_url }}"
           CHUNKSIZE: "{{ var.json.nhtsa_traffic_fatalities.parkwork_2018.chunksize }}"
-          SOURCE_ZIPFILE_EXTRACTED: "parkwork_2018.csv"
+          SOURCE_ZIPFILE_EXTRACTED: "parkwork.csv"
           SOURCE_FILE: "{{ var.json.nhtsa_traffic_fatalities.parkwork_2018.source_file }}"
-          # TARGET_FILE: "{{ var.json.nhtsa_traffic_fatalities.parkwork_2018.target_file }}"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.nhtsa_traffic_fatalities.parkwork_2018.dataset_id }}"
           TABLE_ID: "{{ var.json.nhtsa_traffic_fatalities.parkwork_2018.destination_table }}"
@@ -2501,8 +2504,9 @@ dag:
               "PTRLR3VINNAME": "ptrlr3vinname"
             }
         resources:
-          request_ephemeral_storage: "10G"
+          request_ephemeral_storage: "4G"
           request_cpu: "1"
+          request_memory: "4G"
 
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod for parkwork_2019 pipelines"
@@ -2518,9 +2522,8 @@ dag:
           PIPELINE_NAME: "{{ var.json.nhtsa_traffic_fatalities.parkwork_2019.pipeline_name }}"
           SOURCE_URL: "{{ var.json.nhtsa_traffic_fatalities.parkwork_2019.source_url }}"
           CHUNKSIZE: "{{ var.json.nhtsa_traffic_fatalities.parkwork_2019.chunksize }}"
-          SOURCE_ZIPFILE_EXTRACTED: "parkwork_2019.csv"
+          SOURCE_ZIPFILE_EXTRACTED: "parkwork.csv"
           SOURCE_FILE: "{{ var.json.nhtsa_traffic_fatalities.parkwork_2019.source_file }}"
-          # TARGET_FILE: "{{ var.json.nhtsa_traffic_fatalities.parkwork_2019.target_file }}"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.nhtsa_traffic_fatalities.parkwork_2019.dataset_id }}"
           TABLE_ID: "{{ var.json.nhtsa_traffic_fatalities.parkwork_2019.destination_table }}"
@@ -2846,8 +2849,9 @@ dag:
               "PTRLR3VINNAME": "ptrlr3vinname"
             }
         resources:
-          request_ephemeral_storage: "10G"
+          request_ephemeral_storage: "4G"
           request_cpu: "1"
+          request_memory: "4G"
 
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod for parkwork_2020 pipelines"
@@ -2863,9 +2867,8 @@ dag:
           PIPELINE_NAME: "{{ var.json.nhtsa_traffic_fatalities.parkwork_2020.pipeline_name }}"
           SOURCE_URL: "{{ var.json.nhtsa_traffic_fatalities.parkwork_2020.source_url }}"
           CHUNKSIZE: "{{ var.json.nhtsa_traffic_fatalities.parkwork_2020.chunksize }}"
-          SOURCE_ZIPFILE_EXTRACTED: "parkwork_2020.csv"
+          SOURCE_ZIPFILE_EXTRACTED: "parkwork.csv"
           SOURCE_FILE: "{{ var.json.nhtsa_traffic_fatalities.parkwork_2020.source_file }}"
-          # TARGET_FILE: "{{ var.json.nhtsa_traffic_fatalities.parkwork_2020.target_file }}"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.nhtsa_traffic_fatalities.parkwork_2020.dataset_id }}"
           TABLE_ID: "{{ var.json.nhtsa_traffic_fatalities.parkwork_2020.destination_table }}"
@@ -3227,8 +3230,9 @@ dag:
               "PTRLR3GVWRNAME": "ptrlr3gvwrname"
             }
         resources:
-          request_ephemeral_storage: "10G"
+          request_ephemeral_storage: "4G"
           request_cpu: "1"
+          request_memory: "4G"
 
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod for pbtype pipelines"
@@ -3244,9 +3248,8 @@ dag:
           PIPELINE_NAME: "{{ var.json.nhtsa_traffic_fatalities.pbtype_2015_2020.pipeline_name }}"
           SOURCE_URL: "{{ var.json.nhtsa_traffic_fatalities.pbtype_2015_2020.source_url }}"
           CHUNKSIZE: "{{ var.json.nhtsa_traffic_fatalities.pbtype_2015_2020.chunksize }}"
-          SOURCE_ZIPFILE_EXTRACTED: "pbtype_2015_2020.csv"
+          SOURCE_ZIPFILE_EXTRACTED: "pbtype.csv"
           SOURCE_FILE: "{{ var.json.nhtsa_traffic_fatalities.pbtype_2015_2020.source_file }}"
-          # TARGET_FILE: "{{ var.json.nhtsa_traffic_fatalities.pbtype_2015_2020.target_file }}"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.nhtsa_traffic_fatalities.pbtype_2015_2020.dataset_id }}"
           TABLE_ID: "{{ var.json.nhtsa_traffic_fatalities.pbtype_2015_2020.destination_table }}"
@@ -3401,8 +3404,9 @@ dag:
               "BIKECGPNAME": "crash_group_bicycle_name"
             }
         resources:
-          request_ephemeral_storage: "10G"
+          request_ephemeral_storage: "4G"
           request_cpu: "1"
+          request_memory: "4G"
 
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod for person pipelines"
@@ -3418,9 +3422,8 @@ dag:
           PIPELINE_NAME: "{{ var.json.nhtsa_traffic_fatalities.person_2015_2017.pipeline_name }}"
           SOURCE_URL: "{{ var.json.nhtsa_traffic_fatalities.person_2015_2017.source_url }}"
           CHUNKSIZE: "{{ var.json.nhtsa_traffic_fatalities.person_2015_2017.chunksize }}"
-          SOURCE_ZIPFILE_EXTRACTED: "person_2015_2017.csv"
+          SOURCE_ZIPFILE_EXTRACTED: "person.csv"
           SOURCE_FILE: "{{ var.json.nhtsa_traffic_fatalities.person_2015_2017.source_file }}"
-          # TARGET_FILE: "{{ var.json.nhtsa_traffic_fatalities.person_2015_2017.target_file }}"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.nhtsa_traffic_fatalities.person_2015_2017.dataset_id }}"
           TABLE_ID: "{{ var.json.nhtsa_traffic_fatalities.person_2015_2017.destination_table }}"
@@ -3827,8 +3830,9 @@ dag:
               "LOCATIONNAME": "non_motorist_location_at_time_of_crash_name"
             }
         resources:
-          request_ephemeral_storage: "10G"
+          request_ephemeral_storage: "4G"
           request_cpu: "1"
+          request_memory: "4G"
 
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod for person pipelines"
@@ -3844,9 +3848,8 @@ dag:
           PIPELINE_NAME: "{{ var.json.nhtsa_traffic_fatalities.person_2018.pipeline_name }}"
           SOURCE_URL: "{{ var.json.nhtsa_traffic_fatalities.person_2018.source_url }}"
           CHUNKSIZE: "{{ var.json.nhtsa_traffic_fatalities.person_2018.chunksize }}"
-          SOURCE_ZIPFILE_EXTRACTED: "person_2018.csv"
+          SOURCE_ZIPFILE_EXTRACTED: "person.csv"
           SOURCE_FILE: "{{ var.json.nhtsa_traffic_fatalities.person_2018.source_file }}"
-          # TARGET_FILE: "{{ var.json.nhtsa_traffic_fatalities.person_2018.target_file }}"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.nhtsa_traffic_fatalities.person_2018.dataset_id }}"
           TABLE_ID: "{{ var.json.nhtsa_traffic_fatalities.person_2018.destination_table }}"
@@ -4220,8 +4223,9 @@ dag:
               "LOCATIONNAME": "non_motorist_location_at_time_of_crash_name"
             }
         resources:
-          request_ephemeral_storage: "10G"
+          request_ephemeral_storage: "4G"
           request_cpu: "1"
+          request_memory: "4G"
 
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod for person pipelines"
@@ -4237,9 +4241,8 @@ dag:
           PIPELINE_NAME: "{{ var.json.nhtsa_traffic_fatalities.person_2019.pipeline_name }}"
           SOURCE_URL: "{{ var.json.nhtsa_traffic_fatalities.person_2019.source_url }}"
           CHUNKSIZE: "{{ var.json.nhtsa_traffic_fatalities.person_2019.chunksize }}"
-          SOURCE_ZIPFILE_EXTRACTED: "person_2019.csv"
+          SOURCE_ZIPFILE_EXTRACTED: "person.csv"
           SOURCE_FILE: "{{ var.json.nhtsa_traffic_fatalities.person_2019.source_file }}"
-          # TARGET_FILE: "{{ var.json.nhtsa_traffic_fatalities.person_2019.target_file }}"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.nhtsa_traffic_fatalities.person_2019.dataset_id }}"
           TABLE_ID: "{{ var.json.nhtsa_traffic_fatalities.person_2019.destination_table }}"
@@ -4616,8 +4619,9 @@ dag:
               "HELM_MISNAME": "helm_misname"
             }
         resources:
-          request_ephemeral_storage: "10G"
+          request_ephemeral_storage: "4G"
           request_cpu: "1"
+          request_memory: "4G"
 
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod for person pipelines"
@@ -4633,9 +4637,8 @@ dag:
           PIPELINE_NAME: "{{ var.json.nhtsa_traffic_fatalities.person_2020.pipeline_name }}"
           SOURCE_URL: "{{ var.json.nhtsa_traffic_fatalities.person_2020.source_url }}"
           CHUNKSIZE: "{{ var.json.nhtsa_traffic_fatalities.person_2020.chunksize }}"
-          SOURCE_ZIPFILE_EXTRACTED: "person_2020.csv"
+          SOURCE_ZIPFILE_EXTRACTED: "person.csv"
           SOURCE_FILE: "{{ var.json.nhtsa_traffic_fatalities.person_2020.source_file }}"
-          # TARGET_FILE: "{{ var.json.nhtsa_traffic_fatalities.person_2020.target_file }}"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.nhtsa_traffic_fatalities.person_2020.dataset_id }}"
           TABLE_ID: "{{ var.json.nhtsa_traffic_fatalities.person_2020.destination_table }}"
@@ -5018,11 +5021,12 @@ dag:
               "ICFINALBODYNAME": "icfinalbody_name"
             }
         resources:
-          request_ephemeral_storage: "10G"
+          request_ephemeral_storage: "4G"
           request_cpu: "1"
+          request_memory: "4G"
 
     - operator: "KubernetesPodOperator"
-      description: "Run CSV transform within kubernetes pod for person pipelines"
+      description: "Run CSV transform within kubernetes pod for safetyeq pipelines"
       args:
         task_id: "safetyeq_2015_2016_transform_csv"
         startup_timeout_seconds: 600
@@ -5035,9 +5039,8 @@ dag:
           PIPELINE_NAME: "{{ var.json.nhtsa_traffic_fatalities.safetyeq_2015_2016.pipeline_name }}"
           SOURCE_URL: "{{ var.json.nhtsa_traffic_fatalities.safetyeq_2015_2016.source_url }}"
           CHUNKSIZE: "{{ var.json.nhtsa_traffic_fatalities.safetyeq_2015_2016.chunksize }}"
-          SOURCE_ZIPFILE_EXTRACTED: "safetyeq_2015_2016.csv"
+          SOURCE_ZIPFILE_EXTRACTED: "safetyeq.csv"
           SOURCE_FILE: "{{ var.json.nhtsa_traffic_fatalities.safetyeq_2015_2016.source_file }}"
-          # TARGET_FILE: "{{ var.json.nhtsa_traffic_fatalities.safetyeq_2015_2016.target_file }}"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.nhtsa_traffic_fatalities.safetyeq_2015_2016.dataset_id }}"
           TABLE_ID: "{{ var.json.nhtsa_traffic_fatalities.safetyeq_2015_2016.destination_table }}"
@@ -5078,11 +5081,12 @@ dag:
               "MSAFEQMTNAME": "non_motorist_safety_equipment_use_name"
             }
         resources:
-          request_ephemeral_storage: "10G"
+          request_ephemeral_storage: "4G"
           request_cpu: "1"
+          request_memory: "4G"
 
     - operator: "KubernetesPodOperator"
-      description: "Run CSV transform within kubernetes pod for person pipelines"
+      description: "Run CSV transform within kubernetes pod for safetyeq pipelines"
       args:
         task_id: "safetyeq_2017_2020_transform_csv"
         startup_timeout_seconds: 600
@@ -5095,9 +5099,8 @@ dag:
           PIPELINE_NAME: "{{ var.json.nhtsa_traffic_fatalities.safetyeq_2017_2020.pipeline_name }}"
           SOURCE_URL: "{{ var.json.nhtsa_traffic_fatalities.safetyeq_2017_2020.source_url }}"
           CHUNKSIZE: "{{ var.json.nhtsa_traffic_fatalities.safetyeq_2017_2020.chunksize }}"
-          SOURCE_ZIPFILE_EXTRACTED: "safetyeq_2017_2020.csv"
+          SOURCE_ZIPFILE_EXTRACTED: "safetyeq.csv"
           SOURCE_FILE: "{{ var.json.nhtsa_traffic_fatalities.safetyeq_2017_2020.source_file }}"
-          # TARGET_FILE: "{{ var.json.nhtsa_traffic_fatalities.safetyeq_2017_2020.target_file }}"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.nhtsa_traffic_fatalities.safetyeq_2017_2020.dataset_id }}"
           TABLE_ID: "{{ var.json.nhtsa_traffic_fatalities.safetyeq_2017_2020.destination_table }}"
@@ -5168,8 +5171,9 @@ dag:
               "NMOTHPRENAME": "nm_othpre_name"
             }
         resources:
-          request_ephemeral_storage: "10G"
+          request_ephemeral_storage: "4G"
           request_cpu: "1"
+          request_memory: "4G"
 
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod for vehicle pipelines"
@@ -5185,9 +5189,8 @@ dag:
           PIPELINE_NAME: "{{ var.json.nhtsa_traffic_fatalities.vehicle_2015.pipeline_name }}"
           SOURCE_URL: "{{ var.json.nhtsa_traffic_fatalities.vehicle_2015.source_url }}"
           CHUNKSIZE: "{{ var.json.nhtsa_traffic_fatalities.vehicle_2015.chunksize }}"
-          SOURCE_ZIPFILE_EXTRACTED: "vehicle_2015.csv"
+          SOURCE_ZIPFILE_EXTRACTED: "vehicle.csv"
           SOURCE_FILE: "{{ var.json.nhtsa_traffic_fatalities.vehicle_2015.source_file }}"
-          # TARGET_FILE: "{{ var.json.nhtsa_traffic_fatalities.vehicle_2015.target_file }}"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.nhtsa_traffic_fatalities.vehicle_2015.dataset_id }}"
           TABLE_ID: "{{ var.json.nhtsa_traffic_fatalities.vehicle_2015.destination_table }}"
@@ -5768,8 +5771,9 @@ dag:
               "DR_DRINKNAME": "driver_drinking_name"
             }
         resources:
-          request_ephemeral_storage: "10G"
+          request_ephemeral_storage: "4G"
           request_cpu: "1"
+          request_memory: "4G"
 
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod for vehicle pipelines"
@@ -5785,9 +5789,8 @@ dag:
           PIPELINE_NAME: "{{ var.json.nhtsa_traffic_fatalities.vehicle_2016_2017.pipeline_name }}"
           SOURCE_URL: "{{ var.json.nhtsa_traffic_fatalities.vehicle_2016_2017.source_url }}"
           CHUNKSIZE: "{{ var.json.nhtsa_traffic_fatalities.vehicle_2016_2017.chunksize }}"
-          SOURCE_ZIPFILE_EXTRACTED: "vehicle_2016_2017.csv"
+          SOURCE_ZIPFILE_EXTRACTED: "vehicle.csv"
           SOURCE_FILE: "{{ var.json.nhtsa_traffic_fatalities.vehicle_2016_2017.source_file }}"
-          # TARGET_FILE: "{{ var.json.nhtsa_traffic_fatalities.vehicle_2016_2017.target_file }}"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.nhtsa_traffic_fatalities.vehicle_2016_2017.dataset_id }}"
           TABLE_ID: "{{ var.json.nhtsa_traffic_fatalities.vehicle_2016_2017.destination_table }}"
@@ -6386,8 +6389,9 @@ dag:
               "TRLR3VINNAME": "trailer_vehicle_identification_number_3_name"
             }
         resources:
-          request_ephemeral_storage: "10G"
+          request_ephemeral_storage: "4G"
           request_cpu: "1"
+          request_memory: "4G"
 
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod for vehicle pipelines"
@@ -6403,9 +6407,8 @@ dag:
           PIPELINE_NAME: "{{ var.json.nhtsa_traffic_fatalities.vehicle_2018_2019.pipeline_name }}"
           SOURCE_URL: "{{ var.json.nhtsa_traffic_fatalities.vehicle_2018_2019.source_url }}"
           CHUNKSIZE: "{{ var.json.nhtsa_traffic_fatalities.vehicle_2018_2019.chunksize }}"
-          SOURCE_ZIPFILE_EXTRACTED: "vehicle_2018_2019.csv"
+          SOURCE_ZIPFILE_EXTRACTED: "vehicle.csv"
           SOURCE_FILE: "{{ var.json.nhtsa_traffic_fatalities.vehicle_2018_2019.source_file }}"
-          # TARGET_FILE: "{{ var.json.nhtsa_traffic_fatalities.vehicle_2018_2019.target_file }}"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.nhtsa_traffic_fatalities.vehicle_2018_2019.dataset_id }}"
           TABLE_ID: "{{ var.json.nhtsa_traffic_fatalities.vehicle_2018_2019.destination_table }}"
@@ -7016,8 +7019,9 @@ dag:
               "TRLR3VINNAME": "trailer_vehicle_identification_number_3_name"
             }
         resources:
-          request_ephemeral_storage: "10G"
+          request_ephemeral_storage: "4G"
           request_cpu: "1"
+          request_memory: "4G"
 
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod for vehicle pipelines"
@@ -7033,9 +7037,8 @@ dag:
           PIPELINE_NAME: "{{ var.json.nhtsa_traffic_fatalities.vehicle_2020.pipeline_name }}"
           SOURCE_URL: "{{ var.json.nhtsa_traffic_fatalities.vehicle_2020.source_url }}"
           CHUNKSIZE: "{{ var.json.nhtsa_traffic_fatalities.vehicle_2020.chunksize }}"
-          SOURCE_ZIPFILE_EXTRACTED: "vehicle_2020.csv"
+          SOURCE_ZIPFILE_EXTRACTED: "vehicle.csv"
           SOURCE_FILE: "{{ var.json.nhtsa_traffic_fatalities.vehicle_2020.source_file }}"
-          # TARGET_FILE: "{{ var.json.nhtsa_traffic_fatalities.vehicle_2020.target_file }}"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.nhtsa_traffic_fatalities.vehicle_2020.dataset_id }}"
           TABLE_ID: "{{ var.json.nhtsa_traffic_fatalities.vehicle_2020.destination_table }}"
@@ -7658,8 +7661,9 @@ dag:
               "TRLR3GVWRNAME": "trailer_gross_vehicle_weight_rating_3_name"
             }
         resources:
-          request_ephemeral_storage: "10G"
+          request_ephemeral_storage: "4G"
           request_cpu: "1"
+          request_memory: "4G"
 
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod for vevent pipelines"
@@ -7675,9 +7679,8 @@ dag:
           PIPELINE_NAME: "{{ var.json.nhtsa_traffic_fatalities.vevent_2015_2020.pipeline_name }}"
           SOURCE_URL: "{{ var.json.nhtsa_traffic_fatalities.vevent_2015_2020.source_url }}"
           CHUNKSIZE: "{{ var.json.nhtsa_traffic_fatalities.vevent_2015_2020.chunksize }}"
-          SOURCE_ZIPFILE_EXTRACTED: "vevent_2015_2020.csv"
+          SOURCE_ZIPFILE_EXTRACTED: "vevent.csv"
           SOURCE_FILE: "{{ var.json.nhtsa_traffic_fatalities.vevent_2015_2020.source_file }}"
-          # TARGET_FILE: "{{ var.json.nhtsa_traffic_fatalities.vevent_2015_2020.target_file }}"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.nhtsa_traffic_fatalities.vevent_2015_2020.dataset_id }}"
           TABLE_ID: "{{ var.json.nhtsa_traffic_fatalities.vevent_2015_2020.destination_table }}"
@@ -7742,8 +7745,9 @@ dag:
               "AOI2NAME": "area_of_impact_other_vehicle_name"
             }
         resources:
-          request_ephemeral_storage: "10G"
+          request_ephemeral_storage: "4G"
           request_cpu: "1"
+          request_memory: "4G"
 
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod for vindecode pipelines"
@@ -7759,9 +7763,8 @@ dag:
           PIPELINE_NAME: "{{ var.json.nhtsa_traffic_fatalities.vindecode_2015.pipeline_name }}"
           SOURCE_URL: "{{ var.json.nhtsa_traffic_fatalities.vindecode_2015.source_url }}"
           CHUNKSIZE: "{{ var.json.nhtsa_traffic_fatalities.vindecode_2015.chunksize }}"
-          SOURCE_ZIPFILE_EXTRACTED: "vindecode_2015.csv"
+          SOURCE_ZIPFILE_EXTRACTED: "vindecode.csv"
           SOURCE_FILE: "{{ var.json.nhtsa_traffic_fatalities.vindecode_2015.source_file }}"
-          # TARGET_FILE: "{{ var.json.nhtsa_traffic_fatalities.vindecode_2015.target_file }}"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.nhtsa_traffic_fatalities.vindecode_2015.dataset_id }}"
           TABLE_ID: "{{ var.json.nhtsa_traffic_fatalities.vindecode_2015.destination_table }}"
@@ -8093,8 +8096,9 @@ dag:
               "MCYUSAGE_T": "motorcycles_body_style"
             }
         resources:
-          request_ephemeral_storage: "10G"
+          request_ephemeral_storage: "4G"
           request_cpu: "1"
+          request_memory: "4G"
 
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod for violatn pipelines"
@@ -8110,9 +8114,8 @@ dag:
           PIPELINE_NAME: "{{ var.json.nhtsa_traffic_fatalities.violatn_2015_2020.pipeline_name }}"
           SOURCE_URL: "{{ var.json.nhtsa_traffic_fatalities.violatn_2015_2020.source_url }}"
           CHUNKSIZE: "{{ var.json.nhtsa_traffic_fatalities.violatn_2015_2020.chunksize }}"
-          SOURCE_ZIPFILE_EXTRACTED: "violatn_2015_2020.csv"
+          SOURCE_ZIPFILE_EXTRACTED: "violatn.csv"
           SOURCE_FILE: "{{ var.json.nhtsa_traffic_fatalities.violatn_2015_2020.source_file }}"
-          # TARGET_FILE: "{{ var.json.nhtsa_traffic_fatalities.violatn_2015_2020.target_file }}"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.nhtsa_traffic_fatalities.violatn_2015_2020.dataset_id }}"
           TABLE_ID: "{{ var.json.nhtsa_traffic_fatalities.violatn_2015_2020.destination_table }}"
@@ -8150,8 +8153,9 @@ dag:
               "MVIOLATNNAME": "violations_charged_name"
             }
         resources:
-          request_ephemeral_storage: "10G"
+          request_ephemeral_storage: "4G"
           request_cpu: "1"
+          request_memory: "4G"
 
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod for vision pipelines"
@@ -8167,9 +8171,8 @@ dag:
           PIPELINE_NAME: "{{ var.json.nhtsa_traffic_fatalities.vision_2015_2020.pipeline_name }}"
           SOURCE_URL: "{{ var.json.nhtsa_traffic_fatalities.vision_2015_2020.source_url }}"
           CHUNKSIZE: "{{ var.json.nhtsa_traffic_fatalities.vision_2015_2020.chunksize }}"
-          SOURCE_ZIPFILE_EXTRACTED: "vision_2015_2020.csv"
+          SOURCE_ZIPFILE_EXTRACTED: "vision.csv"
           SOURCE_FILE: "{{ var.json.nhtsa_traffic_fatalities.vision_2015_2020.source_file }}"
-          # TARGET_FILE: "{{ var.json.nhtsa_traffic_fatalities.vision_2015_2020.target_file }}"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.nhtsa_traffic_fatalities.vision_2015_2020.dataset_id }}"
           TABLE_ID: "{{ var.json.nhtsa_traffic_fatalities.vision_2015_2020.destination_table }}"
@@ -8207,8 +8210,9 @@ dag:
               "MVISOBSCNAME": "drivers_vision_obscured_by_name"
             }
         resources:
-          request_ephemeral_storage: "10G"
+          request_ephemeral_storage: "4G"
           request_cpu: "1"
+          request_memory: "4G"
 
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod for vsoe pipelines"
@@ -8224,9 +8228,8 @@ dag:
           PIPELINE_NAME: "{{ var.json.nhtsa_traffic_fatalities.vsoe_2015_2020.pipeline_name }}"
           SOURCE_URL: "{{ var.json.nhtsa_traffic_fatalities.vsoe_2015_2020.source_url }}"
           CHUNKSIZE: "{{ var.json.nhtsa_traffic_fatalities.vsoe_2015_2020.chunksize }}"
-          SOURCE_ZIPFILE_EXTRACTED: "vsoe_2015_2020.csv"
+          SOURCE_ZIPFILE_EXTRACTED: "vsoe.csv"
           SOURCE_FILE: "{{ var.json.nhtsa_traffic_fatalities.vsoe_2015_2020.source_file }}"
-          # TARGET_FILE: "{{ var.json.nhtsa_traffic_fatalities.vsoe_2015_2020.target_file }}"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.nhtsa_traffic_fatalities.vsoe_2015_2020.dataset_id }}"
           TABLE_ID: "{{ var.json.nhtsa_traffic_fatalities.vsoe_2015_2020.destination_table }}"
@@ -8273,9 +8276,15 @@ dag:
               "AOINAME": "area_of_Impact_associated_with_the_event_name"
             }
         resources:
-          request_ephemeral_storage: "10G"
+          request_ephemeral_storage: "4G"
           request_cpu: "1"
-
+          request_memory: "4G"
+    - operator: "GKEDeleteClusterOperator"
+      args:
+        task_id: "delete_cluster"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        name: nhtsa-traffic-fatalities
 
   graph_paths:
-    - "create_cluster >> [ accident_2015_transform_csv,accident_2016_2019_transform_csv,accident_2020_transform_csv,cevent_2015_2020_transform_csv,damage_2015_2020_transform_csv,distract_2015_2020_transform_csv,drimpair_2015_2020_transform_csv,factor_2015_2020_transform_csv,maneuver_2015_2020_transform_csv,nmcrash_2015_2020_transform_csv,nmimpair_2015_2020_transform_csv,parkwork_2015_transform_csv,parkwork_2016_2017_transform_csv,parkwork_2018_transform_csv,parkwork_2019_transform_csv,parkwork_2020_transform_csv,pbtype_transform_csv,person_2015_2017_transform_csv,person_2018_transform_csv,person_2019_transform_csv,person_2020_transform_csv,safetyeq_2015_2016_transform_csv,safetyeq_2017_2020_transform_csv,vehicle_2015_transform_csv,vehicle_2016_2017_transform_csv,vehicle_2018_2019_transform_csv,vehicle_2020_transform_csv,vevent_2015_2020_transform_csv,vindecode_2015_transform_csv,violatn_2015_2020_transform_csv,vision_2015_2020_transform_csv,vsoe_2015_2020_transform_csv ] >> delete_cluster"
+    - "create_cluster >> [ accident_2015_transform_csv,accident_2016_2019_transform_csv,accident_2020_transform_csv,cevent_2015_2020_transform_csv,damage_2015_2020_transform_csv,distract_2015_2020_transform_csv,drimpair_2015_2020_transform_csv,factor_2015_2020_transform_csv,maneuver_2015_2020_transform_csv,nmcrash_2015_2020_transform_csv,nmimpair_2015_2020_transform_csv,nmprior_2015_2020_transform_csv,parkwork_2015_transform_csv,parkwork_2016_2017_transform_csv,parkwork_2018_transform_csv,parkwork_2019_transform_csv,parkwork_2020_transform_csv,pbtype_transform_csv,person_2015_2017_transform_csv,person_2018_transform_csv,person_2019_transform_csv,person_2020_transform_csv,safetyeq_2015_2016_transform_csv,safetyeq_2017_2020_transform_csv,vehicle_2015_transform_csv,vehicle_2016_2017_transform_csv,vehicle_2018_2019_transform_csv,vehicle_2020_transform_csv,vevent_2015_2020_transform_csv,vindecode_2015_transform_csv,violatn_2015_2020_transform_csv,vision_2015_2020_transform_csv,vsoe_2015_2020_transform_csv] >> delete_cluster"
