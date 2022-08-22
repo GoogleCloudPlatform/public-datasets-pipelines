@@ -27,6 +27,7 @@ from google.cloud.exceptions import NotFound
 
 def main(
     project_id: str,
+    dest_folder: str,
     source_bucket: str,
     dest_current_data_folder_name: str,
     dest_historical_data_folder_name: str,
@@ -35,11 +36,11 @@ def main(
     hist_folders_list: typing.List[str],
     pipeline_name: str,
 ) -> None:
-    import pdb; pdb.set_trace()
     logging.info(f"{pipeline_name} process started")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
     execute_pipeline(
         project_id = project_id,
+        dest_folder = dest_folder,
         source_bucket = source_bucket,
         dest_current_data_folder_name = dest_current_data_folder_name,
         dest_historical_data_folder_name = dest_historical_data_folder_name,
@@ -53,6 +54,7 @@ def main(
 
 def execute_pipeline(
     project_id: str,
+    dest_folder: str,
     source_bucket: str,
     dest_current_data_folder_name: str,
     dest_historical_data_folder_name: str,
@@ -62,14 +64,19 @@ def execute_pipeline(
     pipeline_name: str,
 ) -> None:
     for folder in data_root_folder:
-        root_gs_bucket_folder = f"gs://{source_bucket}/{folder}"
-        pathlib.Path(f"./files/{folder}/{dest_current_data_folder_name}").mkdir(parents=True, exist_ok=True)
-        pathlib.Path(f"./files/{folder}/{dest_historical_data_folder_name}").mkdir(parents=True, exist_ok=True)
-        # process_data(
-        #     project_id = project_id,
-        #     source_gs_folder = "{root_gs_bucket_folder}/{source_bucket_current_data_folder_name}",
-        #     dest_folder = "files/{folder}/{dest_current_folder_name}"
-        # )
+        root_gs_bucket_folder = f"gs://{source_bucket}"
+        new_dest_current_data_folder_name = f"{dest_folder}/{folder}/{dest_current_data_folder_name}"
+        new_dest_historical_data_folder_name = f"{dest_folder}/{folder}/{dest_historical_data_folder_name}"
+        logging.info(f"Creating {new_dest_current_data_folder_name} if it does not exist")
+        pathlib.Path(new_dest_current_data_folder_name).mkdir(parents=True, exist_ok=True)
+        logging.info(f"Creating {new_dest_historical_data_folder_name} if it does not exist")
+        pathlib.Path(new_dest_historical_data_folder_name).mkdir(parents=True, exist_ok=True)
+        # import pdb; pdb.set_trace()
+        process_data(
+            project_id = project_id,
+            source_gs_folder = f"{root_gs_bucket_folder}/{source_bucket_current_data_folder_name}",
+            dest_folder = new_dest_current_data_folder_name
+        )
 
 
 def download_file_gcs(
@@ -86,6 +93,7 @@ def download_file_gcs(
     source_object_path = str.split(source_location, f"gs://{bucket_name}/")[1]
     blob = bucket.blob(source_object_path)
     blob.download_to_filename(dest_object)
+    # import pdb; pdb.set_trace()
 
 
 def download_folder_contents(
@@ -98,30 +106,130 @@ def download_folder_contents(
     bucket_name = str.split(source_gcs_folder_path, "gs://")[1].split("/")[0]
     gcs_folder_path = str.split(source_gcs_folder_path, f"gs://{bucket_name}/")[1]
     bucket = storage_client.bucket(bucket_name)
-    for blob in bucket.list_blobs(bucket, prefix=f'{gcs_folder_path}'):
-        if os.path.splitext(os.path.basename(blob)) == f".{file_type}" or file_type == "":
+    blobs = bucket.list_blobs(prefix=f'{gcs_folder_path}')
+    for blob in blobs:
+        if os.path.splitext(os.path.basename(blob.name))[1] == f".{file_type}" or file_type == "":
+            source_location = f"{source_gcs_folder_path}/{os.path.basename(blob.name)}"
+            # import pdb; pdb.set_trace()
             download_file_gcs(
                 project_id,
-                source_location = f"{source_folder}/{blob}",
+                source_location = source_location,
                 destination_folder = destination_folder
             )
 
 
-# def process_data(
-#     source_gs_folder: str,
-#     dest_folder: str):
+def process_data(
+    project_id: str,
+    source_gs_folder: str,
+    dest_folder: str
+) -> None:
 
-#     bucket.list_blobs()
-#     download_file_gcs(
-#         project_id = project_id,
-#         {source_gs_folder}/*.csv -> dest_folder
+    # download_folder_contents(
+    #     project_id = project_id,
+    #     source_gcs_folder_path = source_gs_folder,
+    #     destination_folder = dest_folder,
+    #     file_type = "csv"
+    # )
 
-#     # * for each file in {dest_folder}\*.csv:
-#     #     * load into df
-#     #     * transforms:
-#     #         * format datetime in date fields
-#     #         * add metadata columns
-#     #     * rewrite/overwrite file back to original
+    # * for each file in {dest_folder}\*.csv:
+    for filename in os.listdir(dest_folder):
+        filepath = os.path.join(dest_folder, filename)
+        if os.path.isfile(filepath):
+            process_file(filepath)
+
+    import pdb; pdb.set_trace()
+
+    # storage_client = storage.Client(project_id)
+    # bucket_name = str.split(source_gs_folder, "gs://")[1].split("/")[0]
+    # bucket = storage_client.bucket(bucket_name)
+    # bucket.list_blobs()
+    # download_file_gcs(
+    #     project_id = project_id,
+    #     source_location = source_gs_folder,
+    #     destination_folder = dest_folder
+    # )
+    #    {source_gs_folder}/*.csv -> dest_folder
+
+def process_file(filepath: str) -> None:
+    logging.info(f"Processing file {filepath} started ...")
+
+    # if the table already has data for the file
+    if table_already_has_file_data(
+        project_id=project_id,
+        dataset_id=dataset_id,
+        table_name=table_name,
+        data_file_surr_key_field=data_file_surr_key_value,
+        data_file_surr_key_value=data_file_surr_key_value
+    ):
+        remove_file_table_data()
+
+    with pd.read_csv(
+        filepath,
+        engine="python",
+        encoding="utf-8",
+        quotechar='"',
+        chunksize=int(chunksize),
+        sep=",",
+        names=input_headers,
+        skiprows=1,
+        dtype=data_dtypes,
+    ) as reader:
+        for chunk_number, chunk in enumerate(reader):
+            logging.info(
+                f"Processing chunk #{chunk_number} of file {filepath} started"
+            )
+            target_file_batch = str(target_file).replace(
+                ".csv", f"-{chunk_number}.csv"
+            )
+            df = pd.DataFrame()
+            df = pd.concat([df, chunk])
+            # process_chunk(
+            #     df,
+            #     target_file_batch,
+            #     target_file_name,
+            #     month_number == 1 and chunk_number == 0,
+            #     month_number == 1 and chunk_number == 0,
+            #     output_headers,
+            #     pipeline_name,
+            #     year_number,
+            #     month_number,
+            # )
+            logging.info(
+                f"Processing chunk #{chunk_number} of file {process_year_month} completed"
+            )
+    if not table_exists(project_id, dataset_id, table_id):
+        # Destination able doesn't exist
+        create_dest_table(
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_id=table_id,
+            schema_filepath=schema_path,
+            bucket_name=target_gcs_bucket,
+        )
+    load_data_to_bq(
+        project_id=project_id,
+        dataset_id=dataset_id,
+        table_id=table_id,
+        file_path=target_file_name,
+        field_delimiter="|",
+    )
+    upload_file_to_gcs(
+        file_path=target_file_name,
+        target_gcs_bucket=target_gcs_bucket,
+        target_gcs_path=str(target_gcs_path).replace(
+            ".csv", f"_{process_year_month}.csv"
+        ),
+    )
+    logging.info(f"Processing file {filepath} completed ...")
+
+
+    #     * load into df
+
+    #     * transforms:
+    #         * format datetime in date fields
+    #         * add metadata columns
+    #     * rewrite/overwrite file back to original
+
 
 
 # def process_year_data(
@@ -186,25 +294,51 @@ def download_folder_contents(
 #     logging.info(f"Processing year {year_number} completed")
 
 
-def table_has_month_data(
+def table_already_has_file_data(
     project_id: str,
     dataset_id: str,
     table_name: str,
-    data_file_year_field: str,
-    year_number: int,
-    data_file_month_field: str,
-    month_number: int,
+    data_file_surr_key_field: str,
+    data_file_surr_key_value: int
 ) -> bool:
     check_field_exists = field_exists(
-        project_id, dataset_id, table_name, data_file_month_field
+        project_id, dataset_id, table_name, data_file_surr_key_field
     )
     if check_field_exists:
         client = bigquery.Client(project=project_id)
         query = f"""
             SELECT count(1) AS number_of_rows
             FROM {dataset_id}.{table_name}
-            WHERE {data_file_year_field} = {year_number}
-              AND {data_file_month_field} = {month_number}
+            WHERE {data_file_surr_key_field} = '{data_file_surr_key_value}'
+        """
+        job_config = bigquery.QueryJobConfig()
+        query_job = client.query(query, job_config=job_config)
+        for row in query_job.result():
+            count_rows = row.number_of_rows
+        if int(count_rows) > 0:
+            return True
+        else:
+            return False
+    else:
+        return None
+
+
+def remove_data(
+    project_id: str,
+    dataset_id: str,
+    table_name: str,
+    data_file_surr_key_field: str,
+    data_file_surr_key_value: int
+) -> bool:
+    check_field_exists = field_exists(
+        project_id, dataset_id, table_name, data_file_surr_key_field
+    )
+    if check_field_exists:
+        client = bigquery.Client(project=project_id)
+        query = f"""
+            SELECT count(1) AS number_of_rows
+            FROM {dataset_id}.{table_name}
+            WHERE {data_file_surr_key_field} = '{data_file_surr_key_value}'
         """
         job_config = bigquery.QueryJobConfig()
         query_job = client.query(query, job_config=job_config)
@@ -547,11 +681,12 @@ if __name__ == "__main__":
 
     main(
         project_id=os.environ.get("PROJECT_ID", ""),
+        dest_folder=os.environ.get("DEST_FOLDER", ""),
         source_bucket=os.environ.get("SOURCE_BUCKET", ""),
-        source_bucket_current_folder_name=os.environ.get("SOURCE_BUCKET_CURRENT_FOLDER_NAME", ""),
-        source_bucket_current_data_folder_name=os.environ.get("SOURCE_BUCKET_CURRENT_DATA_FOLDER_NAME", ""),
         dest_current_data_folder_name=os.environ.get("DEST_CURRENT_DATA_FOLDER_NAME", ""),
         dest_historical_data_folder_name=os.environ.get("DEST_HISTORICAL_FOLDER_NAME", ""),
+        # source_bucket_current_folder_name=os.environ.get("SOURCE_BUCKET_CURRENT_FOLDER_NAME", ""),
+        source_bucket_current_data_folder_name=os.environ.get("SOURCE_BUCKET_CURRENT_DATA_FOLDER_NAME", ""),
         data_root_folder=json.loads(os.environ.get("DATA_ROOT_FOLDER", r"[]")),
         hist_folders_list=json.loads(os.environ.get("HIST_FOLDERS_LIST", r"[]")),
         pipeline_name=os.environ.get("PIPELINE_NAME", ""),
