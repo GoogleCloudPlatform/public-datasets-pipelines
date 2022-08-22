@@ -712,5 +712,11 @@
 		"type": "string",
 		"description": "This data element identifies any mis-use of the helmet used by this person.",
 		"mode": "NULLABLE"
+	},
+	{
+		"name": "timestamp_of_crash",
+		"type": "timestamp",
+		"description": "This data element records the date and time on which the crash occurred.",
+		"mode": "NULLABLE"
 	}
 ]

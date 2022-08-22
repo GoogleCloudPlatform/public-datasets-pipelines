@@ -117,7 +117,9 @@ def execute_pipeline(
         field_separator=",",
         rename_mappings_list=rename_mappings_list,
         input_dtypes=input_dtypes,
-        input_csv_headers=input_csv_headers
+        input_csv_headers=input_csv_headers,
+        pipeline_name = pipeline_name,
+        process_year = process_year
     )
     if os.path.exists(target_file):
         upload_file_to_gcs(
@@ -165,7 +167,9 @@ def process_source_file(
     field_separator: str,
     rename_mappings_list: dict,
     input_dtypes: dict,
-    input_csv_headers: typing.List[str]
+    input_csv_headers: typing.List[str],
+    pipeline_name: str,
+    process_year : int
 ) -> pd.DataFrame:
     unpack_file(source_file, source_file_unzip_dir, "zip")
     logging.info(f"Opening source file {source_file}")
@@ -191,7 +195,9 @@ def process_source_file(
                     input_dtypes=input_dtypes,
                     target_file=target_file,
                     chunk_number=chunk_number,
-                    rename_mappings_list=rename_mappings_list
+                    rename_mappings_list=rename_mappings_list,
+                    pipeline_name = pipeline_name,
+                    process_year = process_year
                 )
                 data = []
                 chunk_number += 1
@@ -202,7 +208,9 @@ def process_source_file(
                 input_dtypes=input_dtypes,
                 target_file=target_file,
                 chunk_number=chunk_number,
-                rename_mappings_list=rename_mappings_list
+                rename_mappings_list=rename_mappings_list,
+                pipeline_name = pipeline_name,
+                process_year = process_year
             )
 
 
@@ -212,7 +220,9 @@ def process_dataframe_chunk(
     input_dtypes: dict,
     target_file: str,
     chunk_number: int,
-    rename_mappings_list: dict
+    rename_mappings_list: dict,
+    pipeline_name : str,
+    process_year : int
 ) -> None:
     df = pd.DataFrame(
                 data,
@@ -227,7 +237,9 @@ def process_dataframe_chunk(
         target_file_batch=target_file_batch,
         target_file=target_file,
         skip_header=(not chunk_number == 1),
-        rename_headers_list=rename_mappings_list
+        rename_headers_list=rename_mappings_list,
+        pipeline_name = pipeline_name,
+        process_year =process_year
     )
 
 
@@ -246,20 +258,36 @@ def process_chunk(
     target_file_batch: str,
     target_file: str,
     skip_header: bool,
-    rename_headers_list: dict
+    rename_headers_list: dict,
+    pipeline_name : str,
+    process_year :int
 ) -> None:
     logging.info(f"Processing batch file {target_file_batch}")
     df = rename_headers(df, rename_headers_list)
-    # pipeline_name= 'Accident'
-    # if pipeline_name == 'Accident':
-        # create_new_timestamp_column(df)
-    save_to_new_file(df, file_path=str(target_file_batch), sep="|")
-    append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
+    new_pipeline_name = (pipeline_name.split('-')[1]).lower().strip()
+    if new_pipeline_name in ["accident"]:
+        create_new_timestamp_column(df,new_pipeline_name,process_year)
+        save_to_new_file(df, file_path=str(target_file_batch), sep="|")
+        append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
+    elif new_pipeline_name in ["person","vehicle"]:
+        create_new_timestamp_column(df,new_pipeline_name,process_year)
+    else:
+        save_to_new_file(df, file_path=str(target_file_batch), sep="|")
+        append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
+
     logging.info(f"Processing batch file {target_file_batch} completed")
 
-def create_new_timestamp_column(df: pd.DataFrame):
-  df['timestamp_of_crash']=df['year_of_crash'].apply(lambda x : str(x))+'-'+df['month_of_crash'].apply(lambda x : "0"+str(x) if len(str(x))==1  else str(x))+'-'+df['day_of_crash'].apply(lambda x : "0"+str(x) if len(str(x))==1  else str(x))+' '+df['hour_of_crash'].apply(lambda x : "0"+str(x) if len(str(x))==1  else str(x))+':'+df['minute_of_crash'].apply(lambda x : "0"+str(x) if len(str(x))==1  else str(x))+':'+'00'+' UTC'
-  return df
+def create_new_timestamp_column(df: pd.DataFrame,new_pipeline_name:str,process_year:int):
+    if new_pipeline_name in ["accident"]:
+        df.drop(df[df['hour_of_crash'].apply(lambda x : int(x)) > 24].index, inplace = True)
+        df.drop(df[df['minute_of_crash'].apply(lambda x : int(x)) > 59].index, inplace = True)
+        df['timestamp_of_crash']=df['year_of_crash'].apply(lambda x : str(x))+'-'+df['month_of_crash'].apply(lambda x : "0"+str(x) if len(str(x))==1  else str(x))+'-'+df['day_of_crash'].apply(lambda x : "0"+str(x) if len(str(x))==1  else str(x))+' '+df['hour_of_crash'].apply(lambda x : "0"+str(x) if len(str(x))==1  else str(x))+':'+df['minute_of_crash'].apply(lambda x : "0"+str(x) if len(str(x))==1  else str(x))+':'+'00'+' UTC'
+    elif new_pipeline_name in ["person","vehicle"]:
+        df.drop(df[df['hour_of_crash'].apply(lambda x : int(x)) > 24].index, inplace = True)
+        df.drop(df[df['minute_of_crash'].apply(lambda x : int(x)) > 59].index, inplace = True)
+        df['timestamp_of_crash']=str(process_year)+'-'+df['month_of_crash'].apply(lambda x : "0"+str(x) if len(str(x))==1  else str(x))+'-'+df['day_of_crash'].apply(lambda x : "0"+str(x) if len(str(x))==1  else str(x))+' '+df['hour_of_crash'].apply(lambda x : "0"+str(x) if len(str(x))==1  else str(x))+':'+df['minute_of_crash'].apply(lambda x : "0"+str(x) if len(str(x))==1  else str(x))+':'+'00'+' UTC'
+
+    return df
 
 def unpack_file(infile: str, dest_path: str, compression_type: str = "zip") -> None:
     if compression_type == "zip":

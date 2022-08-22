@@ -1204,5 +1204,11 @@
 		"type": "string",
 		"description": "This element identifies the gross vehicle weight rating of any trailing units as identified by the manufacturer in the vehicle’s VIN.",
 		"mode": "NULLABLE"
+	},
+	{
+		"name": "timestamp_of_crash",
+		"type": "timestamp",
+		"description": "This data element records the date and time on which the crash occurred.",
+		"mode": "NULLABLE"
 	}
 ]

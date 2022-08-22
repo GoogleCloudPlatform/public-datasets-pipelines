@@ -724,5 +724,11 @@
 		"type": "string",
 		"description": "This element captures the completed/finished body class for an incomplete vehicle. An incomplete vehicle is completed by a final stage manufacturer. The intent of this data element is to capture the body class for incomplete vehicles when they are finished for road-use.",
 		"mode": "NULLABLE"
+	},
+	{
+		"name": "timestamp_of_crash",
+		"type": "timestamp",
+		"description": "This data element records the date and time on which the crash occurred.",
+		"mode": "NULLABLE"
 	}
 ]

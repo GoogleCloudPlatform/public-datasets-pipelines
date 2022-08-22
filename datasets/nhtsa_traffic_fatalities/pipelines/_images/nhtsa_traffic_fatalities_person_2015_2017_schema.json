@@ -772,5 +772,11 @@
 		"type": "string",
 		"description": "This data element identifies the attribute which best describes the location of this non-motorist with respect to the roadway at the time of the crash.",
 		"mode": "NULLABLE"
+	},
+	{
+		"name": "timestamp_of_crash",
+		"type": "timestamp",
+		"description": "This data element records the date and time on which the crash occurred.",
+		"mode": "NULLABLE"
 	}
 ]
