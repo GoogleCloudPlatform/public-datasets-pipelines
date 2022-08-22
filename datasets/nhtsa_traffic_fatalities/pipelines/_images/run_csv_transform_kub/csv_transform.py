@@ -44,16 +44,16 @@ def main(
     schema_path: str,
     input_csv_headers: typing.List[str],
     input_dtypes: dict,
-    rename_mappings_list: dict
+    rename_mappings_list: dict,
 ) -> None:
     logging.info(f"{pipeline_name} process started")
     logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
     process_year = int(start_year)
     max_year = int(end_year)
-    for processing_year in range(process_year, max_year+1):
-        source_url = build_source_url(source_url,processing_year)
-        source_file = str.replace(str(source_file),".zip", f"_{processing_year}.zip")
+    for processing_year in range(process_year, max_year + 1):
+        source_url = build_source_url(source_url, processing_year)
+        source_file = str.replace(str(source_file), ".zip", f"_{processing_year}.zip")
         execute_pipeline(
             source_url=source_url,
             source_file=source_file,
@@ -70,20 +70,24 @@ def main(
             target_gcs_bucket=target_gcs_bucket,
             target_gcs_path=target_gcs_path,
             schema_path=schema_path,
-            pipeline_name=pipeline_name
+            pipeline_name=pipeline_name,
         )
         logging.info(f"{pipeline_name}_{processing_year} process completed")
 
 
-def build_source_url(
-    source_url:str,
-    process_year: int
-)-> str:
-    source_url ="https://www.nhtsa.gov/file-downloads/download?p=nhtsa/downloads/FARS/<<YEAR>>/National/FARS<<YEAR>>NationalCSV.zip"
-    source_url_parts =source_url.split("<<YEAR>>")
+def build_source_url(source_url: str, process_year: int) -> str:
+    source_url = "https://www.nhtsa.gov/file-downloads/download?p=nhtsa/downloads/FARS/<<YEAR>>/National/FARS<<YEAR>>NationalCSV.zip"
+    source_url_parts = source_url.split("<<YEAR>>")
     processing_year = str(process_year)
-    Final_URL = source_url_parts[0]+processing_year+source_url_parts[1]+processing_year+source_url_parts[2]
+    Final_URL = (
+        source_url_parts[0]
+        + processing_year
+        + source_url_parts[1]
+        + processing_year
+        + source_url_parts[2]
+    )
     return Final_URL
+
 
 def execute_pipeline(
     source_url: str,
@@ -101,7 +105,7 @@ def execute_pipeline(
     target_gcs_bucket: str,
     target_gcs_path: str,
     schema_path: str,
-    pipeline_name: str
+    pipeline_name: str,
 ) -> None:
     download_file(source_url, source_file)
     source_file_path = os.path.split(source_file)[0]
@@ -118,8 +122,8 @@ def execute_pipeline(
         rename_mappings_list=rename_mappings_list,
         input_dtypes=input_dtypes,
         input_csv_headers=input_csv_headers,
-        pipeline_name = pipeline_name,
-        process_year = process_year
+        pipeline_name=pipeline_name,
+        process_year=process_year,
     )
     if os.path.exists(target_file):
         upload_file_to_gcs(
@@ -131,7 +135,7 @@ def execute_pipeline(
             drop_table = True
         else:
             drop_table = False
-        destination_table = (pipeline_name.split('-')[1]).lower()+f"_{process_year}"
+        destination_table = (pipeline_name.split("-")[1]).lower() + f"_{process_year}"
         table_exists = create_dest_table(
             project_id=project_id,
             dataset_id=dataset_id,
@@ -169,26 +173,21 @@ def process_source_file(
     input_dtypes: dict,
     input_csv_headers: typing.List[str],
     pipeline_name: str,
-    process_year : int
+    process_year: int,
 ) -> pd.DataFrame:
     unpack_file(source_file, source_file_unzip_dir, "zip")
     logging.info(f"Opening source file {source_file}")
-    csv.field_size_limit(512<<10)
+    csv.field_size_limit(512 << 10)
     csv.register_dialect(
-        'TabDialect',
-        quotechar='"',
-        delimiter=field_separator,
-        strict=True
+        "TabDialect", quotechar='"', delimiter=field_separator, strict=True
     )
-    with open(
-        source_file_extracted, encoding="cp1252"
-    ) as reader:
+    with open(source_file_extracted, encoding="cp1252") as reader:
         data = []
         chunk_number = 1
         next(reader)
-        for index, line in enumerate(csv.reader(reader, 'TabDialect'), 0):
+        for index, line in enumerate(csv.reader(reader, "TabDialect"), 0):
             data.append(line)
-            if (index % int(chunksize) == 0 and index > 0):
+            if index % int(chunksize) == 0 and index > 0:
                 process_dataframe_chunk(
                     data=data,
                     input_csv_headers=input_csv_headers,
@@ -196,8 +195,8 @@ def process_source_file(
                     target_file=target_file,
                     chunk_number=chunk_number,
                     rename_mappings_list=rename_mappings_list,
-                    pipeline_name = pipeline_name,
-                    process_year = process_year
+                    pipeline_name=pipeline_name,
+                    process_year=process_year,
                 )
                 data = []
                 chunk_number += 1
@@ -209,8 +208,8 @@ def process_source_file(
                 target_file=target_file,
                 chunk_number=chunk_number,
                 rename_mappings_list=rename_mappings_list,
-                pipeline_name = pipeline_name,
-                process_year = process_year
+                pipeline_name=pipeline_name,
+                process_year=process_year,
             )
 
 
@@ -221,13 +220,10 @@ def process_dataframe_chunk(
     target_file: str,
     chunk_number: int,
     rename_mappings_list: dict,
-    pipeline_name : str,
-    process_year : int
+    pipeline_name: str,
+    process_year: int,
 ) -> None:
-    df = pd.DataFrame(
-                data,
-                columns=input_csv_headers
-            )
+    df = pd.DataFrame(data, columns=input_csv_headers)
     set_df_datatypes(df, input_dtypes)
     target_file_batch = str(target_file).replace(
         ".csv", "-" + str(chunk_number) + ".csv"
@@ -238,15 +234,12 @@ def process_dataframe_chunk(
         target_file=target_file,
         skip_header=(not chunk_number == 1),
         rename_headers_list=rename_mappings_list,
-        pipeline_name = pipeline_name,
-        process_year =process_year
+        pipeline_name=pipeline_name,
+        process_year=process_year,
     )
 
 
-def set_df_datatypes(
-    df: pd.DataFrame,
-    data_dtypes: dict
-) -> pd.DataFrame:
+def set_df_datatypes(df: pd.DataFrame, data_dtypes: dict) -> pd.DataFrame:
     logging.info("Setting data types")
     for key, item in data_dtypes.items():
         df[key] = df[key].astype(item)
@@ -259,35 +252,93 @@ def process_chunk(
     target_file: str,
     skip_header: bool,
     rename_headers_list: dict,
-    pipeline_name : str,
-    process_year :int
+    pipeline_name: str,
+    process_year: int,
 ) -> None:
     logging.info(f"Processing batch file {target_file_batch}")
     df = rename_headers(df, rename_headers_list)
-    new_pipeline_name = (pipeline_name.split('-')[1]).lower().strip()
+    new_pipeline_name = (pipeline_name.split("-")[1]).lower().strip()
     if new_pipeline_name in ["accident"]:
-        create_new_timestamp_column(df,new_pipeline_name,process_year)
+        create_new_timestamp_column(df, new_pipeline_name, process_year)
         save_to_new_file(df, file_path=str(target_file_batch), sep="|")
-        append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
-    elif new_pipeline_name in ["person","vehicle"]:
-        create_new_timestamp_column(df,new_pipeline_name,process_year)
+        append_batch_file(
+            target_file_batch, target_file, skip_header, not (skip_header)
+        )
+    elif new_pipeline_name in ["person", "vehicle"]:
+        create_new_timestamp_column(df, new_pipeline_name, process_year)
     else:
         save_to_new_file(df, file_path=str(target_file_batch), sep="|")
-        append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
+        append_batch_file(
+            target_file_batch, target_file, skip_header, not (skip_header)
+        )
 
     logging.info(f"Processing batch file {target_file_batch} completed")
 
-def create_new_timestamp_column(df: pd.DataFrame,new_pipeline_name:str,process_year:int):
+
+def create_new_timestamp_column(
+    df: pd.DataFrame, new_pipeline_name: str, process_year: int
+):
     if new_pipeline_name in ["accident"]:
-        df.drop(df[df['hour_of_crash'].apply(lambda x : int(x)) > 24].index, inplace = True)
-        df.drop(df[df['minute_of_crash'].apply(lambda x : int(x)) > 59].index, inplace = True)
-        df['timestamp_of_crash']=df['year_of_crash'].apply(lambda x : str(x))+'-'+df['month_of_crash'].apply(lambda x : "0"+str(x) if len(str(x))==1  else str(x))+'-'+df['day_of_crash'].apply(lambda x : "0"+str(x) if len(str(x))==1  else str(x))+' '+df['hour_of_crash'].apply(lambda x : "0"+str(x) if len(str(x))==1  else str(x))+':'+df['minute_of_crash'].apply(lambda x : "0"+str(x) if len(str(x))==1  else str(x))+':'+'00'+' UTC'
-    elif new_pipeline_name in ["person","vehicle"]:
-        df.drop(df[df['hour_of_crash'].apply(lambda x : int(x)) > 24].index, inplace = True)
-        df.drop(df[df['minute_of_crash'].apply(lambda x : int(x)) > 59].index, inplace = True)
-        df['timestamp_of_crash']=str(process_year)+'-'+df['month_of_crash'].apply(lambda x : "0"+str(x) if len(str(x))==1  else str(x))+'-'+df['day_of_crash'].apply(lambda x : "0"+str(x) if len(str(x))==1  else str(x))+' '+df['hour_of_crash'].apply(lambda x : "0"+str(x) if len(str(x))==1  else str(x))+':'+df['minute_of_crash'].apply(lambda x : "0"+str(x) if len(str(x))==1  else str(x))+':'+'00'+' UTC'
+        df.drop(
+            df[df["hour_of_crash"].apply(lambda x: int(x)) > 24].index, inplace=True
+        )
+        df.drop(
+            df[df["minute_of_crash"].apply(lambda x: int(x)) > 59].index, inplace=True
+        )
+        df["timestamp_of_crash"] = (
+            df["year_of_crash"].apply(lambda x: str(x))
+            + "-"
+            + df["month_of_crash"].apply(
+                lambda x: "0" + str(x) if len(str(x)) == 1 else str(x)
+            )
+            + "-"
+            + df["day_of_crash"].apply(
+                lambda x: "0" + str(x) if len(str(x)) == 1 else str(x)
+            )
+            + " "
+            + df["hour_of_crash"].apply(
+                lambda x: "0" + str(x) if len(str(x)) == 1 else str(x)
+            )
+            + ":"
+            + df["minute_of_crash"].apply(
+                lambda x: "0" + str(x) if len(str(x)) == 1 else str(x)
+            )
+            + ":"
+            + "00"
+            + " UTC"
+        )
+    elif new_pipeline_name in ["person", "vehicle"]:
+        df.drop(
+            df[df["hour_of_crash"].apply(lambda x: int(x)) > 24].index, inplace=True
+        )
+        df.drop(
+            df[df["minute_of_crash"].apply(lambda x: int(x)) > 59].index, inplace=True
+        )
+        df["timestamp_of_crash"] = (
+            str(process_year)
+            + "-"
+            + df["month_of_crash"].apply(
+                lambda x: "0" + str(x) if len(str(x)) == 1 else str(x)
+            )
+            + "-"
+            + df["day_of_crash"].apply(
+                lambda x: "0" + str(x) if len(str(x)) == 1 else str(x)
+            )
+            + " "
+            + df["hour_of_crash"].apply(
+                lambda x: "0" + str(x) if len(str(x)) == 1 else str(x)
+            )
+            + ":"
+            + df["minute_of_crash"].apply(
+                lambda x: "0" + str(x) if len(str(x)) == 1 else str(x)
+            )
+            + ":"
+            + "00"
+            + " UTC"
+        )
 
     return df
+
 
 def unpack_file(infile: str, dest_path: str, compression_type: str = "zip") -> None:
     if compression_type == "zip":
@@ -304,7 +355,10 @@ def zip_decompress(infile: str, dest_path: str) -> None:
         zipf.extractall(dest_path)
         for fileame in os.listdir(dest_path):
             file_name, file_extension = os.path.splitext(fileame)
-            os.rename(os.path.join(dest_path, fileame), os.path.join(dest_path, file_name.lower() + file_extension.lower()))
+            os.rename(
+                os.path.join(dest_path, fileame),
+                os.path.join(dest_path, file_name.lower() + file_extension.lower()),
+            )
 
 
 def load_data_to_bq(
