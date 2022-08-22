@@ -1,7 +1,6 @@
 import json
 import logging
 import os
-import pathlib
 
 from google.api_core.exceptions import NotFound
 from google.cloud import bigquery, storage
