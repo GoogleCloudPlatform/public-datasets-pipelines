@@ -19,7 +19,6 @@ import os
 import pathlib
 import typing
 import zipfile as zip
-from datetime import date
 
 import pandas as pd
 import requests
@@ -112,7 +111,7 @@ def execute_pipeline(
     source_file_unzip_dir = f"{source_file_path}/{process_year}"
     source_file_extracted = f"{source_file_unzip_dir}/{source_zipfile_extracted}"
     target_file = source_file_extracted.replace(".csv", "_output.csv")
-    df = process_source_file(
+    process_source_file(
         source_file=source_file,
         source_file_unzip_dir=source_file_unzip_dir,
         source_file_extracted=source_file_extracted,
