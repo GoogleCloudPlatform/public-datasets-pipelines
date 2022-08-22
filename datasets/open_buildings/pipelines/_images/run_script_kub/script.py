@@ -11,7 +11,6 @@ def main(source_gcs_path, project_id, dataset_id, gcs_bucket, schema_filepath) -
 
     source_file_names = fetch_gcs_file_names(source_gcs_path, gcs_bucket)
 
-
     for each_file in source_file_names:
         pipeline_name = each_file
         table_id = each_file[:-4]
