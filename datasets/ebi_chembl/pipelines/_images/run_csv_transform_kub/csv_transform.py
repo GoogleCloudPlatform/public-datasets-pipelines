@@ -412,8 +412,16 @@ def main(
     )
     time.sleep(60)
     logging.info(f"Connecting to db instance {instance_connection_name} ...")
-    getconn = lambda : Connector().connect( instance_connection_name, "pg8000", user=user, password=password, db=database)
-    pool = sqlalchemy.create_engine("postgresql+pg8000://", creator=getconn)
+    pool = sqlalchemy.create_engine(
+        "postgresql+pg8000://",
+        creator=lambda: Connector().connect(
+            instance_connection_name,
+            "pg8000",
+            user=user,
+            password=password,
+            db=database,
+        ),
+    )
     logging.info(f"Done.. and assigned to variable pool {pool}")
     if "activities" not in tables:
         for table in tables:
