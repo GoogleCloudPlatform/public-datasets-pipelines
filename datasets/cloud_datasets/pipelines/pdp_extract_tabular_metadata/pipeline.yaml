@@ -121,7 +121,7 @@ resources:
             "name": "described_columns",
             "description": "The number of columns in the table with a description",
             "type": "INTEGER",
-        },      
+        },
       ]
   - type: bigquery_table
     dataset_id: _cloud_datasets
@@ -178,7 +178,7 @@ resources:
             "name": "scale",
             "description": "Scale for the NUMERIC field",
             "type": "INTEGER",
-        },      
+        },
         {
             "name": "max_length",
             "description": "Maximum length for the STRING or BYTES field",
