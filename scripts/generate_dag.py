@@ -65,6 +65,7 @@ def generate_pipeline_dag(
     dataset_id: str, pipeline_id: str, env: str, format_code: bool
 ):
     CustomYAMLTags(dataset_id)
+    # import pdb; pdb.set_trace()
     pipeline_dir = DATASETS_PATH / dataset_id / "pipelines" / pipeline_id
     config = yaml.load((pipeline_dir / "pipeline.yaml").read_text(), Loader=yaml.Loader)
     validate_airflow_version_existence_and_value(config)

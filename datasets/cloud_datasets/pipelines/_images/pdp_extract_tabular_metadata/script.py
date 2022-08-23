@@ -216,41 +216,7 @@ class DatasetsTablesInfoExtractor:
         table_id = bigquery.TableReference(dataset_ref, table_name)
         print(f'Writing to {table_id}...')
 
-        job_config = bigquery.job.LoadJobConfig(
-            autodetect=False,
-            max_bad_records=5,
-            schema=[
-                bigquery.SchemaField(
-                    'extracted_at',
-                    'TIMESTAMP',
-                    description='Datetime when this row was extracted from BQ'),
-                bigquery.SchemaField(
-                    'created_at',
-                    'TIMESTAMP',
-                    description='Datetime when the dataset was created'),
-                bigquery.SchemaField(
-                    'modified_at',
-                    'TIMESTAMP',
-                    description='Datetime when the dataset was last modified'),
-                bigquery.SchemaField(
-                    'project_id',
-                    'STRING',
-                    description='GCP project where from where public dataset is'),
-                bigquery.SchemaField(
-                    'dataset_id',
-                    'STRING',
-                    description='BigQuery dataset'),
-                bigquery.SchemaField(
-                    'description',
-                    'STRING',
-                    description='The dataset description'),
-                bigquery.SchemaField(
-                    'num_tables',
-                    'INTEGER',
-                    description='Number of tables contained in this dataset'),
-            ])
-
-        print(f'job sonfig: {job_config}')
+        job_config = bigquery.job.LoadJobConfig(autodetect=False, max_bad_records=5)
 
         datasets_dataframe = self.get_datasets_as_dataframe()
         datasets_dataframe['extracted_at'] = extracted_time
@@ -270,61 +236,7 @@ class DatasetsTablesInfoExtractor:
         table_id = bigquery.TableReference(dataset_ref, table_name)
         print(f'Writing to {table_id}...')
 
-        job_config = bigquery.job.LoadJobConfig(
-            autodetect=False,
-            max_bad_records=5,
-            schema=[
-                bigquery.SchemaField(
-                    'extracted_at',
-                    'TIMESTAMP',
-                    description='Datetime when this row was extracted from BQ'),
-                bigquery.SchemaField(
-                    'created_at',
-                    'TIMESTAMP',
-                    description='Datetime when the dataset was created'),
-                bigquery.SchemaField(
-                    'modified_at',
-                    'TIMESTAMP',
-                    description='Datetime when the dataset was last modified'),
-                bigquery.SchemaField(
-                    'project_id',
-                    'STRING',
-                    description='GCP project where from where public dataset is'),
-                bigquery.SchemaField(
-                    'dataset_id',
-                    'STRING',
-                    description='BigQuery dataset'),
-                bigquery.SchemaField(
-                    'table_id',
-                    'STRING',
-                    description='BigQuery table'),
-                bigquery.SchemaField(
-                    'description',
-                    'STRING',
-                    description='The dataset description'),
-                bigquery.SchemaField(
-                    'type',
-                    'STRING',
-                    description='The type of the table'),
-                bigquery.SchemaField(
-                    'num_bytes',
-                    'INTEGER',
-                    description='The number of bytes the table allocated on disk'),
-                bigquery.SchemaField(
-                    'num_rows',
-                    'INTEGER',
-                    description='The number of rows of the table'),
-                bigquery.SchemaField(
-                    'num_columns',
-                    'INTEGER',
-                    description='The number of columns of the table'),
-                bigquery.SchemaField(
-                    'described_columns',
-                    'INTEGER',
-                    description='The number of columns with a description'),
-            ])
-
-        print(f'SCHEMA: {job_config.schema}')
+        job_config = bigquery.job.LoadJobConfig(autodetect=False, max_bad_records=5)
 
         tables_dataframe = self.get_tables_as_dataframe()
         tables_dataframe['extracted_at'] = extracted_time
@@ -347,53 +259,7 @@ class DatasetsTablesInfoExtractor:
         job_config = bigquery.job.LoadJobConfig(
             autodetect=False,
             max_bad_records=5,
-            write_disposition=bigquery.WriteDisposition.WRITE_TRUNCATE,
-            schema=[
-                bigquery.SchemaField(
-                    'extracted_at',
-                    'TIMESTAMP',
-                    description='Datetime when this row was extracted from BQ'),
-                bigquery.SchemaField(
-                    'project_id',
-                    'STRING',
-                    description='GCP project where from where public dataset is'),
-                bigquery.SchemaField(
-                    'dataset_id',
-                    'STRING',
-                    description='BigQuery dataset'),
-                bigquery.SchemaField(
-                    'table_id',
-                    'STRING',
-                    description='BigQuery table'),
-                bigquery.SchemaField(
-                    'name',
-                    'STRING',
-                    description='The name of the field'),
-                bigquery.SchemaField(
-                    'description',
-                    'STRING',
-                    description='Description for the field.'),
-                bigquery.SchemaField(
-                    'field_type',
-                    'STRING',
-                    description='The type of the field'),
-                bigquery.SchemaField(
-                    'mode',
-                    'STRING',
-                    description='The mode of the field'),
-                bigquery.SchemaField(
-                    'precision',
-                    'INTEGER',
-                    description='Precision for the NUMERIC field'),
-                bigquery.SchemaField(
-                    'scale',
-                    'INTEGER',
-                    description='Scale for the NUMERIC field'),
-                bigquery.SchemaField(
-                    'max_length',
-                    'INTEGER',
-                    description='Maximum length for the STRING or BYTES field'),
-            ])
+            write_disposition=bigquery.WriteDisposition.WRITE_TRUNCATE)
 
         print(f'SCHEMA: {job_config.schema}')
 

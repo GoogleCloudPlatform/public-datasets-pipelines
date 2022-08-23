@@ -13,7 +13,7 @@
 # limitations under the License.
 
 dataset:
-  name: _cloud_datasets
+  name: cloud_datasets
   friendly_name: Cloud Datasets
   description: A dataset dedicated to Google Cloud Datasets Program and its metadata (not a public dataset)
   dataset_sources: ~
