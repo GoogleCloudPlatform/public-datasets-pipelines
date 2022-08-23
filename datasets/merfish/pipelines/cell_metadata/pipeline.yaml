@@ -17,7 +17,7 @@ resources:
 
   - type: bigquery_table
     table_id: cell_metadata
-    description:  "The Merfish Mouse Brain Dataset"
+    description: "The Merfish Mouse Brain Dataset"
 
 dag:
   airflow_version: 2
@@ -34,7 +34,7 @@ dag:
 
   tasks:
     - operator: "GoogleCloudStorageToBigQueryOperator"
-      description:  "Task to load CSV data to a BigQuery table"
+      description: "Task to load CSV data to a BigQuery table"
       args:
         task_id: "load_cell_metadata_to_bq"
         bucket: "public-datasets-vizgen-merfish"
@@ -56,31 +56,31 @@ dag:
         schema_fields:
           - name: "fov"
             type: "string"
-            description: 
+            description: ""
             mode: "nullable"
           - name: "volume"
             type: "string"
-            description: 
+            description: ""
             mode: "nullable"
           - name: "center_x"
             type: "string"
-            description: 
+            description: ""
             mode: "nullable"
           - name: "center_y"
             type: "string"
-            description: 
+            description: ""
             mode: "nullable"
           - name: "min_x"
             type: "string"
-            description: 
+            description: ""
             mode: "nullable"
           - name: "min_y"
             type: "string"
-            description: 
+            description: ""
             mode: "nullable"
           - name: "max_y"
             type: "string"
-            description: 
+            description: ""
             mode: "nullable"
 
   graph_paths:
