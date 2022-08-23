@@ -19,9 +19,9 @@ import logging
 import os
 import pathlib
 import time
+import typing
 
 import pandas as pd
-import pg8000
 import sqlalchemy
 from google.cloud import storage
 from google.cloud.sql.connector import Connector
@@ -411,22 +411,10 @@ def main(
         "Waiting for 60 seconds to get database instance up and ready to accept connections."
     )
     time.sleep(60)
-    connector = Connector()
     logging.info(f"Connecting to db instance {instance_connection_name} ...")
-
-    def getconn() -> pg8000.dbapi.Connection:
-        conn = connector.connect(
-            instance_connection_name,
-            "pg8000",
-            user=user,
-            password=password,
-            db=database,
-        )
-        return conn
-
+    getconn = lambda : Connector().connect( instance_connection_name, "pg8000", user=user, password=password, db=database)
     pool = sqlalchemy.create_engine("postgresql+pg8000://", creator=getconn)
     logging.info(f"Done.. and assigned to variable pool {pool}")
-
     if "activities" not in tables:
         for table in tables:
             logging.info(f"Process started for table - {table}.")
@@ -448,7 +436,6 @@ def main(
                 write_to_file(output_folder, tables[0], data, "w")
             elif data:
                 write_to_file(output_folder, tables[0], data, "a")
-
     for file in os.listdir(output_folder):
         source_file = f"{output_folder}/{file}"
         target_gcs_path = f"{target_gcs_folder}/{file}"
@@ -464,7 +451,7 @@ def main(
 
 def get_table_data(
     connection: sqlalchemy.engine.base.Engine, table: str, chunksize: int
-) -> pd.io.parsers.readers.TextFileReader:
+) -> typing.Generator[pd.core.frame.DataFrame, None, None]:
     logging.info(f"\tReading data for table = {table}")
     df_chunk = pd.read_sql_query(
         f"SELECT * FROM {table};", con=connection, chunksize=chunksize

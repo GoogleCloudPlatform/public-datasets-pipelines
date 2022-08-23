@@ -1,5 +1,4 @@
 cloud-sql-python-connector
 google-cloud-storage
 pandas
-pg8000
 sqlalchemy
