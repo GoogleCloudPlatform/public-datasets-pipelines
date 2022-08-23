@@ -50,7 +50,7 @@ def main(
             source_bq_dataset,
             target_project_id,
             target_bq_dataset,
-            transfer_config_name
+            transfer_config_name,
         )
 
     trigger_config(client, existing_config)
@@ -116,7 +116,7 @@ def create_transfer_config(
     source_dataset_id: str,
     target_project_id: str,
     target_dataset_id: str,
-    display_name: str
+    display_name: str,
 ) -> bigquery_datatransfer_v1.types.TransferConfig:
     transfer_config = bigquery_datatransfer_v1.TransferConfig(
         destination_dataset_id=target_dataset_id,
@@ -135,7 +135,7 @@ def create_transfer_config(
 
     request = bigquery_datatransfer_v1.types.CreateTransferConfigRequest(
         parent=client.common_project_path(target_project_id),
-        transfer_config=transfer_config
+        transfer_config=transfer_config,
     )
 
     return client.create_transfer_config(request=request)
