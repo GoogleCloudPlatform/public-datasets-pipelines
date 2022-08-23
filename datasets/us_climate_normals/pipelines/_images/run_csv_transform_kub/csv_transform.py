@@ -52,6 +52,7 @@ def main(
         historical_data_table_id = historical_data_table_id,
         data_file_surr_key_field = data_file_surr_key_field,
         dest_folder = dest_folder,
+        schema_filepath=schema_filepath,
         source_bucket = source_bucket,
         target_gcs_bucket = target_gcs_bucket,
         dest_current_data_folder_name = dest_current_data_folder_name,
