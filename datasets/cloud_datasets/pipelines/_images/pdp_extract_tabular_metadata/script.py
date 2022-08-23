@@ -30,12 +30,13 @@ NUM_THREADS = 5
 def is_empty(s: str) -> bool:
     """Return True if s is None or an empty string."""
     # pylint: disable=g-explicit-bool-comparison
-    return pd.isnull(s) or str(s).strip() == ''
+    return pd.isnull(s) or str(s).strip() == ""
 
 
 @dataclasses.dataclass
 class FieldInfo:
     """Represents the schema of a column of a BQ table."""
+
     project_id: str = None
     dataset_id: str = None
     table_id: str = None
@@ -60,6 +61,7 @@ class FieldInfo:
 @dataclasses.dataclass
 class TableInfo:
     """Represents the metadata for a single table."""
+
     project_id: str = None
     dataset_id: str = None
     table_id: str = None
@@ -87,19 +89,18 @@ class TableInfo:
         self.num_rows = table_object.num_rows
         self.num_bytes = table_object.num_bytes
         self.num_columns = len(table_object.schema)
-        self.described_columns = len([
-            s.description
-            for s in table_object.schema
-            if not is_empty(s.description)
-        ])
+        self.described_columns = len(
+            [s.description for s in table_object.schema if not is_empty(s.description)]
+        )
 
     def __repr__(self) -> str:
-        return f'{self.project_id}.{self.dataset_id}.{self.table_id}'
+        return f"{self.project_id}.{self.dataset_id}.{self.table_id}"
 
 
 @dataclasses.dataclass
 class DatasetInfo:
     """Represents the metadata for a single dataset."""
+
     extracted_at: datetime.datetime = None
     created_at: datetime.datetime = None
     modified_at: datetime.datetime = None
@@ -108,8 +109,11 @@ class DatasetInfo:
     description: str = None
     num_tables: int = None
 
-    def __init__(self, dataset_object: bigquery.Dataset,
-                 dataset_reference: bigquery.DatasetReference):
+    def __init__(
+        self,
+        dataset_object: bigquery.Dataset,
+        dataset_reference: bigquery.DatasetReference,
+    ):
         self.project_id = dataset_object.project
         self.dataset_id = dataset_object.dataset_id
         self.description = dataset_reference.description
@@ -119,16 +123,13 @@ class DatasetInfo:
         self.modified_at = dataset_reference.modified
 
     def __repr__(self) -> str:
-        return f'{self.project_id}.{self.dataset_id}'
+        return f"{self.project_id}.{self.dataset_id}"
 
 
 class DatasetsTablesInfoExtractor:
     """Extracts BQ datasets and tables metadata and stores them in BQ."""
 
-    def __init__(self,
-                 project_id: str,
-                 target_project_id: str,
-                 target_dataset: str):
+    def __init__(self, project_id: str, target_project_id: str, target_dataset: str):
         self.client = bigquery.Client(project_id)
         self.target_project_id = target_project_id
         self.target_dataset = target_dataset
@@ -152,7 +153,7 @@ class DatasetsTablesInfoExtractor:
     def parallel_read_tables(self, full_table_ids: List[str]):
         """Read tables metadata in parallel."""
         num_tables = len(full_table_ids)
-        potential_interval_size = (num_tables // NUM_THREADS)
+        potential_interval_size = num_tables // NUM_THREADS
         residual = num_tables % NUM_THREADS
         index = 0
         threads = []
@@ -161,9 +162,10 @@ class DatasetsTablesInfoExtractor:
             if residual > 0:
                 actual_interval_size += 1
                 residual -= 1
-            tables_ids = full_table_ids[index:index + actual_interval_size]
+            tables_ids = full_table_ids[index : index + actual_interval_size]
             tr = threading.Thread(
-                target=self._read_tables_and_schema, args=(tables_ids,))
+                target=self._read_tables_and_schema, args=(tables_ids,)
+            )
             threads.append(tr)
             index += actual_interval_size
         for tr in threads:
@@ -193,86 +195,96 @@ class DatasetsTablesInfoExtractor:
         """Read the datasets and tables metadata."""
         datasets_list = list(self.client.list_datasets())
         full_table_ids = []
-        print(f'Enlisted Datasets: {len(datasets_list)}')
+        print(f"Enlisted Datasets: {len(datasets_list)}")
         for dataset_item in datasets_list:
             dataset_reference = self.client.get_dataset(dataset_item.reference)
             dataset = DatasetInfo(dataset_item, dataset_reference)
             table_ids = list(self.client.list_tables(dataset_reference))
             dataset.num_tables = len(table_ids)
             full_table_ids.extend(
-                [t.full_table_id.replace(':', '.') for t in table_ids])
+                [t.full_table_id.replace(":", ".") for t in table_ids]
+            )
 
             self.datasets.append(dataset)
 
         self.parallel_read_tables(full_table_ids)
-        print(f'Extracted Datasets: {len(self.datasets)}')
-        print(f'Extracted Tables: {len(self.tables)}')
-        print(f'Extracted Fields: {len(self.tables_fields)}')
+        print(f"Extracted Datasets: {len(self.datasets)}")
+        print(f"Extracted Tables: {len(self.tables)}")
+        print(f"Extracted Fields: {len(self.tables_fields)}")
 
-    def write_datasets_to_bq(self, table_name: str,
-                             extracted_time: datetime.datetime):
+    def write_datasets_to_bq(self, table_name: str, extracted_time: datetime.datetime):
         """Write datasets metadata to BQ."""
-        dataset_ref = bigquery.DatasetReference(self.target_project_id, self.target_dataset)
+        dataset_ref = bigquery.DatasetReference(
+            self.target_project_id, self.target_dataset
+        )
         table_id = bigquery.TableReference(dataset_ref, table_name)
-        print(f'Writing to {table_id}...')
+        print(f"Writing to {table_id}...")
 
         job_config = bigquery.job.LoadJobConfig(autodetect=False, max_bad_records=5)
 
         datasets_dataframe = self.get_datasets_as_dataframe()
-        datasets_dataframe['extracted_at'] = extracted_time
+        datasets_dataframe["extracted_at"] = extracted_time
         columns = [si.name for si in job_config.schema]
         datasets_dataframe = datasets_dataframe[columns]
 
         job = self.client.load_table_from_dataframe(
-            datasets_dataframe, table_id, job_config=job_config)
+            datasets_dataframe, table_id, job_config=job_config
+        )
         job.result()  # Wait for the job to complete.
 
-        print('write_datasets_to_bq done')
+        print("write_datasets_to_bq done")
 
-    def write_tables_to_bq(self, table_name: str,
-                           extracted_time: datetime.datetime):
+    def write_tables_to_bq(self, table_name: str, extracted_time: datetime.datetime):
         """Write tables metadata to BQ."""
-        dataset_ref = bigquery.DatasetReference(self.target_project_id, self.target_dataset)
+        dataset_ref = bigquery.DatasetReference(
+            self.target_project_id, self.target_dataset
+        )
         table_id = bigquery.TableReference(dataset_ref, table_name)
-        print(f'Writing to {table_id}...')
+        print(f"Writing to {table_id}...")
 
         job_config = bigquery.job.LoadJobConfig(autodetect=False, max_bad_records=5)
 
         tables_dataframe = self.get_tables_as_dataframe()
-        tables_dataframe['extracted_at'] = extracted_time
+        tables_dataframe["extracted_at"] = extracted_time
         columns = [si.name for si in job_config.schema]
         tables_dataframe = tables_dataframe[columns]
 
         job = self.client.load_table_from_dataframe(
-            tables_dataframe, table_id, job_config=job_config)
+            tables_dataframe, table_id, job_config=job_config
+        )
         job.result()  # Wait for the job to complete.
 
-        print('write_tables_to_bq is done')
+        print("write_tables_to_bq is done")
 
-    def write_tables_fields_to_bq(self, table_name: str,
-                                  extracted_time: datetime.datetime):
+    def write_tables_fields_to_bq(
+        self, table_name: str, extracted_time: datetime.datetime
+    ):
         """Write tables_fields to BQ."""
-        dataset_ref = bigquery.DatasetReference(self.target_project_id, self.target_dataset)
+        dataset_ref = bigquery.DatasetReference(
+            self.target_project_id, self.target_dataset
+        )
         table_id = bigquery.TableReference(dataset_ref, table_name)
-        print(f'Writing to {table_id}...')
+        print(f"Writing to {table_id}...")
 
         job_config = bigquery.job.LoadJobConfig(
             autodetect=False,
             max_bad_records=5,
-            write_disposition=bigquery.WriteDisposition.WRITE_TRUNCATE)
+            write_disposition=bigquery.WriteDisposition.WRITE_TRUNCATE,
+        )
 
-        print(f'SCHEMA: {job_config.schema}')
+        print(f"SCHEMA: {job_config.schema}")
 
         tables_fields_dataframe = self.get_tables_fields_as_dataframe()
-        tables_fields_dataframe['extracted_at'] = extracted_time
+        tables_fields_dataframe["extracted_at"] = extracted_time
         columns = [si.name for si in job_config.schema]
         tables_fields_dataframe = tables_fields_dataframe[columns]
 
         job = self.client.load_table_from_dataframe(
-            tables_fields_dataframe, table_id, job_config=job_config)
+            tables_fields_dataframe, table_id, job_config=job_config
+        )
         job.result()  # Wait for the job to complete.
 
-        print('write_tables_fields_to_bq is done')
+        print("write_tables_fields_to_bq is done")
 
 
 def main(
@@ -285,14 +297,16 @@ def main(
 ):
     """Entry point for this cloud function."""
     st = time.time()
-    for project_id in source_projects_ids.split(','):
-        extractor = DatasetsTablesInfoExtractor(project_id, target_project_id, target_dataset)
+    for project_id in source_projects_ids.split(","):
+        extractor = DatasetsTablesInfoExtractor(
+            project_id, target_project_id, target_dataset
+        )
         extractor.read_datasets()
         extracted = datetime.datetime.now()
         extractor.write_datasets_to_bq(tabular_dataset_table_name, extracted)
         extractor.write_tables_to_bq(tables_table_name, extracted)
         extractor.write_tables_fields_to_bq(tables_fields_table_name, extracted)
-    print(f'Total time to run this function: {time.time() - st}')
+    print(f"Total time to run this function: {time.time() - st}")
 
 
 if __name__ == "__main__":
