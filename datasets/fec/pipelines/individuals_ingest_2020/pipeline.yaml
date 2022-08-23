@@ -37,10 +37,9 @@ dag:
       args:
         task_id: "download_zip_file_to_composer_bucket"
         source_bucket: "pdp-feeds-staging"
-        source_object: "/FEC/unzipped/indiv20"
+        source_object: "FEC/unzipped/indiv20"
         destination_bucket: "{{ var.value.composer_bucket }}"
         destination_object: "data/fec/individuals/indiv20.txt"
-        impersonation_chain: "{{ var.json.fec.service_account }}"
         move_object: False
 
     - operator: "KubernetesPodOperator"
@@ -70,7 +69,7 @@ dag:
           PIPELINE_NAME: "individuals_ingest_2020"
           CSV_HEADERS: >-
             ["cmte_id","amndt_ind","rpt_tp","transaction_pgi","image_num","transaction_tp","entity_tp","name","city","state",
-            "zip_code","employer","occupation""transaction_dt","transaction_amt","other_id","tran_id","file_num",
+            "zip_code","employer","occupation","transaction_dt","transaction_amt","other_id","tran_id","file_num",
             "memo_cd","memo_text","sub_id"]
           RENAME_MAPPINGS: >-
             {"0":"cmte_id","1":"amndt_ind","2":"rpt_tp","3":"transaction_pgi","4":"image_num","5":"transaction_tp",
