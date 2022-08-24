@@ -203,8 +203,8 @@ dag:
     - operator: "KubernetesPodOperator"
       description: "Extract the metadata for tabular datasets"
       args:
-        task_id: "pdp_extract_tabular_metadata"
-        name: "pdp_extract_tabular_metadata"
+        task_id: "pdp_extract_tabular_metadata_task"
+        name: "Extract Tabular Metadata"
         namespace: "composer"
         service_account_name: "datasets"
         image_pull_policy: "Always"
@@ -222,4 +222,4 @@ dag:
           request_cpu: "200m"
 
   graph_paths:
-    - "pdp_extract_tabular_metadata"
+    - "pdp_extract_tabular_metadata_task"
