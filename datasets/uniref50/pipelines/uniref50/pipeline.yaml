@@ -46,6 +46,10 @@ dag:
           print >> file; n_seq++; next;} { print >> file; }' < $data_dir/uniref/uniref50.fasta
           awk 'BEGIN {n_seq=0;} /^>/ {if(n_seq%3500000==0){file=sprintf("/home/airflow/gcs/data/uniref50/uniref/myseq_1%d.fa",n_seq);}
           print >> file; n_seq++; next;} { print >> file; }' < $data_dir/uniref/myseq0.fa
+          rm $data_dir/uniref/uniref50.fasta.gz
+          rm $data_dir/uniref/uniref50.fasta
+          rm $data_dir/uniref/myseq0.fa
+
         env:
           data_dir: /home/airflow/gcs/data/uniref50
           uniref50: https://ftp.uniprot.org/pub/databases/uniprot/uniref/uniref50/uniref50.fasta.gz
