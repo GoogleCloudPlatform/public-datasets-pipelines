@@ -39,6 +39,7 @@ with DAG(
             "name": "new-york",
             "initial_node_count": 4,
             "network": "{{ var.value.vpc_network }}",
+            "ip_allocation_policy": {"cluster_ipv4_cidr_block": "/26"},
             "node_config": {
                 "machine_type": "e2-standard-16",
                 "oauth_scopes": [
