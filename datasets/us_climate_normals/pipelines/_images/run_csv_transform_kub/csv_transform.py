@@ -43,6 +43,9 @@ def main(
     data_root_folder: typing.List[str],
     hist_folders_list: typing.List[str],
     pipeline_name: str,
+    chunksize: str,
+    input_headers: typing.List[str],
+    data_dtypes: typing.List[str]
 ) -> None:
     logging.info(f"{pipeline_name} process started")
     execute_pipeline(
@@ -63,6 +66,9 @@ def main(
         data_root_folder = data_root_folder,
         hist_folders_list = hist_folders_list,
         pipeline_name = pipeline_name,
+        chunksize = chunksize,
+        input_headers = input_headers,
+        data_dtypes = data_dtypes
     )
     logging.info(f"{pipeline_name} process completed")
 
@@ -85,6 +91,9 @@ def execute_pipeline(
     data_root_folder: typing.List[str],
     hist_folders_list: typing.List[str],
     pipeline_name: str,
+    chunksize: str,
+    input_headers: typing.List[str],
+    data_dtypes: typing.List[str]
 ) -> None:
     for folder in data_root_folder:
         root_gs_bucket_folder = f"gs://{source_bucket}"
@@ -104,7 +113,10 @@ def execute_pipeline(
             target_gcs_bucket = target_gcs_bucket,
             data_file_surr_key_field = data_file_surr_key_field,
             source_gs_folder = source_gs_folder,
-            dest_folder = new_dest_current_data_folder_name
+            dest_folder = new_dest_current_data_folder_name,
+            chunksize = chunksize,
+            input_headers = input_headers,
+            data_dtypes = data_dtypes
         )
 
 
@@ -154,7 +166,10 @@ def process_data(
     target_gcs_bucket: str,
     data_file_surr_key_field: str,
     source_gs_folder: str,
-    dest_folder: str
+    dest_folder: str,
+    chunksize: str,
+    input_headers: typing.List[str],
+    data_dtypes: typing.List[str]
 ) -> None:
 
     # download_folder_contents(
@@ -176,7 +191,10 @@ def process_data(
                 schema_path = schema_filepath,
                 target_gcs_bucket = target_gcs_bucket,
                 data_file_surr_key_field = data_file_surr_key_field,
-                data_file_surr_key_value = filename
+                data_file_surr_key_value = filename,
+                chunksize = chunksize,
+                input_headers = input_headers,
+                data_dtypes = data_dtypes
             )
 
     import pdb; pdb.set_trace()
@@ -200,7 +218,10 @@ def process_file(
     schema_path: str,
     target_gcs_bucket: str,
     data_file_surr_key_field: str,
-    data_file_surr_key_value: int
+    data_file_surr_key_value: int,
+    chunksize: str,
+    input_headers: typing.List[str],
+    data_dtypes: typing.List[str]
 ) -> None:
 
     logging.info(f"Processing file {filepath} started ...")
@@ -229,41 +250,43 @@ def process_file(
             data_file_surr_key_field = data_file_surr_key_field,
             data_file_surr_key_value = data_file_surr_key_value
         )
-
-    # with pd.read_csv(
-    #     filepath,
-    #     engine="python",
-    #     encoding="utf-8",
-    #     quotechar='"',
-    #     chunksize=int(chunksize),
-    #     sep=",",
-    #     names=input_headers,
-    #     skiprows=1,
-    #     dtype=data_dtypes,
-    # ) as reader:
-    #     for chunk_number, chunk in enumerate(reader):
-    #         logging.info(
-    #             f"Processing chunk #{chunk_number} of file {filepath} started"
-    #         )
-    #         target_file_batch = str(target_file).replace(
-    #             ".csv", f"-{chunk_number}.csv"
-    #         )
-    #         df = pd.DataFrame()
-    #         df = pd.concat([df, chunk])
-    #         # process_chunk(
-    #         #     df,
-    #         #     target_file_batch,
-    #         #     target_file_name,
-    #         #     month_number == 1 and chunk_number == 0,
-    #         #     month_number == 1 and chunk_number == 0,
-    #         #     output_headers,
-    #         #     pipeline_name,
-    #         #     year_number,
-    #         #     month_number,
-    #         # )
-    #         logging.info(
-    #             f"Processing chunk #{chunk_number} of file {process_year_month} completed"
-    #         )
+    with pd.read_csv(
+        filepath,
+        engine="python",
+        encoding="utf-8",
+        quotechar='"',
+        chunksize=int(chunksize),
+        sep=",",
+        names=input_headers,
+        skiprows=1,
+        dtype=data_dtypes,
+    ) as reader:
+        for chunk_number, chunk in enumerate(reader):
+            logging.info(
+                f"Processing chunk #{chunk_number} of file {filepath} started"
+            )
+            target_file_batch = str(filepath).replace(
+                ".csv", f"-{chunk_number}.csv"
+            )
+            target_file = str(filepath).replace(
+                ".csv", f"_load_file.csv"
+            )
+            df = pd.DataFrame()
+            df = pd.concat([df, chunk])
+            process_chunk(
+                df=df,
+                target_file_batch=target_file_batch,
+                target_file=target_file,
+                include_header=(chunk_number == 0),
+                truncate_file=(chunk_number == 0),
+                output_headers=input_headers,
+                pipeline_name=pipeline_name,
+                data_file_surr_key_field=data_file_surr_key_field,
+                data_file_surr_key_value=os.path.basename(filepath),
+            )
+            logging.info(
+                f"Processing chunk #{chunk_number} of file {process_year_month} completed"
+            )
     # if not table_exists(project_id, dataset_id, table_id):
     #     # Destination able doesn't exist
     #     create_dest_table(
@@ -742,4 +765,7 @@ if __name__ == "__main__":
         data_root_folder=json.loads(os.environ.get("DATA_ROOT_FOLDER", r"[]")),
         hist_folders_list=json.loads(os.environ.get("HIST_FOLDERS_LIST", r"[]")),
         pipeline_name=os.environ.get("PIPELINE_NAME", ""),
+        chunksize=os.environ.get("CHUNKSIZE", ""),
+        input_headers=json.loads(os.environ.get("INPUT_CSV_HEADERS", r"[]")),
+        data_dtypes=json.loads(os.environ.get("DATA_DTYPES", r"[]"))
     )

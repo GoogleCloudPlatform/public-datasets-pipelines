@@ -79,6 +79,7 @@ dag:
         env_vars:
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "{{ var.json.us_climate_normals.container_registry.dataset_id }}"
+          CHUNKSIZE: "500000"
           CURRENT_DATA_TABLE_ID: "{{ var.json.us_climate_normals.normals_hourly.destination_dataset_table_current }}"
           HISTORICAL_DATA_TABLE_ID: "{{ var.json.us_climate_normals.normals_hourly.destination_dataset_table_historical }}"
           DATA_FILE_SURR_KEY_FIELD: "{{ var.json.us_climate_normals.normals_hourly.data_file_surr_key_field }}"
@@ -96,7 +97,66 @@ dag:
           HIST_FOLDERS_LIST: >-
             ["1981-2010", "1991-2020", "2006-2020"]
           PIPELINE_NAME: "US Climate Normals - Hourly Load"
-
+          INPUT_CSV_HEADERS: >-
+            [ "station", "date",
+              "latitude", "longitude",
+              "elevation", "name",
+              "hly-cldh-normal", "hly-cldh-normal_attributes",
+              "hly-clod-pctbkn", "hly-clod-pctbkn_attributes",
+              "hly-clod-pctclr", "hly-clod-pctclr_attributes",
+              "hly-clod-pctfew", "hly-clod-pctfew_attributes",
+              "hly-clod-pctovc", "hly-clod-pctovc_attributes",
+              "hly-clod-pctsct","hly-clod-pctsct_attributes",
+              "hly-dewp-10pctl","hly-dewp-10pctl_attributes",
+              "hly-dewp-90pctl","hly-dewp-90pctl_attributes",
+              "hly-dewp-normal","hly-dewp-normal_attributes",
+              "hly-hidx-normal","hly-hidx-normal_attributes",
+              "hly-htdh-normal","hly-htdh-normal_attributes",
+              "hly-pres-10pctl","hly-pres-10pctl_attributes",
+              "hly-pres-90pctl","hly-pres-90pctl_attributes",
+              "hly-pres-normal","hly-pres-normal_attributes",
+              "hly-temp-10pctl","hly-temp-10pctl_attributes",
+              "hly-temp-90pctl","hly-temp-90pctl_attributes",
+              "hly-temp-normal","hly-temp-normal_attributes",
+              "hly-wchl-normal","hly-wchl-normal_attributes",
+              "hly-wind-1stdir","hly-wind-1stdir_attributes",
+              "hly-wind-1stpct","hly-wind-1stpct_attributes",
+              "hly-wind-2nddir","hly-wind-2nddir_attributes",
+              "hly-wind-2ndpct","hly-wind-2ndpct_attributes",
+              "hly-wind-avgspd","hly-wind-avgspd_attributes",
+              "hly-wind-pctclm","hly-wind-pctclm_attributes",
+              "hly-wind-vctdir","hly-wind-vctdir_attributes",
+              "hly-wind-vctspd","hly-wind-vctspd_attributes" ]
+          DATA_DTYPE: >-
+            [ "station": "str", "date": "datetime64[ns]",
+              "latitude": "float64", "longitude": "float64",
+              "elevation": "float64", "name": "str",
+              "hly-cldh-normal": "str", "hly-cldh-normal_attributes": "int64",
+              "hly-clod-pctbkn": "str", "hly-clod-pctbkn_attributes": "int64",
+              "hly-clod-pctclr": "str", "hly-clod-pctclr_attributes": "int64",
+              "hly-clod-pctfew": "str", "hly-clod-pctfew_attributes": "int64",
+              "hly-clod-pctovc": "str", "hly-clod-pctovc_attributes": "int64",
+              "hly-clod-pctsct": "str","hly-clod-pctsct_attributes": "int64",
+              "hly-dewp-10pctl": "str","hly-dewp-10pctl_attributes": "int64",
+              "hly-dewp-90pctl": "str","hly-dewp-90pctl_attributes": "int64",
+              "hly-dewp-normal": "str","hly-dewp-normal_attributes": "int64",
+              "hly-hidx-normal": "str","hly-hidx-normal_attributes": "int64",
+              "hly-htdh-normal": "str","hly-htdh-normal_attributes": "int64",
+              "hly-pres-10pctl": "str","hly-pres-10pctl_attributes": "int64",
+              "hly-pres-90pctl": "str","hly-pres-90pctl_attributes": "int64",
+              "hly-pres-normal": "str","hly-pres-normal_attributes": "int64",
+              "hly-temp-10pctl": "str","hly-temp-10pctl_attributes": "int64",
+              "hly-temp-90pctl": "str","hly-temp-90pctl_attributes": "int64",
+              "hly-temp-normal": "str","hly-temp-normal_attributes": "int64",
+              "hly-wchl-normal": "str","hly-wchl-normal_attributes": "int64",
+              "hly-wind-1stdir": "str","hly-wind-1stdir_attributes": "int64",
+              "hly-wind-1stpct": "str","hly-wind-1stpct_attributes": "int64",
+              "hly-wind-2nddir": "str","hly-wind-2nddir_attributes": "int64",
+              "hly-wind-2ndpct": "str","hly-wind-2ndpct_attributes": "int64",
+              "hly-wind-avgspd": "str","hly-wind-avgspd_attributes": "int64",
+              "hly-wind-pctclm": "str","hly-wind-pctclm_attributes": "int64",
+              "hly-wind-vctdir": "str","hly-wind-vctdir_attributes": "int64",
+              "hly-wind-vctspd": "str","hly-wind-vctspd_attributes": "int64" ]
 
           # SOURCE_FILE: "files/data_green_trips.csv"
           # TARGET_FILE: "files/data_output_green_trips.csv"
