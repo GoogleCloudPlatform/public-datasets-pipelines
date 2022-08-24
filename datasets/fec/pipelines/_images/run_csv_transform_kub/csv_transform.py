@@ -13,8 +13,8 @@
 # limitations under the License.
 
 
+import csv
 import datetime
-import json
 import logging
 import os
 import pathlib
@@ -40,6 +40,7 @@ def main(
     target_gcs_path: str,
     csv_headers: typing.List[str],
     # rename_mappings: dict,
+    chunksize: str,
     pipeline_name: str,
 ) -> None:
 
@@ -123,21 +124,23 @@ def main(
         )
     else:
         logging.info(f"Downloading file gs://{source_bucket}/{source_object}")
-        download_blob(source_bucket, source_object, source_file)
+        # download_blob(source_bucket, source_object, source_file)
 
-        logging.info(f"Opening file...{source_file}")
-        df = pd.read_table(
-            source_file, dtype=object, index_col=False, names=csv_headers, sep="|"
-        )
+        process_source_file(source_file, target_file, chunksize, pipeline_name)
 
-        logging.info(f"Transforming.. {source_file}")
+        # logging.info(f"Opening file...{source_file}")
+        # df = pd.read_table(
+        #     source_file, dtype=object, index_col=False, names=csv_headers, sep="|"
+        # )
 
-        df["transaction_dt"] = df["transaction_dt"].astype(str)
-        date_for_length(df, "transaction_dt")
-        df = resolve_date_format(df, "transaction_dt", pipeline_name)
-        df = df.rename(columns=lambda x: x.strip())
+        # logging.info(f"Transforming.. {source_file}")
 
-        logging.info(f"Saving to output file.. {target_file}")
+        # df["transaction_dt"] = df["transaction_dt"].astype(str)
+        # date_for_length(df, "transaction_dt")
+        # df = resolve_date_format(df, "transaction_dt", pipeline_name)
+        # df = df.rename(columns=lambda x: x.strip())
+
+        # logging.info(f"Saving to output file.. {target_file}")
         try:
             save_to_new_file(df, file_path=str(target_file))
         except Exception as e:
@@ -152,6 +155,102 @@ def main(
             f"FEC {pipeline_name} process completed at "
             + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
         )
+
+
+def process_source_file(
+    source_file: str,
+    target_file: str,
+    chunksize: str,
+    pipeline_name: str,
+) -> None:
+    logging.info(f"Opening source file {source_file}")
+    csv.field_size_limit(512 << 10)
+    csv.register_dialect("TabDialect", quotechar='"', delimiter="\t", strict=True)
+    with open(
+        source_file,
+    ) as reader:
+        data = []
+        chunk_number = 1
+        print("process_source_file is good")
+        for index, line in enumerate(csv.reader(reader, "TabDialect"), 0):
+            data.append(line)
+            if index % int(chunksize) == 0 and index > 0:
+                process_dataframe_chunk(
+                    data,
+                    target_file,
+                    chunk_number,
+                    source_file,
+                    pipeline_name,
+                )
+                data = []
+                chunk_number += 1
+
+        if data:
+            process_dataframe_chunk(
+                data,
+                target_file,
+                chunk_number,
+                source_file,
+                pipeline_name,
+            )
+
+
+def process_dataframe_chunk(
+    data: typing.List[str],
+    target_file: str,
+    chunk_number: int,
+    csv_headers: list,
+    pipeline_name: str,
+) -> None:
+    print("coming into process_dataframe_chunk")
+    # print(data)
+    for item in data:
+        for char in item:
+            char = char.split("|")
+    print(data)
+    df = pd.DataFrame(data, columns=csv_headers)
+    print(df.head())
+    print("prblm is with batch")
+    target_file_batch = str(target_file).replace(
+        ".csv", "-" + str(chunk_number) + ".csv"
+    )
+    process_chunk(
+        df=df,
+        target_file_batch=target_file_batch,
+        target_file=target_file,
+        pipeline_name=pipeline_name,
+    )
+
+
+def process_chunk(
+    df: pd.DataFrame,
+    target_file_batch: str,
+    target_file: str,
+    pipeline_name: str,
+) -> None:
+    logging.info(f"Processing batch file {target_file_batch}")
+    df["transaction_dt"] = df["transaction_dt"].astype(str)
+    date_for_length(df, "transaction_dt")
+    df = resolve_date_format(df, "transaction_dt", pipeline_name)
+    df = df.rename(columns=lambda x: x.strip())
+    save_to_new_file(df, file_path=str(target_file_batch), sep=",")
+    append_batch_file(target_file_batch, target_file)
+    logging.info(f"Processing batch file {target_file_batch} completed")
+
+
+def save_to_new_file(df: pd.DataFrame, file_path: str, sep: str = ",") -> None:
+    logging.info(f"Saving data to target file.. {file_path} ...")
+    df.to_csv(file_path, index=False, sep=",")
+
+
+def append_batch_file(target_file_batch: str, target_file: str) -> None:
+
+    with open(target_file_batch, "r") as data_file:
+        with open(target_file, "a+") as target_file:
+            logging.info(f"Appending batch file {target_file_batch} to {target_file}")
+            target_file.write(data_file.read())
+            if os.path.exists(target_file_batch):
+                os.remove(target_file_batch)
 
 
 def download_blob(bucket, object, target_file):
@@ -236,8 +335,8 @@ def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
     df.rename(columns=rename_mappings, inplace=True)
 
 
-def save_to_new_file(df: pd.DataFrame, file_path: str) -> None:
-    df.to_csv(file_path, index=False)
+# def save_to_new_file(df: pd.DataFrame, file_path: str) -> None:
+#     df.to_csv(file_path, index=False)
 
 
 def download_file(source_url: str, source_file_zip_file: pathlib.Path) -> None:
@@ -279,7 +378,7 @@ if __name__ == "__main__":
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
         target_gcs_bucket=os.environ.get("TARGET_GCS_BUCKET", ""),
         target_gcs_path=os.environ.get("TARGET_GCS_PATH", ""),
-        csv_headers=json.loads(os.environ["CSV_HEADERS"]),
-        # rename_mappings=json.loads(os.environ["RENAME_MAPPINGS"]),
+        csv_headers=os.environ.get("CSV_HEADERS", ""),
+        chunksize=os.environ.get("CHUNKSIZE", ""),
         pipeline_name=os.environ.get("PIPELINE_NAME", ""),
     )
