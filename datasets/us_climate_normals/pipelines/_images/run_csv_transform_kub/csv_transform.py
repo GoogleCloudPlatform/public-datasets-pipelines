@@ -250,6 +250,7 @@ def process_file(
             data_file_surr_key_field = data_file_surr_key_field,
             data_file_surr_key_value = data_file_surr_key_value
         )
+    etl_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     with pd.read_csv(
         filepath,
         engine="python",
@@ -280,9 +281,9 @@ def process_file(
                 include_header=(chunk_number == 0),
                 truncate_file=(chunk_number == 0),
                 output_headers=input_headers,
-                pipeline_name=pipeline_name,
                 data_file_surr_key_field=data_file_surr_key_field,
                 data_file_surr_key_value=os.path.basename(filepath),
+                etl_timestamp=etl_timestamp
             )
             logging.info(
                 f"Processing chunk #{chunk_number} of file {process_year_month} completed"
@@ -319,69 +320,6 @@ def process_file(
     #         * format datetime in date fields
     #         * add metadata columns
     #     * rewrite/overwrite file back to original
-
-
-
-# def process_year_data(
-#     source_url: str,
-#     year_number: int,
-#     source_file: str,
-#     target_file: str,
-#     project_id: str,
-#     dataset_id: str,
-#     table_id: str,
-#     data_file_year_field: str,
-#     data_file_month_field: str,
-#     schema_path: str,
-#     chunksize: str,
-#     target_gcs_bucket: str,
-#     target_gcs_path: str,
-#     pipeline_name: str,
-#     input_headers: typing.List[str],
-#     data_dtypes: dict,
-#     output_headers: typing.List[str],
-# ) -> None:
-#     logging.info(f"Processing year {year_number}")
-#     destination_table = f"{table_id}_{year_number}"
-#     for month_number in range(1, 13):
-#         padded_month = str(month_number).zfill(2)
-#         process_year_month = f"{year_number}-{padded_month}"
-#         logging.info(f"Processing month {process_year_month}")
-#         month_data_already_loaded = table_has_month_data(
-#             project_id=project_id,
-#             dataset_id=dataset_id,
-#             table_name=destination_table,
-#             data_file_year_field=data_file_year_field,
-#             year_number=year_number,
-#             data_file_month_field=data_file_month_field,
-#             month_number=month_number,
-#         )
-#         if month_data_already_loaded:
-#             logging.info(f"{process_year_month} data is already loaded. Skipping.")
-#         else:
-#             target_file_name = str.replace(
-#                 target_file, ".csv", f"_{year_number}-{month_number}.csv"
-#             )
-#             process_month(
-#                 source_url=source_url,
-#                 year_number=year_number,
-#                 month_number=month_number,
-#                 source_file=source_file,
-#                 target_file=target_file,
-#                 project_id=project_id,
-#                 dataset_id=dataset_id,
-#                 table_id=destination_table,
-#                 target_file_name=target_file_name,
-#                 schema_path=schema_path,
-#                 chunksize=chunksize,
-#                 target_gcs_bucket=target_gcs_bucket,
-#                 target_gcs_path=target_gcs_path,
-#                 input_headers=input_headers,
-#                 data_dtypes=data_dtypes,
-#                 output_headers=output_headers,
-#                 pipeline_name=pipeline_name,
-#             )
-#     logging.info(f"Processing year {year_number} completed")
 
 
 def table_already_has_file_data(
@@ -544,107 +482,6 @@ def create_table_schema(
     return schema
 
 
-# def process_month(
-#     source_url: str,
-#     year_number: int,
-#     month_number: int,
-#     source_file: str,
-#     target_file: str,
-#     project_id: str,
-#     dataset_id: str,
-#     table_id: str,
-#     target_file_name: str,
-#     schema_path: str,
-#     chunksize: str,
-#     target_gcs_bucket: str,
-#     target_gcs_path: str,
-#     input_headers: typing.List[str],
-#     data_dtypes: dict,
-#     output_headers: typing.List[str],
-#     pipeline_name: str,
-# ) -> None:
-#     padded_month = str(month_number).zfill(2)
-#     process_year_month = f"{year_number}-{padded_month}"
-#     source_url_to_process = f"{source_url}{process_year_month}.parquet"
-#     source_parquet_file = str(source_file).replace(
-#         ".csv", f"_{process_year_month}.parquet"
-#     )
-#     source_file_to_process = str(source_file).replace(
-#         ".csv", f"_{process_year_month}.csv"
-#     )
-#     successful_download = download_file(source_url_to_process, source_parquet_file)
-#     if successful_download:
-#         try:
-#             df_parquet = pd.read_parquet(source_parquet_file)
-#         except BaseException as error:
-#             logging.info(f" ... Unable to obtain or read parquet file ... {error}")
-#             logging.info(f"Processing {process_year_month} failed")
-#         else:
-#             df_parquet.to_csv(source_file_to_process, sep="|", index=False)
-#             with pd.read_csv(
-#                 source_file_to_process,
-#                 engine="python",
-#                 encoding="utf-8",
-#                 quotechar='"',
-#                 chunksize=int(chunksize),
-#                 sep="|",
-#                 names=input_headers,
-#                 skiprows=1,
-#                 dtype=data_dtypes,
-#             ) as reader:
-#                 for chunk_number, chunk in enumerate(reader):
-#                     logging.info(
-#                         f"Processing chunk #{chunk_number} of file {process_year_month} started"
-#                     )
-#                     target_file_batch = str(target_file).replace(
-#                         ".csv", f"-{process_year_month}-{chunk_number}.csv"
-#                     )
-#                     df = pd.DataFrame()
-#                     df = pd.concat([df, chunk])
-#                     process_chunk(
-#                         df,
-#                         target_file_batch,
-#                         target_file_name,
-#                         month_number == 1 and chunk_number == 0,
-#                         month_number == 1 and chunk_number == 0,
-#                         output_headers,
-#                         pipeline_name,
-#                         year_number,
-#                         month_number,
-#                     )
-#                     logging.info(
-#                         f"Processing chunk #{chunk_number} of file {process_year_month} completed"
-#                     )
-#             if not table_exists(project_id, dataset_id, table_id):
-#                 # Destination able doesn't exist
-#                 create_dest_table(
-#                     project_id=project_id,
-#                     dataset_id=dataset_id,
-#                     table_id=table_id,
-#                     schema_filepath=schema_path,
-#                     bucket_name=target_gcs_bucket,
-#                 )
-#             load_data_to_bq(
-#                 project_id=project_id,
-#                 dataset_id=dataset_id,
-#                 table_id=table_id,
-#                 file_path=target_file_name,
-#                 field_delimiter="|",
-#             )
-#             upload_file_to_gcs(
-#                 file_path=target_file_name,
-#                 target_gcs_bucket=target_gcs_bucket,
-#                 target_gcs_path=str(target_gcs_path).replace(
-#                     ".csv", f"_{process_year_month}.csv"
-#                 ),
-#             )
-#             logging.info(f"Processing {process_year_month} completed")
-#     else:
-#         logging.info(
-#             f"Informational: The data file {target_file_name} was not generated because no data was available for year {year_number}.  Continuing."
-#         )
-
-
 def process_chunk(
     df: pd.DataFrame,
     target_file_batch: str,
@@ -652,29 +489,17 @@ def process_chunk(
     include_header: bool,
     truncate_file: bool,
     output_headers: typing.List[str],
-    pipeline_name: str,
-    year_number: int,
-    month_number: int,
+    data_file_surr_key_field: str,
+    data_file_surr_key_value: str,
+    etl_timestamp: str
 ) -> None:
-    if pipeline_name == "tlc_green_trips":
-        df["distance_between_service"] = ""
-        df["time_between_service"] = ""
-    df["data_file_year"] = year_number
-    df["data_file_month"] = month_number
-    df = format_date_time(df, "pickup_datetime", "strftime", "%Y-%m-%d %H:%M:%S")
-    df = format_date_time(df, "dropoff_datetime", "strftime", "%Y-%m-%d %H:%M:%S")
-    df["passenger_count"] = df["passenger_count"].apply(lambda x: str(int(float(str(x)))) if str(x).replace('.', '', 1).isdigit() else "")
-    df = remove_null_rows(df)
+    df = format_date_time(df, "date", "strftime", "%Y-%m-%d %H:%M:%S")
+    df["etl_timestamp"] = etl_timestamp
+    df[data_file_surr_key_field] = data_file_surr_key_value
     df = df[output_headers]
     save_to_new_file(df, file_path=str(target_file_batch))
     append_batch_file(target_file_batch, target_file, include_header, truncate_file)
     logging.info(f"Processing Batch {target_file_batch} completed")
-
-
-def remove_null_rows(df: pd.DataFrame) -> pd.DataFrame:
-    logging.info("Removing Null rows... ")
-    df = df.dropna(axis=0, subset=["vendor_id"])
-    return df
 
 
 def format_date_time(
