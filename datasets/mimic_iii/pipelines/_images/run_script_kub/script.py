@@ -22,9 +22,13 @@ from google.cloud import bigquery_datatransfer_v1
 from google.protobuf.timestamp_pb2 import Timestamp
 
 RETRY_DELAY = 10
+
+
 class TimeoutError(Exception):
     """Raised when the BQ transfer jobs haven't all finished within the allotted time"""
+
     pass
+
 
 def main(
     source_project_id: str,
