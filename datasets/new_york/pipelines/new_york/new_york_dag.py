@@ -36,7 +36,7 @@ with DAG(
         project_id="{{ var.value.gcp_project }}",
         location="us-central1-c",
         body={
-            "name": "new-york",
+            "name": "pubds-new-york",
             "initial_node_count": 4,
             "network": "{{ var.value.vpc_network }}",
             "ip_allocation_policy": {"cluster_ipv4_cidr_block": "/26"},
@@ -56,7 +56,7 @@ with DAG(
         name="311_service_requests",
         project_id="{{ var.value.gcp_project }}",
         location="us-central1-c",
-        cluster_name="new-york",
+        cluster_name="pubds-new-york",
         namespace="default",
         image_pull_policy="Always",
         image="{{ var.json.new_york.container_registry.run_csv_transform_kub_ny_311_service_requests }}",
@@ -87,7 +87,7 @@ with DAG(
         name="citibike_stations",
         project_id="{{ var.value.gcp_project }}",
         location="us-central1-c",
-        cluster_name="new-york",
+        cluster_name="pubds-new-york",
         namespace="default",
         image_pull_policy="Always",
         image="{{ var.json.new_york.container_registry.run_csv_transform_kub_citibike_stations }}",
@@ -122,7 +122,7 @@ with DAG(
         name="nypd_mv_collisions",
         project_id="{{ var.value.gcp_project }}",
         location="us-central1-c",
-        cluster_name="new-york",
+        cluster_name="pubds-new-york",
         namespace="default",
         image_pull_policy="Always",
         image="{{ var.json.new_york.container_registry.run_csv_transform_kub_nypd_mv_collisions }}",
@@ -156,7 +156,7 @@ with DAG(
         name="tree_census_1995",
         project_id="{{ var.value.gcp_project }}",
         location="us-central1-c",
-        cluster_name="new-york",
+        cluster_name="pubds-new-york",
         namespace="default",
         image_pull_policy="Always",
         image="{{ var.json.new_york.container_registry.run_csv_transform_kub_tree_census_1995 }}",
@@ -182,7 +182,7 @@ with DAG(
         task_id="delete_cluster",
         project_id="{{ var.value.gcp_project }}",
         location="us-central1-c",
-        name="new-york",
+        name="pubds-new-york",
     )
 
     (
