@@ -270,7 +270,6 @@ def process_chunk(
         append_batch_file(
             target_file_batch, target_file, skip_header, not (skip_header)
         )
-
     logging.info(f"Processing batch file {target_file_batch} completed")
 
 
@@ -335,7 +334,6 @@ def create_new_timestamp_column(
             + "00"
             + " UTC"
         )
-
     return df
 
 
