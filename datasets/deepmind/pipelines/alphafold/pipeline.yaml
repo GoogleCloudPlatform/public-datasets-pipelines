@@ -31,9 +31,9 @@ dag:
 
   tasks:
     - operator: "CloudDataTransferServiceGCSToGCSOperator"
-      description: "Copy JSON metadata and FASTA to public bucket"
+      description: "Copy JSON metadata, accession IDs, and FASTA to public bucket"
       args:
-        task_id: copy_json_metadata_and_fasta_to_public_bucket
+        task_id: copy_json_metadata_accession_and_fasta_to_public_bucket
         timeout: 43200  # 12 hours
         retries: 0
         wait: True
@@ -41,7 +41,7 @@ dag:
         source_bucket: "{{ var.json.deepmind.alphafold.source_bucket }}"
         destination_bucket: "{{ var.json.deepmind.alphafold.destination_bucket }}"
         object_conditions:
-          includePrefixes: ["metadata", "sequences.fasta"]
+          includePrefixes: ["metadata", "accession_ids.csv", "sequences.fasta"]
         transfer_options:
           overwriteWhen: DIFFERENT
           deleteObjectsUniqueInSink: True
@@ -279,7 +279,7 @@ dag:
             type: STRING
 
   graph_paths:
-    - "[copy_json_metadata_and_fasta_to_public_bucket, copy_proteomes_to_public_bucket] >> load_json_metadata_to_bq"
+    - "[copy_json_metadata_accession_and_fasta_to_public_bucket, copy_proteomes_to_public_bucket] >> load_json_metadata_to_bq"
     - "download_accession_ids_to_composer_bucket >> generate_manifests >> [suffix_confidence_v3_json, suffix_model_v3_cif, suffix_predicted_aligned_error_v3_json]"
     - "[suffix_confidence_v3_json, suffix_model_v3_cif, suffix_predicted_aligned_error_v3_json] >> create_and_run_sts_jobs_using_manifests"
     - "create_and_run_sts_jobs_using_manifests >> [copy_manifests_to_public_bucket, load_json_metadata_to_bq]"
