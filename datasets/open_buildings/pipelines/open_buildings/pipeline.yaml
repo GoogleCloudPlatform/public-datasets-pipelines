@@ -30,13 +30,11 @@ dag:
     default_view: graph
 
   tasks:
-
     - operator: "BashOperator"
       description: "Fetch data gcs - gcs"
       args:
         task_id: "bash_gcs_to_gcs"
         bash_command: "gsutil cp -R gs://open-buildings-data/v1/polygons_s2_level_4_gzip gs://us-central1-dev-v2-cd7f5f38-bucket/data/open_buildings/source_files/"
-
     - operator: "BashOperator"
       description: "Unzip data"
       args:
@@ -69,7 +67,6 @@ dag:
           gunzip -v -k /home/airflow/gcs/data/open_buildings/source_files/polygons_s2_level_4_gzip/0fb_buildings.csv.gz ;
           gunzip -v -k /home/airflow/gcs/data/open_buildings/source_files/polygons_s2_level_4_gzip/0fd_buildings.csv.gz ;
           gunzip -v -k /home/airflow/gcs/data/open_buildings/source_files/polygons_s2_level_4_gzip/0ff_buildings.csv.gz ; "
-
     - operator: "BashOperator"
       description: "Unzip data"
       args:
@@ -102,7 +99,6 @@ dag:
           gunzip -v -k /home/airflow/gcs/data/open_buildings/source_files/polygons_s2_level_4_gzip/13d_buildings.csv.gz ;
           gunzip -v -k /home/airflow/gcs/data/open_buildings/source_files/polygons_s2_level_4_gzip/141_buildings.csv.gz ;
           gunzip -v -k /home/airflow/gcs/data/open_buildings/source_files/polygons_s2_level_4_gzip/143_buildings.csv.gz ; "
-
     - operator: "BashOperator"
       description: "Unzip data"
       args:
@@ -135,7 +131,6 @@ dag:
           gunzip -v -k /home/airflow/gcs/data/open_buildings/source_files/polygons_s2_level_4_gzip/185_buildings.csv.gz ;
           gunzip -v -k /home/airflow/gcs/data/open_buildings/source_files/polygons_s2_level_4_gzip/189_buildings.csv.gz ;
           gunzip -v -k /home/airflow/gcs/data/open_buildings/source_files/polygons_s2_level_4_gzip/18b_buildings.csv.gz ; "
-
     - operator: "BashOperator"
       description: "Unzip data"
       args:
@@ -168,7 +163,6 @@ dag:
           gunzip -v -k /home/airflow/gcs/data/open_buildings/source_files/polygons_s2_level_4_gzip/1e5_buildings.csv.gz ;
           gunzip -v -k /home/airflow/gcs/data/open_buildings/source_files/polygons_s2_level_4_gzip/1e7_buildings.csv.gz ;
           gunzip -v -k /home/airflow/gcs/data/open_buildings/source_files/polygons_s2_level_4_gzip/1e9_buildings.csv.gz ; "
-
     - operator: "BashOperator"
       description: "Unzip data"
       args:
@@ -201,7 +195,6 @@ dag:
           gunzip -v -k /home/airflow/gcs/data/open_buildings/source_files/polygons_s2_level_4_gzip/3d9_buildings.csv.gz ;
           gunzip -v -k /home/airflow/gcs/data/open_buildings/source_files/polygons_s2_level_4_gzip/3db_buildings.csv.gz ;
           gunzip -v -k /home/airflow/gcs/data/open_buildings/source_files/polygons_s2_level_4_gzip/b5b_buildings.csv.gz ; "
-
     - operator: "KubernetesPodOperator"
       description: "ETL within the kubernetes pod"
       args:

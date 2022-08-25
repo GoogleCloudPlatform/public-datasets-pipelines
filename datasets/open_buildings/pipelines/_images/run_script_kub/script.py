@@ -7,9 +7,7 @@ from google.cloud import bigquery, storage
 
 
 def main(source_gcs_path, project_id, dataset_id, gcs_bucket, schema_filepath) -> None:
-
     source_file_names = fetch_gcs_file_names(source_gcs_path, gcs_bucket)
-
     for each_file in source_file_names:
         pipeline_name = each_file
         table_id = each_file[:-4]
@@ -25,7 +23,6 @@ def main(source_gcs_path, project_id, dataset_id, gcs_bucket, schema_filepath) -
         )
         logging.info(f"Finished process for {pipeline_name}")
         print()
-
     logging.info("Cleaning up extracted csv files in GCS. Source csv.gz files present.")
     cleanup(gcs_bucket, source_gcs_path)
 
@@ -51,7 +48,6 @@ def execute_pipeline(
     schema_filepath,
 ):
     logging.info(f"ETL started for {pipeline_name}")
-
     client = storage.Client()
     blob = client.list_blobs(gcs_bucket, prefix=source_gcs_path + pipeline_name)
     if blob:
@@ -105,7 +101,6 @@ def create_dest_table(
         logging.info(
             f"Table {table_ref} currently does not exist.  Attempting to create table."
         )
-
         if schema_filepath:
             schema = create_table_schema(schema_filepath)
             table = bigquery.Table(table_ref, schema=schema)
