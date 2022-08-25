@@ -1,0 +1,626 @@
+[
+	{
+		"name": "state_number",
+		"type": "integer",
+		"description": "This data element identifies the state in which the crash occurred. The codes are from the General Services Administration’s (GSA) publication of worldwide Geographic Location Codes (GLC). For more info on the codes, please look at <C1/V1/D1/PC1/P1/NM1 State Number> section in the pdf: https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/812315",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "state_name",
+		"type": "string",
+		"description": "This data element identifies the state in which the crash occurred. The codes are from the General Services Administration’s (GSA) publication of worldwide Geographic Location Codes (GLC).",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "consecutive_number",
+		"type": "integer",
+		"description": "This data element is the unique case number assigned to each crash. It appears on each data file and is used to merge information from the data files together. xxxxxx Two Characters for State Code followed by Four Characters for Case Number",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "vehicle_number",
+		"type": "integer",
+		"description": "This data element is the consecutive number assigned to each vehicle in the case. This data element appears on each vehicle level data file and is used in conjunction with the ST_CASE data element to merge information from vehicle level data files. 000-999 Assigned Number of Motor Vehicle",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "vehicle_make",
+		"type": "string",
+		"description": "Contains the Polk standardized abbreviation for the OEM's vehicle make. The vehicle make generally contains what the general public usually considers to be a vehicle brand name, for example, Chrysler, Dodge, Ford, Mercury, Toyota, GMC, Chevy, etc.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "marketing_year",
+		"type": "integer",
+		"description": "The marketing year defined by the OEM within which the vehicle was produced. The value contained in this attribute may not always match the calendar year in which the vehicle was actually manufactured. Many OEMs release models prior to calendar year.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "vehicle_type_code",
+		"type": "string",
+		"description": "A Polk assigned code that defines the type of a vehicle represented by a specific VIN. For example: M,P,C or T.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "vehicle_type",
+		"type": "string",
+		"description": "The description of the Polk assigned code for the vehicle type code. For example: passenger, truck, motorcycle, commercial trailer.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "make_name",
+		"type": "string",
+		"description": "(Make- Name) Full name of the make (i.e. Chevrolet)",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "model_code",
+		"type": "string",
+		"description": "(Model Code) description",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "vehicle_trim",
+		"type": "string",
+		"description": "The Trim of the vehicle",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "vehicle_trim_1",
+		"type": "string",
+		"description": "The trim of the vehicle. This field is used when a VIN Pattern could have more than 1 trim assigned.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "vehicle_trim_2",
+		"type": "string",
+		"description": "The trim of the vehicle. This field is used when a VIN Pattern could have more than 2 trims assigned.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "vehicle_trim_3",
+		"type": "string",
+		"description": "The trim of the vehicle. This field is used when a VIN Pattern could have more than 3 trims assigned.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "vehicle_trim_4",
+		"type": "string",
+		"description": "The trim of the vehicle. This field is used when a VIN Pattern could have more than 4 trims assigned.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "body_style_code",
+		"type": "string",
+		"description": "A Polk assigned code that describes the body style of the vehicle. For example, CP=Coupe.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "body_style",
+		"type": "string",
+		"description": "The description of the Polk assigned code Body Style Code For example: Coupe",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "num_of_doors",
+		"type": "integer",
+		"description": "The number of doors the vehicle has",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "number_of_wheels",
+		"type": "integer",
+		"description": "The number of wheel ends on the vehicle. For example in a 6x4 configuration this would be the 6.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "num_of_wheels_by_power_train",
+		"type": "integer",
+		"description": "Number of wheels driven by the power train. For example in a 6x4 configuration this would be the 4.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "vehicle_manufacturer_code",
+		"type": "string",
+		"description": "(Vehicle Manufacturer Name) Standard abbreviation of the name of the vehicle manufacturer, i.e. General Motors, as defined by the National Crime Information Center",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "vehicle_manufacturer_name",
+		"type": "string",
+		"description": "(Vehicle Manufacturer Name) The name of the vehicle manufacturer, i.e. General Motors, as defined by the National Crime Information Center",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "displacement_cid",
+		"type": "integer",
+		"description": "(Displacement CID) displacement in cubic inches. This is a rounded, marketing value, like 302 cubic inches, instead of 4967 cc.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "displacement_cc",
+		"type": "integer",
+		"description": "(Displacement CC) displacement in cubic centimeters. We intend to use this as the definitive, exact displacement value, i.e. 4967 cc.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "cylinder_count_code",
+		"type": "string",
+		"description": "Contains a code that represents the number of cylinders a vehicle's combustion engine can have.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "cycle_count",
+		"type": "integer",
+		"description": "(Cycle Count) Refers to the cycle or stroke of an engine. 2-strokes are lightweight and simpler, but they burn oil, by design. Few cars on the road in North America are two-strokes, the last one offered was a 1967 Saab.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "fuel_code",
+		"type": "string",
+		"description": "(Fuel) What an internal combustion burns to move a piston in a cylinder",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "fuel",
+		"type": "string",
+		"description": "(Fuel) description",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "type_of_fuel_code",
+		"type": "string",
+		"description": "The type of fuel injection",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "type_of_fuel",
+		"type": "string",
+		"description": "The type of fuel injection used by a vehicle. For example, Direct, Throttle body",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "carburetion_types_code",
+		"type": "string",
+		"description": "Carburetion types include 'Carburetor', 'Fuel Injection', N/A",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "carburetion_types",
+		"type": "string",
+		"description": "The description of the Polk assigned code which identifies the vehicle carburetion type. For example Carburetor, Fuel Injection, Unknown or Electric.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "num_of_barrels",
+		"type": "string",
+		"description": "The number of barrels on a carbureted engine.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "gross_vehicle_weights_range_code",
+		"type": "integer",
+		"description": "Contains a code that identifies the Polk standard groupings of gross vehicle weights to which a vehicle may belong. This information is typically captured only for trucks.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "gross_vehicle_weights_range",
+		"type": "string",
+		"description": "The description for the manufacturers assigned Gross Vehicle Weight (GVW) for trucks. This rating may or may not equal the actual GVW.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "distance_between_axles_for_base_model",
+		"type": "float",
+		"description": "Contains the distance between the front and rear axles of a vehicle in inches of the base model of the vehicle.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "distance_between_axles_for_particular_series",
+		"type": "string",
+		"description": "Contains the longest distance between the front and rear axles of a vehicle in inches for a particular series of that vehicle.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "front_tire",
+		"type": "integer",
+		"description": "(Front Tire) More specific tire description (ex. Michelin Eagle P245/40ZR)",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "front_tire_pressure",
+		"type": "integer",
+		"description": "(Front Tire Pressure) Vehicle Mfr. recommendation for tire pressure, in pounds/sq. in.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "front_tire_size_code",
+		"type": "string",
+		"description": "Describes the size of the front tire. For example '17R245'",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "front_tire_size",
+		"type": "string",
+		"description": "(Front Tire Size Description) As in '17R245'",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "rear_tire",
+		"type": "integer",
+		"description": "(Rear Tire) More specific tire description (ex. Michelin Eagle P245/40ZR)",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "rear_tire_pressure",
+		"type": "integer",
+		"description": "(Rear Tire Pressure) Vehicle Mfr. recommendation for tire pressure, in pounds/sq. in.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "rear_tire_size_code",
+		"type": "string",
+		"description": "The size of the rear tires. example '17R245'",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "rear_tire_size",
+		"type": "string",
+		"description": "(Rear Tire Size Description) As in '17R245'",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "tonnage_rating",
+		"type": "string",
+		"description": "(Tonnage Rating) description",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "shipping_weight",
+		"type": "string",
+		"description": "Contains the base weight of the vehicle, rounded to the nearest one hundred pounds, as defined in the OEM's specifications. The base weight of a vehicle is the empty weight of the base model of the vehicle (i.e., the stripped down version of the vehicle)",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "base_price",
+		"type": "string",
+		"description": "Contains the base price of the vehicle as designated by the OEM's specifications. BASE PRICE includes only the price for the base model of the vehicle, excluding any optional equipment that may have been added as a result of the vehicle's TRIM LEVEL.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "drive_type_1",
+		"type": "string",
+		"description": "(Drive Type) This element describes type of driving configuration for cars and trucks such as FWD, AWD, RWD.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "drive_type_2",
+		"type": "string",
+		"description": "(Drive Type) description",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "country_sold_code",
+		"type": "string",
+		"description": "(Country Sold / Specific Market) Country where the vehicle is planned to be sold (may have different emissions standards).",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "country_sold",
+		"type": "string",
+		"description": "(Country Sold / Specific Market) description",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "brakes_abs_code",
+		"type": "string",
+		"description": "(Brakes- ABS Code) A code that describes whether a vehicle has or does not have anti-lock brakes, and what kind of brakes they are. (Not coded for heavy truck). This is based on the series code that is assigned the vehicle from VINA.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "brakes_abs_description",
+		"type": "string",
+		"description": "(Brakes- ABS Code) description",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "security_type_code",
+		"type": "string",
+		"description": "(Security Type) Describes the security system (if any) installed on this model.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "security_type",
+		"type": "string",
+		"description": "(Security Type) description",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "daytime_running_lights_1",
+		"type": "string",
+		"description": "(Daytime Running Lights)A Polk assigned code that identifies whether or not the vehicle has daytime running lights.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "daytime_running_lights_2",
+		"type": "string",
+		"description": "(Daytime Running Lights) description",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "restraint_type_code",
+		"type": "string",
+		"description": "(Restraint Type) A Polk assigned code that identifies the type of restraints that a vehicle has based on VIN.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "restraint_type",
+		"type": "string",
+		"description": "(Restraint Type) description",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "cab_configuration_code",
+		"type": "string",
+		"description": "(Cab Configuration) Cab Type describes the physical configuration of a truck's cabin.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "cab_configuration",
+		"type": "string",
+		"description": "(Cab Configuration) medium description",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "axle_type_front_axle_code",
+		"type": "string",
+		"description": "(Axle- Type, Front Axle) The location of the front axle of a truck tractor. Set forward increases stability on the highway, Setback increases maneuverability in tight spaces.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "axle_type_front_axle",
+		"type": "string",
+		"description": "(Axle- Type, Front Axle) short description",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "axle_type_rear_axle_code",
+		"type": "string",
+		"description": "(Axle- Type, Rear Axle) Represents rear axle configuration on a truck tractor. Tandem axles increase load bearing capability.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "axle_type_rear_axle",
+		"type": "string",
+		"description": "(Axle- Type, Rear Axle) short description",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "brake_type_code",
+		"type": "string",
+		"description": "(Brake Type) The type of brakes on the Vehicle (currently commercial truck only). Truck VIN determines this currently",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "brake_type",
+		"type": "string",
+		"description": "(Brake Type) description",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "engine_manufacture_code",
+		"type": "string",
+		"description": "(Mfr.) A Polk assigned code given to the original equipment manufacture of the within a vehicle",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "engine_manufacture",
+		"type": "string",
+		"description": "(Mfr.) description",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "engine_model",
+		"type": "string",
+		"description": "(Model) description",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "duty_type_code",
+		"type": "string",
+		"description": "(Duty Type) A Polk assigned code that represents the duty type of a truck engine, based on manufacturer information.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "duty_type",
+		"type": "string",
+		"description": "(Duty Type) medium description",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "bed_length_code",
+		"type": "string",
+		"description": "(Bed Length) Code representing the manufacturer's description of the relative size of the cargo area of a pickup truck or van. A 'long' Ford Ranger bed (compact pickup) may well be shorter than a 'short' bed on an F350 (large industrial pickup).",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "bed_length",
+		"type": "string",
+		"description": "(Bed Length) description",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "standard_segmentation_code",
+		"type": "string",
+		"description": "The Polk standard segmentation code",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "standard_segmentation",
+		"type": "string",
+		"description": "Description of SEGMENTATION_CODE that represents the Polk Standard Segmentation applied.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "plant_code",
+		"type": "string",
+		"description": "(Plant Code) Plant code where vehicle was manufactured.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "plant_country",
+		"type": "string",
+		"description": "(Country) This is the country where the plant is located. Example values are USA, Canada and Japan.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "plant_city",
+		"type": "string",
+		"description": "(City) This is the city where the plant is located.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "plant_country_code",
+		"type": "string",
+		"description": "A code representing the country the plant is in.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "plant_state_code",
+		"type": "string",
+		"description": "A code representing the state or province the plant is in.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "plant_state",
+		"type": "string",
+		"description": "(State or Province) This is the state or province (Canada) location of the plant.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "origin_code",
+		"type": "string",
+		"description": "(Origin) A code that indicates the origin of a vehicle.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "origin",
+		"type": "string",
+		"description": "(Origin) description",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "displacement_liters",
+		"type": "float",
+		"description": "(Displacement Liters) displacement in rounded Liters, where 1,000 cubic centimeters = 1 liter. Even domestic makes will advertise displacement in terms of liters (e.g. 5.0 liter mustang, which equates to a 302 CID or 4967 cc displacement).",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "block_type",
+		"type": "string",
+		"description": "(Block Type) Description",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "head_configuration_1",
+		"type": "string",
+		"description": "(Head Configuration) Describes the cylinder head's camshaft/valve configuration.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "head_configuration_2",
+		"type": "string",
+		"description": "(Head Configuration) description",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "valves_per_cylinder",
+		"type": "integer",
+		"description": "(Valves Per Cylinder) Number of intake/exhaust valves per cylinder.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "valves_total",
+		"type": "integer",
+		"description": "(Valves Total) Total number of intake/exhaust valves.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "engine_code",
+		"type": "string",
+		"description": "(Code) Code derived from the VIN (not the secondary VIN for a motorcycle). Usually a single character, some manufactures give full positions 4-8 and engine information from that; they do not break it down any further.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "is_incomplete",
+		"type": "string",
+		"description": "Indicator that signifies whether the vehicle is consider 'incomplete' (Y/N)",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "battery_type_code",
+		"type": "string",
+		"description": "A value that identifies the kind of battery in the vehicle. For example: PbA- Lead Acid, NMH- Nickel Metal Hydride.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "battery_type",
+		"type": "string",
+		"description": "The description of the Polk assigned code for the Battery Type Code. For example: PbA- Lead Acid, NMH- Nickel Metal Hydride.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "total_battery_power",
+		"type": "string",
+		"description": "The measure of total battery power expressed in kilowatts. For example: 71KW, 85KW, 75KW, 67KW.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "battery_voltage",
+		"type": "string",
+		"description": "The voltage rating of the battery as provided by the manufacturer.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "supercharge_flag",
+		"type": "string",
+		"description": "Indicates if the engine has a supercharger or not.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "supercharge_flag_description",
+		"type": "string",
+		"description": "Indicates if the engine has a supercharger or not. Yes, No or Unknown.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "turbocharger_flag",
+		"type": "string",
+		"description": "Indicates if the engine has a turbocharger",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "turbocharger_flag_description",
+		"type": "string",
+		"description": "Indicates if the engine has a turbocharger. Yes, No or Unknown.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "variable_valve_timing_flag",
+		"type": "string",
+		"description": "Used to determine if a car has Variable Valve Timing",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "motorcycles_body_style_code",
+		"type": "string",
+		"description": "A further breakdown of body style for motorcycles to indicate if is it On-Road or Off-Road.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "motorcycles_body_style",
+		"type": "string",
+		"description": "A further breakdown of body style for motorcycles to indicate if is it On-Road or Off-Road.",
+		"mode": "NULLABLE"
+	}
+]
