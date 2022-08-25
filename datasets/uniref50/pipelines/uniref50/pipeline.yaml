@@ -29,7 +29,7 @@ dag:
       depends_on_past: False
       start_date: '2022-06-10'
     max_active_runs: 1
-    schedule_interval: "@weekly"
+    schedule_interval: "@once"
     catchup: False
     default_view: graph
 

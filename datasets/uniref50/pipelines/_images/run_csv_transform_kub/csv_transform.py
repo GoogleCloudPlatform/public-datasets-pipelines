@@ -38,7 +38,6 @@ def main(
     target_gcs_bucket: str,
     target_gcs_path: str,
 ) -> None:
-
     logging.info(f"{pipeline_name} process started")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
     execute_pipeline(
@@ -72,7 +71,6 @@ def execute_pipeline(
     target_gcs_bucket: str,
     target_gcs_path: str,
 ) -> None:
-
     download_blob(source_gcs_bucket, source_gcs_object, source_file)
     process_source_file(
         source_file=source_file,
