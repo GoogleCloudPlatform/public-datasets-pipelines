@@ -22,13 +22,9 @@ from google.cloud import bigquery_datatransfer_v1
 from google.protobuf.timestamp_pb2 import Timestamp
 
 RETRY_DELAY = 10
-
-
 class TimeoutError(Exception):
     """Raised when the BQ transfer jobs haven't all finished within the allotted time"""
-
     pass
-
 
 def main(
     source_project_id: str,
@@ -42,7 +38,6 @@ def main(
     existing_config = find_existing_config(
         client, target_project_id, transfer_config_name
     )
-
     if not existing_config:
         existing_config = create_transfer_config(
             client,
@@ -52,7 +47,6 @@ def main(
             target_bq_dataset,
             transfer_config_name,
         )
-
     trigger_config(client, existing_config)
     wait_for_completion(client, existing_config, timeout)
 
@@ -67,7 +61,6 @@ def find_existing_config(
             parent=f"projects/{gcp_project}"
         )
     )
-
     return next(
         (
             config
@@ -84,21 +77,16 @@ def wait_for_completion(
     timeout: int,
 ) -> None:
     _start = int(time.time())
-
     while True:
         latest_runs = []
         latest_runs.append(latest_transfer_run(client, running_config))
-
         logging.info(f"States: {[str(run.state) for run in latest_runs]}")
-
         # Mark as complete when all runs have succeeded
         if all([str(run.state) == "TransferState.SUCCEEDED" for run in latest_runs]):
             return
-
         # Stop the process when it's longer than the allotted time
         if int(time.time()) - _start > timeout:
             raise TimeoutError
-
         time.sleep(RETRY_DELAY)
 
 
@@ -132,12 +120,10 @@ def create_transfer_config(
             disable_auto_scheduling=True
         ),
     )
-
     request = bigquery_datatransfer_v1.types.CreateTransferConfigRequest(
         parent=client.common_project_path(target_project_id),
         transfer_config=transfer_config,
     )
-
     return client.create_transfer_config(request=request)
 
 
@@ -148,7 +134,6 @@ def trigger_config(
     now = time.time()
     seconds = int(now)
     nanos = int((now - seconds) * pow(10, 9))
-
     try:
         client.start_manual_transfer_runs(
             request=bigquery_datatransfer_v1.types.StartManualTransferRunsRequest(
@@ -165,7 +150,6 @@ def trigger_config(
 
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
-
     main(
         source_project_id=os.environ["SOURCE_PROJECT_ID"],
         source_bq_dataset=os.environ["SOURCE_BQ_DATASET"],
