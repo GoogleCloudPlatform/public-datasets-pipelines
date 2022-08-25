@@ -18,7 +18,7 @@
 resource "google_bigquery_dataset" "imdb" {
   dataset_id  = "imdb"
   project     = var.project_id
-  description = "aclImdb_v1 dataset"
+  description = "It consistes of reviews dataset along with all IMDb interfaces(7 - datasets)."
 }
 
 output "bigquery_dataset-imdb-dataset_id" {

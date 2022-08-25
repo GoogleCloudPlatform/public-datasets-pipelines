@@ -35,7 +35,7 @@
     "mode": "NULLABLE"
   },
   {
-    "name": "hcn_cm_flag",
+    "name": "hcn_crn_flag",
     "type": "STRING",
     "mode": "NULLABLE"
   },
