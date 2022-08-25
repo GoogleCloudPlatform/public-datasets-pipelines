@@ -128,7 +128,7 @@ dag:
               "hly-wind-vctdir","hly-wind-vctdir_attributes",
               "hly-wind-vctspd","hly-wind-vctspd_attributes" ]
           DATA_DTYPE: >-
-            [ "station": "str", "date": "datetime64[ns]",
+            { "station": "str", "date": "datetime64[ns]",
               "latitude": "float64", "longitude": "float64",
               "elevation": "float64", "name": "str",
               "hly-cldh-normal": "str", "hly-cldh-normal_attributes": "int64",
@@ -156,8 +156,34 @@ dag:
               "hly-wind-avgspd": "str","hly-wind-avgspd_attributes": "int64",
               "hly-wind-pctclm": "str","hly-wind-pctclm_attributes": "int64",
               "hly-wind-vctdir": "str","hly-wind-vctdir_attributes": "int64",
-              "hly-wind-vctspd": "str","hly-wind-vctspd_attributes": "int64" ]
-
+              "hly-wind-vctspd": "str","hly-wind-vctspd_attributes": "int64" }
+          INT_COL_LIST: >-
+            [ "hly-cldh-normal_attributes",
+              "hly-clod-pctbkn_attributes",
+              "hly-clod-pctclr_attributes",
+              "hly-clod-pctfew_attributes",
+              "hly-clod-pctovc_attributes",
+              "hly-clod-pctsct_attributes",
+              "hly-dewp-10pctl_attributes",
+              "hly-dewp-90pctl_attributes",
+              "hly-dewp-normal_attributes",
+              "hly-hidx-normal_attributes",
+              "hly-htdh-normal_attributes",
+              "hly-pres-10pctl_attributes",
+              "hly-pres-90pctl_attributes",
+              "hly-pres-normal_attributes",
+              "hly-temp-10pctl_attributes",
+              "hly-temp-90pctl_attributes",
+              "hly-temp-normal_attributes",
+              "hly-wchl-normal_attributes",
+              "hly-wind-1stdir_attributes",
+              "hly-wind-1stpct_attributes",
+              "hly-wind-2nddir_attributes",
+              "hly-wind-2ndpct_attributes",
+              "hly-wind-avgspd_attributes",
+              "hly-wind-pctclm_attributes",
+              "hly-wind-vctdir_attributes",
+              "hly-wind-vctspd_attributes" ]
           # SOURCE_FILE: "files/data_green_trips.csv"
           # TARGET_FILE: "files/data_output_green_trips.csv"
           # DATA_FILE_YEAR_FIELD: "data_file_year"

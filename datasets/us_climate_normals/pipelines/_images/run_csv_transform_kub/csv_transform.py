@@ -14,6 +14,7 @@
 
 import json
 import logging
+import math
 import os
 import pathlib
 import typing
@@ -45,7 +46,8 @@ def main(
     pipeline_name: str,
     chunksize: str,
     input_headers: typing.List[str],
-    data_dtypes: typing.List[str]
+    data_dtypes: dict,
+    int_col_list: typing.List[str]
 ) -> None:
     logging.info(f"{pipeline_name} process started")
     execute_pipeline(
@@ -68,7 +70,8 @@ def main(
         pipeline_name = pipeline_name,
         chunksize = chunksize,
         input_headers = input_headers,
-        data_dtypes = data_dtypes
+        data_dtypes = data_dtypes,
+        int_col_list = int_col_list
     )
     logging.info(f"{pipeline_name} process completed")
 
@@ -93,7 +96,8 @@ def execute_pipeline(
     pipeline_name: str,
     chunksize: str,
     input_headers: typing.List[str],
-    data_dtypes: typing.List[str]
+    data_dtypes: dict,
+    int_col_list: typing.List[str]
 ) -> None:
     for folder in data_root_folder:
         root_gs_bucket_folder = f"gs://{source_bucket}"
@@ -111,12 +115,14 @@ def execute_pipeline(
             table_name = current_data_table_id,
             schema_filepath = schema_filepath,
             target_gcs_bucket = target_gcs_bucket,
+            target_gcs_path = current_data_target_gcs_path,
             data_file_surr_key_field = data_file_surr_key_field,
             source_gs_folder = source_gs_folder,
             dest_folder = new_dest_current_data_folder_name,
             chunksize = chunksize,
             input_headers = input_headers,
-            data_dtypes = data_dtypes
+            data_dtypes = data_dtypes,
+            int_col_list = int_col_list
         )
 
 
@@ -164,25 +170,24 @@ def process_data(
     table_name: str,
     schema_filepath: str,
     target_gcs_bucket: str,
+    target_gcs_path: str,
     data_file_surr_key_field: str,
     source_gs_folder: str,
     dest_folder: str,
     chunksize: str,
     input_headers: typing.List[str],
-    data_dtypes: typing.List[str]
+    data_dtypes: dict,
+    int_col_list: typing.List[str]
 ) -> None:
-
-    # download_folder_contents(
-    #     project_id = project_id,
-    #     source_gcs_folder_path = source_gs_folder,
-    #     destination_folder = dest_folder,
-    #     file_type = "csv"
-    # )
-
-    # * for each file in {dest_folder}\*.csv:
-    for filename in os.listdir(dest_folder):
+    download_folder_contents(
+        project_id = project_id,
+        source_gcs_folder_path = source_gs_folder,
+        destination_folder = dest_folder,
+        file_type = "csv"
+    )
+    for filename in sorted(os.listdir(dest_folder)):
         filepath = os.path.join(dest_folder, filename)
-        if os.path.isfile(filepath):
+        if os.path.isfile(filepath) and filepath.endswith(".csv"):
             process_file(
                 filepath=filepath,
                 project_id = project_id,
@@ -190,25 +195,15 @@ def process_data(
                 table_name = table_name,
                 schema_path = schema_filepath,
                 target_gcs_bucket = target_gcs_bucket,
+                target_gcs_path = target_gcs_path,
                 data_file_surr_key_field = data_file_surr_key_field,
                 data_file_surr_key_value = filename,
                 chunksize = chunksize,
                 input_headers = input_headers,
-                data_dtypes = data_dtypes
+                data_dtypes = data_dtypes,
+                int_col_list = int_col_list
             )
 
-    import pdb; pdb.set_trace()
-
-    # storage_client = storage.Client(project_id)
-    # bucket_name = str.split(source_gs_folder, "gs://")[1].split("/")[0]
-    # bucket = storage_client.bucket(bucket_name)
-    # bucket.list_blobs()
-    # download_file_gcs(
-    #     project_id = project_id,
-    #     source_location = source_gs_folder,
-    #     destination_folder = dest_folder
-    # )
-    #    {source_gs_folder}/*.csv -> dest_folder
 
 def process_file(
     filepath: str,
@@ -217,15 +212,15 @@ def process_file(
     table_name: str,
     schema_path: str,
     target_gcs_bucket: str,
+    target_gcs_path: str,
     data_file_surr_key_field: str,
     data_file_surr_key_value: int,
     chunksize: str,
     input_headers: typing.List[str],
-    data_dtypes: typing.List[str]
+    data_dtypes: dict,
+    int_col_list: typing.List[str]
 ) -> None:
-
     logging.info(f"Processing file {filepath} started ...")
-
     if not table_exists(project_id, dataset_id, table_name):
         # Destination table doesn't exist
         create_dest_table(
@@ -283,43 +278,27 @@ def process_file(
                 output_headers=input_headers,
                 data_file_surr_key_field=data_file_surr_key_field,
                 data_file_surr_key_value=os.path.basename(filepath),
-                etl_timestamp=etl_timestamp
+                etl_timestamp=etl_timestamp,
+                int_col_list=int_col_list
             )
             logging.info(
-                f"Processing chunk #{chunk_number} of file {process_year_month} completed"
+                f"Processing chunk #{chunk_number} of file {filepath} completed"
             )
-    # if not table_exists(project_id, dataset_id, table_id):
-    #     # Destination able doesn't exist
-    #     create_dest_table(
-    #         project_id=project_id,
-    #         dataset_id=dataset_id,
-    #         table_id=table_id,
-    #         schema_filepath=schema_path,
-    #         bucket_name=target_gcs_bucket,
-    #     )
-    # load_data_to_bq(
-    #     project_id=project_id,
-    #     dataset_id=dataset_id,
-    #     table_id=table_id,
-    #     file_path=target_file_name,
-    #     field_delimiter="|",
-    # )
-    # upload_file_to_gcs(
-    #     file_path=target_file_name,
-    #     target_gcs_bucket=target_gcs_bucket,
-    #     target_gcs_path=str(target_gcs_path).replace(
-    #         ".csv", f"_{process_year_month}.csv"
-    #     ),
-    # )
+    os.unlink(filepath)
+    os.rename(target_file, filepath)
+    load_data_to_bq(
+        project_id=project_id,
+        dataset_id=dataset_id,
+        table_id=table_name,
+        file_path=filepath,
+        field_delimiter="|",
+    )
+    upload_file_to_gcs(
+        file_path=filepath,
+        target_gcs_bucket=target_gcs_bucket,
+        target_gcs_path=target_gcs_path
+    )
     logging.info(f"Processing file {filepath} completed ...")
-
-
-    #     * load into df
-
-    #     * transforms:
-    #         * format datetime in date fields
-    #         * add metadata columns
-    #     * rewrite/overwrite file back to original
 
 
 def table_already_has_file_data(
@@ -491,30 +470,27 @@ def process_chunk(
     output_headers: typing.List[str],
     data_file_surr_key_field: str,
     data_file_surr_key_value: str,
-    etl_timestamp: str
+    etl_timestamp: str,
+    int_col_list: typing.List[str]
 ) -> None:
-    df = format_date_time(df, "date", "strftime", "%Y-%m-%d %H:%M:%S")
+    logging.info(" ... reordering columns")
+    df = df[output_headers]
+    logging.info(" ... formatting integer columns")
+    df = format_int_columns(df, int_col_list)
+    logging.info(" ... appending metadata")
     df["etl_timestamp"] = etl_timestamp
     df[data_file_surr_key_field] = data_file_surr_key_value
-    df = df[output_headers]
     save_to_new_file(df, file_path=str(target_file_batch))
     append_batch_file(target_file_batch, target_file, include_header, truncate_file)
     logging.info(f"Processing Batch {target_file_batch} completed")
 
 
-def format_date_time(
-    df: pd.DataFrame, field_name: str, str_pf_time: str, dt_format: str
+def format_int_columns(
+    df: pd.DataFrame,
+    int_col_list: typing.List[str]
 ) -> pd.DataFrame:
-    if str_pf_time == "strptime":
-        logging.info(
-            f"Transform: Formatting datetime for field {field_name} from datetime to {dt_format}  "
-        )
-        df[field_name] = df[field_name].apply(lambda x: datetime.strptime(x, dt_format))
-    else:
-        logging.info(
-            f"Transform: Formatting datetime for field {field_name} from {dt_format} to datetime "
-        )
-        df[field_name] = df[field_name].dt.strftime(dt_format)
+    for col in int_col_list:
+        df[col] = df[col].apply(lambda x: str(int(round(float("0" if math.isnan(x) else str(x))))))
     return df
 
 
@@ -592,5 +568,6 @@ if __name__ == "__main__":
         pipeline_name=os.environ.get("PIPELINE_NAME", ""),
         chunksize=os.environ.get("CHUNKSIZE", ""),
         input_headers=json.loads(os.environ.get("INPUT_CSV_HEADERS", r"[]")),
-        data_dtypes=json.loads(os.environ.get("DATA_DTYPES", r"[]"))
+        data_dtypes=json.loads(os.environ.get("DATA_DTYPES", r"{}")),
+        int_col_list=json.loads(os.environ.get("INT_COL_LIST", r"[]")),
     )

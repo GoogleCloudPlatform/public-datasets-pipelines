@@ -7,7 +7,7 @@
   },
   {
     "name": "date",
-    "type": "TIMESTAMP",
+    "type": "STRING",
     "mode": "NULLABLE",
     "description": ""
   },
