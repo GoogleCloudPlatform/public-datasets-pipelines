@@ -208,7 +208,7 @@ dag:
         namespace: "composer"
         service_account_name: "datasets"
         image_pull_policy: "Always"
-        image: "{{ var.json.cloud_datasets.container_registry.pdp_extract_tabular_metadata }}"
+        image: "{{ var.json.cloud_datasets.container_registry.pdp_extract_tabular_metadata_image }}"
         env_vars:
           SOURCE_PROJECTS_IDS: "{{ var.json.cloud_datasets.pdp_extract_tabular_metadata.source_projects_ids }}"
           TARGET_PROJECT_ID: "{{ var.value.gcp_project }}"
