@@ -234,11 +234,11 @@ class DatasetsTablesInfoExtractor:
     def read_datasets(self):
         """Read the datasets and tables metadata."""
         datasets_list = list(self.client.list_datasets())
-        if self.target_dataset in datasets_list:
-            datasets_list.remove(self.target_dataset)
         full_table_ids = []
-        print(f"Enlisted Datasets: {len(datasets_list)}")
+        logging.info("Enlisted Datasets: %s", len(datasets_list))
         for dataset_item in datasets_list:
+            if dataset_item.dataset_id.startswith("_"):
+                continue  # Not a public dataset
             dataset_reference = self.client.get_dataset(dataset_item.reference)
             dataset = DatasetInfo(dataset_item, dataset_reference)
             table_ids = list(self.client.list_tables(dataset_reference))
@@ -250,9 +250,9 @@ class DatasetsTablesInfoExtractor:
             self.datasets.append(dataset)
 
         self.parallel_read_tables(full_table_ids)
-        print(f"Extracted Datasets: {len(self.datasets)}")
-        print(f"Extracted Tables: {len(self.tables)}")
-        print(f"Extracted Fields: {len(self.tables_fields)}")
+        logging.info("Extracted Datasets: %s", len(self.datasets))
+        logging.info("Extracted Tables: %s", len(self.tables))
+        logging.info("Extracted Fields: %s", len(self.tables_fields))
 
     def write_datasets_to_bq(self, table_name: str, extracted_time: datetime.datetime):
         """Write datasets metadata to BQ."""
@@ -261,7 +261,7 @@ class DatasetsTablesInfoExtractor:
             self.target_project_id, self.target_dataset
         )
         table_id = bigquery.TableReference(dataset_ref, table_name)
-        print(f"Writing to {table_id}...")
+        logging.debug("Writing to %s...", table_id)
 
         job_config = bigquery.job.LoadJobConfig(autodetect=False, max_bad_records=5)
 
@@ -274,7 +274,7 @@ class DatasetsTablesInfoExtractor:
         )
         job.result()  # Wait for the job to complete.
 
-        print("write_datasets_to_bq done")
+        logging.debug("write_datasets_to_bq done")
 
     def write_tables_to_bq(self, table_name: str, extracted_time: datetime.datetime):
         """Write tables metadata to BQ."""
@@ -282,7 +282,7 @@ class DatasetsTablesInfoExtractor:
             self.target_project_id, self.target_dataset
         )
         table_id = bigquery.TableReference(dataset_ref, table_name)
-        print(f"Writing to {table_id}...")
+        logging.debug("Writing to %s...", table_id)
 
         job_config = bigquery.job.LoadJobConfig(autodetect=False, max_bad_records=5)
 
@@ -295,7 +295,7 @@ class DatasetsTablesInfoExtractor:
         )
         job.result()  # Wait for the job to complete.
 
-        print("write_tables_to_bq is done")
+        logging.debug("write_tables_to_bq is done")
 
     def write_tables_fields_to_bq(
         self, table_name: str, extracted_time: datetime.datetime
@@ -305,15 +305,13 @@ class DatasetsTablesInfoExtractor:
             self.target_project_id, self.target_dataset
         )
         table_id = bigquery.TableReference(dataset_ref, table_name)
-        print(f"Writing to {table_id}...")
+        logging.debug("Writing to %s...", table_id)
 
         job_config = bigquery.job.LoadJobConfig(
             autodetect=False,
             max_bad_records=5,
             write_disposition=bigquery.WriteDisposition.WRITE_TRUNCATE,
         )
-
-        print(f"SCHEMA: {job_config.schema}")
 
         tables_fields_dataframe = self.get_tables_fields_as_dataframe()
         tables_fields_dataframe["extracted_at"] = extracted_time
@@ -324,7 +322,7 @@ class DatasetsTablesInfoExtractor:
         )
         job.result()  # Wait for the job to complete.
 
-        print("write_tables_fields_to_bq is done")
+        logging.debug("write_tables_fields_to_bq is done")
 
 
 def main(
@@ -346,7 +344,7 @@ def main(
         extractor.write_datasets_to_bq(tabular_dataset_table_name, extracted)
         extractor.write_tables_to_bq(tables_table_name, extracted)
         extractor.write_tables_fields_to_bq(tables_fields_table_name, extracted)
-    print(f"Total time to run this function: {time.time() - st}")
+    logging.info("Total time to run this function: ", time.time() - st)
 
 
 if __name__ == "__main__":
