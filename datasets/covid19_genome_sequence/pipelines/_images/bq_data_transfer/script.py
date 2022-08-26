@@ -35,17 +35,13 @@ def main(
     source_bq_dataset: str,
     target_project_id: str,
     target_bq_dataset: str,
-    # service_account: str,
     timeout: int,
 ):
     client = bigquery_datatransfer_v1.DataTransferServiceClient()
     transfer_config_name = f"{source_project_id}-{source_bq_dataset}-copy"
-    print("transfer_config_name:",transfer_config_name)
     existing_config = find_existing_config(
         client, target_project_id, transfer_config_name
     )
-    print(existing_config)
-
     if not existing_config:
         existing_config = create_transfer_config(
             client,
@@ -54,7 +50,6 @@ def main(
             target_project_id,
             target_bq_dataset,
             transfer_config_name,
-            # service_account,
         )
 
     trigger_config(client, existing_config)
@@ -71,7 +66,6 @@ def find_existing_config(
             parent=f"projects/{gcp_project}"
         )
     )
-    print("all_transfer_configs",all_transfer_configs)
     return next(
         (
             config
@@ -88,21 +82,16 @@ def wait_for_completion(
     timeout: int,
 ) -> None:
     _start = int(time.time())
-
     while True:
         latest_runs = []
         latest_runs.append(latest_transfer_run(client, running_config))
-
         logging.info(f"States: {[str(run.state) for run in latest_runs]}")
-
         # Mark as complete when all runs have succeeded
         if all([str(run.state) == "TransferState.SUCCEEDED" for run in latest_runs]):
             return
-
         # Stop the process when it's longer than the allotted time
         if int(time.time()) - _start > timeout:
             raise TimeoutError
-
         time.sleep(RETRY_DELAY)
 
 
@@ -121,7 +110,6 @@ def create_transfer_config(
     target_project_id: str,
     target_dataset_id: str,
     display_name: str,
-    # service_account: str,
 ) -> bigquery_datatransfer_v1.types.TransferConfig:
     transfer_config = bigquery_datatransfer_v1.TransferConfig(
         destination_dataset_id=target_dataset_id,
@@ -137,13 +125,10 @@ def create_transfer_config(
             disable_auto_scheduling=True
         ),
     )
-
     request = bigquery_datatransfer_v1.types.CreateTransferConfigRequest(
         parent=client.common_project_path(target_project_id),
         transfer_config=transfer_config,
-        # service_account_name=service_account,
     )
-
     return client.create_transfer_config(request=request)
 
 
@@ -154,7 +139,6 @@ def trigger_config(
     now = time.time()
     seconds = int(now)
     nanos = int((now - seconds) * pow(10, 9))
-
     try:
         client.start_manual_transfer_runs(
             request=bigquery_datatransfer_v1.types.StartManualTransferRunsRequest(
@@ -177,6 +161,5 @@ if __name__ == "__main__":
         source_bq_dataset=os.environ["SOURCE_BQ_DATASET"],
         target_project_id=os.environ["TARGET_PROJECT_ID"],
         target_bq_dataset=os.environ["TARGET_BQ_DATASET"],
-        # service_account=os.environ["SERVICE_ACCOUNT"],
         timeout=int(os.getenv("TIMEOUT", 1200)),
     )

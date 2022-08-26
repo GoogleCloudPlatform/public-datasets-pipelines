@@ -13,9 +13,7 @@
 # limitations under the License.
 
 ---
-
 resources: ~
-
 
 dag:
   airflow_version: 2
@@ -45,10 +43,9 @@ dag:
           SOURCE_BQ_DATASET: "{{ var.json.covid19_genome_sequence.source_bq_dataset }}"
           TARGET_PROJECT_ID: "{{ var.json.covid19_genome_sequence.target_project_id }}"
           TARGET_BQ_DATASET: "{{ var.json.covid19_genome_sequence.target_bq_dataset }}"
-
         resources:
-          request_memory: "4G"
-          request_cpu: "1"
+          request_memory: "128M"
+          request_cpu: "200m"
 
   graph_paths:
     - "copy_bq_datasets"
