@@ -35,7 +35,7 @@ with DAG(
     # Extract the metadata for tabular datasets
     pdp_extract_tabular_metadata_task = kubernetes_pod.KubernetesPodOperator(
         task_id="pdp_extract_tabular_metadata_task",
-        name="Extract Tabular Metadata",
+        name="pdp_extract_tabular_metadata_task",
         namespace="composer",
         service_account_name="datasets",
         image_pull_policy="Always",

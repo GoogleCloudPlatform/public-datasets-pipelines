@@ -204,7 +204,7 @@ dag:
       description: "Extract the metadata for tabular datasets"
       args:
         task_id: "pdp_extract_tabular_metadata_task"
-        name: "Extract Tabular Metadata"
+        name: "pdp_extract_tabular_metadata_task"
         namespace: "composer"
         service_account_name: "datasets"
         image_pull_policy: "Always"

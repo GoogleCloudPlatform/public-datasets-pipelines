@@ -26,6 +26,46 @@ from google.cloud import bigquery
 
 NUM_THREADS = 5
 
+# Update these three column variables if the schema in pipeline.yaml changes.
+TABULAR_DATASETS_COLUMNS = [
+    "extracted_at",
+    "created_at",
+    "modified_at",
+    "project_id",
+    "dataset_id",
+    "description",
+    "num_tables",
+]
+
+TABLES_COLUMNS = [
+    "extracted_at",
+    "created_at",
+    "modified_at",
+    "project_id",
+    "dataset_id",
+    "table_id",
+    "description",
+    "type",
+    "num_bytes",
+    "num_rows",
+    "num_columns",
+    "described_columns",
+]
+
+TABULES_FIELDS_COLUMNS = [
+    "extracted_at",
+    "project_id",
+    "dataset_id",
+    "table_id",
+    "name",
+    "description",
+    "field_type",
+    "mode",
+    "precision",
+    "scale",
+    "max_length",
+]
+
 
 def is_empty(s: str) -> bool:
     """Return True if s is None or an empty string."""
@@ -194,6 +234,7 @@ class DatasetsTablesInfoExtractor:
     def read_datasets(self):
         """Read the datasets and tables metadata."""
         datasets_list = list(self.client.list_datasets())
+        datasets_list.remove(self.target_dataset)
         full_table_ids = []
         print(f"Enlisted Datasets: {len(datasets_list)}")
         for dataset_item in datasets_list:
@@ -214,6 +255,7 @@ class DatasetsTablesInfoExtractor:
 
     def write_datasets_to_bq(self, table_name: str, extracted_time: datetime.datetime):
         """Write datasets metadata to BQ."""
+
         dataset_ref = bigquery.DatasetReference(
             self.target_project_id, self.target_dataset
         )
@@ -224,8 +266,7 @@ class DatasetsTablesInfoExtractor:
 
         datasets_dataframe = self.get_datasets_as_dataframe()
         datasets_dataframe["extracted_at"] = extracted_time
-        columns = [si.name for si in job_config.schema]
-        datasets_dataframe = datasets_dataframe[columns]
+        datasets_dataframe = datasets_dataframe[TABULAR_DATASETS_COLUMNS]
 
         job = self.client.load_table_from_dataframe(
             datasets_dataframe, table_id, job_config=job_config
@@ -246,8 +287,7 @@ class DatasetsTablesInfoExtractor:
 
         tables_dataframe = self.get_tables_as_dataframe()
         tables_dataframe["extracted_at"] = extracted_time
-        columns = [si.name for si in job_config.schema]
-        tables_dataframe = tables_dataframe[columns]
+        tables_dataframe = tables_dataframe[TABLES_COLUMNS]
 
         job = self.client.load_table_from_dataframe(
             tables_dataframe, table_id, job_config=job_config
@@ -276,8 +316,7 @@ class DatasetsTablesInfoExtractor:
 
         tables_fields_dataframe = self.get_tables_fields_as_dataframe()
         tables_fields_dataframe["extracted_at"] = extracted_time
-        columns = [si.name for si in job_config.schema]
-        tables_fields_dataframe = tables_fields_dataframe[columns]
+        tables_fields_dataframe = tables_fields_dataframe[TABULES_FIELDS_COLUMNS]
 
         job = self.client.load_table_from_dataframe(
             tables_fields_dataframe, table_id, job_config=job_config

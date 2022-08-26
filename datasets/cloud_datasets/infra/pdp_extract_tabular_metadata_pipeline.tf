@@ -16,11 +16,11 @@
 
 
 resource "google_bigquery_table" "_cloud_datasets_tabular_datasets" {
-  project     = var.project_id
-  dataset_id  = "_cloud_datasets"
-  table_id    = "tabular_datasets"
+  project    = var.project_id
+  dataset_id = "_cloud_datasets"
+  table_id   = "tabular_datasets"
   description = "This table contains all the metadata for all the tabular datasets in the Cloud Datasets program"
-  schema      = <<EOF
+  schema = <<EOF
     [
   {
       "name": "extracted_at",
@@ -73,11 +73,11 @@ output "bigquery_table-_cloud_datasets_tabular_datasets-id" {
 }
 
 resource "google_bigquery_table" "_cloud_datasets_tables" {
-  project     = var.project_id
-  dataset_id  = "_cloud_datasets"
-  table_id    = "tables"
+  project    = var.project_id
+  dataset_id = "_cloud_datasets"
+  table_id   = "tables"
   description = "This table contains all the metadata for all the tables in the Cloud Datasets program"
-  schema      = <<EOF
+  schema = <<EOF
     [
   {
       "name": "extracted_at",
@@ -138,7 +138,7 @@ resource "google_bigquery_table" "_cloud_datasets_tables" {
       "name": "described_columns",
       "description": "The number of columns in the table with a description",
       "type": "INTEGER",
-  },      
+  },
 ]
     EOF
   depends_on = [
@@ -155,11 +155,11 @@ output "bigquery_table-_cloud_datasets_tables-id" {
 }
 
 resource "google_bigquery_table" "_cloud_datasets_tables_fields" {
-  project     = var.project_id
-  dataset_id  = "_cloud_datasets"
-  table_id    = "tables_fields"
+  project    = var.project_id
+  dataset_id = "_cloud_datasets"
+  table_id   = "tables_fields"
   description = "This table contains all the metadata for all the field in all the tables in the Cloud Datasets program"
-  schema      = <<EOF
+  schema = <<EOF
     [
   {
       "name": "extracted_at",
@@ -210,7 +210,7 @@ resource "google_bigquery_table" "_cloud_datasets_tables_fields" {
       "name": "scale",
       "description": "Scale for the NUMERIC field",
       "type": "INTEGER",
-  },      
+  },
   {
       "name": "max_length",
       "description": "Maximum length for the STRING or BYTES field",
