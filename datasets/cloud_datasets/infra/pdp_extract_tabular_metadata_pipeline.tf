@@ -16,47 +16,47 @@
 
 
 resource "google_bigquery_table" "_cloud_datasets_tabular_datasets" {
-  project    = var.project_id
-  dataset_id = "_cloud_datasets"
-  table_id   = "tabular_datasets"
+  project     = var.project_id
+  dataset_id  = "_cloud_datasets"
+  table_id    = "tabular_datasets"
   description = "This table contains all the metadata for all the tabular datasets in the Cloud Datasets program"
-  schema = <<EOF
+  schema      = <<EOF
     [
   {
       "name": "extracted_at",
       "description": "The date and time when this row was extracted from BigQuery",
-      "type": "TIMESTAMP",
+      "type": "TIMESTAMP"
   },
   {
       "name": "created_at",
       "description": "The date and time when the dataset was created",
-      "type": "TIMESTAMP",
+      "type": "TIMESTAMP"
   },
   {
       "name": "modified_at",
       "description": "The date and time when the dataset was last modified",
-      "type": "TIMESTAMP",
+      "type": "TIMESTAMP"
   },
   {
       "name": "project_id",
       "description": "The GCP project where the public dataset is stored",
-      "type": "STRING",
+      "type": "STRING"
   },
   {
       "name": "dataset_id",
       "description": "The BigQuery dataset ID",
-      "type": "STRING",
+      "type": "STRING"
   },
   {
       "name": "description",
       "description": "The dataset description",
-      "type": "STRING",
+      "type": "STRING"
   },
   {
       "name": "num_tables",
       "description": "Number of tables contained in this dataset",
-      "type": "INTEGER",
-  },
+      "type": "INTEGER"
+  }
 ]
     EOF
   depends_on = [
@@ -73,72 +73,72 @@ output "bigquery_table-_cloud_datasets_tabular_datasets-id" {
 }
 
 resource "google_bigquery_table" "_cloud_datasets_tables" {
-  project    = var.project_id
-  dataset_id = "_cloud_datasets"
-  table_id   = "tables"
+  project     = var.project_id
+  dataset_id  = "_cloud_datasets"
+  table_id    = "tables"
   description = "This table contains all the metadata for all the tables in the Cloud Datasets program"
-  schema = <<EOF
+  schema      = <<EOF
     [
   {
       "name": "extracted_at",
       "description": "The date and time when this row was extracted from BigQuery",
-      "type": "TIMESTAMP",
+      "type": "TIMESTAMP"
   },
   {
       "name": "created_at",
       "description": "The date and time when the dataset was created",
-      "type": "TIMESTAMP",
+      "type": "TIMESTAMP"
   },
   {
       "name": "modified_at",
       "description": "The date and time when the dataset was last modified",
-      "type": "TIMESTAMP",
+      "type": "TIMESTAMP"
   },
   {
       "name": "project_id",
       "description": "The GCP project where the public dataset is stored",
-      "type": "STRING",
+      "type": "STRING"
   },
   {
       "name": "dataset_id",
       "description": "The BigQuery dataset ID",
-      "type": "STRING",
+      "type": "STRING"
   },
   {
       "name": "table_id",
       "description": "The BigQuery table ID",
-      "type": "STRING",
+      "type": "STRING"
   },
   {
       "name": "description",
       "description": "The dataset description",
-      "type": "STRING",
+      "type": "STRING"
   },
   {
       "name": "type",
       "description": "The type of the table",
-      "type": "STRING",
+      "type": "STRING"
   },
   {
       "name": "num_bytes",
       "description": "The number of bytes the table allocated on disk",
-      "type": "INTEGER",
+      "type": "INTEGER"
   },
   {
       "name": "num_rows",
       "description": "The number of rows in the table",
-      "type": "INTEGER",
+      "type": "INTEGER"
   },
   {
       "name": "num_columns",
       "description": "The number of columns in the table",
-      "type": "INTEGER",
+      "type": "INTEGER"
   },
   {
       "name": "described_columns",
       "description": "The number of columns in the table with a description",
-      "type": "INTEGER",
-  },
+      "type": "INTEGER"
+  }
 ]
     EOF
   depends_on = [
@@ -155,67 +155,67 @@ output "bigquery_table-_cloud_datasets_tables-id" {
 }
 
 resource "google_bigquery_table" "_cloud_datasets_tables_fields" {
-  project    = var.project_id
-  dataset_id = "_cloud_datasets"
-  table_id   = "tables_fields"
+  project     = var.project_id
+  dataset_id  = "_cloud_datasets"
+  table_id    = "tables_fields"
   description = "This table contains all the metadata for all the field in all the tables in the Cloud Datasets program"
-  schema = <<EOF
+  schema      = <<EOF
     [
   {
       "name": "extracted_at",
       "description": "The date and time when this row was extracted from BigQuery",
-      "type": "TIMESTAMP",
+      "type": "TIMESTAMP"
   },
   {
       "name": "project_id",
       "description": "The GCP project where the public dataset is stored",
-      "type": "STRING",
+      "type": "STRING"
   },
   {
       "name": "dataset_id",
       "description": "The BigQuery dataset ID",
-      "type": "STRING",
+      "type": "STRING"
   },
   {
       "name": "table_id",
       "description": "The BigQuery table ID",
-      "type": "STRING",
+      "type": "STRING"
   },
   {
       "name": "name",
       "description": "The name of the field",
-      "type": "STRING",
+      "type": "STRING"
   },
   {
       "name": "description",
       "description": "The description for the field",
-      "type": "STRING",
+      "type": "STRING"
   },
   {
       "name": "field_type",
       "description": "The type of the field",
-      "type": "STRING",
+      "type": "STRING"
   },
   {
       "name": "mode",
       "description": "The mode of the field",
-      "type": "STRING",
+      "type": "STRING"
   },
   {
       "name": "precision",
       "description": "Precision for the NUMERIC field",
-      "type": "INTEGER",
+      "type": "INTEGER"
   },
   {
       "name": "scale",
       "description": "Scale for the NUMERIC field",
-      "type": "INTEGER",
+      "type": "INTEGER"
   },
   {
       "name": "max_length",
       "description": "Maximum length for the STRING or BYTES field",
-      "type": "INTEGER",
-  },
+      "type": "INTEGER"
+  }
 ]
     EOF
   depends_on = [
