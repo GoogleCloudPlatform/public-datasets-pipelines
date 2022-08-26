@@ -234,7 +234,8 @@ class DatasetsTablesInfoExtractor:
     def read_datasets(self):
         """Read the datasets and tables metadata."""
         datasets_list = list(self.client.list_datasets())
-        datasets_list.remove(self.target_dataset)
+        if self.target_dataset in datasets_list:
+            datasets_list.remove(self.target_dataset)
         full_table_ids = []
         print(f"Enlisted Datasets: {len(datasets_list)}")
         for dataset_item in datasets_list:
