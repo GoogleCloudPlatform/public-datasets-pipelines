@@ -1,9 +1,23 @@
+# Copyright 2022 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import datetime
 import json
 import logging
 import os
 import pathlib
-import typing
+from typing import Dict, List, Mapping, Union
 
 import pandas as pd
 from google.cloud import storage
@@ -13,7 +27,7 @@ def main(
     source_gcs_bucket: str,
     source_gcs_object: str,
     source_file: pathlib.Path,
-    columns: typing.List[str],
+    columns: List[str],
     target_csv_file: pathlib.Path,
     target_gcs_bucket: str,
     target_gcs_path: str,
@@ -56,7 +70,12 @@ def download_blob(
 
 
 def create_dataframe(
-    lang_abbr: str, meta_data: dict, columns, target_csv_file: pathlib.Path
+    lang_abbr: str,
+    meta_data: Mapping[
+        str, Mapping[str, Union[str, int, Dict[str, Union[int, List[str]]]]]
+    ],
+    columns: List[str],
+    target_csv_file: pathlib.Path,
 ) -> None:
     for idx, kv_pair in enumerate(lang_abbr.items()):
         abbr, language = kv_pair
@@ -72,9 +91,11 @@ def create_dataframe(
 
 
 def temp_dataframe(
-    meta_data: dict,
+    meta_data: Mapping[
+        str, Mapping[str, Union[str, int, Dict[str, Union[int, List[str]]]]]
+    ],
     abbr: str,
-    columns: typing.List[str],
+    columns: List[str],
     num_of_words: int,
     language: str,
     target_csv_file: pathlib.Path,
@@ -91,7 +112,12 @@ def temp_dataframe(
         write_to_file(temp, str(target_csv_file), mode="a")
 
 
-def get_lang_abbr(meta_data: dict, key: str = "language") -> dict:
+def get_lang_abbr(
+    meta_data: Mapping[
+        str, Mapping[str, Union[str, int, Dict[str, Union[int, List[str]]]]]
+    ],
+    key: str = "language",
+) -> Dict[str, str]:
     lang_abbr = {}
     for abbr in meta_data.keys():
         if isinstance(meta_data[abbr], dict):
@@ -99,17 +125,34 @@ def get_lang_abbr(meta_data: dict, key: str = "language") -> dict:
     return lang_abbr
 
 
-def get_num_of_words(meta_data: dict, abbr: str, key: str = "number_of_words") -> int:
+def get_num_of_words(
+    meta_data: Mapping[
+        str, Mapping[str, Union[str, int, Dict[str, Union[int, List[str]]]]]
+    ],
+    abbr: str,
+    key: str = "number_of_words",
+) -> int:
     return meta_data[abbr].get(key, 0)
 
 
-def get_lang_words_count(meta_data: dict, abbr: str, key: str = "wordcounts") -> int:
+def get_lang_words_count(
+    meta_data: Mapping[
+        str, Mapping[str, Union[str, int, Dict[str, Union[int, List[str]]]]]
+    ],
+    abbr: str,
+    key: str = "wordcounts",
+) -> int:
     return meta_data[abbr].get(key, 0)
 
 
 def get_lang_word_filenames(
-    meta_data: dict, abbr: str, word: str, key: str = "filenames"
-) -> typing.List[str]:
+    meta_data: Mapping[
+        str, Mapping[str, Union[str, int, Dict[str, Union[int, List[str]]]]]
+    ],
+    abbr: str,
+    word: str,
+    key: str = "filenames",
+) -> List[str]:
     return meta_data[abbr][key].get(word, [])
 
 

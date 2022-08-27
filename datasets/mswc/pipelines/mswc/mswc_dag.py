@@ -35,8 +35,8 @@ with DAG(
 ) as dag:
 
     # Task to run a GCS to GCS
-    copy_metadata_file_to_bucket = gcs_to_gcs.GCSToGCSOperator(
-        task_id="copy_metadata_file_to_bucket",
+    copy_metadata_file_to_gcs = gcs_to_gcs.GCSToGCSOperator(
+        task_id="copy_metadata_file_to_gcs",
         source_bucket="{{ var.json.mswc.source_bucket }}",
         source_object="metadata.json.gz",
         destination_bucket="{{ var.value.composer_bucket }}",
@@ -51,7 +51,6 @@ with DAG(
         env={
             "data_dir": "/home/airflow/gcs/data/mswc",
             "source_file": "metadata.json.gz",
-            "source_bucket": "{{ var.json.mswc.source_bucket }}",
         },
     )
 
@@ -130,7 +129,7 @@ with DAG(
     )
 
     (
-        copy_metadata_file_to_bucket
+        copy_metadata_file_to_gcs
         >> unzip_metadata_gz
         >> metadata_csv_transform
         >> load_metadata_to_bq
