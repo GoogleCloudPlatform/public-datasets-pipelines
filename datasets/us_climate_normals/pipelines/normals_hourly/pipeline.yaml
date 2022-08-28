@@ -92,11 +92,10 @@ dag:
           DEST_CURRENT_DATA_FOLDER_NAME: "{{ var.json.us_climate_normals.container_registry.dest_current_data_folder_name }}"
           DEST_HISTORICAL_FOLDER_NAME: "{{ var.json.us_climate_normals.container_registry.dest_historical_data_folder_name }}"
           SOURCE_BUCKET_CURRENT_DATA_FOLDER_NAME: "{{ var.json.us_climate_normals.normals_hourly.source_bucket_current_data_folder_name }}"
-          DATA_ROOT_FOLDER: >-
-            [ "normals-hourly" ]
+          DATA_ROOT_FOLDER: "normals-hourly"
           HIST_FOLDERS_LIST: >-
             ["1981-2010", "1991-2020", "2006-2020"]
-          PIPELINE_NAME: "US Climate Normals - Hourly Load"
+          PIPELINE_NAME: "US Climate Normals"
           INPUT_CSV_HEADERS: >-
             [ "station", "date",
               "latitude", "longitude",
