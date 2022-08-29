@@ -36,7 +36,7 @@ with DAG(
     # Fetch data gcs - gcs
     bash_gcs_to_gcs = bash.BashOperator(
         task_id="bash_gcs_to_gcs",
-        bash_command="gsutil cp -R gs://open-buildings-data/v1/polygons_s2_level_4_gzip gs://us-central1-dev-v2-cd7f5f38-bucket/data/open_buildings/source_files/",
+        bash_command="gsutil cp -R gs://open-buildings-data/v1/polygons_s2_level_4_gzip gs://{{ var.value.composer_bucket }}/data/open_buildings/source_files/",
     )
 
     # Unzip data
@@ -80,9 +80,9 @@ with DAG(
         image="{{ var.json.open_buildings.container_registry.run_script_kub }}",
         env_vars={
             "SOURCE_GCS_PATH": "{{ var.json.open_buildings.source_gcs_path }}",
-            "PROJECT_ID": "{{ var.json.open_buildings.project_id }}",
+            "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "{{ var.json.open_buildings.dataset_id }}",
-            "GCS_BUCKET": "{{ var.json.open_buildings.gcs_bucket }}",
+            "GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "SCHEMA_FILEPATH": "schema.json",
         },
         resources={
