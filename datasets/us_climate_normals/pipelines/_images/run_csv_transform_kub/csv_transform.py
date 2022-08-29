@@ -155,6 +155,9 @@ def execute_current_data_load(
     int_col_list: typing.List[str],
 ) -> None:
     for folder in data_root_folder:
+        import pdb
+
+        pdb.set_trace()
         new_dest_current_data_folder_name = (
             f"{dest_folder}/{folder}/{dest_current_data_folder_name}"
         )
