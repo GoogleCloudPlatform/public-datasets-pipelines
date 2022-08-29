@@ -21,7 +21,6 @@ import typing
 from datetime import datetime
 
 import pandas as pd
-import requests
 from google.cloud import bigquery, storage
 from google.cloud.exceptions import NotFound
 
@@ -47,30 +46,30 @@ def main(
     chunksize: str,
     input_headers: typing.List[str],
     data_dtypes: dict,
-    int_col_list: typing.List[str]
+    int_col_list: typing.List[str],
 ) -> None:
     logging.info(f"{pipeline_name} process started")
     execute_pipeline(
-        project_id = project_id,
-        dataset_id = dataset_id,
-        current_data_table_id = current_data_table_id,
-        historical_data_table_id = historical_data_table_id,
-        data_file_surr_key_field = data_file_surr_key_field,
-        dest_folder = dest_folder,
+        project_id=project_id,
+        dataset_id=dataset_id,
+        current_data_table_id=current_data_table_id,
+        historical_data_table_id=historical_data_table_id,
+        data_file_surr_key_field=data_file_surr_key_field,
+        dest_folder=dest_folder,
         schema_filepath=schema_filepath,
-        source_bucket = source_bucket,
-        target_gcs_bucket = target_gcs_bucket,
-        dest_current_data_folder_name = dest_current_data_folder_name,
-        dest_historical_data_folder_name = dest_historical_data_folder_name,
-        source_bucket_current_data_folder_name = source_bucket_current_data_folder_name,
-        current_data_target_gcs_path = current_data_target_gcs_path,
-        historical_data_target_gcs_path = historical_data_target_gcs_path,
-        data_root_folder = data_root_folder,
-        hist_folders_list = hist_folders_list,
-        chunksize = chunksize,
-        input_headers = input_headers,
-        data_dtypes = data_dtypes,
-        int_col_list = int_col_list
+        source_bucket=source_bucket,
+        target_gcs_bucket=target_gcs_bucket,
+        dest_current_data_folder_name=dest_current_data_folder_name,
+        dest_historical_data_folder_name=dest_historical_data_folder_name,
+        source_bucket_current_data_folder_name=source_bucket_current_data_folder_name,
+        current_data_target_gcs_path=current_data_target_gcs_path,
+        historical_data_target_gcs_path=historical_data_target_gcs_path,
+        data_root_folder=data_root_folder,
+        hist_folders_list=hist_folders_list,
+        chunksize=chunksize,
+        input_headers=input_headers,
+        data_dtypes=data_dtypes,
+        int_col_list=int_col_list,
     )
     logging.info(f"{pipeline_name} process completed")
 
@@ -95,10 +94,12 @@ def execute_pipeline(
     chunksize: str,
     input_headers: typing.List[str],
     data_dtypes: dict,
-    int_col_list: typing.List[str]
+    int_col_list: typing.List[str],
 ) -> None:
     root_gs_bucket_folder = f"gs://{source_bucket}"
-    source_gs_folder = f"{root_gs_bucket_folder}/{source_bucket_current_data_folder_name}"
+    source_gs_folder = (
+        f"{root_gs_bucket_folder}/{source_bucket_current_data_folder_name}"
+    )
     execute_current_data_load(
         project_id=project_id,
         dataset_id=dataset_id,
@@ -106,7 +107,6 @@ def execute_pipeline(
         data_file_surr_key_field=data_file_surr_key_field,
         dest_folder=dest_folder,
         schema_filepath=schema_filepath,
-        source_bucket=source_bucket,
         target_gcs_bucket=target_gcs_bucket,
         dest_current_data_folder_name=dest_current_data_folder_name,
         current_data_target_gcs_path=current_data_target_gcs_path,
@@ -115,7 +115,7 @@ def execute_pipeline(
         chunksize=chunksize,
         input_headers=input_headers,
         data_dtypes=data_dtypes,
-        int_col_list=int_col_list
+        int_col_list=int_col_list,
     )
     execute_historical_data_load(
         project_id=project_id,
@@ -133,7 +133,7 @@ def execute_pipeline(
         chunksize=chunksize,
         input_headers=input_headers,
         data_dtypes=data_dtypes,
-        int_col_list=int_col_list
+        int_col_list=int_col_list,
     )
 
 
@@ -152,26 +152,32 @@ def execute_current_data_load(
     chunksize: str,
     input_headers: typing.List[str],
     data_dtypes: dict,
-    int_col_list: typing.List[str]
+    int_col_list: typing.List[str],
 ) -> None:
     for folder in data_root_folder:
-        new_dest_current_data_folder_name = f"{dest_folder}/{folder}/{dest_current_data_folder_name}"
-        logging.info(f"Creating {new_dest_current_data_folder_name} if it does not exist")
-        pathlib.Path(new_dest_current_data_folder_name).mkdir(parents=True, exist_ok=True)
+        new_dest_current_data_folder_name = (
+            f"{dest_folder}/{folder}/{dest_current_data_folder_name}"
+        )
+        logging.info(
+            f"Creating {new_dest_current_data_folder_name} if it does not exist"
+        )
+        pathlib.Path(new_dest_current_data_folder_name).mkdir(
+            parents=True, exist_ok=True
+        )
         process_data(
-            project_id = project_id,
-            dataset_id = dataset_id,
-            table_name = current_data_table_id,
-            schema_filepath = schema_filepath,
-            target_gcs_bucket = target_gcs_bucket,
-            target_gcs_path = current_data_target_gcs_path,
-            data_file_surr_key_field = data_file_surr_key_field,
-            source_gs_folder = source_gs_folder,
-            dest_folder = new_dest_current_data_folder_name,
-            chunksize = chunksize,
-            input_headers = input_headers,
-            data_dtypes = data_dtypes,
-            int_col_list = int_col_list
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_name=current_data_table_id,
+            schema_filepath=schema_filepath,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=current_data_target_gcs_path,
+            data_file_surr_key_field=data_file_surr_key_field,
+            source_gs_folder=source_gs_folder,
+            dest_folder=new_dest_current_data_folder_name,
+            chunksize=chunksize,
+            input_headers=input_headers,
+            data_dtypes=data_dtypes,
+            int_col_list=int_col_list,
         )
 
 
@@ -191,34 +197,36 @@ def execute_historical_data_load(
     chunksize: str,
     input_headers: typing.List[str],
     data_dtypes: dict,
-    int_col_list: typing.List[str]
+    int_col_list: typing.List[str],
 ) -> None:
     for folder in hist_folders_list:
         new_dest_historical_data_folder_name = f"{dest_folder}/{data_root_folder}/{dest_historical_data_folder_name}/{folder}"
-        logging.info(f"Creating {new_dest_historical_data_folder_name} if it does not exist")
-        pathlib.Path(new_dest_historical_data_folder_name).mkdir(parents=True, exist_ok=True)
+        logging.info(
+            f"Creating {new_dest_historical_data_folder_name} if it does not exist"
+        )
+        pathlib.Path(new_dest_historical_data_folder_name).mkdir(
+            parents=True, exist_ok=True
+        )
         process_historical_data(
-            project_id = project_id,
-            dataset_id = dataset_id,
-            table_name = historical_data_table_id,
-            schema_filepath = schema_filepath,
-            target_gcs_bucket = target_gcs_bucket,
-            target_gcs_path = historical_data_target_gcs_path,
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_name=historical_data_table_id,
+            schema_filepath=schema_filepath,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=historical_data_target_gcs_path,
             hist_folders_list=hist_folders_list,
-            data_file_surr_key_field = data_file_surr_key_field,
-            source_gs_folder = source_gs_folder,
-            dest_folder = new_dest_historical_data_folder_name,
-            chunksize = chunksize,
-            input_headers = input_headers,
-            data_dtypes = data_dtypes,
-            int_col_list = int_col_list
+            data_file_surr_key_field=data_file_surr_key_field,
+            source_gs_folder=source_gs_folder,
+            dest_folder=new_dest_historical_data_folder_name,
+            chunksize=chunksize,
+            input_headers=input_headers,
+            data_dtypes=data_dtypes,
+            int_col_list=int_col_list,
         )
 
 
 def download_file_gcs(
-    project_id: str,
-    source_location: str,
-    destination_folder: str
+    project_id: str, source_location: str, destination_folder: str
 ) -> None:
     object_name = os.path.basename(source_location)
     dest_object = f"{destination_folder}/{object_name}"
@@ -235,20 +243,23 @@ def download_folder_contents(
     project_id: str,
     source_gcs_folder_path: str,  # eg. "gs://normals/normal-hourly/access"
     destination_folder: str,
-    file_type: str = ""
+    file_type: str = "",
 ) -> None:
     storage_client = storage.Client(project_id)
     bucket_name = str.split(source_gcs_folder_path, "gs://")[1].split("/")[0]
     gcs_folder_path = str.split(source_gcs_folder_path, f"gs://{bucket_name}/")[1]
     bucket = storage_client.bucket(bucket_name)
-    blobs = bucket.list_blobs(prefix=f'{gcs_folder_path}')
+    blobs = bucket.list_blobs(prefix=f"{gcs_folder_path}")
     for blob in blobs:
-        if os.path.splitext(os.path.basename(blob.name))[1] == f".{file_type}" or file_type == "":
+        if (
+            os.path.splitext(os.path.basename(blob.name))[1] == f".{file_type}"
+            or file_type == ""
+        ):
             source_location = f"{source_gcs_folder_path}/{os.path.basename(blob.name)}"
             download_file_gcs(
                 project_id,
-                source_location = source_location,
-                destination_folder = destination_folder
+                source_location=source_location,
+                destination_folder=destination_folder,
             )
 
 
@@ -265,32 +276,32 @@ def process_data(
     chunksize: str,
     input_headers: typing.List[str],
     data_dtypes: dict,
-    int_col_list: typing.List[str]
+    int_col_list: typing.List[str],
 ) -> None:
     download_folder_contents(
-        project_id = project_id,
-        source_gcs_folder_path = source_gs_folder,
-        destination_folder = dest_folder,
-        file_type = "csv"
+        project_id=project_id,
+        source_gcs_folder_path=source_gs_folder,
+        destination_folder=dest_folder,
+        file_type="csv",
     )
     for filename in sorted(os.listdir(dest_folder)):
         filepath = os.path.join(dest_folder, filename)
         if os.path.isfile(filepath) and filepath.endswith(".csv"):
             process_file(
                 filepath=filepath,
-                project_id = project_id,
-                dataset_id = dataset_id,
-                table_name = table_name,
-                schema_path = schema_filepath,
+                project_id=project_id,
+                dataset_id=dataset_id,
+                table_name=table_name,
+                schema_path=schema_filepath,
                 source_gs_folder=source_gs_folder,
-                target_gcs_bucket = target_gcs_bucket,
-                target_gcs_path = target_gcs_path,
-                data_file_surr_key_field = data_file_surr_key_field,
-                data_file_surr_key_value = f'{source_gs_folder.replace("gs://normals", "")}/{filename}',
-                chunksize = chunksize,
-                input_headers = input_headers,
-                data_dtypes = data_dtypes,
-                int_col_list = int_col_list
+                target_gcs_bucket=target_gcs_bucket,
+                target_gcs_path=target_gcs_path,
+                data_file_surr_key_field=data_file_surr_key_field,
+                data_file_surr_key_value=f'{source_gs_folder.replace("gs://normals", "")}/{filename}',
+                chunksize=chunksize,
+                input_headers=input_headers,
+                data_dtypes=data_dtypes,
+                int_col_list=int_col_list,
             )
 
 
@@ -308,7 +319,7 @@ def process_file(
     chunksize: str,
     input_headers: typing.List[str],
     data_dtypes: dict,
-    int_col_list: typing.List[str]
+    int_col_list: typing.List[str],
 ) -> None:
     logging.info(f"Processing file {filepath} started ...")
     if not table_exists(project_id, dataset_id, table_name):
@@ -326,16 +337,16 @@ def process_file(
         dataset_id=dataset_id,
         table_name=table_name,
         data_file_surr_key_field=data_file_surr_key_value,
-        data_file_surr_key_value=data_file_surr_key_value
+        data_file_surr_key_value=data_file_surr_key_value,
     ):
         remove_file_table_data(
-            project_id = project_id,
-            dataset_id = dataset_id,
-            table_name = table_name,
-            data_file_surr_key_field = data_file_surr_key_field,
-            data_file_surr_key_value = data_file_surr_key_value
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_name=table_name,
+            data_file_surr_key_field=data_file_surr_key_field,
+            data_file_surr_key_value=data_file_surr_key_value,
         )
-    etl_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    etl_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     with pd.read_csv(
         filepath,
         engine="python",
@@ -348,15 +359,9 @@ def process_file(
         dtype=data_dtypes,
     ) as reader:
         for chunk_number, chunk in enumerate(reader):
-            logging.info(
-                f"Processing chunk #{chunk_number} of file {filepath} started"
-            )
-            target_file_batch = str(filepath).replace(
-                ".csv", f"-{chunk_number}.csv"
-            )
-            target_file = str(filepath).replace(
-                ".csv", f"_load_file.csv"
-            )
+            logging.info(f"Processing chunk #{chunk_number} of file {filepath} started")
+            target_file_batch = str(filepath).replace(".csv", f"-{chunk_number}.csv")
+            target_file = str(filepath).replace(".csv", "_load_file.csv")
             df = pd.DataFrame()
             df = pd.concat([df, chunk])
             process_chunk(
@@ -369,7 +374,7 @@ def process_file(
                 data_file_surr_key_field=data_file_surr_key_field,
                 data_file_surr_key_value=f'{source_gs_folder.replace("gs://normals", "")}/{os.path.basename(filepath)}',
                 etl_timestamp=etl_timestamp,
-                int_col_list=int_col_list
+                int_col_list=int_col_list,
             )
             logging.info(
                 f"Processing chunk #{chunk_number} of file {filepath} completed"
@@ -386,7 +391,7 @@ def process_file(
     upload_file_to_gcs(
         file_path=filepath,
         target_gcs_bucket=target_gcs_bucket,
-        target_gcs_path=target_gcs_path
+        target_gcs_path=target_gcs_path,
     )
     logging.info(f"Processing file {filepath} completed ...")
 
@@ -405,10 +410,10 @@ def process_historical_data(
     chunksize: str,
     input_headers: typing.List[str],
     data_dtypes: dict,
-    int_col_list: typing.List[str]
+    int_col_list: typing.List[str],
 ) -> None:
     for fldr in hist_folders_list:
-        source_gs_folder = source_gs_folder.replace('/access', f'/{fldr}/access')
+        source_gs_folder = source_gs_folder.replace("/access", f"/{fldr}/access")
         logging.info(f"Creating {dest_folder} if it does not exist")
         pathlib.Path(f"{dest_folder}").mkdir(parents=True, exist_ok=True)
         process_data(
@@ -424,7 +429,7 @@ def process_historical_data(
             chunksize=chunksize,
             input_headers=input_headers,
             data_dtypes=data_dtypes,
-            int_col_list=int_col_list
+            int_col_list=int_col_list,
         )
 
 
@@ -433,7 +438,7 @@ def table_already_has_file_data(
     dataset_id: str,
     table_name: str,
     data_file_surr_key_field: str,
-    data_file_surr_key_value: int
+    data_file_surr_key_value: int,
 ) -> bool:
     check_field_exists = field_exists(
         project_id, dataset_id, table_name, data_file_surr_key_field
@@ -462,7 +467,7 @@ def remove_file_table_data(
     dataset_id: str,
     table_name: str,
     data_file_surr_key_field: str,
-    data_file_surr_key_value: int
+    data_file_surr_key_value: int,
 ) -> bool:
     check_field_exists = field_exists(
         project_id, dataset_id, table_name, data_file_surr_key_field
@@ -598,7 +603,7 @@ def process_chunk(
     data_file_surr_key_field: str,
     data_file_surr_key_value: str,
     etl_timestamp: str,
-    int_col_list: typing.List[str]
+    int_col_list: typing.List[str],
 ) -> None:
     logging.info(" ... reordering columns")
     df = df[output_headers]
@@ -613,11 +618,12 @@ def process_chunk(
 
 
 def format_int_columns(
-    df: pd.DataFrame,
-    int_col_list: typing.List[str]
+    df: pd.DataFrame, int_col_list: typing.List[str]
 ) -> pd.DataFrame:
     for col in int_col_list:
-        df[col] = df[col].apply(lambda x: str(int(round(float("0" if math.isnan(x) else str(x))))))
+        df[col] = df[col].apply(
+            lambda x: str(int(round(float("0" if math.isnan(x) else str(x)))))
+        )
     return df
 
 
@@ -685,11 +691,19 @@ if __name__ == "__main__":
         schema_filepath=os.environ.get("SCHEMA_FILEPATH", ""),
         source_bucket=os.environ.get("SOURCE_BUCKET", ""),
         target_gcs_bucket=os.environ.get("TARGET_GCS_BUCKET", ""),
-        dest_current_data_folder_name=os.environ.get("DEST_CURRENT_DATA_FOLDER_NAME", ""),
-        dest_historical_data_folder_name=os.environ.get("DEST_HISTORICAL_FOLDER_NAME", ""),
-        source_bucket_current_data_folder_name=os.environ.get("SOURCE_BUCKET_CURRENT_DATA_FOLDER_NAME", ""),
+        dest_current_data_folder_name=os.environ.get(
+            "DEST_CURRENT_DATA_FOLDER_NAME", ""
+        ),
+        dest_historical_data_folder_name=os.environ.get(
+            "DEST_HISTORICAL_FOLDER_NAME", ""
+        ),
+        source_bucket_current_data_folder_name=os.environ.get(
+            "SOURCE_BUCKET_CURRENT_DATA_FOLDER_NAME", ""
+        ),
         current_data_target_gcs_path=os.environ.get("CURRENT_DATA_TARGET_GCS_PATH", ""),
-        historical_data_target_gcs_path=os.environ.get("HISTORICAL_DATA_TARGET_GCS_PATH", ""),
+        historical_data_target_gcs_path=os.environ.get(
+            "HISTORICAL_DATA_TARGET_GCS_PATH", ""
+        ),
         data_root_folder=os.environ.get("DATA_ROOT_FOLDER", ""),
         hist_folders_list=json.loads(os.environ.get("HIST_FOLDERS_LIST", r"[]")),
         pipeline_name=os.environ.get("PIPELINE_NAME", ""),

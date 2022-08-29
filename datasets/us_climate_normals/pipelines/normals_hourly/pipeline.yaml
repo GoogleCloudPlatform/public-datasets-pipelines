@@ -21,7 +21,7 @@ resources:
 dag:
   airflow_version: 2
   initialize:
-    dag_id: us_climate_normals.hourly_load
+    dag_id: hourly_load
     default_args:
       owner: "Google"
       depends_on_past: False
@@ -177,4 +177,4 @@ dag:
         name: us-climate-normals-hourly
 
   graph_paths:
-    - "load_us_climate_normals"
+    - "create_cluster >> hourly_load >> delete_cluster"
