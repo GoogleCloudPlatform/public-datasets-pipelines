@@ -15,20 +15,20 @@
  */
 
 
-resource "google_bigquery_table" "mswc_metadata" {
+resource "google_bigquery_table" "multilingual_spoken_words_corpus_metadata" {
   project     = var.project_id
-  dataset_id  = "mswc"
+  dataset_id  = "multilingual_spoken_words_corpus"
   table_id    = "metadata"
   description = "It contains metadata of all existing audio files in tabular format."
   depends_on = [
-    google_bigquery_dataset.mswc
+    google_bigquery_dataset.multilingual_spoken_words_corpus
   ]
 }
 
-output "bigquery_table-mswc_metadata-table_id" {
-  value = google_bigquery_table.mswc_metadata.table_id
+output "bigquery_table-multilingual_spoken_words_corpus_metadata-table_id" {
+  value = google_bigquery_table.multilingual_spoken_words_corpus_metadata.table_id
 }
 
-output "bigquery_table-mswc_metadata-id" {
-  value = google_bigquery_table.mswc_metadata.id
+output "bigquery_table-multilingual_spoken_words_corpus_metadata-id" {
+  value = google_bigquery_table.multilingual_spoken_words_corpus_metadata.id
 }

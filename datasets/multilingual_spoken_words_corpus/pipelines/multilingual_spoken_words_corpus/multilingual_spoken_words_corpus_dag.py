@@ -26,7 +26,7 @@ default_args = {
 
 
 with DAG(
-    dag_id="mswc.mswc",
+    dag_id="multilingual_spoken_words_corpus.multilingual_spoken_words_corpus",
     default_args=default_args,
     max_active_runs=1,
     schedule_interval="@quarterly",
@@ -37,10 +37,10 @@ with DAG(
     # Task to run a GCS to GCS
     copy_metadata_file_to_gcs = gcs_to_gcs.GCSToGCSOperator(
         task_id="copy_metadata_file_to_gcs",
-        source_bucket="{{ var.json.mswc.source_bucket }}",
+        source_bucket="{{ var.json.multilingual_spoken_words_corpus.source_bucket }}",
         source_object="metadata.json.gz",
         destination_bucket="{{ var.value.composer_bucket }}",
-        destination_object="data/mswc/metadata.json.gz",
+        destination_object="data/multilingual_spoken_words_corpus/metadata.json.gz",
         move_object=False,
     )
 
@@ -49,7 +49,7 @@ with DAG(
         task_id="unzip_metadata_gz",
         bash_command="echo Unzipping $data_dir/$source_file...\ngunzip -c $data_dir/$source_file \u003e $data_dir/metadata.json\necho Successfully unzipped .gz file to specified file metadata.json\n",
         env={
-            "data_dir": "/home/airflow/gcs/data/mswc",
+            "data_dir": "/home/airflow/gcs/data/multilingual_spoken_words_corpus",
             "source_file": "metadata.json.gz",
         },
     )
@@ -62,15 +62,15 @@ with DAG(
         namespace="composer",
         service_account_name="datasets",
         image_pull_policy="Always",
-        image="{{ var.json.mswc.container_registry.run_csv_transform_kub }}",
+        image="{{ var.json.multilingual_spoken_words_corpus.container_registry.run_csv_transform_kub }}",
         env_vars={
             "SOURCE_GCS_BUCKET": "{{ var.value.composer_bucket }}",
-            "SOURCE_GCS_OBJECT": "data/mswc/metadata.json",
+            "SOURCE_GCS_OBJECT": "data/multilingual_spoken_words_corpus/metadata.json",
             "SOURCE_FILE": "./files/metadata.json",
             "TARGET_CSV_FILE": "./files/metadata_data_output.csv",
             "COLUMNS": '["lang_abbr", "language", "number_of_words","word", "word_count", "filename"]',
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
-            "TARGET_GCS_PATH": "data/mswc/metadata_data_output.csv",
+            "TARGET_GCS_PATH": "data/multilingual_spoken_words_corpus/metadata_data_output.csv",
         },
         resources={
             "request_memory": "4G",
@@ -83,9 +83,11 @@ with DAG(
     load_metadata_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_metadata_to_bq",
         bucket="{{ var.value.composer_bucket }}",
-        source_objects=["data/mswc/metadata_data_output.csv"],
+        source_objects=[
+            "data/multilingual_spoken_words_corpus/metadata_data_output.csv"
+        ],
         source_format="CSV",
-        destination_project_dataset_table="mswc.metadata",
+        destination_project_dataset_table="multilingual_spoken_words_corpus.metadata",
         skip_leading_rows=1,
         write_disposition="WRITE_TRUNCATE",
         schema_fields=[
