@@ -43,7 +43,7 @@ with DAG(
         env_vars={
             "SOURCE_PROJECT_ID": "{{ var.json.covid19_genome_sequence.source_project_id }}",
             "SOURCE_BQ_DATASET": "{{ var.json.covid19_genome_sequence.source_bq_dataset }}",
-            "TARGET_PROJECT_ID": "{{ var.json.covid19_genome_sequence.target_project_id }}",
+            "TARGET_PROJECT_ID": "{{ var.value.gcp_project }}",
             "TARGET_BQ_DATASET": "{{ var.json.covid19_genome_sequence.target_bq_dataset }}",
         },
         resources={"request_memory": "128M", "request_cpu": "200m"},
