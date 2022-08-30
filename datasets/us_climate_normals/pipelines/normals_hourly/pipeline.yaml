@@ -17,11 +17,14 @@ resources:
   - type: bigquery_table
     table_id: "hourly_access"
     description: "U.S. Climate Normals Hourly Data (Most Recent)."
+  - type: bigquery_table
+    table_id: "hourly_historical"
+    description: "U.S. Climate Normals Hourly Data (Historical)."
 
 dag:
   airflow_version: 2
   initialize:
-    dag_id: hourly_load
+    dag_id: normals_hourly
     default_args:
       owner: "Google"
       depends_on_past: False
@@ -66,7 +69,7 @@ dag:
           HISTORICAL_DATA_TABLE_ID: "{{ var.json.us_climate_normals.normals_hourly.destination_dataset_table_historical }}"
           DATA_FILE_SURR_KEY_FIELD: "{{ var.json.us_climate_normals.normals_hourly.data_file_surr_key_field }}"
           DEST_FOLDER: "{{ var.json.us_climate_normals.container_registry.dest_folder }}"
-          SCHEMA_FILEPATH: "{{ var.json.us_climate_normals.container_registry.dest_folder }}"
+          SCHEMA_FILEPATH: "{{ var.json.us_climate_normals.normals_hourly.schema_filepath }}"
           SOURCE_BUCKET: "{{ var.json.us_climate_normals.container_registry.source_gcs_bucket }}"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           CURRENT_DATA_TARGET_GCS_PATH: "{{ var.json.us_climate_normals.normals_hourly.current_data_target_gcs_path }}"
@@ -139,32 +142,32 @@ dag:
               "hly-wind-vctdir": "str","hly-wind-vctdir_attributes": "str",
               "hly-wind-vctspd": "str","hly-wind-vctspd_attributes": "str" }
           INT_COL_LIST: >-
-            [ "hly-cldh-normal_attributes",
-              "hly-clod-pctbkn_attributes",
-              "hly-clod-pctclr_attributes",
-              "hly-clod-pctfew_attributes",
-              "hly-clod-pctovc_attributes",
-              "hly-clod-pctsct_attributes",
-              "hly-dewp-10pctl_attributes",
-              "hly-dewp-90pctl_attributes",
-              "hly-dewp-normal_attributes",
-              "hly-hidx-normal_attributes",
-              "hly-htdh-normal_attributes",
-              "hly-pres-10pctl_attributes",
-              "hly-pres-90pctl_attributes",
-              "hly-pres-normal_attributes",
-              "hly-temp-10pctl_attributes",
-              "hly-temp-90pctl_attributes",
-              "hly-temp-normal_attributes",
-              "hly-wchl-normal_attributes",
-              "hly-wind-1stdir_attributes",
-              "hly-wind-1stpct_attributes",
-              "hly-wind-2nddir_attributes",
-              "hly-wind-2ndpct_attributes",
-              "hly-wind-avgspd_attributes",
-              "hly-wind-pctclm_attributes",
-              "hly-wind-vctdir_attributes",
-              "hly-wind-vctspd_attributes" ]
+            [ "hly-cldh-normal",
+              "hly-clod-pctbkn",
+              "hly-clod-pctclr",
+              "hly-clod-pctfew",
+              "hly-clod-pctovc",
+              "hly-clod-pctsct",
+              "hly-dewp-10pctl",
+              "hly-dewp-90pctl",
+              "hly-dewp-normal",
+              "hly-hidx-normal",
+              "hly-htdh-normal",
+              "hly-pres-10pctl",
+              "hly-pres-90pctl",
+              "hly-pres-normal",
+              "hly-temp-10pctl",
+              "hly-temp-90pctl",
+              "hly-temp-normal",
+              "hly-wchl-normal",
+              "hly-wind-1stdir",
+              "hly-wind-1stpct",
+              "hly-wind-2nddir",
+              "hly-wind-2ndpct",
+              "hly-wind-avgspd",
+              "hly-wind-pctclm",
+              "hly-wind-vctdir",
+              "hly-wind-vctspd" ]
         resources:
           request_memory: "12G"
           request_cpu: "1"

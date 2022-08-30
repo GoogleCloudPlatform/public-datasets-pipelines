@@ -154,34 +154,30 @@ def execute_current_data_load(
     data_dtypes: dict,
     int_col_list: typing.List[str],
 ) -> None:
-    for folder in data_root_folder:
-        import pdb
-
-        pdb.set_trace()
-        new_dest_current_data_folder_name = (
-            f"{dest_folder}/{folder}/{dest_current_data_folder_name}"
-        )
-        logging.info(
-            f"Creating {new_dest_current_data_folder_name} if it does not exist"
-        )
-        pathlib.Path(new_dest_current_data_folder_name).mkdir(
-            parents=True, exist_ok=True
-        )
-        process_data(
-            project_id=project_id,
-            dataset_id=dataset_id,
-            table_name=current_data_table_id,
-            schema_filepath=schema_filepath,
-            target_gcs_bucket=target_gcs_bucket,
-            target_gcs_path=current_data_target_gcs_path,
-            data_file_surr_key_field=data_file_surr_key_field,
-            source_gs_folder=source_gs_folder,
-            dest_folder=new_dest_current_data_folder_name,
-            chunksize=chunksize,
-            input_headers=input_headers,
-            data_dtypes=data_dtypes,
-            int_col_list=int_col_list,
-        )
+    new_dest_current_data_folder_name = (
+        f"{dest_folder}/{data_root_folder}/{dest_current_data_folder_name}"
+    )
+    logging.info(
+        f"Creating {new_dest_current_data_folder_name} if it does not exist"
+    )
+    pathlib.Path(new_dest_current_data_folder_name).mkdir(
+        parents=True, exist_ok=True
+    )
+    process_data(
+        project_id=project_id,
+        dataset_id=dataset_id,
+        table_name=current_data_table_id,
+        schema_filepath=schema_filepath,
+        target_gcs_bucket=target_gcs_bucket,
+        target_gcs_path=current_data_target_gcs_path,
+        data_file_surr_key_field=data_file_surr_key_field,
+        source_gs_folder=source_gs_folder,
+        dest_folder=new_dest_current_data_folder_name,
+        chunksize=chunksize,
+        input_headers=input_headers,
+        data_dtypes=data_dtypes,
+        int_col_list=int_col_list,
+    )
 
 
 def execute_historical_data_load(
