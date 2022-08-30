@@ -128,24 +128,6 @@ def main(
 
         process_source_file(source_file, target_file, chunksize, pipeline_name)
 
-        # logging.info(f"Opening file...{source_file}")
-        # df = pd.read_table(
-        #     source_file, dtype=object, index_col=False, names=csv_headers, sep="|"
-        # )
-
-        # logging.info(f"Transforming.. {source_file}")
-
-        # df["transaction_dt"] = df["transaction_dt"].astype(str)
-        # date_for_length(df, "transaction_dt")
-        # df = resolve_date_format(df, "transaction_dt", pipeline_name)
-        # df = df.rename(columns=lambda x: x.strip())
-
-        # logging.info(f"Saving to output file.. {target_file}")
-        try:
-            save_to_new_file(df, file_path=str(target_file))
-        except Exception as e:
-            logging.error(f"Error saving output file: {e}.")
-
         logging.info(
             f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
         )
