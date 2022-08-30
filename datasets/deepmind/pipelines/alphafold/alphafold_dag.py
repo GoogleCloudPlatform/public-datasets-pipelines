@@ -35,17 +35,19 @@ with DAG(
     default_view="graph",
 ) as dag:
 
-    # Copy JSON metadata and FASTA to public bucket
-    copy_json_metadata_and_fasta_to_public_bucket = (
+    # Copy JSON metadata, accession IDs, and FASTA to public bucket
+    copy_json_metadata_accession_and_fasta_to_public_bucket = (
         cloud_storage_transfer_service.CloudDataTransferServiceGCSToGCSOperator(
-            task_id="copy_json_metadata_and_fasta_to_public_bucket",
+            task_id="copy_json_metadata_accession_and_fasta_to_public_bucket",
             timeout=43200,
             retries=0,
             wait=True,
             project_id="bigquery-public-data",
             source_bucket="{{ var.json.deepmind.alphafold.source_bucket }}",
             destination_bucket="{{ var.json.deepmind.alphafold.destination_bucket }}",
-            object_conditions={"includePrefixes": ["metadata", "sequences.fasta"]},
+            object_conditions={
+                "includePrefixes": ["metadata", "accession_ids.csv", "sequences.fasta"]
+            },
             transfer_options={
                 "overwriteWhen": "DIFFERENT",
                 "deleteObjectsUniqueInSink": True,
@@ -311,7 +313,7 @@ with DAG(
     )
 
     [
-        copy_json_metadata_and_fasta_to_public_bucket,
+        copy_json_metadata_accession_and_fasta_to_public_bucket,
         copy_proteomes_to_public_bucket,
     ] >> load_json_metadata_to_bq
     (
