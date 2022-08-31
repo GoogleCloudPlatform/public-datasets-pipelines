@@ -27,51 +27,45 @@ from google.cloud.exceptions import NotFound
 
 def main(
     project_id: str,
-    dataset_id: str,
-    current_data_table_id: str,
-    historical_data_table_id: str,
-    data_file_surr_key_field: str,
-    dest_folder: str,
-    schema_filepath: str,
-    source_bucket: str,
-    target_gcs_bucket: str,
-    dest_current_data_folder_name: str,
-    dest_historical_data_folder_name: str,
-    source_bucket_current_data_folder_name: str,
-    current_data_target_gcs_path: str,
-    historical_data_target_gcs_path: str,
-    data_root_folder: str,
-    hist_folders_list: typing.List[str],
-    pipeline_name: str,
-    chunksize: str,
-    input_headers: typing.List[str],
-    data_dtypes: dict,
-    int_col_list: typing.List[str],
+    dataset_id: str
 ) -> None:
-    logging.info(f"{pipeline_name} process started")
-    execute_pipeline(
-        project_id=project_id,
-        dataset_id=dataset_id,
-        current_data_table_id=current_data_table_id,
-        historical_data_table_id=historical_data_table_id,
-        data_file_surr_key_field=data_file_surr_key_field,
-        dest_folder=dest_folder,
-        schema_filepath=schema_filepath,
-        source_bucket=source_bucket,
-        target_gcs_bucket=target_gcs_bucket,
-        dest_current_data_folder_name=dest_current_data_folder_name,
-        dest_historical_data_folder_name=dest_historical_data_folder_name,
-        source_bucket_current_data_folder_name=source_bucket_current_data_folder_name,
-        current_data_target_gcs_path=current_data_target_gcs_path,
-        historical_data_target_gcs_path=historical_data_target_gcs_path,
-        data_root_folder=data_root_folder,
-        hist_folders_list=hist_folders_list,
-        chunksize=chunksize,
-        input_headers=input_headers,
-        data_dtypes=data_dtypes,
-        int_col_list=int_col_list,
+    # logging.info(f"{pipeline_name} process started")
+    generate_schema_file_from_source_file(
+        filename="/usr/local/google/home/nlarge/Desktop/test_us_climate_normals/normals-hourly/current/AQW00061705.csv",
+        output_schema_file="/usr/local/google/home/nlarge/Desktop/test_us_climate_normals/schema/normals_hourly_AQW_access.json"
     )
-    logging.info(f"{pipeline_name} process completed")
+    # logging.info(schema_content)
+    # logging.info(f"{pipeline_name} process completed")
+
+
+def extract_header_from_file(filename: str, sep: str = ",") -> typing.List[str]:
+    with open(filename) as f:
+        first_line = f.readline()
+    return first_line.replace("-", "_").split(sep)
+
+
+def generate_schema_file_from_source_file(filename: str, output_schema_file: str, input_sep: str = ",") -> None:
+    schema_content = "[\n"
+    for fld in extract_header_from_file(filename, input_sep):
+        data_type = ""
+        fld = fld.replace('"', '').strip()
+        print(f"{fld}")
+        if fld in ( 'LATITUDE', 'LONGITUDE', 'ELEVATION' ):
+            data_type = "FLOAT"
+        elif fld[len(fld)-11:] == '_ATTRIBUTES' or fld in ('STATION', 'DATE', 'NAME'):
+            data_type = "STRING"
+            print(f"*{fld}*")
+        elif data_type == "":
+            data_type = "INTEGER"
+        schema_content += f'  {{\n    "name": "{fld}",\n    "type": "{data_type}",\n    "mode": "NULLABLE",\n    "description": ""\n  }},\n'
+    schema_content = schema_content[:-3]
+    schema_content += "  }\n]\n"
+    pathlib.Path(os.path.dirname(output_schema_file)).mkdir(
+        parents=True, exist_ok=True
+    )
+    with open(output_schema_file, "w+") as schema_file:
+        schema_file.write(schema_content)
+
 
 
 def execute_pipeline(
@@ -683,31 +677,31 @@ if __name__ == "__main__":
     main(
         project_id=os.environ.get("PROJECT_ID", ""),
         dataset_id=os.environ.get("DATASET_ID", ""),
-        current_data_table_id=os.environ.get("CURRENT_DATA_TABLE_ID", ""),
-        historical_data_table_id=os.environ.get("HISTORICAL_DATA_TABLE_ID", ""),
-        data_file_surr_key_field=os.environ.get("DATA_FILE_SURR_KEY_FIELD", ""),
-        dest_folder=os.environ.get("DEST_FOLDER", ""),
-        schema_filepath=os.environ.get("SCHEMA_FILEPATH", ""),
-        source_bucket=os.environ.get("SOURCE_BUCKET", ""),
-        target_gcs_bucket=os.environ.get("TARGET_GCS_BUCKET", ""),
-        dest_current_data_folder_name=os.environ.get(
-            "DEST_CURRENT_DATA_FOLDER_NAME", ""
-        ),
-        dest_historical_data_folder_name=os.environ.get(
-            "DEST_HISTORICAL_FOLDER_NAME", ""
-        ),
-        source_bucket_current_data_folder_name=os.environ.get(
-            "SOURCE_BUCKET_CURRENT_DATA_FOLDER_NAME", ""
-        ),
-        current_data_target_gcs_path=os.environ.get("CURRENT_DATA_TARGET_GCS_PATH", ""),
-        historical_data_target_gcs_path=os.environ.get(
-            "HISTORICAL_DATA_TARGET_GCS_PATH", ""
-        ),
-        data_root_folder=os.environ.get("DATA_ROOT_FOLDER", ""),
-        hist_folders_list=json.loads(os.environ.get("HIST_FOLDERS_LIST", r"[]")),
-        pipeline_name=os.environ.get("PIPELINE_NAME", ""),
-        chunksize=os.environ.get("CHUNKSIZE", ""),
-        input_headers=json.loads(os.environ.get("INPUT_CSV_HEADERS", r"[]")),
-        data_dtypes=json.loads(os.environ.get("DATA_DTYPES", r"{}")),
-        int_col_list=json.loads(os.environ.get("INT_COL_LIST", r"[]")),
+        # current_data_table_id=os.environ.get("CURRENT_DATA_TABLE_ID", ""),
+        # historical_data_table_id=os.environ.get("HISTORICAL_DATA_TABLE_ID", ""),
+        # data_file_surr_key_field=os.environ.get("DATA_FILE_SURR_KEY_FIELD", ""),
+        # dest_folder=os.environ.get("DEST_FOLDER", ""),
+        # schema_filepath=os.environ.get("SCHEMA_FILEPATH", ""),
+        # source_bucket=os.environ.get("SOURCE_BUCKET", ""),
+        # target_gcs_bucket=os.environ.get("TARGET_GCS_BUCKET", ""),
+        # dest_current_data_folder_name=os.environ.get(
+        #     "DEST_CURRENT_DATA_FOLDER_NAME", ""
+        # ),
+        # dest_historical_data_folder_name=os.environ.get(
+        #     "DEST_HISTORICAL_FOLDER_NAME", ""
+        # ),
+        # source_bucket_current_data_folder_name=os.environ.get(
+        #     "SOURCE_BUCKET_CURRENT_DATA_FOLDER_NAME", ""
+        # ),
+        # current_data_target_gcs_path=os.environ.get("CURRENT_DATA_TARGET_GCS_PATH", ""),
+        # historical_data_target_gcs_path=os.environ.get(
+        #     "HISTORICAL_DATA_TARGET_GCS_PATH", ""
+        # ),
+        # data_root_folder=os.environ.get("DATA_ROOT_FOLDER", ""),
+        # hist_folders_list=json.loads(os.environ.get("HIST_FOLDERS_LIST", r"[]")),
+        # pipeline_name=os.environ.get("PIPELINE_NAME", ""),
+        # chunksize=os.environ.get("CHUNKSIZE", ""),
+        # input_headers=json.loads(os.environ.get("INPUT_CSV_HEADERS", r"[]")),
+        # data_dtypes=json.loads(os.environ.get("DATA_DTYPES", r"{}")),
+        # int_col_list=json.loads(os.environ.get("INT_COL_LIST", r"[]")),
     )
