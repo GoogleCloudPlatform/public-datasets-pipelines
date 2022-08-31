@@ -24,8 +24,6 @@ resources:
     description: |
       ChEMBL Data is a manually curated database of small molecules used in drug discovery, including information about existing patented drugs.
 
-      Schema: https://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBLdb/latest/chembl_30_schema.png
-
       Documentation: https://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBLdb/latest/schema_documentation.html
 
       “ChEMBL” by the European Bioinformatics Institute (EMBL-EBI), used under CC BY-SA 3.0. Modifications have been made to add normalized publication numbers.

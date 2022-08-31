@@ -344,107 +344,54 @@ dag:
     default_view: graph
 
   tasks:
-    - operator: "BashOperator"
-      description: "Task to 'start' CloudSQL Database Instance."
+    - operator: "GKECreateClusterOperator"
       args:
-        task_id: "start_db_instance"
-        bash_command: |
-          echo $instance_id
-          gcloud sql instances patch $instance_id --activation-policy=ALWAYS
-        env:
-          instance_id: "{{ var.json.ebi_chembl.instance_id }}"
+        task_id: "create_cluster"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        body:
+          name: ebi-chembl-30
+          initial_node_count: 2
+          network: "{{ var.value.vpc_network }}"
+          node_config:
+            machine_type: e2-standard-8
+            oauth_scopes:
+              - https://www.googleapis.com/auth/devstorage.read_write
+              - https://www.googleapis.com/auth/cloud-platform
 
 
-    - operator: "KubernetesPodOperator"
-      description: "Run CSV transform within kubernetes pod"
+    - operator: "GKEStartPodOperator"
+      description: "Copy files to GCS on the specified date"
       args:
-        task_id: "activities_transform_csv"
-        startup_timeout_seconds: 600
-        name: "activities"
-        namespace: "composer"
-        service_account_name: "datasets"
-        image_pull_policy: "Always"
+        task_id: "csv_transform"
+        name: "ebi_chembl_30"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: ebi-chembl-30
+        namespace: "default"
         image: "{{ var.json.ebi_chembl.container_registry.run_csv_transform_kub }}"
+        image_pull_policy: "Always"
         env_vars:
-          INSTANCE_CONNECTION_NAME: "{{ var.json.ebi_chembl.instance_connection_name }}"
-          USER: "{{ var.json.ebi_chembl.user }}"
-          PASSWORD: "{{ var.json.ebi_chembl.password }}"
-          DATABASE: "{{ var.json.ebi_chembl.database }}"
-          TABLES: >-
-            ["activities"]
-          CHUNK_SIZE: "100000"
           OUTPUT_FOLDER: "./files/output"
+          SOURCE_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          SOURCE_GCS_OBJECT: "data/ebi_chembl/chembl_30/chembl_30_postgresql.dmp"
+          SOURCE_FILE: "./files/chembl_30_postgresql.dmp"
+          TABLES: >-
+            ["action_type", "activities", "activity_properties", "activity_smid", "activity_stds_lookup", "activity_supp", "activity_supp_map", "assay_class_map", "assay_classification", "assay_parameters", "assay_type", "assays", "atc_classification", "binding_sites", "bio_component_sequences", "bioassay_ontology", "biotherapeutic_components", "biotherapeutics", "cell_dictionary", "chembl_id_lookup", "component_class", "component_domains", "component_go", "component_sequences", "component_synonyms", "compound_properties", "compound_records", "compound_structural_alerts", "compound_structures", "confidence_score_lookup", "curation_lookup", "data_validity_lookup", "defined_daily_dose", "docs", "domains", "drug_indication", "drug_mechanism", "drug_warning", "formulations", "frac_classification", "go_classification", "hrac_classification", "indication_refs", "irac_classification", "ligand_eff", "mechanism_refs", "metabolism", "metabolism_refs", "molecule_atc_classification", "molecule_dictionary", "molecule_frac_classification", "molecule_hierarchy", "molecule_hrac_classification", "molecule_irac_classification", "molecule_synonyms", "organism_class", "patent_use_codes", "predicted_binding_domains", "product_patents", "products", "protein_class_synonyms", "protein_classification", "protein_family_classification", "relationship_type", "research_companies", "research_stem", "site_components", "source", "structural_alert_sets", "structural_alerts", "target_components", "target_dictionary", "target_relations", "target_type", "tissue_dictionary", "usan_stems", "variant_sequences", "version", "warning_refs"]
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_FOLDER: "data/ebi_chembl/chembl_30/output"
-        resources:
-          request_memory: "8G"
-          request_cpu: "2"
-          request_ephemeral_storage: "10G"
-
-
-    - operator: "KubernetesPodOperator"
-      description: "Run CSV transform within kubernetes pod"
-      args:
-        task_id: "compound_structures_transform_csv"
+        retries: 3
+        retry_delay: 300
+        retry_exponential_backoff: true
         startup_timeout_seconds: 600
-        name: "compound_structures"
-        namespace: "composer"
-        service_account_name: "datasets"
-        image_pull_policy: "Always"
-        image: "{{ var.json.ebi_chembl.container_registry.run_csv_transform_kub }}"
-        env_vars:
-          INSTANCE_CONNECTION_NAME: "{{ var.json.ebi_chembl.instance_connection_name }}"
-          USER: "{{ var.json.ebi_chembl.user }}"
-          PASSWORD: "{{ var.json.ebi_chembl.password }}"
-          DATABASE: "{{ var.json.ebi_chembl.database }}"
-          TABLES: >-
-            ["compound_structures"]
-          CHUNK_SIZE: "100000"
-          OUTPUT_FOLDER: "./files/output"
-          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
-          TARGET_GCS_FOLDER: "data/ebi_chembl/chembl_30/output"
-        resources:
-          request_memory: "8G"
-          request_cpu: "2"
-          request_ephemeral_storage: "8G"
 
 
-    - operator: "KubernetesPodOperator"
-      description: "Run CSV transform within kubernetes pod"
+    - operator: "GKEDeleteClusterOperator"
       args:
-        task_id: "rem_all_transform_csv"
-        startup_timeout_seconds: 600
-        name: "rem_all"
-        namespace: "composer"
-        service_account_name: "datasets"
-        image_pull_policy: "Always"
-        image: "{{ var.json.ebi_chembl.container_registry.run_csv_transform_kub }}"
-        env_vars:
-          INSTANCE_CONNECTION_NAME: "{{ var.json.ebi_chembl.instance_connection_name }}"
-          USER: "{{ var.json.ebi_chembl.user }}"
-          PASSWORD: "{{ var.json.ebi_chembl.password }}"
-          DATABASE: "{{ var.json.ebi_chembl.database }}"
-          TABLES: >-
-            ["action_type", "activity_properties", "activity_smid", "activity_stds_lookup", "activity_supp", "activity_supp_map", "assay_class_map", "assay_classification", "assay_parameters", "assay_type", "assays", "atc_classification", "binding_sites", "bio_component_sequences", "bioassay_ontology", "biotherapeutic_components", "biotherapeutics", "cell_dictionary", "chembl_id_lookup", "component_class", "component_domains", "component_go", "component_sequences", "component_synonyms", "compound_properties", "compound_records", "compound_structural_alerts", "confidence_score_lookup", "curation_lookup", "data_validity_lookup", "defined_daily_dose", "docs", "domains", "drug_indication", "drug_mechanism", "drug_warning", "formulations", "frac_classification", "go_classification", "hrac_classification", "indication_refs", "irac_classification", "ligand_eff", "mechanism_refs", "metabolism", "metabolism_refs", "molecule_atc_classification", "molecule_dictionary", "molecule_frac_classification", "molecule_hierarchy", "molecule_hrac_classification", "molecule_irac_classification", "molecule_synonyms", "organism_class", "patent_use_codes", "predicted_binding_domains", "product_patents", "products", "protein_class_synonyms", "protein_classification", "protein_family_classification", "relationship_type", "research_companies", "research_stem", "site_components", "source", "structural_alert_sets", "structural_alerts", "target_components", "target_dictionary", "target_relations", "target_type", "tissue_dictionary", "usan_stems", "variant_sequences", "version", "warning_refs"]
-          CHUNK_SIZE: "100000"
-          OUTPUT_FOLDER: "./files/output"
-          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
-          TARGET_GCS_FOLDER: "data/ebi_chembl/chembl_30/output"
-        resources:
-          request_memory: "8G"
-          request_cpu: "1"
-          request_ephemeral_storage: "4G"
-
-
-    - operator: "BashOperator"
-      description: "Task to 'stop' CloudSQL Database Instance."
-      args:
-        task_id: "stop_db_instance"
-        bash_command: |
-          echo $instance_id
-          gcloud sql instances patch $instance_id --activation-policy=NEVER
-        env:
-          instance_id: "{{ var.json.ebi_chembl.instance_id }}"
+        task_id: "delete_cluster"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        name: ebi-chembl-30
 
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
@@ -711,7 +658,7 @@ dag:
             mode: "nullable"
             description: "The lowest value for this activity type that is likely to be genuine. This is only an approximation, so lower genuine values may exist, but it may be desirable to validate these before using them. For a given standard_type/units, values in the activities table below this threshold are flagged with a data_validity_comment of 'Outside typical range'."
           - name: "normal_range_max"
-            type: "integer"
+            type: "float"
             mode: "nullable"
             description: "The highest value for this activity type that is likely to be genuine. This is only an approximation, so higher genuine values may exist, but it may be desirable to validate these before using them. For a given standard_type/units, values in the activities table above this threshold are flagged with a data_validity_comment of 'Outside typical range'."
 
@@ -3643,7 +3590,4 @@ dag:
 
 
   graph_paths:
-    - "start_db_instance >> [activities_transform_csv, compound_structures_transform_csv, rem_all_transform_csv] >> stop_db_instance"
-    - "activities_transform_csv >> load_activities_to_bq"
-    - "compound_structures_transform_csv >> load_compound_structures_to_bq"
-    - "rem_all_transform_csv >> [load_action_type_to_bq, load_activity_properties_to_bq, load_activity_smid_to_bq, load_activity_stds_lookup_to_bq, load_activity_supp_to_bq, load_activity_supp_map_to_bq, load_assay_class_map_to_bq, load_assay_classification_to_bq, load_assay_parameters_to_bq, load_assay_type_to_bq, load_assays_to_bq, load_atc_classification_to_bq, load_binding_sites_to_bq, load_bio_component_sequences_to_bq, load_bioassay_ontology_to_bq, load_biotherapeutic_components_to_bq, load_biotherapeutics_to_bq, load_cell_dictionary_to_bq, load_chembl_id_lookup_to_bq, load_component_class_to_bq, load_component_domains_to_bq, load_component_go_to_bq, load_component_sequences_to_bq, load_component_synonyms_to_bq, load_compound_properties_to_bq, load_compound_records_to_bq, load_compound_structural_alerts_to_bq, load_confidence_score_lookup_to_bq, load_curation_lookup_to_bq, load_data_validity_lookup_to_bq, load_defined_daily_dose_to_bq, load_docs_to_bq, load_domains_to_bq, load_drug_indication_to_bq, load_drug_mechanism_to_bq, load_drug_warning_to_bq, load_formulations_to_bq, load_frac_classification_to_bq, load_go_classification_to_bq, load_hrac_classification_to_bq, load_indication_refs_to_bq, load_irac_classification_to_bq, load_ligand_eff_to_bq, load_mechanism_refs_to_bq, load_metabolism_to_bq, load_metabolism_refs_to_bq, load_molecule_atc_classification_to_bq, load_molecule_dictionary_to_bq, load_molecule_frac_classification_to_bq, load_molecule_hierarchy_to_bq, load_molecule_hrac_classification_to_bq, load_molecule_irac_classification_to_bq, load_molecule_synonyms_to_bq, load_organism_class_to_bq, load_patent_use_codes_to_bq, load_predicted_binding_domains_to_bq, load_product_patents_to_bq, load_products_to_bq, load_protein_class_synonyms_to_bq, load_protein_classification_to_bq, load_protein_family_classification_to_bq, load_relationship_type_to_bq, load_research_companies_to_bq, load_research_stem_to_bq, load_site_components_to_bq, load_source_to_bq, load_structural_alert_sets_to_bq, load_structural_alerts_to_bq, load_target_components_to_bq, load_target_dictionary_to_bq, load_target_relations_to_bq, load_target_type_to_bq, load_tissue_dictionary_to_bq, load_usan_stems_to_bq, load_variant_sequences_to_bq, load_version_to_bq, load_warning_refs_to_bq]"
+    - "create_cluster >> csv_transform >> delete_cluster >> [load_activities_to_bq, load_compound_structures_to_bq, load_action_type_to_bq, load_activity_properties_to_bq, load_activity_smid_to_bq, load_activity_stds_lookup_to_bq, load_activity_supp_to_bq, load_activity_supp_map_to_bq, load_assay_class_map_to_bq, load_assay_classification_to_bq, load_assay_parameters_to_bq, load_assay_type_to_bq, load_assays_to_bq, load_atc_classification_to_bq, load_binding_sites_to_bq, load_bio_component_sequences_to_bq, load_bioassay_ontology_to_bq, load_biotherapeutic_components_to_bq, load_biotherapeutics_to_bq, load_cell_dictionary_to_bq, load_chembl_id_lookup_to_bq, load_component_class_to_bq, load_component_domains_to_bq, load_component_go_to_bq, load_component_sequences_to_bq, load_component_synonyms_to_bq, load_compound_properties_to_bq, load_compound_records_to_bq, load_compound_structural_alerts_to_bq, load_confidence_score_lookup_to_bq, load_curation_lookup_to_bq, load_data_validity_lookup_to_bq, load_defined_daily_dose_to_bq, load_docs_to_bq, load_domains_to_bq, load_drug_indication_to_bq, load_drug_mechanism_to_bq, load_drug_warning_to_bq, load_formulations_to_bq, load_frac_classification_to_bq, load_go_classification_to_bq, load_hrac_classification_to_bq, load_indication_refs_to_bq, load_irac_classification_to_bq, load_ligand_eff_to_bq, load_mechanism_refs_to_bq, load_metabolism_to_bq, load_metabolism_refs_to_bq, load_molecule_atc_classification_to_bq, load_molecule_dictionary_to_bq, load_molecule_frac_classification_to_bq, load_molecule_hierarchy_to_bq, load_molecule_hrac_classification_to_bq, load_molecule_irac_classification_to_bq, load_molecule_synonyms_to_bq, load_organism_class_to_bq, load_patent_use_codes_to_bq, load_predicted_binding_domains_to_bq, load_product_patents_to_bq, load_products_to_bq, load_protein_class_synonyms_to_bq, load_protein_classification_to_bq, load_protein_family_classification_to_bq, load_relationship_type_to_bq, load_research_companies_to_bq, load_research_stem_to_bq, load_site_components_to_bq, load_source_to_bq, load_structural_alert_sets_to_bq, load_structural_alerts_to_bq, load_target_components_to_bq, load_target_dictionary_to_bq, load_target_relations_to_bq, load_target_type_to_bq, load_tissue_dictionary_to_bq, load_usan_stems_to_bq, load_variant_sequences_to_bq, load_version_to_bq, load_warning_refs_to_bq]"
