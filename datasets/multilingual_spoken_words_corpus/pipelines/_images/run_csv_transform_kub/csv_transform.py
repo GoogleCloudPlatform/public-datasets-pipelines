@@ -99,7 +99,7 @@ def temp_dataframe(
     for word, count in get_lang_words_count(meta_data, abbr).items():
         temp = pd.DataFrame(columns=columns)
         lang_word_filenames = get_lang_word_filenames(meta_data, abbr, word)
-        temp["filenames"] = lang_word_filenames
+        temp["filename"] = lang_word_filenames
         temp["lang_abbr"] = [abbr] * count
         temp["word"] = [word] * count
         temp["word_count"] = [count] * count
