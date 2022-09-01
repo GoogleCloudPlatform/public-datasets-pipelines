@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from distutils.command.upload import upload
+# from distutils.command.upload import upload
 import glob
 import json
 import logging
@@ -20,11 +20,13 @@ import math
 import os
 import pathlib
 import typing
-from datetime import datetime
+import datetime
 
 import pandas as pd
 from google.cloud import bigquery, storage
 from google.cloud.exceptions import NotFound
+from airflow import DAG
+import airflow.providers.google.cloud.transfers.gcs_to_bigquery as gcs2bq
 
 
 def main(
@@ -33,6 +35,7 @@ def main(
     target_gcs_bucket:str
 ) -> None:
     # logging.info(f"{pipeline_name} process started")
+
     source_local_folder_root = f'/usr/local/google/home/nlarge/Desktop/test_us_climate_normals'
     root_pipeline_gs_folder = "normals-hourly"
     folders_list = ['', '/1981-2010', '/1991-2010', '/2006-2020']
@@ -55,13 +58,13 @@ def main(
                 if fldr == "":
                     fldr_ident = "access"
                 else:
-                    fldr_ident = str.replace(fldr, "/", "").replace("-", "_")
-                destination_table=f'normals_hourly_{prefix}_{fldr_ident}'
+                    fldr_ident = str.replace(fldr, "/", "")
+                destination_table=f'normals_hourly_{prefix}_{fldr_ident.replace("-", "_")}'
+                schema_filepath_gcs_path=f'data/us_climate_normals/schema/normals_hourly/{fldr}'
+                output_schema_file=f"{source_local_schema_folder}/{destination_table}_schema.json"
+                schema_filepath = f'{schema_filepath_gcs_path}access/{ os.path.basename(output_schema_file) }'
                 if not table_exists(project_id, dataset_id, destination_table):
                     # filename = return_first_file_for_prefix(prefix, folder_to_process)
-                    output_schema_file=f"{source_local_schema_folder}/{destination_table}_schema.json"
-                    schema_filepath_gcs_path='data/us_climate_normals/schema/normals_hourly/access'
-                    schema_filepath = f'{schema_filepath_gcs_path}/{ os.path.basename(output_schema_file) }'
                     generate_schema_file_from_source_file(
                         filename=first_file_path,
                         output_schema_file=output_schema_file,
@@ -76,15 +79,33 @@ def main(
                         schema_filepath=schema_filepath,
                         bucket_name=target_gcs_bucket,
                     )
-                for filename in glob.glob(f'{folder_to_process}/{prefix}*.csv'):
-                    load_data_to_bq(
+                for file_path in sorted(glob.glob(f'{folder_to_process}/{prefix}*.csv')):
+                    filename = os.path.basename(file_path)
+                    target_gcs_path=f"{root_pipeline_gs_folder}/{fldr_ident}/{filename}"
+                    upload_file_to_gcs(
+                        file_path=file_path,
+                        target_gcs_bucket=target_gcs_bucket,
+                        target_gcs_path=f"data/us_climate_normals/{target_gcs_path}"
+                    )
+                    load_data_gcs_to_bq(
                         project_id=project_id,
                         dataset_id=dataset_id,
                         table_id=destination_table,
-                        file_path=filename,
+                        source_bucket=target_gcs_bucket,
+                        schema_filepath=schema_filepath,
+                        file_path=f"data/us_climate_normals/{target_gcs_path}",
                         field_delimiter=",",
-                        truncate_load=(filename == first_file_path)
+                        truncate_load=(file_path == first_file_path)
                     )
+
+                    # load_data_to_bq(
+                    #     project_id=project_id,
+                    #     dataset_id=dataset_id,
+                    #     table_id=destination_table,
+                    #     file_path=filename,
+                    #     field_delimiter=",",
+                    #     truncate_load=(filename == first_file_path)
+                    # )
                 # logging.info(schema_content)
                 # logging.info(f"{pipeline_name} process completed")
 
@@ -154,6 +175,70 @@ def table_exists(project_id: str, dataset_id: str, table_name: str) -> bool:
             found_table = True
     return found_table
 
+
+def load_data_gcs_to_bq(
+    project_id: str,
+    dataset_id: str,
+    table_id: str,
+    source_bucket: str,
+    schema_filepath: str,
+    file_path: str,
+    field_delimiter: str,
+    truncate_load: bool = False
+) -> None:
+    if truncate_load:
+        logging.info(f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} (with truncate table) started")
+    else:
+        logging.info(f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} (with append data) started")
+    if truncate_load:
+        write_disposition = 'WRITE_TRUNCATE'
+    else:
+        write_disposition = 'WRITE_APPEND'
+    default_args = {
+        'owner': 'default_user',
+        'start_date': datetime.datetime.now() - datetime.timedelta(days = 2),
+        'depends_on_past': False,
+        # With this set to true, the pipeline won't run if the previous day failed
+        # 'email': ['demo@email.de'],
+        # 'email_on_failure': True,
+        # upon failure this pipeline will send an email to your email set above
+        # 'email_on_retry': False,
+        'retries': 5,
+        'retry_delay': datetime.timedelta(minutes=1),
+    }
+    with DAG('tempDAG', default_args=default_args) as dag:
+        if not truncate_load:
+            load_data = gcs2bq.GCSToBigQueryOperator(
+                    dag=dag,
+                    task_id='load_source_data',
+                    bucket=source_bucket,
+                    source_objects=[ file_path ],
+                    field_delimiter=field_delimiter,
+                    destination_project_dataset_table=f'us_climate_normals.{table_id}',
+                    skip_leading_rows=1,
+                    schema_object=schema_filepath,
+                    write_disposition=f'{write_disposition}',
+                    schema_update_options=[ "ALLOW_FIELD_ADDITION" ]
+            )
+        else:
+            load_data = gcs2bq.GCSToBigQueryOperator(
+                    dag=dag,
+                    task_id='load_source_data',
+                    bucket=source_bucket,
+                    source_objects=[ file_path ],
+                    field_delimiter=field_delimiter,
+                    destination_project_dataset_table=f'us_climate_normals.{table_id}',
+                    skip_leading_rows=1,
+                    schema_object=schema_filepath,
+                    write_disposition=f'{write_disposition}'
+            )
+        # dummy_task = DummyOperator(task_id='dummy_task', retries=3)
+        # load_data.set_downstream("load_source_data")
+        # dag.Execute()
+        load_data.execute("load_source_data")
+    logging.info(
+        f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} completed"
+    )
 
 def load_data_to_bq(
     project_id: str,

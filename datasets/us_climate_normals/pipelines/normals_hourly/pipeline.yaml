@@ -40,6 +40,7 @@ dag:
       args:
         task_id: "download_raw_csv_file"
         bash_command: |
+          mkdir -p ./files/schema
           mkdir -p ./files/normals-hourly
           gsutil cp -rm gs://normals/normals-hourly * ./files/normals-hourly
     - operator: "GoogleCloudStorageToBigQueryOperator"
