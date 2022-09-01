@@ -79,7 +79,7 @@ def create_dataframe(
         abbr, language = kv_pair
         logging.info(f"\t\t\t{idx + 1} out of {len(lang_abbr)} languages.")
         logging.info(
-            f"Process started for creating dataframe for {abbr} - {language} language."
+            f"Process started for creating dataframe for {abbr} - {language} language..."
         )
         num_of_words = get_num_of_words(meta_data, abbr)
         logging.info(f"\tCreating temporary datafame for all {num_of_words} words\n")
