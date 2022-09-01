@@ -35,6 +35,13 @@ dag:
     default_view: graph
 
   tasks:
+    - operator: "BashOperator"
+      description: "Task to copy over to pod, the source data and structure from GCS"
+      args:
+        task_id: "download_raw_csv_file"
+        bash_command: |
+          mkdir -p ./files/normals-hourly
+          gsutil cp -rm gs://normals/normals-hourly * ./files/normals-hourly
     - operator: "GoogleCloudStorageToBigQueryOperator"
       args:
         task_id: "hourly_load_current_AQW"
