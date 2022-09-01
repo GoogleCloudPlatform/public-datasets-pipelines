@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from distutils.command.upload import upload
 import json
 import logging
 import math
@@ -27,12 +28,37 @@ from google.cloud.exceptions import NotFound
 
 def main(
     project_id: str,
-    dataset_id: str
+    dataset_id: str,
+    target_gcs_bucket:str
 ) -> None:
     # logging.info(f"{pipeline_name} process started")
+    filename="/usr/local/google/home/nlarge/Desktop/test_us_climate_normals/normals-hourly/current/AQW00061705.csv"
+    output_schema_file="/usr/local/google/home/nlarge/Desktop/test_us_climate_normals/schema/normals_hourly_AQW_access_schema.json"
+    schema_filepath_gcs_path='data/us_climate_normals/schema/normals_hourly/access'
+    destination_table='normals_hourly_AQW_access'
+    schema_filepath = f'{schema_filepath_gcs_path}/{ os.path.basename(output_schema_file) }'
     generate_schema_file_from_source_file(
-        filename="/usr/local/google/home/nlarge/Desktop/test_us_climate_normals/normals-hourly/current/AQW00061705.csv",
-        output_schema_file="/usr/local/google/home/nlarge/Desktop/test_us_climate_normals/schema/normals_hourly_AQW_access.json"
+        filename=filename,
+        output_schema_file=output_schema_file,
+        copy_schema_file_to_gcs=True,
+        schema_filepath_bucket=target_gcs_bucket,
+        schema_filepath_gcs_path=schema_filepath
+    )
+    # import pdb; pdb.set_trace()
+    if not table_exists(project_id, dataset_id, destination_table):
+        create_dest_table(
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_id=destination_table,
+            schema_filepath=schema_filepath,
+            bucket_name=target_gcs_bucket,
+        )
+    load_data_to_bq(
+        project_id=project_id,
+        dataset_id=dataset_id,
+        table_id=destination_table,
+        file_path=filename,
+        field_delimiter=","
     )
     # logging.info(schema_content)
     # logging.info(f"{pipeline_name} process completed")
@@ -44,7 +70,14 @@ def extract_header_from_file(filename: str, sep: str = ",") -> typing.List[str]:
     return first_line.replace("-", "_").split(sep)
 
 
-def generate_schema_file_from_source_file(filename: str, output_schema_file: str, input_sep: str = ",") -> None:
+def generate_schema_file_from_source_file(
+        filename: str,
+        output_schema_file: str,
+        copy_schema_file_to_gcs: bool,
+        schema_filepath_bucket: str = "",
+        schema_filepath_gcs_path: str = "",
+        input_sep: str = ","
+) -> None:
     schema_content = "[\n"
     for fld in extract_header_from_file(filename, input_sep):
         data_type = ""
@@ -65,6 +98,13 @@ def generate_schema_file_from_source_file(filename: str, output_schema_file: str
     )
     with open(output_schema_file, "w+") as schema_file:
         schema_file.write(schema_content)
+    if copy_schema_file_to_gcs:
+        upload_file_to_gcs(
+            file_path=output_schema_file,
+            target_gcs_bucket=schema_filepath_bucket,
+            target_gcs_path=schema_filepath_gcs_path
+        )
+
 
 
 
@@ -552,6 +592,7 @@ def create_dest_table(
                 f"Table {table_ref} currently does not exist.  Attempting to create table."
             )
         )
+        # import pdb; pdb.set_trace()
         schema = create_table_schema([], bucket_name, schema_filepath)
         table = bigquery.Table(table_ref, schema=schema)
         client.create_table(table)
@@ -683,7 +724,7 @@ if __name__ == "__main__":
         # dest_folder=os.environ.get("DEST_FOLDER", ""),
         # schema_filepath=os.environ.get("SCHEMA_FILEPATH", ""),
         # source_bucket=os.environ.get("SOURCE_BUCKET", ""),
-        # target_gcs_bucket=os.environ.get("TARGET_GCS_BUCKET", ""),
+        target_gcs_bucket=os.environ.get("TARGET_GCS_BUCKET", ""),
         # dest_current_data_folder_name=os.environ.get(
         #     "DEST_CURRENT_DATA_FOLDER_NAME", ""
         # ),
