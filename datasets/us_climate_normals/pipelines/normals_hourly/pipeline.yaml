@@ -38,62 +38,47 @@ dag:
     - operator: "BashOperator"
       description: "Task to copy over to pod, the source data and structure from GCS"
       args:
-        task_id: "download_raw_csv_file"
+        task_id: "download_source_from_gcs"
         bash_command: |
           mkdir -p ./files/schema
           mkdir -p ./files/normals-hourly
-          gsutil cp -rm gs://normals/normals-hourly * ./files/normals-hourly
-    - operator: "GoogleCloudStorageToBigQueryOperator"
+          gsutil cp -rm gs://normals/normals-hourly * ./files/us_climate_normals/normals-hourly
+    - operator: "KubernetesPodOperator"
+      description: "Run CSV transform within kubernetes pod"
       args:
-        task_id: "hourly_load_current_AQW"
-        bucket: "normals"
-        source_objects: [ "normals-hourly/access/AQW*.csv" ]
-        destination_project_dataset_table: 'us_climate_normals.normals_hourly_AQW'
-        schema_object: 'gs://{{ var.value.composer_bucket }}/data/us_climate_normals/schema/normals_hourly_schema.json'
-        # schema_update_options: [ "ALLOW_FIELD_ADDITION" ]
-        source_format: 'CSV'
-        skip_leading_rows: 1
-        create_disposition: 'CREATE_IF_NEEDED'
-        write_disposition: 'WRITE_TRUNCATE'
-      resources:
-        request_memory: "12G"
-        request_cpu: "1"
-        request_ephemeral_storage: "16G"
-    # - operator: "BigQueryInsertJobOperator"
-    #   args:
-    #     task_id: "convert_datatypes"
-    #     configuration:
-    #       query:
-    #         query: "FOR record in
-    #                 (SELECT column_name
-    #                   FROM `bigquery-public-data-dev.us_climate_normals.INFORMATION_SCHEMA.COLUMNS`
-    #                 WHERE table_name = 'normals_hourly_AQW'
-    #                   AND data_type IN ( 'INTEGER', 'INT64' )
-    #                 LIMIT 1000)
-    #                 DO
-    #                   EXECUTE IMMEDIATE format('''
-    #                     ALTER TABLE us_climate_normals.normals_hourly_AQW ALTER COLUMN %s SET DATA TYPE FLOAT64;
-    #                     ''', record.column_name);
-    #                 END FOR;
-    #                 "
-    #         use_legacy_sql: True
-    - operator: "GoogleCloudStorageToBigQueryOperator"
-      args:
-        task_id: "hourly_load_historical_AQW"
-        bucket: "normals"
-        source_objects: [ "normals-hourly/1981-2010/access/AQW*.csv", "normals-hourly/1991-2010/access/AQW*.csv", "normals-hourly/2006-2020/access/AQW*.csv" ]
-        destination_project_dataset_table: 'us_climate_normals.normals_hourly_AQW'
-        # schema_object='gs://test-bucket/schema.json'
-        schema_update_options: [ "ALLOW_FIELD_ADDITION" ]
-        source_format: 'CSV'
-        skip_leading_rows: 1
-        create_disposition: 'CREATE_IF_NEEDED'
-        write_disposition: 'WRITE_APPEND'
-      resources:
-        request_memory: "12G"
-        request_cpu: "1"
-        request_ephemeral_storage: "16G"
+        task_id: "load_data_to_bq"
+        startup_timeout_seconds: 600
+        name: "load_us_climate_normals_hourly_data"
+        namespace: "composer"
+        service_account_name: "datasets"
+        image_pull_policy: "Always"
+        image: "{{ var.json.us_climate_normals.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "us_climate_normals"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TABLE_PREFIX: "normals_hourly"
+          SOURCE_LOCAL_FOLDER_ROOT: "files/us_climate_normals"
+          ROOT_GCS_FOLDER: "data/us_climate_normals"
+          ROOT_PIPELINE_GS_FOLDER: "normals-hourly"
+          FOLDERS_LIST: >-
+            [
+              "",
+              "/1981-2010",
+              "/1991-2020",
+              "/2006-2020"
+            ]
+          FILE_PREFIX: >-
+            [
+              'AQC', 'AQW', 'CAW', 'CQC', 'FMC', 'FMW',
+              'GQC', 'GQW', 'JQW', 'MQW', 'PSC', 'PSW',
+              'RMC', 'RMW', 'RQC', 'RQW', 'USC', 'USW',
+              'VQC', 'VQW', 'WQW'
+            ]
+          SCHEMA_FILEPATH_GCS_PATH_ROOT: "data/us_climate_normals/schema/normals_hourly"
+        resources:
+          request_memory: "12G"
+          request_cpu: "1"
+          request_ephemeral_storage: "16G"
   graph_paths:
-    - "hourly_load_current_AQW >> hourly_load_historical_AQW"
-    # - "hourly_load_current_AQW >> convert_datatypes >> hourly_load_historical_AQW"
-    # - "create_cluster >> hourly_load >> delete_cluster"
+    - "download_source_from_gcs >> hourly_load_historical_AQW"

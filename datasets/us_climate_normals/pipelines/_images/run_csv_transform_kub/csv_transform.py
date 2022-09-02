@@ -34,20 +34,17 @@ import airflow.providers.google.cloud.transfers.gcs_to_bigquery as gcs2bq
 def main(
     project_id: str,
     dataset_id: str,
-    target_gcs_bucket:str
+    target_gcs_bucket: str,
+    table_prefix: str,
+    pipeline_name: str,
+    source_local_folder_root: str,
+    root_gcs_folder: str,
+    root_pipeline_gs_folder: str,
+    folders_list: typing.List[str],
+    file_prefix: typing.List[str],
+    schema_filepath_gcs_path_root: str,
 ) -> None:
-    # logging.info(f"{pipeline_name} process started")
-
-    source_local_folder_root = f'/usr/local/google/home/nlarge/Desktop/test_us_climate_normals'
-    root_pipeline_gs_folder = "normals-hourly"
-    folders_list = ['', '/1981-2010', '/1991-2010', '/2006-2020']
-    file_prefix = [
-        # 'AQC', 'AQW', 'CAW', 'CQC', 'FMC', 'FMW',
-        # 'GQC', 'GQW', 'JQW', 'MQW', 'PSC', 'PSW',
-        # 'RMC', 'RMW', 'RQC', 'RQW', 'USC', 'USW',
-        # 'VQC', 'VQW', 'WQW'
-        'USW'
-    ]
+    logging.info(f"{pipeline_name} process started")
     source_local_schema_folder = f'{source_local_folder_root}/schema'
     for fldr in folders_list:
         for prefix in file_prefix:
@@ -62,27 +59,10 @@ def main(
                     fldr_ident = "access"
                 else:
                     fldr_ident = str.replace(fldr, "/", "")
-                destination_table=f'normals_hourly_{prefix}_{fldr_ident.replace("-", "_")}'
-                schema_filepath_gcs_path=f'data/us_climate_normals/schema/normals_hourly/{fldr}'
+                destination_table=f'{table_prefix}_{prefix}_{fldr_ident.replace("-", "_")}'
+                schema_filepath_gcs_path=f'{root_gcs_folder}/schema/{root_pipeline_gs_folder}/{fldr}'
                 output_schema_file=f"{source_local_schema_folder}/{destination_table}_schema.json"
                 schema_filepath = f'{schema_filepath_gcs_path}{fldr_ident}/{ os.path.basename(output_schema_file) }'
-                # if not table_exists(project_id, dataset_id, destination_table):
-                #     # filename = return_first_file_for_prefix(prefix, folder_to_process)
-                #     if not gcs_file_exists(bucket=target_gcs_bucket, file_path=output_schema_file):
-                #         generate_schema_file_from_source_file(
-                #             filename=first_file_path,
-                #             output_schema_file=output_schema_file,
-                #             copy_schema_file_to_gcs=True,
-                #             schema_filepath_bucket=target_gcs_bucket,
-                #             schema_filepath_gcs_path=schema_filepath
-                #         )
-                #     create_dest_table(
-                #         project_id=project_id,
-                #         dataset_id=dataset_id,
-                #         table_id=destination_table,
-                #         schema_filepath=schema_filepath,
-                #         bucket_name=target_gcs_bucket,
-                #     )
                 create_schema_and_table(
                     project_id=project_id,
                     dataset_id=dataset_id,
@@ -98,7 +78,7 @@ def main(
                     upload_file_to_gcs(
                         file_path=file_path,
                         target_gcs_bucket=target_gcs_bucket,
-                        target_gcs_path=f"data/us_climate_normals/{target_gcs_path}"
+                        target_gcs_path=f"{root_gcs_folder}/{target_gcs_path}"
                     )
                     load_data_gcs_to_bq(
                         project_id=project_id,
@@ -107,22 +87,12 @@ def main(
                         source_bucket=target_gcs_bucket,
                         output_schema_file=output_schema_file,
                         schema_filepath=schema_filepath,
-                        gcs_file_path=f"data/us_climate_normals/{target_gcs_path}",
+                        gcs_file_path=f"{root_gcs_folder}/{target_gcs_path}",
                         local_file_path=file_path,
                         field_delimiter=",",
                         truncate_load=(file_path == first_file_path)
                     )
-
-                    # load_data_to_bq(
-                    #     project_id=project_id,
-                    #     dataset_id=dataset_id,
-                    #     table_id=destination_table,
-                    #     file_path=filename,
-                    #     field_delimiter=",",
-                    #     truncate_load=(filename == first_file_path)
-                    # )
-                # logging.info(schema_content)
-                # logging.info(f"{pipeline_name} process completed")
+    logging.info(f"{pipeline_name} process completed")
 
 
 def create_schema_and_table(
@@ -288,18 +258,13 @@ def load_data_gcs_to_bq(
                         schema_object=schema_filepath,
                         write_disposition=f'{write_disposition}'
                 )
-            # dummy_task = DummyOperator(task_id='dummy_task', retries=3)
-            # load_data.set_downstream("load_source_data")
-            # dag.Execute()
             load_data.execute("load_source_data")
     except google_api_exceptions.BadRequest:
             print("*** SCHEMA DIFFERENT FROM TABLE - CREATING ADDITIONAL TABLE ***")
-            # ext = os.path.basename(file_path).replace(".csv", "")
             ext = "alternative_1"
             destination_table = f"{table_id}_{ext}"
             schema_filepath = schema_filepath.replace("_schema.json", f"_{ext}_schema.json")
             output_schema_file = output_schema_file.replace("_schema.json", f"_{ext}_schema.json")
-            # import pdb; pdb.set_trace()
             if not table_exists(project_id, dataset_id, destination_table):
                 create_schema_and_table(
                     project_id=project_id,
@@ -336,11 +301,10 @@ def load_data_gcs_to_bq(
                         write_disposition=f'{write_disposition}'
                 )
             load_data.execute("load_source_data_alt_1")
-
-
     logging.info(
         f"Loading data from {gcs_file_path} into {project_id}.{dataset_id}.{table_id} completed"
     )
+
 
 def load_data_to_bq(
     project_id: str,
