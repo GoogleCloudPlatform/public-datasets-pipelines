@@ -51,6 +51,7 @@ def main(
                 f"{source_local_folder_root}/{root_pipeline_gs_folder}"
             )
             folder_to_process = f"{source_local_process_folder_root}{fldr}/access"
+            logging.info(f"prefix={prefix} folder_to_process={folder_to_process}")
             if not prefix_files_exist(prefix, folder_to_process):
                 logging.info(
                     f" ... No files exist with {prefix} prefix in folder {folder_to_process}.  Skipping."
@@ -122,7 +123,6 @@ def create_schema_and_table(
     logging.info(
         f"creating schema and table ... destination_table={destination_table} target_gcs_bucket={target_gcs_bucket} output_schema_file={output_schema_file} file_path={file_path} schema_filepath_gcs_path={schema_filepath_gcs_path} "
     )
-    # import pdb; pdb.set_trace()
     if not table_exists(project_id, dataset_id, destination_table):
         # filename = return_first_file_for_prefix(prefix, folder_to_process)
         if not gcs_file_exists(bucket=target_gcs_bucket, file_path=output_schema_file):
@@ -175,7 +175,6 @@ def generate_schema_file_from_source_file(
     schema_filepath_gcs_path: str = "",
     input_sep: str = ",",
 ) -> None:
-    # import pdb; pdb.set_trace()
     schema_content = "[\n"
     for fld in extract_header_from_file(filename, input_sep):
         data_type = ""
@@ -252,7 +251,6 @@ def load_data_gcs_to_bq(
         "retries": 5,
         "retry_delay": datetime.timedelta(minutes=1),
     }
-    # import pdb; pdb.set_trace()
     try:
         with DAG("tempDAG", default_args=default_args) as dag:
             if not truncate_load:
@@ -447,7 +445,7 @@ if __name__ == "__main__":
         root_gcs_folder=os.environ.get("ROOT_GCS_FOLDER", ""),
         root_pipeline_gs_folder=os.environ.get("ROOT_PIPELINE_GS_FOLDER", ""),
         folders_list=json.loads(os.environ.get("FOLDERS_LIST", r"[]")),
-        file_prefix=json.loads(os.environ.get("FILE_PREFIX", r"[]")),
+        file_prefix=json.loads(os.environ.get("FILE_PREFIX_LIST", r"[]")),
         schema_filepath_gcs_path_root=os.environ.get("SCHEMA_FILEPATH_GCS_PATH_ROOT", ""),
         pipeline_name=os.environ.get("PIPELINE_NAME", "")
     )

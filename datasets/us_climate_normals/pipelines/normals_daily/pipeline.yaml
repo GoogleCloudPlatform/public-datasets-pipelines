@@ -39,7 +39,9 @@ dag:
         bash_command: |
           mkdir -p ./files/us_climate_normals/schema ;
           mkdir -p ./files/us_climate_normals/normals-daily ;
-          gsutil -m cp -r gs://normals/normals-daily/* ./files/us_climate_normals/normals-daily
+          gsutil -m cp -r gs://normals/normals-daily/* ./files/us_climate_normals/normals-daily ;
+          pwd ;
+          ls -R ./files/us_climate_normals/normals-daily ;
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
@@ -66,7 +68,7 @@ dag:
               "/1991-2020",
               "/2006-2020"
             ]
-          FILE_PREFIX: >-
+          FILE_PREFIX_LIST: >-
             [
               "AQC", "AQW", "CAW", "CQC", "FMC", "FMW",
               "GQC", "GQW", "JQW", "MQW", "PSC", "PSW",
