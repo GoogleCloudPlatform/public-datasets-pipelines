@@ -1,0 +1,12 @@
+[
+	{
+		"name": "latitude",
+		"type": "STRING",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "latitude",
+		"type": "STRING",
+		"mode": "NULLABLE"
+	}
+]
