@@ -41,7 +41,7 @@ dag:
         location: "us-central1-c"
         body:
           name: new-york-taxi-trips
-          initial_node_count: 2
+          initial_node_count: 3
           network: "{{ var.value.vpc_network }}"
           node_config:
             machine_type: e2-standard-4
@@ -70,10 +70,11 @@ dag:
           DATA_FILE_YEAR_FIELD: "data_file_year"
           DATA_FILE_MONTH_FIELD: "data_file_month"
           SCHEMA_PATH: "{{ var.json.new_york_taxi_trips.container_registry.green_trips_schema_path }}"
-          CHUNKSIZE: "{{ var.json.new_york_taxi_trips.container_registry.green_trips_chunk_size }}"
+          CHUNKSIZE: "500000"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "{{ var.json.new_york_taxi_trips.container_registry.green_trips_target_gcs_path }}"
           PIPELINE_NAME: "tlc_green_trips"
+          START_YEAR: "2013"
           INPUT_CSV_HEADERS: >-
             ["vendor_id", "pickup_datetime", "dropoff_datetime", "store_and_fwd_flag", "rate_code",
              "pickup_location_id", "dropoff_location_id", "passenger_count", "trip_distance", "fare_amount",
@@ -132,10 +133,11 @@ dag:
           DATASET_ID: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_dataset_id }}"
           TABLE_ID: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_table_id }}"
           SCHEMA_PATH: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_schema_path }}"
-          CHUNKSIZE: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_chunk_size }}"
+          CHUNKSIZE: "500000"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "{{ var.json.new_york_taxi_trips.container_registry.yellow_trips_target_gcs_path }}"
           PIPELINE_NAME: "tlc_yellow_trips"
+          START_YEAR: "2011"
           INPUT_CSV_HEADERS: >-
             [ "vendor_id", "pickup_datetime", "dropoff_datetime", "passenger_count", "trip_distance",
               "rate_code", "store_and_fwd_flag", "pickup_location_id", "dropoff_location_id",
@@ -165,6 +167,10 @@ dag:
               "rate_code", "store_and_fwd_flag", "payment_type", "fare_amount", "extra",
               "mta_tax", "tip_amount", "tolls_amount", "imp_surcharge", "total_amount",
               "pickup_location_id", "dropoff_location_id", "data_file_year", "data_file_month" ]
+        resources:
+          request_memory: "12G"
+          request_cpu: "1"
+          request_ephemeral_storage: "16G"
     - operator: "GKEDeleteClusterOperator"
       args:
         task_id: "delete_cluster"
