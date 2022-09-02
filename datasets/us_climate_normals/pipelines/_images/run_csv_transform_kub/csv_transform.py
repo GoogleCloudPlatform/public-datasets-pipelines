@@ -12,23 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import datetime
+
 # from distutils.command.upload import upload
 import glob
-from http.client import BAD_REQUEST
 import json
 import logging
-import math
 import os
 import pathlib
 import typing
-import datetime
 
-import pandas as pd
-from google.cloud import bigquery, storage
-from google.cloud.exceptions import NotFound
+import airflow.providers.google.cloud.transfers.gcs_to_bigquery as gcs2bq
 import google.api_core.exceptions as google_api_exceptions
 from airflow import DAG
-import airflow.providers.google.cloud.transfers.gcs_to_bigquery as gcs2bq
+from google.cloud import bigquery, storage
+from google.cloud.exceptions import NotFound
 
 
 def main(
@@ -36,8 +34,8 @@ def main(
     dataset_id: str,
     target_gcs_bucket: str,
     table_prefix: str,
-    pipeline_name: str,
     source_local_folder_root: str,
+    pipeline_name: str,
     root_gcs_folder: str,
     root_pipeline_gs_folder: str,
     folders_list: typing.List[str],
@@ -45,24 +43,37 @@ def main(
     schema_filepath_gcs_path_root: str,
 ) -> None:
     logging.info(f"{pipeline_name} process started")
-    source_local_schema_folder = f'{source_local_folder_root}/schema'
+    source_local_schema_folder = f"{source_local_folder_root}/schema"
     for fldr in folders_list:
         for prefix in file_prefix:
             logging.info(f"Processing {prefix} files in {fldr}/access folder ...")
-            source_local_process_folder_root = f'{source_local_folder_root}/{root_pipeline_gs_folder}'
-            folder_to_process = f'{source_local_process_folder_root}{fldr}/access'
+            source_local_process_folder_root = (
+                f"{source_local_folder_root}/{root_pipeline_gs_folder}"
+            )
+            folder_to_process = f"{source_local_process_folder_root}{fldr}/access"
             if not prefix_files_exist(prefix, folder_to_process):
-                logging.info(f" ... No files exist with {prefix} prefix in folder {folder_to_process}.  Skipping.")
+                logging.info(
+                    f" ... No files exist with {prefix} prefix in folder {folder_to_process}.  Skipping."
+                )
             else:
-                first_file_path = return_first_file_for_prefix(prefix, folder_to_process)
+                first_file_path = return_first_file_for_prefix(
+                    prefix, folder_to_process
+                )
                 if fldr == "":
                     fldr_ident = "access"
                 else:
                     fldr_ident = str.replace(fldr, "/", "")
-                destination_table=f'{table_prefix}_{prefix}_{fldr_ident.replace("-", "_")}'
-                schema_filepath_gcs_path=f'{root_gcs_folder}/schema/{root_pipeline_gs_folder}/{fldr}'
-                output_schema_file=f"{source_local_schema_folder}/{destination_table}_schema.json"
-                schema_filepath = f'{schema_filepath_gcs_path}{fldr_ident}/{ os.path.basename(output_schema_file) }'
+                destination_table = (
+                    f'{table_prefix}_{prefix}_{fldr_ident.replace("-", "_")}'
+                )
+                schema_filepath_gcs_path = (
+                    f"{root_gcs_folder}/schema/{root_pipeline_gs_folder}" # /{fldr}"
+                )
+                output_schema_file = (
+                    f"{source_local_schema_folder}/{destination_table}_schema.json"
+                )
+                # schema_filepath = f"{schema_filepath_gcs_path}/{fldr_ident}/{ os.path.basename(output_schema_file) }"
+                schema_filepath = f"{schema_filepath_gcs_path}/{ os.path.basename(output_schema_file) }"
                 create_schema_and_table(
                     project_id=project_id,
                     dataset_id=dataset_id,
@@ -72,13 +83,17 @@ def main(
                     file_path=first_file_path,
                     schema_filepath_gcs_path=schema_filepath,
                 )
-                for file_path in sorted(glob.glob(f'{folder_to_process}/{prefix}*.csv')):
+                for file_path in sorted(
+                    glob.glob(f"{folder_to_process}/{prefix}*.csv")
+                ):
                     filename = os.path.basename(file_path)
-                    target_gcs_path=f"{root_pipeline_gs_folder}/{fldr_ident}/{filename}"
+                    target_gcs_path = (
+                        f"{root_pipeline_gs_folder}/{fldr_ident}/{filename}"
+                    )
                     upload_file_to_gcs(
                         file_path=file_path,
                         target_gcs_bucket=target_gcs_bucket,
-                        target_gcs_path=f"{root_gcs_folder}/{target_gcs_path}"
+                        target_gcs_path=f"{root_gcs_folder}/{target_gcs_path}",
                     )
                     load_data_gcs_to_bq(
                         project_id=project_id,
@@ -90,7 +105,7 @@ def main(
                         gcs_file_path=f"{root_gcs_folder}/{target_gcs_path}",
                         local_file_path=file_path,
                         field_delimiter=",",
-                        truncate_load=(file_path == first_file_path)
+                        truncate_load=(file_path == first_file_path),
                     )
     logging.info(f"{pipeline_name} process completed")
 
@@ -104,7 +119,10 @@ def create_schema_and_table(
     file_path: str,
     schema_filepath_gcs_path: str,
 ) -> None:
-    logging.info(f"creating schema and table ... destination_table={destination_table} target_gcs_bucket={target_gcs_bucket} output_schema_file={output_schema_file} file_path={file_path} schema_filepath_gcs_path={schema_filepath_gcs_path} ")
+    logging.info(
+        f"creating schema and table ... destination_table={destination_table} target_gcs_bucket={target_gcs_bucket} output_schema_file={output_schema_file} file_path={file_path} schema_filepath_gcs_path={schema_filepath_gcs_path} "
+    )
+    # import pdb; pdb.set_trace()
     if not table_exists(project_id, dataset_id, destination_table):
         # filename = return_first_file_for_prefix(prefix, folder_to_process)
         if not gcs_file_exists(bucket=target_gcs_bucket, file_path=output_schema_file):
@@ -115,7 +133,7 @@ def create_schema_and_table(
                 copy_schema_file_to_gcs=True,
                 schema_filepath_bucket=target_gcs_bucket,
                 # schema_filepath_gcs_path=schema_filepath
-                schema_filepath_gcs_path=schema_filepath_gcs_path
+                schema_filepath_gcs_path=schema_filepath_gcs_path,
             )
         create_dest_table(
             project_id=project_id,
@@ -126,25 +144,20 @@ def create_schema_and_table(
         )
 
 
+
 def gcs_file_exists(bucket: str, file_path: str) -> bool:
     storage_client = storage.Client()
     bucket = storage_client.bucket(bucket)
     return storage.Blob(bucket=bucket, name=file_path).exists(storage_client)
 
 
-def prefix_files_exist(
-    prefix: str,
-    folder_to_process: str
-) -> bool:
-    file_list = glob.glob(f'{folder_to_process}/{prefix}*.csv')
+def prefix_files_exist(prefix: str, folder_to_process: str) -> bool:
+    file_list = glob.glob(f"{folder_to_process}/{prefix}*.csv")
     return len(file_list) > 0
 
 
-def return_first_file_for_prefix(
-    prefix: str,
-    folder_to_process: str
-) -> str:
-    file_list = glob.glob(f'{folder_to_process}/{prefix}*.csv')
+def return_first_file_for_prefix(prefix: str, folder_to_process: str) -> str:
+    file_list = glob.glob(f"{folder_to_process}/{prefix}*.csv")
     return sorted(file_list)[0]
 
 
@@ -155,37 +168,41 @@ def extract_header_from_file(filename: str, sep: str = ",") -> typing.List[str]:
 
 
 def generate_schema_file_from_source_file(
-        filename: str,
-        output_schema_file: str,
-        copy_schema_file_to_gcs: bool,
-        schema_filepath_bucket: str = "",
-        schema_filepath_gcs_path: str = "",
-        input_sep: str = ","
+    filename: str,
+    output_schema_file: str,
+    copy_schema_file_to_gcs: bool = True,
+    schema_filepath_bucket: str = "",
+    schema_filepath_gcs_path: str = "",
+    input_sep: str = ",",
 ) -> None:
     # import pdb; pdb.set_trace()
     schema_content = "[\n"
     for fld in extract_header_from_file(filename, input_sep):
         data_type = ""
-        fld = fld.replace('"', '').strip()
-        if fld in ( 'LATITUDE', 'LONGITUDE', 'ELEVATION' ):
+        fld = fld.replace('"', "").strip()
+        if fld in ("LATITUDE", "LONGITUDE", "ELEVATION"):
             data_type = "FLOAT"
-        elif fld[len(fld)-11:] == '_ATTRIBUTES' or fld in ('STATION', 'DATE', 'NAME'):
+        elif fld[len(fld) - 11 :] == "_ATTRIBUTES" or fld in (
+            "STATION",
+            "DATE",
+            "NAME",
+        ):
+            data_type = "STRING"
+        elif fld.find("flag") > -1:
             data_type = "STRING"
         elif data_type == "":
             data_type = "FLOAT"
         schema_content += f'  {{\n    "name": "{fld}",\n    "type": "{data_type}",\n    "mode": "NULLABLE",\n    "description": ""\n  }},\n'
     schema_content = schema_content[:-3]
     schema_content += "  }\n]\n"
-    pathlib.Path(os.path.dirname(output_schema_file)).mkdir(
-        parents=True, exist_ok=True
-    )
+    pathlib.Path(os.path.dirname(output_schema_file)).mkdir(parents=True, exist_ok=True)
     with open(output_schema_file, "w+") as schema_file:
         schema_file.write(schema_content)
     if copy_schema_file_to_gcs:
         upload_file_to_gcs(
             file_path=output_schema_file,
             target_gcs_bucket=schema_filepath_bucket,
-            target_gcs_path=schema_filepath_gcs_path
+            target_gcs_path=schema_filepath_gcs_path,
         )
 
 
@@ -209,98 +226,105 @@ def load_data_gcs_to_bq(
     local_file_path: str,
     output_schema_file: str,
     field_delimiter: str,
-    truncate_load: bool = False
+    truncate_load: bool = False,
 ) -> None:
     if truncate_load:
-        logging.info(f"Loading data from {gcs_file_path} into {project_id}.{dataset_id}.{table_id} (with truncate table) started")
+        logging.info(
+            f"Loading data from {gcs_file_path} into {project_id}.{dataset_id}.{table_id} (with truncate table) started"
+        )
     else:
-        logging.info(f"Loading data from {gcs_file_path} into {project_id}.{dataset_id}.{table_id} (with append data) started")
+        logging.info(
+            f"Loading data from {gcs_file_path} into {project_id}.{dataset_id}.{table_id} (with append data) started"
+        )
     if truncate_load:
-        write_disposition = 'WRITE_TRUNCATE'
+        write_disposition = "WRITE_TRUNCATE"
     else:
-        write_disposition = 'WRITE_APPEND'
+        write_disposition = "WRITE_APPEND"
     default_args = {
-        'owner': 'default_user',
-        'start_date': datetime.datetime.now() - datetime.timedelta(days = 2),
-        'depends_on_past': False,
+        "owner": "default_user",
+        "start_date": datetime.datetime.now() - datetime.timedelta(days=2),
+        "depends_on_past": False,
         # With this set to true, the pipeline won't run if the previous day failed
         # 'email': ['demo@email.de'],
         # 'email_on_failure': True,
         # upon failure this pipeline will send an email to your email set above
         # 'email_on_retry': False,
-        'retries': 5,
-        'retry_delay': datetime.timedelta(minutes=1),
+        "retries": 5,
+        "retry_delay": datetime.timedelta(minutes=1),
     }
+    # import pdb; pdb.set_trace()
     try:
-        with DAG('tempDAG', default_args=default_args) as dag:
+        with DAG("tempDAG", default_args=default_args) as dag:
             if not truncate_load:
                 load_data = gcs2bq.GCSToBigQueryOperator(
-                        dag=dag,
-                        task_id='load_source_data',
-                        bucket=source_bucket,
-                        source_objects=[ gcs_file_path ],
-                        field_delimiter=field_delimiter,
-                        destination_project_dataset_table=f'us_climate_normals.{table_id}',
-                        skip_leading_rows=1,
-                        schema_object=schema_filepath,
-                        write_disposition=f'{write_disposition}',
-                        schema_update_options=[ "ALLOW_FIELD_ADDITION" ]
+                    dag=dag,
+                    task_id="load_source_data",
+                    bucket=source_bucket,
+                    source_objects=[gcs_file_path],
+                    field_delimiter=field_delimiter,
+                    destination_project_dataset_table=f"us_climate_normals.{table_id}",
+                    skip_leading_rows=1,
+                    schema_object=schema_filepath,
+                    write_disposition=f"{write_disposition}",
+                    schema_update_options=["ALLOW_FIELD_ADDITION"],
                 )
             else:
                 load_data = gcs2bq.GCSToBigQueryOperator(
-                        dag=dag,
-                        task_id='load_source_data',
-                        bucket=source_bucket,
-                        source_objects=[ gcs_file_path ],
-                        field_delimiter=field_delimiter,
-                        destination_project_dataset_table=f'us_climate_normals.{table_id}',
-                        skip_leading_rows=1,
-                        schema_object=schema_filepath,
-                        write_disposition=f'{write_disposition}'
+                    dag=dag,
+                    task_id="load_source_data",
+                    bucket=source_bucket,
+                    source_objects=[gcs_file_path],
+                    field_delimiter=field_delimiter,
+                    destination_project_dataset_table=f"us_climate_normals.{table_id}",
+                    skip_leading_rows=1,
+                    schema_object=schema_filepath,
+                    write_disposition=f"{write_disposition}",
                 )
             load_data.execute("load_source_data")
     except google_api_exceptions.BadRequest:
-            print("*** SCHEMA DIFFERENT FROM TABLE - CREATING ADDITIONAL TABLE ***")
-            ext = "alternative_1"
-            destination_table = f"{table_id}_{ext}"
-            schema_filepath = schema_filepath.replace("_schema.json", f"_{ext}_schema.json")
-            output_schema_file = output_schema_file.replace("_schema.json", f"_{ext}_schema.json")
-            if not table_exists(project_id, dataset_id, destination_table):
-                create_schema_and_table(
-                    project_id=project_id,
-                    dataset_id=dataset_id,
-                    destination_table=destination_table,
-                    target_gcs_bucket=source_bucket,
-                    output_schema_file=output_schema_file,
-                    file_path=local_file_path,
-                    schema_filepath_gcs_path=schema_filepath
-                )
-            if not truncate_load:
-                load_data = gcs2bq.GCSToBigQueryOperator(
-                        dag=dag,
-                        task_id='load_source_data_alt_1',
-                        bucket=source_bucket,
-                        source_objects=[ gcs_file_path ],
-                        field_delimiter=field_delimiter,
-                        destination_project_dataset_table=f'us_climate_normals.{destination_table}',
-                        skip_leading_rows=1,
-                        schema_object=schema_filepath,
-                        write_disposition=f'{write_disposition}',
-                        schema_update_options=[ "ALLOW_FIELD_ADDITION" ]
-                )
-            else:
-                load_data = gcs2bq.GCSToBigQueryOperator(
-                        dag=dag,
-                        task_id='load_source_data_alt_1',
-                        bucket=source_bucket,
-                        source_objects=[ gcs_file_path ],
-                        field_delimiter=field_delimiter,
-                        destination_project_dataset_table=f'us_climate_normals.{table_id}',
-                        skip_leading_rows=1,
-                        schema_object=schema_filepath,
-                        write_disposition=f'{write_disposition}'
-                )
-            load_data.execute("load_source_data_alt_1")
+        print("*** SCHEMA DIFFERENT FROM TABLE - CREATING ADDITIONAL TABLE ***")
+        ext = "alternative_1"
+        destination_table = f"{table_id}_{ext}"
+        schema_filepath = schema_filepath.replace("_schema.json", f"_{ext}_schema.json")
+        output_schema_file = output_schema_file.replace(
+            "_schema.json", f"_{ext}_schema.json"
+        )
+        if not table_exists(project_id, dataset_id, destination_table):
+            create_schema_and_table(
+                project_id=project_id,
+                dataset_id=dataset_id,
+                destination_table=destination_table,
+                target_gcs_bucket=source_bucket,
+                output_schema_file=output_schema_file,
+                file_path=local_file_path,
+                schema_filepath_gcs_path=schema_filepath,
+            )
+        if not truncate_load:
+            load_data = gcs2bq.GCSToBigQueryOperator(
+                dag=dag,
+                task_id="load_source_data_alt_1",
+                bucket=source_bucket,
+                source_objects=[gcs_file_path],
+                field_delimiter=field_delimiter,
+                destination_project_dataset_table=f"us_climate_normals.{destination_table}",
+                skip_leading_rows=1,
+                schema_object=schema_filepath,
+                write_disposition=f"{write_disposition}",
+                schema_update_options=["ALLOW_FIELD_ADDITION"],
+            )
+        else:
+            load_data = gcs2bq.GCSToBigQueryOperator(
+                dag=dag,
+                task_id="load_source_data_alt_1",
+                bucket=source_bucket,
+                source_objects=[gcs_file_path],
+                field_delimiter=field_delimiter,
+                destination_project_dataset_table=f"us_climate_normals.{table_id}",
+                skip_leading_rows=1,
+                schema_object=schema_filepath,
+                write_disposition=f"{write_disposition}",
+            )
+        load_data.execute("load_source_data_alt_1")
     logging.info(
         f"Loading data from {gcs_file_path} into {project_id}.{dataset_id}.{table_id} completed"
     )
@@ -312,12 +336,16 @@ def load_data_to_bq(
     table_id: str,
     file_path: str,
     field_delimiter: str,
-    truncate_load: bool = False
+    truncate_load: bool = False,
 ) -> None:
     if truncate_load:
-        logging.info(f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} (with truncate table) started")
+        logging.info(
+            f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} (with truncate table) started"
+        )
     else:
-        logging.info(f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} (with append data) started")
+        logging.info(
+            f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} (with append data) started"
+        )
     client = bigquery.Client(project=project_id)
     table_ref = client.dataset(dataset_id).table(table_id)
     job_config = bigquery.LoadJobConfig()
@@ -326,9 +354,9 @@ def load_data_to_bq(
     job_config.skip_leading_rows = 1  # ignore the header
     job_config.autodetect = False
     if truncate_load:
-        job_config.write_disposition = 'WRITE_TRUNCATE'
+        job_config.write_disposition = "WRITE_TRUNCATE"
     else:
-        job_config.write_disposition = 'WRITE_APPEND'
+        job_config.write_disposition = "WRITE_APPEND"
     with open(file_path, "rb") as source_file:
         job = client.load_table_from_file(source_file, table_ref, job_config=job_config)
     job.result()
@@ -413,31 +441,13 @@ if __name__ == "__main__":
     main(
         project_id=os.environ.get("PROJECT_ID", ""),
         dataset_id=os.environ.get("DATASET_ID", ""),
-        # current_data_table_id=os.environ.get("CURRENT_DATA_TABLE_ID", ""),
-        # historical_data_table_id=os.environ.get("HISTORICAL_DATA_TABLE_ID", ""),
-        # data_file_surr_key_field=os.environ.get("DATA_FILE_SURR_KEY_FIELD", ""),
-        # dest_folder=os.environ.get("DEST_FOLDER", ""),
-        # schema_filepath=os.environ.get("SCHEMA_FILEPATH", ""),
-        # source_bucket=os.environ.get("SOURCE_BUCKET", ""),
         target_gcs_bucket=os.environ.get("TARGET_GCS_BUCKET", ""),
-        # dest_current_data_folder_name=os.environ.get(
-        #     "DEST_CURRENT_DATA_FOLDER_NAME", ""
-        # ),
-        # dest_historical_data_folder_name=os.environ.get(
-        #     "DEST_HISTORICAL_FOLDER_NAME", ""
-        # ),
-        # source_bucket_current_data_folder_name=os.environ.get(
-        #     "SOURCE_BUCKET_CURRENT_DATA_FOLDER_NAME", ""
-        # ),
-        # current_data_target_gcs_path=os.environ.get("CURRENT_DATA_TARGET_GCS_PATH", ""),
-        # historical_data_target_gcs_path=os.environ.get(
-        #     "HISTORICAL_DATA_TARGET_GCS_PATH", ""
-        # ),
-        # data_root_folder=os.environ.get("DATA_ROOT_FOLDER", ""),
-        # hist_folders_list=json.loads(os.environ.get("HIST_FOLDERS_LIST", r"[]")),
-        # pipeline_name=os.environ.get("PIPELINE_NAME", ""),
-        # chunksize=os.environ.get("CHUNKSIZE", ""),
-        # input_headers=json.loads(os.environ.get("INPUT_CSV_HEADERS", r"[]")),
-        # data_dtypes=json.loads(os.environ.get("DATA_DTYPES", r"{}")),
-        # int_col_list=json.loads(os.environ.get("INT_COL_LIST", r"[]")),
+        table_prefix=os.environ.get("TABLE_PREFIX", ""),
+        source_local_folder_root=os.environ.get("SOURCE_LOCAL_FOLDER_ROOT", ""),
+        root_gcs_folder=os.environ.get("ROOT_GCS_FOLDER", ""),
+        root_pipeline_gs_folder=os.environ.get("ROOT_PIPELINE_GS_FOLDER", ""),
+        folders_list=json.loads(os.environ.get("FOLDERS_LIST", r"[]")),
+        file_prefix=json.loads(os.environ.get("FILE_PREFIX", r"[]")),
+        schema_filepath_gcs_path_root=os.environ.get("SCHEMA_FILEPATH_GCS_PATH_ROOT", ""),
+        pipeline_name=os.environ.get("PIPELINE_NAME", "")
     )

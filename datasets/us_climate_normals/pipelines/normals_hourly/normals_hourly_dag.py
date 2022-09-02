@@ -14,7 +14,8 @@
 
 
 from airflow import DAG
-from airflow.providers.google.cloud.transfers import gcs_to_bigquery
+from airflow.operators import bash
+from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
 
 default_args = {
     "owner": "Google",
@@ -31,31 +32,39 @@ with DAG(
     catchup=False,
     default_view="graph",
 ) as dag:
-    hourly_load_current_AQW = gcs_to_bigquery.GCSToBigQueryOperator(
-        task_id="hourly_load_current_AQW",
-        bucket="normals",
-        source_objects=["normals-hourly/access/AQW*.csv"],
-        destination_project_dataset_table="us_climate_normals.normals_hourly_AQW",
-        schema_object="gs://{{ var.value.composer_bucket }}/data/us_climate_normals/schema/normals_hourly_schema.json",
-        source_format="CSV",
-        skip_leading_rows=1,
-        create_disposition="CREATE_IF_NEEDED",
-        write_disposition="WRITE_TRUNCATE",
-    )
-    hourly_load_historical_AQW = gcs_to_bigquery.GCSToBigQueryOperator(
-        task_id="hourly_load_historical_AQW",
-        bucket="normals",
-        source_objects=[
-            "normals-hourly/1981-2010/access/AQW*.csv",
-            "normals-hourly/1991-2010/access/AQW*.csv",
-            "normals-hourly/2006-2020/access/AQW*.csv",
-        ],
-        destination_project_dataset_table="us_climate_normals.normals_hourly_AQW",
-        schema_update_options=["ALLOW_FIELD_ADDITION"],
-        source_format="CSV",
-        skip_leading_rows=1,
-        create_disposition="CREATE_IF_NEEDED",
-        write_disposition="WRITE_APPEND",
+
+    # Task to copy over to pod, the source data and structure from GCS
+    download_source_from_gcs = bash.BashOperator(
+        task_id="download_source_from_gcs",
+        bash_command="mkdir -p ./files/schema\nmkdir -p ./files/normals-hourly\ngsutil cp -rm gs://normals/normals-hourly * ./files/us_climate_normals/normals-hourly\n",
     )
 
-    hourly_load_current_AQW >> hourly_load_historical_AQW
+    # Run CSV transform within kubernetes pod
+    load_data_to_bq = kubernetes_pod.KubernetesPodOperator(
+        task_id="load_data_to_bq",
+        startup_timeout_seconds=600,
+        name="load_us_climate_normals_hourly_data",
+        namespace="composer",
+        service_account_name="datasets",
+        image_pull_policy="Always",
+        image="{{ var.json.us_climate_normals.container_registry.run_csv_transform_kub }}",
+        env_vars={
+            "PROJECT_ID": "{{ var.value.gcp_project }}",
+            "DATASET_ID": "us_climate_normals",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
+            "TABLE_PREFIX": "normals_hourly",
+            "SOURCE_LOCAL_FOLDER_ROOT": "files/us_climate_normals",
+            "ROOT_GCS_FOLDER": "data/us_climate_normals",
+            "ROOT_PIPELINE_GS_FOLDER": "normals-hourly",
+            "FOLDERS_LIST": '[\n  "",\n  "/1981-2010",\n  "/1991-2020",\n  "/2006-2020"\n]',
+            "FILE_PREFIX": "[\n  'AQC', 'AQW', 'CAW', 'CQC', 'FMC', 'FMW',\n  'GQC', 'GQW', 'JQW', 'MQW', 'PSC', 'PSW',\n  'RMC', 'RMW', 'RQC', 'RQW', 'USC', 'USW',\n  'VQC', 'VQW', 'WQW'\n]",
+            "SCHEMA_FILEPATH_GCS_PATH_ROOT": "data/us_climate_normals/schema/normals_hourly",
+        },
+        resources={
+            "request_memory": "12G",
+            "request_cpu": "1",
+            "request_ephemeral_storage": "16G",
+        },
+    )
+
+    download_source_from_gcs >> hourly_load_historical_AQW
