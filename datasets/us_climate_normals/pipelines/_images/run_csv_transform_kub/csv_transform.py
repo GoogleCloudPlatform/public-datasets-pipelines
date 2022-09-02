@@ -25,7 +25,7 @@ import datetime
 
 import pandas as pd
 from google.cloud import bigquery, storage
-import google.cloud.exceptions as google_exceptions
+from google.cloud.exceptions import NotFound
 import google.api_core.exceptions as google_api_exceptions
 from airflow import DAG
 import airflow.providers.google.cloud.transfers.gcs_to_bigquery as gcs2bq
@@ -66,23 +66,32 @@ def main(
                 schema_filepath_gcs_path=f'data/us_climate_normals/schema/normals_hourly/{fldr}'
                 output_schema_file=f"{source_local_schema_folder}/{destination_table}_schema.json"
                 schema_filepath = f'{schema_filepath_gcs_path}{fldr_ident}/{ os.path.basename(output_schema_file) }'
-                if not table_exists(project_id, dataset_id, destination_table):
-                    # filename = return_first_file_for_prefix(prefix, folder_to_process)
-                    if not gcs_file_exists(bucket=target_gcs_bucket, file_path=output_schema_file):
-                        generate_schema_file_from_source_file(
-                            filename=first_file_path,
-                            output_schema_file=output_schema_file,
-                            copy_schema_file_to_gcs=True,
-                            schema_filepath_bucket=target_gcs_bucket,
-                            schema_filepath_gcs_path=schema_filepath
-                        )
-                    create_dest_table(
-                        project_id=project_id,
-                        dataset_id=dataset_id,
-                        table_id=destination_table,
-                        schema_filepath=schema_filepath,
-                        bucket_name=target_gcs_bucket,
-                    )
+                # if not table_exists(project_id, dataset_id, destination_table):
+                #     # filename = return_first_file_for_prefix(prefix, folder_to_process)
+                #     if not gcs_file_exists(bucket=target_gcs_bucket, file_path=output_schema_file):
+                #         generate_schema_file_from_source_file(
+                #             filename=first_file_path,
+                #             output_schema_file=output_schema_file,
+                #             copy_schema_file_to_gcs=True,
+                #             schema_filepath_bucket=target_gcs_bucket,
+                #             schema_filepath_gcs_path=schema_filepath
+                #         )
+                #     create_dest_table(
+                #         project_id=project_id,
+                #         dataset_id=dataset_id,
+                #         table_id=destination_table,
+                #         schema_filepath=schema_filepath,
+                #         bucket_name=target_gcs_bucket,
+                #     )
+                create_schema_and_table(
+                    project_id=project_id,
+                    dataset_id=dataset_id,
+                    destination_table=destination_table,
+                    target_gcs_bucket=target_gcs_bucket,
+                    output_schema_file=output_schema_file,
+                    file_path=first_file_path,
+                    schema_filepath_gcs_path=schema_filepath,
+                )
                 for file_path in sorted(glob.glob(f'{folder_to_process}/{prefix}*.csv')):
                     filename = os.path.basename(file_path)
                     target_gcs_path=f"{root_pipeline_gs_folder}/{fldr_ident}/{filename}"
@@ -96,8 +105,10 @@ def main(
                         dataset_id=dataset_id,
                         table_id=destination_table,
                         source_bucket=target_gcs_bucket,
+                        output_schema_file=output_schema_file,
                         schema_filepath=schema_filepath,
-                        file_path=f"data/us_climate_normals/{target_gcs_path}",
+                        gcs_file_path=f"data/us_climate_normals/{target_gcs_path}",
+                        local_file_path=file_path,
                         field_delimiter=",",
                         truncate_load=(file_path == first_file_path)
                     )
@@ -112,6 +123,37 @@ def main(
                     # )
                 # logging.info(schema_content)
                 # logging.info(f"{pipeline_name} process completed")
+
+
+def create_schema_and_table(
+    project_id: str,
+    dataset_id: str,
+    destination_table: str,
+    target_gcs_bucket: str,
+    output_schema_file: str,
+    file_path: str,
+    schema_filepath_gcs_path: str,
+) -> None:
+    logging.info(f"creating schema and table ... destination_table={destination_table} target_gcs_bucket={target_gcs_bucket} output_schema_file={output_schema_file} file_path={file_path} schema_filepath_gcs_path={schema_filepath_gcs_path} ")
+    if not table_exists(project_id, dataset_id, destination_table):
+        # filename = return_first_file_for_prefix(prefix, folder_to_process)
+        if not gcs_file_exists(bucket=target_gcs_bucket, file_path=output_schema_file):
+            generate_schema_file_from_source_file(
+                # filename=first_file_path,
+                filename=file_path,
+                output_schema_file=output_schema_file,
+                copy_schema_file_to_gcs=True,
+                schema_filepath_bucket=target_gcs_bucket,
+                # schema_filepath_gcs_path=schema_filepath
+                schema_filepath_gcs_path=schema_filepath_gcs_path
+            )
+        create_dest_table(
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_id=destination_table,
+            schema_filepath=schema_filepath_gcs_path,
+            bucket_name=target_gcs_bucket,
+        )
 
 
 def gcs_file_exists(bucket: str, file_path: str) -> bool:
@@ -150,6 +192,7 @@ def generate_schema_file_from_source_file(
         schema_filepath_gcs_path: str = "",
         input_sep: str = ","
 ) -> None:
+    # import pdb; pdb.set_trace()
     schema_content = "[\n"
     for fld in extract_header_from_file(filename, input_sep):
         data_type = ""
@@ -192,14 +235,16 @@ def load_data_gcs_to_bq(
     table_id: str,
     source_bucket: str,
     schema_filepath: str,
-    file_path: str,
+    gcs_file_path: str,
+    local_file_path: str,
+    output_schema_file: str,
     field_delimiter: str,
     truncate_load: bool = False
 ) -> None:
     if truncate_load:
-        logging.info(f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} (with truncate table) started")
+        logging.info(f"Loading data from {gcs_file_path} into {project_id}.{dataset_id}.{table_id} (with truncate table) started")
     else:
-        logging.info(f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} (with append data) started")
+        logging.info(f"Loading data from {gcs_file_path} into {project_id}.{dataset_id}.{table_id} (with append data) started")
     if truncate_load:
         write_disposition = 'WRITE_TRUNCATE'
     else:
@@ -223,7 +268,7 @@ def load_data_gcs_to_bq(
                         dag=dag,
                         task_id='load_source_data',
                         bucket=source_bucket,
-                        source_objects=[ file_path ],
+                        source_objects=[ gcs_file_path ],
                         field_delimiter=field_delimiter,
                         destination_project_dataset_table=f'us_climate_normals.{table_id}',
                         skip_leading_rows=1,
@@ -236,7 +281,7 @@ def load_data_gcs_to_bq(
                         dag=dag,
                         task_id='load_source_data',
                         bucket=source_bucket,
-                        source_objects=[ file_path ],
+                        source_objects=[ gcs_file_path ],
                         field_delimiter=field_delimiter,
                         destination_project_dataset_table=f'us_climate_normals.{table_id}',
                         skip_leading_rows=1,
@@ -248,10 +293,53 @@ def load_data_gcs_to_bq(
             # dag.Execute()
             load_data.execute("load_source_data")
     except google_api_exceptions.BadRequest:
-            print("google_api_exceptions.BadRequestException!!!")
+            print("*** SCHEMA DIFFERENT FROM TABLE - CREATING ADDITIONAL TABLE ***")
+            # ext = os.path.basename(file_path).replace(".csv", "")
+            ext = "alternative_1"
+            destination_table = f"{table_id}_{ext}"
+            schema_filepath = schema_filepath.replace("_schema.json", f"_{ext}_schema.json")
+            output_schema_file = output_schema_file.replace("_schema.json", f"_{ext}_schema.json")
+            # import pdb; pdb.set_trace()
+            if not table_exists(project_id, dataset_id, destination_table):
+                create_schema_and_table(
+                    project_id=project_id,
+                    dataset_id=dataset_id,
+                    destination_table=destination_table,
+                    target_gcs_bucket=source_bucket,
+                    output_schema_file=output_schema_file,
+                    file_path=local_file_path,
+                    schema_filepath_gcs_path=schema_filepath
+                )
+            if not truncate_load:
+                load_data = gcs2bq.GCSToBigQueryOperator(
+                        dag=dag,
+                        task_id='load_source_data_alt_1',
+                        bucket=source_bucket,
+                        source_objects=[ gcs_file_path ],
+                        field_delimiter=field_delimiter,
+                        destination_project_dataset_table=f'us_climate_normals.{destination_table}',
+                        skip_leading_rows=1,
+                        schema_object=schema_filepath,
+                        write_disposition=f'{write_disposition}',
+                        schema_update_options=[ "ALLOW_FIELD_ADDITION" ]
+                )
+            else:
+                load_data = gcs2bq.GCSToBigQueryOperator(
+                        dag=dag,
+                        task_id='load_source_data_alt_1',
+                        bucket=source_bucket,
+                        source_objects=[ gcs_file_path ],
+                        field_delimiter=field_delimiter,
+                        destination_project_dataset_table=f'us_climate_normals.{table_id}',
+                        skip_leading_rows=1,
+                        schema_object=schema_filepath,
+                        write_disposition=f'{write_disposition}'
+                )
+            load_data.execute("load_source_data_alt_1")
+
 
     logging.info(
-        f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} completed"
+        f"Loading data from {gcs_file_path} into {project_id}.{dataset_id}.{table_id} completed"
     )
 
 def load_data_to_bq(
