@@ -58,7 +58,7 @@ with DAG(
             "ROOT_GCS_FOLDER": "data/us_climate_normals",
             "ROOT_PIPELINE_GS_FOLDER": "normals-daily",
             "FOLDERS_LIST": '[\n  "",\n  "/1981-2010",\n  "/1991-2020",\n  "/2006-2020"\n]',
-            "FILE_PREFIX": "[\n  'AQC', 'AQW', 'CAW', 'CQC', 'FMC', 'FMW',\n  'GQC', 'GQW', 'JQW', 'MQW', 'PSC', 'PSW',\n  'RMC', 'RMW', 'RQC', 'RQW', 'USC', 'USW',\n  'VQC', 'VQW', 'WQW'\n]",
+            "FILE_PREFIX": '[\n  "AQC", "AQW", "CAW", "CQC", "FMC", "FMW",\n  "GQC", "GQW", "JQW", "MQW", "PSC", "PSW",\n  "RMC", "RMW", "RQC", "RQW", "USC", "USW",\n  "VQC", "VQW", "WQW"\n]',
             "SCHEMA_FILEPATH_GCS_PATH_ROOT": "data/us_climate_normals/schema/normals-daily",
         },
         resources={

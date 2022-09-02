@@ -68,10 +68,10 @@ dag:
             ]
           FILE_PREFIX: >-
             [
-              'AQC', 'AQW', 'CAW', 'CQC', 'FMC', 'FMW',
-              'GQC', 'GQW', 'JQW', 'MQW', 'PSC', 'PSW',
-              'RMC', 'RMW', 'RQC', 'RQW', 'USC', 'USW',
-              'VQC', 'VQW', 'WQW'
+              "AQC", "AQW", "CAW", "CQC", "FMC", "FMW",
+              "GQC", "GQW", "JQW", "MQW", "PSC", "PSW",
+              "RMC", "RMW", "RQC", "RQW", "USC", "USW",
+              "VQC", "VQW", "WQW"
             ]
           SCHEMA_FILEPATH_GCS_PATH_ROOT: "data/us_climate_normals/schema/normals-daily"
         resources:
