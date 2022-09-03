@@ -1,6 +1,7 @@
 apache-airflow==2.2.5
 apache-airflow-providers-google==8.2.0
 google-api-core==2.7.0
+google-cloud
 google-cloud-storage==1.44.0
 google-cloud-bigquery==2.34.4
 googleapis-common-protos==1.56.2

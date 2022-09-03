@@ -20,12 +20,17 @@ import json
 import logging
 import os
 import pathlib
+import re
+import subprocess
 import typing
 
 import airflow.providers.google.cloud.transfers.gcs_to_bigquery as gcs2bq
 import google.api_core.exceptions as google_api_exceptions
+import pandas as pd
 from airflow import DAG
+# import google.cloud
 from google.cloud import bigquery, storage
+# from google.cloud.storage import Client as gcs_client
 from google.cloud.exceptions import NotFound
 
 
@@ -39,26 +44,29 @@ def main(
     root_gcs_folder: str,
     root_pipeline_gs_folder: str,
     folders_list: typing.List[str],
-    file_prefix: typing.List[str],
-    schema_filepath_gcs_path_root: str,
+    # file_prefix: typing.List[str],
+    # schema_filepath_gcs_path_root: str,
 ) -> None:
     logging.info(f"{pipeline_name} process started")
     source_local_schema_folder = f"{source_local_folder_root}/schema"
     for fldr in folders_list:
+        source_local_process_folder_root = (
+            f"{source_local_folder_root}/{root_pipeline_gs_folder}"
+        )
+        folder_to_process = f"{root_gcs_folder}/{root_pipeline_gs_folder}/{fldr}/access"
+        print(f"folder_to_process: {folder_to_process}")
+        file_prefix = distinct_file_prefixes(target_gcs_bucket, folder_to_process, "csv")
+        print(file_prefix)
         for prefix in file_prefix:
             logging.info(f"Processing {prefix} files in {fldr}/access folder ...")
-            source_local_process_folder_root = (
-                f"{source_local_folder_root}/{root_pipeline_gs_folder}"
-            )
-            folder_to_process = f"{source_local_process_folder_root}{fldr}/access"
             logging.info(f"prefix={prefix} folder_to_process={folder_to_process}")
-            if not prefix_files_exist(prefix, folder_to_process):
+            if not prefix_files_exist(target_gcs_bucket, prefix, folder_to_process):
                 logging.info(
                     f" ... No files exist with {prefix} prefix in folder {folder_to_process}.  Skipping."
                 )
             else:
                 first_file_path = return_first_file_for_prefix(
-                    prefix, folder_to_process
+                    target_gcs_bucket, prefix, folder_to_process
                 )
                 if fldr == "":
                     fldr_ident = "access"
@@ -71,18 +79,21 @@ def main(
                     f"{root_gcs_folder}/schema/{root_pipeline_gs_folder}" # /{fldr}"
                 )
                 output_schema_file = (
-                    f"{source_local_schema_folder}/{destination_table}_schema.json"
+                    f"{source_local_schema_folder}/{root_pipeline_gs_folder}/{destination_table}_schema.json"
                 )
                 # schema_filepath = f"{schema_filepath_gcs_path}/{fldr_ident}/{ os.path.basename(output_schema_file) }"
-                schema_filepath = f"{schema_filepath_gcs_path}/{ os.path.basename(output_schema_file) }"
+                schema_file_path = f"{schema_filepath_gcs_path}/{ os.path.basename(output_schema_file) }"
+                local_file_path = f'{source_local_folder_root}/{root_pipeline_gs_folder}/{fldr}/{ os.path.basename(first_file_path) }'
+                import pdb; pdb.set_trace()
                 create_schema_and_table(
                     project_id=project_id,
                     dataset_id=dataset_id,
                     destination_table=destination_table,
                     target_gcs_bucket=target_gcs_bucket,
                     output_schema_file=output_schema_file,
-                    file_path=first_file_path,
-                    schema_filepath_gcs_path=schema_filepath,
+                    gcs_file_path=first_file_path,
+                    local_file_path=local_file_path,
+                    schema_filepath_gcs_path=schema_file_path,
                 )
                 for file_path in sorted(
                     glob.glob(f"{folder_to_process}/{prefix}*.csv")
@@ -102,7 +113,7 @@ def main(
                         table_id=destination_table,
                         source_bucket=target_gcs_bucket,
                         output_schema_file=output_schema_file,
-                        schema_filepath=schema_filepath,
+                        schema_filepath=schema_file_path,
                         gcs_file_path=f"{root_gcs_folder}/{target_gcs_path}",
                         local_file_path=file_path,
                         field_delimiter=",",
@@ -111,29 +122,46 @@ def main(
     logging.info(f"{pipeline_name} process completed")
 
 
+def distinct_file_prefixes(
+    gcs_bucket: str,
+    filepath: str,
+    file_ext: str  #  without the period
+) -> typing.List[str]:
+    p=re.compile('^[a-zA-Z]*')
+    # files=glob.glob(f'{filepath}/*.{file_ext}')
+    command=f"gcloud alpha storage ls --recursive gs://{gcs_bucket}/{filepath}/* |grep '.csv'"
+    files=sorted(str(subprocess.check_output(command, shell=True)).split("\\n"))
+    df = pd.DataFrame (files, columns = ['filename'])
+    df['filename'] = df['filename'].apply(lambda x: p.match(os.path.basename(x).split(f".{file_ext}")[0]).group(0))
+    df = df[ df["filename"] != "" ]
+    return sorted(df['filename'].unique())
+
+
 def create_schema_and_table(
     project_id: str,
     dataset_id: str,
     destination_table: str,
     target_gcs_bucket: str,
     output_schema_file: str,
-    file_path: str,
+    gcs_file_path: str,
+    local_file_path: str,
     schema_filepath_gcs_path: str,
 ) -> None:
     logging.info(
-        f"creating schema and table ... destination_table={destination_table} target_gcs_bucket={target_gcs_bucket} output_schema_file={output_schema_file} file_path={file_path} schema_filepath_gcs_path={schema_filepath_gcs_path} "
+        f"creating schema and table ... destination_table={destination_table} target_gcs_bucket={target_gcs_bucket} output_schema_file={output_schema_file} file_path={gcs_file_path} schema_filepath_gcs_path={schema_filepath_gcs_path} "
     )
     if not table_exists(project_id, dataset_id, destination_table):
-        # filename = return_first_file_for_prefix(prefix, folder_to_process)
         if not gcs_file_exists(bucket=target_gcs_bucket, file_path=output_schema_file):
-            generate_schema_file_from_source_file(
+            generate_schema_file_from_gcs_source_file(
                 # filename=first_file_path,
-                filename=file_path,
+                project_id=project_id,
+                gcs_bucket=target_gcs_bucket,
+                gcs_file_path=gcs_file_path,
+                local_file_path=local_file_path,
                 output_schema_file=output_schema_file,
-                copy_schema_file_to_gcs=True,
                 schema_filepath_bucket=target_gcs_bucket,
-                # schema_filepath_gcs_path=schema_filepath
                 schema_filepath_gcs_path=schema_filepath_gcs_path,
+                input_sep=","
             )
         create_dest_table(
             project_id=project_id,
@@ -144,39 +172,76 @@ def create_schema_and_table(
         )
 
 
-
 def gcs_file_exists(bucket: str, file_path: str) -> bool:
     storage_client = storage.Client()
     bucket = storage_client.bucket(bucket)
     return storage.Blob(bucket=bucket, name=file_path).exists(storage_client)
 
 
-def prefix_files_exist(prefix: str, folder_to_process: str) -> bool:
-    file_list = glob.glob(f"{folder_to_process}/{prefix}*.csv")
-    return len(file_list) > 0
+def prefix_files_exist(
+    gcs_bucket: str,
+    prefix: str,
+    folder_to_process: str
+) -> bool:
+    # file_list = glob.glob(f"{folder_to_process}/{prefix}*.csv")
+    command=f"gcloud alpha storage ls --recursive gs://{gcs_bucket}/{folder_to_process}/* |grep '.csv'"
+    files=sorted(str(subprocess.check_output(command, shell=True)).split("\\n"))
+    return len(files) > 0
 
 
-def return_first_file_for_prefix(prefix: str, folder_to_process: str) -> str:
-    file_list = glob.glob(f"{folder_to_process}/{prefix}*.csv")
-    return sorted(file_list)[0]
+def return_first_file_for_prefix(gcs_bucket: str, prefix: str, folder_to_process: str) -> str:
+    # file_list = glob.glob(f"{folder_to_process}/{prefix}*.csv")
+    command=f"gcloud alpha storage ls gs://{gcs_bucket}/{folder_to_process}/{prefix}* |grep '.csv'"
+    files=sorted(str(subprocess.check_output(command, shell=True)).split("\\n"))
+    df = pd.DataFrame (files, columns = ['filename'])
+    df = df[ df["filename"] != "'" ]
+    # import pdb; pdb.set_trace()
+    return str(sorted(df['filename'])[0]).replace("b'gs://", "gs://")
 
 
-def extract_header_from_file(filename: str, sep: str = ",") -> typing.List[str]:
-    with open(filename) as f:
-        first_line = f.readline()
+def extract_header_from_gcs_file(
+    project_id: str,
+    gcs_bucket: str,
+    gcs_filepath: str,
+    local_filepath: str,
+    sep: str = ","
+) -> typing.List[str]:
+    download_file_gcs(project_id, gcs_filepath, local_filepath)
+    import pdb; pdb.set_trace()
+    with open(local_filepath) as f:
+         first_line = f.readline()
     return first_line.replace("-", "_").split(sep)
 
 
-def generate_schema_file_from_source_file(
-    filename: str,
+# def extract_file_contents_gcs(
+#     gcs_bucket: str,
+#     gcs_filepath: str
+# ) -> str:
+#     storage_client = storage.Client()
+#     bucket = storage_client.bucket(gcs_bucket)
+#     blob = bucket.get_blob(gcs_filepath)
+#     return blob.download_as_text(encoding="utf-8")
+
+
+def generate_schema_file_from_gcs_source_file(
+    project_id: str,
+    gcs_bucket: str,
+    gcs_file_path: str,
+    local_filepath: str,
     output_schema_file: str,
-    copy_schema_file_to_gcs: bool = True,
     schema_filepath_bucket: str = "",
     schema_filepath_gcs_path: str = "",
     input_sep: str = ",",
 ) -> None:
+    header = extract_header_from_gcs_file(
+                project_id=project_id,
+                gcs_bucket=gcs_bucket,
+                gcs_filepath=gcs_file_path,
+                local_filepath=f'{local_root_filepath}/{gcs_file_path}',
+                sep=input_sep
+            )
     schema_content = "[\n"
-    for fld in extract_header_from_file(filename, input_sep):
+    for fld in header:
         data_type = ""
         fld = fld.replace('"', "").strip()
         if fld in ("LATITUDE", "LONGITUDE", "ELEVATION"):
@@ -197,12 +262,11 @@ def generate_schema_file_from_source_file(
     pathlib.Path(os.path.dirname(output_schema_file)).mkdir(parents=True, exist_ok=True)
     with open(output_schema_file, "w+") as schema_file:
         schema_file.write(schema_content)
-    if copy_schema_file_to_gcs:
-        upload_file_to_gcs(
-            file_path=output_schema_file,
-            target_gcs_bucket=schema_filepath_bucket,
-            target_gcs_path=schema_filepath_gcs_path,
-        )
+    upload_file_to_gcs(
+        file_path=output_schema_file,
+        target_gcs_bucket=schema_filepath_bucket,
+        target_gcs_path=schema_filepath_gcs_path,
+    )
 
 
 def table_exists(project_id: str, dataset_id: str, table_name: str) -> bool:
@@ -416,6 +480,45 @@ def create_table_schema(
     return schema
 
 
+def download_file_gcs(
+    project_id: str, source_location: str, destination_folder: str
+) -> None:
+    object_name = os.path.basename(source_location)
+    dest_object = f"{destination_folder}/{object_name}"
+    logging.info(f"   ... {source_location} -> {dest_object}")
+    storage_client = storage.Client(project_id)
+    bucket_name = str.split(source_location, "gs://")[1].split("/")[0]
+    bucket = storage_client.bucket(bucket_name)
+    source_object_path = str.split(source_location, f"gs://{bucket_name}/")[1]
+    blob = bucket.blob(source_object_path)
+    blob.download_to_filename(dest_object)
+
+
+def download_folder_contents(
+    project_id: str,
+    source_gcs_folder_path: str,  # eg. "gs://normals/normal-hourly/access"
+    destination_folder: str,
+    file_type: str = "",
+) -> None:
+    storage_client = storage.Client(project_id)
+    bucket_name = str.split(source_gcs_folder_path, "gs://")[1].split("/")[0]
+    gcs_folder_path = str.split(source_gcs_folder_path, f"gs://{bucket_name}/")[1]
+    bucket = storage_client.bucket(bucket_name)
+    blobs = bucket.list_blobs(prefix=f"{gcs_folder_path}")
+    for blob in blobs:
+        if (
+            os.path.splitext(os.path.basename(blob.name))[1] == f".{file_type}"
+            or file_type == ""
+        ):
+            source_location = f"{source_gcs_folder_path}/{os.path.basename(blob.name)}"
+            download_file_gcs(
+                project_id,
+                source_location=source_location,
+                destination_folder=destination_folder,
+            )
+
+
+
 def upload_file_to_gcs(
     file_path: pathlib.Path, target_gcs_bucket: str, target_gcs_path: str
 ) -> None:
@@ -445,7 +548,7 @@ if __name__ == "__main__":
         root_gcs_folder=os.environ.get("ROOT_GCS_FOLDER", ""),
         root_pipeline_gs_folder=os.environ.get("ROOT_PIPELINE_GS_FOLDER", ""),
         folders_list=json.loads(os.environ.get("FOLDERS_LIST", r"[]")),
-        file_prefix=json.loads(os.environ.get("FILE_PREFIX_LIST", r"[]")),
-        schema_filepath_gcs_path_root=os.environ.get("SCHEMA_FILEPATH_GCS_PATH_ROOT", ""),
+        # file_prefix=json.loads(os.environ.get("FILE_PREFIX_LIST", r"[]")),
+        # schema_filepath_gcs_path_root=os.environ.get("SCHEMA_FILEPATH_GCS_PATH_ROOT", ""),
         pipeline_name=os.environ.get("PIPELINE_NAME", "")
     )

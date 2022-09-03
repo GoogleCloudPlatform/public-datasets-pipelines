@@ -32,16 +32,14 @@ dag:
     default_view: graph
 
   tasks:
-    - operator: "BashOperator"
-      description: "Task to copy over to pod, the source data and structure from GCS"
-      args:
-        task_id: "download_source_from_gcs"
-        bash_command: |
-          mkdir -p ./files/us_climate_normals/schema ;
-          mkdir -p ./files/us_climate_normals/normals-daily ;
-          gsutil -m cp -r gs://normals/normals-daily/* ./files/us_climate_normals/normals-daily ;
-          pwd ;
-          ls -R ./files/us_climate_normals/normals-daily ;
+    # - operator: "BashOperator"
+    #   description: "Task to copy over to pod, the source data and structure from GCS"
+    #   args:
+    #     task_id: "download_source_from_gcs"
+    #     bash_command: |
+    #       mkdir -p /home/airflow/gcs/data/us_climate_normals/schema ;
+    #       mkdir -p /home/airflow/gcs/data/us_climate_normals/normals-daily ;
+    #       gsutil -m cp -r gs://normals/normals-daily/* gs://{{ var.value.composer_bucket }}/data/us_climate_normals/normals-daily ;
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
@@ -64,21 +62,22 @@ dag:
           FOLDERS_LIST: >-
             [
               "",
-              "/1981-2010",
-              "/1991-2020",
-              "/2006-2020"
+              "1981-2010",
+              "1991-2020",
+              "2006-2020"
             ]
-          FILE_PREFIX_LIST: >-
-            [
-              "AQC", "AQW", "CAW", "CQC", "FMC", "FMW",
-              "GQC", "GQW", "JQW", "MQW", "PSC", "PSW",
-              "RMC", "RMW", "RQC", "RQW", "USC", "USW",
-              "VQC", "VQW", "WQW"
-            ]
-          SCHEMA_FILEPATH_GCS_PATH_ROOT: "data/us_climate_normals/schema/normals-daily"
+          # FILE_PREFIX_LIST: >-
+          #   [
+          #     "AQC", "AQW", "CAW", "CQC", "FMC", "FMW",
+          #     "GQC", "GQW", "JQW", "MQW", "PSC", "PSW",
+          #     "RMC", "RMW", "RQC", "RQW", "USC", "USW",
+          #     "VQC", "VQW", "WQW"
+          #   ]
+          # SCHEMA_FILEPATH_GCS_PATH_ROOT: "data/us_climate_normals/schema/normals-daily"
         resources:
           request_memory: "12G"
           request_cpu: "1"
           request_ephemeral_storage: "16G"
   graph_paths:
-    - "download_source_from_gcs >> load_data_to_bq"
+    - "load_data_to_bq"
+    # - "download_source_from_gcs >> load_data_to_bq"
