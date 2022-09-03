@@ -96,10 +96,11 @@ def main(
                     local_file_path=local_file_path,
                     schema_filepath_gcs_path=schema_file_path,
                 )
-                prefix_file_list = list_of_files_prefix(gcs_bucket=target_gcs_bucket, gcs_file_path=folder_to_process, prefix=prefix)
+                prefix_file_list = list_of_files_prefix(project_id=project_id, gcs_bucket=target_gcs_bucket, gcs_file_path=folder_to_process, prefix=prefix)
                 # for file_path in sorted(
                 #     glob.glob(f"{folder_to_process}/{prefix}*.csv")
                 # ):
+                import pdb; pdb.set_trace()
                 for filename in prefix_file_list:
                     # filename = os.path.basename(file_path)
                     # target_gcs_path = (
@@ -136,19 +137,21 @@ def main(
 
 
 def list_of_files_prefix(
+    project_id: str,
     gcs_bucket: str,
     gcs_file_path: str,
     prefix: str
 ) -> typing.List[str]:
-    # command=f"gcloud alpha storage ls --recursive gs://{gcs_bucket}/{gcs_file_path}/* |grep '\/{prefix}.*\.csv'"
-    # command=f"gcloud alpha storage ls --recursive gs://{gcs_bucket}/{gcs_file_path}/* |grep '\/{prefix}.*\.csv'"
-    command=f"gsutil ls gs://{gcs_bucket}/{gcs_file_path}/* |grep '\/{prefix}.*\.csv'"
-    # files=sorted(str(subprocess.check_output(command, shell=True)).split("\\n"))
-    files=sorted(str(subprocess.check_output(command)).split("\\n"))
-    df = pd.DataFrame (files, columns = ['filename'])
-    df = df[ df["filename"] != "'" ]
-    df["filename"] = df["filename"].apply(lambda x: str(x).replace("b'gs://", "gs://"))
-    return sorted(df['filename'].unique())
+    p=re.compile(f'^{prefix}([0-9]*)') # make sure the file has a numeric digit directly after the prefix e.g. USW0001109.csv where USW is the prefix
+    storage_client = storage.Client(project_id)
+    bucket_file_list_blob = storage_client.list_blobs(gcs_bucket, prefix=f"{filepath}/", delimiter='/')
+    bucket_file_list_iter = list(bucket_file_list_blob)
+    bucket_file_list = [str(item).split(",")[1].strip() for item in bucket_file_list_iter]
+    df = pd.DataFrame (bucket_file_list, columns = ['filename'])
+    df["filename"] = df["filename"].apply(lambda x: p.match(os.path.basename(x)).group(0))
+    df = df[ df["filename"] != "" ]
+    df = sorted(df['filename'].unique())
+    return df
 
 
 
@@ -166,7 +169,7 @@ def distinct_file_prefixes(
     df = pd.DataFrame (bucket_file_list, columns = ['filename'])
     df['filename'] = df['filename'].apply(lambda x: p.match(os.path.basename(x).split(f".{file_ext}")[0]).group(0))
     df = df[ df["filename"] != "" ]
-    df = df[ df['filename'].map(lambda x: len(str(x)) > 2) ]
+    # df = df[ df['filename'].map(lambda x: len(str(x)) > 2) ]
     df = sorted(df['filename'].unique())
     return df
 
