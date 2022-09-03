@@ -47,10 +47,10 @@ with DAG(
             "DATASET_ID": "us_climate_normals",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TABLE_PREFIX": "normals_daily",
-            "SOURCE_LOCAL_FOLDER_ROOT": "data/us_climate_normals",
+            "SOURCE_LOCAL_FOLDER_ROOT": "files/us_climate_normals",
             "ROOT_GCS_FOLDER": "data/us_climate_normals",
             "ROOT_PIPELINE_GS_FOLDER": "normals-daily",
-            "FOLDERS_LIST": '[\n  "",\n  "/1981-2010",\n  "/1991-2020",\n  "/2006-2020"\n]',
+            "FOLDERS_LIST": '[\n  "",\n  "1981-2010",\n  "1991-2020",\n  "2006-2020"\n]',
         },
         resources={
             "request_memory": "12G",
