@@ -84,7 +84,6 @@ def main(
                 # schema_filepath = f"{schema_filepath_gcs_path}/{fldr_ident}/{ os.path.basename(output_schema_file) }"
                 schema_file_path = f"{schema_filepath_gcs_path}/{ os.path.basename(output_schema_file) }"
                 local_file_path = f'{source_local_folder_root}/{root_pipeline_gs_folder}/{fldr}/{ os.path.basename(first_file_path) }'
-                import pdb; pdb.set_trace()
                 create_schema_and_table(
                     project_id=project_id,
                     dataset_id=dataset_id,
@@ -201,33 +200,27 @@ def return_first_file_for_prefix(gcs_bucket: str, prefix: str, folder_to_process
 
 def extract_header_from_gcs_file(
     project_id: str,
-    gcs_bucket: str,
-    gcs_filepath: str,
-    local_filepath: str,
+    # gcs_bucket: str,
+    gcs_file_path: str,
+    local_file_path: str,
     sep: str = ","
 ) -> typing.List[str]:
-    download_file_gcs(project_id, gcs_filepath, local_filepath)
-    import pdb; pdb.set_trace()
-    with open(local_filepath) as f:
+    download_file_gcs(
+        project_id=project_id,
+        source_location=gcs_file_path,
+        destination_folder=os.path.split(local_file_path)[0]
+    )
+    # import pdb; pdb.set_trace()
+    with open(local_file_path) as f:
          first_line = f.readline()
     return first_line.replace("-", "_").split(sep)
-
-
-# def extract_file_contents_gcs(
-#     gcs_bucket: str,
-#     gcs_filepath: str
-# ) -> str:
-#     storage_client = storage.Client()
-#     bucket = storage_client.bucket(gcs_bucket)
-#     blob = bucket.get_blob(gcs_filepath)
-#     return blob.download_as_text(encoding="utf-8")
 
 
 def generate_schema_file_from_gcs_source_file(
     project_id: str,
     gcs_bucket: str,
     gcs_file_path: str,
-    local_filepath: str,
+    local_file_path: str,
     output_schema_file: str,
     schema_filepath_bucket: str = "",
     schema_filepath_gcs_path: str = "",
@@ -235,9 +228,9 @@ def generate_schema_file_from_gcs_source_file(
 ) -> None:
     header = extract_header_from_gcs_file(
                 project_id=project_id,
-                gcs_bucket=gcs_bucket,
-                gcs_filepath=gcs_file_path,
-                local_filepath=f'{local_root_filepath}/{gcs_file_path}',
+                # gcs_bucket=gcs_bucket,
+                gcs_file_path=gcs_file_path,
+                local_file_path=local_file_path,
                 sep=input_sep
             )
     schema_content = "[\n"
@@ -259,7 +252,9 @@ def generate_schema_file_from_gcs_source_file(
         schema_content += f'  {{\n    "name": "{fld}",\n    "type": "{data_type}",\n    "mode": "NULLABLE",\n    "description": ""\n  }},\n'
     schema_content = schema_content[:-3]
     schema_content += "  }\n]\n"
-    pathlib.Path(os.path.dirname(output_schema_file)).mkdir(parents=True, exist_ok=True)
+    schema_file_pathname = os.path.dirname(output_schema_file)
+    # import pdb; pdb.set_trace()
+    pathlib.Path(schema_file_pathname).mkdir(parents=True, exist_ok=True)
     with open(output_schema_file, "w+") as schema_file:
         schema_file.write(schema_content)
     upload_file_to_gcs(
@@ -483,6 +478,7 @@ def create_table_schema(
 def download_file_gcs(
     project_id: str, source_location: str, destination_folder: str
 ) -> None:
+    pathlib.Path(destination_folder).mkdir(parents=True, exist_ok=True)
     object_name = os.path.basename(source_location)
     dest_object = f"{destination_folder}/{object_name}"
     logging.info(f"   ... {source_location} -> {dest_object}")
