@@ -55,14 +55,17 @@ def main(
         source_local_process_folder_root = (
             f"{source_local_folder_root}/{root_pipeline_gs_folder}"
         )
-        folder_to_process = f"{root_gcs_folder}/{root_pipeline_gs_folder}/{fldr}/access"
-        print(f"folder_to_process: {folder_to_process}")
+        if fldr == "":
+            folder_to_process = f"{root_gcs_folder}/{root_pipeline_gs_folder}/access"
+        else:
+            folder_to_process = f"{root_gcs_folder}/{root_pipeline_gs_folder}/{fldr}/access"
+        # print(f"folder_to_process: {folder_to_process}")
         file_prefix = distinct_file_prefixes(
             project_id, target_gcs_bucket, folder_to_process, "csv"
         )
         print(file_prefix)
         for prefix in file_prefix:
-            logging.info(f"Processing {prefix} files in {fldr}/access folder ...")
+            logging.info(f"Processing {prefix} files in {fldr} folder ...")
             logging.info(f"prefix={prefix} folder_to_process={folder_to_process}")
             if not prefix_files_exist(target_gcs_bucket, prefix, folder_to_process):
                 logging.info(
@@ -102,31 +105,16 @@ def main(
                     gcs_file_path=folder_to_process,
                     prefix=prefix,
                 )
-                # for file_path in sorted(
-                #     glob.glob(f"{folder_to_process}/{prefix}*.csv")
-                # ):
-                # import pdb; pdb.set_trace()
                 for filename in prefix_file_list:
                     print(f' ... {filename}')
-                    # filename = os.path.basename(file_path)
-                    # target_gcs_path = (
-                    #     f"{root_pipeline_gs_folder}/{fldr_ident}/{filename}"
-                    # )
-                    # upload_file_to_gcs(
-                    #     file_path=file_path,
-                    #     target_gcs_bucket=target_gcs_bucket,
-                    #     target_gcs_path=f"{root_gcs_folder}/{target_gcs_path}",
-                    # )
                     local_source_folder = os.path.split(local_file_path)[0]
-                    # local_source_filename = os.path.basename(filename)
                     local_file_path = f"{local_source_folder}/{filename}"
-                    source_file_gcs_full_path = f"gs://{target_gcs_bucket}/{root_gcs_folder}/{root_pipeline_gs_folder}/{fldr_ident}/access/{filename}"
+                    source_file_gcs_full_path = f"gs://{target_gcs_bucket}/{root_gcs_folder}/{root_pipeline_gs_folder}/{fldr_ident}/{filename}"
                     download_file_gcs(
                         project_id=project_id,
                         source_location=source_file_gcs_full_path,
                         destination_folder=local_source_folder,
                     )
-                    import pdb; pdb.set_trace()
                     load_data_gcs_to_bq(
                         project_id=project_id,
                         dataset_id=dataset_id,
@@ -135,7 +123,7 @@ def main(
                         output_schema_file=output_schema_file,
                         schema_filepath=schema_file_path,
                         # gcs_file_path=f"{root_gcs_folder}/{target_gcs_path}",
-                        gcs_file_path=filename,
+                        gcs_file_path=source_file_gcs_full_path,
                         local_file_path=local_file_path,
                         field_delimiter=",",
                         truncate_load=(
@@ -407,7 +395,7 @@ def load_data_gcs_to_bq(
         print("*** SCHEMA DIFFERENT FROM TABLE - CREATING ADDITIONAL TABLE ***")
         ext = "alternative_1"
         destination_table = f"{table_id}_{ext}"
-        schema_filepath = schema_filepath.replace("_schema.json", f"_{ext}_schema.json")
+        schema_file_path = schema_filepath.replace("_schema.json", f"_{ext}_schema.json")
         output_schema_file = output_schema_file.replace(
             "_schema.json", f"_{ext}_schema.json"
         )
@@ -418,8 +406,9 @@ def load_data_gcs_to_bq(
                 destination_table=destination_table,
                 target_gcs_bucket=source_bucket,
                 output_schema_file=output_schema_file,
-                file_path=local_file_path,
-                schema_filepath_gcs_path=schema_filepath,
+                gcs_file_path=gcs_file_path,
+                local_file_path=local_file_path,
+                schema_filepath_gcs_path=schema_file_path,
             )
         if not truncate_load:
             load_data = gcs2bq.GCSToBigQueryOperator(
@@ -552,7 +541,6 @@ def download_file_gcs(
     bucket = storage_client.bucket(bucket_name)
     source_object_path = str.split(source_location, f"gs://{bucket_name}/")[1]
     blob = bucket.blob(source_object_path)
-    import pdb; pdb.set_trace()
     blob.download_to_filename(dest_object)
 
 
