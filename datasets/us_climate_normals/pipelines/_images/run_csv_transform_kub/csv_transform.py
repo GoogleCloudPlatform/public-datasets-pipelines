@@ -106,41 +106,43 @@ def main(
                 #     glob.glob(f"{folder_to_process}/{prefix}*.csv")
                 # ):
                 # import pdb; pdb.set_trace()
-                # for filename in prefix_file_list:
-                #     # filename = os.path.basename(file_path)
-                #     # target_gcs_path = (
-                #     #     f"{root_pipeline_gs_folder}/{fldr_ident}/{filename}"
-                #     # )
-                #     # upload_file_to_gcs(
-                #     #     file_path=file_path,
-                #     #     target_gcs_bucket=target_gcs_bucket,
-                #     #     target_gcs_path=f"{root_gcs_folder}/{target_gcs_path}",
-                #     # )
-                #     local_source_folder = os.path.split(local_file_path)[0]
-                #     local_source_filename = os.path.basename(filename)
-                #     local_file_path = f"{local_source_folder}/{local_source_filename}"
-                #     download_file_gcs(
-                #         project_id=project_id,
-                #         source_location=filename,
-                #         destination_folder=local_source_folder,
-                #     )
-                #     # import pdb; pdb.set_trace()
-                #     load_data_gcs_to_bq(
-                #         project_id=project_id,
-                #         dataset_id=dataset_id,
-                #         table_id=destination_table,
-                #         source_bucket=target_gcs_bucket,
-                #         output_schema_file=output_schema_file,
-                #         schema_filepath=schema_file_path,
-                #         # gcs_file_path=f"{root_gcs_folder}/{target_gcs_path}",
-                #         gcs_file_path=filename,
-                #         local_file_path=local_file_path,
-                #         field_delimiter=",",
-                #         truncate_load=(
-                #             os.path.basename(filename)
-                #             == os.path.basename(first_file_path)
-                #         ),
-                #     )
+                for filename in prefix_file_list:
+                    print(f' ... {filename}')
+                    # filename = os.path.basename(file_path)
+                    # target_gcs_path = (
+                    #     f"{root_pipeline_gs_folder}/{fldr_ident}/{filename}"
+                    # )
+                    # upload_file_to_gcs(
+                    #     file_path=file_path,
+                    #     target_gcs_bucket=target_gcs_bucket,
+                    #     target_gcs_path=f"{root_gcs_folder}/{target_gcs_path}",
+                    # )
+                    local_source_folder = os.path.split(local_file_path)[0]
+                    # local_source_filename = os.path.basename(filename)
+                    local_file_path = f"{local_source_folder}/{filename}"
+                    source_file_gcs_full_path = f"gs://{target_gcs_bucket}/{root_gcs_folder}/{root_pipeline_gs_folder}/{fldr_ident}/access/{filename}"
+                    download_file_gcs(
+                        project_id=project_id,
+                        source_location=source_file_gcs_full_path,
+                        destination_folder=local_source_folder,
+                    )
+                    import pdb; pdb.set_trace()
+                    load_data_gcs_to_bq(
+                        project_id=project_id,
+                        dataset_id=dataset_id,
+                        table_id=destination_table,
+                        source_bucket=target_gcs_bucket,
+                        output_schema_file=output_schema_file,
+                        schema_filepath=schema_file_path,
+                        # gcs_file_path=f"{root_gcs_folder}/{target_gcs_path}",
+                        gcs_file_path=filename,
+                        local_file_path=local_file_path,
+                        field_delimiter=",",
+                        truncate_load=(
+                            os.path.basename(filename)
+                            == os.path.basename(first_file_path)
+                        ),
+                    )
     logging.info(f"{pipeline_name} process completed")
 
 
@@ -160,7 +162,6 @@ def list_of_files_prefix(
     df["filename"] = df["filename"].apply(lambda x, prefix: filter_to_prefix_list(prefix, os.path.basename(x)), args=[prefix])
     df = df[df["filename"] != ""]
     df = df[df["filename"].notnull()]
-    import pdb; pdb.set_trace()
     df = sorted(df["filename"].unique())
     return df
 
@@ -170,7 +171,11 @@ def filter_to_prefix_list(
         filename: str
 ) -> str:
     reg_expr = f"^{prefix}([0-9]*)*\.csv"
-    return re.match(reg_expr, filename).format(filename.group(0))
+    filenm  = re.match(reg_expr, filename)
+    if filenm:
+        return(filenm.group(0))
+    else:
+        return None
 
 
 def distinct_file_prefixes(
@@ -179,7 +184,6 @@ def distinct_file_prefixes(
     filepath: str,
     file_ext: str,  #  without the period
 ) -> typing.List[str]:
-    # p=re.compile('^[a-zA-Z]*')
     storage_client = storage.Client(project_id)
     bucket_file_list_blob = storage_client.list_blobs(
         gcs_bucket, prefix=f"{filepath}/", delimiter="/"
@@ -195,7 +199,6 @@ def distinct_file_prefixes(
         ).group(0)
     )
     df = df[df["filename"] != ""]
-    # df = df[ df['filename'].map(lambda x: len(str(x)) > 2) ]
     df = sorted(df["filename"].unique())
     return df
 
@@ -549,6 +552,7 @@ def download_file_gcs(
     bucket = storage_client.bucket(bucket_name)
     source_object_path = str.split(source_location, f"gs://{bucket_name}/")[1]
     blob = bucket.blob(source_object_path)
+    import pdb; pdb.set_trace()
     blob.download_to_filename(dest_object)
 
 
