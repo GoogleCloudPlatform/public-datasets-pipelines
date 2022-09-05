@@ -13,9 +13,6 @@
 # limitations under the License.
 
 import datetime
-
-# from distutils.command.upload import upload
-import glob
 import json
 import logging
 import os
@@ -24,16 +21,12 @@ import re
 import subprocess
 import typing
 
+from airflow import DAG
 import airflow.providers.google.cloud.transfers.gcs_to_bigquery as gcs2bq
 import google.api_core.exceptions as google_api_exceptions
-
-# import google.cloud
-import pandas as pd
-from airflow import DAG
 from google.cloud import bigquery, storage
-
-# from google.cloud.storage import Client as gcs_client
 from google.cloud.exceptions import NotFound
+import pandas as pd
 
 
 def main(
@@ -46,24 +39,20 @@ def main(
     root_gcs_folder: str,
     root_pipeline_gs_folder: str,
     folders_list: typing.List[str],
-    # file_prefix: typing.List[str],
-    # schema_filepath_gcs_path_root: str,
 ) -> None:
     logging.info(f"{pipeline_name} process started")
     source_local_schema_folder = f"{source_local_folder_root}/schema"
     for fldr in folders_list:
-        source_local_process_folder_root = (
-            f"{source_local_folder_root}/{root_pipeline_gs_folder}"
-        )
+        # source_local_process_folder_root = (
+        #     f"{source_local_folder_root}/{root_pipeline_gs_folder}"
+        # )
         if fldr == "":
             folder_to_process = f"{root_gcs_folder}/{root_pipeline_gs_folder}/access"
         else:
             folder_to_process = f"{root_gcs_folder}/{root_pipeline_gs_folder}/{fldr}/access"
-        # print(f"folder_to_process: {folder_to_process}")
         file_prefix = distinct_file_prefixes(
             project_id, target_gcs_bucket, folder_to_process, "csv"
         )
-        print(file_prefix)
         for prefix in file_prefix:
             logging.info(f"Processing {prefix} files in {fldr} folder ...")
             logging.info(f"prefix={prefix} folder_to_process={folder_to_process}")
@@ -86,7 +75,6 @@ def main(
                     f"{root_gcs_folder}/schema/{root_pipeline_gs_folder}"  # /{fldr}"
                 )
                 output_schema_file = f"{source_local_schema_folder}/{root_pipeline_gs_folder}/{destination_table}_schema.json"
-                # schema_filepath = f"{schema_filepath_gcs_path}/{fldr_ident}/{ os.path.basename(output_schema_file) }"
                 schema_file_path = f"{schema_filepath_gcs_path}/{ os.path.basename(output_schema_file) }"
                 local_file_path = f"{source_local_folder_root}/{root_pipeline_gs_folder}/{fldr}/{ os.path.basename(first_file_path) }"
                 create_schema_and_table(
@@ -111,6 +99,8 @@ def main(
                     print(f' ... {filename}')
                     local_source_folder = os.path.split(local_file_path)[0]
                     local_file_path = f"{local_source_folder}/{filename}"
+                    if fldr_ident != 'access':
+                        fldr_ident += '/access'
                     source_file_gcs_full_path = f"gs://{target_gcs_bucket}/{root_gcs_folder}/{root_pipeline_gs_folder}/{fldr_ident}/{filename}"
                     download_file_gcs(
                         project_id=project_id,
@@ -149,8 +139,6 @@ def truncate_table_if_exists(
         """
         job_config = bigquery.QueryJobConfig()
         client.query(query, job_config=job_config)
-        # import pdb; pdb.set_trace()
-        # query_job.execute()
     else:
         pass
 
@@ -255,8 +243,6 @@ def gcs_file_exists(bucket: str, file_path: str) -> bool:
 
 
 def prefix_files_exist(gcs_bucket: str, prefix: str, folder_to_process: str) -> bool:
-    # file_list = glob.glob(f"{folder_to_process}/{prefix}*.csv")
-    # command=f"gcloud alpha storage ls --recursive gs://{gcs_bucket}/{folder_to_process}/* |grep '.csv'"
     command = f"gsutil ls gs://{gcs_bucket}/{folder_to_process}/* |grep '\.csv'"
     files = sorted(str(subprocess.check_output(command, shell=True)).split("\\n"))
     return len(files) > 0
@@ -265,8 +251,6 @@ def prefix_files_exist(gcs_bucket: str, prefix: str, folder_to_process: str) -> 
 def return_first_file_for_prefix(
     gcs_bucket: str, prefix: str, folder_to_process: str
 ) -> str:
-    # file_list = glob.glob(f"{folder_to_process}/{prefix}*.csv")
-    # command=f"gcloud alpha storage ls gs://{gcs_bucket}/{folder_to_process}/{prefix}* |grep '.csv'"
     command = f"gsutil ls gs://{gcs_bucket}/{folder_to_process}/{prefix}* |grep '.csv'"
     files = sorted(str(subprocess.check_output(command, shell=True)).split("\\n"))
     df = pd.DataFrame(files, columns=["filename"])
@@ -276,7 +260,6 @@ def return_first_file_for_prefix(
 
 def extract_header_from_gcs_file(
     project_id: str,
-    # gcs_bucket: str,
     gcs_file_path: str,
     local_file_path: str,
     sep: str = ",",
@@ -293,7 +276,6 @@ def extract_header_from_gcs_file(
 
 def generate_schema_file_from_gcs_source_file(
     project_id: str,
-    gcs_bucket: str,
     gcs_file_path: str,
     local_file_path: str,
     output_schema_file: str,
@@ -303,7 +285,6 @@ def generate_schema_file_from_gcs_source_file(
 ) -> None:
     header = extract_header_from_gcs_file(
         project_id=project_id,
-        # gcs_bucket=gcs_bucket,
         gcs_file_path=gcs_file_path,
         local_file_path=local_file_path,
         sep=input_sep,
@@ -376,11 +357,6 @@ def load_data_gcs_to_bq(
         "owner": "default_user",
         "start_date": datetime.datetime.now() - datetime.timedelta(days=2),
         "depends_on_past": False,
-        # With this set to true, the pipeline won't run if the previous day failed
-        # 'email': ['demo@email.de'],
-        # 'email_on_failure': True,
-        # upon failure this pipeline will send an email to your email set above
-        # 'email_on_retry': False,
         "retries": 5,
         "retry_delay": datetime.timedelta(minutes=1),
     }
@@ -432,20 +408,6 @@ def load_data_gcs_to_bq(
                 local_file_path=local_file_path,
                 schema_filepath_gcs_path=schema_file_path,
             )
-        # if not truncate_load:
-        #     load_data = gcs2bq.GCSToBigQueryOperator(
-        #         dag=dag,
-        #         task_id="load_source_data_alt_1",
-        #         bucket=source_bucket,
-        #         source_objects=[gcs_file_path],
-        #         field_delimiter=field_delimiter,
-        #         destination_project_dataset_table=f"us_climate_normals.{destination_table}",
-        #         skip_leading_rows=1,
-        #         schema_object=schema_filepath,
-        #         write_disposition=f"{write_disposition}",
-        #         schema_update_options=["ALLOW_FIELD_ADDITION"],
-        #     )
-        # else:
         load_data = gcs2bq.GCSToBigQueryOperator(
             dag=dag,
             task_id="load_source_data_alt_1",
@@ -585,7 +547,5 @@ if __name__ == "__main__":
         root_gcs_folder=os.environ.get("ROOT_GCS_FOLDER", ""),
         root_pipeline_gs_folder=os.environ.get("ROOT_PIPELINE_GS_FOLDER", ""),
         folders_list=json.loads(os.environ.get("FOLDERS_LIST", r"[]")),
-        # file_prefix=json.loads(os.environ.get("FILE_PREFIX_LIST", r"[]")),
-        # schema_filepath_gcs_path_root=os.environ.get("SCHEMA_FILEPATH_GCS_PATH_ROOT", ""),
         pipeline_name=os.environ.get("PIPELINE_NAME", ""),
     )
