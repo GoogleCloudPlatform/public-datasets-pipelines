@@ -105,6 +105,8 @@ def main(
                     gcs_file_path=folder_to_process,
                     prefix=prefix,
                 )
+                truncate_table_if_exists(project_id, dataset_id, destination_table)
+                truncate_table_if_exists(project_id, dataset_id, f"{destination_table}_alternative_1")
                 for filename in prefix_file_list:
                     print(f' ... {filename}')
                     local_source_folder = os.path.split(local_file_path)[0]
@@ -132,6 +134,25 @@ def main(
                         ),
                     )
     logging.info(f"{pipeline_name} process completed")
+
+
+def truncate_table_if_exists(
+    project_id: str,
+    dataset_id: str,
+    table_id: str
+) -> None:
+    pass
+    if table_exists(project_id, dataset_id, table_id):
+        client = bigquery.Client(project=project_id)
+        query = f"""
+            TRUNCATE TABLE {project_id}.{dataset_id}.{table_id}
+        """
+        job_config = bigquery.QueryJobConfig()
+        client.query(query, job_config=job_config)
+        # import pdb; pdb.set_trace()
+        # query_job.execute()
+    else:
+        pass
 
 
 def list_of_files_prefix(
@@ -204,10 +225,11 @@ def create_schema_and_table(
     logging.info(
         f"creating schema and table ... destination_table={destination_table} target_gcs_bucket={target_gcs_bucket} output_schema_file={output_schema_file} file_path={gcs_file_path} schema_filepath_gcs_path={schema_filepath_gcs_path} "
     )
-    if not table_exists(project_id, dataset_id, destination_table):
-        if not gcs_file_exists(bucket=target_gcs_bucket, file_path=output_schema_file):
+    table_already_exists = table_exists(project_id, dataset_id, destination_table)
+    source_file_exists = gcs_file_exists(bucket=target_gcs_bucket, file_path=output_schema_file)
+    if not table_already_exists:
+        if not source_file_exists:
             generate_schema_file_from_gcs_source_file(
-                # filename=first_file_path,
                 project_id=project_id,
                 gcs_bucket=target_gcs_bucket,
                 gcs_file_path=gcs_file_path,
@@ -376,7 +398,7 @@ def load_data_gcs_to_bq(
                     skip_leading_rows=1,
                     schema_object=schema_filepath,
                     write_disposition=f"{write_disposition}",
-                    schema_update_options=["ALLOW_FIELD_ADDITION"],
+                    # schema_update_options=["ALLOW_FIELD_ADDITION"],
                 )
             else:
                 load_data = gcs2bq.GCSToBigQueryOperator(
@@ -406,73 +428,39 @@ def load_data_gcs_to_bq(
                 destination_table=destination_table,
                 target_gcs_bucket=source_bucket,
                 output_schema_file=output_schema_file,
-                gcs_file_path=gcs_file_path,
+                gcs_file_path=f"gs://{source_bucket}/{gcs_file_path}",
                 local_file_path=local_file_path,
                 schema_filepath_gcs_path=schema_file_path,
             )
-        if not truncate_load:
-            load_data = gcs2bq.GCSToBigQueryOperator(
-                dag=dag,
-                task_id="load_source_data_alt_1",
-                bucket=source_bucket,
-                source_objects=[gcs_file_path],
-                field_delimiter=field_delimiter,
-                destination_project_dataset_table=f"us_climate_normals.{destination_table}",
-                skip_leading_rows=1,
-                schema_object=schema_filepath,
-                write_disposition=f"{write_disposition}",
-                schema_update_options=["ALLOW_FIELD_ADDITION"],
-            )
-        else:
-            load_data = gcs2bq.GCSToBigQueryOperator(
-                dag=dag,
-                task_id="load_source_data_alt_1",
-                bucket=source_bucket,
-                source_objects=[gcs_file_path],
-                field_delimiter=field_delimiter,
-                destination_project_dataset_table=f"us_climate_normals.{table_id}",
-                skip_leading_rows=1,
-                schema_object=schema_filepath,
-                write_disposition=f"{write_disposition}",
-            )
+        # if not truncate_load:
+        #     load_data = gcs2bq.GCSToBigQueryOperator(
+        #         dag=dag,
+        #         task_id="load_source_data_alt_1",
+        #         bucket=source_bucket,
+        #         source_objects=[gcs_file_path],
+        #         field_delimiter=field_delimiter,
+        #         destination_project_dataset_table=f"us_climate_normals.{destination_table}",
+        #         skip_leading_rows=1,
+        #         schema_object=schema_filepath,
+        #         write_disposition=f"{write_disposition}",
+        #         schema_update_options=["ALLOW_FIELD_ADDITION"],
+        #     )
+        # else:
+        load_data = gcs2bq.GCSToBigQueryOperator(
+            dag=dag,
+            task_id="load_source_data_alt_1",
+            bucket=source_bucket,
+            source_objects=[gcs_file_path],
+            field_delimiter=field_delimiter,
+            quote_character='"',
+            destination_project_dataset_table=f"us_climate_normals.{destination_table}",
+            skip_leading_rows=1,
+            schema_object=schema_file_path,
+            write_disposition=f"{write_disposition}",
+        )
         load_data.execute("load_source_data_alt_1")
     logging.info(
         f"Loading data from {gcs_file_path} into {project_id}.{dataset_id}.{table_id} completed"
-    )
-
-
-def load_data_to_bq(
-    project_id: str,
-    dataset_id: str,
-    table_id: str,
-    file_path: str,
-    field_delimiter: str,
-    truncate_load: bool = False,
-) -> None:
-    if truncate_load:
-        logging.info(
-            f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} (with truncate table) started"
-        )
-    else:
-        logging.info(
-            f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} (with append data) started"
-        )
-    client = bigquery.Client(project=project_id)
-    table_ref = client.dataset(dataset_id).table(table_id)
-    job_config = bigquery.LoadJobConfig()
-    job_config.source_format = bigquery.SourceFormat.CSV
-    job_config.field_delimiter = field_delimiter
-    job_config.skip_leading_rows = 1  # ignore the header
-    job_config.autodetect = False
-    if truncate_load:
-        job_config.write_disposition = "WRITE_TRUNCATE"
-    else:
-        job_config.write_disposition = "WRITE_APPEND"
-    with open(file_path, "rb") as source_file:
-        job = client.load_table_from_file(source_file, table_ref, job_config=job_config)
-    job.result()
-    logging.info(
-        f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} completed"
     )
 
 
