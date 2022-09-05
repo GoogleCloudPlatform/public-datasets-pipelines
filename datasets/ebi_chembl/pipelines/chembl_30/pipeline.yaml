@@ -383,7 +383,7 @@ dag:
         retries: 3
         retry_delay: 300
         retry_exponential_backoff: true
-        startup_timeout_seconds: 600
+        startup_timeout_seconds: 1000
 
 
     - operator: "GKEDeleteClusterOperator"
