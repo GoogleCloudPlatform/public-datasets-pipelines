@@ -219,7 +219,6 @@ def create_schema_and_table(
         if not source_file_exists:
             generate_schema_file_from_gcs_source_file(
                 project_id=project_id,
-                gcs_bucket=target_gcs_bucket,
                 gcs_file_path=gcs_file_path,
                 local_file_path=local_file_path,
                 output_schema_file=output_schema_file,
