@@ -53,7 +53,7 @@ def main(
         file_prefix = distinct_file_prefixes(
             project_id, target_gcs_bucket, folder_to_process, "csv"
         )
-        for prefix in file_prefix:
+        for prefix in [ "RQC" ]:  # file_prefix:
             logging.info(f"Processing {prefix} files in {fldr} folder ...")
             logging.info(f"prefix={prefix} folder_to_process={folder_to_process}")
             if not prefix_files_exist(target_gcs_bucket, prefix, folder_to_process):
@@ -93,8 +93,13 @@ def main(
                     gcs_file_path=folder_to_process,
                     prefix=prefix,
                 )
-                truncate_table_if_exists(project_id, dataset_id, destination_table)
-                truncate_table_if_exists(project_id, dataset_id, f"{destination_table}_alternative_1")
+                truncate_tables_for_prefix(
+                    project_id=project_id,
+                    dataset_id=dataset_id,
+                    table_name_prefix=destination_table
+                )
+                # truncate_table_if_exists(project_id, dataset_id, destination_table)
+                # truncate_table_if_exists(project_id, dataset_id, f"{destination_table}_alternative_1")
                 for filename in prefix_file_list:
                     print(f' ... {filename}')
                     local_source_folder = os.path.split(local_file_path)[0]
@@ -123,7 +128,25 @@ def main(
                             == os.path.basename(first_file_path)
                         ),
                     )
+                    import pdb; pdb.set_trace()
     logging.info(f"{pipeline_name} process completed")
+
+
+def truncate_tables_for_prefix(
+    project_id: str,
+    dataset_id: str,
+    table_name_prefix: str
+) -> None:
+    client = bigquery.Client(project=project_id)
+    tables = client.list_tables(dataset_id)
+    print("Tables contained in '{}':".format(dataset_id))
+    for table in tables:
+        if table.table_id.startswith(table_name_prefix):
+            truncate_table(
+                project_id=project_id,
+                dataset_id=dataset_id,
+                table_id=table.table_id
+            )
 
 
 def truncate_table_if_exists(
@@ -133,14 +156,26 @@ def truncate_table_if_exists(
 ) -> None:
     pass
     if table_exists(project_id, dataset_id, table_id):
-        client = bigquery.Client(project=project_id)
-        query = f"""
-            TRUNCATE TABLE {project_id}.{dataset_id}.{table_id}
-        """
-        job_config = bigquery.QueryJobConfig()
-        client.query(query, job_config=job_config)
+        truncate_table(
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_id=table_id
+        )
     else:
         pass
+
+
+def truncate_table(
+    project_id: str,
+    dataset_id: str,
+    table_id: str
+):
+    client = bigquery.Client(project=project_id)
+    query = f"""
+        TRUNCATE TABLE {project_id}.{dataset_id}.{table_id}
+    """
+    job_config = bigquery.QueryJobConfig()
+    client.query(query, job_config=job_config)
 
 
 def list_of_files_prefix(
@@ -389,40 +424,129 @@ def load_data_gcs_to_bq(
                 )
             load_data.execute("load_source_data")
     except google_api_exceptions.BadRequest:
+            load_ext_schema(
+                project_id=project_id,
+                dataset_id=dataset_id,
+                table_id=table_id,
+                ext_surr_val=1,
+                source_bucket=source_bucket,
+                gcs_file_path=gcs_file_path,
+                local_file_path=local_file_path,
+                schema_filepath=schema_filepath,
+                output_schema_file=output_schema_file,
+                dag=dag,
+                write_disposition=write_disposition,
+                field_delimiter=field_delimiter
+            )
+        # print("*** SCHEMA DIFFERENT FROM TABLE - CREATING ADDITIONAL TABLE ***")
+        # ext = "alternative_1"
+        # destination_table = f"{table_id}_{ext}"
+        # schema_file_path = schema_filepath.replace("_schema.json", f"_{ext}_schema.json")
+        # output_schema_file = output_schema_file.replace(
+        #     "_schema.json", f"_{ext}_schema.json"
+        # )
+        # if not table_exists(project_id, dataset_id, destination_table):
+        #     create_schema_and_table(
+        #         project_id=project_id,
+        #         dataset_id=dataset_id,
+        #         destination_table=destination_table,
+        #         target_gcs_bucket=source_bucket,
+        #         output_schema_file=output_schema_file,
+        #         gcs_file_path=f"gs://{source_bucket}/{gcs_file_path}",
+        #         local_file_path=local_file_path,
+        #         schema_filepath_gcs_path=schema_file_path,
+        #     )
+        # load_data = gcs2bq.GCSToBigQueryOperator(
+        #     dag=dag,
+        #     task_id="load_source_data_alt_1",
+        #     bucket=source_bucket,
+        #     source_objects=[gcs_file_path],
+        #     field_delimiter=field_delimiter,
+        #     allow_quoted_newlines=True,
+        #     quote_character='"',
+        #     destination_project_dataset_table=f"us_climate_normals.{destination_table}",
+        #     skip_leading_rows=1,
+        #     schema_object=schema_file_path,
+        #     write_disposition=f"{write_disposition}",
+        #     autodetect=False
+        # )
+        # load_data.execute("load_source_data_alt_1")
+        # import pdb; pdb.set_trace()
+    logging.info(
+        f"Loading data from {gcs_file_path} into {project_id}.{dataset_id}.{table_id} completed"
+    )
+
+
+def load_ext_schema(
+    project_id: str,
+    dataset_id: str,
+    table_id: str,
+    ext_surr_val: int,
+    source_bucket: str,
+    gcs_file_path: str,
+    local_file_path: str,
+    schema_filepath: str,
+    output_schema_file: str,
+    dag: DAG,
+    write_disposition: str,
+    field_delimiter: str = ","
+) -> None:
+    ext = f"ext_{ str(ext_surr_val).zfill(3) }"
+    destination_table = f"{table_id}_{ext}"
+    schema_file_path = schema_filepath.replace("_schema.json", f"_{ext}_schema.json")
+    output_schema_file_ext = output_schema_file.replace(
+        "_schema.json", f"_{ext}_schema.json"
+    )
+    task_id = f"load_{destination_table}"
+    full_gcs_file_path = f"gs://{source_bucket}/{gcs_file_path}"
+    try:
         print("*** SCHEMA DIFFERENT FROM TABLE - CREATING ADDITIONAL TABLE ***")
-        ext = "alternative_1"
-        destination_table = f"{table_id}_{ext}"
-        schema_file_path = schema_filepath.replace("_schema.json", f"_{ext}_schema.json")
-        output_schema_file = output_schema_file.replace(
-            "_schema.json", f"_{ext}_schema.json"
-        )
         if not table_exists(project_id, dataset_id, destination_table):
             create_schema_and_table(
                 project_id=project_id,
                 dataset_id=dataset_id,
                 destination_table=destination_table,
                 target_gcs_bucket=source_bucket,
-                output_schema_file=output_schema_file,
-                gcs_file_path=f"gs://{source_bucket}/{gcs_file_path}",
+                output_schema_file=output_schema_file_ext,
+                gcs_file_path=full_gcs_file_path, # f"gs://{source_bucket}/{gcs_file_path}",
                 local_file_path=local_file_path,
                 schema_filepath_gcs_path=schema_file_path,
             )
         load_data = gcs2bq.GCSToBigQueryOperator(
             dag=dag,
-            task_id="load_source_data_alt_1",
+            task_id=task_id,  # "load_source_data_alt_1",
             bucket=source_bucket,
             source_objects=[gcs_file_path],
             field_delimiter=field_delimiter,
+            allow_quoted_newlines=True,
             quote_character='"',
             destination_project_dataset_table=f"us_climate_normals.{destination_table}",
             skip_leading_rows=1,
             schema_object=schema_file_path,
             write_disposition=f"{write_disposition}",
+            autodetect=False
         )
-        load_data.execute("load_source_data_alt_1")
-    logging.info(
-        f"Loading data from {gcs_file_path} into {project_id}.{dataset_id}.{table_id} completed"
-    )
+        load_data.execute(task_id)
+    except google_api_exceptions.BadRequest:
+        if ext_surr_val < 999:
+            load_ext_schema(
+                project_id=project_id,
+                dataset_id=dataset_id,
+                table_id=table_id,
+                ext_surr_val=(ext_surr_val + 1),
+                source_bucket=source_bucket,
+                gcs_file_path=gcs_file_path,
+                local_file_path=local_file_path,
+                schema_filepath=schema_file_path,
+                output_schema_file=output_schema_file,
+                dag=dag,
+                write_disposition=write_disposition,
+                field_delimiter=field_delimiter
+            )
+        else:
+            raise("Error: Total number of extension schemas exceeded.")
+    # import pdb; pdb.set_trace()
+
 
 
 def create_dest_table(
