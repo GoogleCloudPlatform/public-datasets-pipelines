@@ -38,6 +38,7 @@ SPEND_RANGE_COLUMNS = [
     "spend_range_max_gbp",
     "spend_range_max_sek",
     "spend_range_max_nzd",
+    "spend_range_max_brl",
 ]
 
 NUMERIC_COLUMNS = [
@@ -54,6 +55,7 @@ NUMERIC_COLUMNS = [
     "spend_gbp",
     "spend_sek",
     "spend_nzd",
+    "spend_brl",
 ]
 
 
