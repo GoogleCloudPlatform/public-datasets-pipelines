@@ -21,12 +21,12 @@ import re
 import subprocess
 import typing
 
-from airflow import DAG
 import airflow.providers.google.cloud.transfers.gcs_to_bigquery as gcs2bq
 import google.api_core.exceptions as google_api_exceptions
+import pandas as pd
+from airflow import DAG
 from google.cloud import bigquery, storage
 from google.cloud.exceptions import NotFound
-import pandas as pd
 
 
 def main(
