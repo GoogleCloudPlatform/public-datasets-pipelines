@@ -53,7 +53,7 @@ def main(
         file_prefix = distinct_file_prefixes(
             project_id, target_gcs_bucket, folder_to_process, "csv"
         )
-        for prefix in [ "RQC" ]:  # file_prefix:
+        for prefix in file_prefix:
             logging.info(f"Processing {prefix} files in {fldr} folder ...")
             logging.info(f"prefix={prefix} folder_to_process={folder_to_process}")
             if not prefix_files_exist(target_gcs_bucket, prefix, folder_to_process):
@@ -128,7 +128,6 @@ def main(
                             == os.path.basename(first_file_path)
                         ),
                     )
-                    import pdb; pdb.set_trace()
     logging.info(f"{pipeline_name} process completed")
 
 
@@ -139,7 +138,6 @@ def truncate_tables_for_prefix(
 ) -> None:
     client = bigquery.Client(project=project_id)
     tables = client.list_tables(dataset_id)
-    print("Tables contained in '{}':".format(dataset_id))
     for table in tables:
         if table.table_id.startswith(table_name_prefix):
             truncate_table(
@@ -170,6 +168,7 @@ def truncate_table(
     dataset_id: str,
     table_id: str
 ):
+    logging.info(f" ... Truncating table {project_id}.{dataset_id}.{table_id}")
     client = bigquery.Client(project=project_id)
     query = f"""
         TRUNCATE TABLE {project_id}.{dataset_id}.{table_id}
@@ -545,7 +544,6 @@ def load_ext_schema(
             )
         else:
             raise("Error: Total number of extension schemas exceeded.")
-    # import pdb; pdb.set_trace()
 
 
 
