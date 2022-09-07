@@ -120,7 +120,7 @@ def transform_xlsx(gcs_bucket: str, source_gcs_path: str, pipeline_name: str) ->
         upload_file = f"{pipeline_name[:-5]}.csv"
         upload_file = upload_file.lower()
         df.to_csv(upload_file, index=False, sep=",")
-    except:
+    except ValueError:
         logging.info(f"{pipeline_name} file is corrupted, skipping and moving ahead.")
         return None
     logging.info("Completed transforming file.")

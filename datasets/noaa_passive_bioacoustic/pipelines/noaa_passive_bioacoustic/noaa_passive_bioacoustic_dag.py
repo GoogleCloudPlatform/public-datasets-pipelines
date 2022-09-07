@@ -45,8 +45,8 @@ with DAG(
     )
 
     # ETL within the kubernetes pod
-    py_gcs_to_bq = kubernetes_pod.KubernetesPodOperator(
-        task_id="py_gcs_to_bq",
+    kub_gcs_to_bq = kubernetes_pod.KubernetesPodOperator(
+        task_id="kub_gcs_to_bq",
         startup_timeout_seconds=1000,
         name="load_data",
         namespace="composer",
@@ -69,4 +69,4 @@ with DAG(
         },
     )
 
-    gcs_to_gcs_operator >> py_gcs_to_bq
+    gcs_to_gcs_operator >> kub_gcs_to_bq
