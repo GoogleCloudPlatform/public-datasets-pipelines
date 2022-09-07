@@ -24,19 +24,3 @@ resource "google_bigquery_dataset" "noaa_passive_bioacoustic" {
 output "bigquery_dataset-noaa_passive_bioacoustic-dataset_id" {
   value = google_bigquery_dataset.noaa_passive_bioacoustic.dataset_id
 }
-
-resource "google_storage_bucket" "noaa-passive-bioacoustic" {
-  name                        = "${var.bucket_name_prefix}-noaa-passive-bioacoustic"
-  force_destroy               = true
-  location                    = "US"
-  uniform_bucket_level_access = true
-  lifecycle {
-    ignore_changes = [
-      logging,
-    ]
-  }
-}
-
-output "storage_bucket-noaa-passive-bioacoustic-name" {
-  value = google_storage_bucket.noaa-passive-bioacoustic.name
-}

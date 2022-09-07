@@ -14,12 +14,13 @@
 
 
 from airflow import DAG
+from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
 from airflow.providers.google.cloud.transfers import gcs_to_gcs
 
 default_args = {
     "owner": "Google",
     "depends_on_past": False,
-    "start_date": "2022-09-01",
+    "start_date": "2022-09-07",
 }
 
 
@@ -33,8 +34,8 @@ with DAG(
 ) as dag:
 
     # Copy objects from source bucket
-    gcs_to_gcs = gcs_to_gcs.GCSToGCSOperator(
-        task_id="gcs_to_gcs",
+    gcs_to_gcs_operator = gcs_to_gcs.GCSToGCSOperator(
+        task_id="gcs_to_gcs_operator",
         source_bucket="{{ var.json.noaa_passive_bioacoustic.source_bucket }}",
         source_object="{{ var.json.noaa_passive_bioacoustic.source_object }}",
         destination_bucket="{{ var.json.noaa_passive_bioacoustic.destination_bucket }}",
@@ -43,4 +44,29 @@ with DAG(
         replace=False,
     )
 
-    gcs_to_gcs
+    # ETL within the kubernetes pod
+    py_gcs_to_bq = kubernetes_pod.KubernetesPodOperator(
+        task_id="py_gcs_to_bq",
+        startup_timeout_seconds=1000,
+        name="load_data",
+        namespace="composer",
+        service_account_name="datasets",
+        image_pull_policy="Always",
+        image="{{ var.json.noaa_passive_bioacoustic.container_registry.run_csv_transform_kub }}",
+        env_vars={
+            "SOURCE_GCS_PATH": "{{ var.json.noaa_passive_bioacoustic.source_gcs_path }}",
+            "DESTINATION_GCS_PATH": "{{ var.json.noaa_passive_bioacoustic.destination_gcs_path }}",
+            "PROJECT_ID": "{{ var.value.gcp_project }}",
+            "DATASET_ID": "{{ var.json.noaa_passive_bioacoustic.dataset_id }}",
+            "GCS_BUCKET": "{{ var.value.composer_bucket }}",
+            "SCHEMA_FILEPATH": "schema.json",
+            "HEADER": '["CLOUD_PATH" ,"FILE_NAME" ,"START_DATE" ,"START_TIME" ,"DATA_COLLECTION_NAME" ,"SOURCE_ORGANIZATION" ,"FUNDING_ORGANIZATION" ,"PROJECT_NAME" ,"SENSOR_DEPTH" ,"SAMPLE_RATE" ,"DURATION" ,"PLATFORM_NAME" ,"SHAPE1" ,"SHAPE2" ,"SHAPE3" ,"SHAPE4" ,"SHAPE5" ,"SHAPE6" ,"SHAPE7" ,"SHAPE8" ,"SHAPE9" ,"SHAPE10" ]',
+        },
+        resources={
+            "request_memory": "2G",
+            "request_cpu": "1",
+            "request_ephemeral_storage": "10G",
+        },
+    )
+
+    gcs_to_gcs_operator >> py_gcs_to_bq

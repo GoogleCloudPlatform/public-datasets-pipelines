@@ -24,8 +24,3 @@ resources:
   - type: bigquery_dataset
     dataset_id: noaa_passive_bioacoustic
     description: This dataset basically contains the metadata corresponding to the audio data files present in google cloud storage bucket gs://noaa-passive-bioacoustic/big_query_metadata/
-
-  - type: storage_bucket
-    name: "noaa-passive-bioacoustic"
-    uniform_bucket_level_access: True
-    location: US
