@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
 # limitations under the License.
 
 artifact:
-  title: "Predicting the Weekly 311 Calls in San Francisco"
-  description: "Train a LSTM model to predict the number of 311 calls in San Francisco based on the call category."
+  title: "Forecasting the Weekly 311 Calls in San Francisco"
+  description: "Train a LSTM model to forecast the number of 311 calls in San Francisco based on the call category."
   tags:
     - techniques: [ml:forecasting, ml:lstm]
     - libraries: [tensorflow, pandas]

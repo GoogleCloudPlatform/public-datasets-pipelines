@@ -4,7 +4,7 @@ from testbook import testbook
 
 @pytest.mark.timeout(900)
 @testbook(
-    "datasets/san_francisco_311/docs/tutorials/predict_weekly_calls/sf_311_weekly_calls_prediction.ipynb"
+    "datasets/san_francisco_311/docs/tutorials/forecast_weekly_calls/sf_311_weekly_calls_forecast.ipynb"
 )
 def test_run_notebook(tb):
     tb.inject(
@@ -20,7 +20,7 @@ def test_run_notebook(tb):
         mock_client.query().result().to_dataframe.return_value = mock_df
         p1.start()
         """,
-        before=3,
+        before=4,
         run=False,
     )
 
@@ -28,6 +28,6 @@ def test_run_notebook(tb):
     dataframe = tb.get("dataframe")
     assert dataframe.shape == (50, 3)
 
-    train_pred_plot = tb.get("train_pred_plot")
-    print(train_pred_plot)
-    assert train_pred_plot is not None
+    test_forecasts_plot = tb.get("test_forecasts_plot")
+    print(test_forecasts_plot)
+    assert test_forecasts_plot is not None
