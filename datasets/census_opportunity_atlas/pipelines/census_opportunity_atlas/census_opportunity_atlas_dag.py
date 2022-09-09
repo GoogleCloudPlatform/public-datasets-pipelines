@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,12 +14,12 @@
 
 
 from airflow import DAG
-from airflow.providers.google.cloud.operators import kubernetes_engine
+from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
 
 default_args = {
     "owner": "Google",
     "depends_on_past": False,
-    "start_date": "2021-03-01",
+    "start_date": "2022-08-25",
 }
 
 
@@ -31,33 +31,14 @@ with DAG(
     catchup=False,
     default_view="graph",
 ) as dag:
-    create_cluster = kubernetes_engine.GKECreateClusterOperator(
-        task_id="create_cluster",
-        project_id="{{ var.value.gcp_project }}",
-        location="us-central1-c",
-        body={
-            "name": "census-opportunity-atlas",
-            "initial_node_count": 2,
-            "network": "{{ var.value.vpc_network }}",
-            "node_config": {
-                "machine_type": "e2-standard-16",
-                "oauth_scopes": [
-                    "https://www.googleapis.com/auth/devstorage.read_write",
-                    "https://www.googleapis.com/auth/cloud-platform",
-                ],
-            },
-        },
-    )
 
-    # Run CSV transform within kubernetes pod
-    tract_covariates = kubernetes_engine.GKEStartPodOperator(
+    # Run CSV transform within the kubernetes pod
+    tract_covariates = kubernetes_pod.KubernetesPodOperator(
         task_id="tract_covariates",
         startup_timeout_seconds=600,
         name="tract_covariates",
-        namespace="default",
-        project_id="{{ var.value.gcp_project }}",
-        location="us-central1-c",
-        cluster_name="census-opportunity-atlas",
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.census_opportunity_atlas.container_registry.tract_covariates.run_csv_transform_kub }}",
         env_vars={
@@ -80,14 +61,12 @@ with DAG(
         resources={"request_ephemeral_storage": "8G", "request_cpu": "1"},
     )
 
-    # Run CSV transform within kubernetes pod
-    tract_outcomes = kubernetes_engine.GKEStartPodOperator(
+    # Run CSV transform within the kubernetes pod
+    tract_outcomes = kubernetes_pod.KubernetesPodOperator(
         task_id="tract_outcomes",
         name="tract_outcomes",
-        namespace="default",
-        project_id="{{ var.value.gcp_project }}",
-        location="us-central1-c",
-        cluster_name="census-opportunity-atlas",
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.census_opportunity_atlas.container_registry.tract_outcomes.run_csv_transform_kub }}",
         env_vars={
@@ -109,11 +88,5 @@ with DAG(
         },
         resources={"request_ephemeral_storage": "8G", "limit_cpu": "1"},
     )
-    delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
-        task_id="delete_cluster",
-        project_id="{{ var.value.gcp_project }}",
-        location="us-central1-c",
-        name="census-opportunity-atlas",
-    )
 
-    create_cluster >> [tract_covariates, tract_outcomes] >> delete_cluster
+    tract_covariates, tract_outcomes
