@@ -1,0 +1,68 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+resources:
+  - type: bigquery_table
+    table_id: "traffic_vision"
+    description: "Clemson DICE Traffic Vision"
+
+dag:
+  airflow_version: 2
+  initialize:
+    dag_id: normals_daily
+    default_args:
+      owner: "Google"
+      depends_on_past: False
+      start_date: '2021-03-01'
+    max_active_runs: 1
+    schedule_interval: "@once"
+    catchup: False
+    default_view: graph
+
+  tasks:
+    - operator: "BashOperator"
+      description: "Task to copy over to pod, the source data and structure from GCS"
+      args:
+        task_id: "transform_files"
+        bash_command: |
+          mkdir -p $WORKING_DIR/load_files ;
+          mkdir -p $WORKING_DIR/unpack ;
+          for f in $WORKING_DIR/files/*.tar.gz ;
+            do echo Decompressing $f ; \
+               tar -xvzf "$f" -C "$WORKING_DIR/unpack" ; \
+               ext="$(basename ${f/.tar.gz/})" ; \
+               # dirpath="$(dirname "${f}")" ; \
+               sedval='s/{\"frame\"/{"id": '$ext'\, "frame"/' ; \
+               # echo Fixing $dirpath/$ext/out.log ; \
+               echo Fixing $WORKING_DIR/unpack/$ext/out.log ; \
+               # sed -i "$sedval" "${f/.tar.gz/}"/out.log ; \
+               sed -i "$sedval" $WORKING_DIR/unpack/$ext/out.log ; \
+               # echo copying "${f/.tar.gz/}"/out.log to "$dirpath"/load_files/out"$ext".log ; \
+               cp $WORKING_DIR/unpack/$ext/out.log $WORKING_DIR/load_files/out"$ext".log ;
+          done
+        env:
+          WORKING_DIR: /home/airflow/gcs/data/trafficvision
+    - operator: "GoogleCloudStorageToBigQueryOperator"
+      description: "Load JSON metadata files to BQ"
+      args:
+        task_id: "load_json_metadata_to_bq"
+        bucket: "{{ var.value.composer_bucket }}"  # Use what's been copied over
+        source_objects: ["data/trafficvision/load_files/out*.log"]
+        source_format: "NEWLINE_DELIMITED_JSON"
+        destination_project_dataset_table: "clemson_dice.traffic_vision"
+        write_disposition: "WRITE_TRUNCATE"
+
+  graph_paths:
+    - "transform_files >> load_json_metadata_to_bq"
