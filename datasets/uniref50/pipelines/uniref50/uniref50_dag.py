@@ -29,7 +29,7 @@ with DAG(
     dag_id="uniref50.uniref50",
     default_args=default_args,
     max_active_runs=1,
-    schedule_interval="@weekly",
+    schedule_interval="@once",
     catchup=False,
     default_view="graph",
 ) as dag:
@@ -71,7 +71,7 @@ with DAG(
         resources={
             "request_memory": "4G",
             "request_cpu": "1",
-            "request_ephemeral_storage": "50G",
+            "request_ephemeral_storage": "10G",
         },
     )
 
@@ -143,7 +143,7 @@ with DAG(
         resources={
             "request_memory": "4G",
             "request_cpu": "1",
-            "request_ephemeral_storage": "50G",
+            "request_ephemeral_storage": "10G",
         },
     )
 
@@ -215,7 +215,7 @@ with DAG(
         resources={
             "request_memory": "4G",
             "request_cpu": "1",
-            "request_ephemeral_storage": "50G",
+            "request_ephemeral_storage": "10G",
         },
     )
 
@@ -287,7 +287,7 @@ with DAG(
         resources={
             "request_memory": "4G",
             "request_cpu": "1",
-            "request_ephemeral_storage": "50G",
+            "request_ephemeral_storage": "10G",
         },
     )
 
@@ -359,7 +359,7 @@ with DAG(
         resources={
             "request_memory": "4G",
             "request_cpu": "1",
-            "request_ephemeral_storage": "50G",
+            "request_ephemeral_storage": "10G",
         },
     )
 
@@ -431,7 +431,7 @@ with DAG(
         resources={
             "request_memory": "4G",
             "request_cpu": "1",
-            "request_ephemeral_storage": "50G",
+            "request_ephemeral_storage": "10G",
         },
     )
 
@@ -503,7 +503,7 @@ with DAG(
         resources={
             "request_memory": "4G",
             "request_cpu": "1",
-            "request_ephemeral_storage": "50G",
+            "request_ephemeral_storage": "10G",
         },
     )
 
@@ -575,7 +575,7 @@ with DAG(
         resources={
             "request_memory": "4G",
             "request_cpu": "1",
-            "request_ephemeral_storage": "50G",
+            "request_ephemeral_storage": "10G",
         },
     )
 
@@ -622,20 +622,22 @@ with DAG(
 
     (
         download_zip_file
-        >> uniref50_transform_csv_1
+        >> [
+            uniref50_transform_csv_1,
+            uniref50_transform_csv_2,
+            uniref50_transform_csv_3,
+            uniref50_transform_csv_4,
+            uniref50_transform_csv_5,
+            uniref50_transform_csv_6,
+            uniref50_transform_csv_7,
+            uniref50_transform_csv_8,
+        ]
         >> load_uniref50_to_bq_1
-        >> uniref50_transform_csv_2
         >> load_uniref50_to_bq_2
-        >> uniref50_transform_csv_3
         >> load_uniref50_to_bq_3
-        >> uniref50_transform_csv_4
         >> load_uniref50_to_bq_4
-        >> uniref50_transform_csv_5
         >> load_uniref50_to_bq_5
-        >> uniref50_transform_csv_6
         >> load_uniref50_to_bq_6
-        >> uniref50_transform_csv_7
         >> load_uniref50_to_bq_7
-        >> uniref50_transform_csv_8
         >> load_uniref50_to_bq_8
     )
