@@ -21,7 +21,7 @@ resources:
 dag:
   airflow_version: 2
   initialize:
-    dag_id: normals_daily
+    dag_id: traffic_vision
     default_args:
       owner: "Google"
       depends_on_past: False
@@ -43,13 +43,9 @@ dag:
             do echo Decompressing $f ; \
                tar -xvzf "$f" -C "$WORKING_DIR/unpack" ; \
                ext="$(basename ${f/.tar.gz/})" ; \
-               # dirpath="$(dirname "${f}")" ; \
-               sedval='s/{\"frame\"/{"id": '$ext'\, "frame"/' ; \
-               # echo Fixing $dirpath/$ext/out.log ; \
+               sedval='s/{\"frame\"/{"id": \"'$ext'\"\, "frame"/' ; \
                echo Fixing $WORKING_DIR/unpack/$ext/out.log ; \
-               # sed -i "$sedval" "${f/.tar.gz/}"/out.log ; \
                sed -i "$sedval" $WORKING_DIR/unpack/$ext/out.log ; \
-               # echo copying "${f/.tar.gz/}"/out.log to "$dirpath"/load_files/out"$ext".log ; \
                cp $WORKING_DIR/unpack/$ext/out.log $WORKING_DIR/load_files/out"$ext".log ;
           done
         env:

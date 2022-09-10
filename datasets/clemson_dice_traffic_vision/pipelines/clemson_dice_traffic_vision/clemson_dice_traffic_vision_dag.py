@@ -25,7 +25,7 @@ default_args = {
 
 
 with DAG(
-    dag_id="clemson_dice_traffic_vision.normals_daily",
+    dag_id="clemson_dice_traffic_vision.traffic_vision",
     default_args=default_args,
     max_active_runs=1,
     schedule_interval="@once",
@@ -36,7 +36,7 @@ with DAG(
     # Task to copy over to pod, the source data and structure from GCS
     transform_files = bash.BashOperator(
         task_id="transform_files",
-        bash_command='mkdir -p $WORKING_DIR/load_files ;\nmkdir -p $WORKING_DIR/unpack ;\nfor f in $WORKING_DIR/files/*.tar.gz ;\n  do echo Decompressing $f ; \\\n     tar -xvzf "$f" -C "$WORKING_DIR/unpack" ; \\\n     ext="$(basename ${f/.tar.gz/})" ; \\\n     # dirpath="$(dirname "${f}")" ; \\\n     sedval=\u0027s/{\\"frame\\"/{"id": \u0027$ext\u0027\\, "frame"/\u0027 ; \\\n     # echo Fixing $dirpath/$ext/out.log ; \\\n     echo Fixing $WORKING_DIR/unpack/$ext/out.log ; \\\n     # sed -i "$sedval" "${f/.tar.gz/}"/out.log ; \\\n     sed -i "$sedval" $WORKING_DIR/unpack/$ext/out.log ; \\\n     # echo copying "${f/.tar.gz/}"/out.log to "$dirpath"/load_files/out"$ext".log ; \\\n     cp $WORKING_DIR/unpack/$ext/out.log $WORKING_DIR/load_files/out"$ext".log ;\ndone\n',
+        bash_command='mkdir -p $WORKING_DIR/load_files ;\nmkdir -p $WORKING_DIR/unpack ;\nfor f in $WORKING_DIR/files/*.tar.gz ;\n  do echo Decompressing $f ; \\\n     tar -xvzf "$f" -C "$WORKING_DIR/unpack" ; \\\n     ext="$(basename ${f/.tar.gz/})" ; \\\n     sedval=\u0027s/{\\"frame\\"/{"id": \\"\u0027$ext\u0027\\"\\, "frame"/\u0027 ; \\\n     echo Fixing $WORKING_DIR/unpack/$ext/out.log ; \\\n     sed -i "$sedval" $WORKING_DIR/unpack/$ext/out.log ; \\\n     cp $WORKING_DIR/unpack/$ext/out.log $WORKING_DIR/load_files/out"$ext".log ;\ndone\n',
         env={"WORKING_DIR": "/home/airflow/gcs/data/trafficvision"},
     )
 
