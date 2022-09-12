@@ -21,7 +21,7 @@ resources:
 dag:
   airflow_version: 2
   initialize:
-    dag_id: clemson_dice
+    dag_id: clemson_dice_traffic_vision
     default_args:
       owner: "Google"
       depends_on_past: False
