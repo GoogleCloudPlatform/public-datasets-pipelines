@@ -25,7 +25,7 @@ default_args = {
 
 
 with DAG(
-    dag_id="clemson_dice_traffic_vision.clemson_dice.traffic_vision",
+    dag_id="clemson_dice_traffic_vision.clemson_dice",
     default_args=default_args,
     max_active_runs=1,
     schedule_interval="@once",
