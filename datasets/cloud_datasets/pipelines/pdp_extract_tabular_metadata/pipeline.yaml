@@ -1,0 +1,225 @@
+# Copyright 2022 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+resources:
+  - type: bigquery_table
+    dataset_id: _cloud_datasets
+    table_id: "tabular_datasets"
+    description: "This table contains all the metadata for all the tabular datasets in the Cloud Datasets program"
+    schema: |-
+      [
+        {
+            "name": "extracted_at",
+            "description": "The date and time when this row was extracted from BigQuery",
+            "type": "TIMESTAMP"
+        },
+        {
+            "name": "created_at",
+            "description": "The date and time when the dataset was created",
+            "type": "TIMESTAMP"
+        },
+        {
+            "name": "modified_at",
+            "description": "The date and time when the dataset was last modified",
+            "type": "TIMESTAMP"
+        },
+        {
+            "name": "project_id",
+            "description": "The GCP project where the public dataset is stored",
+            "type": "STRING"
+        },
+        {
+            "name": "dataset_id",
+            "description": "The BigQuery dataset ID",
+            "type": "STRING"
+        },
+        {
+            "name": "description",
+            "description": "The dataset description",
+            "type": "STRING"
+        },
+        {
+            "name": "num_tables",
+            "description": "Number of tables contained in this dataset",
+            "type": "INTEGER"
+        }
+      ]
+  - type: bigquery_table
+    dataset_id: _cloud_datasets
+    table_id: "tables"
+    description: "This table contains all the metadata for all the tables in the Cloud Datasets program"
+    schema: |-
+      [
+        {
+            "name": "extracted_at",
+            "description": "The date and time when this row was extracted from BigQuery",
+            "type": "TIMESTAMP"
+        },
+        {
+            "name": "created_at",
+            "description": "The date and time when the dataset was created",
+            "type": "TIMESTAMP"
+        },
+        {
+            "name": "modified_at",
+            "description": "The date and time when the dataset was last modified",
+            "type": "TIMESTAMP"
+        },
+        {
+            "name": "project_id",
+            "description": "The GCP project where the public dataset is stored",
+            "type": "STRING"
+        },
+        {
+            "name": "dataset_id",
+            "description": "The BigQuery dataset ID",
+            "type": "STRING"
+        },
+        {
+            "name": "table_id",
+            "description": "The BigQuery table ID",
+            "type": "STRING"
+        },
+        {
+            "name": "description",
+            "description": "The dataset description",
+            "type": "STRING"
+        },
+        {
+            "name": "type",
+            "description": "The type of the table",
+            "type": "STRING"
+        },
+        {
+            "name": "num_bytes",
+            "description": "The number of bytes the table allocated on disk",
+            "type": "INTEGER"
+        },
+        {
+            "name": "num_rows",
+            "description": "The number of rows in the table",
+            "type": "INTEGER"
+        },
+        {
+            "name": "num_columns",
+            "description": "The number of columns in the table",
+            "type": "INTEGER"
+        },
+        {
+            "name": "described_columns",
+            "description": "The number of columns in the table with a description",
+            "type": "INTEGER"
+        }
+      ]
+  - type: bigquery_table
+    dataset_id: _cloud_datasets
+    table_id: "tables_fields"
+    description: "This table contains all the metadata for all the field in all the tables in the Cloud Datasets program"
+    schema: |-
+      [
+        {
+            "name": "extracted_at",
+            "description": "The date and time when this row was extracted from BigQuery",
+            "type": "TIMESTAMP"
+        },
+        {
+            "name": "project_id",
+            "description": "The GCP project where the public dataset is stored",
+            "type": "STRING"
+        },
+        {
+            "name": "dataset_id",
+            "description": "The BigQuery dataset ID",
+            "type": "STRING"
+        },
+        {
+            "name": "table_id",
+            "description": "The BigQuery table ID",
+            "type": "STRING"
+        },
+        {
+            "name": "name",
+            "description": "The name of the field",
+            "type": "STRING"
+        },
+        {
+            "name": "description",
+            "description": "The description for the field",
+            "type": "STRING"
+        },
+        {
+            "name": "field_type",
+            "description": "The type of the field",
+            "type": "STRING"
+        },
+        {
+            "name": "mode",
+            "description": "The mode of the field",
+            "type": "STRING"
+        },
+        {
+            "name": "precision",
+            "description": "Precision for the NUMERIC field",
+            "type": "INTEGER"
+        },
+        {
+            "name": "scale",
+            "description": "Scale for the NUMERIC field",
+            "type": "INTEGER"
+        },
+        {
+            "name": "max_length",
+            "description": "Maximum length for the STRING or BYTES field",
+            "type": "INTEGER"
+        }
+      ]
+
+dag:
+  airflow_version: 2
+  initialize:
+    dag_id: pdp_extract_tabular_metadata
+    default_args:
+      owner: "Google"
+      depends_on_past: False
+      start_date: '2022-08-20'
+    max_active_runs: 1
+    schedule_interval: "@daily"
+    catchup: False
+    default_view: graph
+
+  tasks:
+    - operator: "KubernetesPodOperator"
+      description: "Extract the metadata for tabular datasets"
+      args:
+        task_id: "pdp_extract_tabular_metadata_task"
+        name: "pdp_extract_tabular_metadata_task"
+        namespace: "composer"
+        service_account_name: "datasets"
+        image_pull_policy: "Always"
+        image: "{{ var.json.cloud_datasets.container_registry.pdp_extract_tabular_metadata_image }}"
+        env_vars:
+          SOURCE_PROJECTS_IDS: "{{ var.json.cloud_datasets.pdp_extract_tabular_metadata.source_projects_ids }}"
+          TARGET_PROJECT_ID: "{{ var.value.gcp_project }}"
+          TARGET_DATASET: "{{ var.json.cloud_datasets.pdp_extract_tabular_metadata.target_dataset }}"
+          TABULAR_DATASET_TABLE_NAME: "{{ var.json.cloud_datasets.pdp_extract_tabular_metadata.tabular_dataset_table_name }}"
+          TABLES_TABLE_NAME: "{{ var.json.cloud_datasets.pdp_extract_tabular_metadata.tables_table_name }}"
+          TABLES_FIELDS_TABLE_NAME: "{{ var.json.cloud_datasets.pdp_extract_tabular_metadata.tables_fields_table_name }}"
+
+        resources:
+          request_memory: "128M"
+          request_cpu: "200m"
+
+  graph_paths:
+    - "pdp_extract_tabular_metadata_task"
