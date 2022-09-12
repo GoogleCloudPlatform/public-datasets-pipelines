@@ -32,22 +32,33 @@ dag:
     default_view: graph
 
   tasks:
+    - operator: "GoogleCloudStorageToGoogleCloudStorageOperator"
+      description: "Copy source to destination"
+      args:
+        task_id: "transfer_zip_files"
+        source_bucket: "gcs-public-data-trafficvision"
+        source_object: "*.tar.gz"
+        destination_bucket: "{{ var.value.composer_bucket }}"
+        destination_object: "/data/trafficvision/files"
+        move_object: False
+        replace: False
     - operator: "BashOperator"
       description: "Task to copy over to pod, the source data and structure from GCS"
       args:
         task_id: "transform_files"
         bash_command: |
-          mkdir -p $WORKING_DIR/load_files ;
-          mkdir -p $WORKING_DIR/unpack ;
-          for f in $WORKING_DIR/files/*.tar.gz ;
-            do echo Decompressing $f ; \
-               tar -xvzf "$f" -C "$WORKING_DIR/unpack" ; \
-               ext="$(basename ${f/.tar.gz/})" ; \
-               sedval='s/{\"frame\"/{"id": \"'$ext'\"\, "frame"/' ; \
-               echo Fixing $WORKING_DIR/unpack/$ext/out.log ; \
-               sed -i "$sedval" $WORKING_DIR/unpack/$ext/out.log ; \
-               cp $WORKING_DIR/unpack/$ext/out.log $WORKING_DIR/load_files/out"$ext".log ;
-          done
+            cnt=0 ;
+            for f in $WORKING_DIR/files/*.tar.gz;
+              do let cnt=cnt+1
+                rem=$((cnt % 1000))
+                tar -xzf "$f" -C "$WORKING_DIR/unpack" ; \
+                ext="$(basename ${f/.tar.gz/})" ; \
+                sedval='s/{\"frame\"/{"id": \"'$ext'\"\, "frame"/' ; \
+                sed "$sedval" $WORKING_DIR/unpack/$ext/out.log > $WORKING_DIR/load_files/out"$ext".log ;
+                if [ $rem == "0" ]; then
+                    echo "completed $cnt files "
+                fi
+            done
         env:
           WORKING_DIR: /home/airflow/gcs/data/trafficvision
     - operator: "GoogleCloudStorageToBigQueryOperator"
@@ -61,4 +72,4 @@ dag:
         write_disposition: "WRITE_TRUNCATE"
 
   graph_paths:
-    - "transform_files >> load_json_metadata_to_bq"
+    - "transfer_zip_files >> transform_files >> load_json_metadata_to_bq"

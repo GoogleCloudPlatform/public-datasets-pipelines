@@ -15,7 +15,7 @@
 
 from airflow import DAG
 from airflow.operators import bash
-from airflow.providers.google.cloud.transfers import gcs_to_bigquery
+from airflow.providers.google.cloud.transfers import gcs_to_bigquery, gcs_to_gcs
 
 default_args = {
     "owner": "Google",
@@ -33,10 +33,21 @@ with DAG(
     default_view="graph",
 ) as dag:
 
+    # Copy source to destination
+    transfer_zip_files = gcs_to_gcs.GCSToGCSOperator(
+        task_id="transfer_zip_files",
+        source_bucket="gcs-public-data-trafficvision",
+        source_object="*.tar.gz",
+        destination_bucket="{{ var.value.composer_bucket }}",
+        destination_object="/data/trafficvision/files",
+        move_object=False,
+        replace=False,
+    )
+
     # Task to copy over to pod, the source data and structure from GCS
     transform_files = bash.BashOperator(
         task_id="transform_files",
-        bash_command='mkdir -p $WORKING_DIR/load_files ;\nmkdir -p $WORKING_DIR/unpack ;\nfor f in $WORKING_DIR/files/*.tar.gz ;\n  do echo Decompressing $f ; \\\n     tar -xvzf "$f" -C "$WORKING_DIR/unpack" ; \\\n     ext="$(basename ${f/.tar.gz/})" ; \\\n     sedval=\u0027s/{\\"frame\\"/{"id": \\"\u0027$ext\u0027\\"\\, "frame"/\u0027 ; \\\n     echo Fixing $WORKING_DIR/unpack/$ext/out.log ; \\\n     sed -i "$sedval" $WORKING_DIR/unpack/$ext/out.log ; \\\n     cp $WORKING_DIR/unpack/$ext/out.log $WORKING_DIR/load_files/out"$ext".log ;\ndone\n',
+        bash_command='cnt=0 ;\nfor f in $WORKING_DIR/files/*.tar.gz;\n  do let cnt=cnt+1\n    rem=$((cnt % 1000))\n    tar -xzf "$f" -C "$WORKING_DIR/unpack" ; \\\n    ext="$(basename ${f/.tar.gz/})" ; \\\n    sedval=\u0027s/{\\"frame\\"/{"id": \\"\u0027$ext\u0027\\"\\, "frame"/\u0027 ; \\\n    sed "$sedval" $WORKING_DIR/unpack/$ext/out.log \u003e $WORKING_DIR/load_files/out"$ext".log ;\n    if [ $rem == "0" ]; then\n        echo "completed $cnt files "\n    fi\ndone\n',
         env={"WORKING_DIR": "/home/airflow/gcs/data/trafficvision"},
     )
 
@@ -50,4 +61,4 @@ with DAG(
         write_disposition="WRITE_TRUNCATE",
     )
 
-    transform_files >> load_json_metadata_to_bq
+    transfer_zip_files >> transform_files >> load_json_metadata_to_bq
