@@ -39,7 +39,7 @@ with DAG(
         source_bucket="gcs-public-data-trafficvision",
         source_object="*.tar.gz",
         destination_bucket="{{ var.value.composer_bucket }}",
-        destination_object="/data/trafficvision/files",
+        destination_object="data/trafficvision/files/",
         move_object=False,
         replace=False,
     )
