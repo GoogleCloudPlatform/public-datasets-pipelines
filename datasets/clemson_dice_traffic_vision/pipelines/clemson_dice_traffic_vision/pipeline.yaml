@@ -32,18 +32,19 @@ dag:
     default_view: graph
 
   tasks:
-    - operator: "GoogleCloudStorageToGoogleCloudStorageOperator"
-      description: "Copy source to destination"
+    - operator: "BashOperator"
+      description: "Task to copy over to the pod, the source data and structure from GCS"
       args:
         task_id: "transfer_zip_files"
-        source_bucket: "gcs-public-data-trafficvision"
-        source_object: "*.tar.gz"
-        destination_bucket: "{{ var.value.composer_bucket }}"
-        destination_object: "data/trafficvision/files/"
-        move_object: False
-        replace: False
+        bash_command: |
+            echo Copying source files from $SOURCE_BUCKET started;
+            gsutil -m cp "$SOURCE_BUCKET"/*.tar.gz "$WORKING_DIR";
+            echo Copying source files from $SOURCE_BUCKET completed;
+        env:
+          SOURCE_BUCKET: gs://gcs-public-data-trafficvision
+          WORKING_DIR: /home/airflow/gcs/data/trafficvision/files
     - operator: "BashOperator"
-      description: "Task to copy over to pod, the source data and structure from GCS"
+      description: "Task to transform the copied data files"
       args:
         task_id: "transform_files"
         bash_command: |

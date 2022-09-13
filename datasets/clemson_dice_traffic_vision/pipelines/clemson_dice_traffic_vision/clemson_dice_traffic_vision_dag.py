@@ -15,7 +15,7 @@
 
 from airflow import DAG
 from airflow.operators import bash
-from airflow.providers.google.cloud.transfers import gcs_to_bigquery, gcs_to_gcs
+from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
     "owner": "Google",
@@ -33,18 +33,17 @@ with DAG(
     default_view="graph",
 ) as dag:
 
-    # Copy source to destination
-    transfer_zip_files = gcs_to_gcs.GCSToGCSOperator(
+    # Task to copy over to the pod, the source data and structure from GCS
+    transfer_zip_files = bash.BashOperator(
         task_id="transfer_zip_files",
-        source_bucket="gcs-public-data-trafficvision",
-        source_object="*.tar.gz",
-        destination_bucket="{{ var.value.composer_bucket }}",
-        destination_object="data/trafficvision/files/",
-        move_object=False,
-        replace=False,
+        bash_command='echo Copying source files from $SOURCE_BUCKET started;\ngsutil -m cp "$SOURCE_BUCKET"/*.tar.gz "$WORKING_DIR";\necho Copying source files from $SOURCE_BUCKET completed;\n',
+        env={
+            "SOURCE_BUCKET": "gs://gcs-public-data-trafficvision",
+            "WORKING_DIR": "/home/airflow/gcs/data/trafficvision/files",
+        },
     )
 
-    # Task to copy over to pod, the source data and structure from GCS
+    # Task to transform the copied data files
     transform_files = bash.BashOperator(
         task_id="transform_files",
         bash_command='cnt=0 ;\nfor f in $WORKING_DIR/files/*.tar.gz;\n  do let cnt=cnt+1\n    rem=$((cnt % 1000))\n    tar -xzf "$f" -C "$WORKING_DIR/unpack" ; \\\n    ext="$(basename ${f/.tar.gz/})" ; \\\n    sedval=\u0027s/{\\"frame\\"/{"id": \\"\u0027$ext\u0027\\"\\, "frame"/\u0027 ; \\\n    sed "$sedval" $WORKING_DIR/unpack/$ext/out.log \u003e $WORKING_DIR/load_files/out"$ext".log ;\n    if [ $rem == "0" ]; then\n        echo "completed $cnt files "\n    fi\ndone\n',
