@@ -234,7 +234,6 @@ def load_data_to_bq(
         job_config.write_disposition = "WRITE_TRUNCATE"
     else:
         job_config.write_disposition = "WRITE_APPEND"
-        print("appending started")
     job_config.skip_leading_rows = 1  # ignore the header
     job_config.autodetect = False
     with open(file_path, "rb") as source_file:
@@ -331,9 +330,11 @@ def create_table_schema(
 def append_batch_file(target_file_batch: str, target_file: str) -> None:
 
     with open(target_file_batch, "r") as data_file:
-        with open(target_file, "a+") as target_file:
+        with open(target_file, "a+") as _target_file:
             logging.info(f"Appending batch file {target_file_batch} to {target_file}")
-            target_file.write(data_file.read())
+            logging.info(f"Size of target file is {os.path.getsize(target_file_batch)}")
+            logging.info(f"Size of target file is {os.path.getsize(target_file)}")
+            _target_file.write(data_file.read())
             if os.path.exists(target_file_batch):
                 os.remove(target_file_batch)
 
