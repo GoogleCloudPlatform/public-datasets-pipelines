@@ -15,6 +15,7 @@
 
 from airflow import DAG
 from airflow.operators import bash
+from airflow.providers.google.cloud.operators import cloud_storage_transfer_service
 from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
@@ -33,14 +34,22 @@ with DAG(
     default_view="graph",
 ) as dag:
 
-    # Task to copy over to the pod, the source data and structure from GCS
-    transfer_zip_files = bash.BashOperator(
-        task_id="transfer_zip_files",
-        bash_command='echo Copying source files from $SOURCE_BUCKET started;\ngsutil -m cp "$SOURCE_BUCKET"/*.tar.gz "$WORKING_DIR";\necho Copying source files from $SOURCE_BUCKET completed;\n',
-        env={
-            "SOURCE_BUCKET": "gs://gcs-public-data-trafficvision",
-            "WORKING_DIR": "/home/airflow/gcs/data/trafficvision/files",
-        },
+    # Copy .tar.gz source files to public bucket
+    transfer_zip_files = (
+        cloud_storage_transfer_service.CloudDataTransferServiceGCSToGCSOperator(
+            task_id="transfer_zip_files",
+            timeout=43200,
+            retries=0,
+            wait=True,
+            project_id="bigquery-public-data-dev",
+            source_bucket="gcs-public-data-trafficvision",
+            destination_bucket="{{ var.value.composer_bucket }}",
+            destination_path="/data/trafficvision/files",
+            transfer_options={
+                "overwriteWhen": "ALWAYS",
+                "deleteObjectsUniqueInSink": True,
+            },
+        )
     )
 
     # Task to transform the copied data files

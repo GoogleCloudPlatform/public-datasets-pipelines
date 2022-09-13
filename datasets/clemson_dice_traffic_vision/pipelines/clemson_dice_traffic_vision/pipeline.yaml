@@ -32,17 +32,20 @@ dag:
     default_view: graph
 
   tasks:
-    - operator: "BashOperator"
-      description: "Task to copy over to the pod, the source data and structure from GCS"
+    - operator: "CloudDataTransferServiceGCSToGCSOperator"
+      description: "Copy .tar.gz source files to public bucket"
       args:
-        task_id: "transfer_zip_files"
-        bash_command: |
-            echo Copying source files from $SOURCE_BUCKET started;
-            gsutil -m cp "$SOURCE_BUCKET"/*.tar.gz "$WORKING_DIR";
-            echo Copying source files from $SOURCE_BUCKET completed;
-        env:
-          SOURCE_BUCKET: gs://gcs-public-data-trafficvision
-          WORKING_DIR: /home/airflow/gcs/data/trafficvision/files
+        task_id: transfer_zip_files
+        timeout: 43200  # 12 hours
+        retries: 0
+        wait: True
+        project_id: "bigquery-public-data-dev"
+        source_bucket: "gcs-public-data-trafficvision"
+        destination_bucket: "{{ var.value.composer_bucket }}"
+        destination_path: "/data/trafficvision/files"
+        transfer_options:
+          overwriteWhen: ALWAYS
+          deleteObjectsUniqueInSink: True
     - operator: "BashOperator"
       description: "Task to transform the copied data files"
       args:
