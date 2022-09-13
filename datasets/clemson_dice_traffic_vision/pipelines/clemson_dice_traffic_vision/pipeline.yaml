@@ -51,6 +51,8 @@ dag:
       args:
         task_id: "transform_files"
         bash_command: |
+            mkdir -p "$WORKING_DIR/unpack" ;
+            mkdir -p "$WORKING_DIR/load_files" ;
             cnt=0 ;
             for f in $WORKING_DIR/files/*.tar.gz;
               do let cnt=cnt+1
