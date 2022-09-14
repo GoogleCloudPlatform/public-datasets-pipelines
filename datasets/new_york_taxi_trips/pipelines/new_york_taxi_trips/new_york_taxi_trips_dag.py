@@ -37,10 +37,10 @@ with DAG(
         location="us-central1-c",
         body={
             "name": "new-york-taxi-trips",
-            "initial_node_count": 3,
+            "initial_node_count": 2,
             "network": "{{ var.value.vpc_network }}",
             "node_config": {
-                "machine_type": "e2-standard-4",
+                "machine_type": "e2-standard-8",
                 "oauth_scopes": [
                     "https://www.googleapis.com/auth/devstorage.read_write",
                     "https://www.googleapis.com/auth/cloud-platform",
@@ -80,9 +80,9 @@ with DAG(
             "OUTPUT_CSV_HEADERS": '[ "vendor_id", "pickup_datetime", "dropoff_datetime", "store_and_fwd_flag", "rate_code",\n  "passenger_count", "trip_distance", "fare_amount", "extra", "mta_tax",\n  "tip_amount", "tolls_amount", "ehail_fee", "airport_fee", "total_amount", "payment_type",\n  "distance_between_service", "time_between_service", "trip_type", "imp_surcharge", "pickup_location_id",\n  "dropoff_location_id", "data_file_year", "data_file_month" ]',
         },
         resources={
-            "request_memory": "12G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "16G",
+            "request_memory": "16G",
+            "request_cpu": "2",
+            "request_ephemeral_storage": "24G",
         },
     )
 
@@ -117,9 +117,9 @@ with DAG(
             "OUTPUT_CSV_HEADERS": '[ "vendor_id", "pickup_datetime", "dropoff_datetime", "passenger_count", "trip_distance",\n  "rate_code", "store_and_fwd_flag", "payment_type", "fare_amount", "extra",\n  "mta_tax", "tip_amount", "tolls_amount", "imp_surcharge", "airport_fee",\n  "total_amount", "pickup_location_id", "dropoff_location_id", "data_file_year", "data_file_month" ]',
         },
         resources={
-            "request_memory": "12G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "16G",
+            "request_memory": "16G",
+            "request_cpu": "2",
+            "request_ephemeral_storage": "24G",
         },
     )
     delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(

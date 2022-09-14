@@ -41,10 +41,10 @@ dag:
         location: "us-central1-c"
         body:
           name: new-york-taxi-trips
-          initial_node_count: 3
+          initial_node_count: 2
           network: "{{ var.value.vpc_network }}"
           node_config:
-            machine_type: e2-standard-4
+            machine_type: e2-standard-8
             oauth_scopes:
               - https://www.googleapis.com/auth/devstorage.read_write
               - https://www.googleapis.com/auth/cloud-platform
@@ -109,9 +109,9 @@ dag:
               "distance_between_service", "time_between_service", "trip_type", "imp_surcharge", "pickup_location_id",
               "dropoff_location_id", "data_file_year", "data_file_month" ]
         resources:
-          request_memory: "12G"
-          request_cpu: "1"
-          request_ephemeral_storage: "16G"
+          request_memory: "16G"
+          request_cpu: "2"
+          request_ephemeral_storage: "24G"
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
@@ -170,9 +170,9 @@ dag:
               "mta_tax", "tip_amount", "tolls_amount", "imp_surcharge", "airport_fee",
               "total_amount", "pickup_location_id", "dropoff_location_id", "data_file_year", "data_file_month" ]
         resources:
-          request_memory: "12G"
-          request_cpu: "1"
-          request_ephemeral_storage: "16G"
+          request_memory: "16G"
+          request_cpu: "2"
+          request_ephemeral_storage: "24G"
     - operator: "GKEDeleteClusterOperator"
       args:
         task_id: "delete_cluster"
