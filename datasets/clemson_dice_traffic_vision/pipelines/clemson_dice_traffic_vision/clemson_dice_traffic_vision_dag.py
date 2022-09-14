@@ -55,7 +55,7 @@ with DAG(
     # Task to transform the copied data files
     transform_files = bash.BashOperator(
         task_id="transform_files",
-        bash_command='mkdir -p "$WORKING_DIR/unpack" ;\nmkdir -p "$WORKING_DIR/load_files" ;\ncnt=0 ;\nfor f in $WORKING_DIR/files/*.tar.gz;\n  do let cnt=cnt+1\n    rem=$((cnt % 1000))\n    tar -xzf "$f" -C "$WORKING_DIR/unpack" ; \\\n    ext="$(basename ${f/.tar.gz/})" ; \\\n    sedval=\u0027s/{\\"frame\\"/{"id": \\"\u0027$ext\u0027\\"\\, "frame"/\u0027 ; \\\n    sed "$sedval" $WORKING_DIR/unpack/$ext/out.log \u003e $WORKING_DIR/load_files/out"$ext".log ;\n    if [ $rem == "0" ]; then\n        echo "completed $cnt files "\n    fi\ndone\n',
+        bash_command='mkdir -p "$WORKING_DIR/unpack" ;\nmkdir -p "$WORKING_DIR/load_files" ;\ncnt=0 ;\nfor f in $WORKING_DIR/files/*.tar.gz;\n  do let cnt=cnt+1\n    rem=$((cnt % 5))\n    tar -xzf "$f" -C "$WORKING_DIR/unpack" ; \\\n    guid="$(basename ${f/.tar.gz/})" ; \\\n    #echo $guid ; \\\n    sedval=\u0027s/{\\"frame\\"/{"id": \\"\u0027$guid\u0027\\"\\, "frame"/\u0027 ; \\\n    sed "$sedval" $WORKING_DIR/unpack/$guid/out.log \u003e $WORKING_DIR/load_files/out"$guid".log ;\n    if [ $rem == "0" ]; then\n        echo "completed $cnt files "\n    fi\ndone\necho $cnt\n',
         env={"WORKING_DIR": "/home/airflow/gcs/data/trafficvision"},
     )
 
