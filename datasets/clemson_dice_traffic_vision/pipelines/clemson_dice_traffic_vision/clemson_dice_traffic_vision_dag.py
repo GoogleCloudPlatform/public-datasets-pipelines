@@ -44,7 +44,7 @@ with DAG(
         image="{{ var.json.clemson_dice_traffic_vision.container_registry.run_csv_transform_kub }}",
         env_vars={
             "SOURCE_URL_GCS": "gs://gcs-public-data-trafficvision",
-            "SOURCE_FILE_BATCH_LENGTH": "5000",
+            "SOURCE_FILE_BATCH_LENGTH": "2500",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/trafficvision/load_files",
             "TARGET_ROOT_PATH": "data/trafficvision",

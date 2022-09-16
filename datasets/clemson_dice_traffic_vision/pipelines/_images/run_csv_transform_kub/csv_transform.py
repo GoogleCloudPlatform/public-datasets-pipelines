@@ -19,7 +19,6 @@ import subprocess
 import tarfile
 
 import pandas as pd
-import requests
 from google.cloud import storage
 
 
@@ -32,8 +31,50 @@ def main(
     target_source_folder: str,
     target_unpack_folder: str,
     target_load_folder: str,
+    target_batch_folder: str,
     project_id: str,
+    pipeline_name: str
 ) -> None:
+    generate_folder_hierarchy(
+        target_root_path=target_root_path,
+        target_source_folder=target_source_folder,
+        target_unpack_folder=target_unpack_folder,
+        target_load_folder=target_load_folder,
+        target_batch_folder=target_batch_folder
+    )
+    if pipeline_name == "generate_batch_metadata_files":
+        # remove_gcs_path(
+        #     gcs_bucket=target_gcs_bucket,
+        #     gcs_path=f"{target_gcs_path}/{target_load_folder}"
+        # )
+        df_filelist = populate_df_gcs_filenames_in_bucket(
+            project_id=project_id,
+            source_gcs_folder_path=source_url_gcs,
+            source_file_batch_length=source_file_batch_length,
+            target_root_path=target_root_path,
+            target_batch_folder=target_batch_folder,
+            file_type = ".tar.gz"
+        )
+    # else:
+    #     process_batches(
+    #         project_id=project_id,
+    #         target_gcs_bucket=target_gcs_bucket,
+    #         target_gcs_path=target_gcs_path,
+    #         target_root_path=target_root_path,
+    #         target_source_folder=target_source_folder,
+    #         target_unpack_folder=target_unpack_folder,
+    #         target_load_folder=target_load_folder,
+    #         df_filelist=df_filelist
+    #     )
+
+
+def generate_folder_hierarchy(
+    target_root_path: str,
+    target_source_folder: str,
+    target_unpack_folder: str,
+    target_load_folder: str,
+    target_batch_folder: str
+):
     if not os.path.exists(f"{target_root_path}"):
         logging.info(f"Creating folder {target_root_path}")
         os.makedirs(f"{target_root_path}")
@@ -46,32 +87,17 @@ def main(
     if not os.path.exists(f"{target_root_path}/{target_load_folder}"):
         logging.info(f"Creating folder {target_load_folder}")
         os.makedirs(f"{target_root_path}/{target_load_folder}")
-    remove_gcs_path(
-        gcs_bucket=target_gcs_bucket,
-        gcs_path=f"{target_gcs_path}/{target_load_folder}"
-    )
-    df_filelist = populate_df_gcs_filenames_in_bucket(
-        project_id=project_id,
-        source_gcs_folder_path=source_url_gcs,
-        source_file_batch_length=source_file_batch_length,
-        file_type = ".tar.gz"
-    )
-    process_batches(
-        project_id=project_id,
-        target_gcs_bucket=target_gcs_bucket,
-        target_gcs_path=target_gcs_path,
-        target_root_path=target_root_path,
-        target_source_folder=target_source_folder,
-        target_unpack_folder=target_unpack_folder,
-        target_load_folder=target_load_folder,
-        df_filelist=df_filelist
-    )
+    if not os.path.exists(f"{target_root_path}/{target_batch_folder}"):
+        logging.info(f"Creating folder {target_batch_folder}")
+        os.makedirs(f"{target_root_path}/{target_batch_folder}")
 
 
 def populate_df_gcs_filenames_in_bucket(
     project_id: str,
     source_gcs_folder_path: str,
     source_file_batch_length: int,
+    target_root_path: str,
+    target_batch_folder: str,
     file_type: str
 ) -> pd.DataFrame:
     logging.info("Collecting list of files to process ...")
@@ -79,24 +105,44 @@ def populate_df_gcs_filenames_in_bucket(
     bucket_name = str.split(source_gcs_folder_path, "gs://")[1].split("/")[0]
     bucket = storage_client.bucket(bucket_name)
     df_filelist = pd.DataFrame(columns=["pathname", "guid", "batchnumber"])
+    total_number_files_in_bucket = count_files_in_gcs_bucket(
+                                        project_id=project_id,
+                                        source_gcs_folder_path=source_gcs_folder_path,
+                                        file_type=".tar.gz"
+                                    )
     file_counter = 0
     batch_number = 0
-    # break_now = False
+    break_now = False
     for blob in bucket.list_blobs():
         filename = str(blob).split(",")[1].strip()
+        batch_number_zfill = str(batch_number).zfill(6)
+        batch_metadata_file_path = f"{target_root_path}/{target_batch_folder}/batch_metadata-{batch_number_zfill}.txt"
         if filename.find(f"{file_type}") > 0 or file_type == "":
             path = f"{source_gcs_folder_path}/{filename}"
             guid = str(filename.replace(f"{file_type}", ""))
-            if file_counter % int(source_file_batch_length) == 0:
+            if file_counter % int(source_file_batch_length) == 0 \
+                or file_counter == total_number_files_in_bucket:
+                if batch_number > 0:
+                    save_to_new_file(
+                        df=df_filelist,
+                        file_path=batch_metadata_file_path,
+                        sep="|"
+                    )
+                df_filelist = pd.DataFrame(columns=["pathname", "guid", "batchnumber"])
                 batch_number += 1
                 logging.info(f"Generating metadata for batch {batch_number} file #{file_counter}")
-                # if batch_number > 3: # Dev-testing
-                #     break_now = True
+                if batch_number > 3: # Dev-testing
+                    break_now = True
             df_filelist.loc[len(df_filelist)] = [ path, guid, batch_number ]
             file_counter += 1
-        # if break_now:
-        #     return df_filelist
+        if break_now:
+            return df_filelist
     return df_filelist
+
+
+def save_to_new_file(df: pd.DataFrame, file_path: str, sep: str = "|") -> None:
+    logging.info(f"Saving data to target file.. {file_path} ...")
+    df.to_csv(file_path, index=False, sep=sep)
 
 
 def count_files_in_gcs_bucket(
@@ -106,10 +152,11 @@ def count_files_in_gcs_bucket(
 ) -> int:
     storage_client = storage.Client(project_id)
     bucket_name = str.split(source_gcs_folder_path, "gs://")[1].split("/")[0]
-    bucket = storage_client.bucket(bucket_name, prefix="/")
+    bucket = storage_client.bucket(bucket_name)
     cnt_files = 0
-    for blob in bucket.list_blobs(bucket):
-        if os.path.basename(blob).find("{file_type}") > 0 or file_type == "":
+    for blob in bucket.list_blobs():
+        filename = str(blob).split(",")[1].strip()
+        if os.path.basename(filename).find(f"{file_type}") > 0 or file_type == "":
             cnt_files += 1
     return cnt_files
 
@@ -221,5 +268,7 @@ if __name__ == "__main__":
         target_source_folder=os.environ.get("TARGET_SOURCE_FOLDER", ""),
         target_unpack_folder=os.environ.get("TARGET_UNPACK_FOLDER", ""),
         target_load_folder=os.environ.get("TARGET_LOAD_FOLDER", ""),
-        project_id=os.environ.get("PROJECT_ID", "")
+        target_batch_folder=os.environ.get("TARGET_BATCH_FOLDER", ""),
+        project_id=os.environ.get("PROJECT_ID", ""),
+        pipeline_name=os.environ.get("PIPELINE_NAME", "")
     )
