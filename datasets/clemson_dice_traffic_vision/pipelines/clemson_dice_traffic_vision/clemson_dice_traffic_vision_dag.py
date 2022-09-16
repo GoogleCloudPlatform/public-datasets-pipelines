@@ -14,8 +14,7 @@
 
 
 from airflow import DAG
-from airflow.operators import bash
-from airflow.providers.google.cloud.operators import cloud_storage_transfer_service
+from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
 from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
@@ -34,29 +33,31 @@ with DAG(
     default_view="graph",
 ) as dag:
 
-    # Copy .tar.gz source files to public bucket
-    transfer_zip_files = (
-        cloud_storage_transfer_service.CloudDataTransferServiceGCSToGCSOperator(
-            task_id="transfer_zip_files",
-            timeout=43200,
-            retries=0,
-            wait=True,
-            project_id="bigquery-public-data-dev",
-            source_bucket="gcs-public-data-trafficvision",
-            destination_bucket="{{ var.value.composer_bucket }}",
-            destination_path="/data/trafficvision/files",
-            transfer_options={
-                "overwriteWhen": "ALWAYS",
-                "deleteObjectsUniqueInSink": True,
-            },
-        )
-    )
-
-    # Task to transform the copied data files
-    transform_files = bash.BashOperator(
-        task_id="transform_files",
-        bash_command='mkdir -p "$WORKING_DIR/unpack" ;\nmkdir -p "$WORKING_DIR/load_files" ;\ncnt=0 ;\nfor f in $WORKING_DIR/files/*.tar.gz;\n  do let cnt=cnt+1\n    rem=$((cnt % 5))\n    tar -xzf "$f" -C "$WORKING_DIR/unpack" ; \\\n    guid="$(basename ${f/.tar.gz/})" ; \\\n    #echo $guid ; \\\n    sedval=\u0027s/{\\"frame\\"/{"id": \\"\u0027$guid\u0027\\"\\, "frame"/\u0027 ; \\\n    sed "$sedval" $WORKING_DIR/unpack/$guid/out.log \u003e $WORKING_DIR/load_files/out"$guid".log ;\n    if [ $rem == "0" ]; then\n        echo "completed $cnt files "\n    fi\ndone\necho $cnt\n',
-        env={"WORKING_DIR": "/home/airflow/gcs/data/trafficvision"},
+    # Run CSV transform within kubernetes pod
+    transform_clemson_dice_data = kubernetes_pod.KubernetesPodOperator(
+        task_id="transform_clemson_dice_data",
+        startup_timeout_seconds=600,
+        name="transform_clemson_dice_data",
+        namespace="composer",
+        service_account_name="datasets",
+        image_pull_policy="Always",
+        image="{{ var.json.clemson_dice_traffic_vision.container_registry.run_csv_transform_kub }}",
+        env_vars={
+            "SOURCE_URL_GCS": "gs://gcs-public-data-trafficvision",
+            "SOURCE_FILE_BATCH_LENGTH": "5000",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
+            "TARGET_GCS_PATH": "data/trafficvision/load_files",
+            "TARGET_ROOT_PATH": "data/trafficvision",
+            "TARGET_SOURCE_FOLDER": "files",
+            "TARGET_UNPACK_FOLDER": "unpack",
+            "TARGET_LOAD_FOLDER": "load_files",
+            "PROJECT_ID": "{{ var.value.gcp_project }}",
+        },
+        resources={
+            "request_memory": "12G",
+            "request_cpu": "1",
+            "request_ephemeral_storage": "16G",
+        },
     )
 
     # Load JSON metadata files to BQ
@@ -69,4 +70,4 @@ with DAG(
         write_disposition="WRITE_TRUNCATE",
     )
 
-    transfer_zip_files >> transform_files >> load_json_metadata_to_bq
+    transform_clemson_dice_data >> load_json_metadata_to_bq
