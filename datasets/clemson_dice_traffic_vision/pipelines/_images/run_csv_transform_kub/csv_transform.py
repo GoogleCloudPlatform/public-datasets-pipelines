@@ -121,7 +121,6 @@ def download_file_gcs(
 ) -> None:
     object_name = os.path.basename(source_location)
     dest_object = f"{destination_folder}/{object_name}"
-    logging.info(f"   ... {source_location} -> {dest_object}")
     storage_client = storage.Client(project_id)
     bucket_name = str.split(source_location, "gs://")[1].split("/")[0]
     bucket = storage_client.bucket(bucket_name)
@@ -191,7 +190,7 @@ def process_file(
     guid: str
 ):
     shutil.copyfile(source_json_file, destination_json_file)
-    cmd = "sed -i -e -n 's/{\\\"frame\\\"/{\"id\": \"" + guid + "\"\, \"frame\"/g' " + destination_json_file
+    cmd = "sed -i -e 's/{\\\"frame\\\"/{\"id\": \"" + guid + "\"\, \"frame\"/g' " + destination_json_file
     subprocess.call([cmd], shell=True )
 
 
