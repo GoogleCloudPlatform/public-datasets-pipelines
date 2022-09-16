@@ -53,7 +53,11 @@ with DAG(
             "TARGET_LOAD_FOLDER": "load_files",
             "PROJECT_ID": "{{ var.value.gcp_project }}",
         },
-        resources={"request_memory": "24G", "request_cpu": "2"},
+        resources={
+            "request_memory": "24G",
+            "request_cpu": "2",
+            "request_ephemeral_storage": "10G",
+        },
     )
 
     # Load JSON metadata files to BQ

@@ -55,7 +55,7 @@ dag:
         resources:
           request_memory: "24G"
           request_cpu: "2"
-          # request_ephemeral_storage: "16G"
+          request_ephemeral_storage: "10G"
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Load JSON metadata files to BQ"
       args:
