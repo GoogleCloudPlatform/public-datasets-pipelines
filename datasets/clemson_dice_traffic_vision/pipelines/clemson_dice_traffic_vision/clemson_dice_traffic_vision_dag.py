@@ -82,8 +82,8 @@ with DAG(
             "TARGET_BATCH_FOLDER": "batch_metadata",
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "PIPELINE_NAME": "run_batch_data",
-            "BATCH_GROUP_SIZE": 2,
-            "BATCH_ORDINAL": 1,
+            "BATCH_GROUP_SIZE": "2",
+            "BATCH_ORDINAL": "1",
         },
         resources={
             "request_memory": "16G",
@@ -112,8 +112,8 @@ with DAG(
             "TARGET_BATCH_FOLDER": "batch_metadata",
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "PIPELINE_NAME": "run_batch_data",
-            "BATCH_GROUP_SIZE": 2,
-            "BATCH_ORDINAL": 2,
+            "BATCH_GROUP_SIZE": "2",
+            "BATCH_ORDINAL": "2",
         },
         resources={
             "request_memory": "16G",
