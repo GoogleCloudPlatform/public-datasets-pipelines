@@ -17,7 +17,6 @@ import pathlib
 import shutil
 import subprocess
 import tarfile
-
 import pandas as pd
 from google.cloud import storage
 
@@ -33,7 +32,9 @@ def main(
     target_load_folder: str,
     target_batch_folder: str,
     project_id: str,
-    pipeline_name: str
+    pipeline_name: str,
+    batch_group_size: str,
+    batch_ordinal: str
 ) -> None:
     generate_folder_hierarchy(
         target_root_path=target_root_path,
@@ -43,29 +44,127 @@ def main(
         target_batch_folder=target_batch_folder
     )
     if pipeline_name == "generate_batch_metadata_files":
-        # remove_gcs_path(
-        #     gcs_bucket=target_gcs_bucket,
-        #     gcs_path=f"{target_gcs_path}/{target_load_folder}"
-        # )
-        df_filelist = populate_df_gcs_filenames_in_bucket(
+        remove_gcs_path(
+            gcs_bucket=target_gcs_bucket,
+            gcs_path=f"{target_gcs_path}/{target_load_folder}"
+        )
+        remove_gcs_path(
+            gcs_bucket=target_gcs_bucket,
+            gcs_path=f"{target_gcs_path}/{target_batch_folder}"
+        )
+        generate_batch_metadata_files(
             project_id=project_id,
             source_gcs_folder_path=source_url_gcs,
             source_file_batch_length=source_file_batch_length,
+            target_gcs_bucket=target_gcs_bucket,
             target_root_path=target_root_path,
             target_batch_folder=target_batch_folder,
             file_type = ".tar.gz"
         )
-    # else:
-    #     process_batches(
-    #         project_id=project_id,
-    #         target_gcs_bucket=target_gcs_bucket,
-    #         target_gcs_path=target_gcs_path,
-    #         target_root_path=target_root_path,
-    #         target_source_folder=target_source_folder,
-    #         target_unpack_folder=target_unpack_folder,
-    #         target_load_folder=target_load_folder,
-    #         df_filelist=df_filelist
-    #     )
+    elif pipeline_name == "run_batch_data" :
+        process_batch_metadata_files(
+            project_id=project_id,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=target_gcs_path,
+            target_root_path=target_root_path,
+            target_source_folder=target_source_folder,
+            target_unpack_folder=target_unpack_folder,
+            target_load_folder=target_load_folder,
+            target_batch_folder=target_batch_folder,
+            batch_gcs_path=f"{target_root_path}/{target_batch_folder}",
+            batch_group_size=int(batch_group_size),
+            batch_ordinal=int(batch_ordinal)
+        )
+    else:
+        pass
+
+
+def process_batch_metadata_files(
+    project_id: str,
+    target_gcs_bucket: str,
+    target_gcs_path: str,
+    target_root_path: str,
+    target_source_folder: str,
+    target_unpack_folder: str,
+    target_load_folder: str,
+    target_batch_folder: str,
+    batch_gcs_path: str,
+    batch_group_size: int,
+    batch_ordinal: int
+) -> None:
+    logging.info("Collecting list of batch metadata files to process ...")
+    storage_client = storage.Client(project_id)
+    bucket_name = target_gcs_bucket
+    bucket = storage_client.bucket(bucket_name)
+    file_group_ordinal = 1
+    # import pdb; pdb.set_trace()
+    for blob in bucket.list_blobs(prefix=batch_gcs_path):
+        # import pdb; pdb.set_trace()
+        batch_filename = str(blob).split(",")[1].strip()
+        if file_group_ordinal == batch_ordinal:
+            process_batch(
+                project_id=project_id,
+                batch_filename=batch_filename,
+                target_gcs_bucket=target_gcs_bucket,
+                target_gcs_path=target_gcs_path,
+                target_root_path=target_root_path,
+                target_source_folder=target_source_folder,
+                target_unpack_folder=target_unpack_folder,
+                target_load_folder=target_load_folder
+            )
+        else:
+            pass
+        file_group_ordinal += 1
+        if file_group_ordinal > batch_group_size:
+            file_group_ordinal = 1
+
+
+def process_batch(
+    project_id: str,
+    batch_filename: str,
+    target_gcs_bucket: str,
+    target_gcs_path: str,
+    target_root_path: str,
+    target_source_folder: str,
+    target_unpack_folder: str,
+    target_load_folder: str
+) -> None:
+    # process an individual batch
+    logging.info(f"Processing batch file {batch_filename} batches")
+    # logging.info(f"Deleting batch file data for previous batches")
+    # clean_working_directory_structure(
+    #     target_root_path=target_root_path,
+    #     target_source_folder=target_source_folder,
+    #     target_unpack_folder=target_unpack_folder
+    # )
+    df_filelist = pd.read_csv( batch_filename, sep="|" )
+    for gcs_source_file in df_filelist["pathname"]:
+        filename = os.path.basename(gcs_source_file)
+        guid = str(df_filelist[ df_filelist["pathname"] == gcs_source_file ]["guid"].values[0]).strip()
+        source_json_file = f"{target_root_path}/{target_unpack_folder}/{guid}/out.log"
+        destination_json_file = f"{target_root_path}/{target_load_folder}/out{guid}.log"
+        source_tar_file = f"{target_root_path}/{target_source_folder}/{filename}"
+        download_file_gcs(
+            project_id=project_id,
+            source_location=gcs_source_file,
+            destination_folder=f"{target_root_path}/{target_source_folder}"
+        )
+        with tarfile.open(source_tar_file) as file:
+            file.extractall(path=f"{target_root_path}/{target_unpack_folder}")
+        add_id_column(
+            source_json_file=source_json_file,
+            destination_json_file=destination_json_file,
+            guid=guid
+        )
+        upload_file_to_gcs(
+            file_path=destination_json_file,
+            gcs_bucket=target_gcs_bucket,
+            gcs_path=f"{target_gcs_path}/out{guid}.log"
+        )
+        os.unlink(source_tar_file)
+        os.unlink(destination_json_file)
+        shutil.rmtree(f"{target_root_path}/{target_unpack_folder}/{guid}")
+
 
 
 def generate_folder_hierarchy(
@@ -74,7 +173,7 @@ def generate_folder_hierarchy(
     target_unpack_folder: str,
     target_load_folder: str,
     target_batch_folder: str
-):
+) -> None:
     if not os.path.exists(f"{target_root_path}"):
         logging.info(f"Creating folder {target_root_path}")
         os.makedirs(f"{target_root_path}")
@@ -92,14 +191,15 @@ def generate_folder_hierarchy(
         os.makedirs(f"{target_root_path}/{target_batch_folder}")
 
 
-def populate_df_gcs_filenames_in_bucket(
+def generate_batch_metadata_files(
     project_id: str,
     source_gcs_folder_path: str,
     source_file_batch_length: int,
+    target_gcs_bucket: str,
     target_root_path: str,
     target_batch_folder: str,
     file_type: str
-) -> pd.DataFrame:
+) -> None:
     logging.info("Collecting list of files to process ...")
     storage_client = storage.Client(project_id)
     bucket_name = str.split(source_gcs_folder_path, "gs://")[1].split("/")[0]
@@ -112,7 +212,7 @@ def populate_df_gcs_filenames_in_bucket(
                                     )
     file_counter = 0
     batch_number = 0
-    break_now = False
+    # break_now = False
     for blob in bucket.list_blobs():
         filename = str(blob).split(",")[1].strip()
         batch_number_zfill = str(batch_number).zfill(6)
@@ -128,19 +228,28 @@ def populate_df_gcs_filenames_in_bucket(
                         file_path=batch_metadata_file_path,
                         sep="|"
                     )
+                    metadata_filename = os.path.basename(batch_metadata_file_path)
+                    upload_file_to_gcs(
+                        file_path=batch_metadata_file_path,
+                        gcs_bucket=target_gcs_bucket,
+                        gcs_path=f"{target_root_path}/{target_batch_folder}/{metadata_filename}"
+                    )
                 df_filelist = pd.DataFrame(columns=["pathname", "guid", "batchnumber"])
                 batch_number += 1
                 logging.info(f"Generating metadata for batch {batch_number} file #{file_counter}")
-                if batch_number > 3: # Dev-testing
-                    break_now = True
+                # if batch_number > 3: # Dev-testing
+                #     break_now = True
             df_filelist.loc[len(df_filelist)] = [ path, guid, batch_number ]
             file_counter += 1
-        if break_now:
-            return df_filelist
-    return df_filelist
+        # if break_now:
+        #     break
 
 
-def save_to_new_file(df: pd.DataFrame, file_path: str, sep: str = "|") -> None:
+def save_to_new_file(
+    df: pd.DataFrame,
+    file_path: str,
+    sep: str = "|"
+) -> None:
     logging.info(f"Saving data to target file.. {file_path} ...")
     df.to_csv(file_path, index=False, sep=sep)
 
@@ -176,62 +285,18 @@ def download_file_gcs(
     blob.download_to_filename(dest_object)
 
 
-def process_batches(
-    project_id: str,
-    target_gcs_bucket: str,
-    target_gcs_path: str,
-    target_root_path: str,
-    target_source_folder: str,
-    target_unpack_folder: str,
-    target_load_folder: str,
-    df_filelist: pd.DataFrame
-) -> None:
-    for batch_number in sorted(df_filelist["batchnumber"].unique()):
-        max_batch_number = df_filelist["batchnumber"].max()
-        logging.info(f"Processing Batch #{batch_number} of {max_batch_number} batches")
-        logging.info(f"Deleting batch file data for previous batches")
-        clean_working_directory_structure(
-            target_root_path=target_root_path,
-            target_source_folder=target_source_folder,
-            target_unpack_folder=target_unpack_folder
-        )
-        for source_zipfile in sorted(df_filelist[ df_filelist["batchnumber"] == batch_number ]["pathname"]):
-            filename = os.path.basename(source_zipfile)
-            guid = str(df_filelist[ df_filelist["pathname"] == source_zipfile ]["guid"].values[0]).strip()
-            source_json_file = f"{target_root_path}/{target_unpack_folder}/{guid}/out.log"
-            destination_json_file = f"{target_root_path}/{target_load_folder}/out{guid}.log"
-            source_tar_file = f"{target_root_path}/{target_source_folder}/{filename}"
-            download_file_gcs(
-                project_id=project_id,
-                source_location=source_zipfile,
-                destination_folder=f"{target_root_path}/{target_source_folder}"
-            )
-            with tarfile.open(source_tar_file) as file:
-                file.extractall(path=f"{target_root_path}/{target_unpack_folder}")
-            process_file(
-                source_json_file=source_json_file,
-                destination_json_file=destination_json_file,
-                guid=guid
-            )
-            upload_file_to_gcs(
-                file_path=destination_json_file,
-                gcs_bucket=target_gcs_bucket,
-                gcs_path=f"{target_gcs_path}/out{guid}.log"
-            )
+# def clean_working_directory_structure(
+#     target_root_path: str,
+#     target_source_folder: str,
+#     target_unpack_folder: str
+# ):
+#     shutil.rmtree(f"{target_root_path}/{target_source_folder}")
+#     os.mkdir(f"{target_root_path}/{target_source_folder}")
+#     shutil.rmtree(f"{target_root_path}/{target_unpack_folder}")
+#     os.mkdir(f"{target_root_path}/{target_unpack_folder}")
 
 
-def clean_working_directory_structure(
-    target_root_path: str,
-    target_source_folder: str,
-    target_unpack_folder: str
-):
-    shutil.rmtree(f"{target_root_path}/{target_source_folder}")
-    os.mkdir(f"{target_root_path}/{target_source_folder}")
-    shutil.rmtree(f"{target_root_path}/{target_unpack_folder}")
-    os.mkdir(f"{target_root_path}/{target_unpack_folder}")
-
-
-def process_file(
+def add_id_column(
     source_json_file: str,
     destination_json_file: str,
     guid: str
@@ -270,5 +335,7 @@ if __name__ == "__main__":
         target_load_folder=os.environ.get("TARGET_LOAD_FOLDER", ""),
         target_batch_folder=os.environ.get("TARGET_BATCH_FOLDER", ""),
         project_id=os.environ.get("PROJECT_ID", ""),
-        pipeline_name=os.environ.get("PIPELINE_NAME", "")
+        pipeline_name=os.environ.get("PIPELINE_NAME", ""),
+        batch_group_size=os.environ.get("BATCH_GROUP_SIZE", 1),
+        batch_ordinal=os.environ.get("BATCH_ORDINAL", 1)
     )
