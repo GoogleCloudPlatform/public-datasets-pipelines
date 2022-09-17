@@ -17,6 +17,7 @@ import pathlib
 import shutil
 import subprocess
 import tarfile
+
 import pandas as pd
 from google.cloud import storage
 
@@ -71,7 +72,7 @@ def main(
             target_unpack_folder=target_unpack_folder,
             target_load_folder=target_load_folder,
             target_batch_folder=target_batch_folder,
-            batch_gcs_path=f"{target_root_path}/{target_batch_folder}",
+            batch_gcs_path=f"{target_gcs_path}/{target_batch_folder}",
             batch_group_size=int(batch_group_size),
             batch_ordinal=int(batch_ordinal)
         )
@@ -97,9 +98,7 @@ def process_batch_metadata_files(
     bucket_name = target_gcs_bucket
     bucket = storage_client.bucket(bucket_name)
     file_group_ordinal = 1
-    # import pdb; pdb.set_trace()
     for blob in bucket.list_blobs(prefix=batch_gcs_path):
-        # import pdb; pdb.set_trace()
         batch_filename = str(blob).split(",")[1].strip()
         if file_group_ordinal == batch_ordinal:
             process_batch(
@@ -110,7 +109,8 @@ def process_batch_metadata_files(
                 target_root_path=target_root_path,
                 target_source_folder=target_source_folder,
                 target_unpack_folder=target_unpack_folder,
-                target_load_folder=target_load_folder
+                target_load_folder=target_load_folder,
+                target_batch_folder=target_batch_folder
             )
         else:
             pass
@@ -127,16 +127,16 @@ def process_batch(
     target_root_path: str,
     target_source_folder: str,
     target_unpack_folder: str,
-    target_load_folder: str
+    target_load_folder: str,
+    target_batch_folder: str
 ) -> None:
-    # process an individual batch
     logging.info(f"Processing batch file {batch_filename} batches")
-    # logging.info(f"Deleting batch file data for previous batches")
-    # clean_working_directory_structure(
-    #     target_root_path=target_root_path,
-    #     target_source_folder=target_source_folder,
-    #     target_unpack_folder=target_unpack_folder
-    # )
+    download_file_gcs(
+        project_id=project_id,
+        source_location=f"gs://{target_gcs_bucket}/{batch_filename}",
+        destination_folder=f"{target_root_path}/{target_batch_folder}"
+    )
+    batch_filename = f"{target_root_path}/{target_batch_folder}/{ os.path.basename(batch_filename) }"
     df_filelist = pd.read_csv( batch_filename, sep="|" )
     for gcs_source_file in df_filelist["pathname"]:
         filename = os.path.basename(gcs_source_file)
@@ -159,7 +159,7 @@ def process_batch(
         upload_file_to_gcs(
             file_path=destination_json_file,
             gcs_bucket=target_gcs_bucket,
-            gcs_path=f"{target_gcs_path}/out{guid}.log"
+            gcs_path=f"{target_gcs_path}/{target_load_folder}/out{guid}.log"
         )
         os.unlink(source_tar_file)
         os.unlink(destination_json_file)
@@ -283,17 +283,6 @@ def download_file_gcs(
     source_object_path = str.split(source_location, f"gs://{bucket_name}/")[1]
     blob = bucket.blob(source_object_path)
     blob.download_to_filename(dest_object)
-
-
-# def clean_working_directory_structure(
-#     target_root_path: str,
-#     target_source_folder: str,
-#     target_unpack_folder: str
-# ):
-#     shutil.rmtree(f"{target_root_path}/{target_source_folder}")
-#     os.mkdir(f"{target_root_path}/{target_source_folder}")
-#     shutil.rmtree(f"{target_root_path}/{target_unpack_folder}")
-#     os.mkdir(f"{target_root_path}/{target_unpack_folder}")
 
 
 def add_id_column(
