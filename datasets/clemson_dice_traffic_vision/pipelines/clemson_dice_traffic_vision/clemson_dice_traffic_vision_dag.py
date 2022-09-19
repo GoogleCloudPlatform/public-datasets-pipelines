@@ -43,8 +43,8 @@ with DAG(
         image_pull_policy="Always",
         image="{{ var.json.clemson_dice_traffic_vision.container_registry.run_csv_transform_kub }}",
         env_vars={
-            "SOURCE_URL_GCS": "gs://gcs-public-data-trafficvision",
-            "SOURCE_FILE_BATCH_LENGTH": "2500",
+            "SOURCE_URL_GCS": "gs://{{ var.value.composer_bucket }}/data/trafficvision/files",
+            "SOURCE_FILE_BATCH_LENGTH": "2000",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/trafficvision/load_files",
             "TARGET_ROOT_PATH": "data/trafficvision",
@@ -72,7 +72,7 @@ with DAG(
         image_pull_policy="Always",
         image="{{ var.json.clemson_dice_traffic_vision.container_registry.run_csv_transform_kub }}",
         env_vars={
-            "SOURCE_URL_GCS": "gs://gcs-public-data-trafficvision",
+            "SOURCE_URL_GCS": "gs://{{ var.value.composer_bucket }}/data/trafficvision/files",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/trafficvision",
             "TARGET_ROOT_PATH": "trafficvision",
@@ -86,8 +86,8 @@ with DAG(
             "BATCH_ORDINAL": "1",
         },
         resources={
-            "request_memory": "16G",
-            "request_cpu": "1",
+            "request_memory": "24G",
+            "request_cpu": "2",
             "request_ephemeral_storage": "10G",
         },
     )
@@ -102,7 +102,7 @@ with DAG(
         image_pull_policy="Always",
         image="{{ var.json.clemson_dice_traffic_vision.container_registry.run_csv_transform_kub }}",
         env_vars={
-            "SOURCE_URL_GCS": "gs://gcs-public-data-trafficvision",
+            "SOURCE_URL_GCS": "gs://{{ var.value.composer_bucket }}/data/trafficvision/files",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/trafficvision",
             "TARGET_ROOT_PATH": "trafficvision",
@@ -116,8 +116,8 @@ with DAG(
             "BATCH_ORDINAL": "2",
         },
         resources={
-            "request_memory": "16G",
-            "request_cpu": "1",
+            "request_memory": "24G",
+            "request_cpu": "2",
             "request_ephemeral_storage": "10G",
         },
     )

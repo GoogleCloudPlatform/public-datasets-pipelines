@@ -212,14 +212,15 @@ def generate_batch_metadata_files(
                                     )
     file_counter = 0
     batch_number = 0
-    # break_now = False
-    for blob in bucket.list_blobs():
+    prefix_folder = source_gcs_folder_path.replace("gs://", "").replace(f"{bucket_name}/", "")
+    for blob in bucket.list_blobs(prefix=prefix_folder):
         filename = str(blob).split(",")[1].strip()
         batch_number_zfill = str(batch_number).zfill(6)
         batch_metadata_file_path = f"{target_root_path}/{target_batch_folder}/batch_metadata-{batch_number_zfill}.txt"
         if filename.find(f"{file_type}") > 0 or file_type == "":
-            path = f"{source_gcs_folder_path}/{filename}"
-            guid = str(filename.replace(f"{file_type}", ""))
+            filenm = os.path.basename(filename)
+            path = f"{source_gcs_folder_path}/{filenm}"
+            guid = str(filenm).replace(f"{file_type}", "")
             if file_counter % int(source_file_batch_length) == 0 \
                 or file_counter == total_number_files_in_bucket:
                 if batch_number > 0:
@@ -237,12 +238,8 @@ def generate_batch_metadata_files(
                 df_filelist = pd.DataFrame(columns=["pathname", "guid", "batchnumber"])
                 batch_number += 1
                 logging.info(f"Generating metadata for batch {batch_number} file #{file_counter}")
-                # if batch_number > 3: # Dev-testing
-                #     break_now = True
             df_filelist.loc[len(df_filelist)] = [ path, guid, batch_number ]
             file_counter += 1
-        # if break_now:
-        #     break
 
 
 def save_to_new_file(
