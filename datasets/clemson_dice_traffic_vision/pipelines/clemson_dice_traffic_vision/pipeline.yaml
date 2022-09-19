@@ -32,16 +32,16 @@ dag:
     default_view: graph
 
   tasks:
-    # - operator: "GoogleCloudStorageToGoogleCloudStorageOperator"
-    #   description: "Task to copy over to the pod, the source data and structure from GCS"
-    #   args:
-    #     task_id: "transfer_zip_files"
-    #     source_bucket: "gcs-public-data-trafficvision"
-    #     source_object: "*.tar.gz"
-    #     destination_bucket: "{{ var.value.composer_bucket }}"
-    #     destination_object: "data/trafficvision/files/"
-    #     move_object: False
-    #     replace: False
+    - operator: "GoogleCloudStorageToGoogleCloudStorageOperator"
+      description: "Task to copy over to the pod, the source data and structure from GCS"
+      args:
+        task_id: "transfer_zip_files"
+        source_bucket: "gcs-public-data-trafficvision"
+        source_object: "*.tar.gz"
+        destination_bucket: "{{ var.value.composer_bucket }}"
+        destination_object: "data/trafficvision/files/"
+        move_object: False
+        replace: False
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
@@ -132,5 +132,4 @@ dag:
         destination_project_dataset_table: "clemson_dice.traffic_vision"
         write_disposition: "WRITE_TRUNCATE"
   graph_paths:
-    - "transform_clemson_dice_data >> [ run_batch_data_group_ord_1, run_batch_data_group_ord_2 ] >> load_json_metadata_to_bq"
-    # - "transfer_zip_files >> transform_clemson_dice_data >> [ run_batch_data_group_ord_1, run_batch_data_group_ord_2 ] >> load_json_metadata_to_bq"
+    - "transfer_zip_files >> transform_clemson_dice_data >> [ run_batch_data_group_ord_1, run_batch_data_group_ord_2 ] >> load_json_metadata_to_bq"

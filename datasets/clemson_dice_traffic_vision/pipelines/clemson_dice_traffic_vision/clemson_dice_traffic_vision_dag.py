@@ -15,7 +15,7 @@
 
 from airflow import DAG
 from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
-from airflow.providers.google.cloud.transfers import gcs_to_bigquery
+from airflow.providers.google.cloud.transfers import gcs_to_bigquery, gcs_to_gcs
 
 default_args = {
     "owner": "Google",
@@ -32,6 +32,17 @@ with DAG(
     catchup=False,
     default_view="graph",
 ) as dag:
+
+    # Task to copy over to the pod, the source data and structure from GCS
+    transfer_zip_files = gcs_to_gcs.GCSToGCSOperator(
+        task_id="transfer_zip_files",
+        source_bucket="gcs-public-data-trafficvision",
+        source_object="*.tar.gz",
+        destination_bucket="{{ var.value.composer_bucket }}",
+        destination_object="data/trafficvision/files/",
+        move_object=False,
+        replace=False,
+    )
 
     # Run CSV transform within kubernetes pod
     transform_clemson_dice_data = kubernetes_pod.KubernetesPodOperator(
@@ -133,7 +144,8 @@ with DAG(
     )
 
     (
-        transform_clemson_dice_data
+        transfer_zip_files
+        >> transform_clemson_dice_data
         >> [run_batch_data_group_ord_1, run_batch_data_group_ord_2]
         >> load_json_metadata_to_bq
     )
