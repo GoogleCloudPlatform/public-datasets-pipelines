@@ -169,4 +169,5 @@ dag:
         destination_project_dataset_table: "clemson_dice.traffic_vision"
         write_disposition: "WRITE_TRUNCATE"
   graph_paths:
+    # - "transfer_source"
     - "transfer_source >> transform_clemson_dice_data >> [ run_batch_data_group_ord_1, run_batch_data_group_ord_2 ] >> load_json_metadata_to_bq"

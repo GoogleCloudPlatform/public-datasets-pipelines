@@ -20,6 +20,7 @@ import tarfile
 
 import pandas as pd
 from google.cloud import storage
+from retrying import retry
 
 
 def main(
@@ -103,7 +104,7 @@ def copy_source_files_gcs_to_gcs(
         cmd=f"gsutil -m cp gs://{source_bucket}/* gs://{destination_bucket}/{destination_folder} 2> /dev/null"
     else:
         cmd=f"gsutil -m cp gs://{source_bucket}/* gs://{destination_bucket}/{destination_folder}"
-    subprocess.call([cmd], shell=True)
+    subprocess.run([cmd], shell=True)
 
 def process_batch_metadata_files(
     project_id: str,
@@ -123,6 +124,7 @@ def process_batch_metadata_files(
     bucket_name = target_gcs_bucket
     bucket = storage_client.bucket(bucket_name)
     file_group_ordinal = 1
+    retries = 1
     for blob in bucket.list_blobs(prefix=batch_gcs_path):
         batch_filename = str(blob).split(",")[1].strip()
         if file_group_ordinal == batch_ordinal:
@@ -143,7 +145,7 @@ def process_batch_metadata_files(
         if file_group_ordinal > batch_group_size:
             file_group_ordinal = 1
 
-
+@retry(stop_max_attempt_number=7, stop_max_delay=300000)
 def process_batch(
     project_id: str,
     batch_filename: str,
@@ -189,6 +191,7 @@ def process_batch(
         os.unlink(source_tar_file)
         os.unlink(destination_json_file)
         shutil.rmtree(f"{target_root_path}/{target_unpack_folder}/{guid}")
+        os.unlink(batch_filename)
 
 
 
