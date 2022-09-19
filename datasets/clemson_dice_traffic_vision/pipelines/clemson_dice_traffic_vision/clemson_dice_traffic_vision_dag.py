@@ -15,7 +15,7 @@
 
 from airflow import DAG
 from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
-from airflow.providers.google.cloud.transfers import gcs_to_bigquery, gcs_to_gcs
+from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
     "owner": "Google",
@@ -33,15 +33,33 @@ with DAG(
     default_view="graph",
 ) as dag:
 
-    # Task to copy over to the pod, the source data and structure from GCS
-    transfer_zip_files = gcs_to_gcs.GCSToGCSOperator(
-        task_id="transfer_zip_files",
-        source_bucket="gcs-public-data-trafficvision",
-        source_object="*.tar.gz",
-        destination_bucket="{{ var.value.composer_bucket }}",
-        destination_object="data/trafficvision/files/",
-        move_object=False,
-        replace=False,
+    # Run CSV transform within kubernetes pod
+    transfer_source = kubernetes_pod.KubernetesPodOperator(
+        task_id="transfer_source",
+        startup_timeout_seconds=600,
+        name="transfer_source",
+        namespace="composer",
+        service_account_name="datasets",
+        image_pull_policy="Always",
+        image="{{ var.json.clemson_dice_traffic_vision.container_registry.run_csv_transform_kub }}",
+        env_vars={
+            "SOURCE_URL_GCS": "gs://{{ var.value.composer_bucket }}/data/trafficvision/files",
+            "SOURCE_FILE_BATCH_LENGTH": "2000",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
+            "TARGET_GCS_PATH": "data/trafficvision/load_files",
+            "TARGET_ROOT_PATH": "data/trafficvision",
+            "TARGET_SOURCE_FOLDER": "files",
+            "TARGET_UNPACK_FOLDER": "unpack",
+            "TARGET_LOAD_FOLDER": "load_files",
+            "TARGET_BATCH_FOLDER": "batch_metadata",
+            "PROJECT_ID": "{{ var.value.gcp_project }}",
+            "PIPELINE_NAME": "transfer_source",
+        },
+        resources={
+            "request_memory": "24G",
+            "request_cpu": "2",
+            "request_ephemeral_storage": "10G",
+        },
     )
 
     # Run CSV transform within kubernetes pod
@@ -144,7 +162,7 @@ with DAG(
     )
 
     (
-        transfer_zip_files
+        transfer_source
         >> transform_clemson_dice_data
         >> [run_batch_data_group_ord_1, run_batch_data_group_ord_2]
         >> load_json_metadata_to_bq

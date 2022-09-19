@@ -32,16 +32,53 @@ dag:
     default_view: graph
 
   tasks:
-    - operator: "GoogleCloudStorageToGoogleCloudStorageOperator"
-      description: "Task to copy over to the pod, the source data and structure from GCS"
+    # - operator: "GoogleCloudStorageToGoogleCloudStorageOperator"
+    #   description: "Task to copy over to the pod, the source data and structure from GCS"
+    #   args:
+    #     task_id: "transfer_zip_files"
+    #     source_bucket: "gcs-public-data-trafficvision"
+    #     source_object: "*.tar.gz"
+    #     destination_bucket: "{{ var.value.composer_bucket }}"
+    #     destination_object: "data/trafficvision/files/"
+    #     move_object: False
+    #     replace: False
+    # - operator: "BashOperator"
+    #   description: "Task to copy over to the pod, the source data and structure from GCS"
+    #   args:
+    #     task_id: "transfer_zip_files"
+    #     bash_command: |
+    #         echo Copying source files from $SOURCE_BUCKET to $TARGET_BUCKET started;
+    #         gsutil -m cp "$SOURCE_BUCKET" "$TARGET_BUCKET" 1> /dev/null;
+    #         echo Copying source files from $SOURCE_BUCKET to $TARGET_BUCKET completed;
+    #     env:
+    #       SOURCE_BUCKET: "gs://gcs-public-data-trafficvision"
+    #       TARGET_BUCKET: "gs://{{ var.value.composer_bucket }}/data/trafficvision/files"
+    - operator: "KubernetesPodOperator"
+      description: "Run CSV transform within kubernetes pod"
       args:
-        task_id: "transfer_zip_files"
-        source_bucket: "gcs-public-data-trafficvision"
-        source_object: "*.tar.gz"
-        destination_bucket: "{{ var.value.composer_bucket }}"
-        destination_object: "data/trafficvision/files/"
-        move_object: False
-        replace: False
+        task_id: "transfer_source"
+        startup_timeout_seconds: 600
+        name: "transfer_source"
+        namespace: "composer"
+        service_account_name: "datasets"
+        image_pull_policy: "Always"
+        image: "{{ var.json.clemson_dice_traffic_vision.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL_GCS: "gs://{{ var.value.composer_bucket }}/data/trafficvision/files"
+          SOURCE_FILE_BATCH_LENGTH: "2000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/trafficvision/load_files"
+          TARGET_ROOT_PATH: "data/trafficvision"
+          TARGET_SOURCE_FOLDER: "files"
+          TARGET_UNPACK_FOLDER: "unpack"
+          TARGET_LOAD_FOLDER: "load_files"
+          TARGET_BATCH_FOLDER: "batch_metadata"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          PIPELINE_NAME: "transfer_source"
+        resources:
+          request_memory: "24G"
+          request_cpu: "2"
+          request_ephemeral_storage: "10G"
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
@@ -132,4 +169,4 @@ dag:
         destination_project_dataset_table: "clemson_dice.traffic_vision"
         write_disposition: "WRITE_TRUNCATE"
   graph_paths:
-    - "transfer_zip_files >> transform_clemson_dice_data >> [ run_batch_data_group_ord_1, run_batch_data_group_ord_2 ] >> load_json_metadata_to_bq"
+    - "transfer_source >> transform_clemson_dice_data >> [ run_batch_data_group_ord_1, run_batch_data_group_ord_2 ] >> load_json_metadata_to_bq"

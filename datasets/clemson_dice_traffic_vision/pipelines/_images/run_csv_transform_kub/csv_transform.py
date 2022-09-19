@@ -44,7 +44,16 @@ def main(
         target_load_folder=target_load_folder,
         target_batch_folder=target_batch_folder
     )
-    if pipeline_name == "generate_batch_metadata_files":
+    if pipeline_name == "transfer_source":
+        copy_source_files_gcs_to_gcs(
+            # source_bucket=source_client_bucket,
+            source_bucket="gcs-public-data-trafficvision",
+            destination_bucket=target_gcs_bucket,
+            destination_folder=f"data/trafficvision/{target_source_folder}",
+            file_type=".tar.gz",
+            silent=True
+        )
+    elif pipeline_name == "generate_batch_metadata_files":
         remove_gcs_path(
             gcs_bucket=target_gcs_bucket,
             gcs_path=f"{target_gcs_path}/{target_load_folder}"
@@ -79,6 +88,22 @@ def main(
     else:
         pass
 
+
+def copy_source_files_gcs_to_gcs(
+    source_bucket: str,
+    destination_bucket: str,
+    destination_folder: str,
+    file_type: str,
+    silent: bool = True
+) -> None:
+    logging.info(f"Copying from gs://{source_bucket}/* to gs://{destination_bucket}/{destination_folder}")
+    # subprocess.call([f"gsutil -m cp gs://{source_bucket} gs://{destination_bucket}/{destination_folder}"], shell=True)
+    # cmd=f"gsutil -m cp gs://gcs-public-data-trafficvision/* gs://us-central1-dev-v2-cd7f5f38-bucket/data/trafficvision/files_test 2> /dev/null"
+    if silent:
+        cmd=f"gsutil -m cp gs://{source_bucket}/* gs://{destination_bucket}/{destination_folder} 2> /dev/null"
+    else:
+        cmd=f"gsutil -m cp gs://{source_bucket}/* gs://{destination_bucket}/{destination_folder}"
+    subprocess.call([cmd], shell=True)
 
 def process_batch_metadata_files(
     project_id: str,
