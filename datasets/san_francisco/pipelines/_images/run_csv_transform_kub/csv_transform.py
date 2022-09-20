@@ -30,6 +30,7 @@ from google.cloud import bigquery, storage
 
 def main(
     source_url: str,
+    source_url_dict: dict,
     source_url_list: typing.List[str],
     pipeline_name: str,
     source_file: pathlib.Path,
@@ -65,6 +66,7 @@ def main(
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
     execute_pipeline(
         source_url=source_url,
+        source_url_dict=source_url_dict,
         source_url_list=source_url_list,
         source_file=source_file,
         target_file=target_file,
@@ -99,6 +101,7 @@ def main(
 
 def execute_pipeline(
     source_url: str,
+    source_url_dict: str,
     source_url_list: typing.List[str],
     source_file: pathlib.Path,
     target_file: pathlib.Path,
@@ -135,6 +138,8 @@ def execute_pipeline(
         or destination_table == "street_trees"
     ):
         download_file(source_url, source_file)
+    elif destination_table == "calendar":
+        df_calendar = gcs_to_df(source_url_dict["calendar"])
     elif destination_table == "bikeshare_station_info":
         source_url_json = f"{source_url}.json"
         source_file_json = str(source_file).replace(".csv", "") + "_stations.json"
@@ -244,6 +249,36 @@ def execute_pipeline(
         logging.info(
             f"Informational: The data file {target_file} was not generated because no data file was available.  Continuing."
         )
+
+
+def gcs_to_df(
+    project_id: str,
+    source_file_gcs_path: str
+) -> pd.DataFrame:
+    df = pd.DataFrame()
+    filename = os.path.basename({ source_file_gcs_path })
+    destination_folder=f"files/stage_{filename}"
+    download_file_gcs(
+        project_id=project_id,
+        source_location=source_file_gcs_path,
+        destination_folder=destination_folder
+    )
+    pd.read_csv(
+
+    )
+
+
+def download_file_gcs(
+    project_id: str, source_location: str, destination_folder: str
+) -> None:
+    object_name = os.path.basename(source_location)
+    dest_object = f"{destination_folder}/{object_name}"
+    storage_client = storage.Client(project_id)
+    bucket_name = str.split(source_location, "gs://")[1].split("/")[0]
+    bucket = storage_client.bucket(bucket_name)
+    source_object_path = str.split(source_location, f"gs://{bucket_name}/")[1]
+    blob = bucket.blob(source_object_path)
+    blob.download_to_filename(dest_object)
 
 
 def handle_tripdata(
@@ -913,6 +948,7 @@ if __name__ == "__main__":
 
     main(
         source_url=os.environ.get("SOURCE_URL", ""),
+        source_url_dict=json.loads(os.environ.get("SOURCE_URL_DICT", r"{}")),
         source_url_list=json.loads(os.environ.get("SOURCE_URL_LIST", r"[]")),
         pipeline_name=os.environ.get("PIPELINE_NAME", ""),
         source_file=pathlib.Path(os.environ.get("SOURCE_FILE", "")).expanduser(),
