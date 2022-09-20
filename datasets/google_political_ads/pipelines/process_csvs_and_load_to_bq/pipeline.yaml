@@ -162,9 +162,9 @@ dag:
           TARGET_GCS_PATH: "data/google_political_ads/advertiser_geo_spend/data_output.csv"
           TABLE_NAME: "advertiser_geo_spend"
           CSV_HEADERS: >-
-            ["advertiser_id","advertiser_name","country","country_subdivision_primary","spend_usd","spend_eur","spend_inr","spend_bgn","spend_hrk","spend_czk","spend_dkk","spend_huf","spend_pln","spend_ron","spend_sek","spend_gbp","spend_nzd"]
+            ["advertiser_id","advertiser_name","country","country_subdivision_primary","spend_usd","spend_eur","spend_inr","spend_bgn","spend_hrk","spend_czk","spend_dkk","spend_huf","spend_pln","spend_ron","spend_sek","spend_gbp","spend_nzd", "spend_brl"]
           RENAME_MAPPINGS: >-
-            {"Advertiser_ID" : "advertiser_id" ,"Advertiser_Name" : "advertiser_name" ,"Country" : "country" ,"Country_Subdivision_Primary" : "country_subdivision_primary" ,"Spend_USD" : "spend_usd" ,"Spend_EUR" : "spend_eur" ,"Spend_INR" : "spend_inr" ,"Spend_BGN" : "spend_bgn" ,"Spend_HRK" : "spend_hrk" ,"Spend_CZK" : "spend_czk" ,"Spend_DKK" : "spend_dkk" ,"Spend_HUF" : "spend_huf" ,"Spend_PLN" : "spend_pln" ,"Spend_RON" : "spend_ron" ,"Spend_SEK" : "spend_sek" ,"Spend_GBP" : "spend_gbp" ,"Spend_NZD" : "spend_nzd"}
+            {"Advertiser_ID" : "advertiser_id" ,"Advertiser_Name" : "advertiser_name" ,"Country" : "country" ,"Country_Subdivision_Primary" : "country_subdivision_primary" ,"Spend_USD" : "spend_usd" ,"Spend_EUR" : "spend_eur" ,"Spend_INR" : "spend_inr" ,"Spend_BGN" : "spend_bgn" ,"Spend_HRK" : "spend_hrk" ,"Spend_CZK" : "spend_czk" ,"Spend_DKK" : "spend_dkk" ,"Spend_HUF" : "spend_huf" ,"Spend_PLN" : "spend_pln" ,"Spend_RON" : "spend_ron" ,"Spend_SEK" : "spend_sek" ,"Spend_GBP" : "spend_gbp" ,"Spend_NZD" : "spend_nzd", "Spend_BRL": "spend_brl"}
         resources:
           request_memory: "1G"
           request_cpu: "200m"
@@ -248,6 +248,10 @@ dag:
             type: "integer"
             description: "Total amount in NZD spent on election ads in this region."
             mode: "nullable"
+          - name: "spend_brl"
+            type: "integer"
+            description: "Total amount in BRL spent on election ads in this region."
+            mode: "nullable"
 
     # advertiser_stats
     - operator: "KubernetesPodOperator"
@@ -270,9 +274,9 @@ dag:
           TARGET_GCS_PATH: "data/google_political_ads/advertiser_stats/data_output.csv"
           TABLE_NAME: "advertiser_stats"
           CSV_HEADERS: >-
-            ["advertiser_id","advertiser_name","public_ids_list","regions","elections","total_creatives","spend_usd","spend_eur","spend_inr","spend_bgn","spend_hrk","spend_czk","spend_dkk","spend_huf","spend_pln","spend_ron","spend_sek","spend_gbp","spend_nzd"]
+            ["advertiser_id","advertiser_name","public_ids_list","regions","elections","total_creatives","spend_usd","spend_eur","spend_inr","spend_bgn","spend_hrk","spend_czk","spend_dkk","spend_huf","spend_pln","spend_ron","spend_sek","spend_gbp","spend_nzd", "spend_brl"]
           RENAME_MAPPINGS: >-
-            {"Advertiser_ID": "advertiser_id","Advertiser_Name": "advertiser_name","Public_IDs_List": "public_ids_list","Regions": "regions","Elections": "elections","Total_Creatives": "total_creatives","Spend_USD": "spend_usd","Spend_EUR": "spend_eur","Spend_INR": "spend_inr","Spend_BGN": "spend_bgn","Spend_HRK": "spend_hrk","Spend_CZK": "spend_czk","Spend_DKK": "spend_dkk","Spend_HUF": "spend_huf","Spend_PLN": "spend_pln","Spend_RON": "spend_ron","Spend_SEK": "spend_sek","Spend_GBP": "spend_gbp","Spend_NZD": "spend_nzd"}
+            {"Advertiser_ID": "advertiser_id","Advertiser_Name": "advertiser_name","Public_IDs_List": "public_ids_list","Regions": "regions","Elections": "elections","Total_Creatives": "total_creatives","Spend_USD": "spend_usd","Spend_EUR": "spend_eur","Spend_INR": "spend_inr","Spend_BGN": "spend_bgn","Spend_HRK": "spend_hrk","Spend_CZK": "spend_czk","Spend_DKK": "spend_dkk","Spend_HUF": "spend_huf","Spend_PLN": "spend_pln","Spend_RON": "spend_ron","Spend_SEK": "spend_sek","Spend_GBP": "spend_gbp","Spend_NZD": "spend_nzd", "Spend_BRL": "spend_brl"}
         resources:
           request_memory: "1G"
           request_cpu: "200m"
@@ -364,6 +368,10 @@ dag:
             type: "integer"
             description: "Total amount in NZD spent on election ads by the advertiser."
             mode: "nullable"
+          - name: "spend_brl"
+            type: "integer"
+            description: "Total amount in BRL spent on election ads by the advertiser."
+            mode: "nullable"
 
     # advertiser_weekly_spend
     - operator: "KubernetesPodOperator"
@@ -386,9 +394,9 @@ dag:
           TARGET_GCS_PATH: "data/google_political_ads/advertiser_weekly_spend/data_output.csv"
           TABLE_NAME: "advertiser_weekly_spend"
           CSV_HEADERS: >-
-            ["advertiser_id","advertiser_name","election_cycle","week_start_date","spend_usd","spend_eur","spend_inr","spend_bgn","spend_hrk","spend_czk","spend_dkk","spend_huf","spend_pln","spend_ron","spend_sek","spend_gbp","spend_nzd"]
+            ["advertiser_id","advertiser_name","election_cycle","week_start_date","spend_usd","spend_eur","spend_inr","spend_bgn","spend_hrk","spend_czk","spend_dkk","spend_huf","spend_pln","spend_ron","spend_sek","spend_gbp","spend_nzd", "spend_brl"]
           RENAME_MAPPINGS: >-
-            {"Advertiser_ID": "advertiser_id","Advertiser_Name": "advertiser_name","Election_Cycle": "election_cycle","Week_Start_Date": "week_start_date","Spend_USD": "spend_usd","Spend_EUR": "spend_eur","Spend_INR": "spend_inr","Spend_BGN": "spend_bgn","Spend_HRK": "spend_hrk","Spend_CZK": "spend_czk","Spend_DKK": "spend_dkk","Spend_HUF": "spend_huf","Spend_PLN": "spend_pln","Spend_RON": "spend_ron","Spend_SEK": "spend_sek","Spend_GBP": "spend_gbp","Spend_NZD": "spend_nzd"}
+            {"Advertiser_ID": "advertiser_id","Advertiser_Name": "advertiser_name","Election_Cycle": "election_cycle","Week_Start_Date": "week_start_date","Spend_USD": "spend_usd","Spend_EUR": "spend_eur","Spend_INR": "spend_inr","Spend_BGN": "spend_bgn","Spend_HRK": "spend_hrk","Spend_CZK": "spend_czk","Spend_DKK": "spend_dkk","Spend_HUF": "spend_huf","Spend_PLN": "spend_pln","Spend_RON": "spend_ron","Spend_SEK": "spend_sek","Spend_GBP": "spend_gbp","Spend_NZD": "spend_nzd", "Spend_BRL": "spend_brl"}
         resources:
           request_memory: "1G"
           request_cpu: "200m"
@@ -471,6 +479,10 @@ dag:
           - name: "spend_nzd"
             type: "integer"
             description: "The amount in NZD spent on election ads during the given week by the advertiser."
+            mode: "nullable"
+          - name: "spend_brl"
+            type: "integer"
+            description: "The amount in BRL spent on election ads during the given week by the advertiser."
             mode: "nullable"
 
     - operator: "KubernetesPodOperator"
@@ -572,9 +584,9 @@ dag:
           TARGET_GCS_PATH: "data/google_political_ads/creative_stats/data_output.csv"
           TABLE_NAME: "creative_stats"
           CSV_HEADERS: >-
-            ["ad_id","ad_url","ad_type","regions","advertiser_id","advertiser_name","ad_campaigns_list","date_range_start","date_range_end","num_of_days","impressions","spend_usd","first_served_timestamp","last_served_timestamp","age_targeting","gender_targeting","geo_targeting_included","geo_targeting_excluded","spend_range_min_usd","spend_range_max_usd","spend_range_min_eur","spend_range_max_eur","spend_range_min_inr","spend_range_max_inr","spend_range_min_bgn","spend_range_max_bgn","spend_range_min_hrk","spend_range_max_hrk","spend_range_min_czk","spend_range_max_czk","spend_range_min_dkk","spend_range_max_dkk","spend_range_min_huf","spend_range_max_huf","spend_range_min_pln","spend_range_max_pln","spend_range_min_ron","spend_range_max_ron","spend_range_min_sek","spend_range_max_sek","spend_range_min_gbp","spend_range_max_gbp","spend_range_min_nzd","spend_range_max_nzd"]
+            ["ad_id","ad_url","ad_type","regions","advertiser_id","advertiser_name","ad_campaigns_list","date_range_start","date_range_end","num_of_days","impressions","spend_usd","first_served_timestamp","last_served_timestamp","age_targeting","gender_targeting","geo_targeting_included","geo_targeting_excluded","spend_range_min_usd","spend_range_max_usd","spend_range_min_eur","spend_range_max_eur","spend_range_min_inr","spend_range_max_inr","spend_range_min_bgn","spend_range_max_bgn","spend_range_min_hrk","spend_range_max_hrk","spend_range_min_czk","spend_range_max_czk","spend_range_min_dkk","spend_range_max_dkk","spend_range_min_huf","spend_range_max_huf","spend_range_min_pln","spend_range_max_pln","spend_range_min_ron","spend_range_max_ron","spend_range_min_sek","spend_range_max_sek","spend_range_min_gbp","spend_range_max_gbp","spend_range_min_nzd","spend_range_max_nzd", "spend_range_min_brl", "spend_range_max_brl"]
           RENAME_MAPPINGS: >-
-            {"Ad_ID": "ad_id","Ad_URL": "ad_url","Ad_Type": "ad_type","Regions": "regions","Advertiser_ID": "advertiser_id","Advertiser_Name": "advertiser_name","Ad_Campaigns_List": "ad_campaigns_list","Date_Range_Start": "date_range_start","Date_Range_End": "date_range_end","Num_of_Days": "num_of_days","Impressions": "impressions","Spend_USD": "spend_usd","Spend_Range_Min_USD": "spend_range_min_usd","Spend_Range_Max_USD": "spend_range_max_usd","Spend_Range_Min_EUR": "spend_range_min_eur","Spend_Range_Max_EUR": "spend_range_max_eur","Spend_Range_Min_INR": "spend_range_min_inr","Spend_Range_Max_INR": "spend_range_max_inr","Spend_Range_Min_BGN": "spend_range_min_bgn","Spend_Range_Max_BGN": "spend_range_max_bgn","Spend_Range_Min_HRK": "spend_range_min_hrk","Spend_Range_Max_HRK": "spend_range_max_hrk","Spend_Range_Min_CZK": "spend_range_min_czk","Spend_Range_Max_CZK": "spend_range_max_czk","Spend_Range_Min_DKK": "spend_range_min_dkk","Spend_Range_Max_DKK": "spend_range_max_dkk","Spend_Range_Min_HUF": "spend_range_min_huf","Spend_Range_Max_HUF": "spend_range_max_huf","Spend_Range_Min_PLN": "spend_range_min_pln","Spend_Range_Max_PLN": "spend_range_max_pln","Spend_Range_Min_RON": "spend_range_min_ron","Spend_Range_Max_RON": "spend_range_max_ron","Spend_Range_Min_SEK": "spend_range_min_sek","Spend_Range_Max_SEK": "spend_range_max_sek","Spend_Range_Min_GBP": "spend_range_min_gbp","Spend_Range_Max_GBP": "spend_range_max_gbp","Spend_Range_Min_NZD": "spend_range_min_nzd","Spend_Range_Max_NZD": "spend_range_max_nzd","Age_Targeting": "age_targeting","Gender_Targeting": "gender_targeting","Geo_Targeting_Included": "geo_targeting_included","Geo_Targeting_Excluded": "geo_targeting_excluded","First_Served_Timestamp": "first_served_timestamp","Last_Served_Timestamp": "last_served_timestamp"}
+            {"Ad_ID": "ad_id","Ad_URL": "ad_url","Ad_Type": "ad_type","Regions": "regions","Advertiser_ID": "advertiser_id","Advertiser_Name": "advertiser_name","Ad_Campaigns_List": "ad_campaigns_list","Date_Range_Start": "date_range_start","Date_Range_End": "date_range_end","Num_of_Days": "num_of_days","Impressions": "impressions","Spend_USD": "spend_usd","Spend_Range_Min_USD": "spend_range_min_usd","Spend_Range_Max_USD": "spend_range_max_usd","Spend_Range_Min_EUR": "spend_range_min_eur","Spend_Range_Max_EUR": "spend_range_max_eur","Spend_Range_Min_INR": "spend_range_min_inr","Spend_Range_Max_INR": "spend_range_max_inr","Spend_Range_Min_BGN": "spend_range_min_bgn","Spend_Range_Max_BGN": "spend_range_max_bgn","Spend_Range_Min_HRK": "spend_range_min_hrk","Spend_Range_Max_HRK": "spend_range_max_hrk","Spend_Range_Min_CZK": "spend_range_min_czk","Spend_Range_Max_CZK": "spend_range_max_czk","Spend_Range_Min_DKK": "spend_range_min_dkk","Spend_Range_Max_DKK": "spend_range_max_dkk","Spend_Range_Min_HUF": "spend_range_min_huf","Spend_Range_Max_HUF": "spend_range_max_huf","Spend_Range_Min_PLN": "spend_range_min_pln","Spend_Range_Max_PLN": "spend_range_max_pln","Spend_Range_Min_RON": "spend_range_min_ron","Spend_Range_Max_RON": "spend_range_max_ron","Spend_Range_Min_SEK": "spend_range_min_sek","Spend_Range_Max_SEK": "spend_range_max_sek","Spend_Range_Min_GBP": "spend_range_min_gbp","Spend_Range_Max_GBP": "spend_range_max_gbp","Spend_Range_Min_NZD": "spend_range_min_nzd","Spend_Range_Max_NZD": "spend_range_max_nzd","Spend_Range_Min_BRL": "spend_range_min_brl","Spend_Range_Max_BRL": "spend_range_max_brl", "Age_Targeting": "age_targeting","Gender_Targeting": "gender_targeting","Geo_Targeting_Included": "geo_targeting_included","Geo_Targeting_Excluded": "geo_targeting_excluded","First_Served_Timestamp": "first_served_timestamp","Last_Served_Timestamp": "last_served_timestamp"}
         resources:
           request_memory: "16G"
           request_cpu: "2"
@@ -767,6 +779,14 @@ dag:
             type: "integer"
             description: "Upper bound of the amount in NZD spent by the advertiser on the election ad."
             mode: "nullable"
+          - name: "spend_range_min_brl"
+            type: "integer"
+            description: "Lower bound of the amount in BRL spent by the advertiser on the election ad."
+            mode: "nullable"
+          - name: "spend_range_max_brl"
+            type: "integer"
+            description: "Upper bound of the amount in BRL spent by the advertiser on the election ad."
+            mode: "nullable"
 
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod"
@@ -788,9 +808,9 @@ dag:
           TARGET_GCS_PATH: "data/google_political_ads/geo_spend/data_output.csv"
           TABLE_NAME: "geo_spend"
           CSV_HEADERS: >-
-            ["country","country_subdivision_primary","country_subdivision_secondary","spend_usd","spend_eur","spend_inr","spend_bgn","spend_hrk","spend_czk","spend_dkk","spend_huf","spend_pln","spend_ron","spend_sek","spend_gbp","spend_nzd"]
+            ["country","country_subdivision_primary","country_subdivision_secondary","spend_usd","spend_eur","spend_inr","spend_bgn","spend_hrk","spend_czk","spend_dkk","spend_huf","spend_pln","spend_ron","spend_sek","spend_gbp","spend_nzd", "spend_brl"]
           RENAME_MAPPINGS: >-
-            {"Country": "country","Country_Subdivision_Primary": "country_subdivision_primary","Country_Subdivision_Secondary": "country_subdivision_secondary","Spend_USD": "spend_usd","Spend_EUR": "spend_eur","Spend_INR": "spend_inr","Spend_BGN": "spend_bgn","Spend_HRK": "spend_hrk","Spend_CZK": "spend_czk","Spend_DKK": "spend_dkk","Spend_HUF": "spend_huf","Spend_PLN": "spend_pln","Spend_RON": "spend_ron","Spend_SEK": "spend_sek","Spend_GBP": "spend_gbp","Spend_NZD": "spend_nzd"}
+            {"Country": "country","Country_Subdivision_Primary": "country_subdivision_primary","Country_Subdivision_Secondary": "country_subdivision_secondary","Spend_USD": "spend_usd","Spend_EUR": "spend_eur","Spend_INR": "spend_inr","Spend_BGN": "spend_bgn","Spend_HRK": "spend_hrk","Spend_CZK": "spend_czk","Spend_DKK": "spend_dkk","Spend_HUF": "spend_huf","Spend_PLN": "spend_pln","Spend_RON": "spend_ron","Spend_SEK": "spend_sek","Spend_GBP": "spend_gbp","Spend_NZD": "spend_nzd", "Spend_BRL": "spend_brl"}
         resources:
           request_memory: "1G"
           request_cpu: "200m"
@@ -869,6 +889,10 @@ dag:
           - name: "spend_nzd"
             type: "integer"
             description: "Total amount in NZD spent on election ads in this region."
+            mode: "nullable"
+          - name: "spend_brl"
+            type: "integer"
+            description: "Total amount in BRL spent on election ads in this region."
             mode: "nullable"
 
     - operator: "KubernetesPodOperator"

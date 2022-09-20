@@ -24,9 +24,6 @@ import google.auth
 import jinja2
 from ruamel import yaml
 
-yaml = yaml.YAML(typ="safe")
-
-
 CURRENT_PATH = pathlib.Path(__file__).resolve().parent
 PROJECT_ROOT = CURRENT_PATH.parent
 DATASETS_PATH = PROJECT_ROOT / "datasets"
@@ -51,10 +48,11 @@ def main(
     env: str,
     all_pipelines: bool = False,
     skip_builds: bool = False,
+    async_builds: bool = False,
     format_code: bool = True,
 ):
     if not skip_builds:
-        build_images(dataset_id, env)
+        build_images(dataset_id, env, async_builds)
 
     if all_pipelines:
         for pipeline_dir in list_subdirs(DATASETS_PATH / dataset_id / "pipelines"):
@@ -66,9 +64,9 @@ def main(
 def generate_pipeline_dag(
     dataset_id: str, pipeline_id: str, env: str, format_code: bool
 ):
+    CustomYAMLTags(dataset_id)
     pipeline_dir = DATASETS_PATH / dataset_id / "pipelines" / pipeline_id
-    config = yaml.load((pipeline_dir / "pipeline.yaml").read_text())
-
+    config = yaml.load((pipeline_dir / "pipeline.yaml").read_text(), Loader=yaml.Loader)
     validate_airflow_version_existence_and_value(config)
     validate_dag_id_existence_and_format(config)
     dag_contents = generate_dag(config, dataset_id)
@@ -229,7 +227,7 @@ def copy_files_to_dot_dir(dataset_id: str, pipeline_id: str, env_dir: pathlib.Pa
     )
 
 
-def build_images(dataset_id: str, env: str):
+def build_images(dataset_id: str, env: str, async_builds: bool):
     parent_dir = DATASETS_PATH / dataset_id / "pipelines" / "_images"
     if not parent_dir.exists():
         return
@@ -238,7 +236,7 @@ def build_images(dataset_id: str, env: str):
         dataset_id, parent_dir, PROJECT_ROOT / f".{env}"
     )
     for image_dir in image_dirs:
-        build_and_push_image(dataset_id, image_dir)
+        build_and_push_image(dataset_id, image_dir, async_builds)
 
 
 def copy_image_files_to_dot_dir(
@@ -253,26 +251,40 @@ def copy_image_files_to_dot_dir(
     return list_subdirs(target_dir / "_images")
 
 
-def build_and_push_image(dataset_id: str, image_dir: pathlib.Path):
+def build_and_push_image(
+    dataset_id: str, image_dir: pathlib.Path, async_builds: bool = False
+):
     image_name = f"{dataset_id}__{image_dir.name}"
-    tag = f"gcr.io/{gcp_project_id()}/{image_name}"
+    command = [
+        "gcloud",
+        "builds",
+        "submit",
+        "--async",
+        "--tag",
+        f"gcr.io/{gcp_project_id()}/{image_name}",
+    ]
+
+    if not async_builds:
+        command.remove("--async")
 
     # gcloud builds submit --tag gcr.io/PROJECT_ID/IMAGE_NAME
-    subprocess.check_call(
-        [
-            "gcloud",
-            "builds",
-            "submit",
-            "--tag",
-            str(tag),
-        ],
-        cwd=image_dir,
-    )
+    subprocess.check_call(command, cwd=image_dir)
 
 
-def gcp_project_id(project_id: str = None) -> str:
+def gcp_project_id() -> str:
     _, project_id = google.auth.default()
     return project_id
+
+
+class CustomYAMLTags(yaml.YAMLObject):
+    def __init__(self, dataset):
+        self.dataset = dataset
+        yaml.add_constructor("!IMAGE", self.image_constructor)
+
+    def image_constructor(self, loader, node):
+        value = loader.construct_scalar(node)
+        value = f"gcr.io/{{{{ var.value.gcp_project }}}}/{self.dataset}__{value}"
+        return value
 
 
 if __name__ == "__main__":
@@ -308,6 +320,17 @@ if __name__ == "__main__":
     parser.add_argument(
         "--skip-builds", required=False, dest="skip_builds", action="store_true"
     )
+    parser.add_argument(
+        "--async-builds", required=False, dest="async_builds", action="store_false"
+    )
 
     args = parser.parse_args()
-    main(args.dataset, args.pipeline, args.env, args.all_pipelines, args.skip_builds)
+
+    main(
+        args.dataset,
+        args.pipeline,
+        args.env,
+        args.all_pipelines,
+        args.skip_builds,
+        args.async_builds,
+    )

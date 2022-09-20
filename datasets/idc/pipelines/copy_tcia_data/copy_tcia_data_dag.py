@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ with DAG(
             "TARGET_PROJECT_ID": "{{ var.json.idc.target_project_id }}",
             "SERVICE_ACCOUNT": "{{ var.json.idc.service_account }}",
             "DATASET_NAME": "idc",
-            "DATASET_VERSIONS": '["v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9"]',
+            "DATASET_VERSIONS": '["v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10"]',
         },
         resources={"request_memory": "128M", "request_cpu": "200m"},
     )
@@ -76,7 +76,7 @@ with DAG(
         env_vars={
             "SOURCE_PROJECT_ID": "{{ var.json.idc.source_project_id }}",
             "TARGET_PROJECT_ID": "{{ var.json.idc.target_project_id }}",
-            "BQ_DATASETS": '["idc_v1", "idc_v2", "idc_v3", "idc_v4", "idc_v5", "idc_v6", "idc_v7", "idc_v8", "idc_v9", "idc_current"]',
+            "BQ_DATASETS": '["idc_v1", "idc_v2", "idc_v3", "idc_v4", "idc_v5", "idc_v6", "idc_v7", "idc_v8", "idc_v9", "idc_v10", "idc_current"]',
             "SERVICE_ACCOUNT": "{{ var.json.idc.service_account }}",
         },
         resources={"request_memory": "128M", "request_cpu": "200m"},
