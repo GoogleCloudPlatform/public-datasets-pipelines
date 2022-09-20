@@ -101,7 +101,7 @@ def main(
 
 def execute_pipeline(
     source_url: str,
-    source_url_dict: str,
+    source_url_dict: dict,
     source_url_list: typing.List[str],
     source_file: pathlib.Path,
     target_file: pathlib.Path,
@@ -139,7 +139,20 @@ def execute_pipeline(
     ):
         download_file(source_url, source_file)
     elif destination_table == "calendar":
-        df_calendar = gcs_to_df(source_url_dict["calendar"])
+        import pdb; pdb.set_trace()
+        df_calendar = gcs_to_df(project_id=project_id,
+                                source_file_gcs_path=source_url_dict["calendar"],
+                                target_file_path=str(target_file))
+        df_calendar_attributes = gcs_to_df(
+                                    project_id=project_id,
+                                    source_file_gcs_path=source_url_dict["calendar_attributes"],
+                                    target_file_path=str(target_file)
+                                )
+        df_calendar_dates = gcs_to_df(project_id=project_id,
+                                    source_file_gcs_path=source_url_dict["calendar_dates"],
+                                    target_file_path=str(target_file)
+                                )
+        import pdb; pdb.set_trace()
     elif destination_table == "bikeshare_station_info":
         source_url_json = f"{source_url}.json"
         source_file_json = str(source_file).replace(".csv", "") + "_stations.json"
@@ -253,20 +266,20 @@ def execute_pipeline(
 
 def gcs_to_df(
     project_id: str,
-    source_file_gcs_path: str
+    source_file_gcs_path: str,
+    target_file_path: str,
 ) -> pd.DataFrame:
-    df = pd.DataFrame()
-    filename = os.path.basename({ source_file_gcs_path })
-    destination_folder=f"files/stage_{filename}"
+    filename = os.path.basename(source_file_gcs_path)
+    destination_folder=os.path.split(target_file_path)[0]
     download_file_gcs(
         project_id=project_id,
         source_location=source_file_gcs_path,
         destination_folder=destination_folder
     )
-    pd.read_csv(
-
+    df = pd.read_csv(
+        f"{destination_folder}/{filename}"
     )
-
+    return df
 
 def download_file_gcs(
     project_id: str, source_location: str, destination_folder: str
