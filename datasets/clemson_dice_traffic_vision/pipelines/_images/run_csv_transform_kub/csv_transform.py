@@ -23,6 +23,7 @@ from google.cloud import storage
 from retrying import retry
 
 
+@retry(stop_max_attempt_number=7, stop_max_delay=300000)
 def main(
     source_url_gcs: str,
     source_file_batch_length: str,
@@ -36,14 +37,14 @@ def main(
     project_id: str,
     pipeline_name: str,
     batch_group_size: str,
-    batch_ordinal: str
+    batch_ordinal: str,
 ) -> None:
     generate_folder_hierarchy(
         target_root_path=target_root_path,
         target_source_folder=target_source_folder,
         target_unpack_folder=target_unpack_folder,
         target_load_folder=target_load_folder,
-        target_batch_folder=target_batch_folder
+        target_batch_folder=target_batch_folder,
     )
     if pipeline_name == "transfer_source":
         copy_source_files_gcs_to_gcs(
@@ -52,16 +53,16 @@ def main(
             destination_bucket=target_gcs_bucket,
             destination_folder=f"data/trafficvision/{target_source_folder}",
             file_type=".tar.gz",
-            silent=True
+            silent=True,
         )
     elif pipeline_name == "generate_batch_metadata_files":
         remove_gcs_path(
             gcs_bucket=target_gcs_bucket,
-            gcs_path=f"{target_gcs_path}/{target_load_folder}"
+            gcs_path=f"{target_gcs_path}/{target_load_folder}",
         )
         remove_gcs_path(
             gcs_bucket=target_gcs_bucket,
-            gcs_path=f"{target_gcs_path}/{target_batch_folder}"
+            gcs_path=f"{target_gcs_path}/{target_batch_folder}",
         )
         generate_batch_metadata_files(
             project_id=project_id,
@@ -70,9 +71,9 @@ def main(
             target_gcs_bucket=target_gcs_bucket,
             target_root_path=target_root_path,
             target_batch_folder=target_batch_folder,
-            file_type = ".tar.gz"
+            file_type=".tar.gz",
         )
-    elif pipeline_name == "run_batch_data" :
+    elif pipeline_name == "run_batch_data":
         process_batch_metadata_files(
             project_id=project_id,
             target_gcs_bucket=target_gcs_bucket,
@@ -84,7 +85,7 @@ def main(
             target_batch_folder=target_batch_folder,
             batch_gcs_path=f"{target_gcs_path}/{target_batch_folder}",
             batch_group_size=int(batch_group_size),
-            batch_ordinal=int(batch_ordinal)
+            batch_ordinal=int(batch_ordinal),
         )
     else:
         pass
@@ -95,16 +96,17 @@ def copy_source_files_gcs_to_gcs(
     destination_bucket: str,
     destination_folder: str,
     file_type: str,
-    silent: bool = True
+    silent: bool = True,
 ) -> None:
-    logging.info(f"Copying from gs://{source_bucket}/* to gs://{destination_bucket}/{destination_folder}")
-    # subprocess.call([f"gsutil -m cp gs://{source_bucket} gs://{destination_bucket}/{destination_folder}"], shell=True)
-    # cmd=f"gsutil -m cp gs://gcs-public-data-trafficvision/* gs://us-central1-dev-v2-cd7f5f38-bucket/data/trafficvision/files_test 2> /dev/null"
+    logging.info(
+        f"Copying from gs://{source_bucket} to gs://{destination_bucket}/{destination_folder}"
+    )
+    subprocess.check_call("which gsutil", shell=True)
+    cmd = f"gsutil -m cp -n gs://{source_bucket} gs://{destination_bucket}/{destination_folder}"
     if silent:
-        cmd=f"gsutil -m cp gs://{source_bucket}/* gs://{destination_bucket}/{destination_folder} 2> /dev/null"
-    else:
-        cmd=f"gsutil -m cp gs://{source_bucket}/* gs://{destination_bucket}/{destination_folder}"
-    subprocess.run([cmd], shell=True)
+        cmd += " 2> /dev/null"
+    subprocess.check_call([cmd], shell=True)
+
 
 def process_batch_metadata_files(
     project_id: str,
@@ -117,14 +119,13 @@ def process_batch_metadata_files(
     target_batch_folder: str,
     batch_gcs_path: str,
     batch_group_size: int,
-    batch_ordinal: int
+    batch_ordinal: int,
 ) -> None:
     logging.info("Collecting list of batch metadata files to process ...")
     storage_client = storage.Client(project_id)
     bucket_name = target_gcs_bucket
     bucket = storage_client.bucket(bucket_name)
     file_group_ordinal = 1
-    retries = 1
     for blob in bucket.list_blobs(prefix=batch_gcs_path):
         batch_filename = str(blob).split(",")[1].strip()
         if file_group_ordinal == batch_ordinal:
@@ -137,7 +138,7 @@ def process_batch_metadata_files(
                 target_source_folder=target_source_folder,
                 target_unpack_folder=target_unpack_folder,
                 target_load_folder=target_load_folder,
-                target_batch_folder=target_batch_folder
+                target_batch_folder=target_batch_folder,
             )
         else:
             pass
@@ -145,7 +146,7 @@ def process_batch_metadata_files(
         if file_group_ordinal > batch_group_size:
             file_group_ordinal = 1
 
-@retry(stop_max_attempt_number=7, stop_max_delay=300000)
+
 def process_batch(
     project_id: str,
     batch_filename: str,
@@ -155,38 +156,42 @@ def process_batch(
     target_source_folder: str,
     target_unpack_folder: str,
     target_load_folder: str,
-    target_batch_folder: str
+    target_batch_folder: str,
 ) -> None:
     logging.info(f"Processing batch file {batch_filename} batches")
     download_file_gcs(
         project_id=project_id,
         source_location=f"gs://{target_gcs_bucket}/{batch_filename}",
-        destination_folder=f"{target_root_path}/{target_batch_folder}"
+        destination_folder=f"{target_root_path}/{target_batch_folder}",
     )
-    batch_filename = f"{target_root_path}/{target_batch_folder}/{ os.path.basename(batch_filename) }"
-    df_filelist = pd.read_csv( batch_filename, sep="|" )
+    batch_filename = (
+        f"{target_root_path}/{target_batch_folder}/{ os.path.basename(batch_filename) }"
+    )
+    df_filelist = pd.read_csv(batch_filename, sep="|")
     for gcs_source_file in df_filelist["pathname"]:
         filename = os.path.basename(gcs_source_file)
-        guid = str(df_filelist[ df_filelist["pathname"] == gcs_source_file ]["guid"].values[0]).strip()
+        guid = str(
+            df_filelist[df_filelist["pathname"] == gcs_source_file]["guid"].values[0]
+        ).strip()
         source_json_file = f"{target_root_path}/{target_unpack_folder}/{guid}/out.log"
         destination_json_file = f"{target_root_path}/{target_load_folder}/out{guid}.log"
         source_tar_file = f"{target_root_path}/{target_source_folder}/{filename}"
         download_file_gcs(
             project_id=project_id,
             source_location=gcs_source_file,
-            destination_folder=f"{target_root_path}/{target_source_folder}"
+            destination_folder=f"{target_root_path}/{target_source_folder}",
         )
         with tarfile.open(source_tar_file) as file:
             file.extractall(path=f"{target_root_path}/{target_unpack_folder}")
         add_id_column(
             source_json_file=source_json_file,
             destination_json_file=destination_json_file,
-            guid=guid
+            guid=guid,
         )
         upload_file_to_gcs(
             file_path=destination_json_file,
             gcs_bucket=target_gcs_bucket,
-            gcs_path=f"{target_gcs_path}/{target_load_folder}/out{guid}.log"
+            gcs_path=f"{target_gcs_path}/{target_load_folder}/out{guid}.log",
         )
         os.unlink(source_tar_file)
         os.unlink(destination_json_file)
@@ -194,13 +199,12 @@ def process_batch(
         os.unlink(batch_filename)
 
 
-
 def generate_folder_hierarchy(
     target_root_path: str,
     target_source_folder: str,
     target_unpack_folder: str,
     target_load_folder: str,
-    target_batch_folder: str
+    target_batch_folder: str,
 ) -> None:
     if not os.path.exists(f"{target_root_path}"):
         logging.info(f"Creating folder {target_root_path}")
@@ -226,7 +230,7 @@ def generate_batch_metadata_files(
     target_gcs_bucket: str,
     target_root_path: str,
     target_batch_folder: str,
-    file_type: str
+    file_type: str,
 ) -> None:
     logging.info("Collecting list of files to process ...")
     storage_client = storage.Client(project_id)
@@ -234,13 +238,15 @@ def generate_batch_metadata_files(
     bucket = storage_client.bucket(bucket_name)
     df_filelist = pd.DataFrame(columns=["pathname", "guid", "batchnumber"])
     total_number_files_in_bucket = count_files_in_gcs_bucket(
-                                        project_id=project_id,
-                                        source_gcs_folder_path=source_gcs_folder_path,
-                                        file_type=".tar.gz"
-                                    )
+        project_id=project_id,
+        source_gcs_folder_path=source_gcs_folder_path,
+        file_type=".tar.gz",
+    )
     file_counter = 0
     batch_number = 0
-    prefix_folder = source_gcs_folder_path.replace("gs://", "").replace(f"{bucket_name}/", "")
+    prefix_folder = source_gcs_folder_path.replace("gs://", "").replace(
+        f"{bucket_name}/", ""
+    )
     for blob in bucket.list_blobs(prefix=prefix_folder):
         filename = str(blob).split(",")[1].strip()
         batch_number_zfill = str(batch_number).zfill(6)
@@ -249,40 +255,36 @@ def generate_batch_metadata_files(
             filenm = os.path.basename(filename)
             path = f"{source_gcs_folder_path}/{filenm}"
             guid = str(filenm).replace(f"{file_type}", "")
-            if file_counter % int(source_file_batch_length) == 0 \
-                or file_counter == total_number_files_in_bucket:
+            if (
+                file_counter % int(source_file_batch_length) == 0
+                or file_counter == total_number_files_in_bucket
+            ):
                 if batch_number > 0:
                     save_to_new_file(
-                        df=df_filelist,
-                        file_path=batch_metadata_file_path,
-                        sep="|"
+                        df=df_filelist, file_path=batch_metadata_file_path, sep="|"
                     )
                     metadata_filename = os.path.basename(batch_metadata_file_path)
                     upload_file_to_gcs(
                         file_path=batch_metadata_file_path,
                         gcs_bucket=target_gcs_bucket,
-                        gcs_path=f"{target_root_path}/{target_batch_folder}/{metadata_filename}"
+                        gcs_path=f"{target_root_path}/{target_batch_folder}/{metadata_filename}",
                     )
                 df_filelist = pd.DataFrame(columns=["pathname", "guid", "batchnumber"])
                 batch_number += 1
-                logging.info(f"Generating metadata for batch {batch_number} file #{file_counter}")
-            df_filelist.loc[len(df_filelist)] = [ path, guid, batch_number ]
+                logging.info(
+                    f"Generating metadata for batch {batch_number} file #{file_counter}"
+                )
+            df_filelist.loc[len(df_filelist)] = [path, guid, batch_number]
             file_counter += 1
 
 
-def save_to_new_file(
-    df: pd.DataFrame,
-    file_path: str,
-    sep: str = "|"
-) -> None:
+def save_to_new_file(df: pd.DataFrame, file_path: str, sep: str = "|") -> None:
     logging.info(f"Saving data to target file.. {file_path} ...")
     df.to_csv(file_path, index=False, sep=sep)
 
 
 def count_files_in_gcs_bucket(
-    project_id: str,
-    source_gcs_folder_path: str,
-    file_type: str
+    project_id: str, source_gcs_folder_path: str, file_type: str
 ) -> int:
     storage_client = storage.Client(project_id)
     bucket_name = str.split(source_gcs_folder_path, "gs://")[1].split("/")[0]
@@ -296,9 +298,7 @@ def count_files_in_gcs_bucket(
 
 
 def download_file_gcs(
-    project_id: str,
-    source_location: str,
-    destination_folder: str
+    project_id: str, source_location: str, destination_folder: str
 ) -> None:
     object_name = os.path.basename(source_location)
     dest_object = f"{destination_folder}/{object_name}"
@@ -310,14 +310,17 @@ def download_file_gcs(
     blob.download_to_filename(dest_object)
 
 
-def add_id_column(
-    source_json_file: str,
-    destination_json_file: str,
-    guid: str
-):
+def add_id_column(source_json_file: str, destination_json_file: str, guid: str):
     shutil.copyfile(source_json_file, destination_json_file)
-    cmd = "sed -i -e 's/{\\\"frame\\\"/{\"id\": \"" + guid + "\"\, \"frame\"/g' " + destination_json_file
-    subprocess.call([cmd], shell=True )
+    cmd = (
+        f'sed -i -e \'s/{{\\"frame\\"/{{"id": \\"{guid}\\"\, \\"frame\\"/g\' {destination_json_file}'
+        # 'sed -i -e \'s/{\\"frame\\"/{"id": "'
+        # + guid
+        # + '"\, "frame"/g\' '
+        # + destination_json_file
+    )
+    logging.info(f"cmd = {cmd}")
+    subprocess.check_call([cmd], shell=True)
 
 
 def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:
@@ -351,5 +354,5 @@ if __name__ == "__main__":
         project_id=os.environ.get("PROJECT_ID", ""),
         pipeline_name=os.environ.get("PIPELINE_NAME", ""),
         batch_group_size=os.environ.get("BATCH_GROUP_SIZE", 1),
-        batch_ordinal=os.environ.get("BATCH_ORDINAL", 1)
+        batch_ordinal=os.environ.get("BATCH_ORDINAL", 1),
     )
