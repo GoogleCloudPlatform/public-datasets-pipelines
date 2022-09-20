@@ -1,5 +1,32 @@
 # Changelog
 
+## [5.1.0](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v5.0.0...v5.1.0) (2022-07-30)
+
+
+### Features
+
+* Add scaffold script for directory + dataset.yaml setup ([#412](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/412)) ([5bf354b](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/5bf354b1cce3a8cec8c974e13932ddd91a554479))
+* Adding a notebook tutorial for the EPA dataset: CO levels ([#422](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/422)) ([f0bab59](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/f0bab59aa11e8314e584413f331d50af66d789f8))
+* Adds operators for Cloud SQL, Cloud Functions, and GCE ([#429](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/429)) ([9b5da34](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/9b5da3455e0f9a60d53b3783ff968354a9373025))
+* Support `--async-builds` flag for `generate_dag.py` ([#424](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/424)) ([7536df9](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/7536df9aeb3de265a74aceab6f3f843e613714a5))
+
+
+### Datasets
+
+* Onboard DeepMind AlphaFold DB ([#431](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/431)) ([02c887e](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/02c887ebdf96ba9826d577c307eabd5ac5194aec))
+* Onboard CelebA dataset ([#420](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/420)) ([0c28563](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/0c285639b9f8c7fae10581286bb0df86a47eee8c))
+* Adds BQ views to `scalable_open_source` dataset ([#416](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/416)) ([2785234](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/2785234639639ba2fbe0bdd06f2f53d258ae6f46))
+* Rename co2 columns to emissions to make it generic from Travel Impact Model dataset. ([#418](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/418)) ([e1ac106](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/e1ac1061192e532f2b16d4b59cbfbcb634bde92b))
+
+
+### Bug Fixes
+
+* Change `cms_medicare` tables with column `provider_zipcode` from integer to string type ([#417](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/417)) ([27b0a9b](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/27b0a9b06a236c88322f2144467fee2986702efd))
+* Resolve conflicts on Census Bureau ACS ([#414](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/414)) ([492b973](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/492b973e3215a3c960e06ef061eb0c10de8f8419))
+* Resolve CRON value in Cloud Storage Geo Index dataset ([#413](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/413)) ([8903e82](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/8903e82016d3bca5ef1dd83a9915b60c1e620a66))
+* Resolve IP error when creating NOAA cluster ([#423](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/423)) ([82d53f4](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/82d53f47f013e76be0054f92f3db32b69ed769f3))
+* Use proper GCS prefix for custom data folder ([#408](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/408)) ([9d56363](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/9d563635004542377f1880fae8de2c901a64555a))
+
 ## [5.0.0](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v4.2.0...v5.0.0) (2022-07-11)
 
 
