@@ -1,0 +1,32 @@
+[
+  {
+    "name": "date",
+    "type": "TIMESTAMP",
+    "description": "",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "number_of_strikes",
+    "type": "INTEGER",
+    "description": "",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "center_point_geom",
+    "type": "GEOGRAPHY",
+    "description": "",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "source_url",
+    "type": "STRING",
+    "description": "Source ",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "etl_timestamp",
+    "type": "TIMESTAMP",
+    "description": "Load time for this data row",
+    "mode": "NULLABLE"
+  }
+]

@@ -142,6 +142,7 @@ PRODUCT_BY_ID_DICT = products[1]
 
 def main(
     num_of_users: int,
+    num_of_ghost_events: int,
     target_gcs_prefix: str,
     target_gcs_bucket: str,
     source_dir: str,
@@ -162,7 +163,7 @@ def main(
 
     # generate ghost events
     logging.info("generating ghost events")
-    for user_num in range(int(num_of_users)):
+    for user_num in range(int(num_of_users) * int(num_of_ghost_events)):
         logging.info(f"ghost event {user_num}")
         GhostEvents()
 
@@ -281,7 +282,7 @@ def get_address(
     return {
         "street": fake.street_address(),
         "city": loc["city"],
-        "state": loc["country"],
+        "state": loc["state"],
         "postal_code": loc["postal_code"],
         "country": loc["country"],
         "latitude": loc["latitude"],
@@ -504,8 +505,8 @@ class Order(DataUtil):
         self.user_id = user.id
         self.gender = user.gender
         self.status = self.random_item(
-            population=["Complete", "Cancelled", "Returned"],
-            distribution=[0.85, 0.05, 0.1],
+            population=["Complete", "Cancelled", "Returned", "Processing", "Shipped"],
+            distribution=[0.25, 0.15, 0.1, 0.2, 0.3],
         )
         self.created_at = self.child_created_at()
         # add random generator for days it takes to ship, deliver, return etc.
@@ -526,6 +527,12 @@ class Order(DataUtil):
             self.delivered_at = self.shipped_at + datetime.timedelta(
                 minutes=random.randrange(MINUTES_IN_DAY * 5)
             )  # delivered between 0-5 days after ship date
+            self.returned_at = None
+        elif self.status == "Shipped":
+            self.shipped_at = self.created_at + datetime.timedelta(
+                minutes=random.randrange(MINUTES_IN_DAY * 3)
+            )  # shipped between 0-3 days after order placed
+            self.delivered_at = None
             self.returned_at = None
         else:
             self.shipped_at = None
@@ -592,8 +599,8 @@ class OrderItem(DataUtil):
     user_id: int = dataclasses.field(init=False)
     product_id: int = dataclasses.field(init=False)
     inventory_item_id: int = dataclasses.field(init=False)
+    status: str = dataclasses.field(init=False)
     created_at: datetime.datetime = dataclasses.field(init=False)
-
     shipped_at: datetime.datetime = dataclasses.field(init=False)
     delivered_at: datetime.datetime = dataclasses.field(init=False)
     returned_at: datetime.datetime = dataclasses.field(init=False)
@@ -618,6 +625,7 @@ class OrderItem(DataUtil):
         self.user_id = order.user_id
         inv_item_id = inv_item_id + 1
         self.inventory_item_id = inv_item_id
+        self.status = order.status
         self.created_at = order.created_at - datetime.timedelta(
             seconds=random.randrange(SECONDS_IN_MINUTE * 240)
         )  # order purchased within 4 hours
@@ -631,7 +639,7 @@ class OrderItem(DataUtil):
         ]
         product = PRODUCT_GENDER_DICT[order.gender][random_idx]
         self.product_id = product[0]
-        self.sale_price = product[3]
+        self.sale_price = product[7]
         self.ip_address = fake.ipv4()
         self.browser = self.random_item(
             population=["IE", "Chrome", "Safari", "Firefox", "Other"],
@@ -815,6 +823,7 @@ if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
     main(
         num_of_users=int(os.environ["NUM_OF_USERS"]),
+        num_of_ghost_events=int(os.environ["NUM_OF_GHOST_EVENTS"]),
         target_gcs_prefix=os.environ["TARGET_GCS_PREFIX"],
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
         source_dir=os.environ["SOURCE_DIR"],

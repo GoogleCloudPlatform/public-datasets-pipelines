@@ -1,0 +1,249 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+resources:
+
+  - type: bigquery_table
+    table_id: tree_census_2015
+    description: "Tree Census table"
+
+dag:
+  airflow_version: 2
+  initialize:
+    dag_id: tree_census_2015
+    default_args:
+      owner: "Google"
+      depends_on_past: False
+      start_date: "2021-03-01"
+    max_active_runs: 1
+    schedule_interval: "@daily"
+    catchup: False
+    default_view: graph
+  tasks:
+    - operator: "KubernetesPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "tree_census_2015_transform_csv"
+        startup_timeout_seconds: 600
+        name: "tree_census_2015"
+        namespace: "composer"
+        service_account_name: "datasets"
+        image_pull_policy: "Always"
+        image: "{{ var.json.new_york_trees.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "https://data.cityofnewyork.us/api/views/uvpi-gqnh/rows.csv"
+          SOURCE_FILE: "files/data.csv"
+          TARGET_FILE: "files/data_output.csv"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/new_york_trees/tree_census_2015/data_output.csv"
+          PIPELINE_NAME: "tree_census_2015"
+          CSV_HEADERS: >-
+            ["tree_id","block_id","created_at","tree_dbh","stump_diam","curb_loc","status","health",
+            "spc_latin","spc_common","steward","guards","sidewalk","user_type","problems","root_stone",
+            "root_grate","root_other","trunk_wire","trnk_light","trnk_other","brch_light","brch_shoe",
+            "brch_other","address","zipcode","zip_city","cb_num","borocode","boroname","cncldist",
+            "st_assem","st_senate","nta","nta_name","boro_ct","state","latitude","longitude",
+            "x_sp","y_sp"]
+          RENAME_MAPPINGS: >-
+            {"postcode":"zipcode","community board":"cb_num","borough":"boroname"}
+          INTEGER_STRING_COL: >-
+            ["tree_id", "block_id", "tree_dbh", "stump_diam", "zipcode", "cb_num","borocode",
+            "cncldist","st_assem","st_senate","boro_ct"]
+
+        resources:
+          request_memory: "3G"
+          request_cpu: "1"
+          request_ephemeral_storage: "5G"
+
+    - operator: "GoogleCloudStorageToBigQueryOperator"
+      description: "Task to load CSV data to a BigQuery table"
+      args:
+        task_id: "load_tree_census_2015_to_bq"
+        bucket: "{{ var.value.composer_bucket }}"
+        source_objects: ["data/new_york_trees/tree_census_2015/data_output.csv"]
+        source_format: "CSV"
+        destination_project_dataset_table: "new_york_trees.tree_census_2015"
+        skip_leading_rows: 1
+        allow_quoted_newlines: True
+        write_disposition: "WRITE_TRUNCATE"
+
+        schema_fields:
+          - name: "tree_id"
+            type: "integer"
+            description: "Unique identification number for each tree point"
+            mode: "required"
+          - name: "block_id"
+            type: "integer"
+            description: "Identifier linking each tree to the block in the blockface table/shapefile that it is mapped on."
+            mode: "nullable"
+          - name: "created_at"
+            type: "date"
+            description: "The date tree points were collected in the census software"
+            mode: "nullable"
+          - name: "tree_dbh"
+            type: "integer"
+            description: "Diameter of the tree measured at approximately 54\" / 137cm above the ground."
+            mode: "nullable"
+          - name: "stump_diam"
+            type: "integer"
+            description: "Diameter of stump measured through the center rounded to the nearest inch."
+            mode: "nullable"
+          - name: "curb_loc"
+            type: "string"
+            description: "Location of tree bed in relationship to the curb; trees are either along the curb (OnCurb) or offset from the curb (OffsetFromCurb)"
+            mode: "nullable"
+          - name: "status"
+            type: "string"
+            description: "Indicates whether the tree is alive standing dead or a stump."
+            mode: "nullable"
+          - name: "health"
+            type: "string"
+            description: "Indicates the user's perception of tree health."
+            mode: "nullable"
+          - name: "spc_latin"
+            type: "string"
+            description: "Scientific name for species e.g. \"Acer rubrum\""
+            mode: "nullable"
+          - name: "spc_common"
+            type: "string"
+            description: "Common name for species e.g. \"red maple\""
+            mode: "nullable"
+          - name: "steward"
+            type: "string"
+            description: "Indicates the number of unique signs of stewardship observed for this tree. Not recorded for stumps or dead trees."
+            mode: "nullable"
+          - name: "guards"
+            type: "string"
+            description: "Indicates whether a guard is present and if the user felt it was a helpful or harmful guard. Not recorded for dead trees and stumps"
+            mode: "nullable"
+          - name: "sidewalk"
+            type: "string"
+            description: "Indicates whether one of the sidewalk flags immediately adjacent to the tree was damaged cracked or lifted. Not recorded for dead trees and stumps."
+            mode: "nullable"
+          - name: "user_type"
+            type: "string"
+            description: "This field describes the category of user who collected this tree point's data."
+            mode: "nullable"
+          - name: "problems"
+            type: "string"
+            description: ""
+            mode: "nullable"
+          - name: "root_stone"
+            type: "string"
+            description: "Indicates the presence of a root problem caused by paving stones in tree bed"
+            mode: "nullable"
+          - name: "root_grate"
+            type: "string"
+            description: "Indicates the presence of a root problem caused by metal grates in tree bed"
+            mode: "nullable"
+          - name: "root_other"
+            type: "string"
+            description: "Indicates the presence of other root problems"
+            mode: "nullable"
+          - name: "trunk_wire"
+            type: "string"
+            description: "Indicates the presence of a trunk problem caused by wires or rope wrapped around the trunk"
+            mode: "nullable"
+          - name: "trnk_light"
+            type: "string"
+            description: "Indicates the presence of a trunk problem caused by lighting installed on the tree"
+            mode: "nullable"
+          - name: "trnk_other"
+            type: "string"
+            description: "Indicates the presence of other trunk problems"
+            mode: "nullable"
+          - name: "brch_light"
+            type: "string"
+            description: "Indicates the presence of a branch problem caused by lights (usually string lights) or wires in the branches"
+            mode: "nullable"
+          - name: "brch_shoe"
+            type: "string"
+            description: "Indicates the presence of a branch problem caused by sneakers in the branches"
+            mode: "nullable"
+          - name: "brch_other"
+            type: "string"
+            description: "Indicates the presence of other branch problems"
+            mode: "nullable"
+          - name: "address"
+            type: "string"
+            description: "Nearest estimated address to tree"
+            mode: "nullable"
+          - name: "zipcode"
+            type: "integer"
+            description: "Five-digit zipcode in which tree is located"
+            mode: "nullable"
+          - name: "zip_city"
+            type: "string"
+            description: "City as derived from zipcode. This is often (but not always) the same as borough."
+            mode: "nullable"
+          - name: "cb_num"
+            type: "integer"
+            description: "Community board in which tree point is located"
+            mode: "nullable"
+          - name: "borocode"
+            type: "integer"
+            description: "Code for borough in which tree point is located"
+            mode: "nullable"
+          - name: "boroname"
+            type: "string"
+            description: "Name of borough in which tree point is located"
+            mode: "nullable"
+          - name: "cncldist"
+            type: "integer"
+            description: "Council district in which tree point is located"
+            mode: "nullable"
+          - name: "st_assem"
+            type: "integer"
+            description: "State Assembly District in which tree point is located"
+            mode: "nullable"
+          - name: "st_senate"
+            type: "integer"
+            description: "State Senate District in which tree point is located"
+            mode: "nullable"
+          - name: "nta"
+            type: "string"
+            description: "This is the NTA Code corresponding to the neighborhood tabulation area from the 2010 US Census that the tree point falls into."
+            mode: "nullable"
+          - name: "nta_name"
+            type: "string"
+            description: "This is the NTA name corresponding to the neighborhood tabulation area from the 2010 US Census that the tree point falls into."
+            mode: "nullable"
+          - name: "boro_ct"
+            type: "integer"
+            description: "This is the boro_ct identifyer for the census tract that the tree point falls into."
+            mode: "nullable"
+          - name: "state"
+            type: "string"
+            description: "All features given value 'New York'"
+            mode: "nullable"
+          - name: "latitude"
+            type: "float"
+            description: "Latitude of point in decimal degrees"
+            mode: "nullable"
+          - name: "longitude"
+            type: "float"
+            description: "Longitude of point in decimal degrees"
+            mode: "nullable"
+          - name: "x_sp"
+            type: "float"
+            description: "X coordinate in state plane. Units are feet."
+            mode: "nullable"
+          - name: "y_sp"
+            type: "float"
+            description: "Y coordinate in state plane. Units are feet"
+            mode: "nullable"
+
+  graph_paths:
+    - "tree_census_2015_transform_csv >> load_tree_census_2015_to_bq"

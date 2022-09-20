@@ -16,15 +16,10 @@
 
 
 resource "google_bigquery_table" "bls_employment_hours_earnings_series" {
-  project    = var.project_id
-  dataset_id = "bls"
-  table_id   = "employment_hours_earnings_series"
-
+  project     = var.project_id
+  dataset_id  = "bls"
+  table_id    = "employment_hours_earnings_series"
   description = "Employment_Hours_Earnings_Series Dataset"
-
-
-
-
   depends_on = [
     google_bigquery_dataset.bls
   ]

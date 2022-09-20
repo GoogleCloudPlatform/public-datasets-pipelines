@@ -1,0 +1,147 @@
+[
+	{
+		"name": "dkey",
+		"type": "STRING",
+		"description": "",
+        "mode": "NULLABLE"
+    },
+	{
+		"name": "raw_id",
+		"type": "INTEGER",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "meta_key",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "doc_doi",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "meta_doi",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "doi",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "doi_flag",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "isbn",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "journal",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "doc_title",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "meta_title",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "title",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "doc_pub_date",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "meta_pub_date",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "pub_date",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "doc_author",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "meta_author",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "author",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "doc_size",
+		"type": "INTEGER",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "insert_date",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "multi_row_flag",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "etl_timestamp",
+		"type": "TIMESTAMP",
+		"description": "Date and time this data was loaded to BQ",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "source_file",
+		"type": "STRING",
+		"description": "Source file name of data file used to load to BQ",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "source_url",
+		"type": "STRING",
+		"description": "Original URL location of source file",
+		"mode": "NULLABLE"
+	}
+
+]
