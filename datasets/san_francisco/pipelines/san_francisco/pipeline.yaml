@@ -194,66 +194,6 @@ dag:
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/san_francisco/transit_municipal_calendar/data_output.csv"
           SCHEMA_PATH: "data/san_francisco/schema/sf_calendar_schema.json"
-          HEADER_ROW_ORDINAL: "0"
-          RENAME_HEADERS_LIST: >-
-            {
-              "data.stations.station_id": "station_id",
-              "data.stations.name": "name",
-              "data.stations.short_name": "short_name",
-              "data.stations.lat": "lat",
-              "data.stations.lon": "lon",
-              "data.stations.region_id": "region_id",
-              "data.stations.rental_methods": "rental_methods",
-              "data.stations.capacity": "capacity",
-              "data.stations.eightd_has_key_dispenser": "eightd_has_key_dispenser",
-              "data.stations.has_kiosk": "has_kiosk",
-              "data.stations.external_id": "external_id"
-            }
-          EMPTY_KEY_LIST: >-
-            [
-              "station_id",
-              "name",
-              "lat",
-              "lon"
-            ]
-          GEN_LOCATION_LIST: >-
-            {
-              "station_geom": [ "lon", "lat" ]
-            }
-          RESOLVE_DATATYPES_LIST: >-
-            {
-              "region_id": "Int64"
-            }
-          REMOVE_PAREN_LIST: >-
-            [
-              "latitude",
-              "longitude"
-            ]
-          STRIP_WHITESPACE_LIST: >-
-            [
-              "incident_address"
-            ]
-          DATE_FORMAT_LIST: >-
-            {
-              "created_date": "%Y-%m-%d %H:%M:%S",
-              "closed_date": "%Y-%m-%d %H:%M:%S",
-              "resolution_action_updated_date": "%Y-%m-%d %H:%M:%S"
-            }
-          REORDER_HEADERS_LIST: >-
-            [
-              "station_id",
-              "name",
-              "short_name",
-              "lat",
-              "lon",
-              "region_id",
-              "rental_methods",
-              "capacity",
-              "external_id",
-              "eightd_has_key_dispenser",
-              "has_kiosk",
-              "station_geom"
-            ]
         resources:
           limit_memory: "8G"
           limit_cpu: "3"
@@ -271,7 +211,7 @@ dag:
         env_vars:
           PIPELINE_NAME: "San Francisco Bikeshare Stations"
           SOURCE_URL: "https://gbfs.baywheels.com/gbfs/fr/station_information"
-          CHUNKSIZE: "{{ var.json.san_francisco.sf_bikeshare_stations.chunksize }}"
+          CHUNKSIZE: "750000"
           SOURCE_FILE: "files/data_bikeshare_station_info.csv"
           TARGET_FILE: "files/data_output_bikeshare_station_info.csv"
           PROJECT_ID: "{{ var.value.gcp_project }}"
@@ -985,4 +925,4 @@ dag:
         name: san-francisco
 
   graph_paths:
-    - "create_cluster >> [ sf_311_service_requests, sf_bikeshare_stations, sf_bikeshare_status, sf_bikeshare_trips, sf_film_locations, sffd_service_calls, sf_street_trees ] >> delete_cluster"
+    - "create_cluster >> [ sf_311_service_requests, sf_calendar, sf_bikeshare_stations, sf_bikeshare_status, sf_bikeshare_trips, sf_film_locations, sffd_service_calls, sf_street_trees ] >> delete_cluster"
