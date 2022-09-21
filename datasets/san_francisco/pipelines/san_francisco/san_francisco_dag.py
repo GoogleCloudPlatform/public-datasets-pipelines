@@ -14,7 +14,7 @@
 
 
 from airflow import DAG
-from airflow.providers.google.cloud.operators import kubernetes_engine
+from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
 
 default_args = {
     "owner": "Google",
@@ -31,32 +31,14 @@ with DAG(
     catchup=False,
     default_view="graph",
 ) as dag:
-    create_cluster = kubernetes_engine.GKECreateClusterOperator(
-        task_id="create_cluster",
-        project_id="{{ var.value.gcp_project }}",
-        location="us-central1-c",
-        body={
-            "name": "san-francisco",
-            "initial_node_count": 4,
-            "network": "{{ var.value.vpc_network }}",
-            "node_config": {
-                "machine_type": "e2-standard-16",
-                "oauth_scopes": [
-                    "https://www.googleapis.com/auth/devstorage.read_write",
-                    "https://www.googleapis.com/auth/cloud-platform",
-                ],
-            },
-        },
-    )
 
     # Run New York 311 Service Requests Pipeline
-    sf_311_service_requests = kubernetes_engine.GKEStartPodOperator(
+    sf_311_service_requests = kubernetes_pod.KubernetesPodOperator(
         task_id="sf_311_service_requests",
         name="sf_311_service_requests",
-        project_id="{{ var.value.gcp_project }}",
-        location="us-central1-c",
-        cluster_name="san-francisco",
-        namespace="default",
+        startup_timeout_seconds=600,
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -83,26 +65,24 @@ with DAG(
             "DATE_FORMAT_LIST": '{\n  "created_date": "%Y-%m-%d %H:%M:%S",\n  "closed_date": "%Y-%m-%d %H:%M:%S",\n  "resolution_action_updated_date": "%Y-%m-%d %H:%M:%S"\n}',
             "REORDER_HEADERS_LIST": '[\n    "unique_key",\n    "created_date",\n    "closed_date",\n    "resolution_action_updated_date",\n    "status",\n    "status_notes",\n    "agency_name",\n    "category",\n    "complaint_type",\n    "descriptor",\n    "incident_address",\n    "supervisor_district",\n    "neighborhood",\n    "location",\n    "source",\n    "media_url",\n    "latitude",\n    "longitude",\n    "police_district"\n]',
         },
-        resources={"limit_memory": "8G", "limit_cpu": "3"},
+        resources={
+            "limit_memory": "8G",
+            "limit_cpu": "3",
+            "request_ephemeral_storage": "10G",
+        },
     )
 
     # Run San Francisco Bikeshare Stations Pipeline
-    sf_calendar = kubernetes_engine.GKEStartPodOperator(
+    sf_calendar = kubernetes_pod.KubernetesPodOperator(
         task_id="sf_calendar",
         name="calendar",
-        project_id="{{ var.value.gcp_project }}",
-        location="us-central1-c",
-        cluster_name="san-francisco",
-        namespace="default",
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}",
         env_vars={
             "PIPELINE_NAME": "San Francisco Municipal Calendar",
-            "SOURCE_URL_DICT": {
-                "calendar": "gs://pdp-feeds-staging/SF_Muni/GTFSTransitData_SF/calendar.csv",
-                "calendar_attributes": "gs://pdp-feeds-staging/SF_Muni/GTFSTransitData_SF/calendar_attributes.csv",
-                "calendar_dates": "gs://pdp-feeds-staging/SF_Muni/GTFSTransitData_SF/calendar_dates.csv",
-            },
+            "SOURCE_URL_DICT": '{\n  "calendar": "gs://pdp-feeds-staging/SF_Muni/GTFSTransitData_SF/calendar.csv",\n  "calendar_attributes": "gs://pdp-feeds-staging/SF_Muni/GTFSTransitData_SF/calendar_attributes.csv",\n  "calendar_dates": "gs://pdp-feeds-staging/SF_Muni/GTFSTransitData_SF/calendar_dates.csv"\n}',
             "CHUNKSIZE": "750000",
             "SOURCE_FILE": "files/data_municipal_calendar.csv",
             "TARGET_FILE": "files/data_output_municipal_calendar.csv",
@@ -114,17 +94,19 @@ with DAG(
             "TARGET_GCS_PATH": "data/san_francisco/transit_municipal_calendar/data_output.csv",
             "SCHEMA_PATH": "data/san_francisco/schema/sf_calendar_schema.json",
         },
-        resources={"limit_memory": "8G", "limit_cpu": "3"},
+        resources={
+            "limit_memory": "8G",
+            "limit_cpu": "3",
+            "request_ephemeral_storage": "10G",
+        },
     )
 
     # Run San Francisco Bikeshare Stations Pipeline
-    sf_bikeshare_stations = kubernetes_engine.GKEStartPodOperator(
+    sf_bikeshare_stations = kubernetes_pod.KubernetesPodOperator(
         task_id="sf_bikeshare_stations",
         name="bikeshare_stations",
-        project_id="{{ var.value.gcp_project }}",
-        location="us-central1-c",
-        cluster_name="san-francisco",
-        namespace="default",
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -150,17 +132,19 @@ with DAG(
             "DATE_FORMAT_LIST": '{\n  "created_date": "%Y-%m-%d %H:%M:%S",\n  "closed_date": "%Y-%m-%d %H:%M:%S",\n  "resolution_action_updated_date": "%Y-%m-%d %H:%M:%S"\n}',
             "REORDER_HEADERS_LIST": '[\n  "station_id",\n  "name",\n  "short_name",\n  "lat",\n  "lon",\n  "region_id",\n  "rental_methods",\n  "capacity",\n  "external_id",\n  "eightd_has_key_dispenser",\n  "has_kiosk",\n  "station_geom"\n]',
         },
-        resources={"limit_memory": "8G", "limit_cpu": "3"},
+        resources={
+            "limit_memory": "8G",
+            "limit_cpu": "3",
+            "request_ephemeral_storage": "10G",
+        },
     )
 
     # Run San Francisco Bikeshare Status Pipeline
-    sf_bikeshare_status = kubernetes_engine.GKEStartPodOperator(
+    sf_bikeshare_status = kubernetes_pod.KubernetesPodOperator(
         task_id="sf_bikeshare_status",
         name="bikeshare_status",
-        project_id="{{ var.value.gcp_project }}",
-        location="us-central1-c",
-        cluster_name="san-francisco",
-        namespace="default",
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -181,17 +165,19 @@ with DAG(
             "EMPTY_KEY_LIST": '[\n  "station_id",\n  "num_bikes_available",\n  "num_docks_available",\n  "is_installed",\n  "is_renting",\n  "is_returning",\n  "last_reported"\n]',
             "REORDER_HEADERS_LIST": '[\n  "station_id",\n  "num_bikes_available",\n  "num_bikes_disabled",\n  "num_docks_available",\n  "num_docks_disabled",\n  "is_installed",\n  "is_renting",\n  "is_returning",\n  "last_reported",\n  "num_ebikes_available",\n  "eightd_has_available_keys"\n]',
         },
-        resources={"limit_memory": "8G", "limit_cpu": "3"},
+        resources={
+            "limit_memory": "8G",
+            "limit_cpu": "3",
+            "request_ephemeral_storage": "10G",
+        },
     )
 
     # Run San Francisco Bikeshare Trips Pipeline
-    sf_bikeshare_trips = kubernetes_engine.GKEStartPodOperator(
+    sf_bikeshare_trips = kubernetes_pod.KubernetesPodOperator(
         task_id="sf_bikeshare_trips",
         name="sf_bikeshare_trips",
-        project_id="{{ var.value.gcp_project }}",
-        location="us-central1-c",
-        cluster_name="san-francisco",
-        namespace="default",
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -219,17 +205,19 @@ with DAG(
             "GEN_LOCATION_LIST": '{\n  "start_station_geom": [ "start_station_longitude", "start_station_latitude" ],\n  "end_station_geom": [ "end_station_longitude", "end_station_latitude" ]\n}',
             "REORDER_HEADERS_LIST": '[\n  "trip_id",\n  "duration_sec",\n  "start_date",\n  "start_station_name",\n  "start_station_id",\n  "end_date",\n  "end_station_name",\n  "end_station_id",\n  "bike_number",\n  "zip_code",\n  "subscriber_type",\n  "subscription_type",\n  "start_station_latitude",\n  "start_station_longitude",\n  "end_station_latitude",\n  "end_station_longitude",\n  "member_birth_year",\n  "member_gender",\n  "bike_share_for_all_trip",\n  "start_station_geom",\n  "end_station_geom"\n]',
         },
-        resources={"limit_memory": "8G", "limit_cpu": "3"},
+        resources={
+            "limit_memory": "8G",
+            "limit_cpu": "3",
+            "request_ephemeral_storage": "10G",
+        },
     )
 
     # Run San Francisco Film Locations Pipeline
-    sf_film_locations = kubernetes_engine.GKEStartPodOperator(
+    sf_film_locations = kubernetes_pod.KubernetesPodOperator(
         task_id="sf_film_locations",
         name="sf_film_locations",
-        project_id="{{ var.value.gcp_project }}",
-        location="us-central1-c",
-        cluster_name="san-francisco",
-        namespace="default",
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -251,17 +239,19 @@ with DAG(
             "STRIP_NEWLINES_LIST": '[\n  "production_company",\n  "fun_facts"\n]',
             "REORDER_HEADERS_LIST": '[\n  "title",\n  "release_year",\n  "locations",\n  "fun_facts",\n  "production_company",\n  "distributor",\n  "director",\n  "writer",\n  "actor_1",\n  "actor_2",\n  "actor_3"\n]',
         },
-        resources={"limit_memory": "8G", "limit_cpu": "3"},
+        resources={
+            "limit_memory": "8G",
+            "limit_cpu": "3",
+            "request_ephemeral_storage": "10G",
+        },
     )
 
     # Run San Francisco Fire Department Service Calls Pipeline
-    sffd_service_calls = kubernetes_engine.GKEStartPodOperator(
+    sffd_service_calls = kubernetes_pod.KubernetesPodOperator(
         task_id="sffd_service_calls",
         name="sffd_service_calls",
-        project_id="{{ var.value.gcp_project }}",
-        location="us-central1-c",
-        cluster_name="san-francisco",
-        namespace="default",
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -284,17 +274,19 @@ with DAG(
             "DATE_FORMAT_LIST": '{\n  "call_date": "%Y-%m-%d",\n  "watch_date": "%Y-%m-%d",\n  "available_timestamp": "%Y-%m-%d %H:%M:%S",\n  "dispatch_timestamp": "%Y-%m-%d %H:%M:%S",\n  "entry_timestamp": "%Y-%m-%d %H:%M:%S",\n  "on_scene_timestamp": "%Y-%m-%d %H:%M:%S",\n  "received_timestamp": "%Y-%m-%d %H:%M:%S",\n  "response_timestamp": "%Y-%m-%d %H:%M:%S",\n  "transport_timestamp": "%Y-%m-%d %H:%M:%S",\n  "hospital_timestamp": "%Y-%m-%d %H:%M:%S"\n}',
             "REORDER_HEADERS_LIST": '[\n  "call_number",\n  "unit_id",\n  "incident_number",\n  "call_type",\n  "call_date",\n  "watch_date",\n  "received_timestamp",\n  "entry_timestamp",\n  "dispatch_timestamp",\n  "response_timestamp",\n  "on_scene_timestamp",\n  "transport_timestamp",\n  "hospital_timestamp",\n  "call_final_disposition",\n  "available_timestamp",\n  "address",\n  "city",\n  "zipcode_of_incident",\n  "battalion",\n  "station_area",\n  "box",\n  "original_priority",\n  "priority",\n  "final_priority",\n  "als_unit",\n  "call_type_group",\n  "number_of_alarms",\n  "unit_type",\n  "unit_sequence_in_call_dispatch",\n  "fire_prevention_district",\n  "supervisor_district",\n  "row_id",\n  "latitude",\n  "longitude",\n  "neighborhood_name",\n  "location_geom"\n]',
         },
-        resources={"limit_memory": "8G", "limit_cpu": "3"},
+        resources={
+            "limit_memory": "8G",
+            "limit_cpu": "3",
+            "request_ephemeral_storage": "10G",
+        },
     )
 
     # Run San Francisco Street Trees Pipeline
-    sf_street_trees = kubernetes_engine.GKEStartPodOperator(
+    sf_street_trees = kubernetes_pod.KubernetesPodOperator(
         task_id="sf_street_trees",
         name="sf_street_trees",
-        project_id="{{ var.value.gcp_project }}",
-        location="us-central1-c",
-        cluster_name="san-francisco",
-        namespace="default",
+        namespace="composer",
+        service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -318,26 +310,20 @@ with DAG(
             "EMPTY_KEY_LIST": '[\n  "tree_id"\n]',
             "REORDER_HEADERS_LIST": '[\n  "tree_id",\n  "legal_status",\n  "species",\n  "address",\n  "site_order",\n  "site_info",\n  "plant_type",\n  "care_taker",\n  "care_assistant",\n  "plant_date",\n  "dbh",\n  "plot_size",\n  "permit_notes",\n  "x_coordinate",\n  "y_coordinate",\n  "latitude",\n  "longitude",\n  "location"\n]',
         },
-        resources={"limit_memory": "8G", "limit_cpu": "3"},
-    )
-    delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
-        task_id="delete_cluster",
-        project_id="{{ var.value.gcp_project }}",
-        location="us-central1-c",
-        name="san-francisco",
+        resources={
+            "limit_memory": "8G",
+            "limit_cpu": "3",
+            "request_ephemeral_storage": "10G",
+        },
     )
 
-    (
-        create_cluster
-        >> [
-            sf_311_service_requests,
-            sf_calendar,
-            sf_bikeshare_stations,
-            sf_bikeshare_status,
-            sf_bikeshare_trips,
-            sf_film_locations,
-            sffd_service_calls,
-            sf_street_trees,
-        ]
-        >> delete_cluster
-    )
+    [
+        sf_311_service_requests,
+        sf_calendar,
+        sf_bikeshare_stations,
+        sf_bikeshare_status,
+        sf_bikeshare_trips,
+        sf_film_locations,
+        sffd_service_calls,
+        sf_street_trees,
+    ]

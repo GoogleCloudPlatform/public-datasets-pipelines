@@ -30,29 +30,14 @@ dag:
     catchup: False
     default_view: graph
   tasks:
-    - operator: "GKECreateClusterOperator"
-      args:
-        task_id: "create_cluster"
-        project_id: "{{ var.value.gcp_project }}"
-        location: "us-central1-c"
-        body:
-          name: san-francisco
-          initial_node_count: 4
-          network: "{{ var.value.vpc_network }}"
-          node_config:
-            machine_type: e2-standard-16
-            oauth_scopes:
-              - https://www.googleapis.com/auth/devstorage.read_write
-              - https://www.googleapis.com/auth/cloud-platform
-    - operator: "GKEStartPodOperator"
+    - operator: "KubernetesPodOperator"
       description: "Run New York 311 Service Requests Pipeline"
       args:
         task_id: "sf_311_service_requests"
         name: "sf_311_service_requests"
-        project_id: "{{ var.value.gcp_project }}"
-        location: "us-central1-c"
-        cluster_name: san-francisco
-        namespace: "default"
+        startup_timeout_seconds: 600
+        namespace: "composer"
+        service_account_name: "datasets"
         image_pull_policy: "Always"
         image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -166,24 +151,24 @@ dag:
         resources:
           limit_memory: "8G"
           limit_cpu: "3"
-    - operator: "GKEStartPodOperator"
+          request_ephemeral_storage: "10G"
+    - operator: "KubernetesPodOperator"
       description: "Run San Francisco Bikeshare Stations Pipeline"
       args:
         task_id: "sf_calendar"
         name: "calendar"
-        project_id: "{{ var.value.gcp_project }}"
-        location: "us-central1-c"
-        cluster_name: san-francisco
-        namespace: "default"
+        namespace: "composer"
+        service_account_name: "datasets"
         image_pull_policy: "Always"
         image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
         env_vars:
           PIPELINE_NAME: "San Francisco Municipal Calendar"
-          SOURCE_URL_DICT: {
-            "calendar": "gs://pdp-feeds-staging/SF_Muni/GTFSTransitData_SF/calendar.csv",
-            "calendar_attributes": "gs://pdp-feeds-staging/SF_Muni/GTFSTransitData_SF/calendar_attributes.csv",
-            "calendar_dates": "gs://pdp-feeds-staging/SF_Muni/GTFSTransitData_SF/calendar_dates.csv"
-          }
+          SOURCE_URL_DICT: >-
+            {
+              "calendar": "gs://pdp-feeds-staging/SF_Muni/GTFSTransitData_SF/calendar.csv",
+              "calendar_attributes": "gs://pdp-feeds-staging/SF_Muni/GTFSTransitData_SF/calendar_attributes.csv",
+              "calendar_dates": "gs://pdp-feeds-staging/SF_Muni/GTFSTransitData_SF/calendar_dates.csv"
+            }
           CHUNKSIZE: "750000"
           SOURCE_FILE: "files/data_municipal_calendar.csv"
           TARGET_FILE: "files/data_output_municipal_calendar.csv"
@@ -197,15 +182,14 @@ dag:
         resources:
           limit_memory: "8G"
           limit_cpu: "3"
-    - operator: "GKEStartPodOperator"
+          request_ephemeral_storage: "10G"
+    - operator: "KubernetesPodOperator"
       description: "Run San Francisco Bikeshare Stations Pipeline"
       args:
         task_id: "sf_bikeshare_stations"
         name: "bikeshare_stations"
-        project_id: "{{ var.value.gcp_project }}"
-        location: "us-central1-c"
-        cluster_name: san-francisco
-        namespace: "default"
+        namespace: "composer"
+        service_account_name: "datasets"
         image_pull_policy: "Always"
         image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -284,15 +268,14 @@ dag:
         resources:
           limit_memory: "8G"
           limit_cpu: "3"
-    - operator: "GKEStartPodOperator"
+          request_ephemeral_storage: "10G"
+    - operator: "KubernetesPodOperator"
       description: "Run San Francisco Bikeshare Status Pipeline"
       args:
         task_id: "sf_bikeshare_status"
         name: "bikeshare_status"
-        project_id: "{{ var.value.gcp_project }}"
-        location: "us-central1-c"
-        cluster_name: san-francisco
-        namespace: "default"
+        namespace: "composer"
+        service_account_name: "datasets"
         image_pull_policy: "Always"
         image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -350,15 +333,14 @@ dag:
         resources:
           limit_memory: "8G"
           limit_cpu: "3"
-    - operator: "GKEStartPodOperator"
+          request_ephemeral_storage: "10G"
+    - operator: "KubernetesPodOperator"
       description: "Run San Francisco Bikeshare Trips Pipeline"
       args:
         task_id: "sf_bikeshare_trips"
         name: "sf_bikeshare_trips"
-        project_id: "{{ var.value.gcp_project }}"
-        location: "us-central1-c"
-        cluster_name: san-francisco
-        namespace: "default"
+        namespace: "composer"
+        service_account_name: "datasets"
         image_pull_policy: "Always"
         image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -539,15 +521,14 @@ dag:
         resources:
           limit_memory: "8G"
           limit_cpu: "3"
-    - operator: "GKEStartPodOperator"
+          request_ephemeral_storage: "10G"
+    - operator: "KubernetesPodOperator"
       description: "Run San Francisco Film Locations Pipeline"
       args:
         task_id: "sf_film_locations"
         name: "sf_film_locations"
-        project_id: "{{ var.value.gcp_project }}"
-        location: "us-central1-c"
-        cluster_name: san-francisco
-        namespace: "default"
+        namespace: "composer"
+        service_account_name: "datasets"
         image_pull_policy: "Always"
         image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -606,15 +587,14 @@ dag:
         resources:
           limit_memory: "8G"
           limit_cpu: "3"
-    - operator: "GKEStartPodOperator"
+          request_ephemeral_storage: "10G"
+    - operator: "KubernetesPodOperator"
       description: "Run San Francisco Fire Department Service Calls Pipeline"
       args:
         task_id: "sffd_service_calls"
         name: "sffd_service_calls"
-        project_id: "{{ var.value.gcp_project }}"
-        location: "us-central1-c"
-        cluster_name: san-francisco
-        namespace: "default"
+        namespace: "composer"
+        service_account_name: "datasets"
         image_pull_policy: "Always"
         image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -797,15 +777,14 @@ dag:
         resources:
           limit_memory: "8G"
           limit_cpu: "3"
-    - operator: "GKEStartPodOperator"
+          request_ephemeral_storage: "10G"
+    - operator: "KubernetesPodOperator"
       description: "Run San Francisco Street Trees Pipeline"
       args:
         task_id: "sf_street_trees"
         name: "sf_street_trees"
-        project_id: "{{ var.value.gcp_project }}"
-        location: "us-central1-c"
-        cluster_name: san-francisco
-        namespace: "default"
+        namespace: "composer"
+        service_account_name: "datasets"
         image_pull_policy: "Always"
         image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -917,12 +896,7 @@ dag:
         resources:
           limit_memory: "8G"
           limit_cpu: "3"
-    - operator: "GKEDeleteClusterOperator"
-      args:
-        task_id: "delete_cluster"
-        project_id: "{{ var.value.gcp_project }}"
-        location: "us-central1-c"
-        name: san-francisco
+          request_ephemeral_storage: "10G"
 
   graph_paths:
-    - "create_cluster >> [ sf_311_service_requests, sf_calendar, sf_bikeshare_stations, sf_bikeshare_status, sf_bikeshare_trips, sf_film_locations, sffd_service_calls, sf_street_trees ] >> delete_cluster"
+  - "[ sf_311_service_requests, sf_calendar, sf_bikeshare_stations, sf_bikeshare_status, sf_bikeshare_trips, sf_film_locations, sffd_service_calls, sf_street_trees ]"
