@@ -121,7 +121,7 @@ with DAG(
             "DROP_DEST_TABLE": "N",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/san_francisco/transit_municipal_routes/data_output.csv",
-            "SCHEMA_PATH": "data/san_francisco/schema/sf_routes_schema.json",
+            "SCHEMA_PATH": "data/san_francisco/schema/sf_muni_routes_schema.json",
         },
         resources={
             "limit_memory": "8G",
