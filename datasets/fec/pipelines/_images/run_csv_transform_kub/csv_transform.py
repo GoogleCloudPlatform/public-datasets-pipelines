@@ -39,8 +39,8 @@ def main(
     target_gcs_bucket: str,
     target_gcs_path: str,
     csv_headers: typing.List[str],
-    # rename_mappings: dict,
     chunksize: str,
+    # rename_mappings: dict,
     pipeline_name: str,
 ) -> None:
 
@@ -124,25 +124,41 @@ def main(
         )
     else:
         logging.info(f"Downloading file gs://{source_bucket}/{source_object}")
-        # download_blob(source_bucket, source_object, source_file)
+        download_blob(source_bucket, source_object, source_file)
 
-        process_source_file(source_file, target_file, chunksize, pipeline_name)
+        process_source_file(
+            source_file, target_file, chunksize, csv_headers, pipeline_name
+        )
 
+        # logging.info(f"Opening file...{source_file}")
+        # df = pd.read_table(
+        #     source_file, dtype=object, index_col=False, names=csv_headers, sep="|"
+        # )
+
+        # logging.info(f"Transforming.. {source_file}")
+
+        # df["transaction_dt"] = df["transaction_dt"].astype(str)
+        # date_for_length(df, "transaction_dt")
+        # df = resolve_date_format(df, "transaction_dt", pipeline_name)
+        # df = df.rename(columns=lambda x: x.strip())
+
+        # logging.info(f"Saving to output file.. {target_file}")
         logging.info(
             f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
         )
         upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
-        logging.info(
-            f"FEC {pipeline_name} process completed at "
-            + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-        )
+        # logging.info(
+        #     f"FEC {pipeline_name} process completed at "
+        #     + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        # )
 
 
 def process_source_file(
     source_file: str,
     target_file: str,
     chunksize: str,
+    csv_headers: typing.List[str],
     pipeline_name: str,
 ) -> None:
     logging.info(f"Opening source file {source_file}")
@@ -153,15 +169,15 @@ def process_source_file(
     ) as reader:
         data = []
         chunk_number = 1
-        print("process_source_file is good")
         for index, line in enumerate(csv.reader(reader, "TabDialect"), 0):
             data.append(line)
-            if index % int(chunksize) == 0 and index > 0:
+            if int(index) % int(chunksize) == 0 and int(index) > 0:
+
                 process_dataframe_chunk(
                     data,
                     target_file,
                     chunk_number,
-                    source_file,
+                    csv_headers,
                     pipeline_name,
                 )
                 data = []
@@ -172,7 +188,7 @@ def process_source_file(
                 data,
                 target_file,
                 chunk_number,
-                source_file,
+                csv_headers,
                 pipeline_name,
             )
 
@@ -181,18 +197,36 @@ def process_dataframe_chunk(
     data: typing.List[str],
     target_file: str,
     chunk_number: int,
-    csv_headers: list,
+    csv_headers: typing.List[str],
     pipeline_name: str,
 ) -> None:
-    print("coming into process_dataframe_chunk")
-    # print(data)
-    for item in data:
-        for char in item:
-            char = char.split("|")
-    print(data)
-    df = pd.DataFrame(data, columns=csv_headers)
-    print(df.head())
-    print("prblm is with batch")
+    data = list([char.split("|") for item in data for char in item])
+    df = pd.DataFrame(
+        data,
+        columns=[
+            "cmte_id",
+            "amndt_ind",
+            "rpt_tp",
+            "transaction_pgi",
+            "image_num",
+            "transaction_tp",
+            "entity_tp",
+            "name",
+            "city",
+            "state",
+            "zip_code",
+            "employer",
+            "occupation",
+            "transaction_dt",
+            "transaction_amt",
+            "other_id",
+            "tran_id",
+            "file_num",
+            "memo_cd",
+            "memo_text",
+            "sub_id",
+        ],
+    )
     target_file_batch = str(target_file).replace(
         ".csv", "-" + str(chunk_number) + ".csv"
     )
@@ -211,7 +245,9 @@ def process_chunk(
     pipeline_name: str,
 ) -> None:
     logging.info(f"Processing batch file {target_file_batch}")
+    df["image_num"] = df["image_num"].astype(str)
     df["transaction_dt"] = df["transaction_dt"].astype(str)
+    df.drop(df[df["sub_id"] == ""].index, inplace=True)
     date_for_length(df, "transaction_dt")
     df = resolve_date_format(df, "transaction_dt", pipeline_name)
     df = df.rename(columns=lambda x: x.strip())
@@ -294,7 +330,7 @@ def date_for_length(df: pd.DataFrame, field_name: str):
     date_list = df[field_name].values
     new_date_list = []
     for item in date_list:
-        if item != "NaN" and len(item) >= 6:
+        if item != "NaN" and len(item) >= 6 and len(item) <= 8:
             if len(item) == 7:
                 item = "0" + item
                 new_date_list.append(item)
@@ -305,9 +341,10 @@ def date_for_length(df: pd.DataFrame, field_name: str):
                 new_date_list.append(item)
                 continue
         elif len(item) < 6:
-            item = "NaN"
+            item = ""
             new_date_list.append(item)
         else:
+            item = ""
             new_date_list.append(item)
     df[field_name] = new_date_list
     return df[field_name]
@@ -362,5 +399,6 @@ if __name__ == "__main__":
         target_gcs_path=os.environ.get("TARGET_GCS_PATH", ""),
         csv_headers=os.environ.get("CSV_HEADERS", ""),
         chunksize=os.environ.get("CHUNKSIZE", ""),
+        # rename_mappings=os.environ.get("RENAME_MAPPINGS", ""),
         pipeline_name=os.environ.get("PIPELINE_NAME", ""),
     )
