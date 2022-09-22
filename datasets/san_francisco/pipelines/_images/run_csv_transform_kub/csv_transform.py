@@ -139,110 +139,30 @@ def execute_pipeline(
     ):
         download_file(source_url, source_file)
     elif destination_table == "calendar":
-        df_calendar = gcs_to_df(project_id=project_id,
-                                source_file_gcs_path=source_url_dict["calendar"],
-                                target_file_path=str(target_file))
-        df_calendar_attributes = gcs_to_df(
-                                    project_id=project_id,
-                                    source_file_gcs_path=source_url_dict["calendar_attributes"],
-                                    target_file_path=str(target_file)
-                                )
-        df_calendar_dates = gcs_to_df(project_id=project_id,
-                                    source_file_gcs_path=source_url_dict["calendar_dates"],
-                                    target_file_path=str(target_file)
-                                )
-        df=df_calendar.merge(
-            df_calendar_attributes,
-            how='inner',
-            on=None,
-            left_on='service_id',
-            right_on='service_id',
-            sort=True,
-            suffixes=('_calendar', '_attributes'),
-            copy=True,
-            indicator=False,
-            validate=None
-        )
-        df=df.merge(
-            df_calendar_dates,
-            how='inner',
-            on=None,
-            left_on='service_id',
-            right_on='service_id',
-            sort=True,
-            suffixes=('_calendar', '_dates'),
-            copy=True,
-            indicator=False,
-            validate=None
-        )
-        df['monday_str'] = df['monday'].apply(lambda x: "False" if x == 0 else "True")
-        df['tuesday_str'] = df['tuesday'].apply(lambda x: "False" if x == 0 else "True")
-        df['wednesday_str'] = df['wednesday'].apply(lambda x: "False" if x == 0 else "True")
-        df['thursday_str'] = df['thursday'].apply(lambda x: "False" if x == 0 else "True")
-        df['friday_str'] = df['friday'].apply(lambda x: "False" if x == 0 else "True")
-        df['saturday_str'] = df['saturday'].apply(lambda x: "False" if x == 0 else "True")
-        df['sunday_str'] = df['sunday'].apply(lambda x: "False" if x == 0 else "True")
-        df['exception_type_str'] = df['exception_type'].apply(lambda x: "True" if x == 1 else 'False')
-        df = df[
-                    [
-                        'service_id', 'start_date', 'end_date',
-                        'service_description', 'date', 'exception_type_str',
-                        'monday_str', 'tuesday_str', 'wednesday_str',
-                        'thursday_str', 'friday_str', 'saturday_str', 'sunday_str'
-                    ]
-                ]
-        df = df.rename(
-                        {
-                            'monday_str': 'monday',
-                            'tuesday_str': 'tuesday',
-                            'wednesday_str': 'wednesday',
-                            'thursday_str': 'thursday',
-                            'friday_str': 'friday',
-                            'saturday_str': 'saturday',
-                            'sunday_str': 'sunday',
-                             'service_description': 'service_desc',
-                             'date': 'exceptions',
-                             'exception_type_str': 'exception_type'
-                        },
-                        axis=1
-                )
-        df['exceptions'] = df['exceptions'].apply(lambda x: f"{str(x).strip()[:4]}-{str(x).strip()[4:6]}-{str(x).strip()[6:8]}")
-        df = df[
-                    [
-                        'service_id', 'service_desc',
-                        'monday', 'tuesday', 'wednesday',
-                        'thursday', 'friday', 'saturday', 'sunday',
-                        'exceptions', 'exception_type'
-                    ]
-                ]
-        save_to_new_file(
-            df=df,
-            file_path=target_file,
-            sep="|"
-        )
-        upload_file_to_gcs(
-            file_path=target_file,
+        process_sf_calendar(
+            source_url_dict=source_url_dict,
+            target_file=target_file,
+            project_id=project_id,
+            dataset_id=dataset_id,
+            destination_table=destination_table,
+            drop_dest_table=drop_dest_table,
+            schema_path=schema_path,
             target_gcs_bucket=target_gcs_bucket,
             target_gcs_path=target_gcs_path
         )
-        drop_table = (drop_dest_table == "Y")
-        table_exists = create_dest_table(
+        return None
+    elif destination_table == "routes":
+        process_sf_muni_routes(
+            source_url_dict=source_url_dict,
+            target_file=target_file,
             project_id=project_id,
             dataset_id=dataset_id,
-            table_id=destination_table,
-            schema_filepath=schema_path,
-            bucket_name=target_gcs_bucket,
-            drop_table=drop_table,
+            destination_table=destination_table,
+            drop_dest_table=drop_dest_table,
+            schema_path=schema_path,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=target_gcs_path
         )
-        if table_exists:
-            load_data_to_bq(
-                project_id=project_id,
-                dataset_id=dataset_id,
-                table_id=destination_table,
-                file_path=target_file,
-                truncate_table=True,
-                field_delimiter="|",
-            )
         return None
     elif destination_table == "bikeshare_station_info":
         source_url_json = f"{source_url}.json"
@@ -355,10 +275,181 @@ def execute_pipeline(
         )
 
 
+def process_sf_muni_routes(
+    source_url_dict: dict,
+    target_file: pathlib.Path,
+    project_id: str,
+    dataset_id: str,
+    destination_table: str,
+    drop_dest_table: str,
+    schema_path: str,
+    target_gcs_bucket: str,
+    target_gcs_path: str,
+) -> None:
+    df_routes = gcs_to_df(project_id=project_id,
+                          source_file_gcs_path=source_url_dict["routes"],
+                          target_file_path=str(target_file))
+    df_routes = df_routes[
+        [
+            "route_id",
+            "route_short_name",
+            "route_long_name",
+            "route_type"
+        ]
+    ]
+    save_to_new_file(
+        df=df_routes,
+        file_path=target_file,
+        sep="|"
+    )
+    upload_file_to_gcs(
+        file_path=target_file,
+        target_gcs_bucket=target_gcs_bucket,
+        target_gcs_path=target_gcs_path
+    )
+    drop_table = (drop_dest_table == "Y")
+    table_exists = create_dest_table(
+        project_id=project_id,
+        dataset_id=dataset_id,
+        table_id=destination_table,
+        schema_filepath=schema_path,
+        bucket_name=target_gcs_bucket,
+        drop_table=drop_table,
+    )
+    if table_exists:
+        load_data_to_bq(
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_id=destination_table,
+            file_path=target_file,
+            truncate_table=True,
+            field_delimiter="|",
+        )
+
+
+def process_sf_calendar(
+    source_url_dict: dict,
+    target_file: pathlib.Path,
+    project_id: str,
+    dataset_id: str,
+    destination_table: str,
+    drop_dest_table: str,
+    schema_path: str,
+    target_gcs_bucket: str,
+    target_gcs_path: str,
+) -> None:
+    df_calendar = gcs_to_df(project_id=project_id,
+                            source_file_gcs_path=source_url_dict["calendar"],
+                            target_file_path=str(target_file))
+    df_calendar_attributes = gcs_to_df(
+                                project_id=project_id,
+                                source_file_gcs_path=source_url_dict["calendar_attributes"],
+                                target_file_path=str(target_file)
+                            )
+    df_calendar_dates = gcs_to_df(project_id=project_id,
+                                source_file_gcs_path=source_url_dict["calendar_dates"],
+                                target_file_path=str(target_file)
+                            )
+    df=df_calendar.merge(
+        df_calendar_attributes,
+        how='inner',
+        on=None,
+        left_on='service_id',
+        right_on='service_id',
+        sort=True,
+        suffixes=('_calendar', '_attributes'),
+        copy=True,
+        indicator=False,
+        validate=None
+    )
+    df=df.merge(
+        df_calendar_dates,
+        how='inner',
+        on=None,
+        left_on='service_id',
+        right_on='service_id',
+        sort=True,
+        suffixes=('_calendar', '_dates'),
+        copy=True,
+        indicator=False,
+        validate=None
+    )
+    df['monday_str'] = df['monday'].apply(lambda x: "False" if x == 0 else "True")
+    df['tuesday_str'] = df['tuesday'].apply(lambda x: "False" if x == 0 else "True")
+    df['wednesday_str'] = df['wednesday'].apply(lambda x: "False" if x == 0 else "True")
+    df['thursday_str'] = df['thursday'].apply(lambda x: "False" if x == 0 else "True")
+    df['friday_str'] = df['friday'].apply(lambda x: "False" if x == 0 else "True")
+    df['saturday_str'] = df['saturday'].apply(lambda x: "False" if x == 0 else "True")
+    df['sunday_str'] = df['sunday'].apply(lambda x: "False" if x == 0 else "True")
+    df['exception_type_str'] = df['exception_type'].apply(lambda x: "True" if x == 1 else 'False')
+    df = df[
+                [
+                    'service_id', 'start_date', 'end_date',
+                    'service_description', 'date', 'exception_type_str',
+                    'monday_str', 'tuesday_str', 'wednesday_str',
+                    'thursday_str', 'friday_str', 'saturday_str', 'sunday_str'
+                ]
+            ]
+    df = df.rename(
+                    {
+                        'monday_str': 'monday',
+                        'tuesday_str': 'tuesday',
+                        'wednesday_str': 'wednesday',
+                        'thursday_str': 'thursday',
+                        'friday_str': 'friday',
+                        'saturday_str': 'saturday',
+                        'sunday_str': 'sunday',
+                            'service_description': 'service_desc',
+                            'date': 'exceptions',
+                            'exception_type_str': 'exception_type'
+                    },
+                    axis=1
+            )
+    df['exceptions'] = df['exceptions'].apply(lambda x: f"{str(x).strip()[:4]}-{str(x).strip()[4:6]}-{str(x).strip()[6:8]}")
+    df = df[
+                [
+                    'service_id', 'service_desc',
+                    'monday', 'tuesday', 'wednesday',
+                    'thursday', 'friday', 'saturday', 'sunday',
+                    'exceptions', 'exception_type'
+                ]
+            ]
+    save_to_new_file(
+        df=df,
+        file_path=target_file,
+        sep="|"
+    )
+    upload_file_to_gcs(
+        file_path=target_file,
+        target_gcs_bucket=target_gcs_bucket,
+        target_gcs_path=target_gcs_path
+    )
+    drop_table = (drop_dest_table == "Y")
+    table_exists = create_dest_table(
+        project_id=project_id,
+        dataset_id=dataset_id,
+        table_id=destination_table,
+        schema_filepath=schema_path,
+        bucket_name=target_gcs_bucket,
+        drop_table=drop_table,
+    )
+    if table_exists:
+        load_data_to_bq(
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_id=destination_table,
+            file_path=target_file,
+            truncate_table=True,
+            field_delimiter="|",
+        )
+
+
+
 def gcs_to_df(
     project_id: str,
     source_file_gcs_path: str,
     target_file_path: str,
+    source_file_type: str = "csv"
 ) -> pd.DataFrame:
     filename = os.path.basename(source_file_gcs_path)
     destination_folder=os.path.split(target_file_path)[0]
@@ -367,9 +458,14 @@ def gcs_to_df(
         source_location=source_file_gcs_path,
         destination_folder=destination_folder
     )
-    df = pd.read_csv(
-        f"{destination_folder}/{filename}"
-    )
+    if source_file_type == "csv":
+        df = pd.read_csv(
+            f"{destination_folder}/{filename}"
+        )
+    elif source_file_type == "txt":
+        df = pd.read_fwf(
+            f"{destination_folder}/{filename}"
+        )
     return df
 
 def download_file_gcs(

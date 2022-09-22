@@ -102,6 +102,35 @@ with DAG(
     )
 
     # Run San Francisco Bikeshare Stations Pipeline
+    sf_muni_routes = kubernetes_pod.KubernetesPodOperator(
+        task_id="sf_muni_routes",
+        name="muni_routes",
+        namespace="composer",
+        service_account_name="datasets",
+        image_pull_policy="Always",
+        image="{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}",
+        env_vars={
+            "PIPELINE_NAME": "San Francisco Municipal Routes",
+            "SOURCE_URL_DICT": '{\n  "routes": "gs://pdp-feeds-staging/SF_Muni/GTFSTransitData_SF/routes.txt"\n}',
+            "CHUNKSIZE": "750000",
+            "SOURCE_FILE": "files/data_municipal_routes.csv",
+            "TARGET_FILE": "files/data_output_municipal_routes.csv",
+            "PROJECT_ID": "{{ var.value.gcp_project }}",
+            "DATASET_ID": "san_francisco_transit_muni",
+            "TABLE_ID": "routes",
+            "DROP_DEST_TABLE": "N",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
+            "TARGET_GCS_PATH": "data/san_francisco/transit_municipal_routes/data_output.csv",
+            "SCHEMA_PATH": "data/san_francisco/schema/sf_routes_schema.json",
+        },
+        resources={
+            "limit_memory": "8G",
+            "limit_cpu": "3",
+            "request_ephemeral_storage": "10G",
+        },
+    )
+
+    # Run San Francisco Bikeshare Stations Pipeline
     sf_bikeshare_stations = kubernetes_pod.KubernetesPodOperator(
         task_id="sf_bikeshare_stations",
         name="bikeshare_stations",
