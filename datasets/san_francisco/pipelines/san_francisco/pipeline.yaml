@@ -240,7 +240,7 @@ dag:
           limit_cpu: "3"
           request_ephemeral_storage: "10G"
     - operator: "KubernetesPodOperator"
-      description: "Run San Francisco Bikeshare Stations Pipeline"
+      description: "Run San Francisco Municipal Shapes Pipeline"
       args:
         task_id: "sf_muni_shapes"
         name: "muni_shapes"
@@ -279,6 +279,43 @@ dag:
               "shape_point_lon",
               "shape_point_geom",
               "shape_distance_traveled"
+            ]
+        resources:
+          limit_memory: "8G"
+          limit_cpu: "3"
+          request_ephemeral_storage: "10G"
+    - operator: "KubernetesPodOperator"
+      description: "Run San Francisco Municipal Stops Pipeline"
+      args:
+        task_id: "sf_muni_stops"
+        name: "muni_stops"
+        namespace: "composer"
+        service_account_name: "datasets"
+        image_pull_policy: "Always"
+        image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "San Francisco Municipal Stops"
+          SOURCE_URL_DICT: >-
+            {
+              "stops": "gs://pdp-feeds-staging/SF_Muni/GTFSTransitData_SF/stops.txt"
+            }
+          CHUNKSIZE: "750000"
+          SOURCE_FILE: "files/data_municipal_stops.csv"
+          TARGET_FILE: "files/data_output_municipal_stops.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "san_francisco_transit_muni"
+          TABLE_ID: "stops"
+          DROP_DEST_TABLE: "N"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/san_francisco/transit_municipal_stops/data_output.csv"
+          SCHEMA_PATH: "data/san_francisco/schema/sf_muni_stops_schema.json"
+          REORDER_HEADERS_LIST: >-
+            [
+              "stop_id",
+              "stop_name",
+              "stop_lat",
+              "stop_lon",
+              "stop_geom"
             ]
         resources:
           limit_memory: "8G"
@@ -1000,4 +1037,4 @@ dag:
           request_ephemeral_storage: "10G"
 
   graph_paths:
-  - "[ sf_311_service_requests, sf_calendar, sf_muni_routes, sf_muni_shapes, sf_bikeshare_stations, sf_bikeshare_status, sf_bikeshare_trips, sf_film_locations, sffd_service_calls, sf_street_trees ]"
+  - "[ sf_311_service_requests, sf_calendar, sf_muni_routes, sf_muni_shapes, sf_muni_stops, sf_bikeshare_stations, sf_bikeshare_status, sf_bikeshare_trips, sf_film_locations, sffd_service_calls, sf_street_trees ]"

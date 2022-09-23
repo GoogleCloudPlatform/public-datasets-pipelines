@@ -183,6 +183,20 @@ def execute_pipeline(
             reorder_headers_list=reorder_headers_list
         )
         return None
+    elif destination_table == "stops":
+        process_sf_muni_stops(
+            source_url_dict=source_url_dict,
+            target_file=target_file,
+            project_id=project_id,
+            dataset_id=dataset_id,
+            destination_table=destination_table,
+            drop_dest_table=drop_dest_table,
+            schema_path=schema_path,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=target_gcs_path,
+            reorder_headers_list=reorder_headers_list
+        )
+        return None
     elif destination_table == "bikeshare_station_info":
         source_url_json = f"{source_url}.json"
         source_file_json = str(source_file).replace(".csv", "") + "_stations.json"
@@ -294,55 +308,6 @@ def execute_pipeline(
         )
 
 
-def process_sf_muni_routes(
-    source_url_dict: dict,
-    target_file: pathlib.Path,
-    project_id: str,
-    dataset_id: str,
-    destination_table: str,
-    drop_dest_table: str,
-    schema_path: str,
-    target_gcs_bucket: str,
-    target_gcs_path: str,
-    reorder_headers_list: typing.List[str]
-) -> None:
-    df_routes = gcs_to_df(project_id=project_id,
-                          source_file_gcs_path=source_url_dict["routes"],
-                          target_file_path=str(target_file))
-    df_routes = reorder_headers(
-        df = df_routes,
-        output_headers_list=reorder_headers_list
-    )
-    save_to_new_file(
-        df=df_routes,
-        file_path=target_file,
-        sep="|"
-    )
-    upload_file_to_gcs(
-        file_path=target_file,
-        target_gcs_bucket=target_gcs_bucket,
-        target_gcs_path=target_gcs_path
-    )
-    drop_table = (drop_dest_table == "Y")
-    table_exists = create_dest_table(
-        project_id=project_id,
-        dataset_id=dataset_id,
-        table_id=destination_table,
-        schema_filepath=schema_path,
-        bucket_name=target_gcs_bucket,
-        drop_table=drop_table,
-    )
-    if table_exists:
-        load_data_to_bq(
-            project_id=project_id,
-            dataset_id=dataset_id,
-            table_id=destination_table,
-            file_path=target_file,
-            truncate_table=True,
-            field_delimiter="|",
-        )
-
-
 def process_sf_calendar(
     source_url_dict: dict,
     target_file: pathlib.Path,
@@ -447,6 +412,55 @@ def process_sf_calendar(
         )
 
 
+def process_sf_muni_routes(
+    source_url_dict: dict,
+    target_file: pathlib.Path,
+    project_id: str,
+    dataset_id: str,
+    destination_table: str,
+    drop_dest_table: str,
+    schema_path: str,
+    target_gcs_bucket: str,
+    target_gcs_path: str,
+    reorder_headers_list: typing.List[str]
+) -> None:
+    df_routes = gcs_to_df(project_id=project_id,
+                          source_file_gcs_path=source_url_dict["routes"],
+                          target_file_path=str(target_file))
+    df_routes = reorder_headers(
+        df = df_routes,
+        output_headers_list=reorder_headers_list
+    )
+    save_to_new_file(
+        df=df_routes,
+        file_path=target_file,
+        sep="|"
+    )
+    upload_file_to_gcs(
+        file_path=target_file,
+        target_gcs_bucket=target_gcs_bucket,
+        target_gcs_path=target_gcs_path
+    )
+    drop_table = (drop_dest_table == "Y")
+    table_exists = create_dest_table(
+        project_id=project_id,
+        dataset_id=dataset_id,
+        table_id=destination_table,
+        schema_filepath=schema_path,
+        bucket_name=target_gcs_bucket,
+        drop_table=drop_table,
+    )
+    if table_exists:
+        load_data_to_bq(
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_id=destination_table,
+            file_path=target_file,
+            truncate_table=True,
+            field_delimiter="|",
+        )
+
+
 def process_sf_muni_shapes(
     source_url_dict: dict,
     target_file: pathlib.Path,
@@ -501,6 +515,55 @@ def process_sf_muni_shapes(
             field_delimiter="|",
         )
 
+
+def process_sf_muni_stops(
+    source_url_dict: dict,
+    target_file: pathlib.Path,
+    project_id: str,
+    dataset_id: str,
+    destination_table: str,
+    drop_dest_table: str,
+    schema_path: str,
+    target_gcs_bucket: str,
+    target_gcs_path: str,
+    reorder_headers_list: typing.List[str]
+) -> None:
+    df_stops = gcs_to_df(project_id=project_id,
+                          source_file_gcs_path=source_url_dict["stops"],
+                          target_file_path=str(target_file))
+    df_stops['stop_geom'] = df_stops.apply( lambda x: create_geometry_columns(x["stop_lon"], x["stop_lat"]), axis=1)
+    df_stops = reorder_headers(
+        df=df_stops,
+        output_headers_list=reorder_headers_list
+    )
+    save_to_new_file(
+        df=df_stops,
+        file_path=target_file,
+        sep="|"
+    )
+    upload_file_to_gcs(
+        file_path=target_file,
+        target_gcs_bucket=target_gcs_bucket,
+        target_gcs_path=target_gcs_path
+    )
+    drop_table = (drop_dest_table == "Y")
+    table_exists = create_dest_table(
+        project_id=project_id,
+        dataset_id=dataset_id,
+        table_id=destination_table,
+        schema_filepath=schema_path,
+        bucket_name=target_gcs_bucket,
+        drop_table=drop_table,
+    )
+    if table_exists:
+        load_data_to_bq(
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_id=destination_table,
+            file_path=target_file,
+            truncate_table=True,
+            field_delimiter="|",
+        )
 
 
 def create_geometry_columns(
