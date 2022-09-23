@@ -148,7 +148,9 @@ def execute_pipeline(
             drop_dest_table=drop_dest_table,
             schema_path=schema_path,
             target_gcs_bucket=target_gcs_bucket,
-            target_gcs_path=target_gcs_path
+            target_gcs_path=target_gcs_path,
+            rename_headers_list=rename_headers_list,
+            reorder_headers_list=reorder_headers_list
         )
         return None
     elif destination_table == "routes":
@@ -161,7 +163,24 @@ def execute_pipeline(
             drop_dest_table=drop_dest_table,
             schema_path=schema_path,
             target_gcs_bucket=target_gcs_bucket,
-            target_gcs_path=target_gcs_path
+            target_gcs_path=target_gcs_path,
+            rename_headers_list=rename_headers_list,
+            reorder_headers_list=reorder_headers_list
+        )
+        return None
+    elif destination_table == "shapes":
+        process_sf_muni_shapes(
+            source_url_dict=source_url_dict,
+            target_file=target_file,
+            project_id=project_id,
+            dataset_id=dataset_id,
+            destination_table=destination_table,
+            drop_dest_table=drop_dest_table,
+            schema_path=schema_path,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=target_gcs_path,
+            rename_headers_list=rename_headers_list,
+            reorder_headers_list=reorder_headers_list
         )
         return None
     elif destination_table == "bikeshare_station_info":
@@ -285,18 +304,15 @@ def process_sf_muni_routes(
     schema_path: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
+    reorder_headers_list: typing.List[str]
 ) -> None:
     df_routes = gcs_to_df(project_id=project_id,
                           source_file_gcs_path=source_url_dict["routes"],
                           target_file_path=str(target_file))
-    df_routes = df_routes[
-        [
-            "route_id",
-            "route_short_name",
-            "route_long_name",
-            "route_type"
-        ]
-    ]
+    df_routes = reorder_headers(
+        df = df_routes,
+        output_headers_list=reorder_headers_list
+    )
     save_to_new_file(
         df=df_routes,
         file_path=target_file,
@@ -337,6 +353,8 @@ def process_sf_calendar(
     schema_path: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
+    rename_headers_list: typing.List[str],
+    reorder_headers_list: typing.List[str]
 ) -> None:
     df_calendar = gcs_to_df(project_id=project_id,
                             source_file_gcs_path=source_url_dict["calendar"],
@@ -390,30 +408,15 @@ def process_sf_calendar(
                     'thursday_str', 'friday_str', 'saturday_str', 'sunday_str'
                 ]
             ]
-    df = df.rename(
-                    {
-                        'monday_str': 'monday',
-                        'tuesday_str': 'tuesday',
-                        'wednesday_str': 'wednesday',
-                        'thursday_str': 'thursday',
-                        'friday_str': 'friday',
-                        'saturday_str': 'saturday',
-                        'sunday_str': 'sunday',
-                            'service_description': 'service_desc',
-                            'date': 'exceptions',
-                            'exception_type_str': 'exception_type'
-                    },
-                    axis=1
-            )
+    df = rename_headers(
+        df=df,
+        rename_headers_list=rename_headers_list
+    )
     df['exceptions'] = df['exceptions'].apply(lambda x: f"{str(x).strip()[:4]}-{str(x).strip()[4:6]}-{str(x).strip()[6:8]}")
-    df = df[
-                [
-                    'service_id', 'service_desc',
-                    'monday', 'tuesday', 'wednesday',
-                    'thursday', 'friday', 'saturday', 'sunday',
-                    'exceptions', 'exception_type'
-                ]
-            ]
+    df = reorder_headers(
+        df=df,
+        output_headers_list=reorder_headers_list
+    )
     save_to_new_file(
         df=df,
         file_path=target_file,
@@ -443,6 +446,83 @@ def process_sf_calendar(
             field_delimiter="|",
         )
 
+
+def process_sf_muni_shapes(
+    source_url_dict: dict,
+    target_file: pathlib.Path,
+    project_id: str,
+    dataset_id: str,
+    destination_table: str,
+    drop_dest_table: str,
+    schema_path: str,
+    target_gcs_bucket: str,
+    target_gcs_path: str,
+    rename_headers_list: typing.List[str],
+    reorder_headers_list: typing.List[str]
+) -> None:
+    df_shapes = gcs_to_df(project_id=project_id,
+                          source_file_gcs_path=source_url_dict["shapes"],
+                          target_file_path=str(target_file))
+    df_shapes = rename_headers(
+        df=df_shapes,
+        rename_headers_list=rename_headers_list
+    )
+    df_shapes['shape_point_geom'] = df_shapes.apply( lambda x: create_geometry_columns(x["shape_point_lon"], x["shape_point_lat"]), axis=1)
+    df_shapes = reorder_headers(
+        df=df_shapes,
+        output_headers_list=reorder_headers_list
+    )
+    save_to_new_file(
+        df=df_shapes,
+        file_path=target_file,
+        sep="|"
+    )
+    upload_file_to_gcs(
+        file_path=target_file,
+        target_gcs_bucket=target_gcs_bucket,
+        target_gcs_path=target_gcs_path
+    )
+    drop_table = (drop_dest_table == "Y")
+    table_exists = create_dest_table(
+        project_id=project_id,
+        dataset_id=dataset_id,
+        table_id=destination_table,
+        schema_filepath=schema_path,
+        bucket_name=target_gcs_bucket,
+        drop_table=drop_table,
+    )
+    if table_exists:
+        load_data_to_bq(
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_id=destination_table,
+            file_path=target_file,
+            truncate_table=True,
+            field_delimiter="|",
+        )
+
+
+
+def create_geometry_columns(
+    long: float,
+    lat: float
+) -> pd.DataFrame:
+    return f"POINT({str(long)} {str(lat)})".replace("POINT( )", "")
+
+
+def rename_headers(df: pd.DataFrame,
+                   rename_mappings: dict
+    ) -> pd.DataFrame:
+    logging.info("Transform: Renaming headers...")
+    df = df.rename(columns=rename_mappings, inplace=True)
+
+
+def reorder_headers(df: pd.DataFrame,
+                    headers: typing.List[str]
+    ) -> pd.DataFrame:
+    logging.info("Transform: Reordering headers..")
+    df = df[headers]
+    return df
 
 
 def gcs_to_df(

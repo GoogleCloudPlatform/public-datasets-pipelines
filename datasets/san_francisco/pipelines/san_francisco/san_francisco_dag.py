@@ -72,7 +72,7 @@ with DAG(
         },
     )
 
-    # Run San Francisco Bikeshare Stations Pipeline
+    # Run San Francisco Municipal Calendar Pipeline
     sf_calendar = kubernetes_pod.KubernetesPodOperator(
         task_id="sf_calendar",
         name="calendar",
@@ -93,6 +93,8 @@ with DAG(
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/san_francisco/transit_municipal_calendar/data_output.csv",
             "SCHEMA_PATH": "data/san_francisco/schema/sf_calendar_schema.json",
+            "REORDER_HEADERS_LIST": "[\n  'service_id', 'service_desc',\n  'monday', 'tuesday', 'wednesday',\n  'thursday', 'friday', 'saturday', 'sunday',\n  'exceptions', 'exception_type'\n]",
+            "RENAME_HEADERS_LIST": "{\n    'monday_str': 'monday',\n    'tuesday_str': 'tuesday',\n    'wednesday_str': 'wednesday',\n    'thursday_str': 'thursday',\n    'friday_str': 'friday',\n    'saturday_str': 'saturday',\n    'sunday_str': 'sunday',\n    'service_description': 'service_desc',\n    'date': 'exceptions',\n    'exception_type_str': 'exception_type'\n}",
         },
         resources={
             "limit_memory": "8G",
@@ -101,7 +103,7 @@ with DAG(
         },
     )
 
-    # Run San Francisco Bikeshare Stations Pipeline
+    # Run San Francisco Municipal Routes Pipeline
     sf_muni_routes = kubernetes_pod.KubernetesPodOperator(
         task_id="sf_muni_routes",
         name="muni_routes",
@@ -122,6 +124,38 @@ with DAG(
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/san_francisco/transit_municipal_routes/data_output.csv",
             "SCHEMA_PATH": "data/san_francisco/schema/sf_muni_routes_schema.json",
+            "REORDER_HEADERS_LIST": '[\n  "route_id",\n  "route_short_name",\n  "route_long_name",\n  "route_type"\n]',
+        },
+        resources={
+            "limit_memory": "8G",
+            "limit_cpu": "3",
+            "request_ephemeral_storage": "10G",
+        },
+    )
+
+    # Run San Francisco Bikeshare Stations Pipeline
+    sf_muni_shapes = kubernetes_pod.KubernetesPodOperator(
+        task_id="sf_muni_shapes",
+        name="muni_shapes",
+        namespace="composer",
+        service_account_name="datasets",
+        image_pull_policy="Always",
+        image="{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}",
+        env_vars={
+            "PIPELINE_NAME": "San Francisco Municipal Shapes",
+            "SOURCE_URL_DICT": '{\n  "shapes": "gs://pdp-feeds-staging/SF_Muni/GTFSTransitData_SF/shapes.txt"\n}',
+            "CHUNKSIZE": "750000",
+            "SOURCE_FILE": "files/data_municipal_shapes.csv",
+            "TARGET_FILE": "files/data_output_municipal_shapes.csv",
+            "PROJECT_ID": "{{ var.value.gcp_project }}",
+            "DATASET_ID": "san_francisco_transit_muni",
+            "TABLE_ID": "shapes",
+            "DROP_DEST_TABLE": "N",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
+            "TARGET_GCS_PATH": "data/san_francisco/transit_municipal_shapes/data_output.csv",
+            "SCHEMA_PATH": "data/san_francisco/schema/sf_muni_shapes_schema.json",
+            "RENAME_HEADERS_LIST": '{\n  "shape_pt_lon": "shape_point_lon",\n  "shape_pt_lat": "shape_point_lat",\n  "shape_pt_sequence": "shape_point_sequence",\n  "shape_dist_traveled": "shape_distance_traveled"\n}',
+            "REORDER_HEADERS_LIST": '[\n  "shape_id",\n  "shape_point_sequence",\n  "shape_point_lat",\n  "shape_point_lon",\n  "shape_point_geom",\n  "shape_distance_traveled"\n]',
         },
         resources={
             "limit_memory": "8G",
@@ -349,6 +383,8 @@ with DAG(
     [
         sf_311_service_requests,
         sf_calendar,
+        sf_muni_routes,
+        sf_muni_shapes,
         sf_bikeshare_stations,
         sf_bikeshare_status,
         sf_bikeshare_trips,
