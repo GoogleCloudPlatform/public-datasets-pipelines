@@ -21,6 +21,7 @@ import re
 import shutil
 import typing
 import zipfile as zip
+from datetime import datetime
 
 import pandas as pd
 import requests
@@ -197,6 +198,12 @@ def execute_pipeline(
             reorder_headers_list=reorder_headers_list
         )
         return None
+    elif destination_table == "sfpd_incidents":
+        # download_file_http(
+        #     source_url=source_url_dict["sfpd_incidents"],
+        #     source_file=source_file
+        # )
+        pass
     elif destination_table == "bikeshare_station_info":
         source_url_json = f"{source_url}.json"
         source_file_json = str(source_file).replace(".csv", "") + "_stations.json"
@@ -611,6 +618,29 @@ def gcs_to_df(
         )
     return df
 
+
+def http_to_df(
+    source_url: str,
+    target_file_path: str,
+    source_file_type: str = "csv"
+) -> pd.DataFrame:
+    filename = os.path.basename(source_url)
+    destination_folder=os.path.split(target_file_path)[0]
+    download_file_http(
+        source_url=source_url,
+        source_file=f"{destination_folder}/{filename}"
+    )
+    if source_file_type == "csv":
+        df = pd.read_csv(
+            f"{destination_folder}/{filename}"
+        )
+    elif source_file_type == "txt":
+        df = pd.read_fwf(
+            f"{destination_folder}/{filename}"
+        )
+    return df
+
+
 def download_file_gcs(
     project_id: str, source_location: str, destination_folder: str
 ) -> None:
@@ -933,6 +963,12 @@ def process_chunk(
         df = remove_empty_key_rows(df, empty_key_list)
         df = resolve_date_format(df, date_format_list)
         df = reorder_headers(df, reorder_headers_list)
+    elif destination_table == "sfpd_incidents":
+        df = rename_headers(df=df, rename_headers_list=rename_headers_list)
+        df = remove_empty_key_rows(df, empty_key_list)
+        df = resolve_date_format(df, date_format_list)
+        df['timestamp'] = df.apply(lambda x: datetime.strftime( datetime.strptime((x['Date'] + " " + x['Time'] + ":00" ), "%m/%d/%Y %H:%M:%S"), "%Y-%m-%d %H:%M:%S"), axis=1)
+        df = reorder_headers(df, reorder_headers_list)
     elif destination_table == "bikeshare_station_info":
         df = rename_headers(df, rename_headers_list)
         df = remove_empty_key_rows(df, empty_key_list)
@@ -1210,7 +1246,7 @@ def resolve_date_format(
     date_format_list: dict,
 ) -> pd.DataFrame:
     logging.info("Resolving date formats")
-    for dt_fld, to_format in date_format_list.items():
+    for dt_fld, to_format in date_format_list:
         logging.info(f"Resolving date formats in field {dt_fld}")
         df[dt_fld] = df[dt_fld].apply(convert_dt_format, to_format=to_format)
     return df

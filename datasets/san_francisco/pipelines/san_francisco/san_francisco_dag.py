@@ -194,6 +194,40 @@ with DAG(
         },
     )
 
+    # Run San Francisco Police Department Incidents Pipeline
+    sfpd_incidents = kubernetes_pod.KubernetesPodOperator(
+        task_id="sfpd_incidents",
+        name="sfpd_incidents",
+        namespace="composer",
+        service_account_name="datasets",
+        image_pull_policy="Always",
+        image="{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}",
+        env_vars={
+            "PIPELINE_NAME": "San Francisco Police Department Incidents",
+            "SOURCE_URL_DICT": '{\n  "sfpd_incidents": "https://data.sfgov.org/api/views/tmnf-yvry/rows.csv"\n}',
+            "CHUNKSIZE": "750000",
+            "SOURCE_FILE": "files/data_sfpd_incidents.csv",
+            "TARGET_FILE": "files/data_output_sfpd_incidents.csv",
+            "PROJECT_ID": "{{ var.value.gcp_project }}",
+            "DATASET_ID": "san_francisco_sfpd_incidents",
+            "TABLE_ID": "sfpd_incidents",
+            "DROP_DEST_TABLE": "N",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
+            "TARGET_GCS_PATH": "data/san_francisco/sfpd_incidents/data_output.csv",
+            "SCHEMA_PATH": "data/san_francisco/schema/sf_sfpd_incidents_schema.json",
+            "HEADER_ROW_ORDINAL": "0",
+            "EMPTY_KEY_LIST": '[\n  "unique_key"\n]',
+            "DATE_FORMAT_LIST": '{\n  "Date": "%Y-%m-%d %H:%M:%S"\n}',
+            "RENAME_HEADERS_LIST": '{\n  "IncidntNum": "unique_key",\n  "Category": "category",\n  "Descript": "descript",\n  "DayOfWeek": "dayofweek",\n  "PdDistrict": "pddistrict",\n  "Resolution": "resolution",\n  "Address": "address",\n  "X": "longitude",\n  "Y": "latitude",\n  "Location": "location",\n  "PdId": "pdid",\n  "Date": "Date",\n  "Time": "Time"\n}',
+            "REORDER_HEADERS_LIST": '[\n  "unique_key",\n  "category",\n  "descript",\n  "dayofweek",\n  "pddistrict",\n  "resolution",\n  "address",\n  "longitude",\n  "latitude",\n  "location",\n  "pdid",\n  "timestamp"\n]',
+        },
+        resources={
+            "limit_memory": "8G",
+            "limit_cpu": "3",
+            "request_ephemeral_storage": "10G",
+        },
+    )
+
     # Run San Francisco Bikeshare Stations Pipeline
     sf_bikeshare_stations = kubernetes_pod.KubernetesPodOperator(
         task_id="sf_bikeshare_stations",
