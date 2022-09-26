@@ -1,16 +1,30 @@
-from http import client
 import json
 import logging
-import os
-import typing
 import math
+import os
 import pathlib
+import typing
+
 import pandas as pd
 from google.api_core.exceptions import NotFound
 from google.cloud import bigquery, storage
 
 
-def main(source_file_name, download_path, source_gcs_path, destination_gcs_path, project_id, dataset_id, gcs_bucket, pipeline_name, table_id, schema_filepath, column_name, headers, rename_mappings) -> None:
+def main(
+    source_file_name,
+    download_path,
+    source_gcs_path,
+    destination_gcs_path,
+    project_id,
+    dataset_id,
+    gcs_bucket,
+    pipeline_name,
+    table_id,
+    schema_filepath,
+    column_name,
+    headers,
+    rename_mappings,
+) -> None:
     logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
     logging.info(f"Started Extraction and Load process for {pipeline_name} --->")
@@ -27,7 +41,7 @@ def main(source_file_name, download_path, source_gcs_path, destination_gcs_path,
         schema_filepath,
         column_name,
         headers,
-        rename_mappings
+        rename_mappings,
     )
     logging.info(f"Finished process for {pipeline_name}")
 
@@ -45,14 +59,24 @@ def execute_pipeline(
     schema_filepath,
     column_name,
     headers,
-    rename_mappings
+    rename_mappings,
 ):
     logging.info(f"ETL started for {source_file_name}")
     logging.info("Downloading file")
     download_file(source_gcs_path, download_path, gcs_bucket, source_file_name)
     logging.info("Transforming file")
-    source_file_name=transform_file(dataset_id, download_path, source_file_name, column_name, headers, rename_mappings)
-    upload_file_to_gcs(gcs_bucket, download_path, source_file_name, destination_gcs_path)
+    source_file_name = transform_file(
+        pipeline_name,
+        dataset_id,
+        download_path,
+        source_file_name,
+        column_name,
+        headers,
+        rename_mappings,
+    )
+    upload_file_to_gcs(
+        gcs_bucket, download_path, source_file_name, destination_gcs_path
+    )
     client = storage.Client()
     blob = client.list_blobs(gcs_bucket, prefix=destination_gcs_path + pipeline_name)
     if blob:
@@ -66,6 +90,7 @@ def execute_pipeline(
         )
         if table_exists:
             load_data_to_bq(
+                source_file_name=source_file_name,
                 project_id=project_id,
                 dataset_id=dataset_id,
                 table_id=table_id,
@@ -81,21 +106,28 @@ def execute_pipeline(
         logging.info(f"Informational: The data file {blob} is unavailable")
 
 
-def transform_file(dataset_id, download_path, source_file_name, column_name, headers, rename_mappings):
+def transform_file(
+    pipeline_name,
+    dataset_id,
+    download_path,
+    source_file_name,
+    column_name,
+    headers,
+    rename_mappings,
+):
     logging.info(f"Reading file {source_file_name}")
-    df = pd.read_csv(download_path+source_file_name, skip_blank_lines=True)
+    df = pd.read_csv(download_path + source_file_name, skip_blank_lines=True)
     logging.info(f"Transforming {source_file_name} ... ")
     logging.info(f"Transform: Dropping column {column_name} ...")
     delete_column(df, column_name)
-
     logging.info(f"Transform: Renaming columns for {source_file_name} ...")
     rename_headers(df, rename_mappings)
 
-    if dataset_id == "series_time" or dataset_id == "footnotes":
+    if pipeline_name == "series_time" or pipeline_name == "footnotes":
         logging.info(f"Transform: Extracting year for {source_file_name} ...")
         df["year"] = df["year"].apply(extract_year)
 
-    if dataset_id == "country_summary":
+    if pipeline_name == "country_summary":
         logging.info("Transform: Creating a new column ...")
         df["latest_water_withdrawal_data"] = ""
 
@@ -110,24 +142,27 @@ def transform_file(dataset_id, download_path, source_file_name, column_name, hea
     logging.info(f"Transform: Reordering headers for {source_file_name} ...")
     df = df[headers]
 
-    logging.info(f"Saving to output file")
-    source_file_name=source_file_name.lower().replace("-","_")
+    logging.info(f"Saving output file with proper naming convention")
+    source_file_name = source_file_name.lower().replace("-", "_")
     try:
-        save_to_new_file(df, file_path=download_path+source_file_name)
+        save_to_new_file(df, file_path=download_path + source_file_name)
     except Exception as e:
         logging.error(f"Error saving output file: {e}.")
     return source_file_name
 
 
 def delete_column(df: pd.DataFrame, column_name: str) -> None:
-    df = df.drop(column_name, axis=1, inplace=True)
+    df.drop(column_name, axis=1, inplace=True)
+
 
 def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
     df.rename(columns=rename_mappings, inplace=True)
 
+
 def extract_year(string_val: str) -> str:
     # example : YR2021
     return string_val[-4:]
+
 
 def convert_to_integer_string(input: typing.Union[str, float]) -> str:
     str_val = ""
@@ -137,14 +172,17 @@ def convert_to_integer_string(input: typing.Union[str, float]) -> str:
         str_val = str(int(round(input, 0)))
     return str_val
 
+
 def save_to_new_file(df: pd.DataFrame, file_path: str) -> None:
-    df.to_csv(file_path, index=False)
+    df.to_csv(file_path, index=False, sep=",")
+
 
 def download_file(source_gcs_path, download_path, gcs_bucket, source_file_name):
-    client=storage.Client()
-    bucket=client.bucket(gcs_bucket)
-    blob=bucket.blob(source_gcs_path+source_file_name)
-    blob.download_to_filename(download_path+source_file_name)
+    client = storage.Client()
+    bucket = client.bucket(gcs_bucket)
+    blob = bucket.blob(source_gcs_path + source_file_name)
+    blob.download_to_filename(download_path + source_file_name)
+
 
 def create_dest_table(
     project_id: str,
@@ -172,7 +210,7 @@ def create_dest_table(
             f"Table {table_ref} currently does not exist.  Attempting to create table."
         )
         if schema_filepath:
-            schema = create_table_schema(schema_filepath)
+            schema = create_table_schema(schema_filepath, table_id)
             table = bigquery.Table(table_ref, schema=schema)
             client.create_table(table)
             logging.info(f"Table {table_id} was created")
@@ -185,13 +223,14 @@ def create_dest_table(
     return table_exists
 
 
-def create_table_schema(schema_filepath) -> list:
+def create_table_schema(schema_filepath, table_id) -> list:
     logging.info("Defining table schema")
     schema = []
     with open(schema_filepath) as f:
         sc = f.read()
     schema_struct = json.loads(sc)
-    for schema_field in schema_struct:
+    dataset = table_id
+    for schema_field in schema_struct[dataset]:
         fld_name = schema_field["name"]
         fld_type = schema_field["type"]
         try:
@@ -206,13 +245,18 @@ def create_table_schema(schema_filepath) -> list:
         )
     return schema
 
-def upload_file_to_gcs(gcs_bucket, download_path, source_file_name, destination_gcs_path):
-    client=storage.Client()
-    bucket=client.bucket(gcs_bucket)
-    blob=bucket.blob(destination_gcs_path+source_file_name)
-    blob.upload_from_filename(download_path+source_file_name)
+
+def upload_file_to_gcs(
+    gcs_bucket, download_path, source_file_name, destination_gcs_path
+):
+    client = storage.Client()
+    bucket = client.bucket(gcs_bucket)
+    blob = bucket.blob(destination_gcs_path + source_file_name)
+    blob.upload_from_filename(download_path + source_file_name)
+
 
 def load_data_to_bq(
+    source_file_name: str,
     project_id: str,
     dataset_id: str,
     table_id: str,
@@ -227,10 +271,12 @@ def load_data_to_bq(
     client = bigquery.Client(project=project_id)
     table_ref = f"{project_id}.{dataset_id}.{table_id}"
     job_config = bigquery.LoadJobConfig(
-        skip_leading_rows=1, source_format=bigquery.SourceFormat.CSV
+        allow_quoted_newlines=True,
+        skip_leading_rows=1,
+        source_format=bigquery.SourceFormat.CSV,
     )
     job = client.load_table_from_uri(
-        f"gs://{gcs_bucket}/{source_gcs_path}{table_id}.csv",
+        f"gs://{gcs_bucket}/{source_gcs_path}{source_file_name}",
         table_ref,
         job_config=job_config,
     )
@@ -254,5 +300,4 @@ if __name__ == "__main__":
         column_name=os.environ.get("COLUMN_NAME"),
         headers=json.loads(os.environ.get("HEADERS")),
         rename_mappings=json.loads(os.environ.get("RENAME_MAPPINGS")),
-
     )
