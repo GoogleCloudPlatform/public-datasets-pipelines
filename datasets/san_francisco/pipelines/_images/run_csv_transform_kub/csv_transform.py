@@ -151,7 +151,7 @@ def execute_pipeline(
             target_gcs_bucket=target_gcs_bucket,
             target_gcs_path=target_gcs_path,
             rename_headers_list=rename_headers_list,
-            reorder_headers_list=reorder_headers_list
+            reorder_headers_list=reorder_headers_list,
         )
         return None
     elif destination_table == "routes":
@@ -165,7 +165,7 @@ def execute_pipeline(
             schema_path=schema_path,
             target_gcs_bucket=target_gcs_bucket,
             target_gcs_path=target_gcs_path,
-            reorder_headers_list=reorder_headers_list
+            reorder_headers_list=reorder_headers_list,
         )
         return None
     elif destination_table == "shapes":
@@ -180,7 +180,7 @@ def execute_pipeline(
             target_gcs_bucket=target_gcs_bucket,
             target_gcs_path=target_gcs_path,
             rename_headers_list=rename_headers_list,
-            reorder_headers_list=reorder_headers_list
+            reorder_headers_list=reorder_headers_list,
         )
         return None
     elif destination_table == "stops":
@@ -194,13 +194,12 @@ def execute_pipeline(
             schema_path=schema_path,
             target_gcs_bucket=target_gcs_bucket,
             target_gcs_path=target_gcs_path,
-            reorder_headers_list=reorder_headers_list
+            reorder_headers_list=reorder_headers_list,
         )
         return None
     elif destination_table == "sfpd_incidents":
         download_file_http(
-            source_url=source_url_dict["sfpd_incidents"],
-            source_file=source_file
+            source_url=source_url_dict["sfpd_incidents"], source_file=source_file
         )
     elif destination_table == "bikeshare_station_info":
         source_url_json = f"{source_url}.json"
@@ -324,80 +323,86 @@ def process_sf_calendar(
     target_gcs_bucket: str,
     target_gcs_path: str,
     rename_headers_list: typing.List[str],
-    reorder_headers_list: typing.List[str]
+    reorder_headers_list: typing.List[str],
 ) -> None:
-    df_calendar = gcs_to_df(project_id=project_id,
-                            source_file_gcs_path=source_url_dict["calendar"],
-                            target_file_path=str(target_file))
+    df_calendar = gcs_to_df(
+        project_id=project_id,
+        source_file_gcs_path=source_url_dict["calendar"],
+        target_file_path=str(target_file),
+    )
     df_calendar_attributes = gcs_to_df(
-                                project_id=project_id,
-                                source_file_gcs_path=source_url_dict["calendar_attributes"],
-                                target_file_path=str(target_file)
-                            )
-    df_calendar_dates = gcs_to_df(project_id=project_id,
-                                source_file_gcs_path=source_url_dict["calendar_dates"],
-                                target_file_path=str(target_file)
-                            )
-    df=df_calendar.merge(
+        project_id=project_id,
+        source_file_gcs_path=source_url_dict["calendar_attributes"],
+        target_file_path=str(target_file),
+    )
+    df_calendar_dates = gcs_to_df(
+        project_id=project_id,
+        source_file_gcs_path=source_url_dict["calendar_dates"],
+        target_file_path=str(target_file),
+    )
+    df = df_calendar.merge(
         df_calendar_attributes,
-        how='inner',
+        how="inner",
         on=None,
-        left_on='service_id',
-        right_on='service_id',
+        left_on="service_id",
+        right_on="service_id",
         sort=True,
-        suffixes=('_calendar', '_attributes'),
+        suffixes=("_calendar", "_attributes"),
         copy=True,
         indicator=False,
-        validate=None
+        validate=None,
     )
-    df=df.merge(
+    df = df.merge(
         df_calendar_dates,
-        how='inner',
+        how="inner",
         on=None,
-        left_on='service_id',
-        right_on='service_id',
+        left_on="service_id",
+        right_on="service_id",
         sort=True,
-        suffixes=('_calendar', '_dates'),
+        suffixes=("_calendar", "_dates"),
         copy=True,
         indicator=False,
-        validate=None
+        validate=None,
     )
-    df['monday_str'] = df['monday'].apply(lambda x: "False" if x == 0 else "True")
-    df['tuesday_str'] = df['tuesday'].apply(lambda x: "False" if x == 0 else "True")
-    df['wednesday_str'] = df['wednesday'].apply(lambda x: "False" if x == 0 else "True")
-    df['thursday_str'] = df['thursday'].apply(lambda x: "False" if x == 0 else "True")
-    df['friday_str'] = df['friday'].apply(lambda x: "False" if x == 0 else "True")
-    df['saturday_str'] = df['saturday'].apply(lambda x: "False" if x == 0 else "True")
-    df['sunday_str'] = df['sunday'].apply(lambda x: "False" if x == 0 else "True")
-    df['exception_type_str'] = df['exception_type'].apply(lambda x: "True" if x == 1 else 'False')
+    df["monday_str"] = df["monday"].apply(lambda x: "False" if x == 0 else "True")
+    df["tuesday_str"] = df["tuesday"].apply(lambda x: "False" if x == 0 else "True")
+    df["wednesday_str"] = df["wednesday"].apply(lambda x: "False" if x == 0 else "True")
+    df["thursday_str"] = df["thursday"].apply(lambda x: "False" if x == 0 else "True")
+    df["friday_str"] = df["friday"].apply(lambda x: "False" if x == 0 else "True")
+    df["saturday_str"] = df["saturday"].apply(lambda x: "False" if x == 0 else "True")
+    df["sunday_str"] = df["sunday"].apply(lambda x: "False" if x == 0 else "True")
+    df["exception_type_str"] = df["exception_type"].apply(
+        lambda x: "True" if x == 1 else "False"
+    )
     df = df[
-                [
-                    'service_id', 'start_date', 'end_date',
-                    'service_description', 'date', 'exception_type_str',
-                    'monday_str', 'tuesday_str', 'wednesday_str',
-                    'thursday_str', 'friday_str', 'saturday_str', 'sunday_str'
-                ]
-            ]
-    df = rename_headers(
-        df=df,
-        rename_headers_list=rename_headers_list
+        [
+            "service_id",
+            "start_date",
+            "end_date",
+            "service_description",
+            "date",
+            "exception_type_str",
+            "monday_str",
+            "tuesday_str",
+            "wednesday_str",
+            "thursday_str",
+            "friday_str",
+            "saturday_str",
+            "sunday_str",
+        ]
+    ]
+    df = rename_headers(df=df, rename_headers_list=rename_headers_list)
+    df["exceptions"] = df["exceptions"].apply(
+        lambda x: f"{str(x).strip()[:4]}-{str(x).strip()[4:6]}-{str(x).strip()[6:8]}"
     )
-    df['exceptions'] = df['exceptions'].apply(lambda x: f"{str(x).strip()[:4]}-{str(x).strip()[4:6]}-{str(x).strip()[6:8]}")
-    df = reorder_headers(
-        df=df,
-        output_headers_list=reorder_headers_list
-    )
-    save_to_new_file(
-        df=df,
-        file_path=target_file,
-        sep="|"
-    )
+    df = reorder_headers(df=df, output_headers_list=reorder_headers_list)
+    save_to_new_file(df=df, file_path=target_file, sep="|")
     upload_file_to_gcs(
         file_path=target_file,
         target_gcs_bucket=target_gcs_bucket,
-        target_gcs_path=target_gcs_path
+        target_gcs_path=target_gcs_path,
     )
-    drop_table = (drop_dest_table == "Y")
+    drop_table = drop_dest_table == "Y"
     table_exists = create_dest_table(
         project_id=project_id,
         dataset_id=dataset_id,
@@ -427,26 +432,21 @@ def process_sf_muni_routes(
     schema_path: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
-    reorder_headers_list: typing.List[str]
+    reorder_headers_list: typing.List[str],
 ) -> None:
-    df_routes = gcs_to_df(project_id=project_id,
-                          source_file_gcs_path=source_url_dict["routes"],
-                          target_file_path=str(target_file))
-    df_routes = reorder_headers(
-        df = df_routes,
-        output_headers_list=reorder_headers_list
+    df_routes = gcs_to_df(
+        project_id=project_id,
+        source_file_gcs_path=source_url_dict["routes"],
+        target_file_path=str(target_file),
     )
-    save_to_new_file(
-        df=df_routes,
-        file_path=target_file,
-        sep="|"
-    )
+    df_routes = reorder_headers(df=df_routes, output_headers_list=reorder_headers_list)
+    save_to_new_file(df=df_routes, file_path=target_file, sep="|")
     upload_file_to_gcs(
         file_path=target_file,
         target_gcs_bucket=target_gcs_bucket,
-        target_gcs_path=target_gcs_path
+        target_gcs_path=target_gcs_path,
     )
-    drop_table = (drop_dest_table == "Y")
+    drop_table = drop_dest_table == "Y"
     table_exists = create_dest_table(
         project_id=project_id,
         dataset_id=dataset_id,
@@ -477,31 +477,26 @@ def process_sf_muni_shapes(
     target_gcs_bucket: str,
     target_gcs_path: str,
     rename_headers_list: typing.List[str],
-    reorder_headers_list: typing.List[str]
+    reorder_headers_list: typing.List[str],
 ) -> None:
-    df_shapes = gcs_to_df(project_id=project_id,
-                          source_file_gcs_path=source_url_dict["shapes"],
-                          target_file_path=str(target_file))
-    df_shapes = rename_headers(
-        df=df_shapes,
-        rename_headers_list=rename_headers_list
+    df_shapes = gcs_to_df(
+        project_id=project_id,
+        source_file_gcs_path=source_url_dict["shapes"],
+        target_file_path=str(target_file),
     )
-    df_shapes['shape_point_geom'] = df_shapes.apply( lambda x: create_geometry_columns(x["shape_point_lon"], x["shape_point_lat"]), axis=1)
-    df_shapes = reorder_headers(
-        df=df_shapes,
-        output_headers_list=reorder_headers_list
+    df_shapes = rename_headers(df=df_shapes, rename_headers_list=rename_headers_list)
+    df_shapes["shape_point_geom"] = df_shapes.apply(
+        lambda x: create_geometry_columns(x["shape_point_lon"], x["shape_point_lat"]),
+        axis=1,
     )
-    save_to_new_file(
-        df=df_shapes,
-        file_path=target_file,
-        sep="|"
-    )
+    df_shapes = reorder_headers(df=df_shapes, output_headers_list=reorder_headers_list)
+    save_to_new_file(df=df_shapes, file_path=target_file, sep="|")
     upload_file_to_gcs(
         file_path=target_file,
         target_gcs_bucket=target_gcs_bucket,
-        target_gcs_path=target_gcs_path
+        target_gcs_path=target_gcs_path,
     )
-    drop_table = (drop_dest_table == "Y")
+    drop_table = drop_dest_table == "Y"
     table_exists = create_dest_table(
         project_id=project_id,
         dataset_id=dataset_id,
@@ -531,27 +526,24 @@ def process_sf_muni_stops(
     schema_path: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
-    reorder_headers_list: typing.List[str]
+    reorder_headers_list: typing.List[str],
 ) -> None:
-    df_stops = gcs_to_df(project_id=project_id,
-                          source_file_gcs_path=source_url_dict["stops"],
-                          target_file_path=str(target_file))
-    df_stops['stop_geom'] = df_stops.apply( lambda x: create_geometry_columns(x["stop_lon"], x["stop_lat"]), axis=1)
-    df_stops = reorder_headers(
-        df=df_stops,
-        output_headers_list=reorder_headers_list
+    df_stops = gcs_to_df(
+        project_id=project_id,
+        source_file_gcs_path=source_url_dict["stops"],
+        target_file_path=str(target_file),
     )
-    save_to_new_file(
-        df=df_stops,
-        file_path=target_file,
-        sep="|"
+    df_stops["stop_geom"] = df_stops.apply(
+        lambda x: create_geometry_columns(x["stop_lon"], x["stop_lat"]), axis=1
     )
+    df_stops = reorder_headers(df=df_stops, output_headers_list=reorder_headers_list)
+    save_to_new_file(df=df_stops, file_path=target_file, sep="|")
     upload_file_to_gcs(
         file_path=target_file,
         target_gcs_bucket=target_gcs_bucket,
-        target_gcs_path=target_gcs_path
+        target_gcs_path=target_gcs_path,
     )
-    drop_table = (drop_dest_table == "Y")
+    drop_table = drop_dest_table == "Y"
     table_exists = create_dest_table(
         project_id=project_id,
         dataset_id=dataset_id,
@@ -571,71 +563,47 @@ def process_sf_muni_stops(
         )
 
 
-def create_geometry_columns(
-    long: float,
-    lat: float
-) -> pd.DataFrame:
+def create_geometry_columns(long: float, lat: float) -> pd.DataFrame:
     return f"POINT({str(long)} {str(lat)})".replace("POINT( )", "")
 
 
-def rename_headers(df: pd.DataFrame,
-                   rename_mappings: dict
-    ) -> pd.DataFrame:
+def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> pd.DataFrame:
     logging.info("Transform: Renaming headers...")
     df = df.rename(columns=rename_mappings, inplace=True)
-
-
-def reorder_headers(df: pd.DataFrame,
-                    headers: typing.List[str]
-    ) -> pd.DataFrame:
-    logging.info("Transform: Reordering headers..")
-    df = df[headers]
-    return df
 
 
 def gcs_to_df(
     project_id: str,
     source_file_gcs_path: str,
     target_file_path: str,
-    source_file_type: str = "csv"
+    source_file_type: str = "csv",
 ) -> pd.DataFrame:
     filename = os.path.basename(source_file_gcs_path)
-    destination_folder=os.path.split(target_file_path)[0]
+    destination_folder = os.path.split(target_file_path)[0]
     download_file_gcs(
         project_id=project_id,
         source_location=source_file_gcs_path,
-        destination_folder=destination_folder
+        destination_folder=destination_folder,
     )
     if source_file_type == "csv":
-        df = pd.read_csv(
-            f"{destination_folder}/{filename}"
-        )
+        df = pd.read_csv(f"{destination_folder}/{filename}")
     elif source_file_type == "txt":
-        df = pd.read_fwf(
-            f"{destination_folder}/{filename}"
-        )
+        df = pd.read_fwf(f"{destination_folder}/{filename}")
     return df
 
 
 def http_to_df(
-    source_url: str,
-    target_file_path: str,
-    source_file_type: str = "csv"
+    source_url: str, target_file_path: str, source_file_type: str = "csv"
 ) -> pd.DataFrame:
     filename = os.path.basename(source_url)
-    destination_folder=os.path.split(target_file_path)[0]
+    destination_folder = os.path.split(target_file_path)[0]
     download_file_http(
-        source_url=source_url,
-        source_file=f"{destination_folder}/{filename}"
+        source_url=source_url, source_file=f"{destination_folder}/{filename}"
     )
     if source_file_type == "csv":
-        df = pd.read_csv(
-            f"{destination_folder}/{filename}"
-        )
+        df = pd.read_csv(f"{destination_folder}/{filename}")
     elif source_file_type == "txt":
-        df = pd.read_fwf(
-            f"{destination_folder}/{filename}"
-        )
+        df = pd.read_fwf(f"{destination_folder}/{filename}")
     return df
 
 
@@ -965,7 +933,15 @@ def process_chunk(
         df = rename_headers(df=df, rename_headers_list=rename_headers_list)
         df = remove_empty_key_rows(df, empty_key_list)
         df = resolve_date_format(df, date_format_list)
-        df['timestamp'] = df.apply(lambda x: datetime.strftime( datetime.strptime((x['Date'][:10] + " " + x['Time'] + ":00" ), "%Y-%m-%d %H:%M:%S"), "%Y-%m-%d %H:%M:%S"), axis=1)
+        df["timestamp"] = df.apply(
+            lambda x: datetime.strftime(
+                datetime.strptime(
+                    (x["Date"][:10] + " " + x["Time"] + ":00"), "%Y-%m-%d %H:%M:%S"
+                ),
+                "%Y-%m-%d %H:%M:%S",
+            ),
+            axis=1,
+        )
         df = reorder_headers(df, reorder_headers_list)
     elif destination_table == "bikeshare_station_info":
         df = rename_headers(df, rename_headers_list)
@@ -1141,12 +1117,6 @@ def create_table_schema(
             )
         )
     return schema
-
-
-def rename_headers(df: pd.DataFrame, rename_headers_list: dict) -> pd.DataFrame:
-    logging.info("Renaming Headers")
-    df = df.rename(columns=rename_headers_list)
-    return df
 
 
 def remove_empty_key_rows(
