@@ -16,6 +16,8 @@ dataset:
   name: covid19_google_mobility
   friendly_name: covid19_google_mobility
   description: |-
+    UPDATE: The reports and data will remain publicly available, but Google will stop publishing new reports in October 2022 (or soon after), learn more: https://www.google.com/covid19/mobility#faq-how-long.
+
     Terms of use
     In order to download or use the data or reports, you must agree to the Google Terms of Service: https://policies.google.com/terms
 
@@ -35,6 +37,8 @@ resources:
   - type: bigquery_dataset
     dataset_id: covid19_google_mobility
     description: |-
+        UPDATE: The reports and data will remain publicly available, but Google will stop publishing new reports in October 2022 (or soon after), learn more: https://www.google.com/covid19/mobility#faq-how-long.
+
         Terms of use
         In order to download or use the data or reports, you must agree to the Google Terms of Service: https://policies.google.com/terms
 
