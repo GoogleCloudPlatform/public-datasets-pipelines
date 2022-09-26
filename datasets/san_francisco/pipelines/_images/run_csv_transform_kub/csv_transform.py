@@ -965,7 +965,7 @@ def process_chunk(
         df = rename_headers(df=df, rename_headers_list=rename_headers_list)
         df = remove_empty_key_rows(df, empty_key_list)
         df = resolve_date_format(df, date_format_list)
-        df['timestamp'] = df.apply(lambda x: datetime.strftime( datetime.strptime((x['Date'] + " " + x['Time'] + ":00" ), "%m/%d/%Y %H:%M:%S"), "%Y-%m-%d %H:%M:%S"), axis=1)
+        df['timestamp'] = df.apply(lambda x: datetime.strftime( datetime.strptime((x['Date'][:10] + " " + x['Time'] + ":00" ), "%Y-%m-%d %H:%M:%S"), "%Y-%m-%d %H:%M:%S"), axis=1)
         df = reorder_headers(df, reorder_headers_list)
     elif destination_table == "bikeshare_station_info":
         df = rename_headers(df, rename_headers_list)
@@ -1244,9 +1244,9 @@ def resolve_date_format(
     date_format_list: dict,
 ) -> pd.DataFrame:
     logging.info("Resolving date formats")
-    for dt_fld, to_format in date_format_list:
+    for dt_fld in date_format_list.items():
         logging.info(f"Resolving date formats in field {dt_fld}")
-        df[dt_fld] = df[dt_fld].apply(convert_dt_format, to_format=to_format)
+        df[dt_fld[0]] = df[dt_fld[0]].apply(convert_dt_format, to_format=dt_fld[1])
     return df
 
 

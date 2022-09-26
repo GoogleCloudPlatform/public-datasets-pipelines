@@ -444,16 +444,11 @@ with DAG(
         },
     )
 
-    [
-        sf_311_service_requests,
-        sf_calendar,
-        sf_muni_routes,
-        sf_muni_shapes,
-        sf_muni_stops,
-        sf_bikeshare_stations,
-        sf_bikeshare_status,
-        sf_bikeshare_trips,
-        sf_film_locations,
-        sffd_service_calls,
-        sf_street_trees,
-    ]
+    (
+        [sf_bikeshare_stations, sf_bikeshare_status, sf_film_locations, sf_street_trees]
+        >> sf_bikeshare_trips
+        >> [sf_calendar, sf_muni_routes, sf_muni_shapes, sf_muni_stops]
+        >> sffd_service_calls
+        >> sfpd_incidents
+        >> sf_311_service_requests
+    )
