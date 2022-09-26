@@ -567,9 +567,9 @@ def create_geometry_columns(long: float, lat: float) -> pd.DataFrame:
     return f"POINT({str(long)} {str(lat)})".replace("POINT( )", "")
 
 
-def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> pd.DataFrame:
+def rename_headers(df: pd.DataFrame, rename_headers_list: dict) -> None:
     logging.info("Transform: Renaming headers...")
-    df = df.rename(columns=rename_mappings, inplace=True)
+    df = df.rename(columns=rename_headers_list, inplace=True)
 
 
 def gcs_to_df(
