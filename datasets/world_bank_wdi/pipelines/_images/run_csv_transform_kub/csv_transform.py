@@ -142,7 +142,7 @@ def transform_file(
     logging.info(f"Transform: Reordering headers for {source_file_name} ...")
     df = df[headers]
 
-    logging.info(f"Saving output file with proper naming convention")
+    logging.info("Saving output file with proper naming convention")
     source_file_name = source_file_name.lower().replace("-", "_")
     try:
         save_to_new_file(df, file_path=download_path + source_file_name)
