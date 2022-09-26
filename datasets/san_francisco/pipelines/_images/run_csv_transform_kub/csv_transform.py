@@ -165,7 +165,6 @@ def execute_pipeline(
             schema_path=schema_path,
             target_gcs_bucket=target_gcs_bucket,
             target_gcs_path=target_gcs_path,
-            rename_headers_list=rename_headers_list,
             reorder_headers_list=reorder_headers_list
         )
         return None
@@ -199,11 +198,10 @@ def execute_pipeline(
         )
         return None
     elif destination_table == "sfpd_incidents":
-        # download_file_http(
-        #     source_url=source_url_dict["sfpd_incidents"],
-        #     source_file=source_file
-        # )
-        pass
+        download_file_http(
+            source_url=source_url_dict["sfpd_incidents"],
+            source_file=source_file
+        )
     elif destination_table == "bikeshare_station_info":
         source_url_json = f"{source_url}.json"
         source_file_json = str(source_file).replace(".csv", "") + "_stations.json"

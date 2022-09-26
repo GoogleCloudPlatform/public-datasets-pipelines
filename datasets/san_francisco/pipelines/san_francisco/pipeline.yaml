@@ -181,23 +181,23 @@ dag:
           SCHEMA_PATH: "data/san_francisco/schema/sf_calendar_schema.json"
           REORDER_HEADERS_LIST: >-
             [
-              'service_id', 'service_desc',
-              'monday', 'tuesday', 'wednesday',
-              'thursday', 'friday', 'saturday', 'sunday',
-              'exceptions', 'exception_type'
+              "service_id", "service_desc",
+              "monday", "tuesday", "wednesday",
+              "thursday", "friday", "saturday", "sunday",
+              "exceptions", "exception_type"
             ]
           RENAME_HEADERS_LIST: >-
             {
-                'monday_str': 'monday',
-                'tuesday_str': 'tuesday',
-                'wednesday_str': 'wednesday',
-                'thursday_str': 'thursday',
-                'friday_str': 'friday',
-                'saturday_str': 'saturday',
-                'sunday_str': 'sunday',
-                'service_description': 'service_desc',
-                'date': 'exceptions',
-                'exception_type_str': 'exception_type'
+                "monday_str": "monday",
+                "tuesday_str": "tuesday",
+                "wednesday_str": "wednesday",
+                "thursday_str": "thursday",
+                "friday_str": "friday",
+                "saturday_str": "saturday",
+                "sunday_str": "sunday",
+                "service_description": "service_desc",
+                "date": "exceptions",
+                "exception_type_str": "exception_type"
             }
         resources:
           limit_memory: "8G"

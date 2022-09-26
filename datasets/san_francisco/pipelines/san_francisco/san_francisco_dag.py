@@ -93,8 +93,8 @@ with DAG(
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/san_francisco/transit_municipal_calendar/data_output.csv",
             "SCHEMA_PATH": "data/san_francisco/schema/sf_calendar_schema.json",
-            "REORDER_HEADERS_LIST": "[\n  'service_id', 'service_desc',\n  'monday', 'tuesday', 'wednesday',\n  'thursday', 'friday', 'saturday', 'sunday',\n  'exceptions', 'exception_type'\n]",
-            "RENAME_HEADERS_LIST": "{\n    'monday_str': 'monday',\n    'tuesday_str': 'tuesday',\n    'wednesday_str': 'wednesday',\n    'thursday_str': 'thursday',\n    'friday_str': 'friday',\n    'saturday_str': 'saturday',\n    'sunday_str': 'sunday',\n    'service_description': 'service_desc',\n    'date': 'exceptions',\n    'exception_type_str': 'exception_type'\n}",
+            "REORDER_HEADERS_LIST": '[\n  "service_id", "service_desc",\n  "monday", "tuesday", "wednesday",\n  "thursday", "friday", "saturday", "sunday",\n  "exceptions", "exception_type"\n]',
+            "RENAME_HEADERS_LIST": '{\n    "monday_str": "monday",\n    "tuesday_str": "tuesday",\n    "wednesday_str": "wednesday",\n    "thursday_str": "thursday",\n    "friday_str": "friday",\n    "saturday_str": "saturday",\n    "sunday_str": "sunday",\n    "service_description": "service_desc",\n    "date": "exceptions",\n    "exception_type_str": "exception_type"\n}',
         },
         resources={
             "limit_memory": "8G",
