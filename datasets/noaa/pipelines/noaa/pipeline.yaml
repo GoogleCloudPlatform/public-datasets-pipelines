@@ -48,7 +48,7 @@ dag:
       depends_on_past: False
       start_date: '2021-03-01'
     max_active_runs: 1
-    schedule_interval: "* 1 * * 6"
+    schedule_interval: "30 1 * * *"
     catchup: False
     default_view: graph
 
@@ -491,7 +491,7 @@ dag:
           TARGET_FILE: "files/data_output_ghcnd_hurricanes.csv"
           CHUNKSIZE: "750000"
           PROJECT_ID: "{{ var.value.gcp_project }}"
-          DATASET_ID: "noaa"
+          DATASET_ID: "noaa_hurricanes"
           TABLE_ID: "hurricanes"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/noaa/ghcnd_hurricanes/data_output_ghcnd_hurricanes.csv"
@@ -894,7 +894,7 @@ dag:
           TARGET_FILE: "files/data_output_lightning_strikes.csv"
           CHUNKSIZE: "1000000"
           PROJECT_ID: "{{ var.value.gcp_project }}"
-          DATASET_ID: "noaa"
+          DATASET_ID: "noaa_lightning"
           TABLE_ID: "lightning_strikes"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/noaa/lightning_strikes/data_output.csv"

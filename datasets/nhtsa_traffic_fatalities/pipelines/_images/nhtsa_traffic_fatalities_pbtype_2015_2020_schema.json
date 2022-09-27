@@ -1,0 +1,272 @@
+[
+	{
+		"name": "state_number",
+		"type": "integer",
+		"description": "This data element identifies the state in which the crash occurred. The codes are from the General Services Administration’s (GSA) publication of worldwide Geographic Location Codes (GLC). For more info on the codes, please look at <C1/V1/D1/PC1/P1/NM1 State Number> section in the pdf: https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/812315",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "state_name",
+		"type": "string",
+		"description": "This data element identifies the state in which the crash occurred. The codes are from the General Services Administration’s (GSA) publication of worldwide Geographic Location Codes (GLC).",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "consecutive_number",
+		"type": "integer",
+		"description": "This data element is the unique case number assigned to each crash. It appears on each data file and is used to merge information from the data files together. xxxxxx Two Characters for State Code followed by Four Characters for Case Number",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "vehicle_number",
+		"type": "integer",
+		"description": "This data element is the consecutive number assigned to each vehicle in the case. This data element appears on each vehicle level data file and is used in conjunction with the ST_CASE data element to merge information from vehicle level data files. 000-999 Assigned Number of Motor Vehicle",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "person_number",
+		"type": "integer",
+		"description": "This data element is the consecutive number assigned to each person in the case (i.e., each occupant, pedestrian, or non-motorists involved in the crash). This data element appears on each person level data file and is used in conjunction with the ST_CASE data element (and sometimes the VEH_NO data element) to merge information from person level data files. 001-999 Assigned Person Number",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "person_type",
+		"type": "integer",
+		"description": "This data element describes the role of this person involved in the crash. For more info on the codes, please look at P7/NM7 Person Type section in the pdf: https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/812315",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "person_type_name",
+		"type": "string",
+		"description": "This data element describes the role of this person involved in the crash. For more info on the codes, please look at P7/NM7 Person Type section in the pdf: https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/812315",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "age",
+		"type": "integer",
+		"description": "This data element identifies the person’s age, in years, with respect to the person's last birthday. 000 Less than One Year 001-120 Age of the Individual in Years 998 Not Reported 999 Unknown",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "age_name",
+		"type": "string",
+		"description": "This data element identifies the person’s age, in years, with respect to the person's last birthday. 000 Less than One Year 001-120 Age of the Individual in Years 998 Not Reported 999 Unknown",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "sex",
+		"type": "string",
+		"description": "This data element identifies the sex of the person involved in the crash. 1 Male 2 Female 8 Not Reported 9 Unknown",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "sex_name",
+		"type": "string",
+		"description": "This data element identifies the sex of the person involved in the crash. 1 Male 2 Female 8 Not Reported 9 Unknown",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "marked_crosswalk_present",
+		"type": "string",
+		"description": "This data element indicates if a marked crosswalk was present at the crash site. 0 None Noted 1 Yes 9 Unknown",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "marked_crosswalk_present_name",
+		"type": "string",
+		"description": "This data element indicates if a marked crosswalk was present at the crash site. 0 None Noted 1 Yes 9 Unknown",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "sidewalk_present",
+		"type": "string",
+		"description": "This data element indicates if a sidewalk was present at the crash site. 0 None Noted 1 Yes 9 Unknown",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "sidewalk_present_name",
+		"type": "string",
+		"description": "This data element indicates if a sidewalk was present at the crash site. 0 None Noted 1 Yes 9 Unknown",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "school_zone",
+		"type": "string",
+		"description": "This data element indicates if the crash occurred in a school zone. 0 None Noted 1 Yes 9 Unknown",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "school_zone_name",
+		"type": "string",
+		"description": "This data element indicates if the crash occurred in a school zone. 0 None Noted 1 Yes 9 Unknown",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "crash_type_pedestrian",
+		"type": "integer",
+		"description": "This data element summarizes the circumstances of the crash for this pedestrian. For more info on the codes, please look at NM9-PB30 Crash Type – Pedestrian section in the pdf: https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/812315",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "crash_type_pedestrian_name",
+		"type": "string",
+		"description": "This data element summarizes the circumstances of the crash for this pedestrian. For more info on the codes, please look at NM9-PB30 Crash Type – Pedestrian section in the pdf: https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/812315",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "crash_type_bicycle",
+		"type": "integer",
+		"description": "This data element summarizes the circumstances of the crash for this bicyclist. For more info on the codes, please look at NM9-PB30B Crash Type – Bicycle section in the pdf: https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/812315",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "crash_type_bicycle_name",
+		"type": "string",
+		"description": "This data element summarizes the circumstances of the crash for this bicyclist. For more info on the codes, please look at NM9-PB30B Crash Type – Bicycle section in the pdf: https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/812315",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "crash_location_pedestrian",
+		"type": "string",
+		"description": "This data element identifies where the pedestrian crash occurred with respect to an intersection. 1 At Intersection 2 Intersection-Related 3 Not At Intersection 4 Non-Trafficway Location 7 Not a Pedestrian 9 Unknown/Insufficient Information",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "crash_location_pedestrian_name",
+		"type": "string",
+		"description": "This data element identifies where the pedestrian crash occurred with respect to an intersection. 1 At Intersection 2 Intersection-Related 3 Not At Intersection 4 Non-Trafficway Location 7 Not a Pedestrian 9 Unknown/Insufficient Information",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "crash_location_bicycle",
+		"type": "string",
+		"description": "This data element identifies where the bicyclist crash occurred with respect to an intersection. 1 At Intersection 2 Intersection-Related 3 Not At Intersection 4 Non-Trafficway Location 7 Not a Cyclist 9 Unknown/Insufficient Information",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "crash_location_bicycle_name",
+		"type": "string",
+		"description": "This data element identifies where the bicyclist crash occurred with respect to an intersection. 1 At Intersection 2 Intersection-Related 3 Not At Intersection 4 Non-Trafficway Location 7 Not a Cyclist 9 Unknown/Insufficient Information",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "pedestrian_position",
+		"type": "string",
+		"description": "This data element identifies the position/location of the pedestrian with respect to the trafficway when contacted. 1 Intersection Area 2 Crosswalk Area 3 Travel Lane 4 Paved Shoulder/Bicycle Lane/Parking Lane 5 Sidewalk/Shared-Use Path/Driveway Access 6 Unpaved Right-of-Way 7 Non-Trafficway – Driveway 8 Non-Trafficway – Parking Lot/Other 9 Other/Unknown 77 Not a Pedestrian",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "pedestrian_position_name",
+		"type": "string",
+		"description": "This data element identifies the position/location of the pedestrian with respect to the trafficway when contacted. 1 Intersection Area 2 Crosswalk Area 3 Travel Lane 4 Paved Shoulder/Bicycle Lane/Parking Lane 5 Sidewalk/Shared-Use Path/Driveway Access 6 Unpaved Right-of-Way 7 Non-Trafficway – Driveway 8 Non-Trafficway – Parking Lot/Other 9 Other/Unknown 77 Not a Pedestrian",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "bicyclist_position",
+		"type": "string",
+		"description": "This data element identifies the position/location of the bicyclist with respect to the trafficway when contacted. 1 Travel Lane 2 Bicycle Lane/Paved Shoulder/Parking Lane 3 Sidewalk/Crosswalk/Driveway Access 4 Shared-Use Path 5 Non-Trafficway – Driveway 6 Non-Trafficway – Parking Lot/Other 7 Not a Cyclist 8 Other 9 Unknown",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "bicyclist_position_name",
+		"type": "string",
+		"description": "This data element identifies the position/location of the bicyclist with respect to the trafficway when contacted. 1 Travel Lane 2 Bicycle Lane/Paved Shoulder/Parking Lane 3 Sidewalk/Crosswalk/Driveway Access 4 Shared-Use Path 5 Non-Trafficway – Driveway 6 Non-Trafficway – Parking Lot/Other 7 Not a Cyclist 8 Other 9 Unknown",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "pedestrian_initial_direction_of_travel",
+		"type": "string",
+		"description": "This data element identifies the initial direction of travel of the pedestrian prior to being contacted in the crash. 1 Northbound 2 Eastbound 3 Southbound 4 Westbound 7 Not a Pedestrian 8 Not Applicable 9 Unknown Initial Direction of Travel",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "pedestrian_initial_direction_of_travel_name",
+		"type": "string",
+		"description": "This data element identifies the initial direction of travel of the pedestrian prior to being contacted in the crash. 1 Northbound 2 Eastbound 3 Southbound 4 Westbound 7 Not a Pedestrian 8 Not Applicable 9 Unknown Initial Direction of Travel",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "bicyclist_initial_direction_of_travel",
+		"type": "string",
+		"description": "This data element identifies the initial travel direction of the bicyclist with respect to the flow of traffic prior to being contacted in the crash. 1 With Traffic 2 Facing Traffic 3 Not Applicable 7 Not a Cyclist 9 Unknown",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "bicyclist_initial_direction_of_travel_name",
+		"type": "string",
+		"description": "This data element identifies the initial travel direction of the bicyclist with respect to the flow of traffic prior to being contacted in the crash. 1 With Traffic 2 Facing Traffic 3 Not Applicable 7 Not a Cyclist 9 Unknown",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "motorist_initial_direction_of_travel",
+		"type": "string",
+		"description": "This data element identifies the initial direction of travel of the motorist prior to being involved in a pedestrian crash. 1 Northbound 2 Eastbound 3 Southbound 4 Westbound 7 Not a Pedestrian 8 Not Applicable 9 Unknown Initial Direction of Travel",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "motorist_initial_direction_of_travel_name",
+		"type": "string",
+		"description": "This data element identifies the initial direction of travel of the motorist prior to being involved in a pedestrian crash. 1 Northbound 2 Eastbound 3 Southbound 4 Westbound 7 Not a Pedestrian 8 Not Applicable 9 Unknown Initial Direction of Travel",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "motorist_maneuver",
+		"type": "string",
+		"description": "This data element identifies if the motorist was engaged in a turning maneuver at an intersection prior to being involved in a pedestrian crash. The data element indicates the maneuver being made by the motorist at the time of a pedestrian collision. 1 Left Turn 2 Right Turn 3 Straight Through 7 Not a Pedestrian 8 Not Applicable 9 Unknown Motorist Maneuver",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "motorist_maneuver_name",
+		"type": "string",
+		"description": "This data element identifies if the motorist was engaged in a turning maneuver at an intersection prior to being involved in a pedestrian crash. The data element indicates the maneuver being made by the motorist at the time of a pedestrian collision. 1 Left Turn 2 Right Turn 3 Straight Through 7 Not a Pedestrian 8 Not Applicable 9 Unknown Motorist Maneuver",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "intersection_leg",
+		"type": "string",
+		"description": "The data element identifies the leg of the intersection where the pedestrian crash occurred. 1 Nearside 2 Farside 7 Not a Pedestrian 8 Not Applicable 9 Unknown",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "intersection_leg_name",
+		"type": "string",
+		"description": "The data element identifies the leg of the intersection where the pedestrian crash occurred. 1 Nearside 2 Farside 7 Not a Pedestrian 8 Not Applicable 9 Unknown",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "pedestrian_scenario",
+		"type": "string",
+		"description": "This data element identifies the location and travel directions of the motorist and pedestrian for those crashes that occur at intersections. This data element summarizes the movements of the pedestrian and motorist in an intersection area. For more info on the codes, please look at NM9-PB37 Pedestrian Scenario section in the pdf: https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/812315",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "pedestrian_scenario_name",
+		"type": "string",
+		"description": "This data element identifies the location and travel directions of the motorist and pedestrian for those crashes that occur at intersections. This data element summarizes the movements of the pedestrian and motorist in an intersection area. For more info on the codes, please look at NM9-PB37 Pedestrian Scenario section in the pdf: https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/812315",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "crash_group_pedestrian",
+		"type": "integer",
+		"description": "This data element provides general groupings of the more specific individual Pedestrian Crash Types. For more info on the codes, please look at NM9-PB38 Crash Group – Pedestrian section in the pdf: https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/812315",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "crash_group_pedestrian_name",
+		"type": "string",
+		"description": "This data element provides general groupings of the more specific individual Pedestrian Crash Types. For more info on the codes, please look at NM9-PB38 Crash Group – Pedestrian section in the pdf: https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/812315",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "crash_group_bicycle",
+		"type": "integer",
+		"description": "This data element provides general groupings of the more specific individual Bicyclist Crash Types. For more info on the codes, please look at NM9-PB38B Crash Group – Bicycle section in the pdf: https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/812315",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "crash_group_bicycle_name",
+		"type": "string",
+		"description": "This data element provides general groupings of the more specific individual Bicyclist Crash Types. For more info on the codes, please look at NM9-PB38B Crash Group – Bicycle section in the pdf: https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/812315",
+		"mode": "NULLABLE"
+	}
+]
