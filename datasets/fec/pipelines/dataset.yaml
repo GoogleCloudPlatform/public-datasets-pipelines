@@ -39,7 +39,7 @@ resources:
       Individual Contributions(INDIV Data Dictionary) : The individual contributions file contains each contribution from an individual to a federal committee.
 
       Operating Expenditures(OPPEXP Data Dictionary) : The Operating Expenditures file contains disbursements reported on FEC Form 3 Line 17, FEC Form 3P Line 23and FEC Form 3X Lines 21(a)(i), 21(a)(ii) and 21(b)"
-          
+
   - type: storage_bucket
     name: fec
     uniform_bucket_level_access: True
