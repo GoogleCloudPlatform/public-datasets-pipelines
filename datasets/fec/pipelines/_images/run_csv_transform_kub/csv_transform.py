@@ -239,7 +239,7 @@ def append_batch_file(
         with open(target_file, "a+") as target_file:
             if skip_header:
                 logging.info(
-                    f"Appending batch file {target_file_batch} to {target_file} with skipheader"
+                    f"Appending batch file {target_file_batch} to {target_file} with skipheader..."
                 )
                 next(data_file)
             else:
