@@ -52,7 +52,6 @@ with DAG(
             "TARGET_GCS_PATH": "data/fec/opex_2016/data_output.csv",
             "PIPELINE_NAME": "opex_2016",
             "CSV_HEADERS": '["cmte_id","amndt_ind","rpt_yr","rpt_tp","image_num","line_num","form_tp_cd", "sched_tp_cd","name","city","state","zip_code","transaction_dt","transaction_amt","transaction_pgi", "purpose","category","category_desc","memo_cd","memo_text","entity_tp","sub_id","file_num", "tran_id","back_ref_tran_id"]',
-            "RENAME_MAPPINGS": '{"0":"cmte_id","1":"amndt_ind","2":"rpt_yr","3":"rpt_tp","4":"image_num","5":"line_num","6":"form_tp_cd", "7":"sched_tp_cd","8":"name","9":"city","10":"state","11":"zip_code","12":"transaction_dt", "13":"transaction_amt","14":"transaction_pgi","15":"purpose","16":"category","17":"category_desc","18":"memo_cd", "19":"memo_text","20":"entity_tp","21":"sub_id","22":"file_num","23":"tran_id","24":"back_ref_tran_id"}',
         },
         resources={
             "request_memory": "3G",

@@ -1414,7 +1414,6 @@ with DAG(
             "CHUNKSIZE": "100000",
             "PIPELINE_NAME": "individuals_ingest_2020",
             "CSV_HEADERS": '["cmte_id","amndt_ind","rpt_tp","transaction_pgi","image_num","transaction_tp","entity_tp","name","city","state", "zip_code","employer","occupation","transaction_dt","transaction_amt","other_id","tran_id","file_num", "memo_cd","memo_text","sub_id"]',
-            "RENAME_MAPPINGS": '{"0":"cmte_id","1":"amndt_ind","2":"rpt_tp","3":"transaction_pgi","4":"image_num","5":"transaction_tp", "6":"entity_tp","7":"name","8":"city","9":"state","10":"zip_code","11":"employer", "12":"occupation","13":"transaction_dt","14":"transaction_amt","15":"other_id","16":"tran_id", "17":"file_num","18":"memo_cd","19":"memo_text","20":"sub_id"}',
         },
         resources={
             "request_memory": "4G",
@@ -1566,8 +1565,24 @@ with DAG(
     (
         download_zip_file_to_composer_bucket
         >> split_file
-        >> individuals_ingest_2020_transform_csv_1
+        >> [
+            individuals_ingest_2020_transform_csv_1,
+            individuals_ingest_2020_transform_csv_2,
+            individuals_ingest_2020_transform_csv_3,
+            individuals_ingest_2020_transform_csv_4,
+            individuals_ingest_2020_transform_csv_5,
+            individuals_ingest_2020_transform_csv_6,
+            individuals_ingest_2020_transform_csv_7,
+            individuals_ingest_2020_transform_csv_8,
+            individuals_ingest_2020_transform_csv_9,
+        ]
         >> load_individuals_ingest_2020_to_bq_1
-        >> individuals_ingest_2020_transform_csv_2
         >> load_individuals_ingest_2020_to_bq_2
+        >> load_individuals_ingest_2020_to_bq_3
+        >> load_individuals_ingest_2020_to_bq_4
+        >> load_individuals_ingest_2020_to_bq_5
+        >> load_individuals_ingest_2020_to_bq_6
+        >> load_individuals_ingest_2020_to_bq_7
+        >> load_individuals_ingest_2020_to_bq_8
+        >> load_individuals_ingest_2020_to_bq_9
     )

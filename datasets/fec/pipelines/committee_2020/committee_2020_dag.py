@@ -52,7 +52,6 @@ with DAG(
             "TARGET_GCS_PATH": "data/fec/committee_2020/data_output.csv",
             "PIPELINE_NAME": "committee_2020",
             "CSV_HEADERS": '["cmte_id","cmte_nm","tres_nm","cmte_st1","cmte_st2","cmte_city","cmte_st","cmte_zip","cmte_dsgn","cmte_tp", "cmte_pty_affiliation","cmte_filing_freq","org_tp","connected_org_nm","cand_id"]',
-            "RENAME_MAPPINGS": '{"0":"cmte_id","1":"cmte_nm","2":"tres_nm","3":"cmte_st1","4":"cmte_st2","5":"cmte_city", "6":"cmte_st","7":"cmte_zip","8":"cmte_dsgn","9":"cmte_tp","10":"cmte_pty_affiliation","11":"cmte_filing_freq", "12":"org_tp","13":"connected_org_nm","14":"cand_id"}',
         },
         resources={
             "request_memory": "3G",

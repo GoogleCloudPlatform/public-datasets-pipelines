@@ -55,11 +55,6 @@ dag:
             ["cand_id","cand_name","cand_pty_affiliation","cand_election_yr","cand_office_st","cand_office",
             "cand_office_district","cand_ici","cand_status","cand_pcc","cand_st1","cand_st2","cand_city",
             "cand_st","cand_zip"]
-          RENAME_MAPPINGS: >-
-            {"0":"cand_id","1":"cand_name","2":"cand_pty_affiliation","3":"cand_election_yr","4":"cand_office_st","5":"cand_office",
-            "6":"cand_office_district","7":"cand_ici","8":"cand_status","9":"cand_pcc","10":"cand_st1","11":"cand_st2",
-            "12":"cand_city","13":"cand_st","14":"cand_zip"}
-
         resources:
           request_memory: "3G"
           request_cpu: "1"

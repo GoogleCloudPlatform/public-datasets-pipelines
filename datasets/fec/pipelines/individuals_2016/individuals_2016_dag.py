@@ -37,7 +37,7 @@ with DAG(
     # Task to copy `individuals` to gcs
     download_zip_file = bash.BashOperator(
         task_id="download_zip_file",
-        bash_command="mkdir -p $data_dir/individuals\ncurl -o $data_dir/individuals/indiv16.zip -L $fec\nunzip $data_dir/individuals/indiv16.zip -d $data_dir/individuals/\n",
+        bash_command="mkdir -p $data_dir/individuals\ncurl -o $data_dir/individuals/indiv16.zip -L $fec\nunzip $data_dir/individuals/indiv16.zip -d $data_dir/individuals/\nrm -f $data_dir/individuals/indiv16.zip\n",
         env={
             "data_dir": "/home/airflow/gcs/data/fec",
             "fec": "https://cg-519a459a-0ea3-42c2-b7bc-fa1143481f74.s3-us-gov-west-1.amazonaws.com/bulk-downloads/2016/indiv16.zip",
@@ -62,8 +62,7 @@ with DAG(
             "TARGET_GCS_PATH": "data/fec/individuals/data_output.csv",
             "CHUNKSIZE": "1000000",
             "PIPELINE_NAME": "individuals_2016",
-            "CSV_HEADERS": '["cmte_id","amndt_ind","rpt_tp","transaction_pgi","image_num","transaction_tp","entity_tp","name","city","state", "zip_code","employer","occupation","transaction_dt","transaction_amt","other_id","tran_id","file_num", "memo_cd","memo_text","sub_id"]',
-            "RENAME_MAPPINGS": '{"0":"cmte_id","1":"amndt_ind","2":"rpt_tp","3":"transaction_pgi","4":"image_num","5":"transaction_tp", "6":"entity_tp","7":"name","8":"city","9":"state","10":"zip_code","11":"employer", "12":"occupation","13":"transaction_dt","14":"transaction_amt","15":"other_id","16":"tran_id", "17":"file_num","18":"memo_cd","19":"memo_text","20":"sub_id"}',
+            "CSV_HEADERS": '["cmte_id","amndt_ind","rpt_tp","transaction_pgi","image_num","transaction_tp","entity_tp","name","city","state", "zip_code","employer","occupation","transaction_dt","transaction_amt","other_id","tran_id","file_num", "memo_cd","memo_text","sub_id"]         ',
         },
         resources={
             "request_memory": "5G",
@@ -207,7 +206,7 @@ with DAG(
                 "name": "sub_id",
                 "type": "integer",
                 "description": "FEC Record Number",
-                "mode": "nullable",
+                "mode": "required",
             },
         ],
     )

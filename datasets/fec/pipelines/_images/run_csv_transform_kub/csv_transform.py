@@ -15,6 +15,7 @@
 
 import csv
 import datetime
+import json
 import logging
 import os
 import pathlib
@@ -24,8 +25,6 @@ from zipfile import ZipFile
 import pandas as pd
 import requests
 from google.cloud import storage
-
-# from numpy import source
 
 
 def main(
@@ -40,7 +39,6 @@ def main(
     target_gcs_path: str,
     csv_headers: typing.List[str],
     chunksize: str,
-    # rename_mappings: dict,
     pipeline_name: str,
 ) -> None:
 
@@ -62,47 +60,37 @@ def main(
             source_file,
             sep="|",
             header=None,
-            names=csv_headers,
             dtype=object,
             index_col=False,
         )
+        df.columns = csv_headers
 
         logging.info(f"Transforming {source_file}... ")
-
-        # logging.info("Transform: Rename columns... ")
-        # rename_headers(df, rename_mappings)
-
         if "candidate_20" in pipeline_name:
             logging.info("Transform: Trimming white spaces in headers... ")
             df = df.rename(columns=lambda x: x.strip())
+
+        elif "candidate_committe_20" in pipeline_name:
+            pass
 
         elif "committee_20" in pipeline_name:
             df.drop(df[df["cmte_id"] == "C00622357"].index, inplace=True)
 
         elif "committee_contributions_20" in pipeline_name:
             df["transaction_dt"] = df["transaction_dt"].astype(str)
-            # df["transaction_dt"] = df["transaction_dt"].str[:-2]
             date_for_length(df, "transaction_dt")
             df = resolve_date_format(df, "transaction_dt", pipeline_name)
 
         elif "other_committee_tx_20" in pipeline_name:
             df["transaction_dt"] = df["transaction_dt"].astype(str)
-            # df["transaction_dt"] = df["transaction_dt"].str[:-2]
             date_for_length(df, "transaction_dt")
             df = resolve_date_format(df, "transaction_dt", pipeline_name)
 
         elif "opex" in pipeline_name:
+            df = df.drop(columns=df.columns[-1], axis=1)
             df["transaction_dt"] = df["transaction_dt"].astype(str)
-            # df["transaction_dt"] = df["transaction_dt"].str[:-2]
             date_for_length(df, "transaction_dt")
             df = resolve_date_format(df, "transaction_dt", pipeline_name)
-
-        # elif pipeline_name == "individuals_":
-        #     df["transaction_dt"] = df["transaction_dt"].astype(str)
-        #     #df["transaction_dt"] = df["transaction_dt"].str[:-2]
-        #     date_for_length(df, "transaction_dt")
-        #     df = resolve_date_format(df, "transaction_dt", pipeline_name)
-        #     df = df.rename(columns=lambda x: x.strip())
 
         else:
             pass
@@ -130,28 +118,10 @@ def main(
             source_file, target_file, chunksize, csv_headers, pipeline_name
         )
 
-        # logging.info(f"Opening file...{source_file}")
-        # df = pd.read_table(
-        #     source_file, dtype=object, index_col=False, names=csv_headers, sep="|"
-        # )
-
-        # logging.info(f"Transforming.. {source_file}")
-
-        # df["transaction_dt"] = df["transaction_dt"].astype(str)
-        # date_for_length(df, "transaction_dt")
-        # df = resolve_date_format(df, "transaction_dt", pipeline_name)
-        # df = df.rename(columns=lambda x: x.strip())
-
-        # logging.info(f"Saving to output file.. {target_file}")
         logging.info(
             f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
         )
         upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
-
-        # logging.info(
-        #     f"FEC {pipeline_name} process completed at "
-        #     + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-        # )
 
 
 def process_source_file(
@@ -177,7 +147,6 @@ def process_source_file(
                     data,
                     target_file,
                     chunk_number,
-                    csv_headers,
                     pipeline_name,
                 )
                 data = []
@@ -188,7 +157,6 @@ def process_source_file(
                 data,
                 target_file,
                 chunk_number,
-                csv_headers,
                 pipeline_name,
             )
 
@@ -197,7 +165,6 @@ def process_dataframe_chunk(
     data: typing.List[str],
     target_file: str,
     chunk_number: int,
-    csv_headers: typing.List[str],
     pipeline_name: str,
 ) -> None:
     data = list([char.split("|") for item in data for char in item])
@@ -235,6 +202,7 @@ def process_dataframe_chunk(
         target_file_batch=target_file_batch,
         target_file=target_file,
         pipeline_name=pipeline_name,
+        skip_header=(not chunk_number == 1),
     )
 
 
@@ -243,16 +211,18 @@ def process_chunk(
     target_file_batch: str,
     target_file: str,
     pipeline_name: str,
+    skip_header: bool,
 ) -> None:
     logging.info(f"Processing batch file {target_file_batch}")
     df["image_num"] = df["image_num"].astype(str)
     df["transaction_dt"] = df["transaction_dt"].astype(str)
-    df.drop(df[df["sub_id"] == ""].index, inplace=True)
+    convert_string_to_int(df, "image_num")
+    fill_null_values(df, "sub_id")
     date_for_length(df, "transaction_dt")
     df = resolve_date_format(df, "transaction_dt", pipeline_name)
     df = df.rename(columns=lambda x: x.strip())
     save_to_new_file(df, file_path=str(target_file_batch), sep=",")
-    append_batch_file(target_file_batch, target_file)
+    append_batch_file(target_file_batch, target_file, skip_header)
     logging.info(f"Processing batch file {target_file_batch} completed")
 
 
@@ -261,11 +231,21 @@ def save_to_new_file(df: pd.DataFrame, file_path: str, sep: str = ",") -> None:
     df.to_csv(file_path, index=False, sep=",")
 
 
-def append_batch_file(target_file_batch: str, target_file: str) -> None:
+def append_batch_file(
+    target_file_batch: str, target_file: str, skip_header: bool
+) -> None:
 
     with open(target_file_batch, "r") as data_file:
         with open(target_file, "a+") as target_file:
-            logging.info(f"Appending batch file {target_file_batch} to {target_file}")
+            if skip_header:
+                logging.info(
+                    f"Appending batch file {target_file_batch} to {target_file} with skipheader"
+                )
+                next(data_file)
+            else:
+                logging.info(
+                    f"Appending batch file {target_file_batch} to {target_file}"
+                )
             target_file.write(data_file.read())
             if os.path.exists(target_file_batch):
                 os.remove(target_file_batch)
@@ -326,6 +306,17 @@ def convert_dt_format_opex(dt_str: str) -> str:
         )
 
 
+def fill_null_values(df: pd.DataFrame, field_name: str):
+    df[field_name] = df[field_name].fillna(0)
+
+
+def convert_string_to_int(df: pd.DataFrame, field_name: str):
+    df[field_name] = pd.to_numeric(df[field_name], errors="coerce")
+    df[field_name] = df[field_name].apply(lambda x: "%.0f" % x)
+    df[field_name] = df[field_name].fillna(0)
+    df[field_name] = df[field_name].replace({"nan": 0})
+
+
 def date_for_length(df: pd.DataFrame, field_name: str):
     date_list = df[field_name].values
     new_date_list = []
@@ -352,10 +343,6 @@ def date_for_length(df: pd.DataFrame, field_name: str):
 
 def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
     df.rename(columns=rename_mappings, inplace=True)
-
-
-# def save_to_new_file(df: pd.DataFrame, file_path: str) -> None:
-#     df.to_csv(file_path, index=False)
 
 
 def download_file(source_url: str, source_file_zip_file: pathlib.Path) -> None:
@@ -397,8 +384,7 @@ if __name__ == "__main__":
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
         target_gcs_bucket=os.environ.get("TARGET_GCS_BUCKET", ""),
         target_gcs_path=os.environ.get("TARGET_GCS_PATH", ""),
-        csv_headers=os.environ.get("CSV_HEADERS", ""),
+        csv_headers=json.loads(os.environ["CSV_HEADERS"]),
         chunksize=os.environ.get("CHUNKSIZE", ""),
-        # rename_mappings=os.environ.get("RENAME_MAPPINGS", ""),
         pipeline_name=os.environ.get("PIPELINE_NAME", ""),
     )

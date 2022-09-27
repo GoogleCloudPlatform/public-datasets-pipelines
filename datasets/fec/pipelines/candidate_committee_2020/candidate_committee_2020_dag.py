@@ -52,7 +52,6 @@ with DAG(
             "TARGET_GCS_PATH": "data/fec/candidate_committee_2020/data_output.csv",
             "PIPELINE_NAME": "candidate_committee_2020",
             "CSV_HEADERS": '["cand_id","cand_election_yr","fec_election_yr","cmte_id","cmte_tp","cmte_design","linkage_id"]',
-            "RENAME_MAPPINGS": '{"0":"cand_id","1":"cand_election_yr","2":"fec_election_yr","3":"cmte_id","4":"cmte_tp","5":"cmte_design", "6":"linkage_id"}',
         },
         resources={
             "request_memory": "3G",
