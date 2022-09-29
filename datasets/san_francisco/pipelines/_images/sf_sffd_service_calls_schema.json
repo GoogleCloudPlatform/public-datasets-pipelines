@@ -1,0 +1,218 @@
+[
+    {
+        "name": "call_number",
+        "type": "INTEGER",
+        "description": "A unique 9-digit number assigned by the 911 Dispatch Center (DEM) to this call. These number are used for both Police and Fire calls",
+        "mode": "REQUIRED"
+    },
+    {
+        "name": "unit_id",
+        "type": "STRING",
+        "description": "Unit Identifier. For example E01 for Engine 1 or T01 for Truck 1.",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "incident_number",
+        "type": "INTEGER",
+        "description": "A unique 8-digit number assigned by DEM to this Fire incident.",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "call_type",
+        "type": "STRING",
+        "description": "Type of call the incident falls into. See the list below.",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "call_date",
+        "type": "DATE",
+        "description": "Date the call is received at the 911 Dispatch Center. Used for reporting purposes.",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "watch_date",
+        "type": "DATE",
+        "description": "Watch date when the call is received. Watch date starts at 0800 each morning and ends at 0800 the next day.",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "received_timestamp",
+        "type": "DATETIME",
+        "description": "Date and time of call is received at the 911 Dispatch Center.",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "entry_timestamp",
+        "type": "DATETIME",
+        "description": "Date and time the 911 operator submits the entry of the initical call information into the CAD system",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "dispatch_timestamp",
+        "type": "DATETIME",
+        "description": "Date and time the 911 operator dispatches this unit to the call.",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "response_timestamp",
+        "type": "DATETIME",
+        "description": "Date and time this unit acknowledges the dispatch and records that the unit is en route to the location of the call.",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "on_scene_timestamp",
+        "type": "DATETIME",
+        "description": "Date and time the unit records arriving to the location of the incident",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "transport_timestamp",
+        "type": "DATETIME",
+        "description": "If this unit is an ambulance, date and time the unit begins the transport unit arrives to hospital",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "hospital_timestamp",
+        "type": "DATETIME",
+        "description": "If this unit is an ambulance, date and time the unit arrives to the hospital.",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "call_final_disposition",
+        "type": "STRING",
+        "description": "Disposition of the call (Code). For example TH2: Transport to Hospital - Code 2, FIR: Resolved by Fire Department",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "available_timestamp",
+        "type": "DATETIME",
+        "description": "Date and time this unit is not longer assigned to this call and it is available for another dispatch.",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "address",
+        "type": "STRING",
+        "description": "Address of midblock point associated with incident (obfuscated address to protect caller privacy)",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "city",
+        "type": "STRING",
+        "description": "City of incident",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "zipcode_of_incident",
+        "type": "STRING",
+        "description": "Zipcode of incident",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "battalion",
+        "type": "STRING",
+        "description": "Emergency Response District (There are 9 Fire Emergency Response Districts)",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "station_area",
+        "type": "STRING",
+        "description": "Fire Station First Response Area associated with the address of the incident",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "box",
+        "type": "STRING",
+        "description": "Fire box associated with the address of the incident. A box is the smallest area used to divide the City. Each box is associated with a unique unit dispatch order. The City is divided into more than 2,400 boxes.",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "original_priority",
+        "type": "STRING",
+        "description": "Initial call priority (Code 2: Non-Emergency or Code 3:Emergency).",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "priority",
+        "type": "STRING",
+        "description": "Call priority (Code 2: Non-Emergency or Code 3:Emergency).",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "final_priority",
+        "type": "INTEGER",
+        "description": "Final call priority (Code 2: Non-Emergency or Code 3:Emergency).",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "als_unit",
+        "type": "BOOLEAN",
+        "description": "Does this unit includes ALS (Advance Life Support) resources? Is there a paramedic in this unit?",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "call_type_group",
+        "type": "STRING",
+        "description": "Call types are divided into four main groups: Fire, Alarm, Potential Life Threatening and Non Life Threatening.",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "number_of_alarms",
+        "type": "INTEGER",
+        "description": "Number of alarms associated with the incident. This is a number between 1 and 5.",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "unit_type",
+        "type": "STRING",
+        "description": "Unit type",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "unit_sequence_in_call_dispatch",
+        "type": "INTEGER",
+        "description": "A number that indicates the order this unit was assigned to this call",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "fire_prevention_district",
+        "type": "STRING",
+        "description": "Bureau of Fire Prevention District associated with this address",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "supervisor_district",
+        "type": "STRING",
+        "description": "Supervisor District associated with this address",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "row_id",
+        "type": "STRING",
+        "description": "Unique identifier used for managing data updates. It is the concatenation of Call Number and Unit ID separated by a dash",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "latitude",
+        "type": "FLOAT",
+        "description": "Latitude of the address",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "longitude",
+        "type": "FLOAT",
+        "description": "Longitude of the address",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "neighborhood_name",
+        "type": "STRING",
+        "description": "Text name of the neighborhood in which the incident occurred",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "location_geom",
+        "type": "GEOGRAPHY",
+        "description": "Latitude and longitude of address obfuscated either to the midblock, intersection or call box",
+        "mode": "NULLABLE"
+    }
+]

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Google LLC
+ * Copyright 2021 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,14 @@
  */
 
 
-resource "google_bigquery_table" "irs_990_irs_990_ez_2016" {
-  project     = var.project_id
-  dataset_id  = "irs_990"
-  table_id    = "irs_990_ez_2016"
-  description = "IRS 990 EZ 2016 dataset"
-  depends_on = [
-    google_bigquery_dataset.irs_990
-  ]
+provider "google" {
+  project                     = var.project_id
+  impersonate_service_account = var.impersonating_acct
+  region                      = var.region
 }
 
-output "bigquery_table-irs_990_irs_990_ez_2016-table_id" {
-  value = google_bigquery_table.irs_990_irs_990_ez_2016.table_id
-}
+data "google_client_openid_userinfo" "me" {}
 
-output "bigquery_table-irs_990_irs_990_ez_2016-id" {
-  value = google_bigquery_table.irs_990_irs_990_ez_2016.id
+output "impersonating-account" {
+  value = data.google_client_openid_userinfo.me.email
 }

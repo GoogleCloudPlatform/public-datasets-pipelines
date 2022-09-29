@@ -1,0 +1,1109 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+resources:
+  - type: bigquery_table
+    table_id: "311_service_requests"
+    description: "san_francisco_etl_process"
+dag:
+  airflow_version: 2
+  initialize:
+    dag_id: san_francisco
+    default_args:
+      owner: "Google"
+      depends_on_past: False
+      start_date: '2021-03-01'
+    max_active_runs: 1
+    schedule_interval: "@daily"
+    catchup: False
+    default_view: graph
+  tasks:
+    - operator: "KubernetesPodOperator"
+      description: "Run New York 311 Service Requests Pipeline"
+      args:
+        task_id: "sf_311_service_requests"
+        name: "sf_311_service_requests"
+        startup_timeout_seconds: 600
+        namespace: "composer"
+        service_account_name: "datasets"
+        image_pull_policy: "Always"
+        image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "San Francisco 311 Service Requests"
+          SOURCE_URL: "https://data.sfgov.org/api/views/vw6y-z8j6/rows.csv"
+          CHUNKSIZE: "1000000"
+          SOURCE_FILE: "files/data_311_service_requests.csv"
+          TARGET_FILE: "files/data_output_311_service_requests.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "san_francisco_311"
+          TABLE_ID: "311_service_requests"
+          DROP_DEST_TABLE: "N"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/san_francisco/311_service_requests/data_output.csv"
+          SCHEMA_PATH: "data/san_francisco/schema/sf_311_service_requests_schema.json"
+          HEADER_ROW_ORDINAL: "0"
+          INPUT_CSV_HEADERS: >-
+            [
+              "CaseID",
+              "Opened",
+              "Closed",
+              "Updated",
+              "Status",
+              "Status Notes",
+              "Responsible Agency",
+              "Category",
+              "Request Type",
+              "Request Details",
+              "Address",
+              "Supervisor District",
+              "Neighborhood",
+              "Point",
+              "Source",
+              "Media URL",
+              "Latitude",
+              "Longitude",
+              "Police District"
+            ]
+          RENAME_HEADERS_LIST: >-
+            {
+              "CaseID": "unique_key",
+              "Opened": "created_date",
+              "Closed": "closed_date",
+              "Updated": "resolution_action_updated_date",
+              "Status": "status",
+              "Status Notes": "status_notes",
+              "Responsible Agency": "agency_name",
+              "Category": "category",
+              "Request Type": "complaint_type",
+              "Request Details": "descriptor",
+              "Address": "incident_address",
+              "Supervisor District": "supervisor_district",
+              "Neighborhood": "neighborhood",
+              "Point": "location",
+              "Source": "source",
+              "Media URL": "media_url",
+              "Latitude": "latitude",
+              "Longitude": "longitude",
+              "Police District": "police_district"
+            }
+          EMPTY_KEY_LIST: >-
+            [
+              "unique_key"
+            ]
+          RESOLVE_DATATYPES_LIST: >-
+            {
+              "supervisor_district": "Int64"
+            }
+          REMOVE_PAREN_LIST: >-
+            [
+              "latitude",
+              "longitude"
+            ]
+          STRIP_NEWLINES_LIST: >-
+            [
+              "status_notes",
+              "descriptor"
+            ]
+          STRIP_WHITESPACE_LIST: >-
+            [
+              "incident_address"
+            ]
+          DATE_FORMAT_LIST: >-
+            {
+              "created_date": "%Y-%m-%d %H:%M:%S",
+              "closed_date": "%Y-%m-%d %H:%M:%S",
+              "resolution_action_updated_date": "%Y-%m-%d %H:%M:%S"
+            }
+          REORDER_HEADERS_LIST: >-
+            [
+                "unique_key",
+                "created_date",
+                "closed_date",
+                "resolution_action_updated_date",
+                "status",
+                "status_notes",
+                "agency_name",
+                "category",
+                "complaint_type",
+                "descriptor",
+                "incident_address",
+                "supervisor_district",
+                "neighborhood",
+                "location",
+                "source",
+                "media_url",
+                "latitude",
+                "longitude",
+                "police_district"
+            ]
+        resources:
+          limit_memory: "8G"
+          limit_cpu: "3"
+          request_ephemeral_storage: "10G"
+    - operator: "KubernetesPodOperator"
+      description: "Run San Francisco Municipal Calendar Pipeline"
+      args:
+        task_id: "sf_calendar"
+        name: "calendar"
+        namespace: "composer"
+        service_account_name: "datasets"
+        image_pull_policy: "Always"
+        image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "San Francisco Municipal Calendar"
+          SOURCE_URL_DICT: >-
+            {
+              "calendar": "gs://pdp-feeds-staging/SF_Muni/GTFSTransitData_SF/calendar.csv",
+              "calendar_attributes": "gs://pdp-feeds-staging/SF_Muni/GTFSTransitData_SF/calendar_attributes.csv",
+              "calendar_dates": "gs://pdp-feeds-staging/SF_Muni/GTFSTransitData_SF/calendar_dates.csv"
+            }
+          CHUNKSIZE: "750000"
+          SOURCE_FILE: "files/data_municipal_calendar.csv"
+          TARGET_FILE: "files/data_output_municipal_calendar.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "san_francisco_transit_muni"
+          TABLE_ID: "calendar"
+          DROP_DEST_TABLE: "N"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/san_francisco/transit_municipal_calendar/data_output.csv"
+          SCHEMA_PATH: "data/san_francisco/schema/sf_calendar_schema.json"
+          REORDER_HEADERS_LIST: >-
+            [
+              "service_id", "service_desc",
+              "monday", "tuesday", "wednesday",
+              "thursday", "friday", "saturday", "sunday",
+              "exceptions", "exception_type"
+            ]
+          RENAME_HEADERS_LIST: >-
+            {
+                "monday_str": "monday",
+                "tuesday_str": "tuesday",
+                "wednesday_str": "wednesday",
+                "thursday_str": "thursday",
+                "friday_str": "friday",
+                "saturday_str": "saturday",
+                "sunday_str": "sunday",
+                "service_description": "service_desc",
+                "date": "exceptions",
+                "exception_type_str": "exception_type"
+            }
+        resources:
+          limit_memory: "8G"
+          limit_cpu: "3"
+          request_ephemeral_storage: "10G"
+    - operator: "KubernetesPodOperator"
+      description: "Run San Francisco Municipal Routes Pipeline"
+      args:
+        task_id: "sf_muni_routes"
+        name: "muni_routes"
+        namespace: "composer"
+        service_account_name: "datasets"
+        image_pull_policy: "Always"
+        image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "San Francisco Municipal Routes"
+          SOURCE_URL_DICT: >-
+            {
+              "routes": "gs://pdp-feeds-staging/SF_Muni/GTFSTransitData_SF/routes.txt"
+            }
+          CHUNKSIZE: "750000"
+          SOURCE_FILE: "files/data_municipal_routes.csv"
+          TARGET_FILE: "files/data_output_municipal_routes.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "san_francisco_transit_muni"
+          TABLE_ID: "routes"
+          DROP_DEST_TABLE: "N"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/san_francisco/transit_municipal_routes/data_output.csv"
+          SCHEMA_PATH: "data/san_francisco/schema/sf_muni_routes_schema.json"
+          REORDER_HEADERS_LIST: >-
+            [
+              "route_id",
+              "route_short_name",
+              "route_long_name",
+              "route_type"
+            ]
+        resources:
+          limit_memory: "8G"
+          limit_cpu: "3"
+          request_ephemeral_storage: "10G"
+    - operator: "KubernetesPodOperator"
+      description: "Run San Francisco Municipal Shapes Pipeline"
+      args:
+        task_id: "sf_muni_shapes"
+        name: "muni_shapes"
+        namespace: "composer"
+        service_account_name: "datasets"
+        image_pull_policy: "Always"
+        image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "San Francisco Municipal Shapes"
+          SOURCE_URL_DICT: >-
+            {
+              "shapes": "gs://pdp-feeds-staging/SF_Muni/GTFSTransitData_SF/shapes.txt"
+            }
+          CHUNKSIZE: "750000"
+          SOURCE_FILE: "files/data_municipal_shapes.csv"
+          TARGET_FILE: "files/data_output_municipal_shapes.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "san_francisco_transit_muni"
+          TABLE_ID: "shapes"
+          DROP_DEST_TABLE: "N"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/san_francisco/transit_municipal_shapes/data_output.csv"
+          SCHEMA_PATH: "data/san_francisco/schema/sf_muni_shapes_schema.json"
+          RENAME_HEADERS_LIST: >-
+            {
+              "shape_pt_lon": "shape_point_lon",
+              "shape_pt_lat": "shape_point_lat",
+              "shape_pt_sequence": "shape_point_sequence",
+              "shape_dist_traveled": "shape_distance_traveled"
+            }
+          REORDER_HEADERS_LIST: >-
+            [
+              "shape_id",
+              "shape_point_sequence",
+              "shape_point_lat",
+              "shape_point_lon",
+              "shape_point_geom",
+              "shape_distance_traveled"
+            ]
+        resources:
+          limit_memory: "8G"
+          limit_cpu: "3"
+          request_ephemeral_storage: "10G"
+    - operator: "KubernetesPodOperator"
+      description: "Run San Francisco Municipal Stops Pipeline"
+      args:
+        task_id: "sf_muni_stops"
+        name: "muni_stops"
+        namespace: "composer"
+        service_account_name: "datasets"
+        image_pull_policy: "Always"
+        image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "San Francisco Municipal Stops"
+          SOURCE_URL_DICT: >-
+            {
+              "stops": "gs://pdp-feeds-staging/SF_Muni/GTFSTransitData_SF/stops.txt"
+            }
+          CHUNKSIZE: "750000"
+          SOURCE_FILE: "files/data_municipal_stops.csv"
+          TARGET_FILE: "files/data_output_municipal_stops.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "san_francisco_transit_muni"
+          TABLE_ID: "stops"
+          DROP_DEST_TABLE: "N"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/san_francisco/transit_municipal_stops/data_output.csv"
+          SCHEMA_PATH: "data/san_francisco/schema/sf_muni_stops_schema.json"
+          REORDER_HEADERS_LIST: >-
+            [
+              "stop_id",
+              "stop_name",
+              "stop_lat",
+              "stop_lon",
+              "stop_geom"
+            ]
+        resources:
+          limit_memory: "8G"
+          limit_cpu: "3"
+          request_ephemeral_storage: "10G"
+    - operator: "KubernetesPodOperator"
+      description: "Run San Francisco Police Department Incidents Pipeline"
+      args:
+        task_id: "sfpd_incidents"
+        name: "sfpd_incidents"
+        namespace: "composer"
+        service_account_name: "datasets"
+        image_pull_policy: "Always"
+        image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "San Francisco Police Department Incidents"
+          SOURCE_URL_DICT: >-
+            {
+              "sfpd_incidents": "https://data.sfgov.org/api/views/tmnf-yvry/rows.csv"
+            }
+          CHUNKSIZE: "750000"
+          SOURCE_FILE: "files/data_sfpd_incidents.csv"
+          TARGET_FILE: "files/data_output_sfpd_incidents.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "san_francisco_sfpd_incidents"
+          TABLE_ID: "sfpd_incidents"
+          DROP_DEST_TABLE: "N"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/san_francisco/sfpd_incidents/data_output.csv"
+          SCHEMA_PATH: "data/san_francisco/schema/sf_sfpd_incidents_schema.json"
+          HEADER_ROW_ORDINAL: "0"
+          EMPTY_KEY_LIST: >-
+            [
+              "unique_key"
+            ]
+          DATE_FORMAT_LIST: >-
+            {
+              "Date": "%Y-%m-%d %H:%M:%S"
+            }
+          RENAME_HEADERS_LIST: >-
+            {
+              "IncidntNum": "unique_key",
+              "Category": "category",
+              "Descript": "descript",
+              "DayOfWeek": "dayofweek",
+              "PdDistrict": "pddistrict",
+              "Resolution": "resolution",
+              "Address": "address",
+              "X": "longitude",
+              "Y": "latitude",
+              "Location": "location",
+              "PdId": "pdid",
+              "Date": "Date",
+              "Time": "Time"
+            }
+          REORDER_HEADERS_LIST: >-
+            [
+              "unique_key",
+              "category",
+              "descript",
+              "dayofweek",
+              "pddistrict",
+              "resolution",
+              "address",
+              "longitude",
+              "latitude",
+              "location",
+              "pdid",
+              "timestamp"
+            ]
+        resources:
+          limit_memory: "8G"
+          limit_cpu: "3"
+          request_ephemeral_storage: "10G"
+    - operator: "KubernetesPodOperator"
+      description: "Run San Francisco Bikeshare Stations Pipeline"
+      args:
+        task_id: "sf_bikeshare_stations"
+        name: "bikeshare_stations"
+        namespace: "composer"
+        service_account_name: "datasets"
+        image_pull_policy: "Always"
+        image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "San Francisco Bikeshare Stations"
+          SOURCE_URL: "https://gbfs.baywheels.com/gbfs/fr/station_information"
+          CHUNKSIZE: "750000"
+          SOURCE_FILE: "files/data_bikeshare_station_info.csv"
+          TARGET_FILE: "files/data_output_bikeshare_station_info.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "san_francisco_bikeshare"
+          TABLE_ID: "bikeshare_station_info"
+          DROP_DEST_TABLE: "Y"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/san_francisco/bikeshare_stations/data_output.csv"
+          SCHEMA_PATH: "data/san_francisco/schema/sf_bikeshare_station_info_schema.json"
+          HEADER_ROW_ORDINAL: "0"
+          RENAME_HEADERS_LIST: >-
+            {
+              "data.stations.station_id": "station_id",
+              "data.stations.name": "name",
+              "data.stations.short_name": "short_name",
+              "data.stations.lat": "lat",
+              "data.stations.lon": "lon",
+              "data.stations.region_id": "region_id",
+              "data.stations.rental_methods": "rental_methods",
+              "data.stations.capacity": "capacity",
+              "data.stations.eightd_has_key_dispenser": "eightd_has_key_dispenser",
+              "data.stations.has_kiosk": "has_kiosk",
+              "data.stations.external_id": "external_id"
+            }
+          EMPTY_KEY_LIST: >-
+            [
+              "station_id",
+              "name",
+              "lat",
+              "lon"
+            ]
+          GEN_LOCATION_LIST: >-
+            {
+              "station_geom": [ "lon", "lat" ]
+            }
+          RESOLVE_DATATYPES_LIST: >-
+            {
+              "region_id": "Int64"
+            }
+          REMOVE_PAREN_LIST: >-
+            [
+              "latitude",
+              "longitude"
+            ]
+          STRIP_WHITESPACE_LIST: >-
+            [
+              "incident_address"
+            ]
+          DATE_FORMAT_LIST: >-
+            {
+              "created_date": "%Y-%m-%d %H:%M:%S",
+              "closed_date": "%Y-%m-%d %H:%M:%S",
+              "resolution_action_updated_date": "%Y-%m-%d %H:%M:%S"
+            }
+          REORDER_HEADERS_LIST: >-
+            [
+              "station_id",
+              "name",
+              "short_name",
+              "lat",
+              "lon",
+              "region_id",
+              "rental_methods",
+              "capacity",
+              "external_id",
+              "eightd_has_key_dispenser",
+              "has_kiosk",
+              "station_geom"
+            ]
+        resources:
+          limit_memory: "8G"
+          limit_cpu: "3"
+          request_ephemeral_storage: "10G"
+    - operator: "KubernetesPodOperator"
+      description: "Run San Francisco Bikeshare Status Pipeline"
+      args:
+        task_id: "sf_bikeshare_status"
+        name: "bikeshare_status"
+        namespace: "composer"
+        service_account_name: "datasets"
+        image_pull_policy: "Always"
+        image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "San Francisco Bikeshare Station Status"
+          SOURCE_URL: "https://gbfs.baywheels.com/gbfs/en/station_status"
+          CHUNKSIZE: "750000"
+          SOURCE_FILE: "files/data_bikeshare_status.csv"
+          TARGET_FILE: "files/data_output_bikeshare_status.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "san_francisco_bikeshare"
+          TABLE_ID: "bikeshare_station_status"
+          DROP_DEST_TABLE: "Y"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/san_francisco/bikeshare_status/data_output.csv"
+          SCHEMA_PATH: "data/san_francisco/schema/sf_bikeshare_station_status_schema.json"
+          HEADER_ROW_ORDINAL: "0"
+          RENAME_HEADERS_LIST: >-
+            {
+              "data.stations.eightd_has_available_keys": "eightd_has_available_keys",
+              "data.stations.is_installed": "is_installed",
+              "data.stations.is_renting": "is_renting",
+              "data.stations.is_returning": "is_returning",
+              "data.stations.last_reported": "last_reported",
+              "data.stations.num_bikes_available": "num_bikes_available",
+              "data.stations.num_bikes_disabled": "num_bikes_disabled",
+              "data.stations.num_docks_available": "num_docks_available",
+              "data.stations.num_docks_disabled": "num_docks_disabled",
+              "data.stations.num_ebikes_available": "num_ebikes_available",
+              "data.stations.station_id": "station_id"
+            }
+          EMPTY_KEY_LIST: >-
+            [
+              "station_id",
+              "num_bikes_available",
+              "num_docks_available",
+              "is_installed",
+              "is_renting",
+              "is_returning",
+              "last_reported"
+            ]
+          REORDER_HEADERS_LIST: >-
+            [
+              "station_id",
+              "num_bikes_available",
+              "num_bikes_disabled",
+              "num_docks_available",
+              "num_docks_disabled",
+              "is_installed",
+              "is_renting",
+              "is_returning",
+              "last_reported",
+              "num_ebikes_available",
+              "eightd_has_available_keys"
+            ]
+        resources:
+          limit_memory: "8G"
+          limit_cpu: "3"
+          request_ephemeral_storage: "10G"
+    - operator: "KubernetesPodOperator"
+      description: "Run San Francisco Bikeshare Trips Pipeline"
+      args:
+        task_id: "sf_bikeshare_trips"
+        name: "sf_bikeshare_trips"
+        namespace: "composer"
+        service_account_name: "datasets"
+        image_pull_policy: "Always"
+        image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "San Francisco Bikeshare Trips"
+          SOURCE_URL_LIST: >-
+            [
+              "https://s3.amazonaws.com/fordgobike-data/201803-fordgobike-tripdata.csv.zip",
+              "https://s3.amazonaws.com/fordgobike-data/201804-fordgobike-tripdata.csv.zip",
+              "https://s3.amazonaws.com/fordgobike-data/201802-fordgobike-tripdata.csv.zip",
+              "https://s3.amazonaws.com/fordgobike-data/201801-fordgobike-tripdata.csv.zip",
+              "https://s3.amazonaws.com/fordgobike-data/2017-fordgobike-tripdata.csv",
+              "https://s3.amazonaws.com/babs-open-data/babs_open_data_year_1.zip",
+              "https://s3.amazonaws.com/babs-open-data/babs_open_data_year_2.zip",
+              "https://s3.amazonaws.com/babs-open-data/babs_open_data_year_3.zip"
+            ]
+          CHUNKSIZE: "1000000"
+          SOURCE_FILE: "files/data_bikeshare_trips.csv"
+          TARGET_FILE: "files/data_output_bikeshare_trips.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "san_francisco_bikeshare"
+          TABLE_ID: "bikeshare_trips"
+          DROP_DEST_TABLE: "N"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/san_francisco/bikeshare_trips/data_output.csv"
+          SCHEMA_PATH: "data/san_francisco/schema/sf_bikeshare_trips_schema.json"
+          HEADER_ROW_ORDINAL: "0"
+          TRIP_DATA_NAMES: >-
+            [
+              "source_file",
+              "trip_id",
+              "duration_sec",
+              "start_date",
+              "start_station_name",
+              "start_station_terminal",
+              "end_date",
+              "end_station_name",
+              "end_station_terminal",
+              "bike_number",
+              "subscription_type",
+              "zip_code"
+            ]
+          TRIP_DATA_DTYPES: >-
+            {
+              "source_file": "str",
+              "trip_id": "str",
+              "duration_sec": "str",
+              "start_date": "str",
+              "start_station_name": "str",
+              "start_station_terminal": "str",
+              "end_date": "str",
+              "end_station_name": "str",
+              "end_station_terminal": "str",
+              "bike_number": "str",
+              "subscription_type": "str",
+              "zip_code": "str"
+            }
+          TRIPDATA_NAMES: >-
+            [
+              "source_file",
+              "duration_sec",
+              "start_date",
+              "end_date",
+              "start_station_terminal",
+              "start_station_name",
+              "start_station_latitude",
+              "start_station_longitude",
+              "end_station_terminal",
+              "end_station_name",
+              "end_station_latitude",
+              "end_station_longitude",
+              "bike_number",
+              "subscriber_type",
+              "member_birth_year",
+              "member_gender",
+              "bike_share_for_all_trip"
+            ]
+          TRIPDATA_DTYPES: >-
+            {
+                "source_file": "str",
+                "duration_sec": "int",
+                "start_date": "str",
+                "end_date": "str",
+                "start_station_terminal": "int",
+                "start_station_name": "str",
+                "start_station_latitude": "float",
+                "start_station_longitude": "float",
+                "end_station_terminal": "int",
+                "end_station_name": "str",
+                "end_station_latitude": "float",
+                "end_station_longitude": "float",
+                "bike_number": "int",
+                "subscriber_type": "str",
+                "member_birth_year": "str",
+                "member_gender": "str",
+                "bike_share_for_all_trip": "str"
+            }
+          RENAME_HEADERS_TRIPDATA: >-
+            {
+              "duration_sec": "Duration",
+              "start_time": "Start Date",
+              "start_station_name": "Start Station",
+              "start_station_id": "Start Terminal",
+              "end_time": "End Date",
+              "end_station_name": "End Station",
+              "end_station_id": "End Terminal",
+              "bike_id": "Bike #",
+              "user_type": "Subscription Type",
+              "start_station_latitude": "start_station_latitude",
+              "start_station_longitude": "start_station_longitude",
+              "end_station_latitude": "end_station_latitude",
+              "end_station_longitude": "end_station_longitude",
+              "member_birth_year": "member_birth_year",
+              "member_gender": "member_gender",
+              "bike_share_for_all_trip": "bike_share_for_all_trip"
+            }
+          RENAME_HEADERS_LIST: >-
+            {
+              "trip_id": "trip_id",
+              "duration_sec": "duration_sec",
+              "start_date": "start_date",
+              "start_station_name": "start_station_name",
+              "start_station_terminal": "start_station_id",
+              "end_date": "end_date",
+              "end_station_name": "end_station_name",
+              "end_station_terminal": "end_station_id",
+              "bike_number": "bike_number",
+              "zip_code": "zip_code",
+              "subscriber_type_new": "subscriber_type",
+              "subscription_type": "subscription_type",
+              "start_station_latitude": "start_station_latitude",
+              "start_station_longitude": "start_station_longitude",
+              "end_station_latitude": "end_station_latitude",
+              "end_station_longitude": "end_station_longitude",
+              "member_birth_year": "member_birth_year",
+              "member_gender": "member_gender",
+              "bike_share_for_all_trip": "bike_share_for_all_trip",
+              "start_station_geom": "start_station_geom",
+              "end_station_geom": "end_station_geom"
+            }
+          RESOLVE_DATATYPES_LIST: >-
+            {
+              "member_birth_year": "Int64"
+            }
+          DATE_FORMAT_LIST: >-
+            {
+              "start_date": "%Y-%m-%d %H:%M:%S",
+              "end_date": "%Y-%m-%d %H:%M:%S"
+            }
+          GEN_LOCATION_LIST: >-
+            {
+              "start_station_geom": [ "start_station_longitude", "start_station_latitude" ],
+              "end_station_geom": [ "end_station_longitude", "end_station_latitude" ]
+            }
+          REORDER_HEADERS_LIST: >-
+            [
+              "trip_id",
+              "duration_sec",
+              "start_date",
+              "start_station_name",
+              "start_station_id",
+              "end_date",
+              "end_station_name",
+              "end_station_id",
+              "bike_number",
+              "zip_code",
+              "subscriber_type",
+              "subscription_type",
+              "start_station_latitude",
+              "start_station_longitude",
+              "end_station_latitude",
+              "end_station_longitude",
+              "member_birth_year",
+              "member_gender",
+              "bike_share_for_all_trip",
+              "start_station_geom",
+              "end_station_geom"
+            ]
+        resources:
+          limit_memory: "8G"
+          limit_cpu: "3"
+          request_ephemeral_storage: "10G"
+    - operator: "KubernetesPodOperator"
+      description: "Run San Francisco Film Locations Pipeline"
+      args:
+        task_id: "sf_film_locations"
+        name: "sf_film_locations"
+        namespace: "composer"
+        service_account_name: "datasets"
+        image_pull_policy: "Always"
+        image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "San Francisco Film Locations"
+          SOURCE_URL: "https://data.sfgov.org/api/views/yitu-d5am/rows.csv"
+          CHUNKSIZE: "1000000"
+          SOURCE_FILE: "files/data_film_locations.csv"
+          TARGET_FILE: "files/data_output_film_locations.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "san_francisco_film_locations"
+          TABLE_ID: "film_locations"
+          DROP_DEST_TABLE: "N"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/san_francisco/film_locations/data_output.csv"
+          SCHEMA_PATH: "data/san_francisco/schema/sf_film_locations_schema.json"
+          HEADER_ROW_ORDINAL: "0"
+          RENAME_HEADERS_LIST: >-
+            {
+              "Title": "title",
+              "Release Year": "release_year",
+              "Locations": "locations",
+              "Fun Facts": "fun_facts",
+              "Production Company": "production_company",
+              "Distributor": "distributor",
+              "Director": "director",
+              "Writer": "writer",
+              "Actor 1": "actor_1",
+              "Actor 2": "actor_2",
+              "Actor 3": "actor_3"
+            }
+          STRIP_WHITESPACE_LIST: >-
+            [
+              "distributor",
+              "director",
+              "actor_2"
+            ]
+          STRIP_NEWLINES_LIST: >-
+            [
+              "production_company",
+              "fun_facts"
+            ]
+          REORDER_HEADERS_LIST: >-
+            [
+              "title",
+              "release_year",
+              "locations",
+              "fun_facts",
+              "production_company",
+              "distributor",
+              "director",
+              "writer",
+              "actor_1",
+              "actor_2",
+              "actor_3"
+            ]
+        resources:
+          limit_memory: "8G"
+          limit_cpu: "3"
+          request_ephemeral_storage: "10G"
+    - operator: "KubernetesPodOperator"
+      description: "Run San Francisco Fire Department Service Calls Pipeline"
+      args:
+        task_id: "sffd_service_calls"
+        name: "sffd_service_calls"
+        namespace: "composer"
+        service_account_name: "datasets"
+        image_pull_policy: "Always"
+        image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "San Francisco Fire Department Service Calls"
+          SOURCE_URL: "https://data.sfgov.org/api/views/nuek-vuh3/rows.csv"
+          CHUNKSIZE: "1000000"
+          SOURCE_FILE: "files/data_sffd_service_calls.csv"
+          TARGET_FILE: "files/data_output_sffd_service_calls.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "san_francisco_sffd_service_calls"
+          TABLE_ID: "sffd_service_calls"
+          DROP_DEST_TABLE: "Y"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/san_francisco/sffd_service_calls/data_output.csv"
+          SCHEMA_PATH: "data/san_francisco/schema/sf_sffd_service_calls_schema.json"
+          HEADER_ROW_ORDINAL: "0"
+          INPUT_CSV_HEADERS: >-
+            [
+              "Call Number",
+              "Unit ID",
+              "Incident Number",
+              "Call Type",
+              "Call Date",
+              "Watch Date",
+              "Received DtTm",
+              "Entry DtTm",
+              "Dispatch DtTm",
+              "Response DtTm",
+              "On Scene DtTm",
+              "Transport DtTm",
+              "Hospital DtTm",
+              "Call Final Disposition",
+              "Available DtTm",
+              "Address",
+              "City",
+              "Zipcode of Incident",
+              "Battalion",
+              "Station Area",
+              "Box",
+              "Original Priority",
+              "Priority",
+              "Final Priority",
+              "ALS Unit",
+              "Call Type Group",
+              "Number of Alarms",
+              "Unit Type",
+              "Unit sequence in call dispatch",
+              "Fire Prevention District",
+              "Supervisor District",
+              "Neighborhooods - Analysis Boundaries",
+              "RowID",
+              "case_location"
+            ]
+          DATA_DTYPES: >-
+            {
+              "Call Number": "int64",
+              "Unit ID": "str",
+              "Incident Number": "int64",
+              "Call Type": "str",
+              "Call Date": "str",
+              "Watch Date": "str",
+              "Received DtTm": "str",
+              "Entry DtTm": "str",
+              "Dispatch DtTm": "str",
+              "Response DtTm": "str",
+              "On Scene DtTm": "str",
+              "Transport DtTm": "str",
+              "Hospital DtTm": "str",
+              "Call Final Disposition": "str",
+              "Available DtTm": "str",
+              "Address": "str",
+              "City": "str",
+              "Zipcode of Incident": "str",
+              "Battalion": "str",
+              "Station Area": "str",
+              "Box": "str",
+              "Original Priority": "str",
+              "Priority": "str",
+              "Final Priority": "int64",
+              "ALS Unit": "str",
+              "Call Type Group": "str",
+              "Number of Alarms": "str",
+              "Unit Type": "str",
+              "Unit sequence in call dispatch": "str",
+              "Fire Prevention District": "str",
+              "Supervisor District": "str",
+              "Neighborhooods - Analysis Boundaries": "str",
+              "RowID": "str",
+              "case_location": "str"
+            }
+          RENAME_HEADERS_LIST: >-
+            {
+              "Call Number": "call_number",
+              "Unit ID": "unit_id",
+              "Incident Number": "incident_number",
+              "Call Type": "call_type",
+              "Call Date": "call_date",
+              "Watch Date": "watch_date",
+              "Received DtTm": "received_timestamp",
+              "Entry DtTm": "entry_timestamp",
+              "Dispatch DtTm": "dispatch_timestamp",
+              "Response DtTm": "response_timestamp",
+              "On Scene DtTm": "on_scene_timestamp",
+              "Transport DtTm": "transport_timestamp",
+              "Hospital DtTm": "hospital_timestamp",
+              "Call Final Disposition": "call_final_disposition",
+              "Available DtTm": "available_timestamp",
+              "Address": "address",
+              "City": "city",
+              "Zipcode of Incident": "zipcode_of_incident",
+              "Battalion": "battalion",
+              "Station Area": "station_area",
+              "Box": "box",
+              "Original Priority": "original_priority",
+              "Priority": "priority",
+              "Final Priority": "final_priority",
+              "ALS Unit": "als_unit",
+              "Call Type Group": "call_type_group",
+              "Number of Alarms": "number_of_alarms",
+              "Unit Type": "unit_type",
+              "Unit sequence in call dispatch": "unit_sequence_in_call_dispatch",
+              "Fire Prevention District": "fire_prevention_district",
+              "Supervisor District": "supervisor_district",
+              "Neighborhooods - Analysis Boundaries": "neighborhood_name",
+              "RowID": "row_id",
+              "case_location": "location_geom"
+            }
+          DATE_FORMAT_LIST: >-
+            {
+              "call_date": "%Y-%m-%d",
+              "watch_date": "%Y-%m-%d",
+              "available_timestamp": "%Y-%m-%d %H:%M:%S",
+              "dispatch_timestamp": "%Y-%m-%d %H:%M:%S",
+              "entry_timestamp": "%Y-%m-%d %H:%M:%S",
+              "on_scene_timestamp": "%Y-%m-%d %H:%M:%S",
+              "received_timestamp": "%Y-%m-%d %H:%M:%S",
+              "response_timestamp": "%Y-%m-%d %H:%M:%S",
+              "transport_timestamp": "%Y-%m-%d %H:%M:%S",
+              "hospital_timestamp": "%Y-%m-%d %H:%M:%S"
+            }
+          REORDER_HEADERS_LIST: >-
+            [
+              "call_number",
+              "unit_id",
+              "incident_number",
+              "call_type",
+              "call_date",
+              "watch_date",
+              "received_timestamp",
+              "entry_timestamp",
+              "dispatch_timestamp",
+              "response_timestamp",
+              "on_scene_timestamp",
+              "transport_timestamp",
+              "hospital_timestamp",
+              "call_final_disposition",
+              "available_timestamp",
+              "address",
+              "city",
+              "zipcode_of_incident",
+              "battalion",
+              "station_area",
+              "box",
+              "original_priority",
+              "priority",
+              "final_priority",
+              "als_unit",
+              "call_type_group",
+              "number_of_alarms",
+              "unit_type",
+              "unit_sequence_in_call_dispatch",
+              "fire_prevention_district",
+              "supervisor_district",
+              "row_id",
+              "latitude",
+              "longitude",
+              "neighborhood_name",
+              "location_geom"
+            ]
+        resources:
+          limit_memory: "8G"
+          limit_cpu: "3"
+          request_ephemeral_storage: "10G"
+    - operator: "KubernetesPodOperator"
+      description: "Run San Francisco Street Trees Pipeline"
+      args:
+        task_id: "sf_street_trees"
+        name: "sf_street_trees"
+        namespace: "composer"
+        service_account_name: "datasets"
+        image_pull_policy: "Always"
+        image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "San Francisco Street Trees"
+          SOURCE_URL: "https://data.sfgov.org/api/views/tkzw-k3nq/rows.csv"
+          CHUNKSIZE: "1000000"
+          SOURCE_FILE: "files/data_sf_street_trees.csv"
+          TARGET_FILE: "files/data_output_sf_street_trees.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "san_francisco_trees"
+          TABLE_ID: "street_trees"
+          DROP_DEST_TABLE: "N"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/san_francisco/sf_street_trees/data_output.csv"
+          SCHEMA_PATH: "data/san_francisco/schema/sf_street_trees_schema.json"
+          HEADER_ROW_ORDINAL: "0"
+          INPUT_CSV_HEADERS: >-
+            [
+              "TreeID",
+              "qLegalStatus",
+              "qSpecies",
+              "qAddress",
+              "SiteOrder",
+              "qSiteInfo",
+              "PlantType",
+              "qCaretaker",
+              "qCareAssistant",
+              "PlantDate",
+              "DBH",
+              "PlotSize",
+              "PermitNotes",
+              "XCoord",
+              "YCoord",
+              "Latitude",
+              "Longitude",
+              "Location"
+            ]
+          DATA_DTYPES: >-
+            {
+              "TreeID": "int64",
+              "qLegalStatus": "str",
+              "qSpecies": "str",
+              "qAddress": "str",
+              "SiteOrder": "str",
+              "qSiteInfo": "str",
+              "PlantType": "str",
+              "qCaretaker": "str",
+              "qCareAssistant": "str",
+              "PlantDate": "str",
+              "DBH": "str",
+              "PlotSize": "str",
+              "PermitNotes": "str",
+              "XCoord": "float64",
+              "YCoord": "float64",
+              "Latitude": "float64",
+              "Longitude": "float64",
+              "Location": "str"
+            }
+          RENAME_HEADERS_LIST: >-
+            {
+              "TreeID" : "tree_id",
+              "qLegalStatus" : "legal_status",
+              "qSpecies" : "species",
+              "qAddress" : "address",
+              "SiteOrder" : "site_order",
+              "qSiteInfo" : "site_info",
+              "PlantType" : "plant_type",
+              "qCaretaker" : "care_taker",
+              "qCareAssistant" : "care_assistant",
+              "PlantDate" : "plant_date",
+              "DBH" : "dbh",
+              "PlotSize" : "plot_size",
+              "PermitNotes" : "permit_notes",
+              "XCoord" : "x_coordinate",
+              "YCoord" : "y_coordinate",
+              "Latitude" : "latitude",
+              "Longitude" : "longitude",
+              "Location" : "location"
+            }
+          DATE_FORMAT_LIST: >-
+            {
+              "plant_date": "%Y-%m-%d %H:%M:%S"
+            }
+          EMPTY_KEY_LIST: >-
+            [
+              "tree_id"
+            ]
+          REORDER_HEADERS_LIST: >-
+            [
+              "tree_id",
+              "legal_status",
+              "species",
+              "address",
+              "site_order",
+              "site_info",
+              "plant_type",
+              "care_taker",
+              "care_assistant",
+              "plant_date",
+              "dbh",
+              "plot_size",
+              "permit_notes",
+              "x_coordinate",
+              "y_coordinate",
+              "latitude",
+              "longitude",
+              "location"
+            ]
+        resources:
+          limit_memory: "8G"
+          limit_cpu: "3"
+          request_ephemeral_storage: "10G"
+
+  graph_paths:
+    - "[ sf_bikeshare_stations, sf_bikeshare_status, sf_film_locations, sf_street_trees ] >> sf_bikeshare_trips >> [ sf_calendar, sf_muni_routes, sf_muni_shapes, sf_muni_stops ] >> sffd_service_calls >> sfpd_incidents >> sf_311_service_requests"
