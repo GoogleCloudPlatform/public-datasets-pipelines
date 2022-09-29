@@ -53,6 +53,7 @@ def main(
     tripdata_dtypes: dict,
     rename_headers_tripdata: dict,
     rename_headers_list: dict,
+    starts_with_pattern_list: typing.List[str],
     empty_key_list: typing.List[str],
     gen_location_list: dict,
     resolve_datatypes_list: dict,
@@ -88,6 +89,7 @@ def main(
         tripdata_dtypes=tripdata_dtypes,
         rename_headers_tripdata=rename_headers_tripdata,
         rename_headers_list=rename_headers_list,
+        starts_with_pattern_list=starts_with_pattern_list,
         empty_key_list=empty_key_list,
         gen_location_list=gen_location_list,
         resolve_datatypes_list=resolve_datatypes_list,
@@ -123,6 +125,7 @@ def execute_pipeline(
     tripdata_dtypes: dict,
     rename_headers_tripdata: dict,
     rename_headers_list: typing.List[str],
+    starts_with_pattern_list: typing.List[str],
     empty_key_list: typing.List[str],
     gen_location_list: dict,
     resolve_datatypes_list: dict,
@@ -194,6 +197,22 @@ def execute_pipeline(
             schema_path=schema_path,
             target_gcs_bucket=target_gcs_bucket,
             target_gcs_path=target_gcs_path,
+            reorder_headers_list=reorder_headers_list,
+        )
+        return None
+    elif destination_table == "stop_times":
+        process_sf_muni_stop_times(
+            source_url_dict=source_url_dict,
+            target_file=target_file,
+            project_id=project_id,
+            dataset_id=dataset_id,
+            destination_table=destination_table,
+            drop_dest_table=drop_dest_table,
+            schema_path=schema_path,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=target_gcs_path,
+            rename_headers_list=rename_headers_list,
+            starts_with_pattern_list=starts_with_pattern_list,
             reorder_headers_list=reorder_headers_list,
         )
         return None
@@ -561,6 +580,77 @@ def process_sf_muni_stops(
             truncate_table=True,
             field_delimiter="|",
         )
+
+def process_sf_muni_stop_times(
+    source_url_dict: dict,
+    target_file: pathlib.Path,
+    project_id: str,
+    dataset_id: str,
+    destination_table: str,
+    drop_dest_table: str,
+    schema_path: str,
+    target_gcs_bucket: str,
+    target_gcs_path: str,
+    rename_headers_list: typing.List[str],
+    starts_with_pattern_list: typing.List[str],
+    reorder_headers_list: typing.List[str],
+) -> None:
+    df_stop_times = gcs_to_df(
+        project_id=project_id,
+        source_file_gcs_path=source_url_dict["stop_times"],
+        target_file_path=str(target_file),
+    )
+    df_stop_times = rename_headers(
+        df = df_stop_times,
+        rename_headers_list=rename_headers_list)
+    import pdb; pdb.set_trace()
+    df_stop_times = df_replace_values(
+        df=df_stop_times,
+        starts_with_pattern_list=starts_with_pattern_list
+    )
+    import pdb; pdb.set_trace()
+    df_stops = reorder_headers(df=df_stops, output_headers_list=reorder_headers_list)
+    save_to_new_file(df=df_stops, file_path=target_file, sep="|")
+    upload_file_to_gcs(
+        file_path=target_file,
+        target_gcs_bucket=target_gcs_bucket,
+        target_gcs_path=target_gcs_path,
+    )
+    drop_table = drop_dest_table == "Y"
+    table_exists = create_dest_table(
+        project_id=project_id,
+        dataset_id=dataset_id,
+        table_id=destination_table,
+        schema_filepath=schema_path,
+        bucket_name=target_gcs_bucket,
+        drop_table=drop_table,
+    )
+    if table_exists:
+        load_data_to_bq(
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_id=destination_table,
+            file_path=target_file,
+            truncate_table=True,
+            field_delimiter="|",
+        )
+
+
+def df_replace_values(
+    df: pd.DataFrame,
+    starts_with_pattern_list: typing.List[str]
+    ) -> pd.DataFrame:
+    for lst in starts_with_pattern_list:
+        target_fieldname = lst[0][0]
+        source_fieldname = lst[0][1]
+        reg_exp = lst[1][0]
+        replace_val = lst[1][1]
+        logging.info(f"Replacing values '^{reg_exp}*' with '{replace_val} in field {target_fieldname} from {source_fieldname}'")
+        if target_fieldname != source_fieldname:
+            df[target_fieldname] = ""
+        df[source_fieldname] = df[source_fieldname].astype('str')
+        df[target_fieldname] = df[source_fieldname].apply(lambda x: re.sub(rf'^{reg_exp}(.*)', rf'{replace_val}', x.strip()))
+    return df
 
 
 def create_geometry_columns(long: float, lat: float) -> pd.DataFrame:
@@ -1320,6 +1410,7 @@ if __name__ == "__main__":
         rename_headers_tripdata=json.loads(
             os.environ.get("RENAME_HEADERS_TRIPDATA", r"{}")
         ),
+        starts_with_pattern_list=json.loads(os.environ.get("STARTS_WITH_PATTERN_LIST", r"[]")),
         empty_key_list=json.loads(os.environ.get("EMPTY_KEY_LIST", r"[]")),
         gen_location_list=json.loads(os.environ.get("GEN_LOCATION_LIST", r"{}")),
         resolve_datatypes_list=json.loads(

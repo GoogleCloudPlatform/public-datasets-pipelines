@@ -322,6 +322,98 @@ dag:
           limit_cpu: "3"
           request_ephemeral_storage: "10G"
     - operator: "KubernetesPodOperator"
+      description: "Run San Francisco Municipal Stop Times Pipeline"
+      args:
+        task_id: "sf_muni_stop_times"
+        name: "muni_stop_times"
+        namespace: "composer"
+        service_account_name: "datasets"
+        image_pull_policy: "Always"
+        image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "San Francisco Municipal Stop Times"
+          SOURCE_URL_DICT: >-
+            {
+              "stop_times": "gs://pdp-feeds-staging/SF_Muni/GTFSTransitData_SF/stop_times.txt"
+            }
+          CHUNKSIZE: "750000"
+          SOURCE_FILE: "files/data_municipal_stop_times.csv"
+          TARGET_FILE: "files/data_output_municipal_stop_times.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "san_francisco_transit_muni"
+          TABLE_ID: "stop_times"
+          DROP_DEST_TABLE: "N"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/san_francisco/transit_municipal_stop_times/data_output.csv"
+          SCHEMA_PATH: "data/san_francisco/schema/sf_muni_stops_schema.json"
+          RENAME_HEADERS_LIST: >-
+            {
+              "drop_off_type": "dropoff_type"
+            }
+          STARTS_WITH_PATTERN_LIST: >-
+            [
+              [ ["dropoff_type_desc", "dropoff_type"], [ "0", "regular" ] ],
+              [ ["dropoff_type_desc", "dropoff_type"], [ "1", "none" ] ],
+              [ ["dropoff_type_desc", "dropoff_type"], [ "2", "phone" ] ],
+              [ ["dropoff_type_desc", "dropoff_type"], [ "3", "driver" ] ],
+              [ ["pickup_type_desc", "pickup_type"], [ "0", "regular" ] ],
+              [ ["pickup_type_desc", "pickup_type"], [ "1", "none" ] ],
+              [ ["pickup_type_desc", "pickup_type"], [ "2", "phone" ] ],
+              [ ["pickup_type_desc", "pickup_type"], [ "3", "driver" ] ],
+              [ ["exact_timepoint", "timepoint"], [ "0", "FALSE" ] ],
+              [ ["exact_timepoint", "timepoint"], [ "1", "TRUE" ] ],
+              [ ["arrives_next_day", "arrival_time"], ["24", "TRUE"]  ],
+              [ ["arrives_next_day", "arrival_time"], ["25", "TRUE"]  ],
+              [ ["arrives_next_day", "arrival_time"], ["26", "TRUE"]  ],
+              [ ["arrives_next_day", "arrival_time"], ["27", "TRUE"]  ],
+              [ ["arrives_next_day", "arrival_time"], ["28", "TRUE"]  ],
+              [ ["arrives_next_day", "arrival_time"], ["29", "TRUE"]  ],
+              [ ["arrives_next_day", "arrival_time"], ["30", "TRUE"]  ],
+              [ ["arrives_next_day", "arrival_time"], ["31", "TRUE"]  ],
+              [ ["arrives_next_day", "arrival_time"], ["^(?!.*?TRUE).*", "FALSE"]  ],
+              [ ["arrival_time_desc", "arrival_time"], ["(^24)(.*)", "00$2"]  ],
+              [ ["arrival_time_desc", "arrival_time"], ["(^25)(.*)", "01$2"]  ],
+              [ ["arrival_time_desc", "arrival_time"], ["(^26)(.*)", "02$2"]  ],
+              [ ["arrival_time_desc", "arrival_time"], ["(^27)(.*)", "03$2"]  ],
+              [ ["arrival_time_desc", "arrival_time"], ["(^28)(.*)", "04$2"]  ],
+              [ ["arrival_time_desc", "arrival_time"], ["(^29)(.*)", "05$2"]  ],
+              [ ["arrival_time_desc", "arrival_time"], ["(^30)(.*)", "06$2"]  ],
+              [ ["arrival_time_desc", "arrival_time"], ["(^31)(.*)", "07$2"]  ],
+              [ ["departs_next_day", "departure_time"], ["24", "TRUE"]  ],
+              [ ["departs_next_day", "departure_time"], ["25", "TRUE"]  ],
+              [ ["departs_next_day", "departure_time"], ["26", "TRUE"]  ],
+              [ ["departs_next_day", "departure_time"], ["27", "TRUE"]  ],
+              [ ["departs_next_day", "departure_time"], ["28", "TRUE"]  ],
+              [ ["departs_next_day", "departure_time"], ["29", "TRUE"]  ],
+              [ ["departs_next_day", "departure_time"], ["30", "TRUE"]  ],
+              [ ["departs_next_day", "departure_time"], ["31", "TRUE"]  ],
+              [ ["departs_next_day", "departure_time"], ["^(?!.*?TRUE).*", "FALSE"]  ],
+              [ ["departure_time_desc", "departure_time"], ["(^24)(.*)", "00$2"]  ],
+              [ ["departure_time_desc", "departure_time"], ["(^25)(.*)", "01$2"]  ],
+              [ ["departure_time_desc", "departure_time"], ["(^26)(.*)", "02$2"]  ],
+              [ ["departure_time_desc", "departure_time"], ["(^27)(.*)", "03$2"]  ],
+              [ ["departure_time_desc", "departure_time"], ["(^28)(.*)", "04$2"]  ],
+              [ ["departure_time_desc", "departure_time"], ["(^29)(.*)", "05$2"]  ],
+              [ ["departure_time_desc", "departure_time"], ["(^30)(.*)", "06$2"]  ],
+              [ ["departure_time_desc", "departure_time"], ["(^31)(.*)", "07$2"]  ]
+            ]
+          REORDER_HEADERS_LIST: >-
+            [
+              "stop_id",
+              "trip_id",
+              "stop_sequence",
+              "arrival_time",
+              "arrives_next_day",
+              "departure_time",
+              "departs_next_day",
+              "dropoff_type",
+              "exact_timepoint"
+            ]
+        resources:
+          limit_memory: "8G"
+          limit_cpu: "3"
+          request_ephemeral_storage: "10G"
+    - operator: "KubernetesPodOperator"
       description: "Run San Francisco Police Department Incidents Pipeline"
       args:
         task_id: "sfpd_incidents"
