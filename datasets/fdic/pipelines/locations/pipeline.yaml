@@ -44,11 +44,11 @@ dag:
         image: "{{ var.json.fdic.container_registry.run_csv_transform_kub }}"
         env_vars:
           SOURCE_URL: ""
-          SOURCE_FILE: "files/cn.txt"
+          SOURCE_FILE: "files/locations.csv"
           TARGET_FILE: "files/data_output.csv"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/fdic/data_output_locations.csv"
-          PIPELINE_NAME: "candidate_2016"
+          PIPELINE_NAME: "locations"
           CSV_HEADERS: >-
             ["fdic_certificate_number","institution_name","branch_name","branch_number","main_office","branch_address","branch_city",
             "zip_code","branch_county","county_fips_code","state","state_name","institution_class","cbsa_fips_code","cbsa_name",
@@ -58,7 +58,7 @@ dag:
         resources:
           request_memory: "4G"
           request_cpu: "1"
-          request_ephemeral_storage: "5G"
+          request_ephemeral_storage: "10G"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
