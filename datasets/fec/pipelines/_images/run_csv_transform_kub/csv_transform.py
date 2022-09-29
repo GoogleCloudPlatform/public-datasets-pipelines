@@ -50,7 +50,10 @@ def main(
     logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
 
-    if "individuals" not in pipeline_name:
+    if (
+        "individuals" not in pipeline_name
+        and "other_committee_tx_2020" not in pipeline_name
+    ):
         logging.info(f"Downloading file from {source_url}...")
         download_file(source_url, source_file_zip_file)
         unzip_file(source_file_zip_file, source_file_path)
@@ -63,36 +66,42 @@ def main(
             dtype=object,
             index_col=False,
         )
-        df.columns = csv_headers
 
         logging.info(f"Transforming {source_file}... ")
         if "candidate_20" in pipeline_name:
             logging.info("Transform: Trimming white spaces in headers... ")
+            df.columns = csv_headers
             df = df.rename(columns=lambda x: x.strip())
 
         elif "candidate_committe_20" in pipeline_name:
+            df.columns = csv_headers
             pass
 
         elif "committee_20" in pipeline_name:
+            df.columns = csv_headers
             df.drop(df[df["cmte_id"] == "C00622357"].index, inplace=True)
 
         elif "committee_contributions_20" in pipeline_name:
+            df.columns = csv_headers
             df["transaction_dt"] = df["transaction_dt"].astype(str)
             date_for_length(df, "transaction_dt")
             df = resolve_date_format(df, "transaction_dt", pipeline_name)
 
         elif "other_committee_tx_20" in pipeline_name:
+            df.columns = csv_headers
             df["transaction_dt"] = df["transaction_dt"].astype(str)
             date_for_length(df, "transaction_dt")
             df = resolve_date_format(df, "transaction_dt", pipeline_name)
 
         elif "opex" in pipeline_name:
             df = df.drop(columns=df.columns[-1], axis=1)
+            df.columns = csv_headers
             df["transaction_dt"] = df["transaction_dt"].astype(str)
             date_for_length(df, "transaction_dt")
             df = resolve_date_format(df, "transaction_dt", pipeline_name)
 
         else:
+            df.columns = csv_headers
             pass
 
         logging.info(f"Saving to output file.. {target_file}")

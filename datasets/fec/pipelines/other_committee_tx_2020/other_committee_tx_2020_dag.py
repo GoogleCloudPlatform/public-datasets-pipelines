@@ -14,6 +14,7 @@
 
 
 from airflow import DAG
+from airflow.operators import bash
 from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
 from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
@@ -33,6 +34,16 @@ with DAG(
     default_view="graph",
 ) as dag:
 
+    # Task to copy `other_committee_tx_2020` to gcs
+    download_zip_file = bash.BashOperator(
+        task_id="download_zip_file",
+        bash_command="mkdir -p $data_dir/other_committee_tx_2020\ncurl -o $data_dir/other_committee_tx_2020/other_committee_tx_2020.zip -L $fec\nunzip $data_dir/other_committee_tx_2020/other_committee_tx_2020.zip -d $data_dir/other_committee_tx_2020/\nrm -f $data_dir/other_committee_tx_2020/other_committee_tx_2020.zip\n",
+        env={
+            "data_dir": "/home/airflow/gcs/data/fec",
+            "fec": "https://www.fec.gov/files/bulk-downloads/2020/oth20.zip",
+        },
+    )
+
     # Run CSV transform within kubernetes pod
     other_committee_tx_2020_transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="other_committee_tx_2020_transform_csv",
@@ -43,20 +54,20 @@ with DAG(
         image_pull_policy="Always",
         image="{{ var.json.fec.container_registry.run_csv_transform_kub }}",
         env_vars={
-            "SOURCE_URL": "https://www.fec.gov/files/bulk-downloads/2020/oth20.zip",
-            "SOURCE_FILE_ZIP_FILE": "files/zip_file.zip",
-            "SOURCE_FILE_PATH": "files/",
+            "SOURCE_GCS_BUCKET": "{{ var.value.composer_bucket }}",
+            "SOURCE_GCS_OBJECT": "data/fec/other_committee_tx_2020/itoth.txt",
             "SOURCE_FILE": "files/itoth.txt",
             "TARGET_FILE": "files/data_output.csv",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/fec/other_committee_tx_2020/data_output.csv",
+            "CHUNKSIZE": "1000000",
             "PIPELINE_NAME": "other_committee_tx_2020",
             "CSV_HEADERS": '["cmte_id","amndt_ind","rpt_tp","transaction_pgi","image_num","transaction_tp","entity_tp","name","city","state", "zip_code","employer","occupation","transaction_dt","transaction_amt","other_id","tran_id" ,"file_num", "memo_cd","memo_text","sub_id"]',
         },
         resources={
-            "request_memory": "3G",
+            "request_memory": "4G",
             "request_cpu": "1",
-            "request_ephemeral_storage": "5G",
+            "request_ephemeral_storage": "10G",
         },
     )
 
@@ -200,4 +211,8 @@ with DAG(
         ],
     )
 
-    other_committee_tx_2020_transform_csv >> load_other_committee_tx_2020_to_bq
+    (
+        download_zip_file
+        >> other_committee_tx_2020_transform_csv
+        >> load_other_committee_tx_2020_to_bq
+    )
