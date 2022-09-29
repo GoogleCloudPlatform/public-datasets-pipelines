@@ -52,6 +52,7 @@ with DAG(
             "TARGET_GCS_PATH": "data/fec/committee_contributions_2020/data_output.csv",
             "PIPELINE_NAME": "committee_contributions_2020",
             "CSV_HEADERS": '["cmte_id","amndt_ind","rpt_tp","transaction_pgi","image_num","transaction_tp","entity_tp", "name","city","state","zip_code","employer","occupation","transaction_dt","transaction_amt","other_id", "cand_id","tran_id","file_num","memo_cd","memo_text","sub_id"]',
+        },
         resources={
             "request_memory": "4G",
             "request_cpu": "1",
