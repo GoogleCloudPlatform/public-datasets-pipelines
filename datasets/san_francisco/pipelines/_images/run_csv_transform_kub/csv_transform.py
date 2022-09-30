@@ -1432,5 +1432,6 @@ if __name__ == "__main__":
             os.environ.get("STRIP_WHITESPACE_LIST", r"[]")
         ),
         date_format_list=json.loads(os.environ.get("DATE_FORMAT_LIST", r"[]")),
+        filter_headers_list=json.loads(os.environ.get("FILTER_HEADERS_LIST", r"[]")),
         reorder_headers_list=json.loads(os.environ.get("REORDER_HEADERS_LIST", r"[]")),
     )
