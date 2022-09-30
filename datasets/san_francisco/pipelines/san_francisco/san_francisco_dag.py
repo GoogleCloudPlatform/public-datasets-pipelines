@@ -93,6 +93,7 @@ with DAG(
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/san_francisco/transit_municipal_calendar/data_output.csv",
             "SCHEMA_PATH": "data/san_francisco/schema/sf_calendar_schema.json",
+            "FILTER_HEADERS_LIST": '[\n  "service_id",\n  "start_date",\n  "end_date",\n  "service_description",\n  "date",\n  "exception_type_str",\n  "monday_str",\n  "tuesday_str",\n  "wednesday_str",\n  "thursday_str",\n  "friday_str",\n  "saturday_str",\n  "sunday_str"\n]',
             "REORDER_HEADERS_LIST": '[\n  "service_id", "service_desc",\n  "monday", "tuesday", "wednesday",\n  "thursday", "friday", "saturday", "sunday",\n  "exceptions", "exception_type"\n]',
             "RENAME_HEADERS_LIST": '{\n    "monday_str": "monday",\n    "tuesday_str": "tuesday",\n    "wednesday_str": "wednesday",\n    "thursday_str": "thursday",\n    "friday_str": "friday",\n    "saturday_str": "saturday",\n    "sunday_str": "sunday",\n    "service_description": "service_desc",\n    "date": "exceptions",\n    "exception_type_str": "exception_type"\n}',
         },
@@ -186,6 +187,38 @@ with DAG(
             "TARGET_GCS_PATH": "data/san_francisco/transit_municipal_stops/data_output.csv",
             "SCHEMA_PATH": "data/san_francisco/schema/sf_muni_stops_schema.json",
             "REORDER_HEADERS_LIST": '[\n  "stop_id",\n  "stop_name",\n  "stop_lat",\n  "stop_lon",\n  "stop_geom"\n]',
+        },
+        resources={
+            "limit_memory": "8G",
+            "limit_cpu": "3",
+            "request_ephemeral_storage": "10G",
+        },
+    )
+
+    # Run San Francisco Municipal Stop Times Pipeline
+    sf_muni_stop_times = kubernetes_pod.KubernetesPodOperator(
+        task_id="sf_muni_stop_times",
+        name="muni_stop_times",
+        namespace="composer",
+        service_account_name="datasets",
+        image_pull_policy="Always",
+        image="{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}",
+        env_vars={
+            "PIPELINE_NAME": "San Francisco Municipal Stop Times",
+            "SOURCE_URL_DICT": '{\n  "stop_times": "gs://pdp-feeds-staging/SF_Muni/GTFSTransitData_SF/stop_times.txt"\n}',
+            "CHUNKSIZE": "750000",
+            "SOURCE_FILE": "files/data_municipal_stop_times.csv",
+            "TARGET_FILE": "files/data_output_municipal_stop_times.csv",
+            "PROJECT_ID": "{{ var.value.gcp_project }}",
+            "DATASET_ID": "san_francisco_transit_muni",
+            "TABLE_ID": "stop_times",
+            "DROP_DEST_TABLE": "N",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
+            "TARGET_GCS_PATH": "data/san_francisco/transit_municipal_stop_times/data_output.csv",
+            "SCHEMA_PATH": "data/san_francisco/schema/sf_muni_stops_schema.json",
+            "RENAME_HEADERS_LIST": '{\n  "drop_off_type": "dropoff_type"\n}',
+            "STARTS_WITH_PATTERN_LIST": '[\n  [ ["dropoff_type_desc", "dropoff_type"], [ "0", "regular" ] ],\n  [ ["dropoff_type_desc", "dropoff_type"], [ "1", "none" ] ],\n  [ ["dropoff_type_desc", "dropoff_type"], [ "2", "phone" ] ],\n  [ ["dropoff_type_desc", "dropoff_type"], [ "3", "driver" ] ],\n  [ ["pickup_type_desc", "pickup_type"], [ "0", "regular" ] ],\n  [ ["pickup_type_desc", "pickup_type"], [ "1", "none" ] ],\n  [ ["pickup_type_desc", "pickup_type"], [ "2", "phone" ] ],\n  [ ["pickup_type_desc", "pickup_type"], [ "3", "driver" ] ],\n  [ ["exact_timepoint", "timepoint"], [ "0", "FALSE" ] ],\n  [ ["exact_timepoint", "timepoint"], [ "1", "TRUE" ] ],\n  [ ["arrives_next_day", "arrival_time"], ["24", "TRUE"]  ],\n  [ ["arrives_next_day", "arrival_time"], ["25", "TRUE"]  ],\n  [ ["arrives_next_day", "arrival_time"], ["26", "TRUE"]  ],\n  [ ["arrives_next_day", "arrival_time"], ["27", "TRUE"]  ],\n  [ ["arrives_next_day", "arrival_time"], ["28", "TRUE"]  ],\n  [ ["arrives_next_day", "arrival_time"], ["29", "TRUE"]  ],\n  [ ["arrives_next_day", "arrival_time"], ["30", "TRUE"]  ],\n  [ ["arrives_next_day", "arrival_time"], ["31", "TRUE"]  ],\n  [ ["arrival_time_desc", "arrival_time"], ["^24(.*)", "00$2"]  ],\n  [ ["arrival_time_desc", "arrival_time"], ["^25(.*)", "01$2"]  ],\n  [ ["arrival_time_desc", "arrival_time"], ["^26(.*)", "02$2"]  ],\n  [ ["arrival_time_desc", "arrival_time"], ["^27(.*)", "03$2"]  ],\n  [ ["arrival_time_desc", "arrival_time"], ["^28(.*)", "04$2"]  ],\n  [ ["arrival_time_desc", "arrival_time"], ["^29(.*)", "05$2"]  ],\n  [ ["arrival_time_desc", "arrival_time"], ["^30(.*)", "06$2"]  ],\n  [ ["arrival_time_desc", "arrival_time"], ["^31(.*)", "07$2"]  ],\n  [ ["departs_next_day", "departure_time"], ["24", "TRUE"]  ],\n  [ ["departs_next_day", "departure_time"], ["25", "TRUE"]  ],\n  [ ["departs_next_day", "departure_time"], ["26", "TRUE"]  ],\n  [ ["departs_next_day", "departure_time"], ["27", "TRUE"]  ],\n  [ ["departs_next_day", "departure_time"], ["28", "TRUE"]  ],\n  [ ["departs_next_day", "departure_time"], ["29", "TRUE"]  ],\n  [ ["departs_next_day", "departure_time"], ["30", "TRUE"]  ],\n  [ ["departs_next_day", "departure_time"], ["31", "TRUE"]  ],\n  [ ["departure_time_desc", "departure_time"], ["^24(.*)", "00$2"]  ],\n  [ ["departure_time_desc", "departure_time"], ["^25(.*)", "01$2"]  ],\n  [ ["departure_time_desc", "departure_time"], ["^26(.*)", "02$2"]  ],\n  [ ["departure_time_desc", "departure_time"], ["^27(.*)", "03$2"]  ],\n  [ ["departure_time_desc", "departure_time"], ["^28(.*)", "04$2"]  ],\n  [ ["departure_time_desc", "departure_time"], ["^29(.*)", "05$2"]  ],\n  [ ["departure_time_desc", "departure_time"], ["^30(.*)", "06$2"]  ],\n  [ ["departure_time_desc", "departure_time"], ["^31(.*)", "07$2"]  ]\n]',
+            "REORDER_HEADERS_LIST": '[\n  "stop_id",\n  "trip_id",\n  "stop_sequence",\n  "arrival_time",\n  "arrives_next_day",\n  "departure_time",\n  "departs_next_day",\n  "dropoff_type",\n  "exact_timepoint"\n]',
         },
         resources={
             "limit_memory": "8G",

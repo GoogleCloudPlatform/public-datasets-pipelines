@@ -62,7 +62,7 @@ def main(
     strip_whitespace_list: typing.List[str],
     date_format_list: dict,
     filter_headers_list: typing.List[str],
-    reorder_headers_list: typing.List[str]
+    reorder_headers_list: typing.List[str],
 ) -> None:
 
     logging.info(f"{pipeline_name} process started")
@@ -347,7 +347,7 @@ def process_sf_calendar(
     target_gcs_path: str,
     filter_headers_list: typing.List[str],
     rename_headers_list: typing.List[str],
-    reorder_headers_list: typing.List[str]
+    reorder_headers_list: typing.List[str],
 ) -> None:
     df_calendar = gcs_to_df(
         project_id=project_id,
@@ -570,6 +570,7 @@ def process_sf_muni_stops(
             field_delimiter="|",
         )
 
+
 def process_sf_muni_stop_times(
     source_url_dict: dict,
     target_file: pathlib.Path,
@@ -590,15 +591,20 @@ def process_sf_muni_stop_times(
         target_file_path=str(target_file),
     )
     df_stop_times = rename_headers(
-        df = df_stop_times,
-        rename_headers_list=rename_headers_list)
-    df_stop_times = df_replace_values(
-        df=df_stop_times,
-        starts_with_pattern_list=starts_with_pattern_list
+        df=df_stop_times, rename_headers_list=rename_headers_list
     )
-    df_stop_times.loc[ df_stop_times['arrives_next_day'] == '', 'arrives_next_day'] = 'FALSE'
-    df_stop_times.loc[ df_stop_times['departs_next_day'] == '', 'departs_next_day'] = 'FALSE'
-    df_stop_times = reorder_headers(df=df_stop_times, output_headers_list=reorder_headers_list)
+    df_stop_times = df_replace_values(
+        df=df_stop_times, starts_with_pattern_list=starts_with_pattern_list
+    )
+    df_stop_times.loc[
+        df_stop_times["arrives_next_day"] == "", "arrives_next_day"
+    ] = "FALSE"
+    df_stop_times.loc[
+        df_stop_times["departs_next_day"] == "", "departs_next_day"
+    ] = "FALSE"
+    df_stop_times = reorder_headers(
+        df=df_stop_times, output_headers_list=reorder_headers_list
+    )
     save_to_new_file(df=df_stop_times, file_path=target_file, sep="|")
     upload_file_to_gcs(
         file_path=target_file,
@@ -628,20 +634,30 @@ def process_sf_muni_stop_times(
 def df_replace_values(
     df: pd.DataFrame,
     starts_with_pattern_list: typing.List[str],
-    ) -> pd.DataFrame:
+) -> pd.DataFrame:
     for lst in starts_with_pattern_list:
         target_fieldname = lst[0][0]
         source_fieldname = lst[0][1]
         reg_exp = lst[1][0]
         replace_val = lst[1][1]
-        logging.info(f"Replacing values '{reg_exp}' with '{replace_val} in field {target_fieldname} from {source_fieldname}'")
+        logging.info(
+            f"Replacing values '{reg_exp}' with '{replace_val} in field {target_fieldname} from {source_fieldname}'"
+        )
         if target_fieldname not in df.columns:
             df[target_fieldname] = ""
-        df[source_fieldname] = df[source_fieldname].astype('str')
-        if "(" in reg_exp and not "\(" in reg_exp:
-            df.loc[df[source_fieldname].str.match(rf'^{reg_exp}', case=False), target_fieldname] = replace_val.replace("$2", "") + df[source_fieldname].str.extract(rf'^{reg_exp}', expand=False)
+        df[source_fieldname] = df[source_fieldname].astype("str")
+        if "(" in reg_exp and ("\\(" not in reg_exp):
+            df.loc[
+                df[source_fieldname].str.match(rf"^{reg_exp}", case=False),
+                target_fieldname,
+            ] = replace_val.replace("$2", "") + df[source_fieldname].str.extract(
+                rf"^{reg_exp}", expand=False
+            )
         else:
-            df.loc[df[source_fieldname].str.contains(reg_exp, regex=True, na=False), target_fieldname] = replace_val
+            df.loc[
+                df[source_fieldname].str.contains(reg_exp, regex=True, na=False),
+                target_fieldname,
+            ] = replace_val
     return df
 
 
@@ -1402,7 +1418,9 @@ if __name__ == "__main__":
         rename_headers_tripdata=json.loads(
             os.environ.get("RENAME_HEADERS_TRIPDATA", r"{}")
         ),
-        starts_with_pattern_list=json.loads(os.environ.get("STARTS_WITH_PATTERN_LIST", r"[]")),
+        starts_with_pattern_list=json.loads(
+            os.environ.get("STARTS_WITH_PATTERN_LIST", r"[]")
+        ),
         empty_key_list=json.loads(os.environ.get("EMPTY_KEY_LIST", r"[]")),
         gen_location_list=json.loads(os.environ.get("GEN_LOCATION_LIST", r"{}")),
         resolve_datatypes_list=json.loads(
@@ -1414,5 +1432,5 @@ if __name__ == "__main__":
             os.environ.get("STRIP_WHITESPACE_LIST", r"[]")
         ),
         date_format_list=json.loads(os.environ.get("DATE_FORMAT_LIST", r"[]")),
-        reorder_headers_list=json.loads(os.environ.get("REORDER_HEADERS_LIST", r"[]"))
+        reorder_headers_list=json.loads(os.environ.get("REORDER_HEADERS_LIST", r"[]")),
     )
