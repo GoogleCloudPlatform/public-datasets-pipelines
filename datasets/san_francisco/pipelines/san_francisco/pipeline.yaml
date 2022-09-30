@@ -179,6 +179,22 @@ dag:
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/san_francisco/transit_municipal_calendar/data_output.csv"
           SCHEMA_PATH: "data/san_francisco/schema/sf_calendar_schema.json"
+          FILTER_HEADERS_LIST: >-
+            [
+              "service_id",
+              "start_date",
+              "end_date",
+              "service_description",
+              "date",
+              "exception_type_str",
+              "monday_str",
+              "tuesday_str",
+              "wednesday_str",
+              "thursday_str",
+              "friday_str",
+              "saturday_str",
+              "sunday_str"
+            ]
           REORDER_HEADERS_LIST: >-
             [
               "service_id", "service_desc",
@@ -370,7 +386,6 @@ dag:
               [ ["arrives_next_day", "arrival_time"], ["29", "TRUE"]  ],
               [ ["arrives_next_day", "arrival_time"], ["30", "TRUE"]  ],
               [ ["arrives_next_day", "arrival_time"], ["31", "TRUE"]  ],
-              [ ["arrives_next_day", "arrives_next_day"], ["^TRUE", "FALSE"]  ],
               [ ["arrival_time_desc", "arrival_time"], ["^24(.*)", "00$2"]  ],
               [ ["arrival_time_desc", "arrival_time"], ["^25(.*)", "01$2"]  ],
               [ ["arrival_time_desc", "arrival_time"], ["^26(.*)", "02$2"]  ],
@@ -387,7 +402,6 @@ dag:
               [ ["departs_next_day", "departure_time"], ["29", "TRUE"]  ],
               [ ["departs_next_day", "departure_time"], ["30", "TRUE"]  ],
               [ ["departs_next_day", "departure_time"], ["31", "TRUE"]  ],
-              [ ["departs_next_day", "departs_next_day"], ["^TRUE", "FALSE"]  ],
               [ ["departure_time_desc", "departure_time"], ["^24(.*)", "00$2"]  ],
               [ ["departure_time_desc", "departure_time"], ["^25(.*)", "01$2"]  ],
               [ ["departure_time_desc", "departure_time"], ["^26(.*)", "02$2"]  ],

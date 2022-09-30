@@ -61,7 +61,8 @@ def main(
     strip_newlines_list: typing.List[str],
     strip_whitespace_list: typing.List[str],
     date_format_list: dict,
-    reorder_headers_list: typing.List[str],
+    filter_headers_list: typing.List[str],
+    reorder_headers_list: typing.List[str]
 ) -> None:
 
     logging.info(f"{pipeline_name} process started")
@@ -97,6 +98,7 @@ def main(
         strip_newlines_list=strip_newlines_list,
         strip_whitespace_list=strip_whitespace_list,
         date_format_list=date_format_list,
+        filter_headers_list=filter_headers_list,
         reorder_headers_list=reorder_headers_list,
     )
     logging.info(f"{pipeline_name} process completed")
@@ -133,6 +135,7 @@ def execute_pipeline(
     strip_newlines_list: typing.List[str],
     strip_whitespace_list: typing.List[str],
     date_format_list: dict,
+    filter_headers_list: typing.List[str],
     reorder_headers_list: typing.List[str],
 ) -> None:
     if (
@@ -153,6 +156,7 @@ def execute_pipeline(
             schema_path=schema_path,
             target_gcs_bucket=target_gcs_bucket,
             target_gcs_path=target_gcs_path,
+            filter_headers_list=filter_headers_list,
             rename_headers_list=rename_headers_list,
             reorder_headers_list=reorder_headers_list,
         )
@@ -341,8 +345,9 @@ def process_sf_calendar(
     schema_path: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
+    filter_headers_list: typing.List[str],
     rename_headers_list: typing.List[str],
-    reorder_headers_list: typing.List[str],
+    reorder_headers_list: typing.List[str]
 ) -> None:
     df_calendar = gcs_to_df(
         project_id=project_id,
@@ -393,23 +398,7 @@ def process_sf_calendar(
     df["exception_type_str"] = df["exception_type"].apply(
         lambda x: "True" if x == 1 else "False"
     )
-    df = df[
-        [
-            "service_id",
-            "start_date",
-            "end_date",
-            "service_description",
-            "date",
-            "exception_type_str",
-            "monday_str",
-            "tuesday_str",
-            "wednesday_str",
-            "thursday_str",
-            "friday_str",
-            "saturday_str",
-            "sunday_str",
-        ]
-    ]
+    df = df[filter_headers_list]
     df = rename_headers(df=df, rename_headers_list=rename_headers_list)
     df["exceptions"] = df["exceptions"].apply(
         lambda x: f"{str(x).strip()[:4]}-{str(x).strip()[4:6]}-{str(x).strip()[6:8]}"
@@ -603,12 +592,12 @@ def process_sf_muni_stop_times(
     df_stop_times = rename_headers(
         df = df_stop_times,
         rename_headers_list=rename_headers_list)
-    # import pdb; pdb.set_trace()
     df_stop_times = df_replace_values(
         df=df_stop_times,
         starts_with_pattern_list=starts_with_pattern_list
     )
-    import pdb; pdb.set_trace()
+    df_stop_times.loc[ df_stop_times['arrives_next_day'] == '', 'arrives_next_day'] = 'FALSE'
+    df_stop_times.loc[ df_stop_times['departs_next_day'] == '', 'departs_next_day'] = 'FALSE'
     df_stop_times = reorder_headers(df=df_stop_times, output_headers_list=reorder_headers_list)
     save_to_new_file(df=df_stop_times, file_path=target_file, sep="|")
     upload_file_to_gcs(
@@ -645,29 +634,15 @@ def df_replace_values(
         source_fieldname = lst[0][1]
         reg_exp = lst[1][0]
         replace_val = lst[1][1]
-        replace_whole_target = (lst[1][2] == "TRUE")
         logging.info(f"Replacing values '{reg_exp}' with '{replace_val} in field {target_fieldname} from {source_fieldname}'")
         if target_fieldname not in df.columns:
             df[target_fieldname] = ""
         df[source_fieldname] = df[source_fieldname].astype('str')
-        #if str(reg_exp).contains("(", regexp=False) and not str(reg_exp).contains("\(", regexp=False):
         if "(" in reg_exp and not "\(" in reg_exp:
-            # df.loc[df[source_fieldname].str.extract(rf'{reg_exp}'), target_fieldname] = df[source_fieldname].apply(lambda x: re.sub(rf'^{reg_exp}', rf'{replace_val}', x.strip()))
-            # df.loc[df[source_fieldname].str.extract(rf'{reg_exp}', expand=False), target_fieldname] = "example"
-            df.loc[df[source_fieldname].str.match(rf'{reg_exp}', case=False), target_fieldname] = replace_val.replace("$2", "") + df[source_fieldname].str.extract(rf'{reg_exp}', expand=False)
-            # import pdb; pdb.set_trace()
+            df.loc[df[source_fieldname].str.match(rf'^{reg_exp}', case=False), target_fieldname] = replace_val.replace("$2", "") + df[source_fieldname].str.extract(rf'^{reg_exp}', expand=False)
         else:
-            df.loc[df[source_fieldname].str.contains(reg_exp, regex=True, na=False), target_fieldname] = df[source_fieldname].apply(lambda x: re.sub(rf'^{reg_exp}', rf'{replace_val}', x.strip()))
-        # import pdb; pdb.set_trace()
+            df.loc[df[source_fieldname].str.contains(reg_exp, regex=True, na=False), target_fieldname] = replace_val
     return df
-
-
-# def df_replace_values_rowval(
-#     source_value: str,
-#     reg_expr: str,
-
-# ) -> str:
-
 
 
 def create_geometry_columns(long: float, lat: float) -> pd.DataFrame:
@@ -1439,5 +1414,5 @@ if __name__ == "__main__":
             os.environ.get("STRIP_WHITESPACE_LIST", r"[]")
         ),
         date_format_list=json.loads(os.environ.get("DATE_FORMAT_LIST", r"[]")),
-        reorder_headers_list=json.loads(os.environ.get("REORDER_HEADERS_LIST", r"[]")),
+        reorder_headers_list=json.loads(os.environ.get("REORDER_HEADERS_LIST", r"[]"))
     )
