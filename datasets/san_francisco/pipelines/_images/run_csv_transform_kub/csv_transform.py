@@ -603,14 +603,14 @@ def process_sf_muni_stop_times(
     df_stop_times = rename_headers(
         df = df_stop_times,
         rename_headers_list=rename_headers_list)
-    import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()
     df_stop_times = df_replace_values(
         df=df_stop_times,
         starts_with_pattern_list=starts_with_pattern_list
     )
     import pdb; pdb.set_trace()
-    df_stops = reorder_headers(df=df_stops, output_headers_list=reorder_headers_list)
-    save_to_new_file(df=df_stops, file_path=target_file, sep="|")
+    df_stop_times = reorder_headers(df=df_stop_times, output_headers_list=reorder_headers_list)
+    save_to_new_file(df=df_stop_times, file_path=target_file, sep="|")
     upload_file_to_gcs(
         file_path=target_file,
         target_gcs_bucket=target_gcs_bucket,
@@ -638,19 +638,36 @@ def process_sf_muni_stop_times(
 
 def df_replace_values(
     df: pd.DataFrame,
-    starts_with_pattern_list: typing.List[str]
+    starts_with_pattern_list: typing.List[str],
     ) -> pd.DataFrame:
     for lst in starts_with_pattern_list:
         target_fieldname = lst[0][0]
         source_fieldname = lst[0][1]
         reg_exp = lst[1][0]
         replace_val = lst[1][1]
-        logging.info(f"Replacing values '^{reg_exp}*' with '{replace_val} in field {target_fieldname} from {source_fieldname}'")
-        if target_fieldname != source_fieldname:
+        replace_whole_target = (lst[1][2] == "TRUE")
+        logging.info(f"Replacing values '{reg_exp}' with '{replace_val} in field {target_fieldname} from {source_fieldname}'")
+        if target_fieldname not in df.columns:
             df[target_fieldname] = ""
         df[source_fieldname] = df[source_fieldname].astype('str')
-        df[target_fieldname] = df[source_fieldname].apply(lambda x: re.sub(rf'^{reg_exp}(.*)', rf'{replace_val}', x.strip()))
+        #if str(reg_exp).contains("(", regexp=False) and not str(reg_exp).contains("\(", regexp=False):
+        if "(" in reg_exp and not "\(" in reg_exp:
+            # df.loc[df[source_fieldname].str.extract(rf'{reg_exp}'), target_fieldname] = df[source_fieldname].apply(lambda x: re.sub(rf'^{reg_exp}', rf'{replace_val}', x.strip()))
+            # df.loc[df[source_fieldname].str.extract(rf'{reg_exp}', expand=False), target_fieldname] = "example"
+            df.loc[df[source_fieldname].str.match(rf'{reg_exp}', case=False), target_fieldname] = replace_val.replace("$2", "") + df[source_fieldname].str.extract(rf'{reg_exp}', expand=False)
+            # import pdb; pdb.set_trace()
+        else:
+            df.loc[df[source_fieldname].str.contains(reg_exp, regex=True, na=False), target_fieldname] = df[source_fieldname].apply(lambda x: re.sub(rf'^{reg_exp}', rf'{replace_val}', x.strip()))
+        # import pdb; pdb.set_trace()
     return df
+
+
+# def df_replace_values_rowval(
+#     source_value: str,
+#     reg_expr: str,
+
+# ) -> str:
+
 
 
 def create_geometry_columns(long: float, lat: float) -> pd.DataFrame:
