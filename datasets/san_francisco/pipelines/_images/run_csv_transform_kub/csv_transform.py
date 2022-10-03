@@ -220,6 +220,22 @@ def execute_pipeline(
             reorder_headers_list=reorder_headers_list,
         )
         return None
+    elif destination_table == "fares":
+        process_sf_muni_fares(
+            source_url_dict=source_url_dict,
+            target_file=target_file,
+            project_id=project_id,
+            dataset_id=dataset_id,
+            destination_table=destination_table,
+            drop_dest_table=drop_dest_table,
+            schema_path=schema_path,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=target_gcs_path,
+            rename_headers_list=rename_headers_list,
+            starts_with_pattern_list=starts_with_pattern_list,
+            reorder_headers_list=reorder_headers_list,
+        )
+        return None
     elif destination_table == "sfpd_incidents":
         download_file_http(
             source_url=source_url_dict["sfpd_incidents"], source_file=source_file
@@ -606,6 +622,94 @@ def process_sf_muni_stop_times(
         df=df_stop_times, output_headers_list=reorder_headers_list
     )
     save_to_new_file(df=df_stop_times, file_path=target_file, sep="|")
+    upload_file_to_gcs(
+        file_path=target_file,
+        target_gcs_bucket=target_gcs_bucket,
+        target_gcs_path=target_gcs_path,
+    )
+    drop_table = drop_dest_table == "Y"
+    table_exists = create_dest_table(
+        project_id=project_id,
+        dataset_id=dataset_id,
+        table_id=destination_table,
+        schema_filepath=schema_path,
+        bucket_name=target_gcs_bucket,
+        drop_table=drop_table,
+    )
+    if table_exists:
+        load_data_to_bq(
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_id=destination_table,
+            file_path=target_file,
+            truncate_table=True,
+            field_delimiter="|",
+        )
+
+
+def process_sf_muni_fares(
+    source_url_dict: dict,
+    target_file: pathlib.Path,
+    project_id: str,
+    dataset_id: str,
+    destination_table: str,
+    drop_dest_table: str,
+    schema_path: str,
+    target_gcs_bucket: str,
+    target_gcs_path: str,
+    rename_headers_list: typing.List[str],
+    starts_with_pattern_list: typing.List[str],
+    reorder_headers_list: typing.List[str],
+) -> None:
+    df_fare_rider_categories = gcs_to_df(
+        project_id=project_id,
+        source_file_gcs_path=source_url_dict["fare_rider_categories"],
+        target_file_path=str(target_file),
+    )
+    df_rider_categories = gcs_to_df(
+        project_id=project_id,
+        source_file_gcs_path=source_url_dict["rider_categories"],
+        target_file_path=str(target_file),
+    )
+    df_fare_attributes = gcs_to_df(
+        project_id=project_id,
+        source_file_gcs_path=source_url_dict["fare_attributes"],
+        target_file_path=str(target_file),
+    )
+    df_categories = pd.merge(
+        df_fare_rider_categories,
+        df_rider_categories,
+        left_on="rider_category_id",
+        right_on="rider_category_id",
+        how="left",
+    )
+    import pdb; pdb.set_trace()
+    df_fares = pd.merge(
+        df_fare_attributes,
+        df_categories,
+        left_on="fare_id",
+        right_on="fare_id",
+        how="left",
+    )
+    import pdb; pdb.set_trace()
+    df_fares = rename_headers(
+        df=df_fares,
+        rename_headers_list=rename_headers_list
+    )
+    import pdb; pdb.set_trace()
+    df_fares["rider_desc"].apply(lambda x: x.replace('"', ''))
+    df_fares.loc[
+        df_fares["transfers_permitted"] == "", "transfers_permitted"
+    ] = "NULL"
+    import pdb; pdb.set_trace()
+    df_fares = df_replace_values(
+        df=df_fares, starts_with_pattern_list=starts_with_pattern_list
+    )
+    import pdb; pdb.set_trace()
+
+
+    df_stops = reorder_headers(df=df_stops, output_headers_list=reorder_headers_list)
+    save_to_new_file(df=df_stops, file_path=target_file, sep="|")
     upload_file_to_gcs(
         file_path=target_file,
         target_gcs_bucket=target_gcs_bucket,
