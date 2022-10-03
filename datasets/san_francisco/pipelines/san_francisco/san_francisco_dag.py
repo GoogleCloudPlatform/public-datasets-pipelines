@@ -227,6 +227,38 @@ with DAG(
         },
     )
 
+    # Run San Francisco Municipal Fares Pipeline
+    sf_muni_fares = kubernetes_pod.KubernetesPodOperator(
+        task_id="sf_muni_fares",
+        name="muni_fares",
+        namespace="composer",
+        service_account_name="datasets",
+        image_pull_policy="Always",
+        image="{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}",
+        env_vars={
+            "PIPELINE_NAME": "San Francisco Municipal Fares",
+            "SOURCE_URL_DICT": '{\n  "fare_rider_categories": "gs://pdp-feeds-staging/SF_Muni/GTFSTransitData_SF/fare_rider_categories.txt",\n  "rider_categories": "gs://pdp-feeds-staging/SF_Muni/GTFSTransitData_SF/rider_categories.txt",\n  "fare_attributes": "gs://pdp-feeds-staging/SF_Muni/GTFSTransitData_SF/fare_attributes.txt"\n}',
+            "CHUNKSIZE": "750000",
+            "SOURCE_FILE": "files/data_municipal_muni_fares.csv",
+            "TARGET_FILE": "files/data_output_municipal_muni_fares.csv",
+            "PROJECT_ID": "{{ var.value.gcp_project }}",
+            "DATASET_ID": "san_francisco_transit_muni",
+            "TABLE_ID": "fares",
+            "DROP_DEST_TABLE": "N",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
+            "TARGET_GCS_PATH": "data/san_francisco/transit_municipal_fares/data_output.csv",
+            "SCHEMA_PATH": "data/san_francisco/schema/sf_muni_fares_schema.json",
+            "RENAME_HEADERS_LIST": '{\n  "rider_category_description": "rider_desc",\n  "rider_category_id": "rider_id",\n  "transfers": "transfers_permitted",\n  "price_x": "price"\n}',
+            "STARTS_WITH_PATTERN_LIST": '[\n  [ ["payment_type", "payment_type"], [ "0", "during" ] ],\n  [ ["payment_type", "payment_type"], [ "1", "after" ] ]\n]',
+            "REORDER_HEADERS_LIST": '[\n  "fare_id",\n  "rider_id",\n  "rider_desc",\n  "price",\n  "payment_method",\n  "transfers_permitted",\n  "transfer_duration"\n]',
+        },
+        resources={
+            "limit_memory": "8G",
+            "limit_cpu": "3",
+            "request_ephemeral_storage": "10G",
+        },
+    )
+
     # Run San Francisco Police Department Incidents Pipeline
     sfpd_incidents = kubernetes_pod.KubernetesPodOperator(
         task_id="sfpd_incidents",
@@ -486,6 +518,7 @@ with DAG(
             sf_muni_shapes,
             sf_muni_stops,
             sf_muni_stop_times,
+            sf_muni_fares,
         ]
         >> sffd_service_calls
         >> sfpd_incidents

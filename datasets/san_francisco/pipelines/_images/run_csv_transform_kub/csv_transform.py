@@ -23,6 +23,7 @@ import typing
 import zipfile as zip
 from datetime import datetime
 
+import numpy as np
 import pandas as pd
 import requests
 from google.api_core.exceptions import NotFound
@@ -683,7 +684,6 @@ def process_sf_muni_fares(
         right_on="rider_category_id",
         how="left",
     )
-    import pdb; pdb.set_trace()
     df_fares = pd.merge(
         df_fare_attributes,
         df_categories,
@@ -691,25 +691,20 @@ def process_sf_muni_fares(
         right_on="fare_id",
         how="left",
     )
-    import pdb; pdb.set_trace()
     df_fares = rename_headers(
         df=df_fares,
         rename_headers_list=rename_headers_list
     )
-    import pdb; pdb.set_trace()
     df_fares["rider_desc"].apply(lambda x: x.replace('"', ''))
     df_fares.loc[
         df_fares["transfers_permitted"] == "", "transfers_permitted"
     ] = "NULL"
-    import pdb; pdb.set_trace()
     df_fares = df_replace_values(
         df=df_fares, starts_with_pattern_list=starts_with_pattern_list
     )
-    import pdb; pdb.set_trace()
-
-
-    df_stops = reorder_headers(df=df_stops, output_headers_list=reorder_headers_list)
-    save_to_new_file(df=df_stops, file_path=target_file, sep="|")
+    df_fares['transfer_duration'] = df_fares['transfer_duration'].fillna(0.0).apply(np.int64)
+    df_fares = reorder_headers(df=df_fares, output_headers_list=reorder_headers_list)
+    save_to_new_file(df=df_fares, file_path=target_file, sep="|")
     upload_file_to_gcs(
         file_path=target_file,
         target_gcs_bucket=target_gcs_bucket,
