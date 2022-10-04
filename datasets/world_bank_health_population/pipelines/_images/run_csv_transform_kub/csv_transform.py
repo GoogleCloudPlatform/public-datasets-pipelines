@@ -28,16 +28,16 @@ from google.cloud import storage
 
 def main(
     source_url: str,
-    source_file: pathlib.Path,
+    source_file: str,
     column_name: str,
-    target_file: pathlib.Path,
+    target_file: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
     headers: typing.List[str],
     rename_mappings: dict,
     pipeline_name: str,
 ) -> None:
-
+    print(source_url)
     logging.info(
         f"World Bank Health Population {pipeline_name} process started at "
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
@@ -47,7 +47,7 @@ def main(
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
 
     logging.info(f"Downloading file {source_url}")
-    download_file(source_url, source_file)
+    download_file(source_url, source_file, gcs_bucket=target_gcs_bucket)
 
     logging.info(f"Opening file {source_file}")
     df = pd.read_csv(source_file, skip_blank_lines=True)
@@ -67,8 +67,8 @@ def main(
         df = df
 
     if pipeline_name == "country_summary":
-        logging.info("Transform: Creating a new column ...")
-        df["latest_water_withdrawal_data"] = ""
+        # logging.info("Transform: Creating a new column ...")
+        # df["latest_water_withdrawal_data"] = ""
 
         logging.info("Transform: Converting to integer ... ")
         df["latest_industrial_data"] = df["latest_industrial_data"].apply(
@@ -100,8 +100,12 @@ def main(
     )
 
 
-def download_file(source_url: str, source_file: pathlib.Path) -> None:
-    subprocess.check_call(["gsutil", "cp", f"{source_url}", f"{source_file}"])
+def download_file(source_url: str, source_file: str, gcs_bucket: str) -> None:
+    # subprocess.check_call(["gsutil", "cp", f"{source_url}", f"{source_file}"])
+    client=storage.Client()
+    bucket=client.bucket(gcs_bucket)
+    blob=bucket.blob(source_url)
+    blob.download_to_filename(source_file)
 
 
 def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
@@ -130,7 +134,7 @@ def convert_to_integer_string(input: typing.Union[str, float]) -> str:
     return str_val
 
 
-def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:
+def upload_file_to_gcs(file_path: str, gcs_bucket: str, gcs_path: str) -> None:
     storage_client = storage.Client()
     bucket = storage_client.bucket(gcs_bucket)
     blob = bucket.blob(gcs_path)
@@ -141,13 +145,13 @@ if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
 
     main(
-        source_url=os.environ["SOURCE_URL"],
-        source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
-        column_name=os.environ["COLUMN_TO_REMOVE"],
-        target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
-        target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
-        target_gcs_path=os.environ["TARGET_GCS_PATH"],
-        headers=json.loads(os.environ["CSV_HEADERS"]),
-        rename_mappings=json.loads(os.environ["RENAME_MAPPINGS"]),
-        pipeline_name=os.environ["PIPELINE_NAME"],
+        source_url=os.environ.get("SOURCE_URL"),
+        source_file=os.environ.get("SOURCE_FILE"),
+        column_name=os.environ.get("COLUMN_TO_REMOVE"),
+        target_file=os.environ.get("TARGET_FILE"),
+        target_gcs_bucket=os.environ.get("TARGET_GCS_BUCKET"),
+        target_gcs_path=os.environ.get("TARGET_GCS_PATH"),
+        headers=json.loads(os.environ.get("CSV_HEADERS","[]")),
+        rename_mappings=json.loads(os.environ.get("RENAME_MAPPINGS","{}")),
+        pipeline_name=os.environ.get("PIPELINE_NAME"),
     )
