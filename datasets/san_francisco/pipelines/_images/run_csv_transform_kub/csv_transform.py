@@ -237,6 +237,22 @@ def execute_pipeline(
             reorder_headers_list=reorder_headers_list,
         )
         return None
+    elif destination_table == "trips":
+        process_sf_muni_trips(
+            source_url_dict=source_url_dict,
+            target_file=target_file,
+            project_id=project_id,
+            dataset_id=dataset_id,
+            destination_table=destination_table,
+            drop_dest_table=drop_dest_table,
+            schema_path=schema_path,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=target_gcs_path,
+            rename_headers_list=rename_headers_list,
+            starts_with_pattern_list=starts_with_pattern_list,
+            reorder_headers_list=reorder_headers_list,
+        )
+        return None
     elif destination_table == "sfpd_incidents":
         download_file_http(
             source_url=source_url_dict["sfpd_incidents"], source_file=source_file
@@ -322,7 +338,7 @@ def execute_pipeline(
             target_gcs_bucket=target_gcs_bucket,
             target_gcs_path=target_gcs_path,
         )
-        if drop_dest_table == "Y":
+        if ( drop_dest_table == "Y" ):
             drop_table = True
         else:
             drop_table = False
@@ -427,7 +443,7 @@ def process_sf_calendar(
         target_gcs_bucket=target_gcs_bucket,
         target_gcs_path=target_gcs_path,
     )
-    drop_table = drop_dest_table == "Y"
+    drop_table = ( drop_dest_table == "Y" )
     table_exists = create_dest_table(
         project_id=project_id,
         dataset_id=dataset_id,
@@ -471,7 +487,7 @@ def process_sf_muni_routes(
         target_gcs_bucket=target_gcs_bucket,
         target_gcs_path=target_gcs_path,
     )
-    drop_table = drop_dest_table == "Y"
+    drop_table = ( drop_dest_table == "Y" )
     table_exists = create_dest_table(
         project_id=project_id,
         dataset_id=dataset_id,
@@ -521,7 +537,7 @@ def process_sf_muni_shapes(
         target_gcs_bucket=target_gcs_bucket,
         target_gcs_path=target_gcs_path,
     )
-    drop_table = drop_dest_table == "Y"
+    drop_table = ( drop_dest_table == "Y" )
     table_exists = create_dest_table(
         project_id=project_id,
         dataset_id=dataset_id,
@@ -568,7 +584,7 @@ def process_sf_muni_stops(
         target_gcs_bucket=target_gcs_bucket,
         target_gcs_path=target_gcs_path,
     )
-    drop_table = drop_dest_table == "Y"
+    drop_table = ( drop_dest_table == "Y" )
     table_exists = create_dest_table(
         project_id=project_id,
         dataset_id=dataset_id,
@@ -628,7 +644,7 @@ def process_sf_muni_stop_times(
         target_gcs_bucket=target_gcs_bucket,
         target_gcs_path=target_gcs_path,
     )
-    drop_table = drop_dest_table == "Y"
+    drop_table = ( drop_dest_table == "Y" )
     table_exists = create_dest_table(
         project_id=project_id,
         dataset_id=dataset_id,
@@ -710,7 +726,74 @@ def process_sf_muni_fares(
         target_gcs_bucket=target_gcs_bucket,
         target_gcs_path=target_gcs_path,
     )
-    drop_table = drop_dest_table == "Y"
+    drop_table = ( drop_dest_table == "Y" )
+    table_exists = create_dest_table(
+        project_id=project_id,
+        dataset_id=dataset_id,
+        table_id=destination_table,
+        schema_filepath=schema_path,
+        bucket_name=target_gcs_bucket,
+        drop_table=drop_table,
+    )
+    if table_exists:
+        load_data_to_bq(
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_id=destination_table,
+            file_path=target_file,
+            truncate_table=True,
+            field_delimiter="|",
+        )
+
+
+def process_sf_muni_trips(
+    source_url_dict: dict,
+    target_file: pathlib.Path,
+    project_id: str,
+    dataset_id: str,
+    destination_table: str,
+    drop_dest_table: str,
+    schema_path: str,
+    target_gcs_bucket: str,
+    target_gcs_path: str,
+    rename_headers_list: typing.List[str],
+    starts_with_pattern_list: typing.List[str],
+    reorder_headers_list: typing.List[str],
+) -> None:
+    df_trips = gcs_to_df(
+        project_id=project_id,
+        source_file_gcs_path=source_url_dict["trips"],
+        target_file_path=str(target_file),
+    )
+    df_simple_trips = http_to_df(
+        source_url=source_url_dict["simple_trips"],
+        target_file_path=str(target_file),
+    )
+    df = pd.merge(
+        df_trips,
+        df_simple_trips,
+        left_on="route_id",
+        right_on="DIRECTION",
+        how="left",
+    )
+    df = df_replace_values(
+        df=df, starts_with_pattern_list=starts_with_pattern_list
+    )
+    df = rename_headers(
+        df=df,
+        rename_headers_list=rename_headers_list
+    )
+    df = reorder_headers(
+        df=df,
+        output_headers_list=reorder_headers_list
+    )
+    save_to_new_file(df=df, file_path=target_file, sep="|")
+    upload_file_to_gcs(
+        file_path=target_file,
+        target_gcs_bucket=target_gcs_bucket,
+        target_gcs_path=target_gcs_path,
+    )
+    drop_table = ( drop_dest_table == "Y" )
     table_exists = create_dest_table(
         project_id=project_id,
         dataset_id=dataset_id,

@@ -259,6 +259,38 @@ with DAG(
         },
     )
 
+    # Run San Francisco Municipal Trips Pipeline
+    sf_muni_trips = kubernetes_pod.KubernetesPodOperator(
+        task_id="sf_muni_trips",
+        name="muni_trips",
+        namespace="composer",
+        service_account_name="datasets",
+        image_pull_policy="Always",
+        image="{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}",
+        env_vars={
+            "PIPELINE_NAME": "San Francisco Municipal Trips",
+            "SOURCE_URL_DICT": '{\n  "trips": "gs://pdp-feeds-staging/SF_Muni/GTFSTransitData_SF/trips.txt",\n  "simple_trips": "https://data.sfgov.org/api/views/9exe-acju/rows.csv"\n}',
+            "CHUNKSIZE": "750000",
+            "SOURCE_FILE": "files/data_municipal_muni_trips.csv",
+            "TARGET_FILE": "files/data_output_municipal_muni_trips.csv",
+            "PROJECT_ID": "{{ var.value.gcp_project }}",
+            "DATASET_ID": "san_francisco_transit_muni",
+            "TABLE_ID": "trips",
+            "DROP_DEST_TABLE": "N",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
+            "TARGET_GCS_PATH": "data/san_francisco/transit_municipal_trips/data_output.csv",
+            "SCHEMA_PATH": "data/san_francisco/schema/sf_muni_trips_schema.json",
+            "RENAME_HEADERS_LIST": '{\n    "DIRECTION": "direction_old",\n    "route_id": "route_id_old",\n    "direction_id": "direction",\n    "SERVICE_CA": "service_category",\n    "ROUTE_NAME": "route_id",\n    "shape": "trip_shape"\n}',
+            "STARTS_WITH_PATTERN_LIST": '[\n  [ ["direction", "direction"], [ "0", "O" ] ],\n  [ ["direction", "direction"], [ "1", "I" ] ],\n  [ ["SERVICE_CA", "SERVICE_CA"], [ "nan", "" ] ]\n]',
+            "REORDER_HEADERS_LIST": '[\n  "trip_id",\n  "route_id",\n  "direction",\n  "block_id",\n  "service_category",\n  "trip_headsign",\n  "shape_id",\n  "trip_shape"\n]',
+        },
+        resources={
+            "limit_memory": "8G",
+            "limit_cpu": "3",
+            "request_ephemeral_storage": "10G",
+        },
+    )
+
     # Run San Francisco Police Department Incidents Pipeline
     sfpd_incidents = kubernetes_pod.KubernetesPodOperator(
         task_id="sfpd_incidents",
@@ -519,6 +551,7 @@ with DAG(
             sf_muni_stops,
             sf_muni_stop_times,
             sf_muni_fares,
+            sf_muni_trips,
         ]
         >> sffd_service_calls
         >> sfpd_incidents
