@@ -509,10 +509,8 @@ dag:
           RENAME_HEADERS_LIST: >-
             {
                 "DIRECTION": "direction_old",
-                "route_id": "route_id_old",
                 "direction_id": "direction",
                 "SERVICE_CA": "service_category",
-                "ROUTE_NAME": "route_id",
                 "shape": "trip_shape"
             }
           STARTS_WITH_PATTERN_LIST: >-

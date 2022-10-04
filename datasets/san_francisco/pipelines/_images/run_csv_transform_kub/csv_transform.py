@@ -65,7 +65,6 @@ def main(
     filter_headers_list: typing.List[str],
     reorder_headers_list: typing.List[str],
 ) -> None:
-
     logging.info(f"{pipeline_name} process started")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
     execute_pipeline(
@@ -338,7 +337,7 @@ def execute_pipeline(
             target_gcs_bucket=target_gcs_bucket,
             target_gcs_path=target_gcs_path,
         )
-        if ( drop_dest_table == "Y" ):
+        if drop_dest_table == "Y":
             drop_table = True
         else:
             drop_table = False
@@ -443,7 +442,7 @@ def process_sf_calendar(
         target_gcs_bucket=target_gcs_bucket,
         target_gcs_path=target_gcs_path,
     )
-    drop_table = ( drop_dest_table == "Y" )
+    drop_table = drop_dest_table == "Y"
     table_exists = create_dest_table(
         project_id=project_id,
         dataset_id=dataset_id,
@@ -487,7 +486,7 @@ def process_sf_muni_routes(
         target_gcs_bucket=target_gcs_bucket,
         target_gcs_path=target_gcs_path,
     )
-    drop_table = ( drop_dest_table == "Y" )
+    drop_table = drop_dest_table == "Y"
     table_exists = create_dest_table(
         project_id=project_id,
         dataset_id=dataset_id,
@@ -537,7 +536,7 @@ def process_sf_muni_shapes(
         target_gcs_bucket=target_gcs_bucket,
         target_gcs_path=target_gcs_path,
     )
-    drop_table = ( drop_dest_table == "Y" )
+    drop_table = drop_dest_table == "Y"
     table_exists = create_dest_table(
         project_id=project_id,
         dataset_id=dataset_id,
@@ -584,7 +583,7 @@ def process_sf_muni_stops(
         target_gcs_bucket=target_gcs_bucket,
         target_gcs_path=target_gcs_path,
     )
-    drop_table = ( drop_dest_table == "Y" )
+    drop_table = drop_dest_table == "Y"
     table_exists = create_dest_table(
         project_id=project_id,
         dataset_id=dataset_id,
@@ -644,7 +643,7 @@ def process_sf_muni_stop_times(
         target_gcs_bucket=target_gcs_bucket,
         target_gcs_path=target_gcs_path,
     )
-    drop_table = ( drop_dest_table == "Y" )
+    drop_table = drop_dest_table == "Y"
     table_exists = create_dest_table(
         project_id=project_id,
         dataset_id=dataset_id,
@@ -707,18 +706,15 @@ def process_sf_muni_fares(
         right_on="fare_id",
         how="left",
     )
-    df_fares = rename_headers(
-        df=df_fares,
-        rename_headers_list=rename_headers_list
-    )
-    df_fares["rider_desc"].apply(lambda x: x.replace('"', ''))
-    df_fares.loc[
-        df_fares["transfers_permitted"] == "", "transfers_permitted"
-    ] = "NULL"
+    df_fares = rename_headers(df=df_fares, rename_headers_list=rename_headers_list)
+    df_fares["rider_desc"].apply(lambda x: x.replace('"', ""))
+    df_fares.loc[df_fares["transfers_permitted"] == "", "transfers_permitted"] = "NULL"
     df_fares = df_replace_values(
         df=df_fares, starts_with_pattern_list=starts_with_pattern_list
     )
-    df_fares['transfer_duration'] = df_fares['transfer_duration'].fillna(0.0).apply(np.int64)
+    df_fares["transfer_duration"] = (
+        df_fares["transfer_duration"].fillna(0.0).apply(np.int64)
+    )
     df_fares = reorder_headers(df=df_fares, output_headers_list=reorder_headers_list)
     save_to_new_file(df=df_fares, file_path=target_file, sep="|")
     upload_file_to_gcs(
@@ -726,7 +722,7 @@ def process_sf_muni_fares(
         target_gcs_bucket=target_gcs_bucket,
         target_gcs_path=target_gcs_path,
     )
-    drop_table = ( drop_dest_table == "Y" )
+    drop_table = drop_dest_table == "Y"
     table_exists = create_dest_table(
         project_id=project_id,
         dataset_id=dataset_id,
@@ -776,24 +772,16 @@ def process_sf_muni_trips(
         right_on="DIRECTION",
         how="left",
     )
-    df = df_replace_values(
-        df=df, starts_with_pattern_list=starts_with_pattern_list
-    )
-    df = rename_headers(
-        df=df,
-        rename_headers_list=rename_headers_list
-    )
-    df = reorder_headers(
-        df=df,
-        output_headers_list=reorder_headers_list
-    )
+    df = df_replace_values(df=df, starts_with_pattern_list=starts_with_pattern_list)
+    df = rename_headers(df=df, rename_headers_list=rename_headers_list)
+    df = reorder_headers(df=df, output_headers_list=reorder_headers_list)
     save_to_new_file(df=df, file_path=target_file, sep="|")
     upload_file_to_gcs(
         file_path=target_file,
         target_gcs_bucket=target_gcs_bucket,
         target_gcs_path=target_gcs_path,
     )
-    drop_table = ( drop_dest_table == "Y" )
+    drop_table = drop_dest_table == "Y"
     table_exists = create_dest_table(
         project_id=project_id,
         dataset_id=dataset_id,
