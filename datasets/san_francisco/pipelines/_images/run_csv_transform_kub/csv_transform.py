@@ -23,6 +23,7 @@ import typing
 import zipfile as zip
 from datetime import datetime
 
+import numpy as np
 import pandas as pd
 import requests
 from google.api_core.exceptions import NotFound
@@ -53,6 +54,7 @@ def main(
     tripdata_dtypes: dict,
     rename_headers_tripdata: dict,
     rename_headers_list: dict,
+    starts_with_pattern_list: typing.List[str],
     empty_key_list: typing.List[str],
     gen_location_list: dict,
     resolve_datatypes_list: dict,
@@ -60,9 +62,9 @@ def main(
     strip_newlines_list: typing.List[str],
     strip_whitespace_list: typing.List[str],
     date_format_list: dict,
+    filter_headers_list: typing.List[str],
     reorder_headers_list: typing.List[str],
 ) -> None:
-
     logging.info(f"{pipeline_name} process started")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
     execute_pipeline(
@@ -88,6 +90,7 @@ def main(
         tripdata_dtypes=tripdata_dtypes,
         rename_headers_tripdata=rename_headers_tripdata,
         rename_headers_list=rename_headers_list,
+        starts_with_pattern_list=starts_with_pattern_list,
         empty_key_list=empty_key_list,
         gen_location_list=gen_location_list,
         resolve_datatypes_list=resolve_datatypes_list,
@@ -95,6 +98,7 @@ def main(
         strip_newlines_list=strip_newlines_list,
         strip_whitespace_list=strip_whitespace_list,
         date_format_list=date_format_list,
+        filter_headers_list=filter_headers_list,
         reorder_headers_list=reorder_headers_list,
     )
     logging.info(f"{pipeline_name} process completed")
@@ -123,6 +127,7 @@ def execute_pipeline(
     tripdata_dtypes: dict,
     rename_headers_tripdata: dict,
     rename_headers_list: typing.List[str],
+    starts_with_pattern_list: typing.List[str],
     empty_key_list: typing.List[str],
     gen_location_list: dict,
     resolve_datatypes_list: dict,
@@ -130,6 +135,7 @@ def execute_pipeline(
     strip_newlines_list: typing.List[str],
     strip_whitespace_list: typing.List[str],
     date_format_list: dict,
+    filter_headers_list: typing.List[str],
     reorder_headers_list: typing.List[str],
 ) -> None:
     if (
@@ -150,6 +156,7 @@ def execute_pipeline(
             schema_path=schema_path,
             target_gcs_bucket=target_gcs_bucket,
             target_gcs_path=target_gcs_path,
+            filter_headers_list=filter_headers_list,
             rename_headers_list=rename_headers_list,
             reorder_headers_list=reorder_headers_list,
         )
@@ -194,6 +201,54 @@ def execute_pipeline(
             schema_path=schema_path,
             target_gcs_bucket=target_gcs_bucket,
             target_gcs_path=target_gcs_path,
+            reorder_headers_list=reorder_headers_list,
+        )
+        return None
+    elif destination_table == "stop_times":
+        process_sf_muni_stop_times(
+            source_url_dict=source_url_dict,
+            target_file=target_file,
+            project_id=project_id,
+            dataset_id=dataset_id,
+            destination_table=destination_table,
+            drop_dest_table=drop_dest_table,
+            schema_path=schema_path,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=target_gcs_path,
+            rename_headers_list=rename_headers_list,
+            starts_with_pattern_list=starts_with_pattern_list,
+            reorder_headers_list=reorder_headers_list,
+        )
+        return None
+    elif destination_table == "fares":
+        process_sf_muni_fares(
+            source_url_dict=source_url_dict,
+            target_file=target_file,
+            project_id=project_id,
+            dataset_id=dataset_id,
+            destination_table=destination_table,
+            drop_dest_table=drop_dest_table,
+            schema_path=schema_path,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=target_gcs_path,
+            rename_headers_list=rename_headers_list,
+            starts_with_pattern_list=starts_with_pattern_list,
+            reorder_headers_list=reorder_headers_list,
+        )
+        return None
+    elif destination_table == "trips":
+        process_sf_muni_trips(
+            source_url_dict=source_url_dict,
+            target_file=target_file,
+            project_id=project_id,
+            dataset_id=dataset_id,
+            destination_table=destination_table,
+            drop_dest_table=drop_dest_table,
+            schema_path=schema_path,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=target_gcs_path,
+            rename_headers_list=rename_headers_list,
+            starts_with_pattern_list=starts_with_pattern_list,
             reorder_headers_list=reorder_headers_list,
         )
         return None
@@ -322,6 +377,7 @@ def process_sf_calendar(
     schema_path: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
+    filter_headers_list: typing.List[str],
     rename_headers_list: typing.List[str],
     reorder_headers_list: typing.List[str],
 ) -> None:
@@ -374,23 +430,7 @@ def process_sf_calendar(
     df["exception_type_str"] = df["exception_type"].apply(
         lambda x: "True" if x == 1 else "False"
     )
-    df = df[
-        [
-            "service_id",
-            "start_date",
-            "end_date",
-            "service_description",
-            "date",
-            "exception_type_str",
-            "monday_str",
-            "tuesday_str",
-            "wednesday_str",
-            "thursday_str",
-            "friday_str",
-            "saturday_str",
-            "sunday_str",
-        ]
-    ]
+    df = df[filter_headers_list]
     df = rename_headers(df=df, rename_headers_list=rename_headers_list)
     df["exceptions"] = df["exceptions"].apply(
         lambda x: f"{str(x).strip()[:4]}-{str(x).strip()[4:6]}-{str(x).strip()[6:8]}"
@@ -561,6 +601,234 @@ def process_sf_muni_stops(
             truncate_table=True,
             field_delimiter="|",
         )
+
+
+def process_sf_muni_stop_times(
+    source_url_dict: dict,
+    target_file: pathlib.Path,
+    project_id: str,
+    dataset_id: str,
+    destination_table: str,
+    drop_dest_table: str,
+    schema_path: str,
+    target_gcs_bucket: str,
+    target_gcs_path: str,
+    rename_headers_list: typing.List[str],
+    starts_with_pattern_list: typing.List[str],
+    reorder_headers_list: typing.List[str],
+) -> None:
+    df_stop_times = gcs_to_df(
+        project_id=project_id,
+        source_file_gcs_path=source_url_dict["stop_times"],
+        target_file_path=str(target_file),
+    )
+    df_stop_times = rename_headers(
+        df=df_stop_times, rename_headers_list=rename_headers_list
+    )
+    df_stop_times = df_replace_values(
+        df=df_stop_times, starts_with_pattern_list=starts_with_pattern_list
+    )
+    df_stop_times.loc[
+        df_stop_times["arrives_next_day"] == "", "arrives_next_day"
+    ] = "FALSE"
+    df_stop_times.loc[
+        df_stop_times["departs_next_day"] == "", "departs_next_day"
+    ] = "FALSE"
+    df_stop_times = reorder_headers(
+        df=df_stop_times, output_headers_list=reorder_headers_list
+    )
+    save_to_new_file(df=df_stop_times, file_path=target_file, sep="|")
+    upload_file_to_gcs(
+        file_path=target_file,
+        target_gcs_bucket=target_gcs_bucket,
+        target_gcs_path=target_gcs_path,
+    )
+    drop_table = drop_dest_table == "Y"
+    table_exists = create_dest_table(
+        project_id=project_id,
+        dataset_id=dataset_id,
+        table_id=destination_table,
+        schema_filepath=schema_path,
+        bucket_name=target_gcs_bucket,
+        drop_table=drop_table,
+    )
+    if table_exists:
+        load_data_to_bq(
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_id=destination_table,
+            file_path=target_file,
+            truncate_table=True,
+            field_delimiter="|",
+        )
+
+
+def process_sf_muni_fares(
+    source_url_dict: dict,
+    target_file: pathlib.Path,
+    project_id: str,
+    dataset_id: str,
+    destination_table: str,
+    drop_dest_table: str,
+    schema_path: str,
+    target_gcs_bucket: str,
+    target_gcs_path: str,
+    rename_headers_list: typing.List[str],
+    starts_with_pattern_list: typing.List[str],
+    reorder_headers_list: typing.List[str],
+) -> None:
+    df_fare_rider_categories = gcs_to_df(
+        project_id=project_id,
+        source_file_gcs_path=source_url_dict["fare_rider_categories"],
+        target_file_path=str(target_file),
+    )
+    df_rider_categories = gcs_to_df(
+        project_id=project_id,
+        source_file_gcs_path=source_url_dict["rider_categories"],
+        target_file_path=str(target_file),
+    )
+    df_fare_attributes = gcs_to_df(
+        project_id=project_id,
+        source_file_gcs_path=source_url_dict["fare_attributes"],
+        target_file_path=str(target_file),
+    )
+    df_categories = pd.merge(
+        df_fare_rider_categories,
+        df_rider_categories,
+        left_on="rider_category_id",
+        right_on="rider_category_id",
+        how="left",
+    )
+    df_fares = pd.merge(
+        df_fare_attributes,
+        df_categories,
+        left_on="fare_id",
+        right_on="fare_id",
+        how="left",
+    )
+    df_fares = rename_headers(df=df_fares, rename_headers_list=rename_headers_list)
+    df_fares["rider_desc"].apply(lambda x: x.replace('"', ""))
+    df_fares.loc[df_fares["transfers_permitted"] == "", "transfers_permitted"] = "NULL"
+    df_fares = df_replace_values(
+        df=df_fares, starts_with_pattern_list=starts_with_pattern_list
+    )
+    df_fares["transfer_duration"] = (
+        df_fares["transfer_duration"].fillna(0.0).apply(np.int64)
+    )
+    df_fares = reorder_headers(df=df_fares, output_headers_list=reorder_headers_list)
+    save_to_new_file(df=df_fares, file_path=target_file, sep="|")
+    upload_file_to_gcs(
+        file_path=target_file,
+        target_gcs_bucket=target_gcs_bucket,
+        target_gcs_path=target_gcs_path,
+    )
+    drop_table = drop_dest_table == "Y"
+    table_exists = create_dest_table(
+        project_id=project_id,
+        dataset_id=dataset_id,
+        table_id=destination_table,
+        schema_filepath=schema_path,
+        bucket_name=target_gcs_bucket,
+        drop_table=drop_table,
+    )
+    if table_exists:
+        load_data_to_bq(
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_id=destination_table,
+            file_path=target_file,
+            truncate_table=True,
+            field_delimiter="|",
+        )
+
+
+def process_sf_muni_trips(
+    source_url_dict: dict,
+    target_file: pathlib.Path,
+    project_id: str,
+    dataset_id: str,
+    destination_table: str,
+    drop_dest_table: str,
+    schema_path: str,
+    target_gcs_bucket: str,
+    target_gcs_path: str,
+    rename_headers_list: typing.List[str],
+    starts_with_pattern_list: typing.List[str],
+    reorder_headers_list: typing.List[str],
+) -> None:
+    df_trips = gcs_to_df(
+        project_id=project_id,
+        source_file_gcs_path=source_url_dict["trips"],
+        target_file_path=str(target_file),
+    )
+    df_simple_trips = http_to_df(
+        source_url=source_url_dict["simple_trips"],
+        target_file_path=str(target_file),
+    )
+    df = pd.merge(
+        df_trips,
+        df_simple_trips,
+        left_on="route_id",
+        right_on="DIRECTION",
+        how="left",
+    )
+    df = df_replace_values(df=df, starts_with_pattern_list=starts_with_pattern_list)
+    df = rename_headers(df=df, rename_headers_list=rename_headers_list)
+    df = reorder_headers(df=df, output_headers_list=reorder_headers_list)
+    save_to_new_file(df=df, file_path=target_file, sep="|")
+    upload_file_to_gcs(
+        file_path=target_file,
+        target_gcs_bucket=target_gcs_bucket,
+        target_gcs_path=target_gcs_path,
+    )
+    drop_table = drop_dest_table == "Y"
+    table_exists = create_dest_table(
+        project_id=project_id,
+        dataset_id=dataset_id,
+        table_id=destination_table,
+        schema_filepath=schema_path,
+        bucket_name=target_gcs_bucket,
+        drop_table=drop_table,
+    )
+    if table_exists:
+        load_data_to_bq(
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_id=destination_table,
+            file_path=target_file,
+            truncate_table=True,
+            field_delimiter="|",
+        )
+
+
+def df_replace_values(
+    df: pd.DataFrame,
+    starts_with_pattern_list: typing.List[str],
+) -> pd.DataFrame:
+    for lst in starts_with_pattern_list:
+        target_fieldname = lst[0][0]
+        source_fieldname = lst[0][1]
+        reg_exp = lst[1][0]
+        replace_val = lst[1][1]
+        logging.info(
+            f"Replacing values '{reg_exp}' with '{replace_val} in field {target_fieldname} from {source_fieldname}'"
+        )
+        if target_fieldname not in df.columns:
+            df[target_fieldname] = ""
+        df[source_fieldname] = df[source_fieldname].astype("str")
+        if "(" in reg_exp and ("\\(" not in reg_exp):
+            df.loc[
+                df[source_fieldname].str.match(rf"^{reg_exp}", case=False),
+                target_fieldname,
+            ] = replace_val.replace("$2", "") + df[source_fieldname].str.extract(
+                rf"^{reg_exp}", expand=False
+            )
+        else:
+            df.loc[
+                df[source_fieldname].str.contains(reg_exp, regex=True, na=False),
+                target_fieldname,
+            ] = replace_val
+    return df
 
 
 def create_geometry_columns(long: float, lat: float) -> pd.DataFrame:
@@ -1320,6 +1588,9 @@ if __name__ == "__main__":
         rename_headers_tripdata=json.loads(
             os.environ.get("RENAME_HEADERS_TRIPDATA", r"{}")
         ),
+        starts_with_pattern_list=json.loads(
+            os.environ.get("STARTS_WITH_PATTERN_LIST", r"[]")
+        ),
         empty_key_list=json.loads(os.environ.get("EMPTY_KEY_LIST", r"[]")),
         gen_location_list=json.loads(os.environ.get("GEN_LOCATION_LIST", r"{}")),
         resolve_datatypes_list=json.loads(
@@ -1331,5 +1602,6 @@ if __name__ == "__main__":
             os.environ.get("STRIP_WHITESPACE_LIST", r"[]")
         ),
         date_format_list=json.loads(os.environ.get("DATE_FORMAT_LIST", r"[]")),
+        filter_headers_list=json.loads(os.environ.get("FILTER_HEADERS_LIST", r"[]")),
         reorder_headers_list=json.loads(os.environ.get("REORDER_HEADERS_LIST", r"[]")),
     )

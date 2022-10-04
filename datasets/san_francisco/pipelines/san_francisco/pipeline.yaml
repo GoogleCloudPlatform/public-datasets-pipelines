@@ -179,6 +179,22 @@ dag:
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/san_francisco/transit_municipal_calendar/data_output.csv"
           SCHEMA_PATH: "data/san_francisco/schema/sf_calendar_schema.json"
+          FILTER_HEADERS_LIST: >-
+            [
+              "service_id",
+              "start_date",
+              "end_date",
+              "service_description",
+              "date",
+              "exception_type_str",
+              "monday_str",
+              "tuesday_str",
+              "wednesday_str",
+              "thursday_str",
+              "friday_str",
+              "saturday_str",
+              "sunday_str"
+            ]
           REORDER_HEADERS_LIST: >-
             [
               "service_id", "service_desc",
@@ -316,6 +332,203 @@ dag:
               "stop_lat",
               "stop_lon",
               "stop_geom"
+            ]
+        resources:
+          limit_memory: "8G"
+          limit_cpu: "3"
+          request_ephemeral_storage: "10G"
+    - operator: "KubernetesPodOperator"
+      description: "Run San Francisco Municipal Stop Times Pipeline"
+      args:
+        task_id: "sf_muni_stop_times"
+        name: "muni_stop_times"
+        namespace: "composer"
+        service_account_name: "datasets"
+        image_pull_policy: "Always"
+        image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "San Francisco Municipal Stop Times"
+          SOURCE_URL_DICT: >-
+            {
+              "stop_times": "gs://pdp-feeds-staging/SF_Muni/GTFSTransitData_SF/stop_times.txt"
+            }
+          CHUNKSIZE: "750000"
+          SOURCE_FILE: "files/data_municipal_stop_times.csv"
+          TARGET_FILE: "files/data_output_municipal_stop_times.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "san_francisco_transit_muni"
+          TABLE_ID: "stop_times"
+          DROP_DEST_TABLE: "N"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/san_francisco/transit_municipal_stop_times/data_output.csv"
+          SCHEMA_PATH: "data/san_francisco/schema/sf_muni_stop_times_schema.json"
+          RENAME_HEADERS_LIST: >-
+            {
+              "drop_off_type": "dropoff_type"
+            }
+          STARTS_WITH_PATTERN_LIST: >-
+            [
+              [ ["dropoff_type", "dropoff_type"], [ "0", "regular" ] ],
+              [ ["dropoff_type", "dropoff_type"], [ "1", "none" ] ],
+              [ ["dropoff_type", "dropoff_type"], [ "2", "phone" ] ],
+              [ ["dropoff_type", "dropoff_type"], [ "3", "driver" ] ],
+              [ ["pickup_type", "pickup_type"], [ "0", "regular" ] ],
+              [ ["pickup_type", "pickup_type"], [ "1", "none" ] ],
+              [ ["pickup_type", "pickup_type"], [ "2", "phone" ] ],
+              [ ["pickup_type", "pickup_type"], [ "3", "driver" ] ],
+              [ ["exact_timepoint", "timepoint"], [ "0", "FALSE" ] ],
+              [ ["exact_timepoint", "timepoint"], [ "1", "TRUE" ] ],
+              [ ["arrives_next_day", "arrival_time"], ["24", "TRUE"]  ],
+              [ ["arrives_next_day", "arrival_time"], ["25", "TRUE"]  ],
+              [ ["arrives_next_day", "arrival_time"], ["26", "TRUE"]  ],
+              [ ["arrives_next_day", "arrival_time"], ["27", "TRUE"]  ],
+              [ ["arrives_next_day", "arrival_time"], ["28", "TRUE"]  ],
+              [ ["arrives_next_day", "arrival_time"], ["29", "TRUE"]  ],
+              [ ["arrives_next_day", "arrival_time"], ["30", "TRUE"]  ],
+              [ ["arrives_next_day", "arrival_time"], ["31", "TRUE"]  ],
+              [ ["arrival_time", "arrival_time"], ["^24(.*)", "00$2"]  ],
+              [ ["arrival_time", "arrival_time"], ["^25(.*)", "01$2"]  ],
+              [ ["arrival_time", "arrival_time"], ["^26(.*)", "02$2"]  ],
+              [ ["arrival_time", "arrival_time"], ["^27(.*)", "03$2"]  ],
+              [ ["arrival_time", "arrival_time"], ["^28(.*)", "04$2"]  ],
+              [ ["arrival_time", "arrival_time"], ["^29(.*)", "05$2"]  ],
+              [ ["arrival_time", "arrival_time"], ["^30(.*)", "06$2"]  ],
+              [ ["arrival_time", "arrival_time"], ["^31(.*)", "07$2"]  ],
+              [ ["departs_next_day", "departure_time"], ["24", "TRUE"]  ],
+              [ ["departs_next_day", "departure_time"], ["25", "TRUE"]  ],
+              [ ["departs_next_day", "departure_time"], ["26", "TRUE"]  ],
+              [ ["departs_next_day", "departure_time"], ["27", "TRUE"]  ],
+              [ ["departs_next_day", "departure_time"], ["28", "TRUE"]  ],
+              [ ["departs_next_day", "departure_time"], ["29", "TRUE"]  ],
+              [ ["departs_next_day", "departure_time"], ["30", "TRUE"]  ],
+              [ ["departs_next_day", "departure_time"], ["31", "TRUE"]  ],
+              [ ["departure_time", "departure_time"], ["^24(.*)", "00$2"]  ],
+              [ ["departure_time", "departure_time"], ["^25(.*)", "01$2"]  ],
+              [ ["departure_time", "departure_time"], ["^26(.*)", "02$2"]  ],
+              [ ["departure_time", "departure_time"], ["^27(.*)", "03$2"]  ],
+              [ ["departure_time", "departure_time"], ["^28(.*)", "04$2"]  ],
+              [ ["departure_time", "departure_time"], ["^29(.*)", "05$2"]  ],
+              [ ["departure_time", "departure_time"], ["^30(.*)", "06$2"]  ],
+              [ ["departure_time", "departure_time"], ["^31(.*)", "07$2"]  ]
+            ]
+          REORDER_HEADERS_LIST: >-
+            [
+              "stop_id",
+              "trip_id",
+              "stop_sequence",
+              "arrival_time",
+              "arrives_next_day",
+              "departure_time",
+              "departs_next_day",
+              "dropoff_type",
+              "exact_timepoint"
+            ]
+        resources:
+          limit_memory: "8G"
+          limit_cpu: "3"
+          request_ephemeral_storage: "10G"
+    - operator: "KubernetesPodOperator"
+      description: "Run San Francisco Municipal Fares Pipeline"
+      args:
+        task_id: "sf_muni_fares"
+        name: "muni_fares"
+        namespace: "composer"
+        service_account_name: "datasets"
+        image_pull_policy: "Always"
+        image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "San Francisco Municipal Fares"
+          SOURCE_URL_DICT: >-
+            {
+              "fare_rider_categories": "gs://pdp-feeds-staging/SF_Muni/GTFSTransitData_SF/fare_rider_categories.txt",
+              "rider_categories": "gs://pdp-feeds-staging/SF_Muni/GTFSTransitData_SF/rider_categories.txt",
+              "fare_attributes": "gs://pdp-feeds-staging/SF_Muni/GTFSTransitData_SF/fare_attributes.txt"
+            }
+          CHUNKSIZE: "750000"
+          SOURCE_FILE: "files/data_municipal_muni_fares.csv"
+          TARGET_FILE: "files/data_output_municipal_muni_fares.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "san_francisco_transit_muni"
+          TABLE_ID: "fares"
+          DROP_DEST_TABLE: "N"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/san_francisco/transit_municipal_fares/data_output.csv"
+          SCHEMA_PATH: "data/san_francisco/schema/sf_muni_fares_schema.json"
+          RENAME_HEADERS_LIST: >-
+            {
+              "rider_category_description": "rider_desc",
+              "rider_category_id": "rider_id",
+              "transfers": "transfers_permitted",
+              "price_x": "price"
+            }
+          STARTS_WITH_PATTERN_LIST: >-
+            [
+              [ ["payment_type", "payment_type"], [ "0", "during" ] ],
+              [ ["payment_type", "payment_type"], [ "1", "after" ] ]
+            ]
+          REORDER_HEADERS_LIST: >-
+            [
+              "fare_id",
+              "rider_id",
+              "rider_desc",
+              "price",
+              "payment_method",
+              "transfers_permitted",
+              "transfer_duration"
+            ]
+        resources:
+          limit_memory: "8G"
+          limit_cpu: "3"
+          request_ephemeral_storage: "10G"
+    - operator: "KubernetesPodOperator"
+      description: "Run San Francisco Municipal Trips Pipeline"
+      args:
+        task_id: "sf_muni_trips"
+        name: "muni_trips"
+        namespace: "composer"
+        service_account_name: "datasets"
+        image_pull_policy: "Always"
+        image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "San Francisco Municipal Trips"
+          SOURCE_URL_DICT: >-
+            {
+              "trips": "gs://pdp-feeds-staging/SF_Muni/GTFSTransitData_SF/trips.txt",
+              "simple_trips": "https://data.sfgov.org/api/views/9exe-acju/rows.csv"
+            }
+          CHUNKSIZE: "750000"
+          SOURCE_FILE: "files/data_municipal_muni_trips.csv"
+          TARGET_FILE: "files/data_output_municipal_muni_trips.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "san_francisco_transit_muni"
+          TABLE_ID: "trips"
+          DROP_DEST_TABLE: "N"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/san_francisco/transit_municipal_trips/data_output.csv"
+          SCHEMA_PATH: "data/san_francisco/schema/sf_muni_trips_schema.json"
+          RENAME_HEADERS_LIST: >-
+            {
+                "DIRECTION": "direction_old",
+                "direction_id": "direction",
+                "SERVICE_CA": "service_category",
+                "shape": "trip_shape"
+            }
+          STARTS_WITH_PATTERN_LIST: >-
+            [
+              [ ["direction", "direction"], [ "0", "O" ] ],
+              [ ["direction", "direction"], [ "1", "I" ] ],
+              [ ["SERVICE_CA", "SERVICE_CA"], [ "nan", "" ] ]
+            ]
+          REORDER_HEADERS_LIST: >-
+            [
+              "trip_id",
+              "route_id",
+              "direction",
+              "block_id",
+              "service_category",
+              "trip_headsign",
+              "shape_id",
+              "trip_shape"
             ]
         resources:
           limit_memory: "8G"
@@ -1106,4 +1319,4 @@ dag:
           request_ephemeral_storage: "10G"
 
   graph_paths:
-    - "[ sf_bikeshare_stations, sf_bikeshare_status, sf_film_locations, sf_street_trees ] >> sf_bikeshare_trips >> [ sf_calendar, sf_muni_routes, sf_muni_shapes, sf_muni_stops ] >> sffd_service_calls >> sfpd_incidents >> sf_311_service_requests"
+    - "[ sf_bikeshare_stations, sf_bikeshare_status, sf_film_locations, sf_street_trees ] >> sf_bikeshare_trips >> [ sf_calendar, sf_muni_routes, sf_muni_shapes, sf_muni_stops, sf_muni_stop_times, sf_muni_fares, sf_muni_trips ] >> sffd_service_calls >> sfpd_incidents >> sf_311_service_requests"
