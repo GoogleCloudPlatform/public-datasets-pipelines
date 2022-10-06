@@ -164,7 +164,9 @@ class DatasetInfo:
         self.created_at = dataset_reference.created
         self.modified_at = dataset_reference.modified
         entries = list(dataset_reference.access_entries)
-        self.is_public = any(map(lambda e: e.entity_id in {'allAuthenticatedUsers', 'allUsers'}, entries))
+        self.is_public = any(
+            map(lambda e: e.entity_id in {"allAuthenticatedUsers", "allUsers"}, entries)
+        )
 
     def __repr__(self) -> str:
         return f"{self.project_id}.{self.dataset_id}"
