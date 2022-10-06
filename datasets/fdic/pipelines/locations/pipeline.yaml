@@ -16,13 +16,13 @@
 resources:
 
   - type: bigquery_table
-    table_id: candidate_2016
+    table_id: locations
     description: "FDIC table"
 
 dag:
   airflow_version: 2
   initialize:
-    dag_id: candidate_2016
+    dag_id: locations
     default_args:
       owner: "Google"
       depends_on_past: False
@@ -35,15 +35,15 @@ dag:
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
-        task_id: "locations"
+        task_id: "transform_locations_to_csv"
         startup_timeout_seconds: 600
-        name: "transform_locations_to_csv"
+        name: "locations"
         namespace: "composer"
         service_account_name: "datasets"
         image_pull_policy: "Always"
         image: "{{ var.json.fdic.container_registry.run_csv_transform_kub }}"
         env_vars:
-          SOURCE_URL: ""
+          SOURCE_URL: "https://s3-us-gov-west-1.amazonaws.com/cg-2e5c99a6-e282-42bf-9844-35f5430338a5/downloads/locations.csv"
           SOURCE_FILE: "files/locations.csv"
           TARGET_FILE: "files/data_output.csv"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
@@ -55,6 +55,14 @@ dag:
             "cbsa_division_flag","cbsa_division_fips_code","cbsa_division_name","cbsa_metro_flag","cbsa_metro_fips_code","cbsa_metro_name",
             "cbsa_micro_flag","csa_flag","csa_fips_code","csa_name","date_established","fdic_uninum","last_updated","service_type","branch_fdic_uninum"
             ]
+          RENAME_MAPPINGS: >-
+            {"CERT":"fdic_certificate_number","NAME":"institution_name","OFFNAME":"branch_name","OFFNUM":"branch_number",
+            "MAINOFF":"main_office","ADDRESS":"branch_address","CITY":"branch_city","ZIP":"zip_code","COUNTY":"branch_county",
+            "STCNTY":"county_fips_code","STALP":"state","STNAME":"state_name","BKCLASS":"institution_class","CBSA_NO":"cbsa_fips_code","CBSA":"cbsa_name","CBSA_DIV_FLG":"cbsa_division_flag",
+            "CBSA_DIV_NO":"cbsa_division_fips_code","CBSA_DIV":"cbsa_division_name","CBSA_METRO_FLG":"cbsa_metro_flag",
+            "CBSA_METRO":"cbsa_metro_fips_code","CBSA_METRO_NAME":"cbsa_metro_name","CBSA_MICRO_FLG":"cbsa_micro_flag",
+            "CSA_FLG":"csa_flag","CSA_NO":"csa_fips_code","CSA":"csa_name","ESTYMD":"date_established","FI_UNINUM":"fdic_uninum",
+            "RUNDATE":"last_updated","SERVTYPE":"service_type","UNINUM":"branch_fdic_uninum"}
         resources:
           request_memory: "4G"
           request_cpu: "1"

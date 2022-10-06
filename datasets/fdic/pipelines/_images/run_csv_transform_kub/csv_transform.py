@@ -16,7 +16,6 @@
 import datetime
 import json
 import logging
-import math
 import os
 import pathlib
 import typing
@@ -35,7 +34,6 @@ def main(
     headers: typing.List[str],
     rename_mappings: dict,
     pipeline_name: str,
-    integer_string_col: typing.List[str],
 ) -> None:
 
     logging.info(
@@ -50,19 +48,90 @@ def main(
     download_file(source_url, source_file)
 
     logging.info(f"Opening file {source_file}...")
-    df = pd.read_csv(str(source_file), header=None, index_col=False)
+    df = pd.read_csv(str(source_file))
 
     logging.info(f"Transforming {source_file}... ")
 
-    if pipeline_name == "tree_census_2005":
-        logging.info("Transform: Trimming white spaces in headers... ")
-        df = df.rename(columns=lambda x: x.strip())
+    logging.info("Renaming Columns...")
+    rename_headers(df, rename_mappings)
+
+    if pipeline_name == "locations":
+        logging.info("Replacing bool values...")
+        replace_bool_list = [
+            "main_office",
+            "cbsa_division_flag",
+            "cbsa_metro_flag",
+            "cbsa_micro_flag",
+            "csa_flag",
+        ]
+        replace_bool(replace_bool_list, df)
+        df["cbsa_division_fips_code"] = df["cbsa_division_fips_code"].astype(
+            "Int64", errors="ignore"
+        )
+        logging.info("Replacing date values...")
+        format_date_list = ["date_established", "last_updated"]
+        format_date(format_date_list, df)
+        logging.info("Replacing with null values...")
+        df["cbsa_metro_fips_code"] = df["cbsa_metro_fips_code"].replace(0, "NULL")
     else:
-        df = format_date_time(df, "created_at", "strptime", "%m/%d/%Y")
-        df = format_date_time(df, "created_at", "strftime", "%Y-%m-%d")
-
-    convert_values_to_integer_string(df, integer_string_col)
-
+        logging.info("Replacing bool values...")
+        replace_bool_list = [
+            "active",
+            "conservatorship",
+            "denovo_institute",
+            "federal_charter",
+            "iba",
+            "inactive_flag",
+            "credit_card_institution",
+            "bank_insurance_fund_member",
+            "insured_commercial_bank",
+            "deposit_insurance_fund_member",
+            "fdic_insured",
+            "saif_insured",
+            "insured_savings_institute",
+            "oakar_institute",
+            "state_chartered",
+            "sasser_institute",
+            "law_sasser",
+            "cfpb_supervisory_flag",
+            "ffiec_call_report_filer",
+            "holding_company_flag",
+            "ag_lending_flag",
+            "ownership_type",
+            "csa_indicator",
+            "cbsa_metro_flag",
+            "cbsa_micro_flag",
+            "cbsa_division_flag",
+            "subchap_s_indicator",
+        ]
+        replace_bool(replace_bool_list, df)
+        logging.info("Formatting date values...")
+        format_date_list = [
+            "established_date",
+            "last_updated",
+            "effective_date",
+            "end_effective_date",
+            "deposit_insurance_date",
+            "last_structural_change",
+            "report_date",
+            "reporting_period_end_date",
+            "run_date",
+        ]
+        format_date(format_date_list, df)
+        logging.info("Replacing date values...")
+        replace_date_list = [
+            "last_updated",
+            "effective_date",
+            "end_effective_date",
+            "deposit_insurance_date",
+            "last_structural_change",
+            "report_date",
+            "reporting_period_end_date",
+            "run_date",
+            "cfpb_supervisory_start_date",
+            "cfpb_supervisory_end_date",
+        ]
+        replace_date(replace_date_list, df)
     logging.info("Transform: Reordering headers..")
     df = df[headers]
 
@@ -83,39 +152,27 @@ def main(
     )
 
 
-def format_date_time(
-    df: pd.DataFrame, field_name: str, str_pf_time: str, dt_format: str
-) -> pd.DataFrame:
-    if str_pf_time == "strptime":
-        logging.info(
-            f"Transform: Formatting datetime for field {field_name} from datetime to {dt_format}  "
-        )
-        df[field_name] = df[field_name].apply(
-            lambda x: datetime.datetime.strptime(x, dt_format)
-        )
-    else:
-        logging.info(
-            f"Transform: Formatting datetime for field {field_name} from {dt_format} to datetime "
-        )
-        df[field_name] = df[field_name].apply(
-            lambda x: datetime.datetime.strftime(x, dt_format)
-        )
-    return df
+def replace_bool(replace_bool_list: list, df: pd.DataFrame):
+    for item in replace_bool_list:
+        df[item] = df[item].replace([0, 1], [False, True])
 
 
-def convert_to_integer_string(input: typing.Union[str, float]) -> str:
-    if not input or (math.isnan(input)):
-        return ""
-    else:
-        return str(int(round(input, 0)))
+def format_date(format_date_list: list, df: pd.DataFrame):
+    for item in format_date_list:
+        df[item] = pd.to_datetime(df[item])
+        df[item] = df[item].dt.strftime("%Y-%m-%d")
 
 
-def convert_values_to_integer_string(
-    df: pd.DataFrame, integer_string_col: typing.List
-) -> None:
-    logging.info("Transform: Converting to integers..")
-    for cols in integer_string_col:
-        df[cols] = df[cols].apply(convert_to_integer_string)
+def replace_date(replace_date_list: list, df: pd.DataFrame):
+    for item in replace_date_list:
+        empty_list = []
+        for value in df[item]:
+            if 9999 in value:
+                value = None
+                empty_list.append(value)
+            else:
+                empty_list.append(value)
+        df[item] = empty_list
 
 
 def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
@@ -156,5 +213,4 @@ if __name__ == "__main__":
         headers=json.loads(os.environ["CSV_HEADERS"]),
         rename_mappings=json.loads(os.environ["RENAME_MAPPINGS"]),
         pipeline_name=os.environ["PIPELINE_NAME"],
-        integer_string_col=json.loads(os.environ["INTEGER_STRING_COL"]),
     )
