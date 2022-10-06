@@ -35,6 +35,7 @@ TABULAR_DATASETS_COLUMNS = [
     "dataset_id",
     "description",
     "num_tables",
+    "is_public",
 ]
 
 TABLES_COLUMNS = [
