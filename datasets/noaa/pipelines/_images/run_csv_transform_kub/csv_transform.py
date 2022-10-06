@@ -25,6 +25,7 @@ import time
 import typing
 from urllib.request import Request, urlopen
 
+import numpy as np
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
@@ -308,12 +309,12 @@ def execute_pipeline(
             gen_location_list=gen_location_list,
         )
         return None
-    if pipeline_name == "OAA Storms database by year":
+    if pipeline_name == "NOAA Storms database by year":
         process_storms_database_by_year(
             source_file=source_file,
             target_file=target_file,
             pipeline_name=pipeline_name,
-            source_url=src_url,
+            source_url=source_url,
             chunksize=chunksize,
             project_id=project_id,
             dataset_id=dataset_id,
@@ -323,6 +324,8 @@ def execute_pipeline(
             schema_path=schema_path,
             drop_dest_table=drop_dest_table,
             input_field_delimiter=input_field_delimiter,
+            full_data_load=full_data_load,
+            start_year=start_year,
             input_csv_headers=input_csv_headers,
             data_dtypes=data_dtypes,
             reorder_headers_list=reorder_headers_list,
@@ -333,6 +336,7 @@ def execute_pipeline(
             rename_headers_list=rename_headers_list,
             remove_source_file=remove_source_file,
             delete_target_file=delete_target_file,
+            number_of_header_rows=number_of_header_rows,
             int_date_list=int_date_list,
             gen_location_list=gen_location_list,
         )
@@ -371,10 +375,99 @@ def process_storms_database_by_year(
 ) -> None:
     host = source_url["root"].split("ftp://")[1].split("/")[0]
     cwd = source_url["root"].split("ftp://")[1][len(host) :]
-    for file_to_process in ftp_list_of_files(
-        host=host, cwd=cwd, filter_expr="StormEvents_locations"
-    ):
-        pass
+    list_of_details_files = sorted(
+        ftp_list_of_files(
+            host=host, cwd=cwd, filter_expr="StormEvents_details"
+        )
+    )
+    list_of_locations_files = sorted(
+        ftp_list_of_files(
+            host=host, cwd=cwd, filter_expr="StormEvents_locations"
+        )
+    )
+    for year_to_process in range(int(start_year), datetime.date.today().year + 1):
+        logging.info(f"Processing year {year_to_process}")
+        locations_file = list(filter(lambda x: x.startswith(f'StormEvents_locations-ftp_v1.0_d{str(year_to_process)}'), list_of_locations_files))
+        details_file = list(filter(lambda x: x.startswith(f'StormEvents_details-ftp_v1.0_d{str(year_to_process)}'), list_of_details_files))
+        if locations_file:
+            pass
+            # loc_data = process_storms_locations_file()
+        else:
+            loc_data = create_storms_locations_df()
+        ftp_filename = details_file[0]
+        df_detail_data = process_storms_detail_file(
+            host=host,
+            cwd=cwd,
+            ftp_filename=ftp_filename,
+            local_file=local_file,
+            sep=","
+        )
+        import pdb; pdb.set_trace()
+
+
+def process_storms_detail_file(
+    host: str,
+    cwd: str,
+    ftp_filename: str,
+    local_file: str,
+    sep: str
+) -> None:
+    logging.info("Processing Storms Detail File")
+    df_details = FTP_to_DF(
+        host=host,
+        cwd=cwd,
+        ftp_filename=ftp_filename,
+        local_file=local_file,
+        source_url=f"ftp://{host}{cwd}/{ftp_filename}"
+    )
+    # TODO: now execute the transforms
+
+
+def FTP_to_DF(
+    host: str,
+    cwd: str,
+    ftp_filename: str,
+    local_file: str,
+    sep: str = ","
+) -> pd.DataFrame:
+    download_file_ftp(
+        ftp_host=host,
+        ftp_dir=cwd,
+        ftp_filename=ftp_filename,
+        local_file=local_file,
+        source_url=source_url
+    )
+    df = pd.read_csv(
+        local_file,
+        engine="python",
+        encoding="utf-8",
+        quotechar='"',  # string separator, typically double-quotes
+        sep=sep,  # data column separator, typically ","
+        header=0,  # use when the data file does not contain a header
+        keep_default_na=True,
+        na_values=[" "],
+    )
+    return df
+
+
+
+def create_storms_locations_df() -> pd.DataFrame:
+    df_loc = pd.DataFrame(
+        columns=[
+            "YEARMONTH",
+            "EPISODE_ID",
+            "EVENT_ID",
+            "LOCATION_INDEX",
+            "RANGE",
+            "AZIMUTH",
+            "LOCATION",
+            "LATITUDE",
+            "LONGITUDE",
+            "LAT2",
+            "LON2"
+        ]
+    )
+    return df_loc
 
 
 def ftp_list_of_files(host: str, cwd: str, filter_expr: str = "") -> typing.List[str]:
@@ -1107,7 +1200,6 @@ def download_file_ftp(
 def download_file_ftp_single_try(
     ftp_host: str, ftp_dir: str, ftp_filename: str, local_file: pathlib.Path
 ) -> bool:
-    # try:
     with ftplib.FTP(ftp_host, timeout=60) as ftp_conn:
         ftp_conn.login("", "")
         ftp_conn.cwd(ftp_dir)
@@ -1116,8 +1208,6 @@ def download_file_ftp_single_try(
             ftp_conn.retrbinary("RETR %s" % ftp_filename, dest_file.write)
         ftp_conn.quit()
         return True
-    # except:
-    #     return True
 
 
 def upload_file_to_gcs(
