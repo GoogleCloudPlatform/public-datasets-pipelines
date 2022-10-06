@@ -34,7 +34,7 @@ from google.cloud import bigquery, storage
 
 def main(
     pipeline_name: str,
-    source_url: str,
+    source_url: dict,
     source_file: pathlib.Path,
     target_file: pathlib.Path,
     chunksize: str,
@@ -107,7 +107,7 @@ def main(
 
 def execute_pipeline(
     pipeline_name: str,
-    source_url: str,
+    source_url: dict,
     source_file: pathlib.Path,
     target_file: pathlib.Path,
     chunksize: str,
@@ -151,7 +151,7 @@ def execute_pipeline(
             source_file_unzipped = str.replace(str(source_zipfile), ".csv.gz", ".csv")
             target_file_year = str.replace(str(target_file), ".csv", f"_{yr_str}.csv")
             destination_table_year = f"{destination_table}_{yr_str}"
-            source_url_year = str.replace(source_url, ".csv.gz", f"{yr_str}.csv.gz")
+            source_url_year = str.replace(source_url["ghcnd_by_year"], ".csv.gz", f"{yr_str}.csv.gz")
             target_gcs_path_year = str.replace(
                 target_gcs_path, ".csv", f"_{yr_str}.csv"
             )
@@ -198,6 +198,7 @@ def execute_pipeline(
                 int_date_list=int_date_list,
                 gen_location_list=gen_location_list,
             )
+        return None
     if pipeline_name in [
         "GHCND countries",
         "GHCND inventory",
@@ -205,8 +206,9 @@ def execute_pipeline(
         "GHCND stations",
         "GSOD stations",
     ]:
-        ftp_filename = os.path.split(source_url)[1]
-        download_file_ftp(ftp_host, ftp_dir, ftp_filename, source_file, source_url)
+        src_url = source_url[pipeline_name.replace(" ", "_").lower()]
+        ftp_filename = os.path.split(src_url)[1]
+        download_file_ftp(ftp_host, ftp_dir, ftp_filename, source_file, src_url)
         if number_of_header_rows > 0:
             remove_header_rows(source_file, number_of_header_rows=number_of_header_rows)
         else:
@@ -215,7 +217,7 @@ def execute_pipeline(
             source_file=source_file,
             target_file=target_file,
             pipeline_name=pipeline_name,
-            source_url=source_url,
+            source_url=src_url,
             chunksize=chunksize,
             project_id=project_id,
             dataset_id=dataset_id,
@@ -238,8 +240,10 @@ def execute_pipeline(
             int_date_list=int_date_list,
             gen_location_list=gen_location_list,
         )
+        return None
     if pipeline_name == "GHCND hurricanes":
-        download_file(source_url, source_file)
+        src_url = source_url[pipeline_name.replace(" ", "_").lower()]
+        download_file(src_url, source_file)
         if number_of_header_rows > 0:
             remove_header_rows(source_file, number_of_header_rows=number_of_header_rows)
         else:
@@ -248,7 +252,7 @@ def execute_pipeline(
             source_file=source_file,
             target_file=target_file,
             pipeline_name=pipeline_name,
-            source_url=source_url,
+            source_url=src_url,
             chunksize=chunksize,
             project_id=project_id,
             dataset_id=dataset_id,
@@ -271,73 +275,214 @@ def execute_pipeline(
             int_date_list=int_date_list,
             gen_location_list=gen_location_list,
         )
+        return None
     if pipeline_name == "NOAA lightning strikes by year":
-        url_path = os.path.split(source_url)[0]
-        file_pattern = str.split(os.path.split(source_url)[1], "*")[0]
-        url_list = url_directory_list(f"{url_path}/", file_pattern)
-        if full_data_load == "N":
-            start = datetime.datetime.now().year - 6
-        else:
-            start = int(start_year)
-        for yr in range(start, datetime.datetime.now().year):
-            for url in url_list:
-                url_file_name = os.path.split(url)[1]
-                if str(url_file_name).find(f"{file_pattern}{yr}") >= 0:
-                    source_file_path = os.path.split(source_file)[0]
-                    source_file_zipped = f"{source_file_path}/{url_file_name}"
-                    source_file_year = str.replace(
-                        str(source_file), ".csv", f"_{yr}.csv"
+        src_url = source_url["lightning_strikes_by_year"]
+        process_lightning_strikes_by_year(
+            source_file=source_file,
+            target_file=target_file,
+            pipeline_name=pipeline_name,
+            source_url=src_url,
+            chunksize=chunksize,
+            project_id=project_id,
+            dataset_id=dataset_id,
+            destination_table=destination_table,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=target_gcs_path,
+            schema_path=schema_path,
+            drop_dest_table=drop_dest_table,
+            input_field_delimiter=input_field_delimiter,
+            input_csv_headers=input_csv_headers,
+            data_dtypes=data_dtypes,
+            reorder_headers_list=reorder_headers_list,
+            null_rows_list=null_rows_list,
+            date_format_list=date_format_list,
+            slice_column_list=slice_column_list,
+            regex_list=regex_list,
+            rename_headers_list=rename_headers_list,
+            remove_source_file=remove_source_file,
+            delete_target_file=delete_target_file,
+            int_date_list=int_date_list,
+            gen_location_list=gen_location_list
+        )
+        return None
+    if pipeline_name == "OAA Storms database by year":
+        process_storms_database_by_year(
+            source_file=source_file,
+            target_file=target_file,
+            pipeline_name=pipeline_name,
+            source_url=src_url,
+            chunksize=chunksize,
+            project_id=project_id,
+            dataset_id=dataset_id,
+            destination_table=destination_table,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=target_gcs_path,
+            schema_path=schema_path,
+            drop_dest_table=drop_dest_table,
+            input_field_delimiter=input_field_delimiter,
+            input_csv_headers=input_csv_headers,
+            data_dtypes=data_dtypes,
+            reorder_headers_list=reorder_headers_list,
+            null_rows_list=null_rows_list,
+            date_format_list=date_format_list,
+            slice_column_list=slice_column_list,
+            regex_list=regex_list,
+            rename_headers_list=rename_headers_list,
+            remove_source_file=remove_source_file,
+            delete_target_file=delete_target_file,
+            int_date_list=int_date_list,
+            gen_location_list=gen_location_list
+        )
+        return None
+
+
+def process_storms_database_by_year(
+    pipeline_name: str,
+    source_url: dict,
+    source_file: pathlib.Path,
+    target_file: pathlib.Path,
+    chunksize: str,
+    project_id: str,
+    dataset_id: str,
+    destination_table: str,
+    target_gcs_bucket: str,
+    target_gcs_path: str,
+    schema_path: str,
+    drop_dest_table: str,
+    input_field_delimiter: str,
+    full_data_load: str,
+    start_year: str,
+    input_csv_headers: typing.List[str],
+    data_dtypes: dict,
+    reorder_headers_list: typing.List[str],
+    null_rows_list: typing.List[str],
+    date_format_list: typing.List[str],
+    slice_column_list: dict,
+    regex_list: dict,
+    remove_source_file: bool,
+    rename_headers_list: dict,
+    delete_target_file: bool,
+    number_of_header_rows: int,
+    int_date_list: typing.List[str],
+    gen_location_list: dict,
+) -> None:
+    host = source_url["root"].split("ftp://")[1].split("/")[0]
+    cwd = source_url["root"].split("ftp://")[1][len(host):]
+    for file_to_process in ftp_list_of_files(host=host, cwd=cwd, filter_expr = "StormEvents_locations"):
+        pass
+
+def ftp_list_of_files(
+    host: str,
+    cwd: str,
+    filter_expr: str = ""
+) -> typing.List[str]:
+    ftp = ftplib.FTP(host)
+    ftp.login()
+    ftp.cwd(cwd)
+    file_list = ftp.nlst()
+    if filter is not "":
+        file_list = list(filter(lambda x: str(x).find(filter_expr) >= 0 , file_list))
+    ftp.quit()
+    return file_list
+
+
+def process_lightning_strikes_by_year(
+    pipeline_name: str,
+    source_url: dict,
+    source_file: pathlib.Path,
+    target_file: pathlib.Path,
+    chunksize: str,
+    project_id: str,
+    dataset_id: str,
+    destination_table: str,
+    target_gcs_bucket: str,
+    target_gcs_path: str,
+    schema_path: str,
+    drop_dest_table: str,
+    input_field_delimiter: str,
+    full_data_load: str,
+    start_year: str,
+    input_csv_headers: typing.List[str],
+    data_dtypes: dict,
+    reorder_headers_list: typing.List[str],
+    null_rows_list: typing.List[str],
+    date_format_list: typing.List[str],
+    slice_column_list: dict,
+    regex_list: dict,
+    remove_source_file: bool,
+    rename_headers_list: dict,
+    delete_target_file: bool,
+    number_of_header_rows: int,
+    int_date_list: typing.List[str],
+    gen_location_list: dict,
+) -> None:
+    url_path = os.path.split(source_url)[0]
+    file_pattern = str.split(os.path.split(source_url)[1], "*")[0]
+    url_list = url_directory_list(f"{url_path}/", file_pattern)
+    if full_data_load == "N":
+        start = datetime.datetime.now().year - 6
+    else:
+        start = int(start_year)
+    for yr in range(start, datetime.datetime.now().year):
+        for url in url_list:
+            url_file_name = os.path.split(url)[1]
+            if str(url_file_name).find(f"{file_pattern}{yr}") >= 0:
+                source_file_path = os.path.split(source_file)[0]
+                source_file_zipped = f"{source_file_path}/{url_file_name}"
+                source_file_year = str.replace(
+                    str(source_file), ".csv", f"_{yr}.csv"
+                )
+                target_file_year = str.replace(
+                    str(target_file), ".csv", f"_{yr}.csv"
+                )
+                download_file(url, source_file_zipped)
+                gz_decompress(
+                    infile=source_file_zipped,
+                    tofile=source_file_year,
+                    delete_zipfile=True,
+                )
+                if number_of_header_rows > 0:
+                    remove_header_rows(
+                        source_file_year,
+                        number_of_header_rows=number_of_header_rows,
                     )
-                    target_file_year = str.replace(
-                        str(target_file), ".csv", f"_{yr}.csv"
-                    )
-                    download_file(url, source_file_zipped)
-                    gz_decompress(
-                        infile=source_file_zipped,
-                        tofile=source_file_year,
-                        delete_zipfile=True,
-                    )
-                    if number_of_header_rows > 0:
-                        remove_header_rows(
-                            source_file_year,
-                            number_of_header_rows=number_of_header_rows,
-                        )
-                    else:
-                        pass
-                    if not full_data_load:
-                        delete_source_file_data_from_bq(
-                            project_id=project_id,
-                            dataset_id=dataset_id,
-                            table_id=destination_table,
-                            source_url=url,
-                        )
-                    process_and_load_table(
-                        source_file=source_file_year,
-                        target_file=target_file_year,
-                        pipeline_name=pipeline_name,
-                        source_url=url,
-                        chunksize=chunksize,
+                else:
+                    pass
+                if not full_data_load:
+                    delete_source_file_data_from_bq(
                         project_id=project_id,
                         dataset_id=dataset_id,
-                        destination_table=destination_table,
-                        target_gcs_bucket=target_gcs_bucket,
-                        target_gcs_path=target_gcs_path,
-                        schema_path=schema_path,
-                        drop_dest_table=drop_dest_table,
-                        input_field_delimiter=input_field_delimiter,
-                        input_csv_headers=input_csv_headers,
-                        data_dtypes=data_dtypes,
-                        reorder_headers_list=reorder_headers_list,
-                        null_rows_list=null_rows_list,
-                        date_format_list=date_format_list,
-                        slice_column_list=slice_column_list,
-                        regex_list=regex_list,
-                        rename_headers_list=rename_headers_list,
-                        remove_source_file=remove_source_file,
-                        delete_target_file=delete_target_file,
-                        int_date_list=int_date_list,
-                        gen_location_list=gen_location_list,
+                        table_id=destination_table,
+                        source_url=url,
                     )
+                process_and_load_table(
+                    source_file=source_file_year,
+                    target_file=target_file_year,
+                    pipeline_name=pipeline_name,
+                    source_url=url,
+                    chunksize=chunksize,
+                    project_id=project_id,
+                    dataset_id=dataset_id,
+                    destination_table=destination_table,
+                    target_gcs_bucket=target_gcs_bucket,
+                    target_gcs_path=target_gcs_path,
+                    schema_path=schema_path,
+                    drop_dest_table=drop_dest_table,
+                    input_field_delimiter=input_field_delimiter,
+                    input_csv_headers=input_csv_headers,
+                    data_dtypes=data_dtypes,
+                    reorder_headers_list=reorder_headers_list,
+                    null_rows_list=null_rows_list,
+                    date_format_list=date_format_list,
+                    slice_column_list=slice_column_list,
+                    regex_list=regex_list,
+                    rename_headers_list=rename_headers_list,
+                    remove_source_file=remove_source_file,
+                    delete_target_file=delete_target_file,
+                    int_date_list=int_date_list,
+                    gen_location_list=gen_location_list,
+                )
 
 
 def process_and_load_table(
@@ -1000,7 +1145,7 @@ if __name__ == "__main__":
 
     main(
         pipeline_name=os.environ.get("PIPELINE_NAME", ""),
-        source_url=os.environ.get("SOURCE_URL", ""),
+        source_url=json.loads(os.environ.get("SOURCE_URL", r"{}")),
         source_file=pathlib.Path(os.environ.get("SOURCE_FILE", "")).expanduser(),
         target_file=pathlib.Path(os.environ.get("TARGET_FILE", "")).expanduser(),
         chunksize=os.environ.get("CHUNKSIZE", "100000"),
