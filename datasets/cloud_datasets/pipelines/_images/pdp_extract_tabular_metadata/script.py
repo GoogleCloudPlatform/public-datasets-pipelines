@@ -347,7 +347,7 @@ def main(
         extractor.write_datasets_to_bq(tabular_dataset_table_name, extracted)
         extractor.write_tables_to_bq(tables_table_name, extracted)
         extractor.write_tables_fields_to_bq(tables_fields_table_name, extracted)
-    logging.info("Total time to run this function: ", time.time() - st)
+    logging.info("Total time to run this function: %s", time.time() - st)
 
 
 if __name__ == "__main__":
