@@ -15,20 +15,20 @@
  */
 
 
-resource "google_bigquery_table" "irs_990_irs_990_ez_2016" {
+resource "google_bigquery_table" "irs_990_irs_990_ein" {
   project     = var.project_id
   dataset_id  = "irs_990"
-  table_id    = "irs_990_ez_2016"
-  description = "IRS 990 EZ 2016 dataset"
+  table_id    = "irs_990_ein"
+  description = "IRS 990 EIN dataset"
   depends_on = [
     google_bigquery_dataset.irs_990
   ]
 }
 
-output "bigquery_table-irs_990_irs_990_ez_2016-table_id" {
-  value = google_bigquery_table.irs_990_irs_990_ez_2016.table_id
+output "bigquery_table-irs_990_irs_990_ein-table_id" {
+  value = google_bigquery_table.irs_990_irs_990_ein.table_id
 }
 
-output "bigquery_table-irs_990_irs_990_ez_2016-id" {
-  value = google_bigquery_table.irs_990_irs_990_ez_2016.id
+output "bigquery_table-irs_990_irs_990_ein-id" {
+  value = google_bigquery_table.irs_990_irs_990_ein.id
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Google LLC
+ * Copyright 2021 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,12 @@
  */
 
 
-resource "google_bigquery_table" "irs_990_irs_990_ez_2016" {
+resource "google_bigquery_dataset" "san_francisco_311_service_requests" {
+  dataset_id  = "san_francisco_311_service_requests"
   project     = var.project_id
-  dataset_id  = "irs_990"
-  table_id    = "irs_990_ez_2016"
-  description = "IRS 990 EZ 2016 dataset"
-  depends_on = [
-    google_bigquery_dataset.irs_990
-  ]
+  description = "san_francisco_311_service_requests"
 }
 
-output "bigquery_table-irs_990_irs_990_ez_2016-table_id" {
-  value = google_bigquery_table.irs_990_irs_990_ez_2016.table_id
-}
-
-output "bigquery_table-irs_990_irs_990_ez_2016-id" {
-  value = google_bigquery_table.irs_990_irs_990_ez_2016.id
+output "bigquery_dataset-san_francisco_311_service_requests-dataset_id" {
+  value = google_bigquery_dataset.san_francisco_311_service_requests.dataset_id
 }

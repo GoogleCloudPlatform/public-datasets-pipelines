@@ -79,6 +79,15 @@ def main(
             df.drop(df[df["cmte_id"] == "C00622357"].index, inplace=True)
         elif "committee_contributions_20" in pipeline_name:
             df.columns = csv_headers
+            df = df.rename(columns=lambda x: x.strip())
+
+        elif "candidate_committe_20" in pipeline_name:
+            pass
+
+        elif "committee_20" in pipeline_name:
+            df.drop(df[df["cmte_id"] == "C00622357"].index, inplace=True)
+
+        elif "committee_contributions_20" in pipeline_name:
             df["transaction_dt"] = df["transaction_dt"].astype(str)
             date_for_length(df, "transaction_dt")
             df = resolve_date_format(df, "transaction_dt", pipeline_name)
