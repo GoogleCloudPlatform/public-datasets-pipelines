@@ -151,7 +151,9 @@ def execute_pipeline(
             source_file_unzipped = str.replace(str(source_zipfile), ".csv.gz", ".csv")
             target_file_year = str.replace(str(target_file), ".csv", f"_{yr_str}.csv")
             destination_table_year = f"{destination_table}_{yr_str}"
-            source_url_year = str.replace(source_url["ghcnd_by_year"], ".csv.gz", f"{yr_str}.csv.gz")
+            source_url_year = str.replace(
+                source_url["ghcnd_by_year"], ".csv.gz", f"{yr_str}.csv.gz"
+            )
             target_gcs_path_year = str.replace(
                 target_gcs_path, ".csv", f"_{yr_str}.csv"
             )
@@ -303,7 +305,7 @@ def execute_pipeline(
             remove_source_file=remove_source_file,
             delete_target_file=delete_target_file,
             int_date_list=int_date_list,
-            gen_location_list=gen_location_list
+            gen_location_list=gen_location_list,
         )
         return None
     if pipeline_name == "OAA Storms database by year":
@@ -332,7 +334,7 @@ def execute_pipeline(
             remove_source_file=remove_source_file,
             delete_target_file=delete_target_file,
             int_date_list=int_date_list,
-            gen_location_list=gen_location_list
+            gen_location_list=gen_location_list,
         )
         return None
 
@@ -368,21 +370,20 @@ def process_storms_database_by_year(
     gen_location_list: dict,
 ) -> None:
     host = source_url["root"].split("ftp://")[1].split("/")[0]
-    cwd = source_url["root"].split("ftp://")[1][len(host):]
-    for file_to_process in ftp_list_of_files(host=host, cwd=cwd, filter_expr = "StormEvents_locations"):
+    cwd = source_url["root"].split("ftp://")[1][len(host) :]
+    for file_to_process in ftp_list_of_files(
+        host=host, cwd=cwd, filter_expr="StormEvents_locations"
+    ):
         pass
 
-def ftp_list_of_files(
-    host: str,
-    cwd: str,
-    filter_expr: str = ""
-) -> typing.List[str]:
+
+def ftp_list_of_files(host: str, cwd: str, filter_expr: str = "") -> typing.List[str]:
     ftp = ftplib.FTP(host)
     ftp.login()
     ftp.cwd(cwd)
     file_list = ftp.nlst()
-    if filter is not "":
-        file_list = list(filter(lambda x: str(x).find(filter_expr) >= 0 , file_list))
+    if filter != "":
+        file_list = list(filter(lambda x: str(x).find(filter_expr) >= 0, file_list))
     ftp.quit()
     return file_list
 
@@ -430,12 +431,8 @@ def process_lightning_strikes_by_year(
             if str(url_file_name).find(f"{file_pattern}{yr}") >= 0:
                 source_file_path = os.path.split(source_file)[0]
                 source_file_zipped = f"{source_file_path}/{url_file_name}"
-                source_file_year = str.replace(
-                    str(source_file), ".csv", f"_{yr}.csv"
-                )
-                target_file_year = str.replace(
-                    str(target_file), ".csv", f"_{yr}.csv"
-                )
+                source_file_year = str.replace(str(source_file), ".csv", f"_{yr}.csv")
+                target_file_year = str.replace(str(target_file), ".csv", f"_{yr}.csv")
                 download_file(url, source_file_zipped)
                 gz_decompress(
                     infile=source_file_zipped,
