@@ -59,7 +59,7 @@ resources:
             "name": "is_public",
             "description": "Whether or not the dataset is public to all users",
             "type": "BOOLEAN"
-        }      
+        }
       ]
   - type: bigquery_table
     dataset_id: _cloud_datasets
