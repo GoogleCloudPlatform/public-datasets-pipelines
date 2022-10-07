@@ -21,6 +21,7 @@ import logging
 import os
 import pathlib
 import re
+import socket
 import time
 import typing
 from urllib.request import Request, urlopen
@@ -434,10 +435,10 @@ def process_storms_database_by_year(
             df[dt_fld[0]] = df[dt_fld[0]].apply(lambda x: pd.to_datetime(str(x), format=f"%d-%b-%y %H:%M:%S"))
             df[dt_fld[0]] = df[dt_fld[0]].apply(lambda x: f"{year_to_process}-{str(x)[5:]}")
         df = fix_data_anomolies_storms(df)
-        # import pdb; pdb.set_trace()
-        save_to_new_file(df=df, file_path=target_file, sep="|")
+        targ_file_yr = str.replace(str(target_file), ".csv", f"_{year_to_process}.csv")
+        save_to_new_file(df=df, file_path=targ_file_yr, sep="|")
         upload_file_to_gcs(
-            file_path=target_file,
+            file_path=targ_file_yr,
             target_gcs_bucket=target_gcs_bucket,
             target_gcs_path=target_gcs_path,
         )
@@ -455,20 +456,22 @@ def process_storms_database_by_year(
                 project_id=project_id,
                 dataset_id=dataset_id,
                 table_id=f"{destination_table}_{str(year_to_process)}",
-                file_path=target_file,
+                file_path=targ_file_yr,
                 truncate_table=True,
                 field_delimiter="|",
             )
-        # import pdb; pdb.set_trace()
 
 
 def fix_data_anomolies_storms(df: pd.DataFrame) -> pd.DataFrame:
-    df["damage_property"] = df["damage_property"].apply(lambda x: value_to_float(x)).astype(np.int64)
+    df["damage_property"] = df["damage_property"].apply(lambda x: shorthand_to_number(x)).astype(np.int64)
+    df["damage_crops"] = df["damage_crops"].apply(lambda x: shorthand_to_number(x)).astype(np.int64)
+    df["event_type"] = df["event_type"].apply(lambda x: str(x).lower())
+    df["state"] = df["state"].apply(lambda x: f"{str.capitalize(x)[0]}{str.lower(x)[1]}")
     df["event_point"] = df["event_point"].apply(lambda x: str(x).replace("POINT(nan nan)", ""))
     return df
 
 
-def value_to_float(x) -> float:
+def shorthand_to_number(x) -> float:
     if type(x) == float or type(x) == int:
         return x
     if 'K' in x:
@@ -485,46 +488,13 @@ def value_to_float(x) -> float:
         return 10**9
     if 'T' in x:
         if len(x) > 1:
-            return float(x.replace('B', '')) * 10**12
+            return float(x.replace('T', '')) * 10**12
         return 10**12
     if 'Q' in x:
         if len(x) > 1:
-            return float(x.replace('B', '')) * 10**15
+            return float(x.replace('Q', '')) * 10**15
         return 10**15
     return 0.0
-
-
-# def resolve_date_format(
-#     df: pd.DataFrame,
-#     date_format_list: dict,
-# ) -> pd.DataFrame:
-#     logging.info("Resolving date formats")
-#     for dt_fld in date_format_list.items():
-#         logging.info(f"Resolving date formats in field {dt_fld}")
-#         # df[dt_fld[0]] = df[dt_fld[0]].apply(convert_dt_format, to_format=dt_fld[1])
-#         df[dt_fld[0]] = df[dt_fld[0]].apply(lambda x: pd.to_datetime(str(x), format=f"%d-%b-%y %H:%M:%S"))
-#         df[dt_fld[0]] = df[dt_fld[0]].apply(lambda x: f"{year_to_process}-{str(x)[5:]}")
-#     return df
-
-
-# def convert_dt_format(dt_str: str, to_format: str = '"%Y-%m-%d %H:%M:%S"') -> str:
-#     if not dt_str or str(dt_str).lower() == "nan" or str(dt_str).lower() == "nat":
-#         return ""
-#     else:
-#         if to_format.find(" ") > 0:
-#             # Date and Time
-#             return str(
-#                 pd.to_datetime(
-#                     dt_str, format=f"{to_format}", infer_datetime_format=True
-#                 )
-#             )
-#         else:
-#             # Date Only
-#             return str(
-#                 pd.to_datetime(
-#                     dt_str, format=f"{to_format}", infer_datetime_format=True
-#                 ).date()
-#             )
 
 
 def generate_location(df: pd.DataFrame, gen_location_list: dict) -> pd.DataFrame:
@@ -539,27 +509,6 @@ def generate_location(df: pd.DataFrame, gen_location_list: dict) -> pd.DataFrame
             + ")"
         )
     return df
-
-
-def process_storms_detail_file(
-    host: str,
-    cwd: str,
-    ftp_filename: str,
-    local_file: str,
-    source_url: str,
-    sep: str = ","
-) -> None:
-    local_zipfile = f"{os.path.dirname(local_file)}/{ftp_filename}"
-    df_details = FTP_to_DF(
-        host=host,
-        cwd=cwd,
-        ftp_filename=ftp_filename,
-        local_file=local_zipfile,
-        source_url=source_url
-    )
-    # TODO: now execute the transforms
-    # import pdb; pdb.set_trace()
-    return df_details
 
 
 def FTP_to_DF(
@@ -610,15 +559,30 @@ def create_storms_locations_df() -> pd.DataFrame:
     return df_loc
 
 
-def ftp_list_of_files(host: str, cwd: str, filter_expr: str = "") -> typing.List[str]:
-    ftp = ftplib.FTP(host)
-    ftp.login()
-    ftp.cwd(cwd)
-    file_list = ftp.nlst()
-    if filter != "":
-        file_list = list(filter(lambda x: str(x).find(filter_expr) >= 0, file_list))
-    ftp.quit()
-    return file_list
+def ftp_list_of_files(
+    host: str,
+    cwd: str,
+    filter_expr: str = ""
+) -> typing.List[str]:
+    try_count = 0
+    while True:
+        try:
+            ftp = ftplib.FTP(host)
+            ftp.login()
+            ftp.cwd(cwd)
+            file_list = ftp.nlst()
+            if filter != "":
+                file_list = list(filter(lambda x: str(x).find(filter_expr) >= 0, file_list))
+            ftp.quit()
+            return file_list
+        except TimeoutError as e:
+            try_count += 1
+            if try_count > 3:
+                raise e
+            else:
+                logging.info(f"{e}, Retrying ...")
+                time.sleep(try_count * 30)
+
 
 
 def process_lightning_strikes_by_year(
@@ -1340,14 +1304,24 @@ def download_file_ftp(
 def download_file_ftp_single_try(
     ftp_host: str, ftp_dir: str, ftp_filename: str, local_file: pathlib.Path
 ) -> bool:
-    with ftplib.FTP(ftp_host, timeout=60) as ftp_conn:
-        ftp_conn.login("", "")
-        ftp_conn.cwd(ftp_dir)
-        ftp_conn.encoding = "utf-8"
-        with open(local_file, "wb") as dest_file:
-            ftp_conn.retrbinary("RETR %s" % ftp_filename, dest_file.write)
-        ftp_conn.quit()
-        return True
+    try_count = 0
+    while True:
+        try:
+            with ftplib.FTP(ftp_host, timeout=60) as ftp_conn:
+                ftp_conn.login("", "")
+                ftp_conn.cwd(ftp_dir)
+                ftp_conn.encoding = "utf-8"
+                with open(local_file, "wb") as dest_file:
+                    ftp_conn.retrbinary("RETR %s" % ftp_filename, dest_file.write)
+                ftp_conn.quit()
+                return True
+        except TimeoutError as e:
+            try_count += 1
+            if try_count > 3:
+                raise e
+            else:
+                logging.info(f"{e}, Retrying ...")
+                time.sleep(try_count * 30)
 
 
 def upload_file_to_gcs(
