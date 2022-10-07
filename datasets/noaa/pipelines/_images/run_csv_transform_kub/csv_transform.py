@@ -386,23 +386,159 @@ def process_storms_database_by_year(
         )
     )
     for year_to_process in range(int(start_year), datetime.date.today().year + 1):
-        logging.info(f"Processing year {year_to_process}")
         locations_file = list(filter(lambda x: x.startswith(f'StormEvents_locations-ftp_v1.0_d{str(year_to_process)}'), list_of_locations_files))
         details_file = list(filter(lambda x: x.startswith(f'StormEvents_details-ftp_v1.0_d{str(year_to_process)}'), list_of_details_files))
         if locations_file:
-            pass
-            # loc_data = process_storms_locations_file()
+            ftp_filename = locations_file[0]
+            local_file = str(source_file).replace(".csv", f"_{str(year_to_process)}_locations.csv")
+            local_zipfile = f"{os.path.dirname(local_file)}/{ftp_filename}"
+            logging.info("Processing Storms Locations File  ...")
+            logging.info(f"     host={host} cwd={cwd} ftp_filename={ftp_filename} local_file={local_file} local_zipfile={local_zipfile} source_url={source_url} ")
+            df_locations = FTP_to_DF(
+                host=host,
+                cwd=cwd,
+                ftp_filename=ftp_filename,
+                local_file=local_zipfile,
+                source_url=source_url
+            )
         else:
-            loc_data = create_storms_locations_df()
+            logging.info("Storms Locations File does not exist!")
+            df_locations = create_storms_locations_df()
         ftp_filename = details_file[0]
-        df_detail_data = process_storms_detail_file(
+        local_file = str(source_file).replace(".csv", f"_{str(year_to_process)}_detail.csv")
+        local_zipfile = f"{os.path.dirname(local_file)}/{ftp_filename}"
+        logging.info(f"Processing Storms Detail File ...")
+        logging.info(f"     host={host} cwd={cwd} ftp_filename={ftp_filename} local_file={local_file} local_zipfile={local_zipfile} source_url={source_url} ")
+        df_details = FTP_to_DF(
             host=host,
             cwd=cwd,
             ftp_filename=ftp_filename,
-            local_file=local_file,
-            sep=","
+            local_file=local_zipfile,
+            source_url=source_url
         )
-        import pdb; pdb.set_trace()
+        df = pd.merge(
+            df_details,
+            df_locations,
+            left_on="EVENT_ID",
+            right_on="EVENT_ID",
+            how="left",
+        )
+        df = rename_headers(
+            df=df,
+            rename_headers_list=rename_headers_list
+        )
+        df = generate_location(df, gen_location_list)
+        df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
+        for dt_fld in date_format_list.items():
+            logging.info(f"Resolving date formats in field {dt_fld}")
+            df[dt_fld[0]] = df[dt_fld[0]].apply(lambda x: pd.to_datetime(str(x), format=f"%d-%b-%y %H:%M:%S"))
+            df[dt_fld[0]] = df[dt_fld[0]].apply(lambda x: f"{year_to_process}-{str(x)[5:]}")
+        df = fix_data_anomolies_storms(df)
+        # import pdb; pdb.set_trace()
+        save_to_new_file(df=df, file_path=target_file, sep="|")
+        upload_file_to_gcs(
+            file_path=target_file,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=target_gcs_path,
+        )
+        drop_table = ( drop_dest_table == "Y" )
+        table_exists = create_dest_table(
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_id=f"{destination_table}_{str(year_to_process)}",
+            schema_filepath=schema_path,
+            bucket_name=target_gcs_bucket,
+            drop_table=drop_table,
+        )
+        if table_exists:
+            load_data_to_bq(
+                project_id=project_id,
+                dataset_id=dataset_id,
+                table_id=f"{destination_table}_{str(year_to_process)}",
+                file_path=target_file,
+                truncate_table=True,
+                field_delimiter="|",
+            )
+        # import pdb; pdb.set_trace()
+
+
+def fix_data_anomolies_storms(df: pd.DataFrame) -> pd.DataFrame:
+    df["damage_property"] = df["damage_property"].apply(lambda x: value_to_float(x)).astype(np.int64)
+    df["event_point"] = df["event_point"].apply(lambda x: str(x).replace("POINT(nan nan)", ""))
+    return df
+
+
+def value_to_float(x) -> float:
+    if type(x) == float or type(x) == int:
+        return x
+    if 'K' in x:
+        if len(x) > 1:
+            return float(x.replace('K', '')) * 10**3
+        return 10**3
+    if 'M' in x:
+        if len(x) > 1:
+            return float(x.replace('M', '')) * 10**6
+        return 10**6
+    if 'B' in x:
+        if len(x) > 1:
+            return float(x.replace('B', '')) * 10**9
+        return 10**9
+    if 'T' in x:
+        if len(x) > 1:
+            return float(x.replace('B', '')) * 10**12
+        return 10**12
+    if 'Q' in x:
+        if len(x) > 1:
+            return float(x.replace('B', '')) * 10**15
+        return 10**15
+    return 0.0
+
+
+# def resolve_date_format(
+#     df: pd.DataFrame,
+#     date_format_list: dict,
+# ) -> pd.DataFrame:
+#     logging.info("Resolving date formats")
+#     for dt_fld in date_format_list.items():
+#         logging.info(f"Resolving date formats in field {dt_fld}")
+#         # df[dt_fld[0]] = df[dt_fld[0]].apply(convert_dt_format, to_format=dt_fld[1])
+#         df[dt_fld[0]] = df[dt_fld[0]].apply(lambda x: pd.to_datetime(str(x), format=f"%d-%b-%y %H:%M:%S"))
+#         df[dt_fld[0]] = df[dt_fld[0]].apply(lambda x: f"{year_to_process}-{str(x)[5:]}")
+#     return df
+
+
+# def convert_dt_format(dt_str: str, to_format: str = '"%Y-%m-%d %H:%M:%S"') -> str:
+#     if not dt_str or str(dt_str).lower() == "nan" or str(dt_str).lower() == "nat":
+#         return ""
+#     else:
+#         if to_format.find(" ") > 0:
+#             # Date and Time
+#             return str(
+#                 pd.to_datetime(
+#                     dt_str, format=f"{to_format}", infer_datetime_format=True
+#                 )
+#             )
+#         else:
+#             # Date Only
+#             return str(
+#                 pd.to_datetime(
+#                     dt_str, format=f"{to_format}", infer_datetime_format=True
+#                 ).date()
+#             )
+
+
+def generate_location(df: pd.DataFrame, gen_location_list: dict) -> pd.DataFrame:
+    logging.info("Generating location data")
+    for key, values in gen_location_list.items():
+        logging.info(f"Generating location data for field {key}")
+        df[key] = (
+            "POINT("
+            + df[values[0]][:].astype("string")
+            + " "
+            + df[values[1]][:].astype("string")
+            + ")"
+        )
+    return df
 
 
 def process_storms_detail_file(
@@ -410,17 +546,20 @@ def process_storms_detail_file(
     cwd: str,
     ftp_filename: str,
     local_file: str,
-    sep: str
+    source_url: str,
+    sep: str = ","
 ) -> None:
-    logging.info("Processing Storms Detail File")
+    local_zipfile = f"{os.path.dirname(local_file)}/{ftp_filename}"
     df_details = FTP_to_DF(
         host=host,
         cwd=cwd,
         ftp_filename=ftp_filename,
-        local_file=local_file,
-        source_url=f"ftp://{host}{cwd}/{ftp_filename}"
+        local_file=local_zipfile,
+        source_url=source_url
     )
     # TODO: now execute the transforms
+    # import pdb; pdb.set_trace()
+    return df_details
 
 
 def FTP_to_DF(
@@ -428,6 +567,7 @@ def FTP_to_DF(
     cwd: str,
     ftp_filename: str,
     local_file: str,
+    source_url: str,
     sep: str = ","
 ) -> pd.DataFrame:
     download_file_ftp(

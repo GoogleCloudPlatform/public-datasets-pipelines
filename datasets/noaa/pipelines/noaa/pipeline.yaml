@@ -997,17 +997,16 @@ dag:
           TABLE_ID: "storms"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/noaa/storms_db/data_output.csv"
-          SCHEMA_PATH: "data/noaa/schema/noaa_severe_storms_schema.json"
+          SCHEMA_PATH: "data/noaa/schema/noaa_historic_severe_storms_schema.json"
           DROP_DEST_TABLE: "N"
           INPUT_FIELD_DELIMITER: ","
           FULL_DATA_LOAD: "N"
           REMOVE_SOURCE_FILE: "Y"
           DELETE_TARGET_FILE: "Y"
           START_YEAR: "1950"
-
           RENAME_HEADERS_LIST: >-
             {
-              "EPISODE_ID": "episode_id",
+              "EPISODE_ID_x": "episode_id",
               "EVENT_ID": "event_id",
               "STATE": "state",
               "STATE_FIPS": "state_fips_code",
