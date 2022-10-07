@@ -54,6 +54,11 @@ resources:
             "name": "num_tables",
             "description": "Number of tables contained in this dataset",
             "type": "INTEGER"
+        },
+        {
+            "name": "is_public",
+            "description": "Whether or not the dataset is public to all users",
+            "type": "BOOLEAN"
         }
       ]
   - type: bigquery_table

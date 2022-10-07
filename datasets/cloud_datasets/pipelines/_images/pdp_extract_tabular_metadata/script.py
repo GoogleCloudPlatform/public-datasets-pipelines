@@ -35,6 +35,7 @@ TABULAR_DATASETS_COLUMNS = [
     "dataset_id",
     "description",
     "num_tables",
+    "is_public",
 ]
 
 TABLES_COLUMNS = [
@@ -148,6 +149,7 @@ class DatasetInfo:
     dataset_id: str = None
     description: str = None
     num_tables: int = None
+    is_public: bool = None
 
     def __init__(
         self,
@@ -161,6 +163,10 @@ class DatasetInfo:
             self.description = np.nan
         self.created_at = dataset_reference.created
         self.modified_at = dataset_reference.modified
+        entries = list(dataset_reference.access_entries)
+        self.is_public = any(
+            map(lambda e: e.entity_id in {"allAuthenticatedUsers", "allUsers"}, entries)
+        )
 
     def __repr__(self) -> str:
         return f"{self.project_id}.{self.dataset_id}"
@@ -344,7 +350,7 @@ def main(
         extractor.write_datasets_to_bq(tabular_dataset_table_name, extracted)
         extractor.write_tables_to_bq(tables_table_name, extracted)
         extractor.write_tables_fields_to_bq(tables_fields_table_name, extracted)
-    logging.info("Total time to run this function: ", time.time() - st)
+    logging.info("Total time to run this function: %s", time.time() - st)
 
 
 if __name__ == "__main__":
