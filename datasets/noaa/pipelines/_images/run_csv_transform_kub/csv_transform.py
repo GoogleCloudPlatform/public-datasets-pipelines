@@ -22,6 +22,7 @@ import os
 import pathlib
 import re
 import socket
+from sh import sed
 import time
 import typing
 from urllib.request import Request, urlopen
@@ -312,11 +313,11 @@ def execute_pipeline(
         return None
     if pipeline_name == "NOAA Storms database by year":
         process_storms_database_by_year(
+            # pipeline_name=pipeline_name,
+            source_url=source_url,
             source_file=source_file,
             target_file=target_file,
-            pipeline_name=pipeline_name,
-            source_url=source_url,
-            chunksize=chunksize,
+            # chunksize=chunksize,
             project_id=project_id,
             dataset_id=dataset_id,
             destination_table=destination_table,
@@ -324,32 +325,32 @@ def execute_pipeline(
             target_gcs_path=target_gcs_path,
             schema_path=schema_path,
             drop_dest_table=drop_dest_table,
-            input_field_delimiter=input_field_delimiter,
-            full_data_load=full_data_load,
+            # input_field_delimiter=input_field_delimiter,
+            # full_data_load=full_data_load,
             start_year=start_year,
-            input_csv_headers=input_csv_headers,
-            data_dtypes=data_dtypes,
+            # input_csv_headers=input_csv_headers,
+            # data_dtypes=data_dtypes,
             reorder_headers_list=reorder_headers_list,
-            null_rows_list=null_rows_list,
+            # null_rows_list=null_rows_list,
             date_format_list=date_format_list,
-            slice_column_list=slice_column_list,
-            regex_list=regex_list,
-            rename_headers_list=rename_headers_list,
+            # slice_column_list=slice_column_list,
+            # regex_list=regex_list,
+            # rename_headers_list=rename_headers_list,
             remove_source_file=remove_source_file,
-            delete_target_file=delete_target_file,
-            number_of_header_rows=number_of_header_rows,
-            int_date_list=int_date_list,
+            # delete_target_file=delete_target_file,
+            # number_of_header_rows=number_of_header_rows,
+            # int_date_list=int_date_list,
             gen_location_list=gen_location_list,
         )
         return None
 
 
 def process_storms_database_by_year(
-    pipeline_name: str,
+    # pipeline_name: str,
     source_url: dict,
     source_file: pathlib.Path,
     target_file: pathlib.Path,
-    chunksize: str,
+    # chunksize: str,
     project_id: str,
     dataset_id: str,
     destination_table: str,
@@ -357,21 +358,21 @@ def process_storms_database_by_year(
     target_gcs_path: str,
     schema_path: str,
     drop_dest_table: str,
-    input_field_delimiter: str,
-    full_data_load: str,
+    # input_field_delimiter: str,
+    # full_data_load: str,
     start_year: str,
-    input_csv_headers: typing.List[str],
-    data_dtypes: dict,
+    # input_csv_headers: typing.List[str],
+    # data_dtypes: dict,
     reorder_headers_list: typing.List[str],
-    null_rows_list: typing.List[str],
+    # null_rows_list: typing.List[str],
     date_format_list: typing.List[str],
-    slice_column_list: dict,
-    regex_list: dict,
+    # slice_column_list: dict,
+    # regex_list: dict,
+    # rename_headers_list: dict,
     remove_source_file: bool,
-    rename_headers_list: dict,
-    delete_target_file: bool,
-    number_of_header_rows: int,
-    int_date_list: typing.List[str],
+    # delete_target_file: bool,
+    # number_of_header_rows: int,
+    # int_date_list: typing.List[str],
     gen_location_list: dict,
 ) -> None:
     host = source_url["root"].split("ftp://")[1].split("/")[0]
@@ -386,21 +387,22 @@ def process_storms_database_by_year(
             host=host, cwd=cwd, filter_expr="StormEvents_locations"
         )
     )
-    for year_to_process in range(int(start_year), datetime.date.today().year + 1):
+    for year_to_process in range(1997, 2023): # range(int(start_year), datetime.date.today().year + 1):
         locations_file = list(filter(lambda x: x.startswith(f'StormEvents_locations-ftp_v1.0_d{str(year_to_process)}'), list_of_locations_files))
         details_file = list(filter(lambda x: x.startswith(f'StormEvents_details-ftp_v1.0_d{str(year_to_process)}'), list_of_details_files))
         if locations_file:
             ftp_filename = locations_file[0]
             local_file = str(source_file).replace(".csv", f"_{str(year_to_process)}_locations.csv")
             local_zipfile = f"{os.path.dirname(local_file)}/{ftp_filename}"
+            ftp_zipfile_path = f'{source_url["root"]}/{ftp_filename}'
             logging.info("Processing Storms Locations File  ...")
-            logging.info(f"     host={host} cwd={cwd} ftp_filename={ftp_filename} local_file={local_file} local_zipfile={local_zipfile} source_url={source_url} ")
+            logging.info(f"     host={host} cwd={cwd} ftp_filename={ftp_filename} local_file={local_file} local_zipfile={local_zipfile} source_url={ftp_zipfile_path} ")
             df_locations = FTP_to_DF(
                 host=host,
                 cwd=cwd,
                 ftp_filename=ftp_filename,
                 local_file=local_zipfile,
-                source_url=source_url
+                source_url=ftp_zipfile_path
             )
         else:
             logging.info("Storms Locations File does not exist!")
@@ -408,15 +410,17 @@ def process_storms_database_by_year(
         ftp_filename = details_file[0]
         local_file = str(source_file).replace(".csv", f"_{str(year_to_process)}_detail.csv")
         local_zipfile = f"{os.path.dirname(local_file)}/{ftp_filename}"
+        ftp_zipfile_path = f'{source_url["root"]}/{ftp_filename}'
         logging.info(f"Processing Storms Detail File ...")
-        logging.info(f"     host={host} cwd={cwd} ftp_filename={ftp_filename} local_file={local_file} local_zipfile={local_zipfile} source_url={source_url} ")
+        logging.info(f"     host={host} cwd={cwd} ftp_filename={ftp_filename} local_file={local_file} local_zipfile={local_zipfile} source_url={ftp_zipfile_path} ")
         df_details = FTP_to_DF(
             host=host,
             cwd=cwd,
             ftp_filename=ftp_filename,
             local_file=local_zipfile,
-            source_url=source_url
+            source_url=ftp_zipfile_path
         )
+        logging.info("Merging Details and Locations files")
         df = pd.merge(
             df_details,
             df_locations,
@@ -462,9 +466,29 @@ def process_storms_database_by_year(
             )
 
 
+def clean_source_file(
+    source_file: str
+) -> None:
+    logging.info("Cleaning source file")
+    sed(['-i', 's/,\\"\\"\\"/,\\"\\|\\\'\\|\\\'/g;', source_file])
+    sed(['-i', 's/\\"\\" /\\|\\\'\\|\\\' /g;', source_file])
+    sed(['-i', 's/ \\"\\"/ \\|\\\'\\|\\\'/g;', source_file])
+    sed(['-i', 's/ \\"/ \\|\\\'/g;', source_file])
+    sed(['-i', 's/\\" /\\|\\\' /g;', source_file])
+
+    # sed(['-i', 's/\\"\\"/\\\'|\\\'/g;', source_file])
+    # sed(['-i', 's/ \\"/ \\|\'/g;', source_file])
+    # sed(['-i', 's/\\" /\\|\' /g;', source_file])
+    # sed(['-i', 's/\\",\'\\|\'\\"/\\",\\"\'\\|\'/g;', source_file])
+
+    # sed(['-i', 's/\\"\\n/\\|\\n/g;', source_file])
+    # sed(['-i', 's/ \\"\\"/ \\"/g;s/\\"\\" /\\" /g;', source_file])
+
+
 def fix_data_anomolies_storms(df: pd.DataFrame) -> pd.DataFrame:
-    df["damage_property"] = df["damage_property"].apply(lambda x: shorthand_to_number(x)).astype(np.int64)
-    df["damage_crops"] = df["damage_crops"].apply(lambda x: shorthand_to_number(x)).astype(np.int64)
+    logging.info("Cleansing data")
+    df["damage_property"] = df["damage_property"].apply(lambda x: shorthand_to_number(x)).fillna(0).astype(np.int64)
+    df["damage_crops"] = df["damage_crops"].apply(lambda x: shorthand_to_number(x)).fillna(0).astype(np.int64)
     df["event_type"] = df["event_type"].apply(lambda x: str(x).lower())
     df["state"] = df["state"].apply(lambda x: f"{str.capitalize(x)[0]}{str.lower(x)[1]}")
     df["event_point"] = df["event_point"].apply(lambda x: str(x).replace("POINT(nan nan)", ""))
@@ -526,18 +550,97 @@ def FTP_to_DF(
         local_file=local_file,
         source_url=source_url
     )
-    df = pd.read_csv(
-        local_file,
-        engine="python",
-        encoding="utf-8",
-        quotechar='"',  # string separator, typically double-quotes
-        sep=sep,  # data column separator, typically ","
-        header=0,  # use when the data file does not contain a header
-        keep_default_na=True,
-        na_values=[" "],
+    logging.info(f"Loading file {local_file} into DataFrame")
+    decompressed_source_file = local_file.replace(".gz", "")
+    gz_decompress(
+        infile=local_file,
+        tofile=decompressed_source_file,
+        delete_zipfile=False,
     )
+    # df = pd.read_csv(
+    #     # os.popen('sed -r "s/^\s+|(^[,[:space:]]*|\s*)(#.*)?$//g; s/\s+,/,/g; s/\\"\\"/\\"/g" %s' % decompressed_source_file),
+    #     decompressed_source_file,
+    #     # engine="python",
+    #     encoding="utf-8",
+    #     # quotechar='"',  # string separator, typically double-quotes
+    #     # sep=sep,  # data column separator, typically ","
+    #     sep=',"',
+    #     quoting=csv.QUOTE_ALL,
+    #     skipinitialspace=True,
+    #     header=0,  # use when the data file does not contain a header
+    #     keep_default_na=True,
+    #     na_values=[" "],
+    # )
+    # import re
+    # from io import StringIO
+    # with open(decompressed_source_file) as f:
+    #     data = re.sub('""', '"', re.sub('[ \t]+,', ',',
+    #         re.sub('^[ \t]+|(^[ \t,]*|[ \t]*)(#.*)?$', '', f.read(), flags=re.M)))
+    #     df = pd.read_csv(StringIO(data), quotechar='"', skipinitialspace=True)
+    if "locations" in decompressed_source_file:
+        df = pd.read_csv(
+            decompressed_source_file,
+            engine="python",
+            encoding="utf-8",
+            quotechar='"',  # string separator, typically double-quotes
+            sep=sep,  # data column separator, typically ","
+            quoting=csv.QUOTE_ALL,
+            header=0,  # use when the data file does not contain a header
+            keep_default_na=True,
+            na_values=[" "],
+        )
+    else:
+        clean_source_file(decompressed_source_file)
+        import pdb; pdb.set_trace()
+        df = pd.read_csv(
+            decompressed_source_file,
+            engine="python",
+            encoding="utf-8",
+            quotechar='"',  # string separator, typically double-quotes
+            sep=sep,  # data column separator, typically ","
+            header=0,  # use when the data file does not contain a header
+            keep_default_na=True,
+            escapechar='\\',
+            na_values=[" "],
+        )
+        for col in df:
+            if str(df[col].dtype) == "object":
+                logging.info(f"Replacing values in column {col}")
+                df[col] = df[col].apply(lambda x: str(x).replace("|'", '"'))
+            else:
+                pass
+        import pdb; pdb.set_trace()
+    # try:
+    #     df = pd.read_csv(
+    #         decompressed_source_file,
+    #         engine="python",
+    #         encoding="utf-8",
+    #         quotechar='"',  # string separator, typically double-quotes
+    #         sep=sep,  # data column separator, typically ","
+    #         quoting=csv.QUOTE_ALL,
+    #         header=0,  # use when the data file does not contain a header
+    #         keep_default_na=True,
+    #         na_values=[" "],
+    #     )
+    # except:
+    #     df = pd.read_csv(
+    #         decompressed_source_file,
+    #         engine="python",
+    #         encoding="utf-8",
+    #         quotechar=None,  # string separator, typically double-quotes
+    #         sep=sep,  # data column separator, typically ","
+    #         quoting=csv.QUOTE_NONE,
+    #         header=0,  # use when the data file does not contain a header
+    #         keep_default_na=True,
+    #         na_values=[" "],
+    #     )
+    #     for col in df:
+    #         if str(df[col].dtype) == "object":
+    #             df[col] = df[col].apply(lambda x: x[1:] if x[0] == '"' else x)
+    #             df[col] = df[col].apply(lambda x: x[0:len(x)-1] if x[len(x)-1:len(x)] == '"' else x)
+    #         else:
+    #             pass
     return df
-
 
 
 def create_storms_locations_df() -> pd.DataFrame:
