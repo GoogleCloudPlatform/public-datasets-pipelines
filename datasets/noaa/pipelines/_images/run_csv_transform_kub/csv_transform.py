@@ -335,8 +335,8 @@ def execute_pipeline(
             date_format_list=date_format_list,
             # slice_column_list=slice_column_list,
             # regex_list=regex_list,
-            # rename_headers_list=rename_headers_list,
-            remove_source_file=remove_source_file,
+            rename_headers_list=rename_headers_list,
+            # remove_source_file=remove_source_file,
             # delete_target_file=delete_target_file,
             # number_of_header_rows=number_of_header_rows,
             # int_date_list=int_date_list,
@@ -368,8 +368,8 @@ def process_storms_database_by_year(
     date_format_list: typing.List[str],
     # slice_column_list: dict,
     # regex_list: dict,
-    # rename_headers_list: dict,
-    remove_source_file: bool,
+    rename_headers_list: dict,
+    # remove_source_file: bool,
     # delete_target_file: bool,
     # number_of_header_rows: int,
     # int_date_list: typing.List[str],
@@ -440,7 +440,7 @@ def process_storms_database_by_year(
             df[dt_fld[0]] = df[dt_fld[0]].apply(lambda x: f"{year_to_process}-{str(x)[5:]}")
         df = fix_data_anomolies_storms(df)
         targ_file_yr = str.replace(str(target_file), ".csv", f"_{year_to_process}.csv")
-        save_to_new_file(df=df, file_path=targ_file_yr, sep="|")
+        save_to_new_file(df=df, file_path=targ_file_yr, sep="|", quotechar="^")
         upload_file_to_gcs(
             file_path=targ_file_yr,
             target_gcs_bucket=target_gcs_bucket,
@@ -463,8 +463,9 @@ def process_storms_database_by_year(
                 file_path=targ_file_yr,
                 truncate_table=True,
                 field_delimiter="|",
+                quotechar="^"
             )
-
+        import pdb; pdb.set_trace()
 
 def clean_source_file(
     source_file: str
@@ -557,26 +558,6 @@ def FTP_to_DF(
         tofile=decompressed_source_file,
         delete_zipfile=False,
     )
-    # df = pd.read_csv(
-    #     # os.popen('sed -r "s/^\s+|(^[,[:space:]]*|\s*)(#.*)?$//g; s/\s+,/,/g; s/\\"\\"/\\"/g" %s' % decompressed_source_file),
-    #     decompressed_source_file,
-    #     # engine="python",
-    #     encoding="utf-8",
-    #     # quotechar='"',  # string separator, typically double-quotes
-    #     # sep=sep,  # data column separator, typically ","
-    #     sep=',"',
-    #     quoting=csv.QUOTE_ALL,
-    #     skipinitialspace=True,
-    #     header=0,  # use when the data file does not contain a header
-    #     keep_default_na=True,
-    #     na_values=[" "],
-    # )
-    # import re
-    # from io import StringIO
-    # with open(decompressed_source_file) as f:
-    #     data = re.sub('""', '"', re.sub('[ \t]+,', ',',
-    #         re.sub('^[ \t]+|(^[ \t,]*|[ \t]*)(#.*)?$', '', f.read(), flags=re.M)))
-    #     df = pd.read_csv(StringIO(data), quotechar='"', skipinitialspace=True)
     if "locations" in decompressed_source_file:
         df = pd.read_csv(
             decompressed_source_file,
@@ -591,7 +572,6 @@ def FTP_to_DF(
         )
     else:
         clean_source_file(decompressed_source_file)
-        import pdb; pdb.set_trace()
         df = pd.read_csv(
             decompressed_source_file,
             engine="python",
@@ -609,37 +589,6 @@ def FTP_to_DF(
                 df[col] = df[col].apply(lambda x: str(x).replace("|'", '"'))
             else:
                 pass
-        import pdb; pdb.set_trace()
-    # try:
-    #     df = pd.read_csv(
-    #         decompressed_source_file,
-    #         engine="python",
-    #         encoding="utf-8",
-    #         quotechar='"',  # string separator, typically double-quotes
-    #         sep=sep,  # data column separator, typically ","
-    #         quoting=csv.QUOTE_ALL,
-    #         header=0,  # use when the data file does not contain a header
-    #         keep_default_na=True,
-    #         na_values=[" "],
-    #     )
-    # except:
-    #     df = pd.read_csv(
-    #         decompressed_source_file,
-    #         engine="python",
-    #         encoding="utf-8",
-    #         quotechar=None,  # string separator, typically double-quotes
-    #         sep=sep,  # data column separator, typically ","
-    #         quoting=csv.QUOTE_NONE,
-    #         header=0,  # use when the data file does not contain a header
-    #         keep_default_na=True,
-    #         na_values=[" "],
-    #     )
-    #     for col in df:
-    #         if str(df[col].dtype) == "object":
-    #             df[col] = df[col].apply(lambda x: x[1:] if x[0] == '"' else x)
-    #             df[col] = df[col].apply(lambda x: x[0:len(x)-1] if x[len(x)-1:len(x)] == '"' else x)
-    #         else:
-    #             pass
     return df
 
 
@@ -1221,6 +1170,7 @@ def load_data_to_bq(
     file_path: str,
     truncate_table: bool,
     field_delimiter: str = "|",
+    quotechar: str = '"'
 ) -> None:
     logging.info(
         f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} started"
@@ -1236,6 +1186,8 @@ def load_data_to_bq(
         job_config.write_disposition = "WRITE_APPEND"
     job_config.skip_leading_rows = 1  # ignore the header
     job_config.autodetect = False
+    job_config.allow_quoted_newlines = True
+    job_config.quote_character = quotechar
     with open(file_path, "rb") as source_file:
         job = client.load_table_from_file(source_file, table_ref, job_config=job_config)
     job.result()
@@ -1349,9 +1301,9 @@ def create_table_schema(
     return schema
 
 
-def save_to_new_file(df: pd.DataFrame, file_path: str, sep: str = "|") -> None:
+def save_to_new_file(df: pd.DataFrame, file_path: str, sep: str = "|", quotechar: str = '"') -> None:
     logging.info(f"Saving data to target file.. {file_path} ...")
-    df.to_csv(file_path, index=False, sep=sep)
+    df.to_csv(file_path, index=False, sep=sep, quotechar=quotechar)
 
 
 def append_batch_file(
