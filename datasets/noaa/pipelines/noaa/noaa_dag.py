@@ -393,14 +393,15 @@ with DAG(
     (
         create_cluster
         >> [
-            ghcnd_by_year,
-            ghcnd_countries,
-            ghcnd_inventory,
             ghcnd_states,
             ghcnd_stations,
             gsod_stations,
-            ghcnd_hurricanes,
-            lightning_strikes_by_year,
+            ghcnd_countries,
+            ghcnd_inventory,
         ]
+        >> storms_database_by_year
+        >> ghcnd_by_year
+        >> ghcnd_hurricanes
+        >> lightning_strikes_by_year
         >> delete_cluster
     )

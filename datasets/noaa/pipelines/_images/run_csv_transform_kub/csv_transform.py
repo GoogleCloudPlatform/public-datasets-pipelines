@@ -21,8 +21,6 @@ import logging
 import os
 import pathlib
 import re
-import socket
-from sh import sed
 import time
 import typing
 from urllib.request import Request, urlopen
@@ -33,6 +31,7 @@ import requests
 from bs4 import BeautifulSoup
 from google.api_core.exceptions import NotFound
 from google.cloud import bigquery, storage
+from sh import sed
 
 
 def main(
@@ -313,11 +312,9 @@ def execute_pipeline(
         return None
     if pipeline_name == "NOAA Storms database by year":
         process_storms_database_by_year(
-            # pipeline_name=pipeline_name,
             source_url=source_url,
             source_file=source_file,
             target_file=target_file,
-            # chunksize=chunksize,
             project_id=project_id,
             dataset_id=dataset_id,
             destination_table=destination_table,
@@ -325,32 +322,19 @@ def execute_pipeline(
             target_gcs_path=target_gcs_path,
             schema_path=schema_path,
             drop_dest_table=drop_dest_table,
-            # input_field_delimiter=input_field_delimiter,
-            # full_data_load=full_data_load,
             start_year=start_year,
-            # input_csv_headers=input_csv_headers,
-            # data_dtypes=data_dtypes,
             reorder_headers_list=reorder_headers_list,
-            # null_rows_list=null_rows_list,
             date_format_list=date_format_list,
-            # slice_column_list=slice_column_list,
-            # regex_list=regex_list,
             rename_headers_list=rename_headers_list,
-            # remove_source_file=remove_source_file,
-            # delete_target_file=delete_target_file,
-            # number_of_header_rows=number_of_header_rows,
-            # int_date_list=int_date_list,
             gen_location_list=gen_location_list,
         )
         return None
 
 
 def process_storms_database_by_year(
-    # pipeline_name: str,
     source_url: dict,
     source_file: pathlib.Path,
     target_file: pathlib.Path,
-    # chunksize: str,
     project_id: str,
     dataset_id: str,
     destination_table: str,
@@ -358,67 +342,74 @@ def process_storms_database_by_year(
     target_gcs_path: str,
     schema_path: str,
     drop_dest_table: str,
-    # input_field_delimiter: str,
-    # full_data_load: str,
     start_year: str,
-    # input_csv_headers: typing.List[str],
-    # data_dtypes: dict,
     reorder_headers_list: typing.List[str],
-    # null_rows_list: typing.List[str],
     date_format_list: typing.List[str],
-    # slice_column_list: dict,
-    # regex_list: dict,
     rename_headers_list: dict,
-    # remove_source_file: bool,
-    # delete_target_file: bool,
-    # number_of_header_rows: int,
-    # int_date_list: typing.List[str],
     gen_location_list: dict,
 ) -> None:
     host = source_url["root"].split("ftp://")[1].split("/")[0]
     cwd = source_url["root"].split("ftp://")[1][len(host) :]
     list_of_details_files = sorted(
-        ftp_list_of_files(
-            host=host, cwd=cwd, filter_expr="StormEvents_details"
-        )
+        ftp_list_of_files(host=host, cwd=cwd, filter_expr="StormEvents_details")
     )
     list_of_locations_files = sorted(
-        ftp_list_of_files(
-            host=host, cwd=cwd, filter_expr="StormEvents_locations"
-        )
+        ftp_list_of_files(host=host, cwd=cwd, filter_expr="StormEvents_locations")
     )
     for year_to_process in range(int(start_year), datetime.date.today().year + 1):
-        locations_file = list(filter(lambda x: x.startswith(f'StormEvents_locations-ftp_v1.0_d{str(year_to_process)}'), list_of_locations_files))
-        details_file = list(filter(lambda x: x.startswith(f'StormEvents_details-ftp_v1.0_d{str(year_to_process)}'), list_of_details_files))
+        locations_file = list(
+            filter(
+                lambda x: x.startswith(
+                    f"StormEvents_locations-ftp_v1.0_d{str(year_to_process)}"
+                ),
+                list_of_locations_files,
+            )
+        )
+        details_file = list(
+            filter(
+                lambda x: x.startswith(
+                    f"StormEvents_details-ftp_v1.0_d{str(year_to_process)}"
+                ),
+                list_of_details_files,
+            )
+        )
         if locations_file:
             ftp_filename = locations_file[0]
-            local_file = str(source_file).replace(".csv", f"_{str(year_to_process)}_locations.csv")
+            local_file = str(source_file).replace(
+                ".csv", f"_{str(year_to_process)}_locations.csv"
+            )
             local_zipfile = f"{os.path.dirname(local_file)}/{ftp_filename}"
             ftp_zipfile_path = f'{source_url["root"]}/{ftp_filename}'
             logging.info("Processing Storms Locations File  ...")
-            logging.info(f"     host={host} cwd={cwd} ftp_filename={ftp_filename} local_file={local_file} local_zipfile={local_zipfile} source_url={ftp_zipfile_path} ")
+            logging.info(
+                f"     host={host} cwd={cwd} ftp_filename={ftp_filename} local_file={local_file} local_zipfile={local_zipfile} source_url={ftp_zipfile_path} "
+            )
             df_locations = FTP_to_DF(
                 host=host,
                 cwd=cwd,
                 ftp_filename=ftp_filename,
                 local_file=local_zipfile,
-                source_url=ftp_zipfile_path
+                source_url=ftp_zipfile_path,
             )
         else:
             logging.info("Storms Locations File does not exist!")
             df_locations = create_storms_locations_df()
         ftp_filename = details_file[0]
-        local_file = str(source_file).replace(".csv", f"_{str(year_to_process)}_detail.csv")
+        local_file = str(source_file).replace(
+            ".csv", f"_{str(year_to_process)}_detail.csv"
+        )
         local_zipfile = f"{os.path.dirname(local_file)}/{ftp_filename}"
         ftp_zipfile_path = f'{source_url["root"]}/{ftp_filename}'
-        logging.info(f"Processing Storms Detail File ...")
-        logging.info(f"     host={host} cwd={cwd} ftp_filename={ftp_filename} local_file={local_file} local_zipfile={local_zipfile} source_url={ftp_zipfile_path} ")
+        logging.info("Processing Storms Detail File ...")
+        logging.info(
+            f"     host={host} cwd={cwd} ftp_filename={ftp_filename} local_file={local_file} local_zipfile={local_zipfile} source_url={ftp_zipfile_path} "
+        )
         df_details = FTP_to_DF(
             host=host,
             cwd=cwd,
             ftp_filename=ftp_filename,
             local_file=local_zipfile,
-            source_url=ftp_zipfile_path
+            source_url=ftp_zipfile_path,
         )
         logging.info("Merging Details and Locations files")
         df = pd.merge(
@@ -428,28 +419,31 @@ def process_storms_database_by_year(
             right_on="EVENT_ID",
             how="left",
         )
-        df = rename_headers(
-            df=df,
-            rename_headers_list=rename_headers_list
+        df = rename_headers(df=df, rename_headers_list=rename_headers_list)
+        df["event_latitude"] = df["event_latitude"].apply(
+            lambda x: x - 60 if x > 90 else x
         )
-        df['event_latitude'] = df['event_latitude'].apply( lambda x: x-60 if x > 90 else x)
         df = generate_location(df, gen_location_list)
         df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
         for dt_fld in date_format_list.items():
             logging.info(f"Resolving date formats in field {dt_fld}")
-            df[dt_fld[0]] = df[dt_fld[0]].apply(lambda x: pd.to_datetime(str(x), format=f"%d-%b-%y %H:%M:%S"))
-            df[dt_fld[0]] = df[dt_fld[0]].apply(lambda x: f"{year_to_process}-{str(x)[5:]}")
+            df[dt_fld[0]] = df[dt_fld[0]].apply(
+                lambda x: pd.to_datetime(str(x), format="%d-%b-%y %H:%M:%S")
+            )
+            df[dt_fld[0]] = df[dt_fld[0]].apply(
+                lambda x: f"{year_to_process}-{str(x)[5:]}"
+            )
         df = fix_data_anomolies_storms(df)
         targ_file_yr = str.replace(str(target_file), ".csv", f"_{year_to_process}.csv")
         save_to_new_file(df=df, file_path=targ_file_yr, sep="|", quotechar="^")
-        sed(['-i', 's/|nan|/||/g', targ_file_yr])
-        sed(['-i', 's/|<NA>/|/g', targ_file_yr])
+        sed(["-i", "s/|nan|/||/g", targ_file_yr])
+        sed(["-i", "s/|<NA>/|/g", targ_file_yr])
         upload_file_to_gcs(
             file_path=targ_file_yr,
             target_gcs_bucket=target_gcs_bucket,
             target_gcs_path=target_gcs_path,
         )
-        drop_table = ( drop_dest_table == "Y" )
+        drop_table = drop_dest_table == "Y"
         table_exists = create_dest_table(
             project_id=project_id,
             dataset_id=dataset_id,
@@ -466,61 +460,65 @@ def process_storms_database_by_year(
                 file_path=targ_file_yr,
                 truncate_table=True,
                 field_delimiter="|",
-                quotechar="^"
+                quotechar="^",
             )
-        # import pdb; pdb.set_trace()
 
-def clean_source_file(
-    source_file: str
-) -> None:
+
+def clean_source_file(source_file: str) -> None:
     logging.info("Cleaning source file")
-    sed(['-i', 's/,\\"\\"\\"/,\\"\\|\\\'\\|\\\'/g;', source_file])
-    sed(['-i', 's/\\"\\" /\\|\\\'\\|\\\' /g;', source_file])
-    sed(['-i', 's/ \\"\\"/ \\|\\\'\\|\\\'/g;', source_file])
-    sed(['-i', 's/ \\"/ \\|\\\'/g;', source_file])
-    sed(['-i', 's/\\" /\\|\\\' /g;', source_file])
-
-    # sed(['-i', 's/\\"\\"/\\\'|\\\'/g;', source_file])
-    # sed(['-i', 's/ \\"/ \\|\'/g;', source_file])
-    # sed(['-i', 's/\\" /\\|\' /g;', source_file])
-    # sed(['-i', 's/\\",\'\\|\'\\"/\\",\\"\'\\|\'/g;', source_file])
-
-    # sed(['-i', 's/\\"\\n/\\|\\n/g;', source_file])
-    # sed(['-i', 's/ \\"\\"/ \\"/g;s/\\"\\" /\\" /g;', source_file])
+    sed(["-i", 's/,\\"\\"\\"/,\\"\\|\\\'\\|\\\'/g;', source_file])
+    sed(["-i", "s/\\\"\\\" /\\|\\'\\|\\' /g;", source_file])
+    sed(["-i", "s/ \\\"\\\"/ \\|\\'\\|\\'/g;", source_file])
+    sed(["-i", "s/ \\\"/ \\|\\'/g;", source_file])
+    sed(["-i", "s/\\\" /\\|\\' /g;", source_file])
 
 
 def fix_data_anomolies_storms(df: pd.DataFrame) -> pd.DataFrame:
     logging.info("Cleansing data")
-    df["damage_property"] = df["damage_property"].apply(lambda x: shorthand_to_number(x)).fillna(0).astype(np.int64)
-    df["damage_crops"] = df["damage_crops"].apply(lambda x: shorthand_to_number(x)).fillna(0).astype(np.int64)
+    df["damage_property"] = (
+        df["damage_property"]
+        .apply(lambda x: shorthand_to_number(x))
+        .fillna(0)
+        .astype(np.int64)
+    )
+    df["damage_crops"] = (
+        df["damage_crops"]
+        .apply(lambda x: shorthand_to_number(x))
+        .fillna(0)
+        .astype(np.int64)
+    )
     df["event_type"] = df["event_type"].apply(lambda x: str(x).lower())
-    df["state"] = df["state"].apply(lambda x: f"{str.capitalize(x)[0]}{str.lower(x)[1]}")
-    df["event_point"] = df["event_point"].apply(lambda x: str(x).replace("POINT(nan nan)", ""))
+    df["state"] = df["state"].apply(
+        lambda x: f"{str.capitalize(x)[0]}{str.lower(x)[1]}"
+    )
+    df["event_point"] = df["event_point"].apply(
+        lambda x: str(x).replace("POINT(nan nan)", "")
+    )
     return df
 
 
 def shorthand_to_number(x) -> float:
     if type(x) == float or type(x) == int:
         return x
-    if 'K' in x:
+    if "K" in x:
         if len(x) > 1:
-            return float(x.replace('K', '')) * 10**3
+            return float(x.replace("K", "")) * 10**3
         return 10**3
-    if 'M' in x:
+    if "M" in x:
         if len(x) > 1:
-            return float(x.replace('M', '')) * 10**6
+            return float(x.replace("M", "")) * 10**6
         return 10**6
-    if 'B' in x:
+    if "B" in x:
         if len(x) > 1:
-            return float(x.replace('B', '')) * 10**9
+            return float(x.replace("B", "")) * 10**9
         return 10**9
-    if 'T' in x:
+    if "T" in x:
         if len(x) > 1:
-            return float(x.replace('T', '')) * 10**12
+            return float(x.replace("T", "")) * 10**12
         return 10**12
-    if 'Q' in x:
+    if "Q" in x:
         if len(x) > 1:
-            return float(x.replace('Q', '')) * 10**15
+            return float(x.replace("Q", "")) * 10**15
         return 10**15
     return 0.0
 
@@ -545,14 +543,14 @@ def FTP_to_DF(
     ftp_filename: str,
     local_file: str,
     source_url: str,
-    sep: str = ","
+    sep: str = ",",
 ) -> pd.DataFrame:
     download_file_ftp(
         ftp_host=host,
         ftp_dir=cwd,
         ftp_filename=ftp_filename,
         local_file=local_file,
-        source_url=source_url
+        source_url=source_url,
     )
     logging.info(f"Loading file {local_file} into DataFrame")
     decompressed_source_file = local_file.replace(".gz", "")
@@ -566,24 +564,24 @@ def FTP_to_DF(
             decompressed_source_file,
             engine="python",
             encoding="utf-8",
-            quotechar='"',  # string separator, typically double-quotes
-            sep=sep,  # data column separator, typically ","
+            quotechar='"',
+            sep=sep,
             quoting=csv.QUOTE_ALL,
-            header=0,  # use when the data file does not contain a header
+            header=0,
             keep_default_na=True,
             na_values=[" "],
         )
     else:
         clean_source_file(decompressed_source_file)
+        # import pdb; pdb.set_trace()
         df = pd.read_csv(
             decompressed_source_file,
             engine="python",
             encoding="utf-8",
-            quotechar='"',  # string separator, typically double-quotes
-            sep=sep,  # data column separator, typically ","
-            header=0,  # use when the data file does not contain a header
+            quotechar='"',
+            sep=sep,
+            header=0,
             keep_default_na=True,
-            escapechar='\\',
             na_values=[" "],
         )
         for col in df:
@@ -608,17 +606,13 @@ def create_storms_locations_df() -> pd.DataFrame:
             "LATITUDE",
             "LONGITUDE",
             "LAT2",
-            "LON2"
+            "LON2",
         ]
     )
     return df_loc
 
 
-def ftp_list_of_files(
-    host: str,
-    cwd: str,
-    filter_expr: str = ""
-) -> typing.List[str]:
+def ftp_list_of_files(host: str, cwd: str, filter_expr: str = "") -> typing.List[str]:
     try_count = 0
     while True:
         try:
@@ -627,7 +621,9 @@ def ftp_list_of_files(
             ftp.cwd(cwd)
             file_list = ftp.nlst()
             if filter != "":
-                file_list = list(filter(lambda x: str(x).find(filter_expr) >= 0, file_list))
+                file_list = list(
+                    filter(lambda x: str(x).find(filter_expr) >= 0, file_list)
+                )
             ftp.quit()
             return file_list
         except TimeoutError as e:
@@ -637,7 +633,6 @@ def ftp_list_of_files(
             else:
                 logging.info(f"{e}, Retrying ...")
                 time.sleep(try_count * 30)
-
 
 
 def process_lightning_strikes_by_year(
@@ -1164,7 +1159,7 @@ def load_data_to_bq(
     file_path: str,
     truncate_table: bool,
     field_delimiter: str = "|",
-    quotechar: str = '"'
+    quotechar: str = '"',
 ) -> None:
     logging.info(
         f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} started"
@@ -1295,7 +1290,9 @@ def create_table_schema(
     return schema
 
 
-def save_to_new_file(df: pd.DataFrame, file_path: str, sep: str = "|", quotechar: str = '"') -> None:
+def save_to_new_file(
+    df: pd.DataFrame, file_path: str, sep: str = "|", quotechar: str = '"'
+) -> None:
     logging.info(f"Saving data to target file.. {file_path} ...")
     df.to_csv(file_path, index=False, sep=sep, quotechar=quotechar)
 
