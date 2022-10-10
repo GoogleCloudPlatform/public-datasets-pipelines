@@ -387,7 +387,7 @@ def process_storms_database_by_year(
             host=host, cwd=cwd, filter_expr="StormEvents_locations"
         )
     )
-    for year_to_process in range(1997, 2023): # range(int(start_year), datetime.date.today().year + 1):
+    for year_to_process in range(int(start_year), datetime.date.today().year + 1):
         locations_file = list(filter(lambda x: x.startswith(f'StormEvents_locations-ftp_v1.0_d{str(year_to_process)}'), list_of_locations_files))
         details_file = list(filter(lambda x: x.startswith(f'StormEvents_details-ftp_v1.0_d{str(year_to_process)}'), list_of_details_files))
         if locations_file:
@@ -432,6 +432,7 @@ def process_storms_database_by_year(
             df=df,
             rename_headers_list=rename_headers_list
         )
+        df['event_latitude'] = df['event_latitude'].apply( lambda x: x-60 if x > 90 else x)
         df = generate_location(df, gen_location_list)
         df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
         for dt_fld in date_format_list.items():
@@ -441,6 +442,8 @@ def process_storms_database_by_year(
         df = fix_data_anomolies_storms(df)
         targ_file_yr = str.replace(str(target_file), ".csv", f"_{year_to_process}.csv")
         save_to_new_file(df=df, file_path=targ_file_yr, sep="|", quotechar="^")
+        sed(['-i', 's/|nan|/||/g', targ_file_yr])
+        sed(['-i', 's/|<NA>/|/g', targ_file_yr])
         upload_file_to_gcs(
             file_path=targ_file_yr,
             target_gcs_bucket=target_gcs_bucket,
@@ -465,7 +468,7 @@ def process_storms_database_by_year(
                 field_delimiter="|",
                 quotechar="^"
             )
-        import pdb; pdb.set_trace()
+        # import pdb; pdb.set_trace()
 
 def clean_source_file(
     source_file: str
@@ -1005,15 +1008,6 @@ def convert_date_from_int(df: pd.DataFrame, int_date_list: dict) -> pd.DataFrame
                 (df[dt_int_col][:].astype("string") + "000000"), "raise", False, True
             ).astype("string")
             + " 00:00:00"
-        )
-    return df
-
-
-def generate_location(df: pd.DataFrame, gen_location_list: dict) -> pd.DataFrame:
-    logging.info("Generating location data")
-    for key, values in gen_location_list.items():
-        df[key] = df[[values[0], values[1]]].apply(
-            lambda x: f"POINT({x[0]} {x[1]})", axis=1
         )
     return df
 
