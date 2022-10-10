@@ -105,19 +105,6 @@ def main(
             "subchap_s_indicator",
         ]
         replace_bool(replace_bool_list, df)
-        logging.info("Formatting date values...")
-        format_date_list = [
-            "established_date",
-            "last_updated",
-            "effective_date",
-            "end_effective_date",
-            "deposit_insurance_date",
-            "last_structural_change",
-            "report_date",
-            "reporting_period_end_date",
-            "run_date",
-        ]
-        format_date(format_date_list, df)
         logging.info("Replacing date values...")
         replace_date_list = [
             "last_updated",
@@ -132,6 +119,34 @@ def main(
             "cfpb_supervisory_end_date",
         ]
         replace_date(replace_date_list, df)
+        logging.info("Formatting date values...")
+        format_date_list = [
+            "established_date",
+            "last_updated",
+            "effective_date",
+            "end_effective_date",
+            "deposit_insurance_date",
+            "last_structural_change",
+            "report_date",
+            "reporting_period_end_date",
+            "run_date",
+        ]
+        format_date(format_date_list, df)
+        logging.info("Filling null values...")
+        null_list = [
+            "total_assets",
+            "total_deposits",
+            "equity_capital",
+            "offices_count",
+            "total_domestic_deposits",
+            "net_income",
+            "quarterly_net_income",
+            "office_count_domestic",
+            "office_count_foreign",
+            "office_count_us_territories",
+        ]
+        fill_null(null_list, df)
+
     logging.info("Transform: Reordering headers..")
     df = df[headers]
 
@@ -166,13 +181,22 @@ def format_date(format_date_list: list, df: pd.DataFrame):
 def replace_date(replace_date_list: list, df: pd.DataFrame):
     for item in replace_date_list:
         empty_list = []
+        df[item] = df[item].astype(str)
+        df[item] = df[item].replace("nan", "")
         for value in df[item]:
-            if 9999 in value:
-                value = None
+            if "9999" in value:
+                value = ""
                 empty_list.append(value)
             else:
                 empty_list.append(value)
         df[item] = empty_list
+        df[item] = pd.to_datetime(df[item], format="%m-%d-%Y", errors="ignore")
+
+
+def fill_null(null_list: list, df: pd.DataFrame):
+    for item in null_list:
+        df[item] = df[item].fillna(0)
+        df[item] = df[item].astype(int)
 
 
 def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:

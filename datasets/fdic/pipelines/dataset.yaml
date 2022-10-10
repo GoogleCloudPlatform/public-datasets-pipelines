@@ -24,7 +24,7 @@ resources:
   - type: bigquery_dataset
     dataset_id: fdic
     description: FDIC dataset
- 
+
   - type: storage_bucket
     name: fdic
     uniform_bucket_level_access: True
