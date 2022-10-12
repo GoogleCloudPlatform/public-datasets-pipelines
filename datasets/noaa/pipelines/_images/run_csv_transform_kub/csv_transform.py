@@ -729,7 +729,7 @@ def process_lightning_strikes_by_year(
                     delete_target_file=delete_target_file,
                     int_date_list=int_date_list,
                     gen_location_list=gen_location_list,
-                    truncate_table=False
+                    truncate_table=False,
                 )
 
 
@@ -1164,7 +1164,7 @@ def load_data_to_bq(
     table_id: str,
     file_path: str,
     truncate_table: bool,
-    source_url: str,
+    source_url: str = "",
     field_delimiter: str = "|",
     quotechar: str = '"',
 ) -> None:
@@ -1179,12 +1179,15 @@ def load_data_to_bq(
     if truncate_table:
         job_config.write_disposition = "WRITE_TRUNCATE"
     else:
-        delete_source_file_data_from_bq(
-            project_id=project_id,
-            dataset_id=dataset_id,
-            table_id=table_id,
-            source_url=source_url,
-        )
+        if source_url == "":
+            pass
+        else:
+            delete_source_file_data_from_bq(
+                project_id=project_id,
+                dataset_id=dataset_id,
+                table_id=table_id,
+                source_url=source_url,
+            )
         job_config.write_disposition = "WRITE_APPEND"
     job_config.skip_leading_rows = 1  # ignore the header
     job_config.autodetect = False
