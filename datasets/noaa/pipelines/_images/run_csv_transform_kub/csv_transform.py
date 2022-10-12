@@ -296,6 +296,8 @@ def execute_pipeline(
             schema_path=schema_path,
             drop_dest_table=drop_dest_table,
             input_field_delimiter=input_field_delimiter,
+            full_data_load=full_data_load,
+            start_year=start_year,
             input_csv_headers=input_csv_headers,
             data_dtypes=data_dtypes,
             reorder_headers_list=reorder_headers_list,
@@ -306,6 +308,7 @@ def execute_pipeline(
             rename_headers_list=rename_headers_list,
             remove_source_file=remove_source_file,
             delete_target_file=delete_target_file,
+            number_of_header_rows=number_of_header_rows,
             int_date_list=int_date_list,
             gen_location_list=gen_location_list,
         )
@@ -726,6 +729,7 @@ def process_lightning_strikes_by_year(
                     delete_target_file=delete_target_file,
                     int_date_list=int_date_list,
                     gen_location_list=gen_location_list,
+                    truncate_table=False
                 )
 
 
@@ -755,6 +759,7 @@ def process_and_load_table(
     delete_target_file: bool,
     int_date_list: typing.List[str],
     gen_location_list: dict,
+    truncate_table: bool = True,
     encoding: str = "utf-8",
 ) -> None:
     process_source_file(
@@ -801,7 +806,8 @@ def process_and_load_table(
                 dataset_id=dataset_id,
                 table_id=destination_table,
                 file_path=target_file,
-                truncate_table=True,
+                truncate_table=truncate_table,
+                source_url=source_url,
                 field_delimiter="|",
             )
         else:
@@ -1158,6 +1164,7 @@ def load_data_to_bq(
     table_id: str,
     file_path: str,
     truncate_table: bool,
+    source_url: str,
     field_delimiter: str = "|",
     quotechar: str = '"',
 ) -> None:
@@ -1172,6 +1179,12 @@ def load_data_to_bq(
     if truncate_table:
         job_config.write_disposition = "WRITE_TRUNCATE"
     else:
+        delete_source_file_data_from_bq(
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_id=table_id,
+            source_url=source_url,
+        )
         job_config.write_disposition = "WRITE_APPEND"
     job_config.skip_leading_rows = 1  # ignore the header
     job_config.autodetect = False
