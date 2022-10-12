@@ -51,6 +51,10 @@ with DAG(
             "PIPELINE_NAME": "locations",
             "CSV_HEADERS": '["fdic_certificate_number","institution_name","branch_name","branch_number","main_office","branch_address","branch_city", "zip_code","branch_county","county_fips_code","state","state_name","institution_class","cbsa_fips_code","cbsa_name", "cbsa_division_flag","cbsa_division_fips_code","cbsa_division_name","cbsa_metro_flag","cbsa_metro_fips_code","cbsa_metro_name", "cbsa_micro_flag","csa_flag","csa_fips_code","csa_name","date_established","fdic_uninum","last_updated","service_type","branch_fdic_uninum" ]',
             "RENAME_MAPPINGS": '{"CERT":"fdic_certificate_number","NAME":"institution_name","OFFNAME":"branch_name","OFFNUM":"branch_number", "MAINOFF":"main_office","ADDRESS":"branch_address","CITY":"branch_city","ZIP":"zip_code","COUNTY":"branch_county", "STCNTY":"county_fips_code","STALP":"state","STNAME":"state_name","BKCLASS":"institution_class","CBSA_NO":"cbsa_fips_code","CBSA":"cbsa_name","CBSA_DIV_FLG":"cbsa_division_flag", "CBSA_DIV_NO":"cbsa_division_fips_code","CBSA_DIV":"cbsa_division_name","CBSA_METRO_FLG":"cbsa_metro_flag", "CBSA_METRO":"cbsa_metro_fips_code","CBSA_METRO_NAME":"cbsa_metro_name","CBSA_MICRO_FLG":"cbsa_micro_flag", "CSA_FLG":"csa_flag","CSA_NO":"csa_fips_code","CSA":"csa_name","ESTYMD":"date_established","FI_UNINUM":"fdic_uninum", "RUNDATE":"last_updated","SERVTYPE":"service_type","UNINUM":"branch_fdic_uninum"}',
+            "REPLACE_BOOL_LIST": '["main_office","cbsa_division_flag","cbsa_metro_flag","cbsa_micro_flag","csa_flag"]',
+            "STRING_TO_INT": "cbsa_division_fips_code",
+            "FORMAT_DATE_LIST": '["date_established", "last_updated"]',
+            "ZERO_TO_NULL": "cbsa_metro_fips_code",
         },
         resources={
             "request_memory": "4G",

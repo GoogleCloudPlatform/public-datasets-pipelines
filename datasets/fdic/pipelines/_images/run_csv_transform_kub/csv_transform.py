@@ -34,117 +34,43 @@ def main(
     headers: typing.List[str],
     rename_mappings: dict,
     pipeline_name: str,
+    replace_bool_list: typing.List[str],
+    format_date_list: typing.List[str],
+    replace_date_list: typing.List[str],
+    null_list: typing.List[str],
+    string_to_int: str,
+    zero_to_null: str,
 ) -> None:
-
     logging.info(
         f"FDIC{pipeline_name} process started at "
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
-
     logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
-
     logging.info(f"Downloading file from {source_url}...")
     download_file(source_url, source_file)
-
     logging.info(f"Opening file {source_file}...")
     df = pd.read_csv(str(source_file))
-
     logging.info(f"Transforming {source_file}... ")
-
     logging.info("Renaming Columns...")
     rename_headers(df, rename_mappings)
-
     if pipeline_name == "locations":
         logging.info("Replacing bool values...")
-        replace_bool_list = [
-            "main_office",
-            "cbsa_division_flag",
-            "cbsa_metro_flag",
-            "cbsa_micro_flag",
-            "csa_flag",
-        ]
         replace_bool(replace_bool_list, df)
-        df["cbsa_division_fips_code"] = df["cbsa_division_fips_code"].astype(
-            "Int64", errors="ignore"
-        )
+        df[string_to_int] = df[string_to_int].astype("Int64", errors="ignore")
         logging.info("Replacing date values...")
         format_date_list = ["date_established", "last_updated"]
         format_date(format_date_list, df)
         logging.info("Replacing with null values...")
-        df["cbsa_metro_fips_code"] = df["cbsa_metro_fips_code"].replace(0, "NULL")
+        df[zero_to_null] = df[zero_to_null].replace(0, "NULL")
     else:
         logging.info("Replacing bool values...")
-        replace_bool_list = [
-            "active",
-            "conservatorship",
-            "denovo_institute",
-            "federal_charter",
-            "iba",
-            "inactive_flag",
-            "credit_card_institution",
-            "bank_insurance_fund_member",
-            "insured_commercial_bank",
-            "deposit_insurance_fund_member",
-            "fdic_insured",
-            "saif_insured",
-            "insured_savings_institute",
-            "oakar_institute",
-            "state_chartered",
-            "sasser_institute",
-            "law_sasser",
-            "cfpb_supervisory_flag",
-            "ffiec_call_report_filer",
-            "holding_company_flag",
-            "ag_lending_flag",
-            "ownership_type",
-            "csa_indicator",
-            "cbsa_metro_flag",
-            "cbsa_micro_flag",
-            "cbsa_division_flag",
-            "subchap_s_indicator",
-        ]
         replace_bool(replace_bool_list, df)
         logging.info("Replacing date values...")
-        replace_date_list = [
-            "last_updated",
-            "effective_date",
-            "end_effective_date",
-            "deposit_insurance_date",
-            "last_structural_change",
-            "report_date",
-            "reporting_period_end_date",
-            "run_date",
-            "cfpb_supervisory_start_date",
-            "cfpb_supervisory_end_date",
-        ]
         replace_date(replace_date_list, df)
         logging.info("Formatting date values...")
-        format_date_list = [
-            "established_date",
-            "last_updated",
-            "effective_date",
-            "end_effective_date",
-            "deposit_insurance_date",
-            "last_structural_change",
-            "report_date",
-            "reporting_period_end_date",
-            "run_date",
-        ]
         format_date(format_date_list, df)
         logging.info("Filling null values...")
-        null_list = [
-            "total_assets",
-            "total_deposits",
-            "equity_capital",
-            "offices_count",
-            "total_domestic_deposits",
-            "net_income",
-            "quarterly_net_income",
-            "office_count_domestic",
-            "office_count_foreign",
-            "office_count_us_territories",
-        ]
         fill_null(null_list, df)
 
     logging.info("Transform: Reordering headers..")
@@ -155,12 +81,11 @@ def main(
         save_to_new_file(df, file_path=str(target_file))
     except Exception as e:
         logging.error(f"Error saving output file: {e}.")
-
     logging.info(
         f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
     )
-    upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
+    upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
     logging.info(
         f"FDIC {pipeline_name} process completed at "
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
@@ -237,4 +162,10 @@ if __name__ == "__main__":
         headers=json.loads(os.environ["CSV_HEADERS"]),
         rename_mappings=json.loads(os.environ["RENAME_MAPPINGS"]),
         pipeline_name=os.environ["PIPELINE_NAME"],
+        replace_bool_list=json.loads(os.environ.get("REPLACE_BOOL_LIST", "")),
+        format_date_list=json.loads(os.environ.get("FORMAT_DATE_LIST", "")),
+        replace_date_list=json.loads(os.environ.get("REPLACE_DATE_LIST", "[]")),
+        null_list=json.loads(os.environ.get("NULL_LIST", "[]")),
+        string_to_int=os.environ.get("STRING_TO_INT", ""),
+        zero_to_null=os.environ.get("ZERO_TO_NULL", ""),
     )

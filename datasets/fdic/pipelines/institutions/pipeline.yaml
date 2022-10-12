@@ -106,6 +106,21 @@ dag:
               "CBSA_NO":"cbsa_fips_code","CBSA_METRO_FLG":"cbsa_metro_flag","CBSA_MICRO_FLG":"cbsa_micro_flag","CBSA_DIV":"cbsa_division_name",
               "CBSA_DIV_NO":"cbsa_division_fips_code","CBSA_DIV_FLG":"cbsa_division_flag","FEDCHRTR":"federal_charter"
             }
+          REPLACE_BOOL_LIST: >-
+            ["active","conservatorship","denovo_institute","federal_charter","iba","inactive_flag","credit_card_institution","bank_insurance_fund_member",
+             "insured_commercial_bank","deposit_insurance_fund_member", "fdic_insured","saif_insured","insured_savings_institute",
+             "oakar_institute","state_chartered","sasser_institute","law_sasser","cfpb_supervisory_flag","ffiec_call_report_filer",
+             "holding_company_flag","ag_lending_flag","ownership_type","csa_indicator","cbsa_metro_flag","cbsa_micro_flag","cbsa_division_flag",
+             "subchap_s_indicator"]
+          REPLACE_DATE_LIST: >-
+            ["last_updated","effective_date","end_effective_date","deposit_insurance_date","last_structural_change","report_date",
+             "reporting_period_end_date","run_date","cfpb_supervisory_start_date","cfpb_supervisory_end_date"]
+          FORMAT_DATE_LIST: >-
+            ["established_date","last_updated","effective_date","end_effective_date","deposit_insurance_date","last_structural_change",
+             "report_date","reporting_period_end_date","run_date"]
+          NULL_LIST: >-
+            ["total_assets","total_deposits","equity_capital","offices_count","total_domestic_deposits","net_income","quarterly_net_income",
+             "office_count_domestic","office_count_foreign","office_count_us_territories"]
         resources:
           request_memory: "4G"
           request_cpu: "1"
