@@ -46,14 +46,12 @@ def main(
         f"FEC{pipeline_name} process started at "
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
-
     logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
     if (
         "individuals" not in pipeline_name
         and "other_committee_tx_2020" not in pipeline_name
     ):
-        logging.info(f"Downloading file from {source_url}...")
         download_file(source_url, source_file_zip_file)
         unzip_file(source_file_zip_file, source_file_path)
 
@@ -65,7 +63,6 @@ def main(
             dtype=object,
             index_col=False,
         )
-
         logging.info(f"Transforming {source_file}... ")
         if "candidate_20" in pipeline_name:
             logging.info("Transform: Trimming white spaces in headers... ")
@@ -105,18 +102,14 @@ def main(
         else:
             df.columns = csv_headers
             pass
-
-        logging.info(f"Saving to output file.. {target_file}")
         try:
             save_to_new_file(df, file_path=str(target_file))
         except Exception as e:
             logging.error(f"Error saving output file: {e}.")
-
         logging.info(
             f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
         )
         upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
-
         logging.info(
             f"FEC {pipeline_name} process completed at "
             + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
@@ -128,7 +121,6 @@ def main(
         process_source_file(
             source_file, target_file, chunksize, csv_headers, pipeline_name
         )
-
         logging.info(
             f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
         )
