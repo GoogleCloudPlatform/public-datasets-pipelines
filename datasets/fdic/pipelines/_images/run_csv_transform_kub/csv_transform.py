@@ -72,10 +72,8 @@ def main(
         format_date(format_date_list, df)
         logging.info("Filling null values...")
         fill_null(null_list, df)
-
     logging.info("Transform: Reordering headers..")
     df = df[headers]
-
     logging.info(f"Saving to output file.. {target_file}")
     try:
         save_to_new_file(df, file_path=str(target_file))
@@ -84,7 +82,6 @@ def main(
     logging.info(
         f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
     )
-
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
     logging.info(
         f"FDIC {pipeline_name} process completed at "
@@ -92,18 +89,18 @@ def main(
     )
 
 
-def replace_bool(replace_bool_list: list, df: pd.DataFrame):
+def replace_bool(replace_bool_list: list, df: pd.DataFrame) -> None:
     for item in replace_bool_list:
         df[item] = df[item].replace([0, 1], [False, True])
 
 
-def format_date(format_date_list: list, df: pd.DataFrame):
+def format_date(format_date_list: list, df: pd.DataFrame) -> None:
     for item in format_date_list:
         df[item] = pd.to_datetime(df[item])
         df[item] = df[item].dt.strftime("%Y-%m-%d")
 
 
-def replace_date(replace_date_list: list, df: pd.DataFrame):
+def replace_date(replace_date_list: list, df: pd.DataFrame) -> None:
     for item in replace_date_list:
         empty_list = []
         df[item] = df[item].astype(str)
@@ -118,7 +115,7 @@ def replace_date(replace_date_list: list, df: pd.DataFrame):
         df[item] = pd.to_datetime(df[item], format="%m-%d-%Y", errors="ignore")
 
 
-def fill_null(null_list: list, df: pd.DataFrame):
+def fill_null(null_list: list, df: pd.DataFrame) -> None:
     for item in null_list:
         df[item] = df[item].fillna(0)
         df[item] = df[item].astype(int)
