@@ -61,21 +61,21 @@ dag:
           DELETE_TARGET_FILE: "Y"
           INPUT_CSV_HEADERS: >-
             [
-              "state_abbr", "state_fips", "place_fips", "stpl_fips", "city_name",
-              "metric_name", "group_name", "metric_number", "group_number", "num",
-              "denom", "est", "lci", "uci", "county_indicator",
-              "multiplier_indicator", "data_yr_type", "geo_level", "date_export"
+              "state_abbr","state_fips","city_fips","stpl_fips","stcosub_fips","city_name","metric_name","metric_number","group_name",
+              "group_number","num","denom","est","lci","uci","county_indicator","multiplier_indicator","data_yr_type","data_yr",
+              "geo_level","date_export","census_year","version","NCHS_disclaimer","suggested_citation"
             ]
           DATA_DTYPES: >-
             {
               "state_abbr": "str",
               "state_fips": "str",
-              "place_fips": "str",
+              "city_fips": "str",
               "stpl_fips": "str",
+              "stcosub_fips": "str",
               "city_name": "str",
               "metric_name": "str",
-              "group_name": "str",
               "metric_number": "str",
+              "group_name": "str",
               "group_number": "str",
               "num": "str",
               "denom": "str",
@@ -85,27 +85,31 @@ dag:
               "county_indicator": "str",
               "multiplier_indicator": "str",
               "data_yr_type": "str",
+              "data_yr": "str",
               "geo_level": "str",
-              "date_export": "str"
+              "date_export": "str",
+              "census_year": "str",
+              "version": "str",
+              "NCHS_disclaimer": "str",
+              "suggested_citation": "str"
             }
           OUTPUT_CSV_HEADERS: >-
             [
-              "state_abbr", "state_fips", "place_fips", "stpl_fips", "city_name",
-              "metric_name", "group_name", "metric_number", "group_number", "num",
-              "denom", "est", "lci", "uci", "county_indicator",
-              "multiplier_indicator", "data_yr_type", "geo_level", "date_export", "source_url",
-              "etl_timestamp"
+              "state_abbr","state_fips","city_fips","stpl_fips","stcosub_fips","city_name","metric_name","metric_number","group_name",
+              "group_number","num","denom","est","lci","uci","county_indicator","multiplier_indicator","data_yr_type","data_yr",
+              "geo_level","date_export","census_year","version","NCHS_disclaimer","suggested_citation"
             ]
           RENAME_HEADERS_LIST: >-
             {
               "state_abbr": "state_abbr",
               "state_fips": "state_fips",
-              "place_fips": "place_fips",
+              "city_fips": "city_fips",
               "stpl_fips": "stpl_fips",
+              "stcosub_fips": "stcosub_fips",
               "city_name": "city_name",
               "metric_name": "metric_name",
-              "group_name": "group_name",
               "metric_number": "metric_number",
+              "group_name": "group_name",
               "group_number": "group_number",
               "num": "num",
               "denom": "denom",
@@ -115,15 +119,21 @@ dag:
               "county_indicator": "county_indicator",
               "multiplier_indicator": "multiplier_indicator",
               "data_yr_type": "data_yr_type",
+              "data_yr": "data_yr",
               "geo_level": "geo_level",
-              "date_export": "date_export"
+              "date_export": "date_export",
+              "census_year": "census_year",
+              "version": "version",
+              "NCHS_disclaimer": "NCHS_disclaimer",
+              "suggested_citation": "suggested_citation"
             }
           TABLE_DESCRIPTION: "City Health Dashboard Data Tract"
           PIPELINE_NAME: "chdb_data_city_all"
-          FILE_NAME_PREFIX: "CHDB_data_city_all_"
+          FILE_NAME_PREFIX: "CHDB_data_city_all_v15.1"
         resources:
-          limit_memory: "8G"
-          limit_cpu: "1"
+          request_memory: "4G"
+          request_cpu: "1"
+          request_ephemeral_storage: "5G"
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
@@ -152,20 +162,19 @@ dag:
           DELETE_TARGET_FILE: "Y"
           INPUT_CSV_HEADERS: >-
             [
-              "state_abbr", "state_fips", "county_fips", "county_name", "tract_code",
-              "stcotr_fips", "stpl_fips", "city_name", "metric_name", "metric_number",
-              "group_name", "group_number", "num", "denom", "est",
-              "lci", "uci", "data_yr_type", "geo_level", "date_export"
+              "state_abbr","state_fips","county_name","city_fips","stpl_fips","stcosub_fips","stcotr_fips","city_name","metric_name",
+              "metric_number","group_name","group_number","num","denom","est","lci","uci","data_yr_type","data_yr","geo_level",
+              "date_export","census_year","version","suggested_citation"
             ]
           DATA_DTYPES: >-
             {
               "state_abbr": "str",
               "state_fips": "str",
-              "county_fips": "str",
               "county_name": "str",
-              "tract_code": "str",
-              "stcotr_fips": "str",
+              "city_fips": "str",
               "stpl_fips": "str",
+              "stcosub_fips": "str",
+              "stcotr_fips": "str",
               "city_name": "str",
               "metric_name": "str",
               "metric_number": "str",
@@ -177,26 +186,28 @@ dag:
               "lci": "str",
               "uci": "str",
               "data_yr_type": "str",
+              "data_yr": "str",
               "geo_level": "str",
-              "date_export": "str"
+              "date_export": "str",
+              "census_year": "str",
+              "version": "str",
+              "suggested_citation": "str"
             }
           OUTPUT_CSV_HEADERS: >-
             [
-              "state_abbr", "state_fips", "county_fips", "county_name", "tract_code",
-              "stcotr_fips", "stpl_fips", "city_name", "metric_name", "metric_number",
-              "group_name", "group_number", "num", "denom", "est",
-              "lci", "uci", "data_yr_type", "geo_level", "date_export", "source_url",
-              "etl_timestamp"
+              "state_abbr","state_fips","county_name","city_fips","stpl_fips","stcosub_fips","stcotr_fips","city_name","metric_name",
+              "metric_number","group_name","group_number","num","denom","est","lci","uci","data_yr_type","data_yr","geo_level",
+              "date_export","census_year","version","suggested_citation"
             ]
           RENAME_HEADERS_LIST: >-
             {
               "state_abbr": "state_abbr",
               "state_fips": "state_fips",
-              "county_fips": "county_fips",
               "county_name": "county_name",
-              "tract_code": "tract_code",
-              "stcotr_fips": "stcotr_fips",
+              "city_fips": "city_fips",
               "stpl_fips": "stpl_fips",
+              "stcosub_fips": "stcosub_fips",
+              "stcotr_fips": "stcotr_fips",
               "city_name": "city_name",
               "metric_name": "metric_name",
               "metric_number": "metric_number",
@@ -208,15 +219,20 @@ dag:
               "lci": "lci",
               "uci": "uci",
               "data_yr_type": "data_yr_type",
+              "data_yr": "data_yr",
               "geo_level": "geo_level",
-              "date_export": "date_export"
+              "date_export": "date_export",
+              "census_year": "census_year",
+              "version": "version",
+              "suggested_citation": "suggested_citation"
             }
           TABLE_DESCRIPTION: "City Health Dashboard Data Tract"
           PIPELINE_NAME: "chdb_data_tract_all"
-          FILE_NAME_PREFIX: "CHDB_data_tract_all_"
+          FILE_NAME_PREFIX: "CHDB_data_tract_all_v15.1"
         resources:
-          limit_memory: "8G"
-          limit_cpu: "1"
+          request_memory: "4G"
+          request_cpu: "1"
+          request_ephemeral_storage: "5G"
 
   graph_paths:
     - "[ chdb_data_tract, chdb_data_city ]"

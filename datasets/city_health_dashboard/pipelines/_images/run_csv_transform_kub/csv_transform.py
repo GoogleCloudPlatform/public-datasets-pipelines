@@ -105,7 +105,7 @@ def execute_pipeline(
     download_file(source_url, source_file)
     dest_path = os.path.split(source_file)[0]
     unpack_file(infile=source_file, dest_path=dest_path)
-    datafile = find_file_in_path(dest_path, f"*{file_name_prefix}*.csv")[0]
+    datafile = find_file_in_path(dest_path, f"{file_name_prefix}.csv")[0]
     process_source_file(
         source_url=source_url,
         source_file=datafile,
@@ -270,7 +270,7 @@ def process_chunk(
 ) -> None:
     logging.info(f"Processing batch file {target_file_batch}")
     df = rename_headers(df, rename_headers_list)
-    df = add_metadata_cols(df, source_url)
+    # df = add_metadata_cols(df, source_url)
     df = df[output_csv_headers_list]
     save_to_new_file(df, file_path=str(target_file_batch), sep="|")
     append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
