@@ -37,11 +37,11 @@ with DAG(
         location="us-central1-c",
         body={
             "name": "pubds-new-york",
-            "initial_node_count": 4,
+            "initial_node_count": 2,
             "network": "{{ var.value.vpc_network }}",
             "ip_allocation_policy": {"cluster_ipv4_cidr_block": "/26"},
             "node_config": {
-                "machine_type": "e2-standard-16",
+                "machine_type": "e2-standard-8",
                 "oauth_scopes": [
                     "https://www.googleapis.com/auth/devstorage.read_write",
                     "https://www.googleapis.com/auth/cloud-platform",
@@ -78,7 +78,7 @@ with DAG(
             "RENAME_HEADERS": '{\n  "Unique Key": "unique_key",\n  "Created Date": "created_date",\n  "Closed Date": "closed_date",\n  "Agency": "agency",\n  "Agency Name": "agency_name",\n  "Complaint Type": "complaint_type",\n  "Descriptor": "descriptor",\n  "Location Type": "location_type",\n  "Incident Zip": "incident_zip",\n  "Incident Address": "incident_address",\n  "Street Name": "street_name",\n  "Cross Street 1": "cross_street_1",\n  "Cross Street 2": "cross_street_2",\n  "Intersection Street 1": "intersection_street_1",\n  "Intersection Street 2": "intersection_street_2",\n  "Address Type": "address_type",\n  "City": "city",\n  "Landmark": "landmark",\n  "Facility Type": "facility_type",\n  "Status": "status",\n  "Due Date": "due_date",\n  "Resolution Description": "resolution_description",\n  "Resolution Action Updated Date": "resolution_action_updated_date",\n  "Community Board": "community_board",\n  "Open Data Channel Type": "open_data_channel_type",\n  "Borough": "borough",\n  "X Coordinate (State Plane)": "x_coordinate",\n  "Y Coordinate (State Plane)": "y_coordinate",\n  "Park Facility Name": "park_facility_name",\n  "Park Borough": "park_borough",\n  "Vehicle Type": "vehicle_type",\n  "Taxi Company Borough": "taxi_company_borough",\n  "Taxi Pick Up Location": "taxi_pickup_location",\n  "Bridge Highway Name": "bridge_highway_name",\n  "Bridge Highway Direction": "bridge_highway_direction",\n  "Road Ramp": "road_ramp",\n  "Bridge Highway Segment": "bridge_highway_segment",\n  "Latitude": "latitude",\n  "Longitude": "longitude",\n  "Location": "location",\n  "BBL": "bbl"\n}',
             "OUTPUT_CSV_HEADERS": '[\n  "unique_key",\n  "created_date",\n  "closed_date",\n  "agency",\n  "agency_name",\n  "complaint_type",\n  "descriptor",\n  "location_type",\n  "incident_zip",\n  "incident_address",\n  "street_name",\n  "cross_street_1",\n  "cross_street_2",\n  "intersection_street_1",\n  "intersection_street_2",\n  "address_type",\n  "city",\n  "landmark",\n  "facility_type",\n  "status",\n  "due_date",\n  "resolution_description",\n  "resolution_action_updated_date",\n  "community_board",\n  "borough",\n  "x_coordinate",\n  "y_coordinate",\n  "park_facility_name",\n  "park_borough",\n  "bbl",\n  "open_data_channel_type",\n  "vehicle_type",\n  "taxi_company_borough",\n  "taxi_pickup_location",\n  "bridge_highway_name",\n  "bridge_highway_direction",\n  "road_ramp",\n  "bridge_highway_segment",\n  "latitude",\n  "longitude",\n  "location"\n]',
         },
-        resources={"request_ephemeral_storage": "32G", "limit_cpu": "3"},
+        resources={"request_ephemeral_storage": "10G", "limit_cpu": "2"},
     )
 
     # Run New York Citibike Stations Pipeline
@@ -113,7 +113,7 @@ with DAG(
             "INPUT_CSV_HEADERS": '[\n  "rental_uris",\n  "lat",\n  "eightd_station_services",\n  "legacy_id_x",\n  "short_name",\n  "external_id",\n  "station_id",\n  "rental_methods",\n  "station_type",\n  "short_name",\n  "eightd_has_key_dispenser",\n  "electric_bike_surcharge_waiver",\n  "lon",\n  "has_kiosk",\n  "capacity",\n  "region_id",\n  "is_installed",\n  "num_docks_available",\n  "num_docks_disabled",\n  "num_bikes_disabled",\n  "num_bikes_available",\n  "station_status",\n  "last_reported",\n  "eightd_has_available_keys",\n  "num_ebikes_available",\n  "is_returning",\n  "is_renting",\n  "legacy_id_y",\n  "valet",\n  "eightd_active_station_services"\n]',
             "OUTPUT_CSV_HEADERS": '[\n  "station_id",\n  "name",\n  "short_name",\n  "latitude",\n  "longitude",\n  "region_id",\n  "rental_methods",\n  "capacity",\n  "eightd_has_key_dispenser",\n  "num_bikes_available",\n  "num_bikes_disabled",\n  "num_docks_available",\n  "num_docks_disabled",\n  "is_installed",\n  "is_renting",\n  "is_returning",\n  "eightd_has_available_keys",\n  "last_reported"\n]',
         },
-        resources={"request_ephemeral_storage": "16G", "limit_cpu": "3"},
+        resources={"request_ephemeral_storage": "10G", "limit_cpu": "2"},
     )
 
     # Run New York NYPD MV Collisions Pipeline
@@ -147,7 +147,7 @@ with DAG(
             "RENAME_HEADERS_LIST": '{\n  "BOROUGH": "borough",\n  "CONTRIBUTING FACTOR VEHICLE 1": "contributing_factor_vehicle_1",\n  "CONTRIBUTING FACTOR VEHICLE 2": "contributing_factor_vehicle_2",\n  "CONTRIBUTING FACTOR VEHICLE 3": "contributing_factor_vehicle_3",\n  "CONTRIBUTING FACTOR VEHICLE 4": "contributing_factor_vehicle_4",\n  "CONTRIBUTING FACTOR VEHICLE 5": "contributing_factor_vehicle_5",\n  "CROSS STREET NAME": "cross_street_name",\n  "LATITUDE": "latitude",\n  "LONGITUDE": "longitude",\n  "LOCATION": "location",\n  "NUMBER OF CYCLIST INJURED": "number_of_cyclist_injured",\n  "NUMBER OF CYCLIST KILLED": "number_of_cyclist_killed",\n  "NUMBER OF MOTORIST INJURED": "number_of_motorist_injured",\n  "NUMBER OF MOTORIST KILLED": "number_of_motorist_killed",\n  "NUMBER OF PEDESTRIANS INJURED": "number_of_pedestrians_injured",\n  "NUMBER OF PEDESTRIANS KILLED": "number_of_pedestrians_killed",\n  "NUMBER OF PERSONS INJURED": "number_of_persons_injured",\n  "NUMBER OF PERSONS KILLED": "number_of_persons_killed",\n  "OFF STREET NAME": "off_street_name",\n  "ON STREET NAME": "on_street_name",\n  "COLLISION_ID": "unique_key",\n  "VEHICLE TYPE CODE 1": "vehicle_type_code1",\n  "VEHICLE TYPE CODE 2": "vehicle_type_code2",\n  "VEHICLE TYPE CODE 3": "vehicle_type_code_3",\n  "VEHICLE TYPE CODE 4": "vehicle_type_code_4",\n  "VEHICLE TYPE CODE 5": "vehicle_type_code_5",\n  "ZIP CODE": "zip_code"\n}',
             "REORDER_HEADERS_LIST": '[\n  "borough",\n  "contributing_factor_vehicle_1",\n  "contributing_factor_vehicle_2",\n  "contributing_factor_vehicle_3",\n  "contributing_factor_vehicle_4",\n  "contributing_factor_vehicle_5",\n  "cross_street_name",\n  "timestamp",\n  "latitude",\n  "longitude",\n  "location",\n  "number_of_cyclist_injured",\n  "number_of_cyclist_killed",\n  "number_of_motorist_injured",\n  "number_of_motorist_killed",\n  "number_of_pedestrians_injured",\n  "number_of_pedestrians_killed",\n  "number_of_persons_injured",\n  "number_of_persons_killed",\n  "off_street_name",\n  "on_street_name",\n  "unique_key",\n  "vehicle_type_code1",\n  "vehicle_type_code2",\n  "vehicle_type_code_3",\n  "vehicle_type_code_4",\n  "vehicle_type_code_5",\n  "zip_code"\n]',
         },
-        resources={"request_ephemeral_storage": "16G", "limit_cpu": "3"},
+        resources={"request_ephemeral_storage": "10G", "limit_cpu": "2"},
     )
 
     # Run New York Tree Census 1995 Pipeline
@@ -176,7 +176,7 @@ with DAG(
             "REMOVE_WHITESPACE_LIST": '[\n  "spc_latin"\n]',
             "REORDER_HEADERS_LIST": '[\n  "recordid",\n  "address",\n  "house_number",\n  "street",\n  "zip_original",\n  "cb_original",\n  "site",\n  "species",\n  "diameter",\n  "status",\n  "wires",\n  "sidewalk_condition",\n  "support_structure",\n  "borough",\n  "x",\n  "y",\n  "longitude",\n  "latitude",\n  "cb_new",\n  "zip_new",\n  "censustract_2010",\n  "censusblock_2010",\n  "nta_2010",\n  "segmentid",\n  "spc_common",\n  "spc_latin",\n  "location"\n]',
         },
-        resources={"request_ephemeral_storage": "16G", "limit_cpu": "3"},
+        resources={"request_ephemeral_storage": "10G", "limit_cpu": "2"},
     )
     delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
         task_id="delete_cluster",
@@ -191,7 +191,7 @@ with DAG(
             transform_csv_nypd_mv_collisions,
             transform_csv_ny_citibike_stations,
             transform_csv_ny_tree_census_1995,
-            transform_csv_ny_311_service_requests,
         ]
+        >> transform_csv_ny_311_service_requests
         >> delete_cluster
     )

@@ -95,6 +95,9 @@ def execute_pipeline(
         source_url_stations_json=source_url_stations_json,
         source_url_status_json=source_url_status_json,
         source_file=source_file,
+        resolve_datatypes_list=resolve_datatypes_list,
+        normalize_data_list=normalize_data_list,
+        boolean_datapoints_list=boolean_datapoints_list,
     )
     process_source_file(
         source_file=source_file,
@@ -286,7 +289,12 @@ def process_source_file(
 
 
 def download_and_merge_source_files(
-    source_url_stations_json: str, source_url_status_json: str, source_file: str
+    source_url_stations_json: str,
+    source_url_status_json: str,
+    source_file: str,
+    resolve_datatypes_list: dict,
+    normalize_data_list: typing.List[str],
+    boolean_datapoints_list: typing.List[str]
 ) -> None:
     source_file_stations_csv = str(source_file).replace(".csv", "") + "_stations.csv"
     source_file_stations_json = str(source_file).replace(".csv", "") + "_stations"
@@ -306,6 +314,12 @@ def download_and_merge_source_files(
     )
     logging.info("Merging files")
     df = df_stations.merge(df_status, left_on="station_id", right_on="station_id")
+    df = clean_data_points(
+        df,
+        resolve_datatypes_list=resolve_datatypes_list,
+        normalize_data_list=normalize_data_list,
+        boolean_datapoints_list=boolean_datapoints_list,
+    )
     save_to_new_file(df, source_file)
 
 
@@ -341,12 +355,12 @@ def process_chunk(
 ) -> None:
     logging.info(f"Processing batch file {target_file_batch}")
     df = convert_datetime_from_int(df, datetime_fieldlist)
-    df = clean_data_points(
-        df,
-        resolve_datatypes_list=resolve_datatypes_list,
-        normalize_data_list=normalize_data_list,
-        boolean_datapoints_list=boolean_datapoints_list,
-    )
+    # df = clean_data_points(
+    #     df,
+    #     resolve_datatypes_list=resolve_datatypes_list,
+    #     normalize_data_list=normalize_data_list,
+    #     boolean_datapoints_list=boolean_datapoints_list,
+    # )
     df = rename_headers(df, rename_headers_list)
     df = reorder_headers(df, output_headers_list)
     save_to_new_file(df, file_path=str(target_file_batch))
@@ -387,7 +401,10 @@ def clean_data_points(
 def resolve_datatypes(df: pd.DataFrame, resolve_datatypes_list: dict) -> pd.DataFrame:
     for column, datatype in resolve_datatypes_list.items():
         logging.info(f"Resolving datatype for column {column} to {datatype}")
-        df[column] = df[column].astype(datatype)
+        if datatype in ('Int64', 'Float'):
+            df[column] = df[column].fillna(0).astype(datatype)
+        else:
+            df[column] = df[column].astype(datatype)
     return df
 
 
