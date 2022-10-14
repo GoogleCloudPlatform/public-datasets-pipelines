@@ -47,34 +47,26 @@ def main(
     )
     logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
-    logging.info(f"Downloading file from {source_url}...")
     download_file(source_url, source_file)
     logging.info(f"Opening file {source_file}...")
     df = pd.read_csv(str(source_file))
     logging.info(f"Transforming {source_file}... ")
-    logging.info("Renaming Columns...")
     rename_headers(df, rename_mappings)
     if pipeline_name == "locations":
-        logging.info("Replacing bool values...")
         replace_bool(replace_bool_list, df)
+        logging.info("Converting values to int...")
         df[string_to_int] = df[string_to_int].astype("Int64", errors="ignore")
-        logging.info("Replacing date values...")
         format_date_list = ["date_established", "last_updated"]
         format_date(format_date_list, df)
         logging.info("Replacing with null values...")
         df[zero_to_null] = df[zero_to_null].replace(0, "NULL")
     else:
-        logging.info("Replacing bool values...")
         replace_bool(replace_bool_list, df)
-        logging.info("Replacing date values...")
         replace_date(replace_date_list, df)
-        logging.info("Formatting date values...")
         format_date(format_date_list, df)
-        logging.info("Filling null values...")
         fill_null(null_list, df)
     logging.info("Transform: Reordering headers..")
     df = df[headers]
-    logging.info(f"Saving to output file.. {target_file}")
     try:
         save_to_new_file(df, file_path=str(target_file))
     except Exception as e:
@@ -90,17 +82,20 @@ def main(
 
 
 def replace_bool(replace_bool_list: list, df: pd.DataFrame) -> None:
+    logging.info("Replacing bool values...")
     for item in replace_bool_list:
         df[item] = df[item].replace([0, 1], [False, True])
 
 
 def format_date(format_date_list: list, df: pd.DataFrame) -> None:
+    logging.info("Formatting date values...")
     for item in format_date_list:
         df[item] = pd.to_datetime(df[item])
         df[item] = df[item].dt.strftime("%Y-%m-%d")
 
 
 def replace_date(replace_date_list: list, df: pd.DataFrame) -> None:
+    logging.info("Replacing date values...")
     for item in replace_date_list:
         empty_list = []
         df[item] = df[item].astype(str)
@@ -116,16 +111,19 @@ def replace_date(replace_date_list: list, df: pd.DataFrame) -> None:
 
 
 def fill_null(null_list: list, df: pd.DataFrame) -> None:
+    logging.info("Filling null values...")
     for item in null_list:
         df[item] = df[item].fillna(0)
         df[item] = df[item].astype(int)
 
 
 def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
+    logging.info("Renaming Columns...")
     df.rename(columns=rename_mappings, inplace=True)
 
 
 def save_to_new_file(df: pd.DataFrame, file_path: str) -> None:
+    logging.info(f"Saving to output file.. {file_path}")
     df.to_csv(file_path, index=False)
 
 
