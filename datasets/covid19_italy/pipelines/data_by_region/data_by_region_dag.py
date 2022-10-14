@@ -121,7 +121,7 @@ with DAG(
     # Task to load CSV data to a BigQuery table
     load_data_by_region_to_bq_eu = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_data_by_region_to_bq_eu",
-        bucket="public-datasets-dev-covid19-italy-eu",
+        bucket="{{ var.json.covid19_italy.destination_gcs_bucket }}",
         source_objects="region/data_output.csv",
         source_format="CSV",
         destination_project_dataset_table="covid19_italy_eu.data_by_region",
