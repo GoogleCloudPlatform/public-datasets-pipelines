@@ -31,46 +31,51 @@ def main(
     target_gcs_bucket: str,
     target_gcs_path: str,
 ) -> None:
-    logging.info(" Sales pipeline process started")
     logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
-
-    logging.info(f"Downloading file {source_url}")
-    download_file(source_url, source_file)
-
-    chunksz = int(chunksize)
-    logging.info(f"Reading csv file {source_url}")
-    with pd.read_csv(
-        source_file,
-        engine="python",
-        encoding="utf-8",
-        quotechar='"',
-        chunksize=chunksz,
-    ) as reader:
-        for chunk_number, chunk in enumerate(reader):
-            logging.info(f"Processing batch {chunk_number}")
-            target_file_batch = str(target_file).replace(
-                ".csv", "-" + str(chunk_number) + ".csv"
-            )
-            df = pd.DataFrame()
-            df = pd.concat([df, chunk])
-            processChunk(df, target_file_batch)
-
-            logging.info(f"Appending batch {chunk_number} to {target_file}")
-            if chunk_number == 0:
-                subprocess.run(["cp", target_file_batch, target_file])
-            else:
-                subprocess.check_call(f"sed -i '1d' {target_file_batch}", shell=True)
-                subprocess.check_call(
-                    f"cat {target_file_batch} >> {target_file}", shell=True
+    source_files=list_files(source_bucket=target_gcs_bucket)
+    for source_file in source_files:
+        logging.info("Downloading source file")
+        download_file(source_url, source_file)
+        chunksz = int(chunksize)
+        logging.info(f"Reading csv file {source_url}")
+        with pd.read_csv(
+            source_file,
+            engine="python",
+            encoding="utf-8",
+            quotechar='"',
+            chunksize=chunksz,
+        ) as reader:
+            for chunk_number, chunk in enumerate(reader):
+                logging.info(f"Processing batch {chunk_number}")
+                target_file_batch = str(target_file).replace(
+                    ".csv", "-" + str(chunk_number) + ".csv"
                 )
-            subprocess.run(["rm", target_file_batch])
+                df = pd.DataFrame()
+                df = pd.concat([df, chunk])
+                processChunk(df, target_file_batch)
+                logging.info(f"Appending batch {chunk_number} to {target_file}")
+                if chunk_number == 0:
+                    subprocess.run(["cp", target_file_batch, target_file])
+                else:
+                    subprocess.check_call(f"sed -i '1d' {target_file_batch}", shell=True)
+                    subprocess.check_call(
+                        f"cat {target_file_batch} >> {target_file}", shell=True
+                    )
+                subprocess.run(["rm", target_file_batch])
+        logging.info(
+            f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
+        )
+        upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
+        logging.info("Proceed to next file, if any =======>")
 
-    logging.info(
-        f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
-    )
-    upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
-
+def list_files(source_bucket):
+    client=storage.Client()
+    blobs=client.list_blobs(source_bucket,prefix="split")
+    files=[]
+    for blob in blobs:
+        files.append(blob.name.split("/")[-1])
+    return files
 
 def processChunk(df: pd.DataFrame, target_file_batch: str) -> None:
 
