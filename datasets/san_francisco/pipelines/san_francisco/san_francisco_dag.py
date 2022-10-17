@@ -281,7 +281,7 @@ with DAG(
             "TARGET_GCS_PATH": "data/san_francisco/transit_municipal_trips/data_output.csv",
             "SCHEMA_PATH": "data/san_francisco/schema/sf_muni_trips_schema.json",
             "RENAME_HEADERS_LIST": '{\n    "DIRECTION": "direction_old",\n    "direction_id": "direction",\n    "SERVICE_CA": "service_category",\n    "shape": "trip_shape"\n}',
-            "STARTS_WITH_PATTERN_LIST": '[\n  [ ["direction", "direction"], [ "0", "O" ] ],\n  [ ["direction", "direction"], [ "1", "I" ] ],\n  [ ["SERVICE_CA", "SERVICE_CA"], [ "nan", "" ] ]\n]',
+            "STARTS_WITH_PATTERN_LIST": '[\n  [ ["direction_id", "direction_id"], [ "0", "O" ] ],\n  [ ["direction_id", "direction_id"], [ "1", "I" ] ],\n  [ ["SERVICE_CA", "SERVICE_CA"], [ "nan", "" ] ]\n]',
             "REORDER_HEADERS_LIST": '[\n  "trip_id",\n  "route_id",\n  "direction",\n  "block_id",\n  "service_category",\n  "trip_headsign",\n  "shape_id",\n  "trip_shape"\n]',
         },
         resources={

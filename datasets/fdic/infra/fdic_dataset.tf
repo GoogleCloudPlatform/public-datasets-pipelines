@@ -15,12 +15,28 @@
  */
 
 
-variable "project_id" {}
-variable "bucket_name_prefix" {}
-variable "impersonating_acct" {}
-variable "region" {}
-variable "env" {}
-variable "iam_policies" {
-  default = {}
+resource "google_bigquery_dataset" "fdic" {
+  dataset_id  = "fdic"
+  project     = var.project_id
+  description = "FDIC dataset"
 }
 
+output "bigquery_dataset-fdic-dataset_id" {
+  value = google_bigquery_dataset.fdic.dataset_id
+}
+
+resource "google_storage_bucket" "fdic" {
+  name                        = "${var.bucket_name_prefix}-fdic"
+  force_destroy               = true
+  location                    = "US"
+  uniform_bucket_level_access = true
+  lifecycle {
+    ignore_changes = [
+      logging,
+    ]
+  }
+}
+
+output "storage_bucket-fdic-name" {
+  value = google_storage_bucket.fdic.name
+}

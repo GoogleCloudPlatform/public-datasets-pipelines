@@ -15,12 +15,20 @@
  */
 
 
-variable "project_id" {}
-variable "bucket_name_prefix" {}
-variable "impersonating_acct" {}
-variable "region" {}
-variable "env" {}
-variable "iam_policies" {
-  default = {}
+resource "google_bigquery_table" "fdic_locations" {
+  project     = var.project_id
+  dataset_id  = "fdic"
+  table_id    = "locations"
+  description = "FDIC table"
+  depends_on = [
+    google_bigquery_dataset.fdic
+  ]
 }
 
+output "bigquery_table-fdic_locations-table_id" {
+  value = google_bigquery_table.fdic_locations.table_id
+}
+
+output "bigquery_table-fdic_locations-id" {
+  value = google_bigquery_table.fdic_locations.id
+}

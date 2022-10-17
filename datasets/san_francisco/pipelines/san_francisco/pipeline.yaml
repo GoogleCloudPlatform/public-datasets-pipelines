@@ -515,8 +515,8 @@ dag:
             }
           STARTS_WITH_PATTERN_LIST: >-
             [
-              [ ["direction", "direction"], [ "0", "O" ] ],
-              [ ["direction", "direction"], [ "1", "I" ] ],
+              [ ["direction_id", "direction_id"], [ "0", "O" ] ],
+              [ ["direction_id", "direction_id"], [ "1", "I" ] ],
               [ ["SERVICE_CA", "SERVICE_CA"], [ "nan", "" ] ]
             ]
           REORDER_HEADERS_LIST: >-

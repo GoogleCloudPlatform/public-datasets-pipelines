@@ -1,0 +1,200 @@
+[
+  {
+    "name":"episode_id",
+    "type":"string",
+    "description":"ID assigned by NWS to denote the storm episode; links the event details file with the information within location file",
+    "mode":"nullable"
+  },
+  {
+    "name":"event_id",
+    "type":"string",
+    "description":"ID assigned by NWS to note a single, small part that goes into a specific storm episode; links the storm episode between the three files downloaded from SPC’s website",
+    "mode":"nullable"
+  },
+  {
+    "name":"state",
+    "type":"string",
+    "description":"The full text state name where the event occurred",
+    "mode":"nullable"
+  },
+  {
+    "name":"state_fips_code",
+    "type":"string",
+    "description":"Unique FIPS code identifier assigned to each state.   State names and their corresponding FIPS codes are available as a BigQuery Public Dataset: bigquery-public-data.census_fips_codes.states_2016  The geographic polygons that define the perimeter of each state are available as a BigQuery Public Dataset: bigquery-public-data.geo_us_boundaries.us_states",
+    "mode":"nullable"
+  },
+  {
+    "name":"event_type",
+    "type":"string",
+    "description":"The only events permitted in Storm Data are listed in Table 1 of Section 2.1.1 of NWS Directive 10-1605 at http://www.nws.noaa.gov/directives/sym/pd01016005curr.pdf. The chosen event type is the one that most accurately describes the meteorological event leading to fatalities, injuries, damage, etc. However, significant events, such as tornadoes, having no impact or causing no damage, are also included in Storm Data.",
+    "mode":"nullable"
+  },
+  {
+    "name":"cz_type",
+    "type":"string",
+    "description":"Indicates whether the event happened in   - C: County/Parish  - Z: NWS zone  - M: Marine",
+    "mode":"nullable"
+  },
+  {
+    "name":"cz_fips_code",
+    "type":"string",
+    "description":"Unique FIPS code identifier assigned to each county.   State names and their corresponding FIPS codes are available as a BigQuery Public Dataset: bigquery-public-data.census_fips_codes.counties_2016  The geographic polygons that define the perimeter of each state are available as a BigQuery Public Dataset: bigquery-public-data.geo_us_boundaries.us_counties",
+    "mode":"nullable"
+  },
+  {
+    "name":"cz_name",
+    "type":"string",
+    "description":"(County/Parish, Zone or Marine Name assigned to the county FIPS number or NWS Forecast Zone  NWS Forecast Zones are available as a BigQuery Public Dataset: bigquery-public-data.noaa_historic_severe_storms.nws_forecast_zones",
+    "mode":"nullable"
+  },
+  {
+    "name":"wfo",
+    "type":"string",
+    "description":"National Weather Service Forecast Office’s area of responsibility (County Warning Area) in which the event occurred",
+    "mode":"nullable"
+  },
+  {
+    "name":"event_begin_time",
+    "type":"datetime",
+    "description":"The date and time that the event began. Note that episodes and events may have different start and end times if multiple events occured in the same episode",
+    "mode":"nullable"
+  },
+  {
+    "name":"event_timezone",
+    "type":"string",
+    "description":"The time zone in which the event_begin_time and the event_end_time is recorded.",
+    "mode":"nullable"
+  },
+  {
+    "name":"event_end_time",
+    "type":"datetime",
+    "description":"The date and time that the event ended. Note that episodes and events may have different start and end times if multiple events occured in the same episode",
+    "mode":"nullable"
+  },
+  {
+    "name":"injuries_direct",
+    "type":"integer",
+    "description":"The number of injuries directly related to the weather event",
+    "mode":"nullable"
+  },
+  {
+    "name":"injuries_indirect",
+    "type":"integer",
+    "description":"The number of injuries indirectly related to the weather event",
+    "mode":"nullable"
+  },
+  {
+    "name":"deaths_direct",
+    "type":"integer",
+    "description":"The number of deathes directly related to the weather event",
+    "mode":"nullable"
+  },
+  {
+    "name":"deaths_indirect",
+    "type":"integer",
+    "description":"The number of deathes indirectly related to the weather event",
+    "mode":"nullable"
+  },
+  {
+    "name":"damage_property",
+    "type":"integer",
+    "description":"The estimated amount of damage to property incurred by the weather event, in USD at the time of the event. Values are not adjusted for inflation  Note: Values listed as 0 do not necessarily mean that no property damage occurred as a result of the event",
+    "mode":"nullable"
+  },
+  {
+    "name":"damage_crops",
+    "type":"integer",
+    "description":"The estimated amount of damage to crops incurred by the weather event, in USD at the time of the storm. Values are not adjusted for inflation  Note: Values listed as 0 do not necessarily mean that no property damage occurred as a result of the event",
+    "mode":"nullable"
+  },
+  {
+    "name":"source",
+    "type":"string",
+    "description":"Source reporting the weather event  Note: This can be any entry. Values are not restricted to specific categories",
+    "mode":"nullable"
+  },
+  {
+    "name":"magnitude",
+    "type":"float",
+    "description":"Measured extent of the magnitude type. This is only used for wind speeds and hail size.   Wind speeds are in MPH; Hail sizes are in inches",
+    "mode":"nullable"
+  },
+  {
+    "name":"magnitude_type",
+    "type":"string",
+    "description":"Differentiates between the type of mangitude measured.    - EG = Wind Estimated Gust  - ES = Estimated Sustained Wind  - MS = Measured Sustained Wind  - MG = Measured Wind Gust  No magnitude type is included for hail",
+    "mode":"nullable"
+  },
+  {
+    "name":"flood_cause",
+    "type":"string",
+    "description":"Reported or estimated cause of the flood",
+    "mode":"nullable"
+  },
+  {
+    "name":"tor_f_scale",
+    "type":"string",
+    "description":"Enhanced Fujita Scale describes the strength of the tornado based on the amount and type of damage caused by the tornado. The F-scale of damage will vary in the destruction area; therefore, the highest value of the F-scale is recorded for each event.    - EF0 – Light Damage (40 – 72 mph)   - EF1 – Moderate Damage (73 – 112 mph)   - EF2 – Significant damage (113 – 157 mph)   - EF3 – Severe Damage (158 – 206 mph)   - EF4 – Devastating Damage (207 – 260 mph)   - EF5 – Incredible Damage (261 – 318 mph)",
+    "mode":"nullable"
+  },
+  {
+    "name":"tor_length",
+    "type":"string",
+    "description":"Length of the tornado or tornado segment while on the ground (minimal of tenths of miles)",
+    "mode":"nullable"
+  },
+  {
+    "name":"tor_width",
+    "type":"string",
+    "description":"Width of the tornado or tornado segment while on the ground (in feet)",
+    "mode":"nullable"
+  },
+  {
+    "name":"tor_other_wfo",
+    "type":"string",
+    "description":"Indicates the continuation of a tornado segment as it crossed from one National Weather Service Forecast Office to another. The subsequent WFO identifier is provided within this field.",
+    "mode":"nullable"
+  },
+  {
+    "name":"location_index",
+    "type":"string",
+    "description":"Number assigned by NWS to specific locations within the same Storm event. Each event’s sequentially increasing location index number will have a corresponding lat/lon point",
+    "mode":"nullable"
+  },
+  {
+    "name":"event_range",
+    "type":"float",
+    "description":"A hydro-meteorological event will be referenced, minimally, to the nearest tenth of a mile, to the geographical center (not from the village/city boundaries or limits) of a particular village/city, airport, or inland lake, providing that the reference point is documented in the Storm Data software location database.",
+    "mode":"nullable"
+  },
+  {
+    "name":"event_azimuth",
+    "type":"string",
+    "description":"16-point compass direction from a particular village/city, airport, or inland lake, providing that the reference point is documented in the Storm Data software location database of > 130,000 locations.",
+    "mode":"nullable"
+  },
+  {
+    "name":"reference_location",
+    "type":"string",
+    "description":"Reference location of the center from which the range is calculated and the azimuth is determined",
+    "mode":"nullable"
+  },
+  {
+    "name":"event_latitude",
+    "type":"float",
+    "description":"The latitude where the event occurred (rounded to the hundredths in decimal degrees; includes an ‘-‘ if it’s S of the Equator)",
+    "mode":"nullable"
+  },
+  {
+    "name":"event_longitude",
+    "type":"float",
+    "description":"The longitude where the event occurred (rounded to the hundredths in decimal degrees; includes an ‘-‘ if it’s W of the Prime Meridian)",
+    "mode":"nullable"
+  },
+  {
+    "name":"event_point",
+    "type":"geography",
+    "description":"Geographic representation of the event_longitude and latitude",
+    "mode":"nullable"
+  }
+]
