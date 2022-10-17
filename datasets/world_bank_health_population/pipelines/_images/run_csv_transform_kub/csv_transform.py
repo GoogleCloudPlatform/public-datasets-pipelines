@@ -84,12 +84,12 @@ def download_file_gcs(
 
 
 def reorder_headers(df, headers):
-    logging.info(f"Transform: Reordering headers")
+    logging.info("Transform: Reordering headers")
     df = df[headers]
 
 
 def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
-    logging.info(f"Transform: Renaming columns")
+    logging.info("Transform: Renaming columns")
     df.rename(columns=rename_mappings, inplace=True)
 
 
@@ -103,7 +103,7 @@ def extract_year(string_val: str) -> str:
 
 
 def save_to_new_file(df: pd.DataFrame, file_path: str) -> None:
-    logging.info(f"Saving to output file..")
+    logging.info("Saving to output file..")
     df.to_csv(file_path, index=False)
 
 
