@@ -51,6 +51,7 @@ def main(
         "individuals" not in pipeline_name
         and "other_committee_tx_2020" not in pipeline_name
     ):
+        logging.info(f"Downloading file from {source_url}...")
         download_file(source_url, source_file_zip_file)
         unzip_file(source_file_zip_file, source_file_path)
         logging.info(f"Opening file {source_file}...")
