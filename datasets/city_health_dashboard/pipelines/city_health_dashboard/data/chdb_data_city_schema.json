@@ -6,20 +6,25 @@
 	},
 	{
 		"name": "state_fips",
-		"type": "INTEGER",
+		"type": "STRING",
 		"mode": "NULLABLE"
 	},
 	{
-		"name": "place_fips",
-		"type": "INTEGER",
+		"name": "city_fips",
+		"type": "STRING",
 		"mode": "NULLABLE"
 	},
 	{
 		"name": "stpl_fips",
-		"type": "INTEGER",
+		"type": "STRING",
 		"mode": "NULLABLE"
 	},
 	{
+		"name": "stcosub_fips",
+		"type": "STRING",
+		"mode": "NULLABLE"
+	},
+  {
 		"name": "city_name",
 		"type": "STRING",
 		"mode": "NULLABLE"
@@ -29,6 +34,11 @@
 		"type": "STRING",
 		"mode": "NULLABLE"
 	},
+  {
+		"name": "metric_number",
+		"type": "INTEGER",
+		"mode": "NULLABLE"
+	},
 	{
 		"name": "group_name",
 		"type": "STRING",
@@ -36,11 +46,6 @@
 	},
 	{
 		"name": "group_number",
-		"type": "INTEGER",
-		"mode": "NULLABLE"
-	},
-	{
-		"name": "metric_number",
 		"type": "INTEGER",
 		"mode": "NULLABLE"
 	},
@@ -84,6 +89,11 @@
 		"type": "STRING",
 		"mode": "NULLABLE"
 	},
+  {
+		"name": "data_yr",
+		"type": "STRING",
+		"mode": "NULLABLE"
+	},
 	{
 		"name": "geo_level",
 		"type": "STRING",
@@ -94,14 +104,24 @@
 		"type": "DATE",
 		"mode": "NULLABLE"
 	},
-	{
-		"name": "source_url",
-		"type": "STRING",
+  {
+		"name": "census_year",
+		"type": "INTEGER",
 		"mode": "NULLABLE"
 	},
 	{
-		"name": "etl_timestamp",
-		"type": "TIMESTAMP",
+		"name": "version",
+		"type": "FLOAT",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "NCHS_disclaimer",
+		"type": "STRING",
+		"mode": "NULLABLE"
+	},
+  {
+		"name": "suggested_citation",
+		"type": "STRING",
 		"mode": "NULLABLE"
 	}
 ]
