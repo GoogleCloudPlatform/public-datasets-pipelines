@@ -41,7 +41,6 @@ def main(
     pipeline_name: str,
     csv_headers: typing.List[str],
 ) -> None:
-
     logging.info(
         f"FEC{pipeline_name} process started at "
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
@@ -55,7 +54,6 @@ def main(
         logging.info(f"Downloading file from {source_url}...")
         download_file(source_url, source_file_zip_file)
         unzip_file(source_file_zip_file, source_file_path)
-
         logging.info(f"Opening file {source_file}...")
         df = pd.read_table(
             source_file,
@@ -64,7 +62,6 @@ def main(
             dtype=object,
             index_col=False,
         )
-        logging.info(f"Transforming {source_file}... ")
         if "candidate_20" in pipeline_name:
             logging.info("Transform: Trimming white spaces in headers... ")
             df.columns = csv_headers
@@ -94,28 +91,13 @@ def main(
         else:
             df.columns = csv_headers
             pass
-
-        logging.info(f"Saving to output file.. {target_file}")
-        try:
-            save_to_new_file(df, file_path=str(target_file))
-        except Exception as e:
-            logging.error(f"Error saving output file: {e}.")
-        logging.info(
-            f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
-        )
+        save_to_new_file(df, file_path=str(target_file))
         upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
-        logging.info(
-            f"FEC {pipeline_name} process completed at "
-            + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-        )
+        logging.info(f"FEC {pipeline_name} process completed")
     else:
-        logging.info(f"Downloading file gs://{source_bucket}/{source_object}")
         download_blob(source_bucket, source_object, source_file)
         process_source_file(
             source_file, target_file, chunksize, pipeline_name, csv_headers
-        )
-        logging.info(
-            f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
         )
         upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
@@ -188,7 +170,12 @@ def process_chunk(
     logging.info(f"Processing batch file {target_file_batch}")
     df["image_num"] = df["image_num"].astype(str)
     df["transaction_dt"] = df["transaction_dt"].astype(str)
-    convert_string_to_int(df, "image_num")
+    df["image_num"] = (
+        pd.to_numeric(df["image_num"], errors="coerce")
+        .apply(lambda x: "%.0f" % x)
+        .fillna(0)
+        .replace({"nan": 0})
+    )
     df["sub_id"] = df["sub_id"].fillna(0)
     date_for_length(df, "transaction_dt")
     df = resolve_date_format(df, "transaction_dt", pipeline_name)
@@ -223,6 +210,7 @@ def append_batch_file(
 
 
 def download_blob(bucket, object, target_file) -> None:
+    logging.info(f"Downloading file gs://{bucket}/{target_file}")
     """Downloads a blob from the bucket."""
     storage_client = storage.Client()
     bucket = storage_client.bucket(bucket)
@@ -235,12 +223,11 @@ def resolve_date_format(
     field_name: str,
     pipeline: str,
 ) -> pd.DataFrame:
+    logging.info(f"Resolving date format in field {field_name}")
     if "opex" not in pipeline:
-        logging.info("Resolving date formats")
         df[field_name] = df[field_name].apply(convert_dt_format)
         return df
     else:
-        logging.info("Resolving date formats")
         df[field_name] = df[field_name].apply(convert_dt_format_opex)
         return df
 
@@ -277,14 +264,8 @@ def convert_dt_format_opex(dt_str: str) -> str:
         )
 
 
-def convert_string_to_int(df: pd.DataFrame, field_name: str) -> pd.DataFrame:
-    df[field_name] = pd.to_numeric(df[field_name], errors="coerce")
-    df[field_name] = df[field_name].apply(lambda x: "%.0f" % x)
-    df[field_name] = df[field_name].fillna(0)
-    df[field_name] = df[field_name].replace({"nan": 0})
-
-
 def date_for_length(df: pd.DataFrame, field_name: str) -> pd.DataFrame:
+    logging.info(f"Evaluating date format on field {field_name}")
     date_list = df[field_name].values
     new_date_list = []
     for item in date_list:
@@ -328,6 +309,7 @@ def unzip_file(
 
 
 def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:
+    logging.info(f"Uploading output file to.. gs://{gcs_bucket}/{gcs_path}")
     storage_client = storage.Client()
     bucket = storage_client.bucket(gcs_bucket)
     blob = bucket.blob(gcs_path)
