@@ -54,9 +54,9 @@ dag:
           RENAME_MAPPINGS: >-
             {"Complaint ID":"complaint_id","Date received":"date_received","Product":"product","Sub-product":"subproduct","Issue":"issue","Sub-issue":"subissue","Consumer complaint narrative":"consumer_complaint_narrative","Company response to consumer":"company_response_to_consumer","Company public response":"company_public_response","Company":"company_name","State":"state","ZIP code":"zip_code","Tags":"tags","Consumer consent provided?":"consumer_consent_provided","Submitted via":"submitted_via","Date sent to company":"date_sent_to_company","Timely response?":"timely_response","Consumer disputed?":"consumer_disputed"}
         resources:
-          request_memory: "3G"
+          request_memory: "4G"
           request_cpu: "1"
-          request_ephemeral_storage: "10G"
+          request_ephemeral_storage: "8G"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
