@@ -169,7 +169,6 @@ def process_chunk(
     logging.info(f"Processing batch file {target_file_batch}")
     df["image_num"] = df["image_num"].astype(str)
     df["transaction_dt"] = df["transaction_dt"].astype(str)
-    # convert_string_to_int(df, "image_num")
     df["image_num"] = (
         pd.to_numeric(df["image_num"], errors="coerce")
         .apply(lambda x: "%.0f" % x)
