@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ with DAG(
         image="{{ var.json.noaa.container_registry.run_csv_transform_kub }}",
         env_vars={
             "PIPELINE_NAME": "GHCND by year",
-            "SOURCE_URL": "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/by_year/.csv.gz",
+            "SOURCE_URL": '{\n  "ghcnd_by_year": "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/by_year/.csv.gz"\n}',
             "SOURCE_FILE": "files/data_ghcnd_by_year.csv",
             "TARGET_FILE": "files/data_output_ghcnd_by_year.csv",
             "CHUNKSIZE": "750000",
@@ -102,7 +102,7 @@ with DAG(
         image="{{ var.json.noaa.container_registry.run_csv_transform_kub }}",
         env_vars={
             "PIPELINE_NAME": "GHCND countries",
-            "SOURCE_URL": "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/ghcnd-countries.txt",
+            "SOURCE_URL": '{\n  "ghcnd_countries": "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/ghcnd-countries.txt"\n}',
             "SOURCE_FILE": "files/data_ghcnd_countries.csv",
             "TARGET_FILE": "files/data_output_ghcnd_countries.csv",
             "CHUNKSIZE": "750000",
@@ -138,7 +138,7 @@ with DAG(
         image="{{ var.json.noaa.container_registry.run_csv_transform_kub }}",
         env_vars={
             "PIPELINE_NAME": "GHCND inventory",
-            "SOURCE_URL": "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/ghcnd-inventory.txt",
+            "SOURCE_URL": '{\n  "ghcnd_inventory": "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/ghcnd-inventory.txt"\n}',
             "SOURCE_FILE": "files/data_ghcnd_inventory.csv",
             "TARGET_FILE": "files/data_output_ghcnd_inventory.csv",
             "CHUNKSIZE": "750000",
@@ -174,7 +174,7 @@ with DAG(
         image="{{ var.json.noaa.container_registry.run_csv_transform_kub }}",
         env_vars={
             "PIPELINE_NAME": "GHCND states",
-            "SOURCE_URL": "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/ghcnd-states.txt",
+            "SOURCE_URL": '{\n  "ghcnd_states": "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/ghcnd-states.txt"\n}',
             "SOURCE_FILE": "files/data_ghcnd_states.csv",
             "TARGET_FILE": "files/data_output_ghcnd_states.csv",
             "CHUNKSIZE": "750000",
@@ -210,7 +210,7 @@ with DAG(
         image="{{ var.json.noaa.container_registry.run_csv_transform_kub }}",
         env_vars={
             "PIPELINE_NAME": "GHCND stations",
-            "SOURCE_URL": "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/ghcnd-stations.txt",
+            "SOURCE_URL": '{\n  "ghcnd_stations": "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/ghcnd-stations.txt"\n}',
             "SOURCE_FILE": "files/data_ghcnd_stations.csv",
             "TARGET_FILE": "files/data_output_ghcnd_stations.csv",
             "CHUNKSIZE": "750000",
@@ -246,7 +246,7 @@ with DAG(
         image="{{ var.json.noaa.container_registry.run_csv_transform_kub }}",
         env_vars={
             "PIPELINE_NAME": "GSOD stations",
-            "SOURCE_URL": "ftp://ftp.ncdc.noaa.gov/pub/data/noaa/isd-history.txt",
+            "SOURCE_URL": '{\n  "gsod_stations": "ftp://ftp.ncdc.noaa.gov/pub/data/noaa/isd-history.txt"\n}',
             "SOURCE_FILE": "files/data_gsod_stations.csv",
             "TARGET_FILE": "files/data_output_gsod_stations.csv",
             "CHUNKSIZE": "750000",
@@ -285,7 +285,7 @@ with DAG(
         image="{{ var.json.noaa.container_registry.run_csv_transform_kub }}",
         env_vars={
             "PIPELINE_NAME": "GHCND hurricanes",
-            "SOURCE_URL": "https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r00/access/csv/ibtracs.ALL.list.v04r00.csv",
+            "SOURCE_URL": '{\n  "ghcnd_hurricanes": "https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r00/access/csv/ibtracs.ALL.list.v04r00.csv"\n}',
             "SOURCE_FILE": "files/data_ghcnd_hurricanes.csv",
             "TARGET_FILE": "files/data_output_ghcnd_hurricanes.csv",
             "CHUNKSIZE": "750000",
@@ -319,7 +319,7 @@ with DAG(
         image="{{ var.json.noaa.container_registry.run_csv_transform_kub }}",
         env_vars={
             "PIPELINE_NAME": "NOAA lightning strikes by year",
-            "SOURCE_URL": "https://www1.ncdc.noaa.gov/pub/data/swdi/database-csv/v2/nldn-tiles-*.csv.gz",
+            "SOURCE_URL": '{\n  "lightning_strikes_by_year": "https://www1.ncdc.noaa.gov/pub/data/swdi/database-csv/v2/nldn-tiles-*.csv.gz"\n}',
             "SOURCE_FILE": "files/data_lightning_strikes.csv",
             "TARGET_FILE": "files/data_output_lightning_strikes.csv",
             "CHUNKSIZE": "1000000",
@@ -347,6 +347,42 @@ with DAG(
         },
         resources={"request_ephemeral_storage": "16G", "limit_cpu": "3"},
     )
+
+    # Run NOAA load processes - Storms Database
+    storms_database_by_year = kubernetes_engine.GKEStartPodOperator(
+        task_id="storms_database_by_year",
+        name="noaa.storms_database_by_year",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="noaa",
+        namespace="default",
+        image_pull_policy="Always",
+        image="{{ var.json.noaa.container_registry.run_csv_transform_kub }}",
+        env_vars={
+            "PIPELINE_NAME": "NOAA Storms database by year",
+            "SOURCE_URL": '{\n    "root": "ftp://ftp.ncdc.noaa.gov/pub/data/swdi/stormevents/csvfiles",\n    "storms_details": "StormEvents_details-ftp_v1.0_d",\n    "storms_locations": "StormEvents_locations-ftp_v1.0_d"\n}',
+            "SOURCE_FILE": "files/data_storms_database.csv",
+            "TARGET_FILE": "files/data_output_storms_database.csv",
+            "CHUNKSIZE": "500000",
+            "PROJECT_ID": "{{ var.value.gcp_project }}",
+            "DATASET_ID": "noaa_historic_severe_storms",
+            "TABLE_ID": "storms",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
+            "TARGET_GCS_PATH": "data/noaa/storms_db/data_output.csv",
+            "SCHEMA_PATH": "data/noaa/schema/noaa_historic_severe_storms_schema.json",
+            "DROP_DEST_TABLE": "N",
+            "INPUT_FIELD_DELIMITER": ",",
+            "FULL_DATA_LOAD": "N",
+            "REMOVE_SOURCE_FILE": "Y",
+            "DELETE_TARGET_FILE": "Y",
+            "START_YEAR": "1950",
+            "RENAME_HEADERS_LIST": '{\n  "EPISODE_ID_x": "episode_id",\n  "EVENT_ID": "event_id",\n  "STATE": "state",\n  "STATE_FIPS": "state_fips_code",\n  "EVENT_TYPE": "event_type",\n  "CZ_TYPE": "cz_type",\n  "CZ_FIPS": "cz_fips_code",\n  "CZ_NAME": "cz_name",\n  "WFO": "wfo",\n  "BEGIN_DATE_TIME": "event_begin_time",\n  "CZ_TIMEZONE": "event_timezone",\n  "END_DATE_TIME": "event_end_time",\n  "INJURIES_DIRECT": "injuries_direct",\n  "INJURIES_INDIRECT": "injuries_indirect",\n  "DEATHS_DIRECT": "deaths_direct",\n  "DEATHS_INDIRECT": "deaths_indirect",\n  "DAMAGE_PROPERTY": "damage_property",\n  "DAMAGE_CROPS": "damage_crops",\n  "SOURCE": "source",\n  "MAGNITUDE": "magnitude",\n  "MAGNITUDE_TYPE": "magnitude_type",\n  "FLOOD_CAUSE": "flood_cause",\n  "TOR_F_SCALE": "tor_f_scale",\n  "TOR_LENGTH": "tor_length",\n  "TOR_WIDTH": "tor_width",\n  "TOR_OTHER_WFO": "tor_other_wfo",\n  "LOCATION_INDEX": "location_index",\n  "RANGE": "event_range",\n  "AZIMUTH": "event_azimuth",\n  "LOCATION": "reference_location",\n  "LATITUDE": "event_latitude",\n  "LONGITUDE": "event_longitude"\n}',
+            "DATE_FORMAT_LIST": '{\n  "event_begin_time": "%Y-%m-%d %H:%M:%S",\n  "event_end_time": "%Y-%m-%d %H:%M:%S"\n}',
+            "GEN_LOCATION_LIST": '{\n  "event_point": ["event_longitude", "event_latitude"]\n}',
+            "REORDER_HEADERS_LIST": '[\n  "episode_id",\n  "event_id",\n  "state",\n  "state_fips_code",\n  "event_type",\n  "cz_type",\n  "cz_fips_code",\n  "cz_name",\n  "wfo",\n  "event_begin_time",\n  "event_timezone",\n  "event_end_time",\n  "injuries_direct",\n  "injuries_indirect",\n  "deaths_direct",\n  "deaths_indirect",\n  "damage_property",\n  "damage_crops",\n  "source",\n  "magnitude",\n  "magnitude_type",\n  "flood_cause",\n  "tor_f_scale",\n  "tor_length",\n  "tor_width",\n  "tor_other_wfo",\n  "location_index",\n  "event_range",\n  "event_azimuth",\n  "reference_location",\n  "event_latitude",\n  "event_longitude",\n  "event_point"\n]',
+        },
+        resources={"request_ephemeral_storage": "16G", "limit_cpu": "3"},
+    )
     delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
         task_id="delete_cluster",
         project_id="{{ var.value.gcp_project }}",
@@ -357,14 +393,15 @@ with DAG(
     (
         create_cluster
         >> [
-            ghcnd_by_year,
-            ghcnd_countries,
-            ghcnd_inventory,
             ghcnd_states,
             ghcnd_stations,
             gsod_stations,
-            ghcnd_hurricanes,
-            lightning_strikes_by_year,
+            ghcnd_countries,
+            ghcnd_inventory,
         ]
+        >> storms_database_by_year
+        >> ghcnd_by_year
+        >> ghcnd_hurricanes
+        >> lightning_strikes_by_year
         >> delete_cluster
     )

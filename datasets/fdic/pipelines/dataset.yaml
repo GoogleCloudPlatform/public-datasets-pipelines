@@ -13,23 +13,19 @@
 # limitations under the License.
 
 dataset:
-  name: covid19_italy
-  friendly_name: covid19_italy
-  description: COVID-19 Italy
+  name: :fdic
+  friendly_name: :fdic
+  description: FDIC dataset
   dataset_sources: ~
   terms_of_use: ~
 
+
 resources:
   - type: bigquery_dataset
-    dataset_id: covid19_italy
-    description: "COVID-19 Italy"
-
-  - type: bigquery_dataset
-    dataset_id: covid19_italy_eu
-    location: EU
-    description: "COVID-19 Italy data stored in EU region."
+    dataset_id: fdic
+    description: FDIC dataset
 
   - type: storage_bucket
-    name: covid19-italy-eu
-    location: EU
-    uniform_bucket_level_access: true
+    name: fdic
+    uniform_bucket_level_access: True
+    location: US
