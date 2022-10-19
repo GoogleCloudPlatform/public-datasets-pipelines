@@ -6,7 +6,7 @@
 	},
 	{
 		"name": "state_fips",
-		"type": "STRING",
+		"type": "INTEGER",
 		"mode": "NULLABLE"
 	},
   {
@@ -16,22 +16,22 @@
 	},
 	{
 		"name": "city_fips",
-		"type": "STRING",
+		"type": "INTEGER",
 		"mode": "NULLABLE"
 	},
 	{
 		"name": "stpl_fips",
-		"type": "STRING",
+		"type": "INTEGER",
 		"mode": "NULLABLE"
 	},
 	{
 		"name": "stcosub_fips",
-		"type": "STRING",
+		"type": "INTEGER",
 		"mode": "NULLABLE"
 	},
   {
 		"name": "stcotr_fips",
-		"type": "STRING",
+		"type": "INTEGER",
 		"mode": "NULLABLE"
 	},
   {
