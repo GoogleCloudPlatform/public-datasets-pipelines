@@ -270,7 +270,7 @@ def process_chunk(
 ) -> None:
     logging.info(f"Processing batch file {target_file_batch}")
     df = rename_headers(df, rename_headers_list)
-    # df = add_metadata_cols(df, source_url)
+    df = add_metadata_cols(df, source_url)
     df = df[output_csv_headers_list]
     save_to_new_file(df, file_path=str(target_file_batch), sep="|")
     append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))

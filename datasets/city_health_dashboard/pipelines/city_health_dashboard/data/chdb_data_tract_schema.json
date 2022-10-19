@@ -118,5 +118,15 @@
 		"name": "suggested_citation",
 		"type": "STRING",
 		"mode": "NULLABLE"
-	}
+	},
+	{
+		"name": "source_url",
+		"type": "STRING",
+		"mode": "NULLABLE"
+	},
+  {
+		"name": "etl_timestamp",
+		"type": "TIMESTAMP",
+		"mode": "NULLABLE"
+    }
 ]

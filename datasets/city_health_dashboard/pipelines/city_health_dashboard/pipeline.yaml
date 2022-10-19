@@ -97,7 +97,8 @@ dag:
             [
               "state_abbr","state_fips","city_fips","stpl_fips","stcosub_fips","city_name","metric_name","metric_number","group_name",
               "group_number","num","denom","est","lci","uci","county_indicator","multiplier_indicator","data_yr_type","data_yr",
-              "geo_level","date_export","census_year","version","NCHS_disclaimer","suggested_citation"
+              "geo_level","date_export","census_year","version","NCHS_disclaimer","suggested_citation","source_url",
+              "etl_timestamp"
             ]
           RENAME_HEADERS_LIST: >-
             {
@@ -197,7 +198,7 @@ dag:
             [
               "state_abbr","state_fips","county_name","city_fips","stpl_fips","stcosub_fips","stcotr_fips","city_name","metric_name",
               "metric_number","group_name","group_number","num","denom","est","lci","uci","data_yr_type","data_yr","geo_level",
-              "date_export","census_year","version","suggested_citation"
+              "date_export","census_year","version","suggested_citation","source_url","etl_timestamp"
             ]
           RENAME_HEADERS_LIST: >-
             {
