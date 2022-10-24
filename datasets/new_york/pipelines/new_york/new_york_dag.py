@@ -59,7 +59,7 @@ with DAG(
         cluster_name="pubds-new-york",
         namespace="default",
         image_pull_policy="Always",
-        image="{{ var.json.new_york.container_registry.run_csv_transform_kub_ny_311_service_requests }}",
+        image="{{ var.json.new_york.container_registry.run_csv_transform_kub_311_service_requests }}",
         env_vars={
             "PIPELINE_NAME": "{{ var.json.new_york.ny_311_service_requests.pipeline_name }}",
             "SOURCE_URL": "{{ var.json.new_york.ny_311_service_requests.source_url }}",
