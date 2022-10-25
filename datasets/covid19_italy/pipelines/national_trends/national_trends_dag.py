@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,13 +14,14 @@
 
 
 from airflow import DAG
+from airflow.operators import bash
 from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
 from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
     "owner": "Google",
     "depends_on_past": False,
-    "start_date": "2021-04-01",
+    "start_date": "2022-10-03",
 }
 
 
@@ -106,4 +107,65 @@ with DAG(
         ],
     )
 
-    national_trends_transform_csv >> load_national_trends_to_bq
+    # Task to copy bq uploadable data file to bucket in EU
+    copy_data_file_EU = bash.BashOperator(
+        task_id="copy_data_file_EU",
+        bash_command="gsutil cp gs://{{ var.value.composer_bucket }}/data/covid19_italy/national_trends/data_output.csv {{ var.json.covid19_italy.destination_gcs_national_trends }}",
+    )
+
+    # Task to load CSV data to a BigQuery table
+    load_national_trends_to_bq_eu = gcs_to_bigquery.GCSToBigQueryOperator(
+        task_id="load_national_trends_to_bq_eu",
+        bucket="{{ var.json.covid19_italy.destination_gcs_bucket }}",
+        source_objects="national/data_output.csv",
+        source_format="CSV",
+        destination_project_dataset_table="covid19_italy_eu.national_trends",
+        skip_leading_rows=1,
+        write_disposition="WRITE_TRUNCATE",
+        schema_fields=[
+            {"name": "date", "type": "TIMESTAMP", "mode": "NULLABLE"},
+            {"name": "country", "type": "STRING", "mode": "NULLABLE"},
+            {
+                "name": "hospitalized_patients_symptoms",
+                "type": "INTEGER",
+                "mode": "NULLABLE",
+            },
+            {
+                "name": "hospitalized_patients_intensive_care",
+                "type": "INTEGER",
+                "mode": "NULLABLE",
+            },
+            {
+                "name": "total_hospitalized_patients",
+                "type": "INTEGER",
+                "mode": "NULLABLE",
+            },
+            {"name": "home_confinement_cases", "type": "INTEGER", "mode": "NULLABLE"},
+            {
+                "name": "total_current_confirmed_cases",
+                "type": "INTEGER",
+                "mode": "NULLABLE",
+            },
+            {
+                "name": "new_current_confirmed_cases",
+                "type": "INTEGER",
+                "mode": "NULLABLE",
+            },
+            {
+                "name": "new_total_confirmed_cases",
+                "type": "INTEGER",
+                "mode": "NULLABLE",
+            },
+            {"name": "recovered", "type": "INTEGER", "mode": "NULLABLE"},
+            {"name": "deaths", "type": "INTEGER", "mode": "NULLABLE"},
+            {"name": "total_confirmed_cases", "type": "INTEGER", "mode": "NULLABLE"},
+            {"name": "tests_performed", "type": "INTEGER", "mode": "NULLABLE"},
+            {"name": "note", "type": "STRING", "mode": "NULLABLE"},
+        ],
+    )
+
+    (
+        national_trends_transform_csv
+        >> copy_data_file_EU
+        >> [load_national_trends_to_bq, load_national_trends_to_bq_eu]
+    )

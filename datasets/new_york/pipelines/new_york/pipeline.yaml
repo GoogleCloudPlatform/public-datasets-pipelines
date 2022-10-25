@@ -60,7 +60,7 @@ dag:
         cluster_name: pubds-new-york
         namespace: "default"
         image_pull_policy: "Always"
-        image: "{{ var.json.new_york.container_registry.run_csv_transform_kub_311_service_requests }}"
+        image: "{{ var.json.new_york.container_registry.run_csv_transform_kub }}"
         env_vars:
           PIPELINE_NAME: "New York - 311 Service Requests"
           SOURCE_URL: "https://data.cityofnewyork.us/api/views/erm2-nwe9/rows.csv"
@@ -230,7 +230,7 @@ dag:
         cluster_name: pubds-new-york
         namespace: "default"
         image_pull_policy: "Always"
-        image: "{{ var.json.new_york.container_registry.run_csv_transform_kub_citibike_stations }}"
+        image: "{{ var.json.new_york.container_registry.run_csv_transform_kub }}"
         env_vars:
           PIPELINE_NAME: "New York - Citibike Stations"
           SOURCE_URL_STATIONS_JSON: "https://gbfs.citibikenyc.com/gbfs/en/station_information"
@@ -371,7 +371,7 @@ dag:
         cluster_name: pubds-new-york
         namespace: "default"
         image_pull_policy: "Always"
-        image: "{{ var.json.new_york.container_registry.run_csv_transform_kub_nypd_mv_collisions }}"
+        image: "{{ var.json.new_york.container_registry.run_csv_transform_kub }}"
         env_vars:
           PIPELINE_NAME: "New York - NYPD Motor Vehicle Collisions"
           SOURCE_URL: "https://nycopendata.socrata.com/api/views/h9gi-nx95/rows.csv"
@@ -516,7 +516,7 @@ dag:
         cluster_name: pubds-new-york
         namespace: "default"
         image_pull_policy: "Always"
-        image: "{{ var.json.new_york.container_registry.run_csv_transform_kub_tree_census_1995 }}"
+        image: "{{ var.json.new_york.container_registry.run_csv_transform_kub }}"
         env_vars:
           PIPELINE_NAME: "New York - Tree Census 1995"
           SOURCE_URL: "https://data.cityofnewyork.us/api/views/kyad-zm4j/rows.csv"

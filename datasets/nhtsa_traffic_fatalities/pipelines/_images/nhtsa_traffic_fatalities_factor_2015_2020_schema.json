@@ -1,0 +1,38 @@
+[
+	{
+		"name": "state_number",
+		"type": "integer",
+		"description": "This data element identifies the state in which the crash occurred. The codes are from the General Services Administration’s (GSA) publication of worldwide Geographic Location Codes (GLC). For more info on the codes, please look at <C1/V1/D1/PC1/P1/NM1 State Number> section in the pdf: https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/812315",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "state_name",
+		"type": "string",
+		"description": "This data element identifies the state in which the crash occurred. The codes are from the General Services Administration’s (GSA) publication of worldwide Geographic Location Codes (GLC).",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "consecutive_number",
+		"type": "integer",
+		"description": "This data element is the unique case number assigned to each crash. It appears on each data file and is used to merge information from the data files together. xxxxxx Two Characters for State Code followed by Four Characters for Case Number",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "vehicle_number",
+		"type": "integer",
+		"description": "This data element is the consecutive number assigned to each vehicle in the case. This data element appears on each vehicle level data file and is used in conjunction with the ST_CASE data element to merge information from vehicle level data files. 000-999 Assigned Number of Motor Vehicle",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "contributing_circumstances_motor_vehicle",
+		"type": "integer",
+		"description": "This data element describes this vehicle’s possible pre-existing defects or maintenance conditions that may have contributed to the crash. For more info on the codes, please look at <PC4 Contributing Circumstances, Motor Vehicle> section in the pdf: https://crashstats.nhtsa.dot.gov/Api/Public/ViewPublication/812315",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "contributing_circumstances_motor_vehicle_name",
+		"type": "string",
+		"description": "This data element describes this vehicle’s possible pre-existing defects or maintenance conditions that may have contributed to the crash.",
+		"mode": "NULLABLE"
+	}
+]

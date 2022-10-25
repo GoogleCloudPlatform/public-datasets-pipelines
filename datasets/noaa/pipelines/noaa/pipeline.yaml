@@ -1,0 +1,1098 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+resources:
+  - type: bigquery_table
+    table_id: "ghcnd_by_year"
+    description: "noaaspc"
+  - type: bigquery_table
+    table_id: "ghcnd_countries"
+    description: "noaaspc"
+  - type: bigquery_table
+    table_id: "ghcnd_inventory"
+    description: "noaaspc"
+  - type: bigquery_table
+    table_id: "ghcnd_states"
+    description: "noaaspc"
+  - type: bigquery_table
+    table_id: "ghcnd_stations"
+    description: "noaaspc"
+  - type: bigquery_table
+    table_id: "gsod_stations"
+    description: "noaaspc"
+  - type: bigquery_table
+    table_id: "hurricanes"
+    description: "noaaspc"
+  - type: bigquery_table
+    table_id: "lightning_strikes_by_year"
+    description: "noaaspc"
+
+dag:
+  airflow_version: 2
+  initialize:
+    dag_id: noaa
+    default_args:
+      owner: "Google"
+      depends_on_past: False
+      start_date: '2021-03-01'
+    max_active_runs: 1
+    schedule_interval: "30 1 * * *"
+    catchup: False
+    default_view: graph
+
+  tasks:
+    - operator: "GKECreateClusterOperator"
+      args:
+        task_id: "create_cluster"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        body:
+          name: noaa
+          initial_node_count: 2
+          network: "{{ var.value.vpc_network }}"
+          node_config:
+            machine_type: e2-standard-16
+            oauth_scopes:
+              - https://www.googleapis.com/auth/devstorage.read_write
+              - https://www.googleapis.com/auth/cloud-platform
+    - operator: "GKEStartPodOperator"
+      description: "Run NOAA load processes"
+      args:
+        task_id: "ghcnd_by_year"
+        name: "noaa.ghcnd_by_year"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: noaa
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "GHCND by year"
+          SOURCE_URL: >-
+            {
+              "ghcnd_by_year": "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/by_year/.csv.gz"
+            }
+          SOURCE_FILE: "files/data_ghcnd_by_year.csv"
+          TARGET_FILE: "files/data_output_ghcnd_by_year.csv"
+          CHUNKSIZE: "750000"
+          FTP_HOST: "ftp.ncdc.noaa.gov"
+          FTP_DIR: "pub/data/ghcn/daily/by_year"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "ghcn_d"
+          TABLE_ID: "ghcnd"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/noaa/ghcnd_by_year/data_output.csv"
+          SCHEMA_PATH: "data/noaa/schema/ghcnd_by_year_schema.json"
+          DROP_DEST_TABLE: "N"
+          INPUT_FIELD_DELIMITER: ","
+          FTP_BATCH_SIZE: "10"
+          FTP_BATCH_SLEEP_TIME: "60"
+          FULL_DATA_LOAD: "N"
+          START_YEAR: "1763"
+          REMOVE_SOURCE_FILE: "Y"
+          DELETE_TARGET_FILE: "Y"
+          INPUT_CSV_HEADERS: >-
+            [
+              "id",
+              "date",
+              "element",
+              "value",
+              "mflag",
+              "qflag",
+              "sflag",
+              "time"
+            ]
+          DATA_DTYPES: >-
+            {
+              "id": "str",
+              "date": "str",
+              "element": "str",
+              "value": "str",
+              "mflag": "str",
+              "qflag": "str",
+              "sflag": "str",
+              "time": "str"
+            }
+          REORDER_HEADERS_LIST: >-
+            [
+              "id",
+              "date",
+              "element",
+              "value",
+              "mflag",
+              "qflag",
+              "sflag",
+              "time",
+              "source_url",
+              "etl_timestamp"
+            ]
+          NULL_ROWS_LIST: >-
+            [
+              "id"
+            ]
+          DATE_FORMAT_LIST: >-
+            [
+              "date"
+            ]
+        resources:
+          request_ephemeral_storage: "16G"
+          limit_cpu: "3"
+    - operator: "GKEStartPodOperator"
+      description: "Run NOAA load processes"
+      args:
+        task_id: "ghcnd_countries"
+        name: "noaa.ghcnd_countries"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: noaa
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "GHCND countries"
+          SOURCE_URL: >-
+            {
+              "ghcnd_countries": "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/ghcnd-countries.txt"
+            }
+          SOURCE_FILE: "files/data_ghcnd_countries.csv"
+          TARGET_FILE: "files/data_output_ghcnd_countries.csv"
+          CHUNKSIZE: "750000"
+          FTP_HOST: "ftp.ncdc.noaa.gov"
+          FTP_DIR: "pub/data/ghcn/daily"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "ghcn_d"
+          TABLE_ID: "ghcnd_countries"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/noaa/ghcnd_countries/data_output.csv"
+          SCHEMA_PATH: "data/noaa/schema/ghcnd_countries_schema.json"
+          DROP_DEST_TABLE: "N"
+          INPUT_FIELD_DELIMITER: "|"
+          REMOVE_SOURCE_FILE: "N"
+          DELETE_TARGET_FILE: "N"
+          INPUT_CSV_HEADERS: >-
+            [
+              "textdata"
+            ]
+          DATA_DTYPES: >-
+            {
+              "textdata": "str"
+            }
+          REORDER_HEADERS_LIST: >-
+            [
+              "code",
+              "name",
+              "source_url",
+              "etl_timestamp"
+            ]
+          SLICE_COLUMN_LIST: >-
+            {
+              "code": ["textdata", "0", "2"],
+              "name": ["textdata", "3", ""]
+            }
+        resources:
+          request_ephemeral_storage: "4G"
+          limit_cpu: "3"
+    - operator: "GKEStartPodOperator"
+      description: "Run NOAA load processes"
+      args:
+        task_id: "ghcnd_inventory"
+        name: "noaa.ghcnd_inventory"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: noaa
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "GHCND inventory"
+          SOURCE_URL: >-
+            {
+              "ghcnd_inventory": "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/ghcnd-inventory.txt"
+            }
+          SOURCE_FILE: "files/data_ghcnd_inventory.csv"
+          TARGET_FILE: "files/data_output_ghcnd_inventory.csv"
+          CHUNKSIZE: "750000"
+          FTP_HOST: "ftp.ncdc.noaa.gov"
+          FTP_DIR: "pub/data/ghcn/daily"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "ghcn_d"
+          TABLE_ID: "ghcnd_inventory"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/noaa/ghcnd_inventory/data_output.csv"
+          SCHEMA_PATH: "data/noaa/schema/ghcnd_inventory_schema.json"
+          DROP_DEST_TABLE: "N"
+          INPUT_FIELD_DELIMITER: "|"
+          REMOVE_SOURCE_FILE: "Y"
+          DELETE_TARGET_FILE: "Y"
+          INPUT_CSV_HEADERS: >-
+            [
+              "textdata"
+            ]
+          DATA_DTYPES: >-
+            {
+              "textdata": "str"
+            }
+          REORDER_HEADERS_LIST: >-
+            [
+              "id",
+              "latitude",
+              "longitude",
+              "element",
+              "firstyear",
+              "lastyear",
+              "source_url",
+              "etl_timestamp"
+            ]
+          SLICE_COLUMN_LIST: >-
+            {
+              "id": ["textdata", "0", "11"],
+              "latitude": ["textdata", "12", "20"],
+              "longitude": ["textdata", "21", "30"],
+              "element": ["textdata", "31", "35"],
+              "firstyear": ["textdata", "36", "40"],
+              "lastyear": ["textdata", "41", "45"]
+            }
+        resources:
+          request_ephemeral_storage: "4G"
+          limit_cpu: "3"
+    - operator: "GKEStartPodOperator"
+      description: "Run NOAA load processes"
+      args:
+        task_id: "ghcnd_states"
+        name: "noaa.ghcnd_states"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: noaa
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "GHCND states"
+          SOURCE_URL: >-
+            {
+              "ghcnd_states": "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/ghcnd-states.txt"
+            }
+          SOURCE_FILE: "files/data_ghcnd_states.csv"
+          TARGET_FILE: "files/data_output_ghcnd_states.csv"
+          CHUNKSIZE: "750000"
+          FTP_HOST: "ftp.ncdc.noaa.gov"
+          FTP_DIR: "pub/data/ghcn/daily"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "ghcn_d"
+          TABLE_ID: "ghcnd_states"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/noaa/ghcnd_states/data_output.csv"
+          SCHEMA_PATH: "data/noaa/schema/ghcnd_states_schema.json"
+          DROP_DEST_TABLE: "N"
+          INPUT_FIELD_DELIMITER: "|"
+          REMOVE_SOURCE_FILE: "Y"
+          DELETE_TARGET_FILE: "Y"
+          INPUT_CSV_HEADERS: >-
+            [
+              "textdata"
+            ]
+          DATA_DTYPES: >-
+            {
+              "textdata": "str"
+            }
+          REORDER_HEADERS_LIST: >-
+            [
+              "code",
+              "name",
+              "source_url",
+              "etl_timestamp"
+            ]
+          SLICE_COLUMN_LIST: >-
+            {
+              "code": ["textdata", "0", "2"],
+              "name": ["textdata", "3", ""]
+            }
+        resources:
+          request_ephemeral_storage: "4G"
+          limit_cpu: "3"
+    - operator: "GKEStartPodOperator"
+      description: "Run NOAA load processes"
+      args:
+        task_id: "ghcnd_stations"
+        name: "noaa.ghcnd_stations"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: noaa
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "GHCND stations"
+          SOURCE_URL: >-
+            {
+              "ghcnd_stations": "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/ghcnd-stations.txt"
+            }
+          SOURCE_FILE: "files/data_ghcnd_stations.csv"
+          TARGET_FILE: "files/data_output_ghcnd_stations.csv"
+          CHUNKSIZE: "750000"
+          FTP_HOST: "ftp.ncdc.noaa.gov"
+          FTP_DIR: "pub/data/ghcn/daily"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "ghcn_d"
+          TABLE_ID: "ghcnd_stations"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/noaa/ghcnd_stations/data_output.csv"
+          SCHEMA_PATH: "data/noaa/schema/ghcnd_stations_schema.json"
+          DROP_DEST_TABLE: "N"
+          INPUT_FIELD_DELIMITER: "|"
+          REMOVE_SOURCE_FILE: "Y"
+          DELETE_TARGET_FILE: "Y"
+          INPUT_CSV_HEADERS: >-
+            [
+              "textdata"
+            ]
+          DATA_DTYPES: >-
+            {
+              "textdata": "str"
+            }
+          REORDER_HEADERS_LIST: >-
+            [
+              "id",
+              "latitude",
+              "longitude",
+              "elevation",
+              "state",
+              "name",
+              "gsn_flag",
+              "hcn_crn_flag",
+              "wmoid",
+              "source_url",
+              "etl_timestamp"
+            ]
+          SLICE_COLUMN_LIST: >-
+            {
+              "id": ["textdata", "0", "11"],
+              "latitude": ["textdata", "12", "20"],
+              "longitude": ["textdata", "21", "30"],
+              "elevation": ["textdata", "31", "37"],
+              "state": ["textdata", "38", "40"],
+              "name": ["textdata", "41", "71"],
+              "gsn_flag": ["textdata", "72", "75"],
+              "hcn_crn_flag": ["textdata", "76", "79"],
+              "wmoid": ["textdata", "80", "85"]
+            }
+        resources:
+          request_ephemeral_storage: "4G"
+          limit_cpu: "3"
+    - operator: "GKEStartPodOperator"
+      description: "Run NOAA load processes"
+      args:
+        task_id: "gsod_stations"
+        name: "noaa.gsod_stations"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: noaa
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "GSOD stations"
+          SOURCE_URL: >-
+            {
+              "gsod_stations": "ftp://ftp.ncdc.noaa.gov/pub/data/noaa/isd-history.txt"
+            }
+          SOURCE_FILE: "files/data_gsod_stations.csv"
+          TARGET_FILE: "files/data_output_gsod_stations.csv"
+          CHUNKSIZE: "750000"
+          FTP_HOST: "ftp.ncdc.noaa.gov"
+          FTP_DIR: "pub/data/noaa"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "noaa"
+          TABLE_ID: "gsod_stations"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/noaa/gsod_stations/data_output.csv"
+          SCHEMA_PATH: "data/noaa/schema/gsod_stations_schema.json"
+          DROP_DEST_TABLE: "N"
+          INPUT_FIELD_DELIMITER: "|"
+          REMOVE_SOURCE_FILE: "Y"
+          DELETE_TARGET_FILE: "Y"
+          NUMBER_OF_HEADER_ROWS: "21"
+          REGEX_LIST: >-
+            {
+              "lat": ["^(-[0]+)(.*)", "-$2", "True"],
+              "lat": ["^(\\s+)$", "", "True"],
+              "lat": ["^(\\+\\d+\\.\\d+[0-9])\\s+", "$1", "True"],
+              "lat": ["^(-\\d+\\.\\d+[0-9])\\s+", "$1", "True"],
+              "lat": ["nan", "", "False"],
+              "lon": ["^(-[0]+)(.*)", "-$2", "True"],
+              "lon": ["^(\\s+)$", "", "True"],
+              "lon": ["^(\\+\\d+\\.\\d+[0-9])\\s+", "$1", "True"],
+              "lon": ["^(-\\d+\\.\\d+[0-9])\\s+", "$1", "True"],
+              "lon": ["nan", "", "False"],
+              "usaf": ["(\\d{1,})(\\s{1,})$", "$1", "True"],
+              "name": ["^\\s{1,}([a-zA-Z]\\D+)", "$1", "True"],
+              "name": ["^(\\D+[a-zA-Z])\\s{1,}$", "$1", "True"],
+              "name": ["^(\\s+)$", "", "True"],
+              "call": ["^(\\s+)$", "", "True"],
+              "call": ["^([a-zA-Z]+)\\s+", "$1", "True"],
+              "elev": ["^(\\s+)$", "", "True"],
+              "state": ["^(\\s+)$", "", "True"],
+              "country": ["^(\\s+)$", "", "True"]
+            }
+          INPUT_CSV_HEADERS: >-
+            [
+              "textdata"
+            ]
+          DATA_DTYPES: >-
+            {
+              "textdata": "str"
+            }
+          REORDER_HEADERS_LIST: >-
+            [
+              "usaf",
+              "wban",
+              "name",
+              "country",
+              "state",
+              "call",
+              "lat",
+              "lon",
+              "elev",
+              "begin",
+              "end",
+              "source_url",
+              "etl_timestamp"
+            ]
+          NULL_ROWS_LIST: >-
+            [
+              "usaf"
+            ]
+          SLICE_COLUMN_LIST: >-
+            {
+              "usaf": ["textdata", "0", "6"],
+              "wban": ["textdata", "7", "12"],
+              "name": ["textdata", "13", "42"],
+              "country": ["textdata", "43", "45"],
+              "state": ["textdata", "48", "50"],
+              "call": ["textdata", "51", "56"],
+              "lat": ["textdata", "57", "64"],
+              "lon": ["textdata", "65", "74"],
+              "elev": ["textdata", "75", "81"],
+              "begin": ["textdata", "82", "90"],
+              "end": ["textdata", "91", "99"]
+            }
+        resources:
+          request_ephemeral_storage: "4G"
+          limit_cpu: "3"
+    - operator: "GKEStartPodOperator"
+      description: "Run NOAA load processes"
+      args:
+        task_id: "ghcnd_hurricanes"
+        name: "noaa.ghcnd_hurricanes"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: noaa
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "GHCND hurricanes"
+          SOURCE_URL: >-
+            {
+              "ghcnd_hurricanes": "https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r00/access/csv/ibtracs.ALL.list.v04r00.csv"
+            }
+          SOURCE_FILE: "files/data_ghcnd_hurricanes.csv"
+          TARGET_FILE: "files/data_output_ghcnd_hurricanes.csv"
+          CHUNKSIZE: "750000"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "noaa_hurricanes"
+          TABLE_ID: "hurricanes"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/noaa/ghcnd_hurricanes/data_output_ghcnd_hurricanes.csv"
+          SCHEMA_PATH: "data/noaa/schema/ghcnd_hurricanes_schema.json"
+          DROP_DEST_TABLE: "N"
+          INPUT_FIELD_DELIMITER: ","
+          NUMBER_OF_HEADER_ROWS: "2"
+          REMOVE_SOURCE_FILE: "Y"
+          DELETE_TARGET_FILE: "Y"
+          INPUT_CSV_HEADERS: >-
+            [
+              "sid",
+              "season",
+              "number",
+              "basin",
+              "subbasin",
+              "name",
+              "iso_time",
+              "nature",
+              "lat",
+              "lon",
+              "wmo_wind",
+              "wmo_pres",
+              "wmo_agency",
+              "track_type",
+              "dist2land",
+              "landfall",
+              "iflag",
+              "usa_agency",
+              "usa_atcf_id",
+              "usa_lat",
+              "usa_lon",
+              "usa_record",
+              "usa_status",
+              "usa_wind",
+              "usa_pres",
+              "usa_sshs",
+              "usa_r34_ne",
+              "usa_r34_se",
+              "usa_r34_sw",
+              "usa_r34_nw",
+              "usa_r50_ne",
+              "usa_r50_se",
+              "usa_r50_sw",
+              "usa_r50_nw",
+              "usa_r64_ne",
+              "usa_r64_se",
+              "usa_r64_sw",
+              "usa_r64_nw",
+              "usa_poci",
+              "usa_roci",
+              "usa_rmw",
+              "usa_eye",
+              "tokyo_lat",
+              "tokyo_lon",
+              "tokyo_grade",
+              "tokyo_wind",
+              "tokyo_pres",
+              "tokyo_r50_dir",
+              "tokyo_r50_long",
+              "tokyo_r50_short",
+              "tokyo_r30_dir",
+              "tokyo_r30_long",
+              "tokyo_r30_short",
+              "tokyo_land",
+              "cma_lat",
+              "cma_lon",
+              "cma_cat",
+              "cma_wind",
+              "cma_pres",
+              "hko_lat",
+              "hko_lon",
+              "hko_cat",
+              "hko_wind",
+              "hko_pres",
+              "newdelhi_lat",
+              "newdelhi_lon",
+              "newdelhi_grade",
+              "newdelhi_wind",
+              "newdelhi_pres",
+              "newdelhi_ci",
+              "newdelhi_dp",
+              "newdelhi_poci",
+              "reunion_lat",
+              "reunion_lon",
+              "reunion_type",
+              "reunion_wind",
+              "reunion_pres",
+              "reunion_tnum",
+              "reunion_ci",
+              "reunion_rmw",
+              "reunion_r34_ne",
+              "reunion_r34_se",
+              "reunion_r34_sw",
+              "reunion_r34_nw",
+              "reunion_r50_ne",
+              "reunion_r50_se",
+              "reunion_r50_sw",
+              "reunion_r50_nw",
+              "reunion_r64_ne",
+              "reunion_r64_se",
+              "reunion_r64_sw",
+              "reunion_r64_nw",
+              "bom_lat",
+              "bom_lon",
+              "bom_type",
+              "bom_wind",
+              "bom_pres",
+              "bom_tnum",
+              "bom_ci",
+              "bom_rmw",
+              "bom_r34_ne",
+              "bom_r34_se",
+              "bom_r34_sw",
+              "bom_r34_nw",
+              "bom_r50_ne",
+              "bom_r50_se",
+              "bom_r50_sw",
+              "bom_r50_nw",
+              "bom_r64_ne",
+              "bom_r64_se",
+              "bom_r64_sw",
+              "bom_r64_nw",
+              "bom_roci",
+              "bom_poci",
+              "bom_eye",
+              "bom_pos_method",
+              "bom_pres_method",
+              "nadi_lat",
+              "nadi_lon",
+              "nadi_cat",
+              "nadi_wind",
+              "nadi_pres",
+              "wellington_lat",
+              "wellington_lon",
+              "wellington_wind",
+              "wellington_pres",
+              "ds824_lat",
+              "ds824_lon",
+              "ds824_stage",
+              "ds824_wind",
+              "ds824_pres",
+              "td9636_lat",
+              "td9636_lon",
+              "td9636_stage",
+              "td9636_wind",
+              "td9636_pres",
+              "td9635_lat",
+              "td9635_lon",
+              "td9635_wind",
+              "td9635_pres",
+              "td9635_roci",
+              "neumann_lat",
+              "neumann_lon",
+              "neumann_class",
+              "neumann_wind",
+              "neumann_pres",
+              "mlc_lat",
+              "mlc_lon",
+              "mlc_class",
+              "mlc_wind",
+              "mlc_pres",
+              "usa_gust",
+              "bom_gust",
+              "bom_gust_per",
+              "reunion_gust",
+              "reunion_gust_per",
+              "usa_seahgt",
+              "usa_searad_ne",
+              "usa_searad_se",
+              "usa_searad_sw",
+              "usa_searad_nw",
+              "storm_speed",
+              "storm_dir"
+            ]
+          REORDER_HEADERS_LIST: >-
+            [
+              "sid",
+              "season",
+              "number",
+              "basin",
+              "subbasin",
+              "name",
+              "iso_time",
+              "nature",
+              "latitude",
+              "longitude",
+              "wmo_wind",
+              "wmo_pressure",
+              "wmo_agency",
+              "track_type",
+              "dist2land",
+              "landfall",
+              "iflag",
+              "usa_agency",
+              "usa_latitude",
+              "usa_longitude",
+              "usa_record",
+              "usa_status",
+              "usa_wind",
+              "usa_pressure",
+              "usa_sshs",
+              "usa_r34_ne",
+              "usa_r34_se",
+              "usa_r34_sw",
+              "usa_r34_nw",
+              "usa_r50_ne",
+              "usa_r50_se",
+              "usa_r50_sw",
+              "usa_r50_nw",
+              "usa_r64_ne",
+              "usa_r64_se",
+              "usa_r64_sw",
+              "usa_r64_nw",
+              "usa_poci",
+              "usa_roci",
+              "usa_rmw",
+              "usa_eye",
+              "tokyo_latitude",
+              "tokyo_longitude",
+              "tokyo_grade",
+              "tokyo_wind",
+              "tokyo_pressure",
+              "tokyo_r50_dir",
+              "tokyo_r50_longitude",
+              "tokyo_r50_short",
+              "tokyo_r30_dir",
+              "tokyo_r30_long",
+              "tokyo_r30_short",
+              "tokyo_land",
+              "cma_latitude",
+              "cma_longitude",
+              "cma_cat",
+              "cma_wind",
+              "cma_pressure",
+              "hko_latitude",
+              "hko_longitude",
+              "hko_cat",
+              "hko_wind",
+              "hko_pressure",
+              "newdelhi_latitude",
+              "newdelhi_longitude",
+              "newdelhi_grade",
+              "newdelhi_wind",
+              "newdelhi_pressure",
+              "newdelhi_ci",
+              "newdelhi_dp",
+              "newdelhi_poci",
+              "reunion_latitude",
+              "reunion_longitude",
+              "reunion_type",
+              "reunion_wind",
+              "reunion_pressure",
+              "reunion_tnum",
+              "reunion_ci",
+              "reunion_rmw",
+              "reunion_r34_ne",
+              "reunion_r34_se",
+              "reunion_r34_sw",
+              "reunion_r34_nw",
+              "reunion_r50_ne",
+              "reunion_r50_se",
+              "reunion_r50_sw",
+              "reunion_r50_nw",
+              "reunion_r64_ne",
+              "reunion_r64_se",
+              "reunion_r64_sw",
+              "reunion_r64_nw",
+              "bom_latitude",
+              "bom_longitude",
+              "bom_type",
+              "bom_wind",
+              "bom_pressure",
+              "bom_tnum",
+              "bom_ci",
+              "bom_rmw",
+              "bom_r34_ne",
+              "bom_r34_se",
+              "bom_r34_sw",
+              "bom_r34_nw",
+              "bom_r50_ne",
+              "bom_r50_se",
+              "bom_r50_sw",
+              "bom_r50_nw",
+              "bom_r64_ne",
+              "bom_r64_se",
+              "bom_r64_sw",
+              "bom_r64_nw",
+              "bom_roci",
+              "bom_poci",
+              "bom_eye",
+              "bom_pos_method",
+              "bom_pressure_method",
+              "wellington_latitude",
+              "wellington_longitude",
+              "wellington_wind",
+              "wellington_pressure",
+              "nadi_latitude",
+              "nadi_longitude",
+              "nadi_cat",
+              "nadi_wind",
+              "nadi_pressure",
+              "ds824_latitude",
+              "ds824_longitude",
+              "ds824_stage",
+              "ds824_wind",
+              "ds824_pressure",
+              "td9636_latitude",
+              "td9636_longitude",
+              "td9636_stage",
+              "td9636_wind",
+              "td9636_pressure",
+              "td9635_latitude",
+              "td9635_longitude",
+              "td9635_wind",
+              "td9635_pressure",
+              "td9635_roci",
+              "neumann_latitude",
+              "neumann_longitude",
+              "neumann_class",
+              "neumann_wind",
+              "neumann_pressure",
+              "mlc_latitude",
+              "mlc_longitude",
+              "mlc_class",
+              "mlc_wind",
+              "mlc_pressure",
+              "usa_atcf_id",
+              "source_url",
+              "etl_timestamp"
+            ]
+          RENAME_HEADERS_LIST: >-
+            {
+              "lat": "latitude",
+              "lon": "longitude",
+              "wmo_pres": "wmo_pressure",
+              "usa_lat": "usa_latitude",
+              "usa_lon": "usa_longitude",
+              "usa_pres": "usa_pressure",
+              "tokyo_lat": "tokyo_latitude",
+              "tokyo_lon": "tokyo_longitude",
+              "tokyo_pres": "tokyo_pressure",
+              "tokyo_r50_long": "tokyo_r50_longitude",
+              "cma_lat": "cma_latitude",
+              "cma_lon": "cma_longitude",
+              "cma_pres": "cma_pressure",
+              "hko_lat": "hko_latitude",
+              "hko_lon": "hko_longitude",
+              "hko_pres": "hko_pressure",
+              "newdelhi_lat": "newdelhi_latitude",
+              "newdelhi_lon": "newdelhi_longitude",
+              "newdelhi_pres": "newdelhi_pressure",
+              "reunion_lat": "reunion_latitude",
+              "reunion_lon": "reunion_longitude",
+              "reunion_pres": "reunion_pressure",
+              "bom_lat": "bom_latitude",
+              "bom_lon": "bom_longitude",
+              "bom_pres": "bom_pressure",
+              "bom_pres_method": "bom_pressure_method",
+              "wellington_lat": "wellington_latitude",
+              "wellington_lon": "wellington_longitude",
+              "wellington_pres": "wellington_pressure",
+              "nadi_lat": "nadi_latitude",
+              "nadi_lon": "nadi_longitude",
+              "nadi_pres": "nadi_pressure",
+              "ds824_lat": "ds824_latitude",
+              "ds824_lon": "ds824_longitude",
+              "ds824_pres": "ds824_pressure",
+              "td9636_lat": "td9636_latitude",
+              "td9636_lon": "td9636_longitude",
+              "td9636_pres": "td9636_pressure",
+              "td9635_lat": "td9635_latitude",
+              "td9635_lon": "td9635_longitude",
+              "td9635_pres": "td9635_pressure",
+              "neumann_lat": "neumann_latitude",
+              "neumann_lon": "neumann_longitude",
+              "neumann_pres": "neumann_pressure",
+              "mlc_lat": "mlc_latitude",
+              "mlc_lon": "mlc_longitude",
+              "mlc_pres": "mlc_pressure"
+            }
+        resources:
+          request_ephemeral_storage: "16G"
+          limit_cpu: "3"
+    - operator: "GKEStartPodOperator"
+      description: "Run NOAA load processes"
+      args:
+        task_id: "lightning_strikes_by_year"
+        name: "noaa.lightning_strikes_by_year"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: noaa
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "NOAA lightning strikes by year"
+          SOURCE_URL: >-
+            {
+              "lightning_strikes_by_year": "https://www1.ncdc.noaa.gov/pub/data/swdi/database-csv/v2/nldn-tiles-*.csv.gz"
+            }
+          SOURCE_FILE: "files/data_lightning_strikes.csv"
+          TARGET_FILE: "files/data_output_lightning_strikes.csv"
+          CHUNKSIZE: "1000000"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "noaa_lightning"
+          TABLE_ID: "lightning_strikes"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/noaa/lightning_strikes/data_output.csv"
+          SCHEMA_PATH: "data/noaa/schema/noaa_lightning_strikes_schema.json"
+          DROP_DEST_TABLE: "N"
+          INPUT_FIELD_DELIMITER: ","
+          HTTP_BATCH_SIZE: "10"
+          HTTP_BATCH_SLEEP_TIME: "60"
+          FULL_DATA_LOAD: "Y"
+          REMOVE_SOURCE_FILE: "Y"
+          DELETE_TARGET_FILE: "Y"
+          START_YEAR: "1990"
+          NUMBER_OF_HEADER_ROWS: "3"
+          INT_DATE_LIST: >-
+            {
+              "date": "day_int"
+            }
+          GEN_LOCATION_LIST: >-
+            {
+              "center_point_geom": ["centerlon", "centerlat"]
+            }
+          INPUT_CSV_HEADERS: >-
+            [
+              "ZDAY",
+              "CENTERLON",
+              "CENTERLAT",
+              "TOTAL_COUNT"
+            ]
+          DATA_DTYPES: >-
+            {
+              "ZDAY": "str",
+              "CENTERLON": "str",
+              "CENTERLAT": "str",
+              "TOTAL_COUNT": "str"
+            }
+          REORDER_HEADERS_LIST: >-
+            [
+              "date",
+              "number_of_strikes",
+              "center_point_geom",
+              "source_url",
+              "etl_timestamp"
+            ]
+          RENAME_HEADERS_LIST: >-
+            {
+              "zday": "day_int",
+              "total_count": "number_of_strikes"
+            }
+        resources:
+          request_ephemeral_storage: "16G"
+          limit_cpu: "3"
+    - operator: "GKEStartPodOperator"
+      description: "Run NOAA load processes - Storms Database"
+      args:
+        task_id: "storms_database_by_year"
+        name: "noaa.storms_database_by_year"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: noaa
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "NOAA Storms database by year"
+          SOURCE_URL: >-
+            {
+                "root": "ftp://ftp.ncdc.noaa.gov/pub/data/swdi/stormevents/csvfiles",
+                "storms_details": "StormEvents_details-ftp_v1.0_d",
+                "storms_locations": "StormEvents_locations-ftp_v1.0_d"
+            }
+          SOURCE_FILE: "files/data_storms_database.csv"
+          TARGET_FILE: "files/data_output_storms_database.csv"
+          CHUNKSIZE: "500000"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "noaa_historic_severe_storms"
+          TABLE_ID: "storms"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/noaa/storms_db/data_output.csv"
+          SCHEMA_PATH: "data/noaa/schema/noaa_historic_severe_storms_schema.json"
+          DROP_DEST_TABLE: "N"
+          INPUT_FIELD_DELIMITER: ","
+          FULL_DATA_LOAD: "N"
+          REMOVE_SOURCE_FILE: "Y"
+          DELETE_TARGET_FILE: "Y"
+          START_YEAR: "1950"
+          RENAME_HEADERS_LIST: >-
+            {
+              "EPISODE_ID_x": "episode_id",
+              "EVENT_ID": "event_id",
+              "STATE": "state",
+              "STATE_FIPS": "state_fips_code",
+              "EVENT_TYPE": "event_type",
+              "CZ_TYPE": "cz_type",
+              "CZ_FIPS": "cz_fips_code",
+              "CZ_NAME": "cz_name",
+              "WFO": "wfo",
+              "BEGIN_DATE_TIME": "event_begin_time",
+              "CZ_TIMEZONE": "event_timezone",
+              "END_DATE_TIME": "event_end_time",
+              "INJURIES_DIRECT": "injuries_direct",
+              "INJURIES_INDIRECT": "injuries_indirect",
+              "DEATHS_DIRECT": "deaths_direct",
+              "DEATHS_INDIRECT": "deaths_indirect",
+              "DAMAGE_PROPERTY": "damage_property",
+              "DAMAGE_CROPS": "damage_crops",
+              "SOURCE": "source",
+              "MAGNITUDE": "magnitude",
+              "MAGNITUDE_TYPE": "magnitude_type",
+              "FLOOD_CAUSE": "flood_cause",
+              "TOR_F_SCALE": "tor_f_scale",
+              "TOR_LENGTH": "tor_length",
+              "TOR_WIDTH": "tor_width",
+              "TOR_OTHER_WFO": "tor_other_wfo",
+              "LOCATION_INDEX": "location_index",
+              "RANGE": "event_range",
+              "AZIMUTH": "event_azimuth",
+              "LOCATION": "reference_location",
+              "LATITUDE": "event_latitude",
+              "LONGITUDE": "event_longitude"
+            }
+          DATE_FORMAT_LIST: >-
+            {
+              "event_begin_time": "%Y-%m-%d %H:%M:%S",
+              "event_end_time": "%Y-%m-%d %H:%M:%S"
+            }
+          GEN_LOCATION_LIST: >-
+            {
+              "event_point": ["event_longitude", "event_latitude"]
+            }
+          REORDER_HEADERS_LIST: >-
+            [
+              "episode_id",
+              "event_id",
+              "state",
+              "state_fips_code",
+              "event_type",
+              "cz_type",
+              "cz_fips_code",
+              "cz_name",
+              "wfo",
+              "event_begin_time",
+              "event_timezone",
+              "event_end_time",
+              "injuries_direct",
+              "injuries_indirect",
+              "deaths_direct",
+              "deaths_indirect",
+              "damage_property",
+              "damage_crops",
+              "source",
+              "magnitude",
+              "magnitude_type",
+              "flood_cause",
+              "tor_f_scale",
+              "tor_length",
+              "tor_width",
+              "tor_other_wfo",
+              "location_index",
+              "event_range",
+              "event_azimuth",
+              "reference_location",
+              "event_latitude",
+              "event_longitude",
+              "event_point"
+            ]
+        resources:
+          request_ephemeral_storage: "16G"
+          limit_cpu: "3"
+    - operator: "GKEDeleteClusterOperator"
+      args:
+        task_id: "delete_cluster"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        name: noaa
+
+  graph_paths:
+    - "create_cluster >> [ghcnd_states, ghcnd_stations, gsod_stations, ghcnd_countries, ghcnd_inventory] >> storms_database_by_year >> ghcnd_by_year >> ghcnd_hurricanes >> lightning_strikes_by_year >> delete_cluster"

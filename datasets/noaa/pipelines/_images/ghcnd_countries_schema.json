@@ -1,0 +1,24 @@
+[
+  {
+      "name": "code",
+      "type": "STRING",
+      "mode": "NULLABLE"
+  },
+  {
+      "name": "name",
+      "type": "STRING",
+      "mode": "NULLABLE"
+  },
+  {
+      "name": "source_url",
+      "type": "STRING",
+      "description": "Source ",
+      "mode": "NULLABLE"
+  },
+  {
+      "name": "etl_timestamp",
+      "type": "TIMESTAMP",
+      "description": "Load time for this data row",
+      "mode": "NULLABLE"
+  }
+]

@@ -1,0 +1,68 @@
+[
+    {
+        "name": "title",
+        "type": "STRING",
+        "description": "",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "release_year",
+        "type": "INTEGER",
+        "description": "",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "locations",
+        "type": "STRING",
+        "description": "",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "fun_facts",
+        "type": "STRING",
+        "description": "",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "production_company",
+        "type": "STRING",
+        "description": "",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "distributor",
+        "type": "STRING",
+        "description": "",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "director",
+        "type": "STRING",
+        "description": "",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "writer",
+        "type": "STRING",
+        "description": "",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "actor_1",
+        "type": "STRING",
+        "description": "",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "actor_2",
+        "type": "STRING",
+        "description": "",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "actor_3",
+        "type": "STRING",
+        "description": "",
+        "mode": "NULLABLE"
+    }
+]

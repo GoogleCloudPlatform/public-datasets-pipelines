@@ -1,0 +1,44 @@
+[ 
+	{
+		"name": "ClusterID",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "RepID",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "TaxID",
+		"type": "String",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "Sequence",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "ClusterName",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "Size",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "Organism",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	}
+]
