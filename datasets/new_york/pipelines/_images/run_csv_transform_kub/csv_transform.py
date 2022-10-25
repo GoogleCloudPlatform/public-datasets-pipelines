@@ -57,36 +57,39 @@ def main(
 ) -> None:
     logging.info(f"{pipeline_name} process started")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
-    execute_pipeline(
-        source_url=source_url,
-        source_url_stations_json=source_url_stations_json,
-        source_url_status_json=source_url_status_json,
-        source_file=source_file,
-        target_file=target_file,
-        project_id=project_id,
-        dataset_id=dataset_id,
-        destination_table=table_id,
-        chunksize=chunksize,
-        target_gcs_bucket=target_gcs_bucket,
-        target_gcs_path=target_gcs_path,
-        schema_path=schema_path,
-        transform_list=transform_list,
-        data_dtypes=data_dtypes,
-        null_rows_list=null_rows_list,
-        parse_dates_list=parse_dates_list,
-        rename_headers_list=rename_headers_list,
-        output_headers_list=output_headers_list,
-        datetime_fieldlist=datetime_fieldlist,
-        resolve_datatypes_list=resolve_datatypes_list,
-        normalize_data_list=normalize_data_list,
-        boolean_datapoints_list=boolean_datapoints_list,
-        remove_whitespace_list=remove_whitespace_list,
-        regex_list=regex_list,
-        crash_field_list=crash_field_list,
-        date_format_list=date_format_list,
-        reorder_headers_list=reorder_headers_list
-    )
-    logging.info(f"{pipeline_name} process completed")
+    successful_completion = execute_pipeline(
+                                source_url=source_url,
+                                source_url_stations_json=source_url_stations_json,
+                                source_url_status_json=source_url_status_json,
+                                source_file=source_file,
+                                target_file=target_file,
+                                project_id=project_id,
+                                dataset_id=dataset_id,
+                                destination_table=table_id,
+                                chunksize=chunksize,
+                                target_gcs_bucket=target_gcs_bucket,
+                                target_gcs_path=target_gcs_path,
+                                schema_path=schema_path,
+                                transform_list=transform_list,
+                                data_dtypes=data_dtypes,
+                                null_rows_list=null_rows_list,
+                                parse_dates_list=parse_dates_list,
+                                rename_headers_list=rename_headers_list,
+                                output_headers_list=output_headers_list,
+                                datetime_fieldlist=datetime_fieldlist,
+                                resolve_datatypes_list=resolve_datatypes_list,
+                                normalize_data_list=normalize_data_list,
+                                boolean_datapoints_list=boolean_datapoints_list,
+                                remove_whitespace_list=remove_whitespace_list,
+                                regex_list=regex_list,
+                                crash_field_list=crash_field_list,
+                                date_format_list=date_format_list,
+                                reorder_headers_list=reorder_headers_list
+                            )
+    if successful_completion:
+        logging.info(f"{pipeline_name} process completed")
+    else:
+        logging.info(f"{pipeline_name} process was unknown and failed")
 
 
 def execute_pipeline(
@@ -117,9 +120,34 @@ def execute_pipeline(
     normalize_data_list: typing.List[str],
     boolean_datapoints_list: typing.List[str],
     remove_whitespace_list: typing.List[str],
-) -> None:
-    if destination_table == "311_service_requests":
-        # download_file(source_url, source_file)
+) -> bool:
+    if destination_table not in [
+                                "311_service_requests",
+                                "citibike_stations",
+                                "nypd_mv_collisions",
+                                "tree_census_1995"
+    ]:
+        logging.info("Unknown pipeline")
+        return False
+    else:
+        sep = ","
+        if destination_table == "311_service_requests":
+            # download_file(source_url, source_file)
+            pass
+        elif destination_table == "citibike_stations":
+            download_and_merge_source_files(
+                source_url_stations_json=source_url_stations_json,
+                source_url_status_json=source_url_status_json,
+                source_file=source_file,
+                resolve_datatypes_list=resolve_datatypes_list,
+                normalize_data_list=normalize_data_list,
+                boolean_datapoints_list=boolean_datapoints_list
+            )
+            sep = "|"
+        elif destination_table == "nypd_mv_collisions":
+            download_file(source_url, source_file)
+        elif destination_table == "tree_census_1995":
+            download_file(source_url=source_url, source_file=source_file)
         process_source_file(
             source_file=source_file,
             target_file=target_file,
@@ -130,6 +158,8 @@ def execute_pipeline(
             rename_headers_list=rename_headers_list,
             output_headers_list=output_headers_list,
             destination_table=destination_table,
+            normalize_data_list=normalize_data_list,
+            boolean_datapoints_list=boolean_datapoints_list,
             transform_list=transform_list,
             reorder_headers_list=output_headers_list,
             datetime_fieldlist=datetime_fieldlist,
@@ -138,81 +168,37 @@ def execute_pipeline(
             remove_whitespace_list=remove_whitespace_list,
             crash_field_list=crash_field_list,
             date_format_list=date_format_list,
+            sep=sep
         )
-    if destination_table == "citibike_stations":
-        download_and_merge_source_files(
-            source_url_stations_json=source_url_stations_json,
-            source_url_status_json=source_url_status_json,
-            source_file=source_file,
-            resolve_datatypes_list=resolve_datatypes_list,
-            normalize_data_list=normalize_data_list,
-            boolean_datapoints_list=boolean_datapoints_list,
-        )
-        process_source_file(
-            source_file=source_file,
-            target_file=target_file,
-            chunksize=chunksize,
-            data_dtypes=data_dtypes,
-            rename_headers_list=rename_headers_list,
-            output_headers_list=output_headers_list,
-            datetime_fieldlist=datetime_fieldlist,
-            resolve_datatypes_list=resolve_datatypes_list,
-            normalize_data_list=normalize_data_list,
-            boolean_datapoints_list=boolean_datapoints_list,
-        )
-    if destination_table == "nypd_mv_collisions":
-        download_file(source_url, source_file)
-        process_source_file(
-            source_file=source_file,
-            target_file=target_file,
-            chunksize=chunksize,
-            source_dtypes=data_dtypes,
-            resolve_datatypes_list=resolve_datatypes_list,
-            transform_list=transform_list,
-            reorder_headers_list=reorder_headers_list,
-            rename_headers_list=rename_headers_list,
-            regex_list=regex_list,
-            crash_field_list=crash_field_list,
-            date_format_list=date_format_list,
-        )
-    if destination_table == "tree_census_1995":
-        download_file(source_url=source_url, source_file=source_file)
-        process_source_file(
-            source_file=source_file,
-            target_file=target_file,
-            chunksize=chunksize,
-            rename_headers_list=rename_headers_list,
-            remove_whitespace_list=remove_whitespace_list,
-            reorder_headers_list=reorder_headers_list,
-        )
-    if os.path.exists(target_file):
-        upload_file_to_gcs(
-            file_path=target_file,
-            target_gcs_bucket=target_gcs_bucket,
-            target_gcs_path=target_gcs_path,
-        )
-        table_exists = create_dest_table(
-            project_id=project_id,
-            dataset_id=dataset_id,
-            table_id=destination_table,
-            schema_filepath=schema_path,
-            bucket_name=target_gcs_bucket,
-        )
-        if table_exists:
-            load_data_to_bq(
+        if os.path.exists(target_file):
+            upload_file_to_gcs(
+                file_path=target_file,
+                target_gcs_bucket=target_gcs_bucket,
+                target_gcs_path=target_gcs_path,
+            )
+            table_exists = create_dest_table(
                 project_id=project_id,
                 dataset_id=dataset_id,
                 table_id=destination_table,
-                file_path=target_file,
-                truncate_table=True,
+                schema_filepath=schema_path,
+                bucket_name=target_gcs_bucket,
             )
+            if table_exists:
+                load_data_to_bq(
+                    project_id=project_id,
+                    dataset_id=dataset_id,
+                    table_id=destination_table,
+                    file_path=target_file,
+                    truncate_table=True,
+                )
+            else:
+                error_msg = f"Error: Data was not loaded because the destination table {project_id}.{dataset_id}.{destination_table} does not exist and/or could not be created."
+                raise ValueError(error_msg)
         else:
-            error_msg = f"Error: Data was not loaded because the destination table {project_id}.{dataset_id}.{destination_table} does not exist and/or could not be created."
-            raise ValueError(error_msg)
-    else:
-        logging.info(
-            f"Informational: The data file {target_file} was not generated because no data file was available.  Continuing."
-        )
+            logging.info(
+                f"Informational: The data file {target_file} was not generated because no data file was available.  Continuing."
+            )
+        return True
 
 
 def download_and_merge_source_files(
@@ -322,12 +308,15 @@ def process_source_file(
     output_headers_list: typing.List[str],
     transform_list: typing.List[str],
     reorder_headers_list: typing.List[str],
+    normalize_data_list: typing.List[str],
+    boolean_datapoints_list: typing.List[str],
     datetime_fieldlist: typing.List[str],
     resolve_datatypes_list: dict,
     regex_list: typing.List[typing.List],
     remove_whitespace_list: typing.List[str],
     crash_field_list: typing.List[typing.List],
     date_format_list: typing.List[typing.List],
+    sep: str = ","
 ) -> None:
     logging.info(f"Processing file {source_file}")
     with pd.read_csv(
@@ -338,6 +327,7 @@ def process_source_file(
         chunksize=int(chunksize),
         dtype=data_dtypes,
         parse_dates=parse_dates_list,
+        sep = sep
     ) as reader:
         for chunk_number, chunk in enumerate(reader):
             logging.info(f"Processing batch {chunk_number}")
@@ -356,6 +346,8 @@ def process_source_file(
                 null_rows_list=null_rows_list,
                 parse_dates_list=parse_dates_list,
                 reorder_headers_list=reorder_headers_list,
+                # normalize_data_list=normalize_data_list,
+                # boolean_datapoints_list=boolean_datapoints_list,
                 transform_list=transform_list,
                 output_headers_list=output_headers_list,
                 datetime_fieldlist=datetime_fieldlist,
@@ -505,6 +497,8 @@ def process_chunk(
     null_rows_list: typing.List[str],
     parse_dates_list: typing.List[str],
     reorder_headers_list: typing.List[str],
+    # normalize_data_list: typing.List[str],
+    # boolean_datapoints_list: typing.List[str],
     datetime_fieldlist: typing.List[str],
     resolve_datatypes_list: dict,
     regex_list: typing.List[typing.List],
