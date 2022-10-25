@@ -132,8 +132,7 @@ def execute_pipeline(
     else:
         sep = ","
         if destination_table == "311_service_requests":
-            # download_file(source_url, source_file)
-            pass
+            download_file(source_url, source_file)
         elif destination_table == "citibike_stations":
             download_and_merge_source_files(
                 source_url_stations_json=source_url_stations_json,
@@ -145,7 +144,9 @@ def execute_pipeline(
             )
             sep = "|"
         elif destination_table == "nypd_mv_collisions":
-            download_file(source_url, source_file)
+            # download_file(source_url, source_file)
+            # import pdb; pdb.set_trace()
+            pass
         elif destination_table == "tree_census_1995":
             download_file(source_url=source_url, source_file=source_file)
         process_source_file(
@@ -158,10 +159,10 @@ def execute_pipeline(
             rename_headers_list=rename_headers_list,
             output_headers_list=output_headers_list,
             destination_table=destination_table,
-            normalize_data_list=normalize_data_list,
-            boolean_datapoints_list=boolean_datapoints_list,
+            # normalize_data_list=normalize_data_list,
+            # boolean_datapoints_list=boolean_datapoints_list,
             transform_list=transform_list,
-            reorder_headers_list=output_headers_list,
+            reorder_headers_list=reorder_headers_list,
             datetime_fieldlist=datetime_fieldlist,
             resolve_datatypes_list=resolve_datatypes_list,
             regex_list=regex_list,
@@ -264,7 +265,7 @@ def clean_data_points(
 def resolve_datatypes(df: pd.DataFrame, resolve_datatypes_list: dict) -> pd.DataFrame:
     for column, datatype in resolve_datatypes_list.items():
         logging.info(f"Resolving datatype for column {column} to {datatype}")
-        if datatype in ('Int64', 'Float'):
+        if datatype.lower() in ('int64', 'float'):
             df[column] = df[column].fillna(0).astype(datatype)
         else:
             df[column] = df[column].astype(datatype)
@@ -308,8 +309,8 @@ def process_source_file(
     output_headers_list: typing.List[str],
     transform_list: typing.List[str],
     reorder_headers_list: typing.List[str],
-    normalize_data_list: typing.List[str],
-    boolean_datapoints_list: typing.List[str],
+    # normalize_data_list: typing.List[str],
+    # boolean_datapoints_list: typing.List[str],
     datetime_fieldlist: typing.List[str],
     resolve_datatypes_list: dict,
     regex_list: typing.List[typing.List],
@@ -508,7 +509,7 @@ def process_chunk(
 ) -> None:
     logging.info(f"Processing batch file {target_file_batch}")
     if destination_table == "311_service_requests":
-        df = resolve_date_format(df, parse_dates_list)
+        df = parse_date_formats(df, parse_dates_list)
         df = rename_headers(df, rename_headers_list)
         df = remove_null_rows(df, null_rows_list)
         df = reorder_headers(df, reorder_headers_list)
@@ -537,6 +538,7 @@ def process_chunk(
                 df = rename_headers(df, rename_headers_list)
             elif transform == "reorder_headers":
                 df = reorder_headers(df, reorder_headers_list)
+            # import pdb; pdb.set_trace()
     if destination_table == "tree_census_1995":
         df = rename_headers(df, rename_headers_list)
         df = remove_whitespace(df, remove_whitespace_list)
@@ -566,6 +568,13 @@ def add_crash_timestamp(
         axis=1,
     )
     return df
+
+
+def crash_timestamp(crash_date: str, crash_time: str) -> str:
+    # if crash time format is H:MM then convert to HH:MM:SS
+    if len(crash_time) == 4:
+        crash_time = f"0{crash_time}:00"
+    return f"{crash_date} {crash_time}"
 
 
 def remove_whitespace(
@@ -630,16 +639,54 @@ def reorder_headers(df: pd.DataFrame, output_headers: typing.List[str]) -> pd.Da
     return df[output_headers]
 
 
-def resolve_date_format(
-    df: pd.DataFrame, parse_dates: typing.List[str]
-) -> pd.DataFrame:
-    for dt_fld in parse_dates:
-        logging.info(f"Resolving date format in column {dt_fld}")
-        df[dt_fld] = df[dt_fld].apply(convert_dt_format)
+def resolve_date_format(df: pd.DataFrame, date_fields: list = []) -> pd.DataFrame:
+    for dt_fld in date_fields:
+        field_name = dt_fld[0]
+        logging.info(f"Resolving date format in column {field_name}")
+        from_format = dt_fld[1]
+        to_format = dt_fld[2]
+        df[field_name] = df[field_name].apply(
+            lambda x: convert_dt_format(str(x), from_format, to_format)
+        )
     return df
 
 
-def convert_dt_format(dt_str: str) -> str:
+def convert_dt_format(
+    dt_str: str, from_format: str, to_format: str = "%Y-%m-%d %H:%M:%S"
+) -> str:
+    if not dt_str or str(dt_str).lower() == "nan" or str(dt_str).lower() == "nat":
+        dt_str = ""
+        return dt_str
+    else:
+        if from_format == "%Y%m%d":
+            year = dt_str[0:4]
+            month = dt_str[4:6]
+            day = dt_str[6:8]
+            dt_str = f"{year}-{month}-{day} 00:00:00"
+            from_format = "%Y-%m-%d %H:%M:%S"
+        elif len(dt_str.strip().split(" ")[1]) == 8:
+            # if format of time portion is 00:00:00 then use 00:00 format
+            dt_str = dt_str[:-3]
+        elif (len(dt_str.strip().split("-")[0]) == 4) and (
+            len(from_format.strip().split("/")[0]) == 2
+        ):
+            # if the format of the date portion of the data is in YYYY-MM-DD format
+            # and from_format is in MM-DD-YYYY then resolve this by modifying the from_format
+            # to use the YYYY-MM-DD.  This resolves mixed date formats in files
+            from_format = "%Y-%m-%d " + from_format.strip().split(" ")[1]
+        return datetime.datetime.strptime(dt_str, from_format).strftime(to_format)
+
+
+def parse_date_formats(
+    df: pd.DataFrame, parse_dates: typing.List[str]
+) -> pd.DataFrame:
+    for dt_fld in parse_dates:
+        logging.info(f"Evaluating date format in column {dt_fld}")
+        df[dt_fld] = df[dt_fld].apply(parse_date_format_value)
+    return df
+
+
+def parse_date_format_value(dt_str: str) -> str:
     if not dt_str or str(dt_str).lower() == "nan" or str(dt_str).lower() == "nat":
         return ""
     elif (

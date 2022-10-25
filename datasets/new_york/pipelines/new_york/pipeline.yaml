@@ -128,7 +128,7 @@ dag:
             [
               "unique_key"
             ]
-          RENAME_HEADERS: >-
+          RENAME_HEADERS_LIST: >-
             {
               "Unique Key": "unique_key",
               "Created Date": "created_date",
