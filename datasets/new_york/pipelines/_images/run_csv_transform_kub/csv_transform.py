@@ -42,8 +42,9 @@ def main(
     transform_list: typing.List[str],
     data_dtypes: typing.List[str],
     null_rows_list: typing.List[str],
-    parse_dates: dict,
+    parse_dates_list: dict,
     rename_headers_list: dict,
+    reorder_headers_list: typing.List[str],
     output_headers_list: typing.List[str],
     datetime_fieldlist: typing.List[str],
     resolve_datatypes_list: dict,
@@ -72,7 +73,7 @@ def main(
         transform_list=transform_list,
         data_dtypes=data_dtypes,
         null_rows_list=null_rows_list,
-        parse_dates=parse_dates,
+        parse_dates_list=parse_dates_list,
         rename_headers_list=rename_headers_list,
         output_headers_list=output_headers_list,
         datetime_fieldlist=datetime_fieldlist,
@@ -83,6 +84,7 @@ def main(
         regex_list=regex_list,
         crash_field_list=crash_field_list,
         date_format_list=date_format_list,
+        reorder_headers_list=reorder_headers_list
     )
     logging.info(f"{pipeline_name} process completed")
 
@@ -102,7 +104,7 @@ def execute_pipeline(
     schema_path: str,
     transform_list: typing.List[str],
     data_dtypes: typing.List[str],
-    parse_dates: dict,
+    parse_dates_list: dict,
     null_rows_list: typing.List[str],
     rename_headers_list: dict,
     output_headers_list: typing.List[str],
@@ -117,16 +119,25 @@ def execute_pipeline(
     remove_whitespace_list: typing.List[str],
 ) -> None:
     if destination_table == "311_service_requests":
-        download_file(source_url, source_file)
+        # download_file(source_url, source_file)
         process_source_file(
             source_file=source_file,
             target_file=target_file,
             chunksize=chunksize,
             data_dtypes=data_dtypes,
-            parse_dates=parse_dates,
+            parse_dates_list=parse_dates_list,
             null_rows_list=null_rows_list,
             rename_headers_list=rename_headers_list,
             output_headers_list=output_headers_list,
+            destination_table=destination_table,
+            transform_list=transform_list,
+            reorder_headers_list=output_headers_list,
+            datetime_fieldlist=datetime_fieldlist,
+            resolve_datatypes_list=resolve_datatypes_list,
+            regex_list=regex_list,
+            remove_whitespace_list=remove_whitespace_list,
+            crash_field_list=crash_field_list,
+            date_format_list=date_format_list,
         )
     if destination_table == "citibike_stations":
         download_and_merge_source_files(
@@ -302,7 +313,6 @@ def resolve_boolean_datapoints(
 def process_source_file(
     source_file: str,
     target_file: str,
-    target_file_batch: str,
     destination_table: str,
     chunksize: str,
     data_dtypes: dict,
@@ -345,13 +355,9 @@ def process_source_file(
                 rename_headers_list=rename_headers_list,
                 null_rows_list=null_rows_list,
                 parse_dates_list=parse_dates_list,
-                reorder_headers_list=output_headers_list,
-                transform_list=transform_list,
-                rename_headers_list=rename_headers_list,
-                output_headers_list=output_headers_list,
-                null_rows_list=null_rows_list,
-                parse_dates_list=parse_dates_list,
                 reorder_headers_list=reorder_headers_list,
+                transform_list=transform_list,
+                output_headers_list=output_headers_list,
                 datetime_fieldlist=datetime_fieldlist,
                 resolve_datatypes_list=resolve_datatypes_list,
                 regex_list=regex_list,
@@ -541,7 +547,7 @@ def process_chunk(
         df = rename_headers(df, rename_headers_list)
         df = remove_whitespace(df, remove_whitespace_list)
         df = reorder_headers(df, reorder_headers_list)
-    if df:
+    if not df.empty:
         save_to_new_file(df, file_path=str(target_file_batch))
         append_batch_file(
             batch_file_path=target_file_batch,
@@ -589,8 +595,6 @@ def replace_regex(df: pd.DataFrame, regex_list: dict) -> pd.DataFrame:
             r"" + search_expr, replace_expr, regex=True
         )
     return df
-
-
 
 
 def convert_datetime_from_int(
@@ -707,10 +711,22 @@ if __name__ == "__main__":
         table_id=os.environ.get("TABLE_ID", ""),
         target_gcs_bucket=os.environ.get("TARGET_GCS_BUCKET", ""),
         target_gcs_path=os.environ.get("TARGET_GCS_PATH", ""),
-        schema_path=os.environ("SCHEMA_PATH", ""),
+        schema_path=os.environ.get("SCHEMA_PATH", ""),
         data_dtypes=json.loads(os.environ.get("DATA_DTYPES", "{}")),
         null_rows_list=json.loads(os.environ.get("NULL_ROWS_LIST", "[]")),
-        parse_dates=json.loads(os.environ.get("PARSE_DATES", "[]")),
-        rename_headers_list=json.loads(os.environ.get("RENAME_HEADERS", "{}")),
+        parse_dates_list=json.loads(os.environ.get("PARSE_DATES", "{}")),
+        rename_headers_list=json.loads(os.environ.get("RENAME_HEADERS_LIST", "{}")),
+        reorder_headers_list=json.loads(os.environ.get("REORDER_HEADERS_LIST", "[]")),
         output_headers_list=json.loads(os.environ.get("OUTPUT_CSV_HEADERS", "[]")),
+        source_url_stations_json=os.environ.get("SOURCE_URL_STATIONS_JSON", ""),
+        source_url_status_json=os.environ.get("SOURCE_URL_STATUS_JSON", ""),
+        transform_list=json.loads(os.environ.get("TRANSFORM_LIST", "[]")),
+        datetime_fieldlist=json.loads(os.environ.get("DATETIME_FIELDLIST", "[]")),
+        resolve_datatypes_list=json.loads(os.environ.get("RESOLVE_DATATYPES_LIST", "{}")),
+        normalize_data_list=json.loads(os.environ.get("NORMALIZE_DATA_LIST", "[]")),
+        boolean_datapoints_list=json.loads(os.environ.get("BOOLEAN_DATAPOINTS_LIST", "[]")),
+        remove_whitespace_list=json.loads(os.environ.get("REMOVE_WHITESPACE_LIST", "[]")),
+        regex_list=json.loads(os.environ.get("REGEX_LIST", "[]")),
+        crash_field_list=json.loads(os.environ.get("CRASH_FIELD_LIST", "[]")),
+        date_format_list=json.loads(os.environ.get("DATE_FORMAT_LIST", "[]")),
     )
