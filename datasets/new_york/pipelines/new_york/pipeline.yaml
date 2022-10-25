@@ -525,7 +525,7 @@ dag:
           TARGET_FILE: "files/data_output_new_york_trees_tree_census_1995.csv"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "new_york_trees"
-          TABLE_ID: "{{ var.json.new_york.tree_census_1995.destination_table }}"
+          TABLE_ID: "tree_census_1995"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/new_york/tree_census_1995/data_output.csv"
           SCHEMA_PATH: "data/new_york/schema/tree_census_1995_schema.json"

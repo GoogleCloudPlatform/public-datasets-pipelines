@@ -144,9 +144,7 @@ def execute_pipeline(
             )
             sep = "|"
         elif destination_table == "nypd_mv_collisions":
-            # download_file(source_url, source_file)
-            # import pdb; pdb.set_trace()
-            pass
+            download_file(source_url, source_file)
         elif destination_table == "tree_census_1995":
             download_file(source_url=source_url, source_file=source_file)
         process_source_file(
@@ -159,8 +157,6 @@ def execute_pipeline(
             rename_headers_list=rename_headers_list,
             output_headers_list=output_headers_list,
             destination_table=destination_table,
-            # normalize_data_list=normalize_data_list,
-            # boolean_datapoints_list=boolean_datapoints_list,
             transform_list=transform_list,
             reorder_headers_list=reorder_headers_list,
             datetime_fieldlist=datetime_fieldlist,
@@ -309,8 +305,6 @@ def process_source_file(
     output_headers_list: typing.List[str],
     transform_list: typing.List[str],
     reorder_headers_list: typing.List[str],
-    # normalize_data_list: typing.List[str],
-    # boolean_datapoints_list: typing.List[str],
     datetime_fieldlist: typing.List[str],
     resolve_datatypes_list: dict,
     regex_list: typing.List[typing.List],
@@ -347,8 +341,6 @@ def process_source_file(
                 null_rows_list=null_rows_list,
                 parse_dates_list=parse_dates_list,
                 reorder_headers_list=reorder_headers_list,
-                # normalize_data_list=normalize_data_list,
-                # boolean_datapoints_list=boolean_datapoints_list,
                 transform_list=transform_list,
                 output_headers_list=output_headers_list,
                 datetime_fieldlist=datetime_fieldlist,
@@ -498,8 +490,6 @@ def process_chunk(
     null_rows_list: typing.List[str],
     parse_dates_list: typing.List[str],
     reorder_headers_list: typing.List[str],
-    # normalize_data_list: typing.List[str],
-    # boolean_datapoints_list: typing.List[str],
     datetime_fieldlist: typing.List[str],
     resolve_datatypes_list: dict,
     regex_list: typing.List[typing.List],
@@ -538,7 +528,6 @@ def process_chunk(
                 df = rename_headers(df, rename_headers_list)
             elif transform == "reorder_headers":
                 df = reorder_headers(df, reorder_headers_list)
-            # import pdb; pdb.set_trace()
     if destination_table == "tree_census_1995":
         df = rename_headers(df, rename_headers_list)
         df = remove_whitespace(df, remove_whitespace_list)
