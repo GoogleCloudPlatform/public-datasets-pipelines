@@ -28,6 +28,7 @@ output "bigquery_dataset-google_cfe-dataset_id" {
 resource "google_storage_bucket" "datacenter-cfe" {
   name          = "${var.bucket_name_prefix}-datacenter-cfe"
   force_destroy = true
+  location      = "US"
   lifecycle {
     ignore_changes = [
       logging,

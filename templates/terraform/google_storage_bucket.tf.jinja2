@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ resource "google_storage_bucket" "{{ name }}" {
   }
 }
 
-{% if iam_policies -%}
+{% if iam_policies and iam_policies["storage_buckets"] and (name in iam_policies["storage_buckets"]) -%}
 data "google_iam_policy" "storage_bucket__{{ name }}" {
   dynamic "binding" {
     for_each = var.iam_policies["storage_buckets"]["{{ name }}"]

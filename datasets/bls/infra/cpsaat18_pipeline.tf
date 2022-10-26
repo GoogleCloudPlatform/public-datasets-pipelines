@@ -16,15 +16,10 @@
 
 
 resource "google_bigquery_table" "bls_cpsaat18" {
-  project    = var.project_id
-  dataset_id = "bls"
-  table_id   = "cpsaat18"
-
+  project     = var.project_id
+  dataset_id  = "bls"
+  table_id    = "cpsaat18"
   description = "Current population survey 18: Employed persons by detailed industry, sex, race, and Hispanic or Latino ethnicity"
-
-
-
-
   depends_on = [
     google_bigquery_dataset.bls
   ]

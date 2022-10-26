@@ -16,15 +16,10 @@
 
 
 resource "google_bigquery_table" "cms_medicare_outpatient_charges_2011" {
-  project    = var.project_id
-  dataset_id = "cms_medicare"
-  table_id   = "outpatient_charges_2011"
-
+  project     = var.project_id
+  dataset_id  = "cms_medicare"
+  table_id    = "outpatient_charges_2011"
   description = "CMS Medicare Outpatient Charges 2011"
-
-
-
-
   depends_on = [
     google_bigquery_dataset.cms_medicare
   ]
@@ -39,15 +34,10 @@ output "bigquery_table-cms_medicare_outpatient_charges_2011-id" {
 }
 
 resource "google_bigquery_table" "cms_medicare_outpatient_charges_2012" {
-  project    = var.project_id
-  dataset_id = "cms_medicare"
-  table_id   = "outpatient_charges_2012"
-
+  project     = var.project_id
+  dataset_id  = "cms_medicare"
+  table_id    = "outpatient_charges_2012"
   description = "CMS Medicare Outpatient Charges 2012"
-
-
-
-
   depends_on = [
     google_bigquery_dataset.cms_medicare
   ]
@@ -62,15 +52,10 @@ output "bigquery_table-cms_medicare_outpatient_charges_2012-id" {
 }
 
 resource "google_bigquery_table" "cms_medicare_outpatient_charges_2013" {
-  project    = var.project_id
-  dataset_id = "cms_medicare"
-  table_id   = "outpatient_charges_2013"
-
+  project     = var.project_id
+  dataset_id  = "cms_medicare"
+  table_id    = "outpatient_charges_2013"
   description = "CMS Medicare Outpatient Charges 2013"
-
-
-
-
   depends_on = [
     google_bigquery_dataset.cms_medicare
   ]
@@ -85,15 +70,10 @@ output "bigquery_table-cms_medicare_outpatient_charges_2013-id" {
 }
 
 resource "google_bigquery_table" "cms_medicare_outpatient_charges_2014" {
-  project    = var.project_id
-  dataset_id = "cms_medicare"
-  table_id   = "outpatient_charges_2014"
-
+  project     = var.project_id
+  dataset_id  = "cms_medicare"
+  table_id    = "outpatient_charges_2014"
   description = "CMS Medicare Outpatient Charges 2014"
-
-
-
-
   depends_on = [
     google_bigquery_dataset.cms_medicare
   ]

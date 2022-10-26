@@ -206,7 +206,6 @@ def resolve_date_format(
         df[col] = df[col].apply(
             lambda x: convert_dt_format(str(x), from_format, to_format, is_date)
         )
-
     return df
 
 
@@ -215,6 +214,8 @@ def convert_dt_format(
 ) -> str:
     rtnval = "<initial_value>"
     if not dt_str or str(dt_str).lower() == "nan" or str(dt_str).lower() == "nat":
+        rtnval = ""
+    elif len(dt_str) > 20:
         rtnval = ""
     elif len(dt_str.strip()) == 10:
         # if there is no time format
@@ -239,7 +240,6 @@ def convert_dt_format(
         from_format = "%Y-%m-%d " + from_format.strip().split(" ")[1]
     else:
         dt_str = "<blank>"
-
     return rtnval
 
 
