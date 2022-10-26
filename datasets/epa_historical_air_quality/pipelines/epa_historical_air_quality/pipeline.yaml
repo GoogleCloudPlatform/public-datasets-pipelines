@@ -955,7 +955,7 @@ dag:
               "Method Code": "str", "Method Name": "str", "Local Site Name": "str", "Address": "str", "State Name": "str",
               "County Name": "str", "City Name": "str", "CBSA Name": "str", "Date of Last Change": "str"
             }
-          RENAME_HEADERS: >-
+          RENAME_HEADERS_LIST: >-
             { "State Code": "state_code",
               "County Code": "county_code",
               "Site Num": "site_num",
