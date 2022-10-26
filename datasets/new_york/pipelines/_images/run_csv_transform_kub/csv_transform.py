@@ -58,34 +58,34 @@ def main(
     logging.info(f"{pipeline_name} process started")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
     successful_completion = execute_pipeline(
-                                source_url=source_url,
-                                source_url_stations_json=source_url_stations_json,
-                                source_url_status_json=source_url_status_json,
-                                source_file=source_file,
-                                target_file=target_file,
-                                project_id=project_id,
-                                dataset_id=dataset_id,
-                                destination_table=table_id,
-                                chunksize=chunksize,
-                                target_gcs_bucket=target_gcs_bucket,
-                                target_gcs_path=target_gcs_path,
-                                schema_path=schema_path,
-                                transform_list=transform_list,
-                                data_dtypes=data_dtypes,
-                                null_rows_list=null_rows_list,
-                                parse_dates_list=parse_dates_list,
-                                rename_headers_list=rename_headers_list,
-                                output_headers_list=output_headers_list,
-                                datetime_fieldlist=datetime_fieldlist,
-                                resolve_datatypes_list=resolve_datatypes_list,
-                                normalize_data_list=normalize_data_list,
-                                boolean_datapoints_list=boolean_datapoints_list,
-                                remove_whitespace_list=remove_whitespace_list,
-                                regex_list=regex_list,
-                                crash_field_list=crash_field_list,
-                                date_format_list=date_format_list,
-                                reorder_headers_list=reorder_headers_list
-                            )
+        source_url=source_url,
+        source_url_stations_json=source_url_stations_json,
+        source_url_status_json=source_url_status_json,
+        source_file=source_file,
+        target_file=target_file,
+        project_id=project_id,
+        dataset_id=dataset_id,
+        destination_table=table_id,
+        chunksize=chunksize,
+        target_gcs_bucket=target_gcs_bucket,
+        target_gcs_path=target_gcs_path,
+        schema_path=schema_path,
+        transform_list=transform_list,
+        data_dtypes=data_dtypes,
+        null_rows_list=null_rows_list,
+        parse_dates_list=parse_dates_list,
+        rename_headers_list=rename_headers_list,
+        output_headers_list=output_headers_list,
+        datetime_fieldlist=datetime_fieldlist,
+        resolve_datatypes_list=resolve_datatypes_list,
+        normalize_data_list=normalize_data_list,
+        boolean_datapoints_list=boolean_datapoints_list,
+        remove_whitespace_list=remove_whitespace_list,
+        regex_list=regex_list,
+        crash_field_list=crash_field_list,
+        date_format_list=date_format_list,
+        reorder_headers_list=reorder_headers_list,
+    )
     if successful_completion:
         logging.info(f"{pipeline_name} process completed")
     else:
@@ -122,10 +122,10 @@ def execute_pipeline(
     remove_whitespace_list: typing.List[str],
 ) -> bool:
     if destination_table not in [
-                                "311_service_requests",
-                                "citibike_stations",
-                                "nypd_mv_collisions",
-                                "tree_census_1995"
+        "311_service_requests",
+        "citibike_stations",
+        "nypd_mv_collisions",
+        "tree_census_1995",
     ]:
         logging.info("Unknown pipeline")
         return False
@@ -140,7 +140,7 @@ def execute_pipeline(
                 source_file=source_file,
                 resolve_datatypes_list=resolve_datatypes_list,
                 normalize_data_list=normalize_data_list,
-                boolean_datapoints_list=boolean_datapoints_list
+                boolean_datapoints_list=boolean_datapoints_list,
             )
             sep = "|"
         elif destination_table == "nypd_mv_collisions":
@@ -165,7 +165,7 @@ def execute_pipeline(
             remove_whitespace_list=remove_whitespace_list,
             crash_field_list=crash_field_list,
             date_format_list=date_format_list,
-            sep=sep
+            sep=sep,
         )
         if os.path.exists(target_file):
             upload_file_to_gcs(
@@ -204,7 +204,7 @@ def download_and_merge_source_files(
     source_file: str,
     resolve_datatypes_list: dict,
     normalize_data_list: typing.List[str],
-    boolean_datapoints_list: typing.List[str]
+    boolean_datapoints_list: typing.List[str],
 ) -> None:
     source_file_stations_csv = str(source_file).replace(".csv", "") + "_stations.csv"
     source_file_stations_json = str(source_file).replace(".csv", "") + "_stations"
@@ -246,22 +246,10 @@ def download_file_json(
     df.to_csv(source_file_csv, index=False)
 
 
-def clean_data_points(
-    df: pd.DataFrame,
-    resolve_datatypes_list: dict,
-    normalize_data_list: typing.List[str],
-    boolean_datapoints_list: typing.List[str],
-) -> pd.DataFrame:
-    df = resolve_datatypes(df, resolve_datatypes_list)
-    df = normalize_data(df, normalize_data_list)
-    df = resolve_boolean_datapoints(df, boolean_datapoints_list)
-    return df
-
-
 def resolve_datatypes(df: pd.DataFrame, resolve_datatypes_list: dict) -> pd.DataFrame:
     for column, datatype in resolve_datatypes_list.items():
         logging.info(f"Resolving datatype for column {column} to {datatype}")
-        if datatype.lower() in ('int64', 'float'):
+        if datatype.lower() in ("int64", "float"):
             df[column] = df[column].fillna(0).astype(datatype)
         else:
             df[column] = df[column].astype(datatype)
@@ -311,7 +299,7 @@ def process_source_file(
     remove_whitespace_list: typing.List[str],
     crash_field_list: typing.List[typing.List],
     date_format_list: typing.List[typing.List],
-    sep: str = ","
+    sep: str = ",",
 ) -> None:
     logging.info(f"Processing file {source_file}")
     with pd.read_csv(
@@ -322,7 +310,7 @@ def process_source_file(
         chunksize=int(chunksize),
         dtype=data_dtypes,
         parse_dates=parse_dates_list,
-        sep = sep
+        sep=sep,
     ) as reader:
         for chunk_number, chunk in enumerate(reader):
             logging.info(f"Processing batch {chunk_number}")
@@ -666,9 +654,7 @@ def convert_dt_format(
         return datetime.datetime.strptime(dt_str, from_format).strftime(to_format)
 
 
-def parse_date_formats(
-    df: pd.DataFrame, parse_dates: typing.List[str]
-) -> pd.DataFrame:
+def parse_date_formats(df: pd.DataFrame, parse_dates: typing.List[str]) -> pd.DataFrame:
     for dt_fld in parse_dates:
         logging.info(f"Evaluating date format in column {dt_fld}")
         df[dt_fld] = df[dt_fld].apply(parse_date_format_value)
@@ -752,10 +738,16 @@ if __name__ == "__main__":
         source_url_status_json=os.environ.get("SOURCE_URL_STATUS_JSON", ""),
         transform_list=json.loads(os.environ.get("TRANSFORM_LIST", "[]")),
         datetime_fieldlist=json.loads(os.environ.get("DATETIME_FIELDLIST", "[]")),
-        resolve_datatypes_list=json.loads(os.environ.get("RESOLVE_DATATYPES_LIST", "{}")),
+        resolve_datatypes_list=json.loads(
+            os.environ.get("RESOLVE_DATATYPES_LIST", "{}")
+        ),
         normalize_data_list=json.loads(os.environ.get("NORMALIZE_DATA_LIST", "[]")),
-        boolean_datapoints_list=json.loads(os.environ.get("BOOLEAN_DATAPOINTS_LIST", "[]")),
-        remove_whitespace_list=json.loads(os.environ.get("REMOVE_WHITESPACE_LIST", "[]")),
+        boolean_datapoints_list=json.loads(
+            os.environ.get("BOOLEAN_DATAPOINTS_LIST", "[]")
+        ),
+        remove_whitespace_list=json.loads(
+            os.environ.get("REMOVE_WHITESPACE_LIST", "[]")
+        ),
         regex_list=json.loads(os.environ.get("REGEX_LIST", "[]")),
         crash_field_list=json.loads(os.environ.get("CRASH_FIELD_LIST", "[]")),
         date_format_list=json.loads(os.environ.get("DATE_FORMAT_LIST", "[]")),
