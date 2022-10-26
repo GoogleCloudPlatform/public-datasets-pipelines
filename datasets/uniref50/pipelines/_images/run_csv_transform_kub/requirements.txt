@@ -1,0 +1,6 @@
+google-cloud-bigquery
+google-cloud-storage
+pandas
+Bio
+SeqIO
+sh

@@ -1,0 +1,38 @@
+[
+	{
+		"name": "latitude",
+		"type": "STRING",
+		"mode": "NULLABLE",
+		"description": "This represents the latitude of the building polygon centroid."
+	},
+	{
+		"name": "longitude",
+		"type": "STRING",
+		"mode": "NULLABLE",
+		"description": "This represents the longitude of the building polygon centroid."
+	},
+	{
+		"name": "area_in_meters",
+		"type": "STRING",
+		"mode": "NULLABLE",
+		"description": "This represents the area in square meters of the polygon."
+	},
+	{
+		"name": "confidence",
+		"type": "STRING",
+		"mode": "NULLABLE",
+		"description": "This represents the confidence score [0.5;1.0] assigned by the model."
+	},
+	{
+		"name": "geometry",
+		"type": "STRING",
+		"mode": "NULLABLE",
+		"description": "This represents the building polygon in the WKT format (POLYGON)."
+	},
+	{
+		"name": "full_plus_code",
+		"type": "STRING",
+		"mode": "NULLABLE",
+		"description": "This represents the full Plus Code(latitude longitude based) at the building polygon centroid."
+	}
+]

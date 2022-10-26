@@ -1,0 +1,68 @@
+[
+  {
+    "name": "service_id",
+    "type": "STRING",
+    "description": "Unique identifier for a set of dates when service is available for one or more routes",
+    "mode": "nullable"
+  },
+  {
+    "name": "service_desc",
+    "type": "STRING",
+    "description": "Text description of service category",
+    "mode": "nullable"
+  },
+  {
+    "name": "sunday",
+    "type": "BOOLEAN",
+    "description": "Indicates whether the service is valid for all Sundays operating on the agency is using normal schedules and fare categories",
+    "mode": "nullable"
+  },
+  {
+    "name": "monday",
+    "type": "BOOLEAN",
+    "description": "Indicates whether the service is valid for all Sundays operating on the agency is using normal schedules and fare categories",
+    "mode": "nullable"
+  },
+  {
+    "name": "tuesday",
+    "type": "BOOLEAN",
+    "description": "Indicates whether the service is valid for all Sundays operating on the agency is using normal schedules and fare categories",
+    "mode": "nullable"
+  },
+  {
+    "name": "wednesday",
+    "type": "BOOLEAN",
+    "description": "Indicates whether the service is valid for all Sundays operating on the agency is using normal schedules and fare categories",
+    "mode": "nullable"
+  },
+  {
+    "name": "thursday",
+    "type": "BOOLEAN",
+    "description": "Indicates whether the service is valid for all Sundays operating on the agency is using normal schedules and fare categories",
+    "mode": "nullable"
+  },
+  {
+    "name": "friday",
+    "type": "BOOLEAN",
+    "description": "Indicates whether the service is valid for all Sundays operating on the agency is using normal schedules and fare categories",
+    "mode": "nullable"
+  },
+  {
+    "name": "saturday",
+    "type": "BOOLEAN",
+    "description": "Indicates whether the service is valid for all Sundays operating on the agency is using normal schedules and fare categories",
+    "mode": "nullable"
+  },
+  {
+    "name": "exceptions",
+    "type": "DATE",
+    "description": "Specifies a particular date when this service is not available. This is typically during holidays, special events, etc. If applicable, the operating service for the day is indicated in replacement_service. Format for the date is YYYY-MM-DD",
+    "mode": "nullable"
+  },
+  {
+    "name": "exception_type",
+    "type": "BOOLEAN",
+    "description": "Indicates whether service is available on the date specified in the exceptions field. The following are valid values for this field:  - TRUE: Service will be operating during the date listed in the column exceptions -  FALSE: Service will not be operating during the date listed in the column exceptions",
+    "mode": "nullable"
+  }
+]

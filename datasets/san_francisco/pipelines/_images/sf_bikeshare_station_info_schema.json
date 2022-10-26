@@ -1,0 +1,74 @@
+[
+	{
+		"name": "station_id",
+		"type": "STRING",
+		"description": "Unique identifier of a station.",
+        "mode": "REQUIRED"
+    },
+	{
+		"name": "name",
+		"type": "STRING",
+		"description": "Public name of the station",
+        "mode": "REQUIRED"
+    },
+	{
+		"name": "short_name",
+		"type": "STRING",
+		"description": "Short name or other type of identifier, as used by the data publisher",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "lat",
+		"type": "FLOAT",
+		"description": "The latitude of station. The field value must be a valid WGS 84 latitude in decimal degrees format. See: http://en.wikipedia.org/wiki/World_Geodetic_System, https://en.wikipedia.org/wiki/Decimal_degrees",
+        "mode": "REQUIRED"
+    },
+	{
+		"name": "lon",
+		"type": "FLOAT",
+		"description": "The longitude of station. The field value must be a valid WGS 84 longitude in decimal degrees format. See: http://en.wikipedia.org/wiki/World_Geodetic_System, https://en.wikipedia.org/wiki/Decimal_degrees",
+        "mode": "REQUIRED"
+    },
+	{
+		"name": "region_id",
+		"type": "INTEGER",
+		"description": "ID of the region where station is located",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "rental_methods",
+		"type": "STRING",
+		"description": "Array of enumerables containing the payment methods accepted at this station.  Current valid values (in CAPS) are: KEY (i.e. operator issued bike key / fob / card) CREDITCARD PAYPASS APPLEPAY ANDROIDPAY TRANSITCARD ACCOUNTNUMBER PHONE This list is intended to be as comprehensive at the time of publication as possible but is subject to change, as defined in File Requirements above",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "capacity",
+		"type": "INTEGER",
+		"description": "Number of total docking points installed at this station, both available and unavailable",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "external_id",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "eightd_has_key_dispenser",
+		"type": "BOOLEAN",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "has_kiosk",
+		"type": "BOOLEAN",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "station_geom",
+		"type": "GEOGRAPHY",
+		"description": "",
+		"mode": "NULLABLE"
+	}
+]

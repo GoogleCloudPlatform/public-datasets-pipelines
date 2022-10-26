@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,10 @@
 
 
 resource "google_bigquery_table" "google_cloud_release_notes_release_notes" {
-  project    = var.project_id
-  dataset_id = "google_cloud_release_notes"
-  table_id   = "release_notes"
-
+  project     = var.project_id
+  dataset_id  = "google_cloud_release_notes"
+  table_id    = "release_notes"
   description = "This table contains release notes for the majority of generally available Google Cloud products found on cloud.google.com. You can use this BigQuery public dataset to consume release notes programmatically across all products. HTML versions of release notes are available within each product\u0027s documentation and also in a filterable format at https://console.cloud.google.com/release-notes."
-
-
-
-
   depends_on = [
     google_bigquery_dataset.google_cloud_release_notes
   ]

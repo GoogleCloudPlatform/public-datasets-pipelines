@@ -53,12 +53,9 @@ def main(
 
     logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
-
     logging.info(f"Downloading file {source_url}")
     download_file(source_url, source_file)
-
     logging.info(f"Opening file {source_file}")
-
     if pipeline_name in (PIPELINES_NAME_INPATIENT + PIPELINES_NAME_OUTPATIENT):
         with ZipFile(source_file) as zipped_files:
             file_list = zipped_files.namelist()
@@ -67,31 +64,24 @@ def main(
             df = pd.read_csv(data)
     else:
         df = pd.read_csv(str(source_file))
-
     logging.info(f"Transformation Process Starting.. {source_file}")
-
     rename_headers(df, rename_mappings)
-
     filter_null_rows(
         df, PIPELINES_NAME_INPATIENT, PIPELINES_NAME_OUTPATIENT, pipeline_name
     )
-
+    if pipeline_name in (PIPELINES_NAME_INPATIENT + PIPELINES_NAME_OUTPATIENT):
+        df["provider_zipcode"] = df["provider_zipcode"].apply(lambda x: str(x).zfill(5))
     df = df[headers]
-
     logging.info(f"Transformation Process complete .. {source_file}")
-
     logging.info(f"Saving to output file.. {target_file}")
-
     try:
         save_to_new_file(df, file_path=str(target_file))
     except Exception as e:
         logging.error(f"Error saving output file: {e}.")
-
     logging.info(
         f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
     )
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
-
     logging.info(
         "CMS Medicare process completed at "
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))

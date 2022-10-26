@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 resource "google_bigquery_dataset" "covid19_google_mobility" {
   dataset_id  = "covid19_google_mobility"
   project     = var.project_id
-  description = "Terms of use\nIn order to download or use the data or reports, you must agree to the Google Terms of Service: https://policies.google.com/terms\n\nDescription\nThis dataset aims to provide insights into what has changed in response to policies aimed at combating COVID-19. It reports movement trends over time by geography, across different categories of places such as retail and recreation, groceries and pharmacies, parks, transit stations, workplaces, and residential.\n\nThis dataset is intended to help remediate the impact of COVID-19. It shouldn\u2019t be used for medical diagnostic, prognostic, or treatment purposes. It also isn\u2019t intended to be used for guidance on personal travel plans.\n\nTo learn more about the dataset, the place categories, and how we calculate these trends and preserve privacy, do the following:\n\n\u2022 Visit the help center: https://support.google.com/covid19-mobility.\n\n\u2022 Or, read the dataset documentation: https://www.google.com/covid19/mobility/data_documentation.html."
+  description = "UPDATE: The reports and data will remain publicly available, but Google will stop publishing new reports in October 2022 (or soon after), learn more: https://www.google.com/covid19/mobility#faq-how-long.\n\nTerms of use\nIn order to download or use the data or reports, you must agree to the Google Terms of Service: https://policies.google.com/terms\n\nDescription\nThis dataset aims to provide insights into what has changed in response to policies aimed at combating COVID-19. It reports movement trends over time by geography, across different categories of places such as retail and recreation, groceries and pharmacies, parks, transit stations, workplaces, and residential.\n\nThis dataset is intended to help remediate the impact of COVID-19. It shouldn\u2019t be used for medical diagnostic, prognostic, or treatment purposes. It also isn\u2019t intended to be used for guidance on personal travel plans.\n\nTo learn more about the dataset, the place categories, and how we calculate these trends and preserve privacy, do the following:\n\n\u2022 Visit the help center: https://support.google.com/covid19-mobility.\n\n\u2022 Or, read the dataset documentation: https://www.google.com/covid19/mobility/data_documentation.html."
 }
 
 output "bigquery_dataset-covid19_google_mobility-dataset_id" {

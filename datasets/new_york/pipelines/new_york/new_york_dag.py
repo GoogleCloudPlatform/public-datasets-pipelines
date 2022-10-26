@@ -36,9 +36,10 @@ with DAG(
         project_id="{{ var.value.gcp_project }}",
         location="us-central1-c",
         body={
-            "name": "new-york",
+            "name": "pubds-new-york",
             "initial_node_count": 4,
             "network": "{{ var.value.vpc_network }}",
+            "ip_allocation_policy": {"cluster_ipv4_cidr_block": "/26"},
             "node_config": {
                 "machine_type": "e2-standard-16",
                 "oauth_scopes": [
@@ -55,10 +56,10 @@ with DAG(
         name="311_service_requests",
         project_id="{{ var.value.gcp_project }}",
         location="us-central1-c",
-        cluster_name="new-york",
+        cluster_name="pubds-new-york",
         namespace="default",
         image_pull_policy="Always",
-        image="{{ var.json.new_york.container_registry.ny_311_service_requests.run_csv_transform_kub }}",
+        image="{{ var.json.new_york.container_registry.run_csv_transform_kub_ny_311_service_requests }}",
         env_vars={
             "PIPELINE_NAME": "{{ var.json.new_york.ny_311_service_requests.pipeline_name }}",
             "SOURCE_URL": "{{ var.json.new_york.ny_311_service_requests.source_url }}",
@@ -86,10 +87,10 @@ with DAG(
         name="citibike_stations",
         project_id="{{ var.value.gcp_project }}",
         location="us-central1-c",
-        cluster_name="new-york",
+        cluster_name="pubds-new-york",
         namespace="default",
         image_pull_policy="Always",
-        image="{{ var.json.new_york.container_registry.citibike_stations.run_csv_transform_kub }}",
+        image="{{ var.json.new_york.container_registry.run_csv_transform_kub_citibike_stations }}",
         env_vars={
             "PIPELINE_NAME": "{{ var.json.new_york.citibike_stations.pipeline_name }}",
             "SOURCE_URL_STATIONS_JSON": "{{ var.json.new_york.citibike_stations.source_url_stations }}",
@@ -121,10 +122,10 @@ with DAG(
         name="nypd_mv_collisions",
         project_id="{{ var.value.gcp_project }}",
         location="us-central1-c",
-        cluster_name="new-york",
+        cluster_name="pubds-new-york",
         namespace="default",
         image_pull_policy="Always",
-        image="{{ var.json.new_york.container_registry.nypd_mv_collisions.run_csv_transform_kub }}",
+        image="{{ var.json.new_york.container_registry.run_csv_transform_kub_nypd_mv_collisions }}",
         env_vars={
             "PIPELINE_NAME": "{{ var.json.new_york.nypd_mv_collisions.pipeline_name }}",
             "SOURCE_URL": "{{ var.json.new_york.nypd_mv_collisions.source_url }}",
@@ -155,10 +156,10 @@ with DAG(
         name="tree_census_1995",
         project_id="{{ var.value.gcp_project }}",
         location="us-central1-c",
-        cluster_name="new-york",
+        cluster_name="pubds-new-york",
         namespace="default",
         image_pull_policy="Always",
-        image="{{ var.json.new_york.container_registry.tree_census_1995.run_csv_transform_kub }}",
+        image="{{ var.json.new_york.container_registry.run_csv_transform_kub_tree_census_1995 }}",
         env_vars={
             "PIPELINE_NAME": "{{ var.json.new_york.tree_census_1995.pipeline_name }}",
             "SOURCE_URL": "{{ var.json.new_york.tree_census_1995.source_url }}",
@@ -181,7 +182,7 @@ with DAG(
         task_id="delete_cluster",
         project_id="{{ var.value.gcp_project }}",
         location="us-central1-c",
-        name="new-york",
+        name="pubds-new-york",
     )
 
     (

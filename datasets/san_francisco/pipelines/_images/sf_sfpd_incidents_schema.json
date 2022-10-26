@@ -1,0 +1,74 @@
+[
+  {
+    "name": "unique_key",
+    "type": "INTEGER",
+    "description": "The unique incident number for this accident",
+    "mode": "nullable"
+  },
+  {
+    "name": "category",
+    "type": "STRING",
+    "description": "",
+    "mode": "nullable"
+  },
+  {
+    "name": "descript",
+    "type": "STRING",
+    "description": "",
+    "mode": "nullable"
+  },
+  {
+    "name": "daysofweek",
+    "type": "STRING",
+    "description": "",
+    "mode": "nullable"
+  },
+  {
+    "name": "pddistrict",
+    "type": "STRING",
+    "description": "Police Department district",
+    "mode": "nullable"
+  },
+  {
+    "name": "resolution",
+    "type": "STRING",
+    "description": "Whether there was an arrest, citation, booking, etc.",
+    "mode": "nullable"
+  },
+  {
+    "name": "address",
+    "type": "STRING",
+    "description": "",
+    "mode": "nullable"
+  },
+  {
+    "name": "longitude",
+    "type": "FLOAT",
+    "description": "",
+    "mode": "nullable"
+  },
+  {
+    "name": "latitude",
+    "type": "FLOAT",
+    "description": "",
+    "mode": "nullable"
+  },
+  {
+    "name": "location",
+    "type": "STRING",
+    "description": "Longitude/Latitude",
+    "mode": "nullable"
+  },
+  {
+    "name": "pdid",
+    "type": "INTEGER",
+    "description": "Unique Identifier for use in update and insert operations",
+    "mode": "nullable"
+  },
+  {
+    "name": "timestamp",
+    "type": "DATETIME",
+    "description": "",
+    "mode": "nullable"
+  }
+]

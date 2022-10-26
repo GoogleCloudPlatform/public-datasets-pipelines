@@ -16,15 +16,10 @@
 
 
 resource "google_bigquery_table" "census_opportunity_atlas_tract_covariates" {
-  project    = var.project_id
-  dataset_id = "census_opportunity_atlas"
-  table_id   = "tract_covariates"
-
+  project     = var.project_id
+  dataset_id  = "census_opportunity_atlas"
+  table_id    = "tract_covariates"
   description = "Census Opportunity Atlas"
-
-
-
-
   depends_on = [
     google_bigquery_dataset.census_opportunity_atlas
   ]
