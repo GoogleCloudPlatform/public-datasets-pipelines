@@ -957,6 +957,7 @@ dag:
               "Observation Percent": "float64", "Arithmetic Mean": "float64", "1st Max Value": "float64", "1st Max Hour": "int32", "AQI": "str",
               "Method Code": "str", "Method Name": "str", "Local Site Name": "str", "Address": "str", "State Name": "str",
               "County Name": "str", "City Name": "str", "CBSA Name": "str", "Date of Last Change": "str"
+            }
           RENAME_HEADERS: >-
             { "State Code": "state_code",
               "County Code": "county_code",
