@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,8 @@
 
 
 from airflow import DAG
-from airflow.contrib.operators import gcs_to_bq, kubernetes_pod_operator
+from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
     "owner": "Google",
@@ -33,12 +34,12 @@ with DAG(
 ) as dag:
 
     # Run CSV transform within kubernetes pod
-    irs_990_pf_2015_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+    irs_990_pf_2015_transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="irs_990_pf_2015_transform_csv",
         startup_timeout_seconds=600,
         name="irs_990_pf_2015",
-        namespace="composer",
         service_account_name="datasets",
+        namespace="composer",
         image_pull_policy="Always",
         image="{{ var.json.irs_990.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -55,7 +56,7 @@ with DAG(
     )
 
     # Task to load CSV data to a BigQuery table
-    load_irs_990_pf_2015_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    load_irs_990_pf_2015_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_irs_990_pf_2015_to_bq",
         bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/irs_990/irs_990_pf_2015/data_output.csv"],
