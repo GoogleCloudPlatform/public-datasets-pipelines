@@ -32,17 +32,12 @@ def main(
     target_gcs_bucket: str,
     target_gcs_path: str,
 ) -> None:
-
     logging.info("Austin Bikeshare - Bikeshare Trips process started")
-
     logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
-
     logging.info(f"Downloading file {source_url}")
     download_file(source_url, source_file)
-
     chunksz = int(chunksize)
-
     logging.info(f"Opening batch file {source_file}")
     with pd.read_csv(
         source_file, engine="python", encoding="utf-8", quotechar='"', chunksize=chunksz
@@ -64,12 +59,10 @@ def main(
                     f"cat {target_file_batch} >> {target_file}", shell=True
                 )
             subprocess.run(["rm", target_file_batch])
-
     logging.info(
         f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
     )
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
-
     logging.info("Austin Bikeshare - Bikeshare Trips process completed")
 
 
@@ -85,19 +78,14 @@ def download_file(source_url: str, source_file: pathlib.Path) -> None:
 
 
 def processChunk(df: pd.DataFrame, target_file_batch: str) -> None:
-
     logging.info("Transformation Process Starting")
-
     logging.info("Transform: Renaming Headers")
     rename_headers(df)
-
     logging.info("Transform: Filtering null identity records")
     filter_null_rows(df)
-
     logging.info("Transform: Acquiring start_time")
     df["start_time"] = df["time"] + " " + df["checkout_time"]
     df["start_time"] = df["start_time"].apply(convert_dt_format)
-
     logging.info("Transform: Reordering headers")
     df = df[
         [
@@ -112,11 +100,8 @@ def processChunk(df: pd.DataFrame, target_file_batch: str) -> None:
             "duration_minutes",
         ]
     ]
-
     logging.info("Transformation Process complete")
-
     logging.info(f"Saving to output file.. {target_file_batch}")
-
     try:
         save_to_new_file(df, file_path=str(target_file_batch))
     except Exception as e:
@@ -149,7 +134,6 @@ def rename_headers(df: pd.DataFrame) -> None:
         "Month": "month",
         "Year": "year",
     }
-
     df.rename(columns=header_names, inplace=True)
 
 

@@ -1,0 +1,122 @@
+[
+  {
+    "name": "unique_key",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "complaint_type",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "complaint_description",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "owning_department",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "source",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "status",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "status_change_date",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "created_date",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "last_update_date",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "close_date",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "incident_address",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "street_number",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "street_name",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "city",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "incident_zip",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "county",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "state_plane_x_coordinate",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "state_plane_y_coordinate",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "latitude",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "longitude",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "location",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "council_district_code",
+    "type": "INTEGER",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "map_page",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "map_tile",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  }
+]
