@@ -12,35 +12,40 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 import logging
 import os
 import pathlib
 import subprocess
+import typing
 from datetime import datetime
 
 import pandas as pd
-import requests
 from google.cloud import storage
 
 
 def main(
     source_url: str,
-    source_file: pathlib.Path,
-    target_file: pathlib.Path,
+    download_location: str,
+    target_file: str,
     chunksize: str,
     target_gcs_bucket: str,
+    source_gcs_path: str,
     target_gcs_path: str,
+    headers: typing.List[str],
+    rename_mappings: dict
 ) -> None:
-    logging.info("Creating 'files' folder")
-    pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
-    source_files=list_files(source_bucket=target_gcs_bucket)
+    source_files=list_files(source_bucket=target_gcs_bucket, source_gcs_path=source_gcs_path)
+    file_number=0
     for source_file in source_files:
-        logging.info("Downloading source file")
-        download_file(source_url, source_file)
+        download_file(source_url+source_file, download_location+source_file, target_gcs_bucket)
         chunksz = int(chunksize)
-        logging.info(f"Reading csv file {source_url}")
+        temp_store=target_file
+        target_file=target_file+"_"+str(file_number)+".csv"
+        logging.info("Reading csv file")
+        csvfile=download_location+source_file
         with pd.read_csv(
-            source_file,
+            csvfile,
             engine="python",
             encoding="utf-8",
             quotechar='"',
@@ -48,12 +53,10 @@ def main(
         ) as reader:
             for chunk_number, chunk in enumerate(reader):
                 logging.info(f"Processing batch {chunk_number}")
-                target_file_batch = str(target_file).replace(
-                    ".csv", "-" + str(chunk_number) + ".csv"
-                )
+                target_file_batch = str(target_file).replace(".csv", "-" + str(chunk_number) + ".csv")
                 df = pd.DataFrame()
                 df = pd.concat([df, chunk])
-                processChunk(df, target_file_batch)
+                processChunk(df, target_file_batch, headers, rename_mappings)
                 logging.info(f"Appending batch {chunk_number} to {target_file}")
                 if chunk_number == 0:
                     subprocess.run(["cp", target_file_batch, target_file])
@@ -63,60 +66,28 @@ def main(
                         f"cat {target_file_batch} >> {target_file}", shell=True
                     )
                 subprocess.run(["rm", target_file_batch])
-        logging.info(
-            f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
-        )
-        upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
+        upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path, str(file_number))
+        subprocess.run(["rm", target_file])
         logging.info("Proceed to next file, if any =======>")
+        print()
+        file_number+=1
+        target_file=temp_store
 
-def list_files(source_bucket):
+def list_files(source_bucket, source_gcs_path):
     client=storage.Client()
-    blobs=client.list_blobs(source_bucket,prefix="split")
+    blobs=client.list_blobs(source_bucket,prefix=source_gcs_path+"split")
     files=[]
     for blob in blobs:
         files.append(blob.name.split("/")[-1])
     return files
 
-def processChunk(df: pd.DataFrame, target_file_batch: str) -> None:
-
-    logging.info("Renaming Headers")
-    rename_headers(df)
-
+def processChunk(df: pd.DataFrame, target_file_batch: str, headers, rename_mappings) -> None:
+    rename_headers_(df, rename_mappings)
     logging.info("Convert Date Format")
     df["date"] = df["date"].apply(convert_dt_format)
-
     logging.info("Reordering headers..")
-    df = df[
-        [
-            "invoice_and_item_number",
-            "date",
-            "store_number",
-            "store_name",
-            "address",
-            "city",
-            "zip_code",
-            "store_location",
-            "county_number",
-            "county",
-            "category",
-            "category_name",
-            "vendor_number",
-            "vendor_name",
-            "item_number",
-            "item_description",
-            "pack",
-            "bottle_volume_ml",
-            "state_bottle_cost",
-            "state_bottle_retail",
-            "bottles_sold",
-            "sale_dollars",
-            "volume_sold_liters",
-            "volume_sold_gallons",
-        ]
-    ]
-
+    df = df[headers]
     df["county_number"] = df["county_number"].astype("Int64")
-
     logging.info(f"Saving to output file.. {target_file_batch}")
     try:
         save_to_new_file(df, file_path=str(target_file_batch))
@@ -125,34 +96,9 @@ def processChunk(df: pd.DataFrame, target_file_batch: str) -> None:
     logging.info("..Done!")
 
 
-def rename_headers(df: pd.DataFrame) -> None:
-    header_names = {
-        "Invoice/Item Number": "invoice_and_item_number",
-        "Date": "date",
-        "Store Number": "store_number",
-        "Store Name": "store_name",
-        "Address": "address",
-        "City": "city",
-        "Zip Code": "zip_code",
-        "Store Location": "store_location",
-        "County Number": "county_number",
-        "County": "county",
-        "Category": "category",
-        "Category Name": "category_name",
-        "Vendor Number": "vendor_number",
-        "Vendor Name": "vendor_name",
-        "Item Number": "item_number",
-        "Item Description": "item_description",
-        "Pack": "pack",
-        "Bottle Volume (ml)": "bottle_volume_ml",
-        "State Bottle Cost": "state_bottle_cost",
-        "State Bottle Retail": "state_bottle_retail",
-        "Bottles Sold": "bottles_sold",
-        "Sale (Dollars)": "sale_dollars",
-        "Volume Sold (Liters)": "volume_sold_liters",
-        "Volume Sold (Gallons)": "volume_sold_gallons",
-    }
-    df = df.rename(columns=header_names, inplace=True)
+def rename_headers_(df: pd.DataFrame, rename_mappings) -> None:
+    logging.info("Renaming Headers")
+    df = df.rename(columns=rename_mappings, inplace=True)
 
 
 def convert_dt_format(dt_str: str) -> str:
@@ -167,21 +113,21 @@ def save_to_new_file(df, file_path) -> None:
     df.to_csv(file_path, index=False)
 
 
-def download_file(source_url: str, source_file: pathlib.Path) -> None:
-    logging.info(f"Downloading {source_url} into {source_file}")
-    r = requests.get(source_url, stream=True)
-    if r.status_code == 200:
-        with open(source_file, "wb") as f:
-            for chunk in r:
-                f.write(chunk)
-    else:
-        logging.error(f"Couldn't download {source_url}: {r.text}")
+def download_file(source_url: str, download_location: str, source_bucket: str) -> None:
+    logging.info("Downloading source file")
+    logging.info(f"Downloading {source_url} into {download_location}")
+    client=storage.Client()
+    bucket=client.bucket(source_bucket)
+    blob=bucket.blob(source_url)
+    blob.download_to_filename(download_location)
 
 
-def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:
+def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str, file_number: str) -> None:
+    logging.info("Uploading output file to gcs")
     storage_client = storage.Client()
     bucket = storage_client.bucket(gcs_bucket)
-    blob = bucket.blob(gcs_path)
+    filename=gcs_path+file_number+".csv"
+    blob = bucket.blob(filename)
     blob.upload_from_filename(file_path)
 
 
@@ -190,9 +136,12 @@ if __name__ == "__main__":
 
     main(
         source_url=os.environ["SOURCE_URL"],
-        source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
-        target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
+        download_location=os.environ["DOWNLOAD_LOCATION"],
+        target_file=os.environ["TARGET_FILE"],
         chunksize=os.environ["CHUNKSIZE"],
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
+        source_gcs_path=os.environ["SOURCE_GCS_PATH"],
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
+        headers=json.loads(os.environ["HEADERS"]),
+        rename_mappings=json.loads(os.environ["RENAME_MAPPINGS"])
     )
