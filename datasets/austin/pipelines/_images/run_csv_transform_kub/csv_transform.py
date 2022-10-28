@@ -37,9 +37,14 @@ def main(
     dataset_id: str,
     destination_table: str,
     schema_path: str,
-    rename_headers_list: dict,
+    date_format_list: typing.List[str],
     int_cols_list: typing.List[str],
-    date_format_list: dict,
+    remove_newlines_cols_list: typing.List[str],
+    null_rows_list: typing.List[str],
+    input_headers: typing.List[str],
+    data_dtypes: dict,
+    rename_headers_list: dict,
+    reorder_headers_list: typing.List[str],
 ) -> None:
     logging.info(f"{pipeline_name} process started")
     logging.info("creating 'files' folder")
@@ -54,10 +59,16 @@ def main(
         project_id=project_id,
         dataset_id=dataset_id,
         destination_table=destination_table,
+        field_delimiter=",",
         schema_path=schema_path,
-        rename_headers_list=rename_headers_list,
-        int_cols_list=int_cols_list,
         date_format_list=date_format_list,
+        int_cols_list=int_cols_list,
+        remove_newlines_cols_list=remove_newlines_cols_list,
+        null_rows_list=null_rows_list,
+        input_headers=input_headers,
+        data_dtypes=data_dtypes,
+        rename_headers_list=rename_headers_list,
+        reorder_headers_list=reorder_headers_list,
     )
     # download_file_http(source_url, source_file)
     # logging.info(f"Opening batch file {source_file}")
@@ -98,27 +109,37 @@ def execute_pipeline(
     project_id: str,
     dataset_id: str,
     destination_table: str,
+    field_delimiter: str,
     schema_path: str,
-    rename_headers_list: dict,
+    date_format_list: typing.List[str],
     int_cols_list: typing.List[str],
-    date_format_list: dict,
+    remove_newlines_cols_list: typing.List[str],
+    null_rows_list: typing.List[str],
+    input_headers: typing.List[str],
+    data_dtypes: dict,
+    rename_headers_list: dict,
+    reorder_headers_list: typing.List[str],
 ) -> None:
     if destination_table == "311_service_requests":
         # download_file_http(source_url, source_file)
         process_source_file(
             source_file=source_file,
+            chunksize=chunksize,
             target_file=target_file,
             input_headers=input_headers,
-            output_headers=output_headers,
             dtypes=data_dtypes,
-            chunksize=chunksize,
             field_delimiter=field_delimiter,
+            date_format_list=date_format_list,
+            int_cols_list=int_cols_list,
+            remove_newlines_cols_list=remove_newlines_cols_list,
+            null_rows_list=null_rows_list,
+            reorder_headers_list=reorder_headers_list,
             rename_headers_list=rename_headers_list,
         )
         load_data_to_bq(
             project_id=project_id,
             dataset_id=dataset_id,
-            table_id=table_name,
+            table_id=destination_table,
             file_path=target_file,
             field_delimiter=field_delimiter,
             truncate_table=False,
@@ -129,14 +150,170 @@ def execute_pipeline(
                 target_gcs_bucket=target_gcs_bucket,
                 target_gcs_path=target_gcs_path,
             )
-        if remove_file:
-            os.remove(source_file)
-            os.remove(source_csv_file)
-            os.remove(target_file)
-        else:
-            pass
     else:
         pass
+
+
+def process_source_file(
+    source_file: str,
+    target_file: str,
+    input_headers: typing.List[str],
+    dtypes: dict,
+    chunksize: str,
+    field_delimiter: str,
+    date_format_list: typing.List[str],
+    int_cols_list: typing.List[str],
+    remove_newlines_cols_list: typing.List[str],
+    null_rows_list: typing.List[str],
+    reorder_headers_list: typing.List[str],
+    rename_headers_list: dict,
+) -> None:
+    logging.info(f"Opening batch file {source_file}")
+    with pd.read_csv(
+        source_file,  # path to main source file to load in batches
+        engine="python",
+        encoding="utf-8",
+        quotechar='"',  # string separator, typically double-quotes
+        chunksize=int(chunksize),  # size of batch data, in no. of records
+        sep=",",  # data column separator, typically ","
+        header=0,  # use when the data file does not contain a header
+        names=input_headers,
+        dtype=dtypes,
+        keep_default_na=True,
+        na_values=[" "],
+    ) as reader:
+        for chunk_number, chunk in enumerate(reader):
+            target_file_batch = str(target_file).replace(
+                ".csv", "-" + str(chunk_number) + ".csv"
+            )
+            df = pd.DataFrame()
+            df = pd.concat([df, chunk])
+            process_chunk(
+                df=df,
+                target_file_batch=target_file_batch,
+                target_file=target_file,
+                include_header=(chunk_number == 0),
+                truncate_file=(chunk_number == 0),
+                field_delimiter=field_delimiter,
+                date_format_list=date_format_list,
+                int_cols_list=int_cols_list,
+                remove_newlines_cols_list=remove_newlines_cols_list,
+                null_rows_list=null_rows_list,
+                reorder_headers_list=reorder_headers_list,
+                rename_headers_list=rename_headers_list,
+            )
+
+
+def process_chunk(
+    df: pd.DataFrame,
+    target_file_batch: str,
+    target_file: str,
+    include_header: bool,
+    truncate_file: bool,
+    field_delimiter: str,
+    date_format_list: typing.List[str],
+    int_cols_list: typing.List[str],
+    remove_newlines_cols_list: typing.List[str],
+    null_rows_list: typing.List[str],
+    reorder_headers_list: typing.List[str],
+    rename_headers_list: dict,
+) -> None:
+    logging.info(f"Processing Batch {target_file_batch} completed")
+    df = rename_headers(
+        df=df,
+        rename_headers_list=rename_headers_list
+    )
+    for dt_col in date_format_list:
+        df[dt_col] = df[dt_col].apply(convert_dt_format)
+    df = delete_newlines_from_column(df, remove_newlines_cols_list) #col_name="location")
+    df = filter_null_rows(df, null_rows_list)
+    for int_col in int_cols_list:
+        df[int_col] = df[int_col].fillna(0).astype("int32")
+    # df = convert_values(df)
+    df = reorder_headers(df, reorder_headers_list)
+    save_to_new_file(df=df, file_path=str(target_file_batch), sep=field_delimiter)
+    append_batch_file(
+        batch_file_path=target_file_batch,
+        target_file_path=target_file,
+        include_header=include_header,
+        truncate_target_file=truncate_file,
+    )
+    logging.info(f"Processing Batch {target_file_batch} completed")
+
+
+def convert_dt_format(dt_str: str) -> str:
+    # if the format is %m/%d/%Y then...
+    if str(dt_str).strip()[3] == "/":
+        return datetime.datetime.strptime(str(dt_str), "%m/%d/%Y %H:%M:%S %p").strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
+    elif not dt_str or str(dt_str).lower() == "nan" or str(dt_str).lower() == "nat":
+        return ""
+    else:
+        return str(dt_str)
+
+
+# def convert_values(df: pd.DataFrame) -> None:
+#     # dt_cols = [
+#     #     "status_change_date",
+#     #     "created_date",
+#     #     "last_update_date",
+#     #     "close_date",
+#     # ]
+#     # for dt_col in dt_cols:
+#     #     df[dt_col] = df[dt_col].apply(convert_dt_format)
+#     int_cols = ["council_district_code"]
+#     for int_col in int_cols:
+#         df[int_col] = df[int_col].astype("int32")
+
+
+def delete_newlines(val: str) -> str:
+    return val.replace("\n", "")
+
+
+def delete_newlines_from_column(df: pd.DataFrame, col_name: str) -> None:
+    if df[col_name] is not None & df[col_name].str.len() > 0:
+        df[col_name] = df[col_name].apply(delete_newlines)
+
+
+def filter_null_rows(df: pd.DataFrame) -> pd.DataFrame:
+    return df[df.unique_key != ""]
+
+
+def save_to_new_file(df: pd.DataFrame, file_path: str) -> None:
+    df.export_csv(file_path)
+
+
+def download_file_http(
+    source_url: str, source_file: pathlib.Path, continue_on_error: bool = False
+) -> bool:
+    logging.info(f"Downloading {source_url} to {source_file}")
+    try:
+        src_file = requests.get(source_url, stream=True)
+        rtn_status_code = src_file.status_code
+        if 400 <= rtn_status_code <= 499:
+            logging.info(
+                f"Unable to download file {source_url} (error code was {rtn_status_code})"
+            )
+            return False
+        else:
+            with open(source_file, "wb") as f:
+                for chunk in src_file:
+                    f.write(chunk)
+            return True
+    except requests.exceptions.RequestException as e:
+        if e == requests.exceptions.HTTPError:
+            err_msg = "A HTTP error occurred."
+        elif e == requests.exceptions.Timeout:
+            err_msg = "A HTTP timeout error occurred."
+        elif e == requests.exceptions.TooManyRedirects:
+            err_msg = "Too Many Redirects occurred."
+        if not continue_on_error:
+            logging.info(f"{err_msg} Unable to obtain {source_url}")
+            raise SystemExit(e)
+        else:
+            logging.info(f"{err_msg} Unable to obtain {source_url}.")
+        return False
 
 
 def load_data_to_bq(
@@ -266,72 +443,33 @@ def create_table_schema(
     return schema
 
 
-def processChunk(df: pd.DataFrame, target_file_batch: str) -> None:
-    logging.info("Transforming.")
-    rename_headers(df)
-    convert_values(df)
-    delete_newlines_from_column(df, col_name="location")
-    filter_null_rows(df)
-    logging.info("Saving to target file.. {target_file_batch}")
-    try:
-        save_to_new_file(df, file_path=str(target_file_batch))
-    except Exception as e:
-        logging.error(f"Error saving to target file: {e}.")
-    logging.info(f"Saved transformed source data to target file .. {target_file_batch}")
-
-
-def convert_dt_format(dt_str: str) -> str:
-    # if the format is %m/%d/%Y then...
-    if str(dt_str).strip()[3] == "/":
-        return datetime.datetime.strptime(str(dt_str), "%m/%d/%Y %H:%M:%S %p").strftime(
-            "%Y-%m-%d %H:%M:%S"
-        )
-    elif not dt_str or str(dt_str).lower() == "nan" or str(dt_str).lower() == "nat":
-        return ""
-    else:
-        return str(dt_str)
-
-
-def convert_values(df: pd.DataFrame) -> None:
-    dt_cols = [
-        "status_change_date",
-        "created_date",
-        "last_update_date",
-        "close_date",
-    ]
-    for dt_col in dt_cols:
-        df[dt_col] = df[dt_col].apply(convert_dt_format)
-    int_cols = ["council_district_code"]
-    for int_col in int_cols:
-        df[int_col] = df[int_col].astype("int32")
-
-
-def delete_newlines(val: str) -> str:
-    return val.replace("\n", "")
-
-
-def delete_newlines_from_column(df: pd.DataFrame, col_name: str) -> None:
-    if df[col_name] is not None & df[col_name].str.len() > 0:
-        df[col_name] = df[col_name].apply(delete_newlines)
-
-
-def filter_null_rows(df: pd.DataFrame) -> None:
-    df = df[df.unique_key != ""]
-
-
-def save_to_new_file(df: pd.DataFrame, file_path: str) -> None:
-    df.export_csv(file_path)
-
-
-def download_file_http(source_url: str, source_file: pathlib.Path) -> None:
-    logging.info(f"Downloading file {source_url} to {source_file}")
-    r = requests.get(source_url, stream=True)
-    if r.status_code == 200:
-        with open(source_file, "wb") as f:
-            for chunk in r:
-                f.write(chunk)
-    else:
-        logging.error(f"Couldn't download {source_url}: {r.text}")
+def append_batch_file(
+    batch_file_path: str,
+    target_file_path: str,
+    include_header: bool,
+    truncate_target_file: bool,
+) -> None:
+    logging.info(
+        f"Appending file {batch_file_path} to file {target_file_path} with include_header={include_header} and truncate_target_file={truncate_target_file}"
+    )
+    with open(batch_file_path, "r") as data_file:
+        if truncate_target_file:
+            target_file = open(target_file_path, "w+").close()
+        with open(target_file_path, "a+") as target_file:
+            if not include_header:
+                logging.info(
+                    f"Appending batch file {batch_file_path} to {target_file_path} without header"
+                )
+                next(data_file)
+            else:
+                logging.info(
+                    f"Appending batch file {batch_file_path} to {target_file_path} with header"
+                )
+            target_file.write(data_file.read())
+            data_file.close()
+            target_file.close()
+            if os.path.exists(batch_file_path):
+                os.remove(batch_file_path)
 
 
 def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:
@@ -351,7 +489,16 @@ if __name__ == "__main__":
         chunksize=os.environ.get("CHUNKSIZE", ""),
         target_gcs_bucket=os.environ.get("TARGET_GCS_BUCKET", ""),
         target_gcs_path=os.environ.get("TARGET_GCS_PATH", ""),
+        project_id=os.environ.get("PROJECT_ID", ""),
+        dataset_id=os.environ.get("DATASET_ID", ""),
+        destination_table=os.environ.get("DESTINATION_TABLE", ""),
+        schema_path=os.environ.get("SCHEMA_PATH", ""),
         rename_headers_list=json.loads(os.environ.get("DATE_FORMAT_LIST", r"{}")),
         int_cols_list=json.loads(os.environ.get("INT_COLS_LIST", r"[]")),
         date_format_list=json.loads(os.environ.get("DATE_FORMAT_LIST", r"{}")),
+        remove_newlines_cols_list=json.loads(os.environ.get("REMOVE_NEWLINES_COLS_LIST", r"[]")),
+        null_rows_list=json.loads(os.environ.get("NULL_ROWS_LIST", r"[]")),
+        input_headers=json.loads(os.environ.get("INPUT_CSV_HEADERS", r"[]")),
+        data_dtypes=json.loads(os.environ.get("DATA_DTYPES", r"{}")),
+        reorder_headers_list=json.loads(os.environ.get("REORDER_HEADERS_LIST", r"[]")),
     )

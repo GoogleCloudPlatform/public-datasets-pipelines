@@ -52,12 +52,81 @@ dag:
           DATASET_ID: "austin_311"
           DESTINATION_TABLE: "311_service_requests"
           SCHEMA_PATH: "data/austin/schema/austin_311_service_requests_schema.json"
+          DATE_FORMAT_LIST: >-
+            {
+              "status_change_date": "%Y-%m-%d %H:%M:%S",
+              "created_date": "%Y-%m-%d %H:%M:%S",
+              "last_update_date": "%Y-%m-%d %H:%M:%S",
+              "close_date": "%Y-%m-%d %H:%M:%S"
+            }
+          INT_COLS_LIST: >-
+            [
+              "council_district_code"
+            ]
+          REMOVE_NEWLINES_COLS_LIST: >-
+            [
+              "location"
+            ]
+          NULL_ROWS_LIST: >-
+            [
+              "unique_key"
+            ]
+          INPUT_CSV_HEADERS: >-
+            [
+              "Service Request (SR) Number",
+              "SR Type Code",
+              "SR Description",
+              "Owning Department",
+              "Method Received",
+              "SR Status",
+              "Status Change Date",
+              "Created Date",
+              "Last Update Date",
+              "Close Date",
+              "SR Location",
+              "Street Number",
+              "Street Name",
+              "City",
+              "Zip Code",
+              "County",
+              "State Plane X Coordinate",
+              "State Plane Y Coordinate",
+              "Latitude Coordinate",
+              "Longitude Coordinate",
+              "(Latitude.Longitude)",
+              "Council District",
+              "Map Page",
+              "Map Tile"
+            ]
+          DATA_DTYPES: >-
+            {
+              "Service Request (SR) Number": "str",
+              "SR Description": "str",
+              "Method Received": "str",
+              "SR Status": "str",
+              "Status Change Date": "datetime64",
+              "Created Date": "datetime64",
+              "Last Update Date": "datetime64",
+              "Close Date": "datetime64",
+              "SR Location": "str",
+              "Street Number": "str",
+              "Street Name": "str",
+              "City": "str",
+              "Zip Code": "str",
+              "County": "str",
+              "State Plane X Coordinate": "float",
+              "State Plane Y Coordinate": "float",
+              "Latitude Coordinate": "Float",
+              "Longitude Coordinate": "float",
+              "(Latitude.Longitude)": "str",
+              "Council District": "int",
+              "Map Page": "str",
+              "Map Tile": "str"
+            }
           RENAME_HEADERS_LIST: >-
             {
               "Service Request (SR) Number": "unique_key",
-              "SR Type Code": "complaint_type",
               "SR Description": "complaint_description",
-              "Owning Department": "owning_department",
               "Method Received": "source",
               "SR Status": "status",
               "Status Change Date": "status_change_date",
@@ -79,17 +148,31 @@ dag:
               "Map Page": "map_page",
               "Map Tile": "map_tile"
             }
-          INT_COLS_LIST: >-
+          REORDER_HEADERS_LIST: >-
             [
-              "council_district_code"
+              "unique_key",
+              "complaint_description",
+              "source",
+              "status",
+              "status_change_date",
+              "created_date",
+              "last_update_date",
+              "close_date",
+              "incident_address",
+              "street_number",
+              "street_name",
+              "city",
+              "incident_zip",
+              "county",
+              "state_plane_x_coordinate",
+              "state_plane_y_coordinate",
+              "latitude",
+              "longitude",
+              "location",
+              "council_district_code",
+              "map_page",
+              "map_tile"
             ]
-          DATE_FORMAT_LIST: >-
-            {
-              "status_change_date": "%Y-%m-%d %H:%M:%S",
-              "created_date": "%Y-%m-%d %H:%M:%S",
-              "last_update_date": "%Y-%m-%d %H:%M:%S",
-              "close_date": "%Y-%m-%d %H:%M:%S"
-            }
         resources:
           request_memory: "10G"
           request_cpu: "2"
