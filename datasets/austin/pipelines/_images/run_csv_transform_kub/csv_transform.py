@@ -16,13 +16,12 @@ import json
 import logging
 import os
 import pathlib
-# import subprocess
 import typing
 
 import pandas as pd
 import requests
 from google.cloud import bigquery, storage
-from google.cloud.exceptions import NotFound
+from google.api_core.exceptions import NotFound
 
 
 def main(
@@ -70,32 +69,6 @@ def main(
         rename_headers_list=rename_headers_list,
         reorder_headers_list=reorder_headers_list,
     )
-    # download_file_http(source_url, source_file)
-    # logging.info(f"Opening batch file {source_file}")
-    # with pd.read_csv(
-    #     source_file, engine="python", encoding="utf-8", quotechar='"', chunksize=chunksz
-    # ) as reader:
-    #     for chunk_number, chunk in enumerate(reader):
-    #         logging.info(f"Processing batch {chunk_number}")
-    #         target_file_batch = str(target_file).replace(
-    #             ".csv", "-" + str(chunk_number) + ".csv"
-    #         )
-    #         df = pd.DataFrame()
-    #         df = pd.concat([df, chunk])
-    #         processChunk(df, target_file_batch)
-    #         logging.info(f"Appending batch {chunk_number} to {target_file}")
-    #         if chunk_number == 0:
-    #             subprocess.run(["cp", target_file_batch, target_file])
-    #         else:
-    #             subprocess.check_call(f"sed -i '1d' {target_file_batch}", shell=True)
-    #             subprocess.check_call(
-    #                 f"cat {target_file_batch} >> {target_file}", shell=True
-    #             )
-    #         subprocess.run(["rm", target_file_batch])
-    # logging.info(
-    #     f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
-    # )
-    # upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
     logging.info("Austin 311 Service Requests By Year process completed")
 
 
@@ -121,7 +94,7 @@ def execute_pipeline(
     reorder_headers_list: typing.List[str],
 ) -> None:
     if destination_table == "311_service_requests":
-        # download_file_http(source_url, source_file)
+        download_file_http(source_url, source_file)
         process_source_file(
             source_file=source_file,
             chunksize=chunksize,
@@ -136,19 +109,34 @@ def execute_pipeline(
             reorder_headers_list=reorder_headers_list,
             rename_headers_list=rename_headers_list,
         )
-        load_data_to_bq(
-            project_id=project_id,
-            dataset_id=dataset_id,
-            table_id=destination_table,
-            file_path=target_file,
-            field_delimiter=field_delimiter,
-            truncate_table=False,
-        )
         if os.path.exists(target_file):
             upload_file_to_gcs(
                 file_path=target_file,
                 target_gcs_bucket=target_gcs_bucket,
                 target_gcs_path=target_gcs_path,
+            )
+            table_exists = create_dest_table(
+                project_id=project_id,
+                dataset_id=dataset_id,
+                table_id=destination_table,
+                schema_filepath=schema_path,
+                bucket_name=target_gcs_bucket
+            )
+            if table_exists:
+                load_data_to_bq(
+                    project_id=project_id,
+                    dataset_id=dataset_id,
+                    table_id=destination_table,
+                    file_path=target_file,
+                    truncate_table=True,
+                    field_delimiter="|",
+                )
+            else:
+                error_msg = f"Error: Data was not loaded because the destination table {project_id}.{dataset_id}.{destination_table} does not exist and/or could not be created."
+                raise ValueError(error_msg)
+        else:
+            logging.info(
+                f"Informational: The data file {target_file} was not generated because no data file was available.  Continuing."
             )
     else:
         pass
@@ -224,14 +212,18 @@ def process_chunk(
         rename_headers_list=rename_headers_list
     )
     for dt_col in date_format_list:
+        logging.info(f"Converting Date Format {dt_col}")
         df[dt_col] = df[dt_col].apply(convert_dt_format)
-    df = delete_newlines_from_column(df, remove_newlines_cols_list) #col_name="location")
+    for col in remove_newlines_cols_list:
+        df[col] = df[col].replace({r'\s+$': '', r'^\s+': ''}, regex=True).replace(r'\n',  ' ', regex=True)
     df = filter_null_rows(df, null_rows_list)
     for int_col in int_cols_list:
         df[int_col] = df[int_col].fillna(0).astype("int32")
-    # df = convert_values(df)
-    df = reorder_headers(df, reorder_headers_list)
-    save_to_new_file(df=df, file_path=str(target_file_batch), sep=field_delimiter)
+    df = reorder_headers(
+        df=df,
+        reorder_headers_list=reorder_headers_list
+    )
+    save_to_new_file(df=df, file_path=str(target_file_batch), sep="|")
     append_batch_file(
         batch_file_path=target_file_batch,
         target_file_path=target_file,
@@ -241,47 +233,37 @@ def process_chunk(
     logging.info(f"Processing Batch {target_file_batch} completed")
 
 
+def rename_headers(df: pd.DataFrame, rename_headers_list: dict) -> pd.DataFrame:
+    logging.info("Renaming Headers")
+    return df.rename(columns=rename_headers_list)
+
+
+def reorder_headers(df: pd.DataFrame, reorder_headers_list: typing.List[str]) -> pd.DataFrame:
+    logging.info("Reordering headers..")
+    return df[reorder_headers_list]
+
+
 def convert_dt_format(dt_str: str) -> str:
     # if the format is %m/%d/%Y then...
-    if str(dt_str).strip()[3] == "/":
+    if not dt_str or str(dt_str).lower() == "nan" or str(dt_str).lower() == "nat":
+        return ""
+    elif str(dt_str).strip()[3] == "/":
         return datetime.datetime.strptime(str(dt_str), "%m/%d/%Y %H:%M:%S %p").strftime(
             "%Y-%m-%d %H:%M:%S"
         )
-    elif not dt_str or str(dt_str).lower() == "nan" or str(dt_str).lower() == "nat":
-        return ""
     else:
         return str(dt_str)
 
 
-# def convert_values(df: pd.DataFrame) -> None:
-#     # dt_cols = [
-#     #     "status_change_date",
-#     #     "created_date",
-#     #     "last_update_date",
-#     #     "close_date",
-#     # ]
-#     # for dt_col in dt_cols:
-#     #     df[dt_col] = df[dt_col].apply(convert_dt_format)
-#     int_cols = ["council_district_code"]
-#     for int_col in int_cols:
-#         df[int_col] = df[int_col].astype("int32")
+def filter_null_rows(df: pd.DataFrame, null_rows_list: typing.List[str]) -> pd.DataFrame:
+    for col in null_rows_list:
+        df = df[df[col] != ""]
+    return df
 
 
-def delete_newlines(val: str) -> str:
-    return val.replace("\n", "")
-
-
-def delete_newlines_from_column(df: pd.DataFrame, col_name: str) -> None:
-    if df[col_name] is not None & df[col_name].str.len() > 0:
-        df[col_name] = df[col_name].apply(delete_newlines)
-
-
-def filter_null_rows(df: pd.DataFrame) -> pd.DataFrame:
-    return df[df.unique_key != ""]
-
-
-def save_to_new_file(df: pd.DataFrame, file_path: str) -> None:
-    df.export_csv(file_path)
+def save_to_new_file(df: pd.DataFrame, file_path: str, sep: str = "|") -> None:
+    logging.info(f"Saving data to target file.. {file_path} ...")
+    df.to_csv(file_path, index=False, sep=sep)
 
 
 def download_file_http(
@@ -353,10 +335,6 @@ def create_dest_table(
     schema_filepath: list,
     bucket_name: str,
     drop_table: bool = False,
-    table_clustering_field_list: typing.List[str] = [],
-    table_description: str = "",
-    table_partition_field: str = "",
-    table_partition_field_type: str = "",
 ) -> bool:
     table_ref = f"{project_id}.{dataset_id}.{table_id}"
     logging.info(f"Attempting to create table {table_ref} if it doesn't already exist")
@@ -381,18 +359,6 @@ def create_dest_table(
         if check_gcs_file_exists(schema_filepath, bucket_name):
             schema = create_table_schema([], bucket_name, schema_filepath)
             table = bigquery.Table(table_ref, schema=schema)
-            table.description = table_description
-            if table_clustering_field_list:
-                logging.info(
-                    f"Creating cluster on table ({table_clustering_field_list})"
-                )
-                table.clustering_fields = table_clustering_field_list
-            if table_partition_field:
-                logging.info(
-                    f"Creating partition on table ({table_partition_field}, {table_partition_field_type})"
-                )
-                table.partitioning_type = table_partition_field_type
-                table.time_partitioning.field = table_partition_field
             client.create_table(table)
             print(f"Table {table_ref} was created".format(table_id))
             table_exists = True
@@ -472,11 +438,21 @@ def append_batch_file(
                 os.remove(batch_file_path)
 
 
-def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:
-    storage_client = storage.Client()
-    bucket = storage_client.bucket(gcs_bucket)
-    blob = bucket.blob(gcs_path)
-    blob.upload_from_filename(file_path)
+def upload_file_to_gcs(
+    file_path: pathlib.Path, target_gcs_bucket: str, target_gcs_path: str
+) -> None:
+    if os.path.exists(file_path):
+        logging.info(
+            f"Uploading output file to gs://{target_gcs_bucket}/{target_gcs_path}"
+        )
+        storage_client = storage.Client()
+        bucket = storage_client.bucket(target_gcs_bucket)
+        blob = bucket.blob(target_gcs_path)
+        blob.upload_from_filename(file_path)
+    else:
+        logging.info(
+            f"Cannot upload file to gs://{target_gcs_bucket}/{target_gcs_path} as it does not exist."
+        )
 
 
 if __name__ == "__main__":
@@ -493,7 +469,7 @@ if __name__ == "__main__":
         dataset_id=os.environ.get("DATASET_ID", ""),
         destination_table=os.environ.get("DESTINATION_TABLE", ""),
         schema_path=os.environ.get("SCHEMA_PATH", ""),
-        rename_headers_list=json.loads(os.environ.get("DATE_FORMAT_LIST", r"{}")),
+        rename_headers_list=json.loads(os.environ.get("RENAME_HEADERS_LIST", r"{}")),
         int_cols_list=json.loads(os.environ.get("INT_COLS_LIST", r"[]")),
         date_format_list=json.loads(os.environ.get("DATE_FORMAT_LIST", r"{}")),
         remove_newlines_cols_list=json.loads(os.environ.get("REMOVE_NEWLINES_COLS_LIST", r"[]")),

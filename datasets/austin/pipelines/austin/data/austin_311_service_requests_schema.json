@@ -5,17 +5,7 @@
     "mode": "NULLABLE"
   },
   {
-    "name": "complaint_type",
-    "type": "STRING",
-    "mode": "NULLABLE"
-  },
-  {
     "name": "complaint_description",
-    "type": "STRING",
-    "mode": "NULLABLE"
-  },
-  {
-    "name": "owning_department",
     "type": "STRING",
     "mode": "NULLABLE"
   },

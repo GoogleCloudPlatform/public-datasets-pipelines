@@ -47,11 +47,11 @@ dag:
           SOURCE_FILE: "files/data_austin_311_service_requests.csv"
           TARGET_FILE: "files/data_output_austin_311_service_requests.csv"
           TARGET_GCS_BUCKET: "{{ var.json.shared.composer_bucket }}"
-          TARGET_GCS_PATH: "data/austin/311_service_requests/data_output.csv"
+          TARGET_GCS_PATH: "data/austin_311/311_service_requests/data_output.csv"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "austin_311"
           DESTINATION_TABLE: "311_service_requests"
-          SCHEMA_PATH: "data/austin/schema/austin_311_service_requests_schema.json"
+          SCHEMA_PATH: "data/austin_311/schema/austin_311_service_requests_schema.json"
           DATE_FORMAT_LIST: >-
             {
               "status_change_date": "%Y-%m-%d %H:%M:%S",
@@ -74,9 +74,7 @@ dag:
           INPUT_CSV_HEADERS: >-
             [
               "Service Request (SR) Number",
-              "SR Type Code",
               "SR Description",
-              "Owning Department",
               "Method Received",
               "SR Status",
               "Status Change Date",
