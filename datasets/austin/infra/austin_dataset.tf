@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,12 @@
  */
 
 
-provider "google" {
-  project                     = var.project_id
-  impersonate_service_account = var.impersonating_acct
-  region                      = var.region
-}
+resource "google_bigquery_dataset" "austin_311" {
+  dataset_id = "austin_311"
+  project    = var.project_id
+  description = "Austin 311 Service Requests"
+  }
 
-data "google_client_openid_userinfo" "me" {}
-
-output "impersonating-account" {
-  value = data.google_client_openid_userinfo.me.email
+output "bigquery_dataset-austin_311-dataset_id" {
+  value = google_bigquery_dataset.austin_311.dataset_id
 }

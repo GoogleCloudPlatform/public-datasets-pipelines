@@ -69,7 +69,7 @@ def main(
         rename_headers_list=rename_headers_list,
         reorder_headers_list=reorder_headers_list,
     )
-    logging.info("Austin 311 Service Requests By Year process completed")
+    logging.info(f"{pipeline_name} process completed")
 
 
 def execute_pipeline(
@@ -93,58 +93,57 @@ def execute_pipeline(
     rename_headers_list: dict,
     reorder_headers_list: typing.List[str],
 ) -> None:
-    if destination_table == "311_service_requests":
-        download_file_http(source_url, source_file)
-        process_source_file(
-            source_file=source_file,
-            chunksize=chunksize,
-            target_file=target_file,
-            input_headers=input_headers,
-            dtypes=data_dtypes,
-            field_delimiter=field_delimiter,
-            date_format_list=date_format_list,
-            int_cols_list=int_cols_list,
-            remove_newlines_cols_list=remove_newlines_cols_list,
-            null_rows_list=null_rows_list,
-            reorder_headers_list=reorder_headers_list,
-            rename_headers_list=rename_headers_list,
+    # download_file_http(source_url, source_file)
+    process_source_file(
+        source_file=source_file,
+        chunksize=chunksize,
+        target_file=target_file,
+        destination_table=destination_table,
+        input_headers=input_headers,
+        dtypes=data_dtypes,
+        field_delimiter=field_delimiter,
+        date_format_list=date_format_list,
+        int_cols_list=int_cols_list,
+        remove_newlines_cols_list=remove_newlines_cols_list,
+        null_rows_list=null_rows_list,
+        reorder_headers_list=reorder_headers_list,
+        rename_headers_list=rename_headers_list,
+    )
+    if os.path.exists(target_file):
+        upload_file_to_gcs(
+            file_path=target_file,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=target_gcs_path,
         )
-        if os.path.exists(target_file):
-            upload_file_to_gcs(
-                file_path=target_file,
-                target_gcs_bucket=target_gcs_bucket,
-                target_gcs_path=target_gcs_path,
-            )
-            table_exists = create_dest_table(
+        table_exists = create_dest_table(
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_id=destination_table,
+            schema_filepath=schema_path,
+            bucket_name=target_gcs_bucket
+        )
+        if table_exists:
+            load_data_to_bq(
                 project_id=project_id,
                 dataset_id=dataset_id,
                 table_id=destination_table,
-                schema_filepath=schema_path,
-                bucket_name=target_gcs_bucket
+                file_path=target_file,
+                truncate_table=True,
+                field_delimiter="|",
             )
-            if table_exists:
-                load_data_to_bq(
-                    project_id=project_id,
-                    dataset_id=dataset_id,
-                    table_id=destination_table,
-                    file_path=target_file,
-                    truncate_table=True,
-                    field_delimiter="|",
-                )
-            else:
-                error_msg = f"Error: Data was not loaded because the destination table {project_id}.{dataset_id}.{destination_table} does not exist and/or could not be created."
-                raise ValueError(error_msg)
         else:
-            logging.info(
-                f"Informational: The data file {target_file} was not generated because no data file was available.  Continuing."
-            )
+            error_msg = f"Error: Data was not loaded because the destination table {project_id}.{dataset_id}.{destination_table} does not exist and/or could not be created."
+            raise ValueError(error_msg)
     else:
-        pass
+        logging.info(
+            f"Informational: The data file {target_file} was not generated because no data file was available.  Continuing."
+        )
 
 
 def process_source_file(
     source_file: str,
     target_file: str,
+    destination_table: str,
     input_headers: typing.List[str],
     dtypes: dict,
     chunksize: str,
@@ -180,9 +179,9 @@ def process_source_file(
                 df=df,
                 target_file_batch=target_file_batch,
                 target_file=target_file,
+                destination_table=destination_table,
                 include_header=(chunk_number == 0),
                 truncate_file=(chunk_number == 0),
-                field_delimiter=field_delimiter,
                 date_format_list=date_format_list,
                 int_cols_list=int_cols_list,
                 remove_newlines_cols_list=remove_newlines_cols_list,
@@ -196,9 +195,9 @@ def process_chunk(
     df: pd.DataFrame,
     target_file_batch: str,
     target_file: str,
+    destination_table: str,
     include_header: bool,
     truncate_file: bool,
-    field_delimiter: str,
     date_format_list: typing.List[str],
     int_cols_list: typing.List[str],
     remove_newlines_cols_list: typing.List[str],
@@ -206,23 +205,55 @@ def process_chunk(
     reorder_headers_list: typing.List[str],
     rename_headers_list: dict,
 ) -> None:
-    logging.info(f"Processing Batch {target_file_batch} completed")
-    df = rename_headers(
-        df=df,
-        rename_headers_list=rename_headers_list
-    )
-    for dt_col in date_format_list:
-        logging.info(f"Converting Date Format {dt_col}")
-        df[dt_col] = df[dt_col].apply(convert_dt_format)
-    for col in remove_newlines_cols_list:
-        df[col] = df[col].replace({r'\s+$': '', r'^\s+': ''}, regex=True).replace(r'\n',  ' ', regex=True)
-    df = filter_null_rows(df, null_rows_list)
-    for int_col in int_cols_list:
-        df[int_col] = df[int_col].fillna(0).astype("int32")
-    df = reorder_headers(
-        df=df,
-        reorder_headers_list=reorder_headers_list
-    )
+    logging.info(f"Processing Batch {target_file_batch} started")
+    if destination_table == "311_service_requests":
+        df = rename_headers(
+            df=df,
+            rename_headers_list=rename_headers_list
+        )
+        for dt_col in date_format_list:
+            logging.info(f"Converting Date Format {dt_col}")
+            df[dt_col] = ( df[dt_col]
+                            .apply(lambda x: datetime
+                                                .datetime
+                                                .strptime(str(x), "%m/%d/%Y %H:%M:%S %p")
+                                                .strftime("%Y-%m-%d %H:%M:%S")
+                            )
+                        )
+        for col in remove_newlines_cols_list:
+            logging.info(f"Removing newlines from input data")
+            df[col] = df[col].replace({r'\s+$': '', r'^\s+': ''}, regex=True).replace(r'\n',  ' ', regex=True)
+        df = filter_null_rows(df, null_rows_list)
+        for int_col in int_cols_list:
+            df[int_col] = df[int_col].fillna(0).astype("int32")
+        df = reorder_headers(
+            df=df,
+            reorder_headers_list=reorder_headers_list
+        )
+    elif destination_table == "bikeshare_trips":
+        df = rename_headers(
+            df=df,
+            rename_headers_list=rename_headers_list
+        )
+        df = filter_null_rows(df, null_rows_list)
+        logging.info("Merging date/time into start_time")
+        df["start_time"] = df["time"] + " " + df["checkout_time"]
+        for dt_col in date_format_list:
+            logging.info(f"Converting Date Format {dt_col}")
+            df[dt_col] = ( df[dt_col]
+                            .apply(lambda x: datetime
+                                                .datetime
+                                                .strptime(str(x), "%m/%d/%Y %H:%M:%S")
+                                                .strftime("%Y-%m-%d %H:%M:%S")
+                            )
+                        )
+        df = reorder_headers(
+            df=df,
+            reorder_headers_list=reorder_headers_list
+        )
+    else:
+        logging.info("Pipeline Not Recognized.")
+        return None
     save_to_new_file(df=df, file_path=str(target_file_batch), sep="|")
     append_batch_file(
         batch_file_path=target_file_batch,
@@ -243,16 +274,19 @@ def reorder_headers(df: pd.DataFrame, reorder_headers_list: typing.List[str]) ->
     return df[reorder_headers_list]
 
 
-def convert_dt_format(dt_str: str) -> str:
-    # if the format is %m/%d/%Y then...
-    if not dt_str or str(dt_str).lower() == "nan" or str(dt_str).lower() == "nat":
-        return ""
-    elif str(dt_str).strip()[3] == "/":
-        return datetime.datetime.strptime(str(dt_str), "%m/%d/%Y %H:%M:%S %p").strftime(
-            "%Y-%m-%d %H:%M:%S"
-        )
-    else:
-        return str(dt_str)
+# def convert_dt_format(dt_str: str, in_format: str) -> str:
+#     # if the format is %m/%d/%Y then...
+#     if not dt_str or str(dt_str).lower() == "nan" or str(dt_str).lower() == "nat":
+#         return ""
+#     elif str(dt_str).strip()[3] == "/":
+#         return datetime.datetime.strptime(str(dt_str), "%m/%d/%Y %H:%M:%S").strftime(
+#             "%Y-%m-%d %H:%M:%S"
+#         )
+#         # return datetime.datetime.strptime(str(dt_str), "%m/%d/%Y %H:%M:%S %p").strftime(
+#         #     "%Y-%m-%d %H:%M:%S"
+#         # )
+#     else:
+#         return str(dt_str)
 
 
 def filter_null_rows(df: pd.DataFrame, null_rows_list: typing.List[str]) -> pd.DataFrame:

@@ -175,8 +175,97 @@ dag:
           request_memory: "10G"
           request_cpu: "2"
 
-    - operator: "GoogleCloudStorageToBigQueryOperator"
-      description: "Task to load CSV data to a BigQuery table"
+    - operator: "KubernetesPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "austin_bikeshare_transform_csv"
+        image_pull_policy: "Always"
+        name: "austin_bikeshare_trips"
+        namespace: "default"
+        image: "{{ var.json.austin.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "https://data.austintexas.gov/api/views/tyfh-5r8s/rows.csv"
+          SOURCE_FILE: "files/data_austin_bikeshare_trips.csv"
+          TARGET_FILE: "files/data_output_austin_bikeshare_trips.csv"
+          CHUNKSIZE: "750000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/austin_bikeshare/data_output.csv"
+          PIPELINE_NAME: "Austin Bikeshare Trips"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "austin_bikeshare_trips"
+          DESTINATION_TABLE: "bikeshare_trips"
+          SCHEMA_PATH: "data/austin_bikeshare/schema/austin_bikeshare_trips_schema.json"
+          DATE_FORMAT_LIST: >-
+            {
+              "start_time": "%Y-%m-%d %H:%M:%S"
+            }
+          NULL_ROWS_LIST: >-
+            [
+              "trip_id"
+            ]
+          INPUT_CSV_HEADERS: >-
+            [
+              "Trip ID",
+              "Membership Type",
+              "Bicycle ID",
+              "Bike Type",
+              "Checkout Date",
+              "Checkout Time",
+              "Checkout Kiosk ID",
+              "Checkout Kiosk",
+              "Return Kiosk ID",
+              "Return Kiosk",
+              "Trip Duration Minutes",
+              "Month",
+              "Year"
+            ]
+          DATA_DTYPES: >-
+            {
+              "Trip ID": "str",
+              "Membership Type": "str",
+              "Bicycle ID": "str",
+              "Bike Type": "str",
+              "Checkout Date": "str",
+              "Checkout Time": "str",
+              "Checkout Kiosk ID": "str",
+              "Checkout Kiosk": "str",
+              "Return Kiosk ID": "str",
+              "Return Kiosk": "str",
+              "Trip Duration Minutes": "str",
+              "Month": "str",
+              "Year": "str"
+            }
+          RENAME_HEADERS_LIST: >-
+            {
+              "Trip ID": "trip_id",
+              "Membership Type": "subscriber_type",
+              "Bicycle ID": "bikeid",
+              "Checkout Date": "time",
+              "Checkout Kiosk ID": "start_station_id",
+              "Checkout Kiosk": "start_station_name",
+              "Return Kiosk ID": "end_station_id",
+              "Return Kiosk": "end_station_name",
+              "Trip Duration Minutes": "duration_minutes",
+              "Checkout Time": "checkout_time",
+              "Month": "month",
+              "Year": "year"
+            }
+          REORDER_HEADERS_LIST: >-
+            [
+              "trip_id",
+              "subscriber_type",
+              "bikeid",
+              "start_time",
+              "start_station_id",
+              "start_station_name",
+              "end_station_id",
+              "end_station_name",
+              "duration_minutes"
+            ]
+        resources:
+          request_memory: "10G"
+          request_cpu: "2"
+
 
   graph_paths:
     - "austin_311_service_requests_transform_csv"
