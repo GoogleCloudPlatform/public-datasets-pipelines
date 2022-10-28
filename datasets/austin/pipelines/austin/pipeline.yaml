@@ -17,6 +17,9 @@ resources:
   - type: bigquery_table
     table_id: 311_service_requests
     description: "austin 311 service requests"
+  - type: bigquery_table
+    table_id: bikeshare_trips
+    description: "austin bikeshare trips"
 
 dag:
   airflow_version: 2

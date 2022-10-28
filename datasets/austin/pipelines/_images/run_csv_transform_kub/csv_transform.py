@@ -20,8 +20,8 @@ import typing
 
 import pandas as pd
 import requests
-from google.cloud import bigquery, storage
 from google.api_core.exceptions import NotFound
+from google.cloud import bigquery, storage
 
 
 def main(
@@ -120,7 +120,7 @@ def execute_pipeline(
             dataset_id=dataset_id,
             table_id=destination_table,
             schema_filepath=schema_path,
-            bucket_name=target_gcs_bucket
+            bucket_name=target_gcs_bucket,
         )
         if table_exists:
             load_data_to_bq(
@@ -207,50 +207,38 @@ def process_chunk(
 ) -> None:
     logging.info(f"Processing Batch {target_file_batch} started")
     if destination_table == "311_service_requests":
-        df = rename_headers(
-            df=df,
-            rename_headers_list=rename_headers_list
-        )
-        for dt_col in date_format_list:
-            logging.info(f"Converting Date Format {dt_col}")
-            df[dt_col] = ( df[dt_col]
-                            .apply(lambda x: datetime
-                                                .datetime
-                                                .strptime(str(x), "%m/%d/%Y %H:%M:%S %p")
-                                                .strftime("%Y-%m-%d %H:%M:%S")
-                            )
-                        )
+        df = rename_headers(df=df, rename_headers_list=rename_headers_list)
+        # for dt_col in date_format_list:
+        #     logging.info(f"Converting Date Format {dt_col}")
+        #     df[dt_col] = df[dt_col].apply(
+        #         lambda x: datetime.datetime.strptime(
+        #             str(x), "%m/%d/%Y %H:%M:%S %p"
+        #         ).strftime("%Y-%m-%d %H:%M:%S")
+        #     )
         for col in remove_newlines_cols_list:
-            logging.info(f"Removing newlines from input data")
-            df[col] = df[col].replace({r'\s+$': '', r'^\s+': ''}, regex=True).replace(r'\n',  ' ', regex=True)
+            logging.info(f"Removing newlines from {col}")
+            df[col] = (
+                df[col]
+                .replace({r"\s+$": "", r"^\s+": ""}, regex=True)
+                .replace(r"\n", " ", regex=True)
+            )
         df = filter_null_rows(df, null_rows_list)
         for int_col in int_cols_list:
             df[int_col] = df[int_col].fillna(0).astype("int32")
-        df = reorder_headers(
-            df=df,
-            reorder_headers_list=reorder_headers_list
-        )
+        df = reorder_headers(df=df, reorder_headers_list=reorder_headers_list)
     elif destination_table == "bikeshare_trips":
-        df = rename_headers(
-            df=df,
-            rename_headers_list=rename_headers_list
-        )
+        df = rename_headers(df=df, rename_headers_list=rename_headers_list)
         df = filter_null_rows(df, null_rows_list)
         logging.info("Merging date/time into start_time")
         df["start_time"] = df["time"] + " " + df["checkout_time"]
         for dt_col in date_format_list:
             logging.info(f"Converting Date Format {dt_col}")
-            df[dt_col] = ( df[dt_col]
-                            .apply(lambda x: datetime
-                                                .datetime
-                                                .strptime(str(x), "%m/%d/%Y %H:%M:%S")
-                                                .strftime("%Y-%m-%d %H:%M:%S")
-                            )
-                        )
-        df = reorder_headers(
-            df=df,
-            reorder_headers_list=reorder_headers_list
-        )
+            df[dt_col] = df[dt_col].apply(
+                lambda x: datetime.datetime.strptime(
+                    str(x), "%m/%d/%Y %H:%M:%S"
+                ).strftime("%Y-%m-%d %H:%M:%S")
+            )
+        df = reorder_headers(df=df, reorder_headers_list=reorder_headers_list)
     else:
         logging.info("Pipeline Not Recognized.")
         return None
@@ -269,7 +257,9 @@ def rename_headers(df: pd.DataFrame, rename_headers_list: dict) -> pd.DataFrame:
     return df.rename(columns=rename_headers_list)
 
 
-def reorder_headers(df: pd.DataFrame, reorder_headers_list: typing.List[str]) -> pd.DataFrame:
+def reorder_headers(
+    df: pd.DataFrame, reorder_headers_list: typing.List[str]
+) -> pd.DataFrame:
     logging.info("Reordering headers..")
     return df[reorder_headers_list]
 
@@ -289,7 +279,9 @@ def reorder_headers(df: pd.DataFrame, reorder_headers_list: typing.List[str]) ->
 #         return str(dt_str)
 
 
-def filter_null_rows(df: pd.DataFrame, null_rows_list: typing.List[str]) -> pd.DataFrame:
+def filter_null_rows(
+    df: pd.DataFrame, null_rows_list: typing.List[str]
+) -> pd.DataFrame:
     for col in null_rows_list:
         df = df[df[col] != ""]
     return df
@@ -506,7 +498,9 @@ if __name__ == "__main__":
         rename_headers_list=json.loads(os.environ.get("RENAME_HEADERS_LIST", r"{}")),
         int_cols_list=json.loads(os.environ.get("INT_COLS_LIST", r"[]")),
         date_format_list=json.loads(os.environ.get("DATE_FORMAT_LIST", r"{}")),
-        remove_newlines_cols_list=json.loads(os.environ.get("REMOVE_NEWLINES_COLS_LIST", r"[]")),
+        remove_newlines_cols_list=json.loads(
+            os.environ.get("REMOVE_NEWLINES_COLS_LIST", r"[]")
+        ),
         null_rows_list=json.loads(os.environ.get("NULL_ROWS_LIST", r"[]")),
         input_headers=json.loads(os.environ.get("INPUT_CSV_HEADERS", r"[]")),
         data_dtypes=json.loads(os.environ.get("DATA_DTYPES", r"{}")),

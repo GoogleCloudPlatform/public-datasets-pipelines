@@ -15,22 +15,12 @@
  */
 
 
-resource "google_bigquery_dataset" "austin_311" {
-  dataset_id  = "austin_311"
-  project     = var.project_id
-  description = "Austin 311 Service Requests"
+variable "project_id" {}
+variable "bucket_name_prefix" {}
+variable "impersonating_acct" {}
+variable "region" {}
+variable "env" {}
+variable "iam_policies" {
+  default = {}
 }
 
-output "bigquery_dataset-austin_311-dataset_id" {
-  value = google_bigquery_dataset.austin_311.dataset_id
-}
-
-resource "google_bigquery_dataset" "austin_bikeshare_trips" {
-  dataset_id  = "austin_bikeshare_trips"
-  project     = var.project_id
-  description = "Austin Bikeshare Trips"
-}
-
-output "bigquery_dataset-austin_bikeshare_trips-dataset_id" {
-  value = google_bigquery_dataset.austin_bikeshare_trips.dataset_id
-}
