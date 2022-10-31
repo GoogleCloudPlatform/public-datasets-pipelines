@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,8 @@
 
 
 from airflow import DAG
-from airflow.contrib.operators import gcs_to_bq, kubernetes_pod_operator
+from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
     "owner": "Google",
@@ -33,12 +34,12 @@ with DAG(
 ) as dag:
 
     # Run CSV transform within kubernetes pod
-    irs_990_ez_2017_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+    irs_990_ez_2017_transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="irs_990_ez_2017_transform_csv",
         startup_timeout_seconds=600,
         name="irs_990_ez_2017",
-        namespace="composer",
         service_account_name="datasets",
+        namespace="composer",
         image_pull_policy="Always",
         image="{{ var.json.irs_990.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -51,11 +52,11 @@ with DAG(
             "CSV_HEADERS": '["ein","elf","tax_pd","subseccd","totcntrbs","prgmservrev","duesassesmnts","othrinvstinc","grsamtsalesastothr","basisalesexpnsothr","gnsaleofastothr","grsincgaming","grsrevnuefndrsng","direxpns","netincfndrsng","grsalesminusret","costgoodsold","grsprft","othrevnue","totrevnue","totexpns","totexcessyr","othrchgsnetassetfnd","networthend","totassetsend","totliabend","totnetassetsend","actvtynotprevrptcd","chngsinorgcd","unrelbusincd","filedf990tcd","contractioncd","politicalexpend","filedf1120polcd","loanstoofficerscd","loanstoofficers","initiationfee","grspublicrcpts","s4958excessbenefcd","prohibtdtxshltrcd","nonpfrea","totnooforgscnt","totsupport","gftgrntsrcvd170","txrevnuelevied170","srvcsval170","pubsuppsubtot170","exceeds2pct170","pubsupplesspct170","samepubsuppsubtot170","grsinc170","netincunreltd170","othrinc170","totsupp170","grsrcptsrelated170","totgftgrntrcvd509","grsrcptsadmissn509","grsrcptsactivities509","txrevnuelevied509","srvcsval509","pubsuppsubtot509","rcvdfrmdisqualsub509","exceeds1pct509","subtotpub509","pubsupplesub509","samepubsuppsubtot509","grsinc509","unreltxincls511tx509","subtotsuppinc509","netincunrelatd509","othrinc509","totsupp509"]',
             "RENAME_MAPPINGS": '{"EIN": "ein","a_tax_prd": "tax_pd","taxpd": "tax_pd","taxprd": "tax_pd","subseccd": "subseccd","prgmservrev": "prgmservrev","duesassesmnts": "duesassesmnts","othrinvstinc": "othrinvstinc","grsamtsalesastothr": "grsamtsalesastothr","basisalesexpnsothr": "basisalesexpnsothr","gnsaleofastothr": "gnsaleofastothr","grsincgaming": "grsincgaming","grsrevnuefndrsng": "grsrevnuefndrsng","direxpns": "direxpns","netincfndrsng": "netincfndrsng","grsalesminusret": "grsalesminusret","costgoodsold": "costgoodsold","grsprft": "grsprft","othrevnue": "othrevnue","totrevnue": "totrevnue","totexpns": "totexpns","totexcessyr": "totexcessyr","othrchgsnetassetfnd": "othrchgsnetassetfnd","networthend": "networthend","totassetsend": "totassetsend","totliabend": "totliabend","totnetassetsend": "totnetassetsend","actvtynotprevrptcd": "actvtynotprevrptcd","chngsinorgcd": "chngsinorgcd","unrelbusincd": "unrelbusincd","filedf990tcd": "filedf990tcd","contractioncd": "contractioncd","politicalexpend": "politicalexpend","filedfYYN0polcd": "filedf1120polcd","loanstoofficerscd": "loanstoofficerscd","loanstoofficers": "loanstoofficers","initiationfee": "initiationfee","grspublicrcpts": "grspublicrcpts","s4958excessbenefcd": "s4958excessbenefcd","prohibtdtxshltrcd": "prohibtdtxshltrcd","nonpfrea": "nonpfrea","totnoforgscnt": "totnooforgscnt","totsupport": "totsupport","gftgrntrcvd170": "gftgrntsrcvd170","txrevnuelevied170": "txrevnuelevied170","srvcsval170": "srvcsval170","pubsuppsubtot170": "pubsuppsubtot170","excds2pct170": "exceeds2pct170","pubsupplesspct170": "pubsupplesspct170","samepubsuppsubtot170": "samepubsuppsubtot170","grsinc170": "grsinc170","netincunrelatd170": "netincunreltd170","othrinc170": "othrinc170","totsupport170": "totsupp170","grsrcptsrelatd170": "grsrcptsrelated170","totgftgrntrcvd509": "totgftgrntrcvd509","grsrcptsadmiss509": "grsrcptsadmissn509","grsrcptsactvts509": "grsrcptsactivities509","txrevnuelevied509": "txrevnuelevied509","srvcsval509": "srvcsval509","pubsuppsubtot509": "pubsuppsubtot509","rcvdfrmdisqualsub509": "rcvdfrmdisqualsub509","excds1pct509": "exceeds1pct509","subtotpub509": "subtotpub509","pubsupplesssub509": "pubsupplesub509","samepubsuppsubtot509": "samepubsuppsubtot509","grsinc509": "grsinc509","unreltxincls511tx509": "unreltxincls511tx509","subtotsuppinc509": "subtotsuppinc509","netincunreltd509": "netincunrelatd509","othrinc509": "othrinc509","totsupp509": "totsupp509","elf": "elf","totcntrbs": "totcntrbs"}',
         },
-        resources={"request_memory": "4G", "request_cpu": "1"},
+        resources={"request_memory": "2G", "request_cpu": "1"},
     )
 
     # Task to load CSV data to a BigQuery table
-    load_irs_990_ez_2017_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    load_irs_990_ez_2017_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_irs_990_ez_2017_to_bq",
         bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/irs_990/irs_990_ez_2017/data_output.csv"],
