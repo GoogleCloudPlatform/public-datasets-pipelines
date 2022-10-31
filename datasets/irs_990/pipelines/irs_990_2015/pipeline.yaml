@@ -76,7 +76,7 @@ dag:
 
         # Set resource limits for the pod here. For resource units in Kubernetes, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes
         resources:
-          request_memory: "2G"
+          request_memory: "4G"
           request_cpu: "1"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
