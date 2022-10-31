@@ -49,7 +49,7 @@ dag:
           CHUNKSIZE: "750000"
           SOURCE_FILE: "files/data_austin_311_service_requests.csv"
           TARGET_FILE: "files/data_output_austin_311_service_requests.csv"
-          TARGET_GCS_BUCKET: "{{ var.json.shared.composer_bucket }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/austin_311/311_service_requests/data_output.csv"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "austin_311"
@@ -117,10 +117,10 @@ dag:
               "County": "str",
               "State Plane X Coordinate": "float",
               "State Plane Y Coordinate": "float",
-              "Latitude Coordinate": "Float",
+              "Latitude Coordinate": "float",
               "Longitude Coordinate": "float",
               "(Latitude.Longitude)": "str",
-              "Council District": "int",
+              "Council District": "str",
               "Map Page": "str",
               "Map Tile": "str"
             }
