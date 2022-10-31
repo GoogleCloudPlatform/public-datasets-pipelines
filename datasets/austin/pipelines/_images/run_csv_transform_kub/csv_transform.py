@@ -58,7 +58,6 @@ def main(
         project_id=project_id,
         dataset_id=dataset_id,
         destination_table=destination_table,
-        field_delimiter=",",
         schema_path=schema_path,
         date_format_list=date_format_list,
         int_cols_list=int_cols_list,
@@ -82,7 +81,6 @@ def execute_pipeline(
     project_id: str,
     dataset_id: str,
     destination_table: str,
-    field_delimiter: str,
     schema_path: str,
     date_format_list: typing.List[str],
     int_cols_list: typing.List[str],
@@ -93,7 +91,7 @@ def execute_pipeline(
     rename_headers_list: dict,
     reorder_headers_list: typing.List[str],
 ) -> None:
-    # download_file_http(source_url, source_file)
+    download_file_http(source_url, source_file)
     process_source_file(
         source_file=source_file,
         chunksize=chunksize,
@@ -101,7 +99,6 @@ def execute_pipeline(
         destination_table=destination_table,
         input_headers=input_headers,
         dtypes=data_dtypes,
-        field_delimiter=field_delimiter,
         date_format_list=date_format_list,
         int_cols_list=int_cols_list,
         remove_newlines_cols_list=remove_newlines_cols_list,
@@ -147,7 +144,6 @@ def process_source_file(
     input_headers: typing.List[str],
     dtypes: dict,
     chunksize: str,
-    field_delimiter: str,
     date_format_list: typing.List[str],
     int_cols_list: typing.List[str],
     remove_newlines_cols_list: typing.List[str],

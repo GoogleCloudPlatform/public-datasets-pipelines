@@ -24,7 +24,7 @@ resources:
 dag:
   airflow_version: 2
   initialize:
-    dag_id: 311_service_requests
+    dag_id: austin
     default_args:
       owner: "Google"
       depends_on_past: False
@@ -38,11 +38,11 @@ dag:
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
-        task_id: "311_service_requests_transform_csv"
+        task_id: "austin_311_service_requests"
         image_pull_policy: "Always"
         name: "austin"
         namespace: "default"
-        image: "{{ var.json.austin_311.container_registry.run_csv_transform_kub }}"
+        image: "{{ var.json.austin.container_registry.run_csv_transform_kub }}"
         env_vars:
           PIPELINE_NAME: "Austin 311 Service Requests By Year"
           SOURCE_URL: "https://data.austintexas.gov/api/views/xwdj-i9he/rows.csv"
@@ -181,7 +181,7 @@ dag:
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
-        task_id: "austin_bikeshare_transform_csv"
+        task_id: "austin_bikeshare"
         image_pull_policy: "Always"
         name: "austin_bikeshare_trips"
         namespace: "default"
@@ -271,4 +271,4 @@ dag:
 
 
   graph_paths:
-    - "austin_311_service_requests_transform_csv"
+    - "austin_311_service_requests >> austin_bikeshare"
