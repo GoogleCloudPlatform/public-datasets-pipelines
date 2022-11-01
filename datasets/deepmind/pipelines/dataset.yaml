@@ -24,6 +24,10 @@ resources:
     name: "deepmind-alphafold"
     uniform_bucket_level_access: True
     location: US
+  - type: storage_bucket
+    name: "deepmind-alphafold-v4"
+    uniform_bucket_level_access: True
+    location: US
   - type: bigquery_dataset
     dataset_id: deepmind_alphafold
     description: "Metadata for the AlphaFold Protein Structure Database"
