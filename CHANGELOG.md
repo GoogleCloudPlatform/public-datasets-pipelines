@@ -3,7 +3,7 @@
 ## [5.2.0](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v5.1.0...v5.2.0) (2022-11-01)
 
 
-### Features
+### Datasets
 
 * Add geom columns for thelook_ecommerce dataset ([#307](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/307)) ([f39a177](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/f39a177dafd64a2dfed941bfb078ef24cece4b26))
 * Add Municipal Calendar to San Francisco Dataset ([#480](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/480)) ([a21c2ef](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/a21c2efb507d08c794f65572ea16dcadc5124350))
