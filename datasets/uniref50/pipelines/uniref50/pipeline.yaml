@@ -79,8 +79,6 @@ dag:
           SCHEMA_PATH: "data/uniref50/uniref50_schema.json"
           CHUNKSIZE: "100000"
         resources:
-          request_memory: "4G"
-          request_cpu: "1"
           request_ephemeral_storage: "10G"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
@@ -148,9 +146,7 @@ dag:
           DATASET_ID: "uniref50"
           SCHEMA_PATH: "data/uniref50/uniref50_schema.json"
           CHUNKSIZE: "100000"
-        resources:
-          request_memory: "4G"
-          request_cpu: "1"
+        resources: 
           request_ephemeral_storage: "10G"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
@@ -218,9 +214,7 @@ dag:
           DATASET_ID: "uniref50"
           SCHEMA_PATH: "data/uniref50/uniref50_schema.json"
           CHUNKSIZE: "100000"
-        resources:
-          request_memory: "4G"
-          request_cpu: "1"
+        resources: 
           request_ephemeral_storage: "10G"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
@@ -288,9 +282,7 @@ dag:
           DATASET_ID: "uniref50"
           SCHEMA_PATH: "data/uniref50/uniref50_schema.json"
           CHUNKSIZE: "100000"
-        resources:
-          request_memory: "4G"
-          request_cpu: "1"
+        resources: 
           request_ephemeral_storage: "10G"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
@@ -358,9 +350,7 @@ dag:
           DATASET_ID: "uniref50"
           SCHEMA_PATH: "data/uniref50/uniref50_schema.json"
           CHUNKSIZE: "100000"
-        resources:
-          request_memory: "4G"
-          request_cpu: "1"
+        resources:  
           request_ephemeral_storage: "10G"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
@@ -428,9 +418,7 @@ dag:
           DATASET_ID: "uniref50"
           SCHEMA_PATH: "data/uniref50/uniref50_schema.json"
           CHUNKSIZE: "100000"
-        resources:
-          request_memory: "4G"
-          request_cpu: "1"
+        resources:  
           request_ephemeral_storage: "10G"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
@@ -498,9 +486,7 @@ dag:
           DATASET_ID: "uniref50"
           SCHEMA_PATH: "data/uniref50/uniref50_schema.json"
           CHUNKSIZE: "100000"
-        resources:
-          request_memory: "4G"
-          request_cpu: "1"
+        resources:  
           request_ephemeral_storage: "10G"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
@@ -568,9 +554,7 @@ dag:
           DATASET_ID: "uniref50"
           SCHEMA_PATH: "data/uniref50/uniref50_schema.json"
           CHUNKSIZE: "100000"
-        resources:
-          request_memory: "4G"
-          request_cpu: "1"
+        resources:  
           request_ephemeral_storage: "10G"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
