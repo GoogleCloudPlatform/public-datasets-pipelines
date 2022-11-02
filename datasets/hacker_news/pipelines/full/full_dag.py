@@ -37,7 +37,7 @@ with DAG(
     # Fetch data gcs - gcs
     bash_gcs_to_gcs = bash.BashOperator(
         task_id="bash_gcs_to_gcs",
-        bash_command="gsutil cp -R gs://pdp-feeds-staging/Hacker_News/output/output.csv gs://{{ var.value.composer_bucket }}/data/hacker_news/\nsplit -dl 10000000 --additional-suffix=.csv /home/airflow/gcs/data/hacker_news/output.csv /home/airflow/gcs/data/hacker_news/\nrm /home/airflow/gcs/data/hacker_news/output.csv\n",
+        bash_command="gsutil cp -R gs://pdp-feeds-staging/Hacker_News/output/output.csv gs://{{ var.value.composer_bucket }}/data/hacker_news/\nsplit -dl 10000000 --additional-suffix=.csv /home/airflow/gcs/data/hacker_news/output.csv /home/airflow/gcs/data/hacker_news/\n",
     )
 
     # Run CSV transform within kubernetes pod

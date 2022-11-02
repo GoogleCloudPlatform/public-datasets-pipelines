@@ -39,7 +39,7 @@ dag:
         bash_command: |
           gsutil cp -R gs://pdp-feeds-staging/Hacker_News/output/output.csv gs://{{ var.value.composer_bucket }}/data/hacker_news/
           split -dl 10000000 --additional-suffix=.csv /home/airflow/gcs/data/hacker_news/output.csv /home/airflow/gcs/data/hacker_news/
-          rm /home/airflow/gcs/data/hacker_news/output.csv
+          
 
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod"
