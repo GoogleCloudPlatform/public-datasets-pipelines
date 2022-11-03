@@ -9,23 +9,13 @@
 		"type": "INTEGER",
 		"mode": "NULLABLE"
 	},
-	{
-		"name": "county_fips",
-		"type": "INTEGER",
-		"mode": "NULLABLE"
-	},
-	{
+  {
 		"name": "county_name",
 		"type": "STRING",
 		"mode": "NULLABLE"
 	},
 	{
-		"name": "tract_code",
-		"type": "INTEGER",
-		"mode": "NULLABLE"
-	},
-	{
-		"name": "stcotr_fips",
+		"name": "city_fips",
 		"type": "INTEGER",
 		"mode": "NULLABLE"
 	},
@@ -35,6 +25,16 @@
 		"mode": "NULLABLE"
 	},
 	{
+		"name": "stcosub_fips",
+		"type": "INTEGER",
+		"mode": "NULLABLE"
+	},
+  {
+		"name": "stcotr_fips",
+		"type": "INTEGER",
+		"mode": "NULLABLE"
+	},
+  {
 		"name": "city_name",
 		"type": "STRING",
 		"mode": "NULLABLE"
@@ -44,7 +44,7 @@
 		"type": "STRING",
 		"mode": "NULLABLE"
 	},
-	{
+  {
 		"name": "metric_number",
 		"type": "INTEGER",
 		"mode": "NULLABLE"
@@ -89,6 +89,11 @@
 		"type": "STRING",
 		"mode": "NULLABLE"
 	},
+  {
+		"name": "data_yr",
+		"type": "INTEGER",
+		"mode": "NULLABLE"
+	},
 	{
 		"name": "geo_level",
 		"type": "STRING",
@@ -99,14 +104,29 @@
 		"type": "DATE",
 		"mode": "NULLABLE"
 	},
+  {
+		"name": "census_year",
+		"type": "INTEGER",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "version",
+		"type": "FLOAT",
+		"mode": "NULLABLE"
+	},
+  {
+		"name": "suggested_citation",
+		"type": "STRING",
+		"mode": "NULLABLE"
+	},
 	{
 		"name": "source_url",
 		"type": "STRING",
 		"mode": "NULLABLE"
 	},
-	{
+  {
 		"name": "etl_timestamp",
 		"type": "TIMESTAMP",
 		"mode": "NULLABLE"
-	}
+    }
 ]

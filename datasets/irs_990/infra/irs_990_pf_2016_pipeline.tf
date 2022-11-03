@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,10 @@
 
 
 resource "google_bigquery_table" "irs_990_irs_990_pf_2016" {
-  project    = var.project_id
-  dataset_id = "irs_990"
-  table_id   = "irs_990_pf_2016"
-
+  project     = var.project_id
+  dataset_id  = "irs_990"
+  table_id    = "irs_990_pf_2016"
   description = "IRS 990 PF 2016 dataset"
-
-
-
-
   depends_on = [
     google_bigquery_dataset.irs_990
   ]

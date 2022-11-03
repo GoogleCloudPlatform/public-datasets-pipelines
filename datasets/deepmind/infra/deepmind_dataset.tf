@@ -45,6 +45,36 @@ output "storage_bucket-deepmind-alphafold-name" {
   value = google_storage_bucket.deepmind-alphafold.name
 }
 
+resource "google_storage_bucket" "deepmind-alphafold-v4" {
+  name                        = "${var.bucket_name_prefix}-deepmind-alphafold-v4"
+  force_destroy               = true
+  location                    = "US"
+  uniform_bucket_level_access = true
+  lifecycle {
+    ignore_changes = [
+      logging,
+    ]
+  }
+}
+
+data "google_iam_policy" "storage_bucket__deepmind-alphafold-v4" {
+  dynamic "binding" {
+    for_each = var.iam_policies["storage_buckets"]["deepmind-alphafold-v4"]
+    content {
+      role    = binding.value["role"]
+      members = binding.value["members"]
+    }
+  }
+}
+
+resource "google_storage_bucket_iam_policy" "deepmind-alphafold-v4" {
+  bucket      = google_storage_bucket.deepmind-alphafold-v4.name
+  policy_data = data.google_iam_policy.storage_bucket__deepmind-alphafold-v4.policy_data
+}
+output "storage_bucket-deepmind-alphafold-v4-name" {
+  value = google_storage_bucket.deepmind-alphafold-v4.name
+}
+
 resource "google_bigquery_dataset" "deepmind_alphafold" {
   dataset_id  = "deepmind_alphafold"
   project     = var.project_id

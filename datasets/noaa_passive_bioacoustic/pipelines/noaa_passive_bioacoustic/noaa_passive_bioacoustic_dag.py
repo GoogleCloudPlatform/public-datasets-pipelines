@@ -38,7 +38,7 @@ with DAG(
         task_id="gcs_to_gcs_operator",
         source_bucket="{{ var.json.noaa_passive_bioacoustic.source_bucket }}",
         source_object="{{ var.json.noaa_passive_bioacoustic.source_object }}",
-        destination_bucket="{{ var.json.noaa_passive_bioacoustic.destination_bucket }}",
+        destination_bucket="{{ var.value.composer_bucket }}",
         destination_object="{{ var.json.noaa_passive_bioacoustic.destination_object }}",
         move_object=False,
         replace=False,

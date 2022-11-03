@@ -13,7 +13,12 @@
 # limitations under the License.
 
 name: Run unit tests
-on: [pull_request]
+on:
+  pull_request:
+    paths-ignore:
+      - 'CHANGELOG.md'
+      - 'README.md'
+      - 'version.txt'
 jobs:
   build:
     runs-on: ubuntu-latest

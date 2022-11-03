@@ -41,10 +41,10 @@ dag:
         location: "us-central1-c"
         body:
           name: new-york-taxi-trips
-          initial_node_count: 3
+          initial_node_count: 2
           network: "{{ var.value.vpc_network }}"
           node_config:
-            machine_type: e2-standard-4
+            machine_type: e2-standard-8
             oauth_scopes:
               - https://www.googleapis.com/auth/devstorage.read_write
               - https://www.googleapis.com/auth/cloud-platform
@@ -79,7 +79,7 @@ dag:
             ["vendor_id", "pickup_datetime", "dropoff_datetime", "store_and_fwd_flag", "rate_code",
              "pickup_location_id", "dropoff_location_id", "passenger_count", "trip_distance", "fare_amount",
              "extra", "mta_tax", "tip_amount", "tolls_amount", "ehail_fee",
-             "imp_surcharge", "total_amount", "payment_type", "trip_type", "congestion_surcharge" ]
+             "imp_surcharge", "total_amount", "payment_type", "trip_type", "congestion_surcharge", "airport_fee" ]
           DATA_DTYPES: >-
             { "vendor_id": "str",
               "pickup_datetime": "datetime64[ns]",
@@ -100,17 +100,18 @@ dag:
               "total_amount": "float64",
               "payment_type": "str",
               "trip_type": "str",
-              "congestion_surcharge": "float64" }
+              "congestion_surcharge": "float64",
+              "airport_fee": "float64" }
           OUTPUT_CSV_HEADERS: >-
             [ "vendor_id", "pickup_datetime", "dropoff_datetime", "store_and_fwd_flag", "rate_code",
               "passenger_count", "trip_distance", "fare_amount", "extra", "mta_tax",
-              "tip_amount", "tolls_amount", "ehail_fee", "total_amount", "payment_type",
+              "tip_amount", "tolls_amount", "ehail_fee", "airport_fee", "total_amount", "payment_type",
               "distance_between_service", "time_between_service", "trip_type", "imp_surcharge", "pickup_location_id",
               "dropoff_location_id", "data_file_year", "data_file_month" ]
         resources:
-          request_memory: "12G"
-          request_cpu: "1"
-          request_ephemeral_storage: "16G"
+          request_memory: "16G"
+          request_cpu: "2"
+          request_ephemeral_storage: "24G"
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
@@ -142,7 +143,7 @@ dag:
             [ "vendor_id", "pickup_datetime", "dropoff_datetime", "passenger_count", "trip_distance",
               "rate_code", "store_and_fwd_flag", "pickup_location_id", "dropoff_location_id",
               "payment_type", "fare_amount", "extra", "mta_tax", "tip_amount",
-              "tolls_amount", "imp_surcharge", "total_amount", "congestion_surcharge" ]
+              "tolls_amount", "imp_surcharge", "total_amount", "congestion_surcharge", "airport_fee" ]
           DATA_DTYPES: >-
             { "vendor_id": "str",
               "pickup_datetime": "datetime64[ns]",
@@ -161,16 +162,17 @@ dag:
               "tolls_amount": "float64",
               "imp_surcharge": "float64",
               "total_amount": "float64",
-              "congestion_surcharge": "float64" }
+              "congestion_surcharge": "float64",
+              "airport_fee": "float64" }
           OUTPUT_CSV_HEADERS: >-
             [ "vendor_id", "pickup_datetime", "dropoff_datetime", "passenger_count", "trip_distance",
               "rate_code", "store_and_fwd_flag", "payment_type", "fare_amount", "extra",
-              "mta_tax", "tip_amount", "tolls_amount", "imp_surcharge", "total_amount",
-              "pickup_location_id", "dropoff_location_id", "data_file_year", "data_file_month" ]
+              "mta_tax", "tip_amount", "tolls_amount", "imp_surcharge", "airport_fee",
+              "total_amount", "pickup_location_id", "dropoff_location_id", "data_file_year", "data_file_month" ]
         resources:
-          request_memory: "12G"
-          request_cpu: "1"
-          request_ephemeral_storage: "16G"
+          request_memory: "16G"
+          request_cpu: "2"
+          request_ephemeral_storage: "24G"
     - operator: "GKEDeleteClusterOperator"
       args:
         task_id: "delete_cluster"

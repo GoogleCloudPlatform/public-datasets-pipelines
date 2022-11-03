@@ -146,7 +146,7 @@ dag:
           DATASET_ID: "uniref50"
           SCHEMA_PATH: "data/uniref50/uniref50_schema.json"
           CHUNKSIZE: "100000"
-        resources: 
+        resources:
           request_ephemeral_storage: "10G"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
@@ -214,7 +214,7 @@ dag:
           DATASET_ID: "uniref50"
           SCHEMA_PATH: "data/uniref50/uniref50_schema.json"
           CHUNKSIZE: "100000"
-        resources: 
+        resources:
           request_ephemeral_storage: "10G"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
@@ -282,7 +282,7 @@ dag:
           DATASET_ID: "uniref50"
           SCHEMA_PATH: "data/uniref50/uniref50_schema.json"
           CHUNKSIZE: "100000"
-        resources: 
+        resources:
           request_ephemeral_storage: "10G"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
@@ -350,7 +350,7 @@ dag:
           DATASET_ID: "uniref50"
           SCHEMA_PATH: "data/uniref50/uniref50_schema.json"
           CHUNKSIZE: "100000"
-        resources:  
+        resources:
           request_ephemeral_storage: "10G"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
@@ -418,7 +418,7 @@ dag:
           DATASET_ID: "uniref50"
           SCHEMA_PATH: "data/uniref50/uniref50_schema.json"
           CHUNKSIZE: "100000"
-        resources:  
+        resources:
           request_ephemeral_storage: "10G"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
@@ -486,7 +486,7 @@ dag:
           DATASET_ID: "uniref50"
           SCHEMA_PATH: "data/uniref50/uniref50_schema.json"
           CHUNKSIZE: "100000"
-        resources:  
+        resources:
           request_ephemeral_storage: "10G"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
@@ -554,7 +554,7 @@ dag:
           DATASET_ID: "uniref50"
           SCHEMA_PATH: "data/uniref50/uniref50_schema.json"
           CHUNKSIZE: "100000"
-        resources:  
+        resources:
           request_ephemeral_storage: "10G"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"

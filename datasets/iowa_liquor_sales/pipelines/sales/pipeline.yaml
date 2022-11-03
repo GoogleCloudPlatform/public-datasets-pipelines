@@ -25,49 +25,68 @@ dag:
     default_args:
       owner: "Google"
       depends_on_past: False
-      start_date: '2021-03-01'
+      start_date: '2022-10-27'
     max_active_runs: 1
     schedule_interval: "@weekly"
     catchup: False
     default_view: graph
 
   tasks:
+    - operator: "BashOperator"
+      description: "Download data"
+      args:
+        task_id: "bash_download"
+        bash_command: "wget -O /home/airflow/gcs/data/iowa_liquor_sales/raw_files/data.csv https://data.iowa.gov/api/views/m3tr-qhgy/rows.csv"
+
+    - operator: "BashOperator"
+      description: "Split data file into smaller chunks"
+      args:
+        task_id: "bash_split"
+        bash_command: tail -n +2 /home/airflow/gcs/data/iowa_liquor_sales/raw_files/data.csv | split -d -l 4000000 - --filter='sh -c "{ head -n1 /home/airflow/gcs/data/iowa_liquor_sales/raw_files/data.csv; cat; } > $FILE"' /home/airflow/gcs/data/iowa_liquor_sales/raw_files/split_data_ ;
+
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
-        task_id: "transform_csv"
-        startup_timeout_seconds: 600
+        task_id: "kub_transform_csv"
+        startup_timeout_seconds: 1000
         name: "Sales"
         namespace: "composer"
         service_account_name: "datasets"
         image_pull_policy: "Always"
         image: "{{ var.json.iowa_liquor_sales.container_registry.run_csv_transform_kub }}"
         env_vars:
-          SOURCE_URL: "https://data.iowa.gov/api/views/m3tr-qhgy/rows.csv"
-          SOURCE_FILE: "files/data.csv"
-          TARGET_FILE: "files/data_output.csv"
+          SOURCE_URL: "data/iowa_liquor_sales/raw_files/"
+          DOWNLOAD_LOCATION: ""
+          TARGET_FILE: "data_output"
           CHUNKSIZE: "1000000"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
-          TARGET_GCS_PATH: "data/iowa_liquor_sales/sales/data_output.csv"
-
+          SOURCE_GCS_PATH: "data/iowa_liquor_sales/raw_files/"
+          TARGET_GCS_PATH: "data/iowa_liquor_sales/transformed_files/data_output_"
+          HEADERS: >-
+            ["invoice_and_item_number","date","store_number","store_name","address","city","zip_code","store_location","county_number","county","category","category_name","vendor_number","vendor_name","item_number","item_description","pack","bottle_volume_ml","state_bottle_cost","state_bottle_retail","bottles_sold","sale_dollars","volume_sold_liters","volume_sold_gallons"]
+          RENAME_MAPPINGS: >-
+            {"Invoice/Item Number":"invoice_and_item_number","Date":"date","Store Number":"store_number","Store Name":"store_name","Address":"address","City":"city","Zip Code":"zip_code","Store Location":"store_location","County Number":"county_number","County":"county","Category":"category","Category Name":"category_name","Vendor Number":"vendor_number","Vendor Name":"vendor_name","Item Number":"item_number","Item Description":"item_description","Pack":"pack","Bottle Volume (ml)":"bottle_volume_ml","State Bottle Cost":"state_bottle_cost","State Bottle Retail":"state_bottle_retail","Bottles Sold":"bottles_sold","Sale (Dollars)":"sale_dollars","Volume Sold (Liters)":"volume_sold_liters","Volume Sold (Gallons)":"volume_sold_gallons"}
         resources:
-          request_memory: "8G"
-          request_cpu: "4"
-          request_ephemeral_storage: "32G"
+          request_memory: "4G"
+          request_cpu: "1"
+          request_ephemeral_storage: "10G"
+
+    - operator: "BashOperator"
+      description: "Combine the split files into one"
+      args:
+        task_id: "bash_concatenate"
+        bash_command: "touch /home/airflow/gcs/data/iowa_liquor_sales/transformed_files/final_output.csv; awk 'FNR>1' /home/airflow/gcs/data/iowa_liquor_sales/transformed_files/data_output_*.csv  > /home/airflow/gcs/data/iowa_liquor_sales/transformed_files/final_output.csv ;"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
-
       args:
         task_id: "load_to_bq"
         bucket: "{{ var.value.composer_bucket }}"
-        source_objects: ["data/iowa_liquor_sales/sales/data_output.csv"]
+        source_objects: ["data/iowa_liquor_sales/transformed_files/final_output.csv"]
         source_format: "CSV"
         destination_project_dataset_table: "iowa_liquor_sales.sales"
-        skip_leading_rows: 1
         allow_quoted_newlines: True
         write_disposition: "WRITE_TRUNCATE"
-
         schema_fields:
           - name: "invoice_and_item_number"
             type: "STRING"
@@ -166,5 +185,6 @@ dag:
             description: Total volume of liquor ordered in gallons. (i.e. (Bottle Volume (ml) x Bottles Sold)/3785.411784)"
             mode: "NULLABLE"
 
+
   graph_paths:
-    - "transform_csv >> load_to_bq"
+    - "bash_download >> bash_split >> kub_transform_csv >> bash_concatenate >> load_to_bq"
