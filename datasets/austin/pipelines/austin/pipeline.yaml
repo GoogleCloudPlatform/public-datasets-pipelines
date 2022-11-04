@@ -271,4 +271,4 @@ dag:
 
 
   graph_paths:
-    - "austin_311_service_requests >> austin_bikeshare"
+    - "[ austin_311_service_requests, austin_bikeshare ]"

@@ -92,4 +92,4 @@ with DAG(
         resources={"request_memory": "10G", "request_cpu": "2"},
     )
 
-    austin_311_service_requests >> austin_bikeshare
+    [austin_311_service_requests, austin_bikeshare]
