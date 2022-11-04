@@ -1,0 +1,44 @@
+[
+  {
+    "name": "fare_id",
+    "type": "STRING",
+    "description": "Unique identifier a fare class.",
+    "mode": "nullable"
+  },
+  {
+    "name": "rider_id",
+    "type": "STRING",
+    "description": "Unique identifier a rider category. Rider categories are used to assign different pricing to different groups of individuals",
+    "mode": "nullable"
+  },
+  {
+    "name": "rider_desc",
+    "type": "STRING",
+    "description": "Text description of the rider category",
+    "mode": "nullable"
+  },
+  {
+    "name": "price",
+    "type": "NUMERIC",
+    "description": "Contains the fare price, in USD",
+    "mode": "nullable"
+  },
+  {
+    "name": "payment_method",
+    "type": "STRING",
+    "description": "Indicates when the fare must be paid. The following are valid values for this field: -  during: Indicates the fare is paid when riders board -  before: Indicates fare must be paid before riders board",
+    "mode": "nullable"
+  },
+  {
+    "name": "transfers_permitted",
+    "type": "STRING",
+    "description": "Specifies the number of transfers permitted on this fare.  -  0: No transfers are permitted on this fare. -  1: One transfer is permitted on this fare. -  2: Two transfers are permitted on this fare. -  NULL: Unlimited transfers are permitted on this fare.",
+    "mode": "nullable"
+  },
+  {
+    "name": "transfer_duration",
+    "type": "INTEGER",
+    "description": "Specifies the length of time, in seconds, before a transfer expires. When used with a transfers_permitted value of 0, the transfer_duration field indicates how long a ticket is valid for a fare where no transfers are allowed.",
+    "mode": "nullable"
+  }
+]

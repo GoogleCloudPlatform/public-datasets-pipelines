@@ -1,0 +1,110 @@
+[
+	{
+		"name": "tree_id",
+		"type": "INTEGER",
+		"description": "Unique ID for Tree",
+        "mode": "REQUIRED"
+    },
+	{
+		"name": "legal_status",
+		"type": "STRING",
+		"description": "Legal staus: Permitted or DPW maintained",
+        "mode": "NULLABLE"
+    },
+	{
+		"name": "species",
+		"type": "STRING",
+		"description": "Species of tree",
+        "mode": "NULLABLE"
+    },
+	{
+		"name": "address",
+		"type": "STRING",
+		"description": "Address of Tree",
+        "mode": "NULLABLE"
+    },
+	{
+		"name": "site_order",
+		"type": "INTEGER",
+		"description": "Order of tree at address where multiple trees are at same address. Trees are ordered in ascending address order",
+        "mode": "NULLABLE"
+    },
+	{
+		"name": "site_info",
+		"type": "STRING",
+		"description": "Description of location of tree",
+        "mode": "NULLABLE"
+    },
+	{
+		"name": "plant_type",
+		"type": "STRING",
+		"description": "Landscaping or Tree",
+        "mode": "NULLABLE"
+    },
+	{
+		"name": "care_taker",
+		"type": "STRING",
+		"description": "Agency or person that is primary caregiver to tree. Owner of Tree",
+        "mode": "NULLABLE"
+    },
+	{
+		"name": "care_assistant",
+		"type": "STRING",
+		"description": "Agency or person that is secondary caregiver to tree",
+        "mode": "NULLABLE"
+    },
+	{
+		"name": "plant_date",
+		"type": "TIMESTAMP",
+		"description": "Date tree was planted",
+        "mode": "NULLABLE"
+    },
+	{
+		"name": "dbh",
+		"type": "STRING",
+		"description": "depth height",
+        "mode": "NULLABLE"
+    },
+	{
+		"name": "plot_size",
+		"type": "STRING",
+		"description": "dimension of tree plot",
+        "mode": "NULLABLE"
+    },
+	{
+		"name": "permit_notes",
+		"type": "STRING",
+		"description": "Tree permit number reference",
+        "mode": "NULLABLE"
+    },
+	{
+		"name": "x_coordinate",
+		"type": "FLOAT",
+		"description": "CA State Plane III",
+        "mode": "NULLABLE"
+    },
+	{
+		"name": "y_coordinate",
+		"type": "FLOAT",
+		"description": "CA State Plane III",
+        "mode": "NULLABLE"
+    },
+	{
+		"name": "latitude",
+		"type": "FLOAT",
+		"description": "WGS84",
+        "mode": "NULLABLE"
+    },
+	{
+		"name": "longitude",
+		"type": "FLOAT",
+		"description": "WGS84",
+        "mode": "NULLABLE"
+    },
+	{
+		"name": "location",
+		"type": "STRING",
+		"description": "Location formatted for mapping",
+        "mode": "NULLABLE"
+    }
+]

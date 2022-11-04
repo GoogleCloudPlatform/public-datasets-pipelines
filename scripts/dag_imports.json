@@ -77,6 +77,38 @@
       "DataflowCreatePythonJobOperator": {
           "import": "from airflow.providers.google.cloud.operators import dataflow",
           "class": "dataflow.DataflowCreatePythonJobOperator"
+      },
+      "CloudSQLCreateInstanceDatabaseOperator": {
+          "import": "airflow.providers.google.cloud.operators import cloud_sql",
+          "class": "cloud_sql.CloudSQLCreateInstanceDatabaseOperator"
+      },
+      "CloudSQLDeleteInstanceDatabaseOperator": {
+          "import": "airflow.providers.google.cloud.operators import cloud_sql",
+          "class": "cloud_sql.CloudSQLDeleteInstanceDatabaseOperator"
+      },
+      "CloudSQLExportInstanceOperator": {
+          "import": "airflow.providers.google.cloud.operators import cloud_sql",
+          "class": "cloud_sql.CloudSQLExportInstanceOperator"
+      },
+      "CloudSQLExecuteQueryOperator": {
+          "import": "airflow.providers.google.cloud.operators import cloud_sql",
+          "class": "cloud_sql.CloudSQLExecuteQueryOperator"
+      },
+      "CloudFunctionDeployFunctionOperator": {
+          "import": "airflow.providers.google.cloud.operators import functions",
+          "class": "functions.CloudFunctionDeployFunctionOperator"
+      },
+      "CloudFunctionDeleteFunctionOperator": {
+          "import": "airflow.providers.google.cloud.operators import functions",
+          "class": "functions.CloudFunctionDeleteFunctionOperator"
+      },
+      "ComputeEngineStartInstanceOperator": {
+          "import": "airflow.providers.google.cloud.operators import compute",
+          "class": "compute.ComputeEngineStartInstanceOperator"
+      },
+      "ComputeEngineStopInstanceOperator": {
+          "import": "airflow.providers.google.cloud.operators import compute",
+          "class": "compute.ComputeEngineStopInstanceOperator"
       }
    }
 }

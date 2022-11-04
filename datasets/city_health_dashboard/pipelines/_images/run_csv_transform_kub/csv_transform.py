@@ -105,7 +105,7 @@ def execute_pipeline(
     download_file(source_url, source_file)
     dest_path = os.path.split(source_file)[0]
     unpack_file(infile=source_file, dest_path=dest_path)
-    datafile = find_file_in_path(dest_path, f"*{file_name_prefix}*.csv")[0]
+    datafile = find_file_in_path(dest_path, f"{file_name_prefix}.csv")[0]
     process_source_file(
         source_url=source_url,
         source_file=datafile,

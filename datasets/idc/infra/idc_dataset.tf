@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -259,6 +259,30 @@ resource "google_bigquery_dataset_iam_policy" "idc_v9" {
 }
 output "bigquery_dataset-idc_v9-dataset_id" {
   value = google_bigquery_dataset.idc_v9.dataset_id
+}
+
+resource "google_bigquery_dataset" "idc_v10" {
+  dataset_id  = "idc_v10"
+  project     = var.project_id
+  description = "Imaging Data Commons (IDC) - The Cancer Imaging Archive (TCIA) v10 data"
+}
+
+data "google_iam_policy" "bq_ds__idc_v10" {
+  dynamic "binding" {
+    for_each = var.iam_policies["bigquery_datasets"]["idc_v10"]
+    content {
+      role    = binding.value["role"]
+      members = binding.value["members"]
+    }
+  }
+}
+
+resource "google_bigquery_dataset_iam_policy" "idc_v10" {
+  dataset_id  = google_bigquery_dataset.idc_v10.dataset_id
+  policy_data = data.google_iam_policy.bq_ds__idc_v10.policy_data
+}
+output "bigquery_dataset-idc_v10-dataset_id" {
+  value = google_bigquery_dataset.idc_v10.dataset_id
 }
 
 resource "google_bigquery_dataset" "idc_current" {
