@@ -71,7 +71,7 @@ def execute_pipeline(
     target_gcs_bucket: str,
     target_gcs_path: str,
 ) -> None:
-    # download_blob(source_gcs_bucket, source_gcs_object, source_file)
+    download_blob(source_gcs_bucket, source_gcs_object, source_file)
     process_source_file(
         source_file=source_file,
         batch_file=batch_file,
