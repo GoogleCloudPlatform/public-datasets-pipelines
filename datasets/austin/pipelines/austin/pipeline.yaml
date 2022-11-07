@@ -176,13 +176,14 @@ dag:
               "map_tile"
             ]
         resources:
-          request_memory: "10G"
-          request_cpu: "2"
+          limit_memory: "8G"
+          limit_cpu: "3"
+          request_ephemeral_storage: "10G"
 
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
-        task_id: "austin_bikeshare"
+        task_id: "austin_bikeshare_trips"
         name: "austin_bikeshare_trips"
         namespace: "composer"
         service_account_name: "datasets"
@@ -197,7 +198,7 @@ dag:
           TARGET_GCS_PATH: "data/austin_bikeshare/data_output.csv"
           PIPELINE_NAME: "Austin Bikeshare Trips"
           PROJECT_ID: "{{ var.value.gcp_project }}"
-          DATASET_ID: "austin_bikeshare_trips"
+          DATASET_ID: "austin_bikeshare"
           DESTINATION_TABLE: "bikeshare_trips"
           SCHEMA_PATH: "data/austin_bikeshare/schema/austin_bikeshare_trips_schema.json"
           DATE_FORMAT_LIST: >-
@@ -268,9 +269,10 @@ dag:
               "duration_minutes"
             ]
         resources:
-          request_memory: "10G"
-          request_cpu: "2"
+          limit_memory: "8G"
+          limit_cpu: "3"
+          request_ephemeral_storage: "10G"
 
 
   graph_paths:
-    - "[ austin_311_service_requests, austin_bikeshare ]"
+    - "[ austin_311_service_requests, austin_bikeshare_trips ]"
