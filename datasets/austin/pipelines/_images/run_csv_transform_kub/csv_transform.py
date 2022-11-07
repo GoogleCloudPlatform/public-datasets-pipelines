@@ -204,13 +204,6 @@ def process_chunk(
     logging.info(f"Processing Batch {target_file_batch} started")
     if destination_table == "311_service_requests":
         df = rename_headers(df=df, rename_headers_list=rename_headers_list)
-        # for dt_col in date_format_list:
-        #     logging.info(f"Converting Date Format {dt_col}")
-        #     df[dt_col] = df[dt_col].apply(
-        #         lambda x: datetime.datetime.strptime(
-        #             str(x), "%m/%d/%Y %H:%M:%S %p"
-        #         ).strftime("%Y-%m-%d %H:%M:%S")
-        #     )
         for col in remove_newlines_cols_list:
             logging.info(f"Removing newlines from {col}")
             df[col] = (
@@ -258,21 +251,6 @@ def reorder_headers(
 ) -> pd.DataFrame:
     logging.info("Reordering headers..")
     return df[reorder_headers_list]
-
-
-# def convert_dt_format(dt_str: str, in_format: str) -> str:
-#     # if the format is %m/%d/%Y then...
-#     if not dt_str or str(dt_str).lower() == "nan" or str(dt_str).lower() == "nat":
-#         return ""
-#     elif str(dt_str).strip()[3] == "/":
-#         return datetime.datetime.strptime(str(dt_str), "%m/%d/%Y %H:%M:%S").strftime(
-#             "%Y-%m-%d %H:%M:%S"
-#         )
-#         # return datetime.datetime.strptime(str(dt_str), "%m/%d/%Y %H:%M:%S %p").strftime(
-#         #     "%Y-%m-%d %H:%M:%S"
-#         # )
-#     else:
-#         return str(dt_str)
 
 
 def filter_null_rows(
