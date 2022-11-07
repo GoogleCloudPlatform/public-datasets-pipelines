@@ -176,8 +176,7 @@ dag:
               "map_tile"
             ]
         resources:
-          request_memory: "10G"
-          request_cpu: "2"
+          request_ephemeral_storage: "10G"
 
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod"
@@ -268,8 +267,7 @@ dag:
               "duration_minutes"
             ]
         resources:
-          request_memory: "10G"
-          request_cpu: "2"
+          request_ephemeral_storage: "10G"
 
 
   graph_paths:

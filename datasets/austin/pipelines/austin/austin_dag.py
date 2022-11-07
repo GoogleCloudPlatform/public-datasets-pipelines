@@ -61,7 +61,7 @@ with DAG(
             "RENAME_HEADERS_LIST": '{\n  "Service Request (SR) Number": "unique_key",\n  "SR Description": "complaint_description",\n  "Method Received": "source",\n  "SR Status": "status",\n  "Status Change Date": "status_change_date",\n  "Created Date": "created_date",\n  "Last Update Date": "last_update_date",\n  "Close Date": "close_date",\n  "SR Location": "incident_address",\n  "Street Number": "street_number",\n  "Street Name": "street_name",\n  "City": "city",\n  "Zip Code": "incident_zip",\n  "County": "county",\n  "State Plane X Coordinate": "state_plane_x_coordinate",\n  "State Plane Y Coordinate": "state_plane_y_coordinate",\n  "Latitude Coordinate": "latitude",\n  "Longitude Coordinate": "longitude",\n  "(Latitude.Longitude)": "location",\n  "Council District": "council_district_code",\n  "Map Page": "map_page",\n  "Map Tile": "map_tile"\n}',
             "REORDER_HEADERS_LIST": '[\n  "unique_key",\n  "complaint_description",\n  "source",\n  "status",\n  "status_change_date",\n  "created_date",\n  "last_update_date",\n  "close_date",\n  "incident_address",\n  "street_number",\n  "street_name",\n  "city",\n  "incident_zip",\n  "county",\n  "state_plane_x_coordinate",\n  "state_plane_y_coordinate",\n  "latitude",\n  "longitude",\n  "location",\n  "council_district_code",\n  "map_page",\n  "map_tile"\n]',
         },
-        resources={"request_memory": "10G", "request_cpu": "2"},
+        resources={"request_ephemeral_storage": "10G"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -91,7 +91,7 @@ with DAG(
             "RENAME_HEADERS_LIST": '{\n  "Trip ID": "trip_id",\n  "Membership Type": "subscriber_type",\n  "Bicycle ID": "bikeid",\n  "Checkout Date": "time",\n  "Checkout Kiosk ID": "start_station_id",\n  "Checkout Kiosk": "start_station_name",\n  "Return Kiosk ID": "end_station_id",\n  "Return Kiosk": "end_station_name",\n  "Trip Duration Minutes": "duration_minutes",\n  "Checkout Time": "checkout_time",\n  "Month": "month",\n  "Year": "year"\n}',
             "REORDER_HEADERS_LIST": '[\n  "trip_id",\n  "subscriber_type",\n  "bikeid",\n  "start_time",\n  "start_station_id",\n  "start_station_name",\n  "end_station_id",\n  "end_station_name",\n  "duration_minutes"\n]',
         },
-        resources={"request_memory": "10G", "request_cpu": "2"},
+        resources={"request_ephemeral_storage": "10G"},
     )
 
     [austin_311_service_requests, austin_bikeshare]
