@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM python:3.8
+FROM python:3.10.6
 ENV PYTHONUNBUFFERED True
 COPY requirements.txt ./
 RUN python3 -m pip install --no-cache-dir -r requirements.txt
