@@ -35,9 +35,10 @@ with DAG(
     # Run CSV transform within kubernetes pod
     austin_311_service_requests = kubernetes_pod.KubernetesPodOperator(
         task_id="austin_311_service_requests",
-        image_pull_policy="Always",
         name="austin",
-        namespace="default",
+        namespace="composer",
+        service_account_name="datasets",
+        image_pull_policy="Always",
         image="{{ var.json.austin.container_registry.run_csv_transform_kub }}",
         env_vars={
             "PIPELINE_NAME": "Austin 311 Service Requests By Year",
@@ -66,9 +67,10 @@ with DAG(
     # Run CSV transform within kubernetes pod
     austin_bikeshare = kubernetes_pod.KubernetesPodOperator(
         task_id="austin_bikeshare",
-        image_pull_policy="Always",
         name="austin_bikeshare_trips",
-        namespace="default",
+        namespace="composer",
+        service_account_name="datasets",
+        image_pull_policy="Always",
         image="{{ var.json.austin.container_registry.run_csv_transform_kub }}",
         env_vars={
             "SOURCE_URL": "https://data.austintexas.gov/api/views/tyfh-5r8s/rows.csv",
