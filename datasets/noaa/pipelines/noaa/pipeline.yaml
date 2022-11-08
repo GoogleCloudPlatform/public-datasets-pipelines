@@ -1087,6 +1087,74 @@ dag:
         resources:
           request_ephemeral_storage: "16G"
           limit_cpu: "3"
+    - operator: "GKEStartPodOperator"
+      description: "Run NOAA load processes - Storms Database"
+      args:
+        task_id: "spc_hail"
+        name: "noaa.spc_hail"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: noaa
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "NOAA Storms database by year"
+          SOURCE_URL: >-
+            {
+              "hail": "https://www.spc.noaa.gov/wcm/newdata/2021-hail-prelim-reports-ytd.csv"
+            }
+          SOURCE_FILE: "files/data_spc_hail.csv"
+          TARGET_FILE: "files/data_output_spc_hail.csv"
+          CHUNKSIZE: "500000"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "noaa_historic_severe_storms"
+          TABLE_ID: "hail"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/noaa/spc_hail/data_output.csv"
+          SCHEMA_PATH: "data/noaa/schema/spc_hail_schema.json"
+          DROP_DEST_TABLE: "N"
+          INPUT_FIELD_DELIMITER: "|"
+          FULL_DATA_LOAD: "N"
+          REMOVE_SOURCE_FILE: "Y"
+          DELETE_TARGET_FILE: "Y"
+          RENAME_HEADERS_LIST: >-
+            {
+              "lat": "latitude",
+              "lon": "longitude"
+            }
+          REG_EXPR_LIST: >-
+            [
+              ["time", "^(\d)$", "000$1"],
+              ["time", "^(\d{2})$", "00$1"],
+              ["time", "^(\d{3})$", "0$1"],
+              ["month", "^(\d)$", "0$1"],
+              ["day", "^(\d)$", "0$1"]
+            ]
+          DATE_FORMAT_LIST: >-
+            {
+              "event_begin_time": "yyyy-MM-dd HHmmss"
+            }
+          GEN_LOCATION_LIST: >-
+            {
+              "report_point": ["longitude", "latitude"]
+            }
+          REORDER_HEADERS_LIST: >-
+            [
+              "timestamp",
+              "time",
+              "size",
+              "location",
+              "county",
+              "state",
+              "latitude",
+              "longitude",
+              "comments",
+              "report_point"
+            ]
+        resources:
+          request_ephemeral_storage: "16G"
+          limit_cpu: "3"
     - operator: "GKEDeleteClusterOperator"
       args:
         task_id: "delete_cluster"

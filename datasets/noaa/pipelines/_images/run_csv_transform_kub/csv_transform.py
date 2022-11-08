@@ -62,6 +62,7 @@ def main(
     slice_column_list: dict,
     regex_list: dict,
     rename_headers_list: dict,
+    reg_expr_list: typing.List[typing.List[str]],
     remove_source_file: str,
     delete_target_file: str,
     number_of_header_rows: str,
@@ -98,6 +99,7 @@ def main(
         slice_column_list=slice_column_list,
         regex_list=regex_list,
         rename_headers_list=rename_headers_list,
+        reg_expr_list=reg_expr_list,
         remove_source_file=(remove_source_file == "Y"),
         delete_target_file=(delete_target_file == "Y"),
         number_of_header_rows=int(number_of_header_rows),
@@ -136,6 +138,7 @@ def execute_pipeline(
     regex_list: dict,
     remove_source_file: bool,
     rename_headers_list: dict,
+    reg_expr_list: typing.List[typing.List[str]],
     delete_target_file: bool,
     number_of_header_rows: int,
     int_date_list: typing.List[str],
@@ -203,6 +206,13 @@ def execute_pipeline(
                 gen_location_list=gen_location_list,
             )
         return None
+    if pipeline_name == "NOAA SPC Hail":
+        src_url = source_url[pipeline_name.replace(" ", "_").lower()]
+        download_file_http(
+            source_url=src_url,
+            source_file=source_file
+        )
+        import pdb; pdb.set_trace()
     if pipeline_name in [
         "GHCND countries",
         "GHCND inventory",
@@ -1386,6 +1396,38 @@ def download_file_ftp_single_try(
                 time.sleep(try_count * 30)
 
 
+def download_file_http(
+    source_url: str, source_file: pathlib.Path, continue_on_error: bool = False
+) -> bool:
+    logging.info(f"Downloading {source_url} to {source_file}")
+    try:
+        src_file = requests.get(source_url, stream=True)
+        rtn_status_code = src_file.status_code
+        if 400 <= rtn_status_code <= 499:
+            logging.info(
+                f"Unable to download file {source_url} (error code was {rtn_status_code})"
+            )
+            return False
+        else:
+            with open(source_file, "wb") as f:
+                for chunk in src_file:
+                    f.write(chunk)
+            return True
+    except requests.exceptions.RequestException as e:
+        if e == requests.exceptions.HTTPError:
+            err_msg = "A HTTP error occurred."
+        elif e == requests.exceptions.Timeout:
+            err_msg = "A HTTP timeout error occurred."
+        elif e == requests.exceptions.TooManyRedirects:
+            err_msg = "Too Many Redirects occurred."
+        if not continue_on_error:
+            logging.info(f"{err_msg} Unable to obtain {source_url}")
+            raise SystemExit(e)
+        else:
+            logging.info(f"{err_msg} Unable to obtain {source_url}.")
+        return False
+
+
 def upload_file_to_gcs(
     file_path: pathlib.Path, target_gcs_bucket: str, target_gcs_path: str
 ) -> None:
@@ -1433,6 +1475,7 @@ if __name__ == "__main__":
         date_format_list=json.loads(os.environ.get("DATE_FORMAT_LIST", r"[]")),
         slice_column_list=json.loads(os.environ.get("SLICE_COLUMN_LIST", r"{}")),
         rename_headers_list=json.loads(os.environ.get("RENAME_HEADERS_LIST", r"{}")),
+        reg_expr_list=json.loads(os.environ.get("RENAME_HEADERS_LIST", r"[]")),
         remove_source_file=os.environ.get("REMOVE_SOURCE_FILE", "N"),
         delete_target_file=os.environ.get("DELETE_TARGET_FILE", "N"),
         number_of_header_rows=os.environ.get("NUMBER_OF_HEADER_ROWS", "0"),
