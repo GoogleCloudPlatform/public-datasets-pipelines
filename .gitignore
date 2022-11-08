@@ -10,15 +10,20 @@ pyvenv.cfg
 
 # terraform caches
 .terraform*
+*.tfstate
+*.tfstate.backup
 terraform.tfstate
 .terragrunt-cache
 
 # airflow cache
 tmp
 
-# env or editor config
+# python env or editor config
 .python-version
 .vscode
+
+# env variables files
+.vars.*.yaml
 
 # generated files and folders
 .dev
@@ -28,5 +33,10 @@ tmp
 
 # ignore nested Pipfiles, JSON, and tfvars files
 /datasets/**/Pipfile
-/datasets/**/*.json
+/datasets/**/*_variables.json
 /datasets/**/*.tfvars
+
+# ignore temp folders
+.tmp
+
+.DS_Store

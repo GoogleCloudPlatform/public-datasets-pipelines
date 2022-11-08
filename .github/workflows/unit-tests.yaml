@@ -13,27 +13,32 @@
 # limitations under the License.
 
 name: Run unit tests
-on: [pull_request]
+on:
+  pull_request:
+    paths-ignore:
+      - 'CHANGELOG.md'
+      - 'README.md'
+      - 'version.txt'
 jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8]
+        python-version: [3.8.12]
     steps:
       - uses: actions/checkout@v2
-      - uses: hashicorp/setup-terraform@v1
+      - uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 0.15.1
       - name: Setup Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install pipenv
-        run: pip install pipenv
+      - name: Install poetry
+        run: curl -sSL https://install.python-poetry.org | python3 - --preview
       - name: Install dependencies
-        run: pipenv install --ignore-pipfile --dev
+        run: poetry install --only pipelines
       - name: Initialize Airflow
-        run: pipenv run airflow db init
+        run: poetry run airflow db init
       - name: Run tests
-        run: pipenv run python -m pytest -v
+        run: poetry run python -m pytest -v tests

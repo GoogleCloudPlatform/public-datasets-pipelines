@@ -20,8 +20,6 @@ from ruamel import yaml
 
 from scripts import generate_dag, generate_terraform
 
-yaml = yaml.YAML(typ="safe")
-
 PROJECT_ROOT = generate_dag.PROJECT_ROOT
 SAMPLE_YAML_PATHS = {
     "dataset": PROJECT_ROOT / "samples" / "dataset.yaml",
@@ -39,19 +37,24 @@ def dataset_path() -> typing.Iterator[pathlib.Path]:
 
 @pytest.fixture
 def pipeline_path(dataset_path, suffix="_pipeline") -> typing.Iterator[pathlib.Path]:
-    with tempfile.TemporaryDirectory(dir=dataset_path, suffix=suffix) as dir_path:
+    pipelines_dir = dataset_path / "pipelines"
+    pipelines_dir.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(dir=pipelines_dir, suffix=suffix) as dir_path:
         yield pathlib.Path(dir_path)
 
 
 def all_pipelines() -> typing.Iterator[typing.Tuple[pathlib.Path, pathlib.Path]]:
     for dataset_path in generate_terraform.list_subdirs(generate_dag.DATASETS_PATH):
-        for pipeline_path in generate_terraform.list_subdirs(dataset_path):
+        for pipeline_path in generate_terraform.list_subdirs(
+            dataset_path / "pipelines"
+        ):
             yield dataset_path, pipeline_path
 
 
 def test_all_dag_ids_are_unique():
     dag_ids = set()
     for dataset_path, pipeline_path in all_pipelines():
+        generate_dag.CustomYAMLTags(dataset_path.name)
         dag_config = yaml.load(open(pipeline_path / "pipeline.yaml"))
 
         config_dag_id = generate_dag.dag_init(dag_config)["dag_id"]
@@ -69,13 +72,16 @@ def test_non_unique_dag_id_will_fail_validation(
     pipeline_path: pathlib.Path,
     pipeline_path_2: pathlib.Path,
 ):
-    shutil.copyfile(SAMPLE_YAML_PATHS["dataset"], dataset_path / "dataset.yaml")
+    shutil.copyfile(
+        SAMPLE_YAML_PATHS["dataset"], dataset_path / "pipelines" / "dataset.yaml"
+    )
     shutil.copyfile(SAMPLE_YAML_PATHS["pipeline"], pipeline_path / "pipeline.yaml")
     shutil.copyfile(SAMPLE_YAML_PATHS["pipeline"], pipeline_path_2 / "pipeline.yaml")
 
     dag_ids = set()
     all_unique = True
     for dataset_path, pipeline_path in all_pipelines():
+        generate_dag.CustomYAMLTags(dataset_path.name)
         dag_config = yaml.load(open(pipeline_path / "pipeline.yaml"))
 
         config_dag_id = generate_dag.dag_init(dag_config)["dag_id"]

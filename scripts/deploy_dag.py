@@ -18,8 +18,9 @@ import json
 import pathlib
 import subprocess
 import typing
-import warnings
 
+import click
+from google.cloud.orchestration.airflow import service_v1beta1
 from ruamel import yaml
 
 yaml = yaml.YAML(typ="safe")
@@ -35,112 +36,287 @@ class IncompatibilityError(Exception):
 
 
 def main(
-    local: bool,
     env_path: pathlib.Path,
     dataset_id: str,
-    pipeline: str = None,
-    airflow_home: pathlib.Path = None,
-    composer_env: str = None,
-    composer_bucket: str = None,
-    composer_region: str = None,
+    composer_env: str,
+    composer_bucket: typing.Union[str, None],
+    composer_region: str,
+    pipeline: typing.Union[str, None],
 ):
+    if composer_bucket is None:
+        composer_bucket = get_composer_bucket(composer_env, composer_region)
+
     print("\n========== AIRFLOW VARIABLES ==========")
-    copy_variables_to_airflow_data_folder(
-        local, env_path, dataset_id, airflow_home, composer_bucket
-    )
-    import_variables_to_airflow_env(
-        local, env_path, dataset_id, composer_env, composer_bucket, composer_region
+    check_and_configure_airflow_variables(
+        env_path, dataset_id, composer_env, composer_bucket, composer_region
     )
 
     print("========== AIRFLOW DAGS ==========")
     if pipeline:
-        pipelines = [env_path / "datasets" / dataset_id / pipeline]
+        pipelines = [env_path / "datasets" / dataset_id / "pipelines" / pipeline]
     else:
-        pipelines = list_subdirs(env_path / "datasets" / dataset_id)
+        pipelines = list_subdirs(env_path / "datasets" / dataset_id / "pipelines")
 
-    if local:
-        runtime_airflow_version = local_airflow_version()
-    else:
-        runtime_airflow_version = composer_airflow_version(
-            composer_env, composer_region
-        )
+    runtime_airflow_version = composer_airflow_version(composer_env, composer_region)
 
     for pipeline_path in pipelines:
         check_airflow_version_compatibility(pipeline_path, runtime_airflow_version)
 
+        data_folder = (
+            DATASETS_PATH / dataset_id / "pipelines" / pipeline_path.name / "data"
+        )
+
+        if data_folder.exists() and data_folder.is_dir() and any(data_folder.iterdir()):
+            copy_data_folder_to_composer_bucket(
+                dataset_id,
+                data_folder,
+                pipeline_path.name,
+                composer_bucket,
+            )
+
         copy_custom_callables_to_airflow_dags_folder(
-            local,
             env_path,
             dataset_id,
             pipeline_path.name,
             composer_bucket,
-            airflow_home,
         )
 
         copy_generated_dag_to_airflow_dags_folder(
-            local,
             env_path,
             dataset_id,
             pipeline_path.name,
             composer_bucket,
-            airflow_home,
         )
+
+
+def get_gcp_project() -> str:
+    return subprocess.run(
+        ["gcloud", "config", "get-value", "project"], text=True, capture_output=True
+    ).stdout.strip()
+
+
+def get_composer_bucket(
+    composer_env: str,
+    composer_region: str,
+) -> str:
+    project_id = get_gcp_project()
+
+    # Create a client
+    client = service_v1beta1.EnvironmentsClient()
+
+    # Initialize request argument(s)
+    request = service_v1beta1.GetEnvironmentRequest(
+        name=f"projects/{project_id}/locations/{composer_region}/environments/{composer_env}"
+    )
+
+    # Make the request
+    response = client.get_environment(request=request)
+
+    # Handle the response
+    composer_bucket = response.config.dag_gcs_prefix.replace("/dags", "").replace(
+        "gs://", ""
+    )
+    return composer_bucket
 
 
 def run_gsutil_cmd(args: typing.List[str], cwd: pathlib.Path):
     subprocess.check_call(["gsutil"] + args, cwd=cwd)
 
 
-def copy_variables_to_airflow_data_folder(
-    local: bool,
+def check_and_configure_airflow_variables(
     env_path: pathlib.Path,
     dataset_id: str,
-    airflow_home: pathlib.Path = None,
-    composer_bucket: str = None,
+    composer_env: str,
+    composer_bucket: str,
+    composer_region: str,
 ):
-    """
-    cd .{ENV}/datasets or .{ENV}/datasets/{dataset_id}
-    """
-    for cwd, filename in (
-        (env_path / "datasets", "shared_variables.json"),
-        (env_path / "datasets" / dataset_id, f"{dataset_id}_variables.json"),
-    ):
+    """First checks if a `.vars.[ENV].yaml` file exists in the dataset folder and if the `pipelines` key exists in that file.
+    If so, copy the JSON object equivalent of `pipelines` into the variables file at `.[ENV]/datasets/pipelines/[DATASET]_variables.json`.
 
-        if not (cwd / filename).exists():
-            warnings.warn(f"Airflow variables file {filename} does not exist.")
-            continue
+    Finally, upload the pipeline variables file to the Composer bucket.
+    """
+    cwd = env_path / "datasets" / dataset_id / "pipelines"
+    vars_json_path = cwd / f"{dataset_id}_variables.json"
+    env_vars_file = DATASETS_PATH / dataset_id / f".vars{env_path.name}.yaml"
+    env_vars = yaml.load(open(env_vars_file)) if env_vars_file.exists() else None
 
-        if local:
-            """
-            cp {DATASET_ID}_variables.json {AIRFLOW_HOME}/data/variables/{filename}
-            """
-            target_path = airflow_home / "data" / "variables" / filename
-            target_path.mkdir(parents=True, exist_ok=True)
+    if isinstance(env_vars, dict) and "pipelines" in env_vars:
+        local_vars = env_vars["pipelines"]
+    elif vars_json_path.exists() and vars_json_path.stat().st_size > 0:
+        with open(vars_json_path) as file_:
+            local_vars = json.load(file_)
+    else:
+        print("No local pipeline variables found.")
+        local_vars = None
+
+    overwrite_remote_vars = compare_and_set_airflow_variables(
+        local_vars,
+        composer_env,
+        composer_region,
+        dataset_id,
+        vars_json_path,
+    )
+    if overwrite_remote_vars:
+        import_variables_to_cloud_composer(
+            env_path, dataset_id, composer_env, composer_bucket, composer_region
+        )
+
+
+def get_airflow_var_from_composer_env(
+    composer_env: str,
+    composer_region: str,
+    dataset_id: str,
+) -> typing.Union[dict, None]:
+    result = subprocess.run(
+        [
+            "gcloud",
+            "composer",
+            "environments",
+            "run",
+            composer_env,
+            "--location",
+            composer_region,
+            "--project",
+            get_gcp_project(),
+            "variables",
+            "--",
+            "get",
+            dataset_id,
+        ],
+        text=True,
+        capture_output=True,
+    )
+
+    # The variable doesn't exist in the Composer environment
+    if result.returncode == 1:
+        print(
+            f"Airflow variable `{dataset_id}` not found in Composer environment `{composer_env}`"
+        )
+        return
+    else:
+        print(
+            f"Airflow variable `{dataset_id}` found in Composer environment `{composer_env}`"
+        )
+        return {dataset_id: json.loads(result.stdout.strip())}
+
+
+def compare_and_set_airflow_variables(
+    local_vars: typing.Union[dict, None],
+    composer_env: str,
+    composer_region: str,
+    dataset_id: str,
+    vars_json_path: pathlib.Path,
+) -> bool:
+    if not local_vars:
+        print(
+            f"Airflow variable `{dataset_id}` is not defined locally. Checking Cloud Composer environment for this variable.."
+        )
+
+    remote_vars = get_airflow_var_from_composer_env(
+        composer_env, composer_region, dataset_id
+    )
+    if remote_vars is None and local_vars is None:
+        print(
+            "Airflow variables not defined locally and remotely. Cloud Composer variable import will be skipped.\n"
+        )
+        vars_to_use = None
+        import_to_composer = False
+
+    if remote_vars is not None and local_vars is not None:
+        print(
+            "Remote value:\n"
+            f"{json.dumps(remote_vars, indent=2)}\n\n"
+            "Local value:\n"
+            f"{json.dumps(local_vars, indent=2)}\n"
+        )
+        if remote_vars == local_vars:
             print(
-                "\nCopying variables JSON file into Airflow data folder\n\n"
-                f"  Source:\n  {cwd / filename}\n\n"
-                f"  Destination:\n  {target_path}\n"
+                "Remote and local Airflow variables are the same. Cloud Composer variable import will be skipped.\n"
             )
-
-            subprocess.check_call(["cp", "-rf", filename, str(target_path)], cwd=cwd)
+            vars_to_use = local_vars
+            import_to_composer = False
         else:
-            """
-            [remote]
-            gsutil cp {DATASET_ID}_variables.json gs://{COMPOSER_BUCKET}/data/variables/{filename}...
-            """
-            gcs_uri = f"gs://{composer_bucket}/data/variables/{filename}"
+            strategy = prompt_strategy_for_local_and_remote_vars()
+            if strategy.lower() == "r":  # use remote variable (default)
+                vars_to_use = remote_vars
+                import_to_composer = False
+            elif strategy.lower() == "l":  # use local variable
+                vars_to_use = local_vars
+                import_to_composer = True
+            else:  # merge local and remote variables
+                vars_to_use = merge_nested_dicts(remote_vars, local_vars)
+                import_to_composer = True
             print(
-                "\nCopying variables JSON file into Cloud Composer data folder\n\n"
-                f"  Source:\n  {cwd / filename}\n\n"
-                f"  Destination:\n  {gcs_uri}\n"
+                f"Airflow variable `{dataset_id}` is now set to\n"
+                f"{json.dumps(vars_to_use, indent=2)}\n"
             )
-            run_gsutil_cmd(["cp", filename, gcs_uri], cwd=cwd)
+    elif remote_vars is None and local_vars is not None:
+        vars_to_use = local_vars
+        import_to_composer = True
+    else:  # remote vars exists and local vars is None
+        print(
+            f"Setting local variable `{dataset_id}` to\n"
+            f"{json.dumps(remote_vars, indent=2)}\n\n"
+        )
+        vars_to_use = remote_vars
+        import_to_composer = False
+
+    if vars_to_use is not None:
+        with open(vars_json_path, "w") as file_:
+            file_.write(json.dumps(vars_to_use))
+
+    return import_to_composer
+
+
+def prompt_strategy_for_local_and_remote_vars() -> str:
+    strategy = click.prompt(
+        (
+            "Remote and local Airflow variables are different.\n"
+            "Select version to use: Merge (m), use local (l), use remote (r)?"
+        ),
+        type=click.Choice(["m", "l", "r"], case_sensitive=False),
+        default="r",
+    )
+    return strategy
+
+
+def merge_nested_dicts(a: dict, b: dict, path=None) -> dict:
+    if path is None:
+        path = []
+    for key in b:
+        if key in a:
+            if isinstance(a[key], dict) and isinstance(b[key], dict):
+                merge_nested_dicts(a[key], b[key], path + [str(key)])
+            elif a[key] == b[key]:
+                pass  # same leaf value
+            else:
+                a[key] = b[key]
+        else:
+            a[key] = b[key]
+    return a
+
+
+def copy_data_folder_to_composer_bucket(
+    dataset_id: str,
+    data_folder: pathlib.Path,
+    pipeline: str,
+    composer_bucket: str,
+):
+    print(
+        f"Data folder exists: {data_folder}.\nCopying contents into Composer bucket.."
+    )
+    gcs_uri = f"gs://{composer_bucket}/data/{dataset_id}/{pipeline}"
+    run_gsutil_cmd(["-q", "cp", "-r", f"{data_folder}/*", gcs_uri], data_folder)
+
+    print("Done. Files uploaded to GCS:")
+    for file in data_folder.iterdir():
+        print(f"  - {gcs_uri}/{file.name}")
 
 
 def run_cloud_composer_vars_import(
     composer_env: str,
     composer_region: str,
-    airflow_path: pathlib.Path,
+    airflow_path: str,
     cwd: pathlib.Path,
 ):
     subprocess.check_call(
@@ -150,129 +326,94 @@ def run_cloud_composer_vars_import(
             "composer",
             "environments",
             "run",
-            str(composer_env),
+            composer_env,
             "--location",
-            str(composer_region),
+            composer_region,
             "variables",
             "--",
             "import",
-            str(airflow_path),
+            airflow_path,
         ],
         cwd=cwd,
     )
 
 
-def import_variables_to_airflow_env(
-    local: bool,
+def import_variables_to_cloud_composer(
     env_path: pathlib.Path,
     dataset_id: str,
-    composer_env: str = None,
-    composer_bucket: str = None,
-    composer_region: str = None,
+    composer_env: str,
+    composer_bucket: str,
+    composer_region: str,
 ):
     """
-    [local]
-    airflow variables import .{ENV}/datasets/{DATASET_ID}/variables.json
-
-    [remote]
     gcloud composer environments run COMPOSER_ENV --location COMPOSER_REGION variables -- import /home/airflow/gcs/data/variables/{DATASET_ID}_variables.json
     """
-    for cwd, filename in (
-        (env_path / "datasets", "shared_variables.json"),
-        (env_path / "datasets" / dataset_id, f"{dataset_id}_variables.json"),
-    ):
-        if local:
-            print(f"\nImporting Airflow variables from {cwd / filename}...\n")
-            subprocess.check_call(
-                ["airflow", "variables", "import", str(cwd / filename)], cwd=cwd
-            )
-        else:
-            gcs_uri = f"gs://{composer_bucket}/data/variables/{filename}"
-            airflow_path = f"/home/airflow/gcs/data/variables/{filename}"
-            print(f"\nImporting Airflow variables from {gcs_uri} ({airflow_path})...\n")
-            run_cloud_composer_vars_import(
-                composer_env, composer_region, airflow_path, cwd=cwd
-            )
+    cwd = env_path / "datasets" / dataset_id / "pipelines"
+    filename = f"{dataset_id}_variables.json"
+    gcs_uri = f"gs://{composer_bucket}/data/variables/{filename}"
+    airflow_path = f"/home/airflow/gcs/data/variables/{filename}"
+
+    print(
+        "\nCopying variables JSON file into Cloud Composer data folder\n\n"
+        f"  Source:\n  {cwd / filename}\n\n"
+        f"  Destination:\n  {gcs_uri}\n"
+    )
+    run_gsutil_cmd(["cp", filename, gcs_uri], cwd=cwd)
+
+    print(f"\nImporting Airflow variables from {gcs_uri} ({airflow_path})...\n")
+    run_cloud_composer_vars_import(composer_env, composer_region, airflow_path, cwd=cwd)
 
 
 def copy_generated_dag_to_airflow_dags_folder(
-    local: bool,
     env_path: pathlib.Path,
     dataset_id: str,
     pipeline_id: str,
-    composer_bucket: str = None,
-    airflow_home: pathlib.Path = None,
+    composer_bucket: str,
 ):
     """
-    cd {DATASET_ID}/{PIPELINE_ID}
+    Runs the command
 
-    [local]
-    cp {PIPELINE_ID}_dag.py {AIRFLOW_HOME}/dags/{DATASET_ID}__{PIPELINE_ID}_dag.py
+        gsutil cp {PIPELINE_ID}_dag.py gs://{COMPOSER_BUCKET}/dags/{DATASET_ID}__{PIPELINE_ID}_dag.py
 
-    [remote]
-    gsutil cp {PIPELINE_ID}_dag.py gs://{COMPOSER_BUCKET}/dags/{DATASET_ID}__{PIPELINE_ID}_dag.py
+    inside $DATASET/pipelines/$PIPELINE
     """
-    cwd = env_path / "datasets" / dataset_id / pipeline_id
+    cwd = env_path / "datasets" / dataset_id / "pipelines" / pipeline_id
     filename = f"{pipeline_id}_dag.py"
 
-    if local:
-        target = airflow_home / "dags" / f"{dataset_id}__{pipeline_id}_dag.py"
-        print(
-            f"\nCopying DAG file for pipeline `{pipeline_id}` into Airflow DAGs folder\n\n"
-            f"  Source:\n  {cwd / filename}\n\n"
-            f"  Destination:\n  {target}\n"
-        )
-        subprocess.check_call(["cp", "-rf", filename, str(target)], cwd=cwd)
-    else:
-        target = f"gs://{composer_bucket}/dags/{dataset_id}__{pipeline_id}_dag.py"
-        print(
-            f"\nCopying DAG file for pipeline `{pipeline_id}` into Cloud Composer DAG folder\n\n"
-            f"  Source:\n  {cwd / filename}\n\n"
-            f"  Destination:\n  {target}\n"
-        )
-        run_gsutil_cmd(["cp", filename, target], cwd=cwd)
+    target = f"gs://{composer_bucket}/dags/{dataset_id}__{pipeline_id}_dag.py"
+    print(
+        f"\nCopying DAG file for pipeline `{pipeline_id}` into Cloud Composer DAG folder\n\n"
+        f"  Source:\n  {cwd / filename}\n\n"
+        f"  Destination:\n  {target}\n"
+    )
+    run_gsutil_cmd(["cp", filename, target], cwd=cwd)
 
 
 def copy_custom_callables_to_airflow_dags_folder(
-    local: bool,
     env_path: pathlib.Path,
     dataset_id: str,
     pipeline_id: str,
-    composer_bucket: str = None,
-    airflow_home: pathlib.Path = None,
+    composer_bucket: str,
 ):
     """
-    cd {DATASET_ID}/{PIPELINE_ID}
+    Runs the command
 
-    [local]
-    mkdir -p {AIRFLOW_HOME}/dags/DATASET_ID/PIPELINE_ID/custom
-    cp -rf custom {AIRFLOW_HOME}/dags/DATASET_ID/PIPELINE_ID/custom
+        gsutil cp -r custom gs://$COMPOSER_BUCKET/dags/$DATASET/$PIPELINE_ID/
 
-    [remote]
-    gsutil cp -r custom gs://{COMPOSER_BUCKET}/dags/{DATASET_ID}/{PIPELINE_ID}/
+    inside $DATASET/pipelines/$PIPELINE.
     """
-    cwd = env_path / "datasets" / dataset_id / pipeline_id
+    cwd = env_path / "datasets" / dataset_id / "pipelines" / pipeline_id
 
     if not (cwd / "custom").exists():
         return
 
-    if local:
-        target_parent = airflow_home / "dags" / dataset_id / pipeline_id
-        target_parent.mkdir(parents=True, exist_ok=True)
-        print(
-            f"\nCopying custom callables folder for pipeline `{pipeline_id}` into Airflow DAGs folder\n\n"
-            f"  Source:\n  {cwd / 'custom'}\n\n"
-            f"  Destination:\n  {target_parent / 'custom'}\n"
-        )
-        subprocess.check_call(["cp", "-rf", "custom", str(target_parent)], cwd=cwd)
-    else:
-        target = f"gs://{composer_bucket}/dags/{dataset_id}/{pipeline_id}/"
-        print(
-            f"\nCopying custom callables folder for pipeline `{pipeline_id}` into Cloud Composer DAG folder\n\n"
-            f"  Source:\n  {cwd / 'custom'}\n\n"
-            f"  Destination:\n  {target}\n"
-        )
-        run_gsutil_cmd(["-m", "cp", "-r", "custom", target], cwd=cwd)
+    target = f"gs://{composer_bucket}/dags/{dataset_id}/{pipeline_id}/"
+    print(
+        f"\nCopying custom callables folder for pipeline `{pipeline_id}` into Cloud Composer DAG folder\n\n"
+        f"  Source:\n  {cwd / 'custom'}\n\n"
+        f"  Destination:\n  {target}\n"
+    )
+    run_gsutil_cmd(["-m", "cp", "-r", "custom", target], cwd=cwd)
 
 
 def check_existence_of_variables_file(file_path: pathlib.Path):
@@ -286,15 +427,10 @@ def list_subdirs(path: pathlib.Path) -> typing.List[pathlib.Path]:
     return subdirs
 
 
-def local_airflow_version() -> str:
-    airflow_version = subprocess.run(
-        ["airflow", "version"], stdout=subprocess.PIPE
-    ).stdout.decode("utf-8")
-    return 2 if airflow_version.startswith("2") else 1
-
-
-def composer_airflow_version(composer_env: str, composer_region: str) -> str:
-    composer_env = json.loads(
+def composer_airflow_version(
+    composer_env: str, composer_region: str
+) -> typing.Literal[1, 2]:
+    config = json.loads(
         subprocess.run(
             [
                 "gcloud",
@@ -312,7 +448,7 @@ def composer_airflow_version(composer_env: str, composer_region: str) -> str:
     )
 
     # Example image version: composer-1.17.0-preview.8-airflow-2.1.1
-    image_version = composer_env["config"]["softwareConfig"]["imageVersion"]
+    image_version = config["config"]["softwareConfig"]["imageVersion"]
 
     airflow_version = image_version.split("-airflow-")[-1]
     return 2 if airflow_version.startswith("2") else 1
@@ -363,6 +499,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-n",
         "--composer-env",
+        required=True,
         type=str,
         dest="composer_env",
         help="The Google Cloud Composer environment name",
@@ -370,6 +507,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-b",
         "--composer-bucket",
+        required=False,
         type=str,
         dest="composer_bucket",
         help="The Google Cloud Composer bucket name",
@@ -377,6 +515,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-r",
         "--composer-region",
+        required=True,
         type=str,
         dest="composer_region",
         help="The region of the Google Cloud Composer environment",
@@ -389,46 +528,22 @@ if __name__ == "__main__":
         dest="pipeline",
         help="The directory name of the pipeline",
     )
-    parser.add_argument(
-        "-a",
-        "--airflow-home",
-        type=str,
-        default="~/airflow",
-        dest="airflow_home",
-        help="pathlib.Path to the Airflow home directory (defaults to `~/airflow`)",
-    )
-    parser.add_argument("--local", required=False, dest="local", action="store_true")
 
     args = parser.parse_args()
-    airflow_path = pathlib.Path(args.airflow_home).expanduser()
+    if not args.composer_env:
+        raise ValueError(
+            "Argument `-n|--composer-env` (Composer environment name) not specified"
+        )
 
-    if args.local:
-        if not airflow_path.exists() and airflow_path.is_dir():
-            raise ValueError(
-                "Argument `-a|--airflow-home` must exist and be a directory"
-            )
-    else:
-        if not args.composer_env:
-            raise ValueError(
-                "Argument `-n|--composer-env` (Composer environment name) not specified"
-            )
-
-        if not args.composer_bucket:
-            raise ValueError(
-                "Argument `-b|--composer-bucket` (Composer bucket name) not specified"
-            )
-
-        if not args.composer_region:
-            raise ValueError(
-                "Argument `-r|--composer-region` (Composer environment region) not specified"
-            )
+    if not args.composer_region:
+        raise ValueError(
+            "Argument `-r|--composer-region` (Composer environment region) not specified"
+        )
 
     main(
-        local=args.local,
         env_path=PROJECT_ROOT / f".{args.env}",
         dataset_id=args.dataset,
         pipeline=args.pipeline,
-        airflow_home=airflow_path,
         composer_env=args.composer_env,
         composer_bucket=args.composer_bucket,
         composer_region=args.composer_region,

@@ -24,9 +24,6 @@ import google.auth
 import jinja2
 from ruamel import yaml
 
-yaml = yaml.YAML(typ="safe")
-
-
 CURRENT_PATH = pathlib.Path(__file__).resolve().parent
 PROJECT_ROOT = CURRENT_PATH.parent
 DATASETS_PATH = PROJECT_ROOT / "datasets"
@@ -51,23 +48,25 @@ def main(
     env: str,
     all_pipelines: bool = False,
     skip_builds: bool = False,
+    async_builds: bool = False,
+    format_code: bool = True,
 ):
     if not skip_builds:
-        build_images(dataset_id, env)
+        build_images(dataset_id, env, async_builds)
 
     if all_pipelines:
-        for pipeline_dir in list_subdirs(DATASETS_PATH / dataset_id):
-            generate_pipeline_dag(dataset_id, pipeline_dir.name, env)
+        for pipeline_dir in list_subdirs(DATASETS_PATH / dataset_id / "pipelines"):
+            generate_pipeline_dag(dataset_id, pipeline_dir.name, env, format_code)
     else:
-        generate_pipeline_dag(dataset_id, pipeline_id, env)
-
-    generate_shared_variables_file(env)
+        generate_pipeline_dag(dataset_id, pipeline_id, env, format_code)
 
 
-def generate_pipeline_dag(dataset_id: str, pipeline_id: str, env: str):
-    pipeline_dir = DATASETS_PATH / dataset_id / pipeline_id
-    config = yaml.load((pipeline_dir / "pipeline.yaml").read_text())
-
+def generate_pipeline_dag(
+    dataset_id: str, pipeline_id: str, env: str, format_code: bool
+):
+    CustomYAMLTags(dataset_id)
+    pipeline_dir = DATASETS_PATH / dataset_id / "pipelines" / pipeline_id
+    config = yaml.load((pipeline_dir / "pipeline.yaml").read_text(), Loader=yaml.Loader)
     validate_airflow_version_existence_and_value(config)
     validate_dag_id_existence_and_format(config)
     dag_contents = generate_dag(config, dataset_id)
@@ -75,7 +74,9 @@ def generate_pipeline_dag(dataset_id: str, pipeline_id: str, env: str):
     dag_path = pipeline_dir / f"{pipeline_id}_dag.py"
     dag_path.touch()
     write_to_file(dag_contents, dag_path)
-    format_python_code(dag_path)
+
+    if format_code:
+        format_python_code(dag_path)
 
     copy_files_to_dot_dir(
         dataset_id,
@@ -132,15 +133,6 @@ def generate_task_contents(task: dict, airflow_version: str) -> str:
         **task,
         namespaced_operator=AIRFLOW_IMPORTS[airflow_version][task["operator"]]["class"],
     )
-
-
-def generate_shared_variables_file(env: str) -> None:
-    shared_variables_file = pathlib.Path(
-        PROJECT_ROOT / f".{env}" / "datasets" / "shared_variables.json"
-    )
-    if not shared_variables_file.exists():
-        shared_variables_file.touch()
-        shared_variables_file.write_text("{}", encoding="utf-8")
 
 
 def dag_init(config: dict) -> dict:
@@ -201,15 +193,17 @@ def write_to_file(contents: str, filepath: pathlib.Path):
 
 
 def format_python_code(target_file: pathlib.Path):
-    subprocess.Popen(f"black -q {target_file}", stdout=subprocess.PIPE, shell=True)
+    subprocess.Popen(
+        f"black -q {target_file}", stdout=subprocess.PIPE, shell=True
+    ).wait()
     subprocess.check_call(["isort", "--profile", "black", "."], cwd=PROJECT_ROOT)
 
 
 def print_airflow_variables(dataset_id: str, dag_contents: str, env: str):
-    var_regex = r"\{{2}\s*var.([a-zA-Z0-9_\.]*)?\s*\}{2}"
+    var_regex = r"\{{2}\s*var.json.([a-zA-Z0-9_\.]*)?\s*\}{2}"
     print(
         f"\nThe following Airflow variables must be set in"
-        f"\n\n  .{env}/datasets/{dataset_id}/{dataset_id}_variables.json"
+        f"\n\n  .{env}/datasets/{dataset_id}/pipelines/{dataset_id}_variables.json"
         "\n\nusing JSON dot notation:"
         "\n"
     )
@@ -225,16 +219,16 @@ def print_airflow_variables(dataset_id: str, dag_contents: str, env: str):
 
 
 def copy_files_to_dot_dir(dataset_id: str, pipeline_id: str, env_dir: pathlib.Path):
-    source_dir = PROJECT_ROOT / "datasets" / dataset_id / pipeline_id
-    target_dir = env_dir / "datasets" / dataset_id
+    source_dir = PROJECT_ROOT / "datasets" / dataset_id / "pipelines" / pipeline_id
+    target_dir = env_dir / "datasets" / dataset_id / "pipelines"
     target_dir.mkdir(parents=True, exist_ok=True)
     subprocess.check_call(
         ["cp", "-rf", str(source_dir), str(target_dir)], cwd=PROJECT_ROOT
     )
 
 
-def build_images(dataset_id: str, env: str):
-    parent_dir = DATASETS_PATH / dataset_id / "_images"
+def build_images(dataset_id: str, env: str, async_builds: bool):
+    parent_dir = DATASETS_PATH / dataset_id / "pipelines" / "_images"
     if not parent_dir.exists():
         return
 
@@ -242,13 +236,13 @@ def build_images(dataset_id: str, env: str):
         dataset_id, parent_dir, PROJECT_ROOT / f".{env}"
     )
     for image_dir in image_dirs:
-        build_and_push_image(dataset_id, image_dir)
+        build_and_push_image(dataset_id, image_dir, async_builds)
 
 
 def copy_image_files_to_dot_dir(
     dataset_id: str, parent_dir: pathlib.Path, env_dir: pathlib.Path
 ) -> typing.List[pathlib.Path]:
-    target_dir = env_dir / "datasets" / dataset_id
+    target_dir = env_dir / "datasets" / dataset_id / "pipelines"
     target_dir.mkdir(parents=True, exist_ok=True)
     subprocess.check_call(
         ["cp", "-rf", str(parent_dir), str(target_dir)], cwd=PROJECT_ROOT
@@ -257,26 +251,40 @@ def copy_image_files_to_dot_dir(
     return list_subdirs(target_dir / "_images")
 
 
-def build_and_push_image(dataset_id: str, image_dir: pathlib.Path):
+def build_and_push_image(
+    dataset_id: str, image_dir: pathlib.Path, async_builds: bool = False
+):
     image_name = f"{dataset_id}__{image_dir.name}"
-    tag = f"gcr.io/{gcp_project_id()}/{image_name}"
+    command = [
+        "gcloud",
+        "builds",
+        "submit",
+        "--async",
+        "--tag",
+        f"gcr.io/{gcp_project_id()}/{image_name}",
+    ]
+
+    if not async_builds:
+        command.remove("--async")
 
     # gcloud builds submit --tag gcr.io/PROJECT_ID/IMAGE_NAME
-    subprocess.check_call(
-        [
-            "gcloud",
-            "builds",
-            "submit",
-            "--tag",
-            str(tag),
-        ],
-        cwd=image_dir,
-    )
+    subprocess.check_call(command, cwd=image_dir)
 
 
-def gcp_project_id(project_id: str = None) -> str:
+def gcp_project_id() -> str:
     _, project_id = google.auth.default()
     return project_id
+
+
+class CustomYAMLTags(yaml.YAMLObject):
+    def __init__(self, dataset):
+        self.dataset = dataset
+        yaml.add_constructor("!IMAGE", self.image_constructor)
+
+    def image_constructor(self, loader, node):
+        value = loader.construct_scalar(node)
+        value = f"gcr.io/{{{{ var.value.gcp_project }}}}/{self.dataset}__{value}"
+        return value
 
 
 if __name__ == "__main__":
@@ -312,6 +320,17 @@ if __name__ == "__main__":
     parser.add_argument(
         "--skip-builds", required=False, dest="skip_builds", action="store_true"
     )
+    parser.add_argument(
+        "--async-builds", required=False, dest="async_builds", action="store_false"
+    )
 
     args = parser.parse_args()
-    main(args.dataset, args.pipeline, args.env, args.all_pipelines, args.skip_builds)
+
+    main(
+        args.dataset,
+        args.pipeline,
+        args.env,
+        args.all_pipelines,
+        args.skip_builds,
+        args.async_builds,
+    )
