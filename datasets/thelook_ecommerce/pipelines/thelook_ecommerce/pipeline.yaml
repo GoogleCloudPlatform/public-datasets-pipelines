@@ -53,7 +53,7 @@ dag:
       depends_on_past: False
       start_date: "2021-02-09"
     max_active_runs: 1
-    schedule_interval: "@daily" # runs everyday at 6am EST
+    schedule_interval: "@daily"  # runs everyday at 6am EST
     catchup: False
     default_view: graph
 
