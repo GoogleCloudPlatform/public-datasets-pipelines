@@ -38,22 +38,7 @@ dag:
     default_view: graph
 
   tasks:
-    - operator: "GKECreateClusterOperator"
-      args:
-        task_id: "create_cluster"
-        project_id: "{{ var.value.gcp_project }}"
-        location: "us-central1-c"
-        body:
-          name: irs-990--irs-990-pf-2014
-          initial_node_count: 1
-          network: "{{ var.value.vpc_network }}"
-          node_config:
-            machine_type: e2-small
-            oauth_scopes:
-              - https://www.googleapis.com/auth/devstorage.read_write
-              - https://www.googleapis.com/auth/cloud-platform
-
-    - operator: "GKEStartPodOperator"
+    - operator: "KubernetesPodOperator"
 
       # Task description
       description: "Run CSV transform within kubernetes pod"
@@ -68,10 +53,8 @@ dag:
         name: "irs_990_pf_2014"
 
         # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
-        project_id: "{{ var.value.gcp_project }}"
-        location: "us-central1-c"
-        cluster_name: irs-990--irs-990-pf-2014
-        namespace: "default"
+        service_account_name: "datasets"
+        namespace: "composer"
 
         image_pull_policy: "Always"
 
@@ -93,7 +76,7 @@ dag:
 
         # Set resource limits for the pod here. For resource units in Kubernetes, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes
         resources:
-          request_memory: "4G"
+          request_memory: "2G"
           request_cpu: "1"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
@@ -835,12 +818,6 @@ dag:
             type: "string"
             description: "Sharing of facilities equipment mailing lists other assets or paid employees?"
             mode: "nullable"
-    - operator: "GKEDeleteClusterOperator"
-      args:
-        task_id: "delete_cluster"
-        project_id: "{{ var.value.gcp_project }}"
-        location: "us-central1-c"
-        name: irs-990--irs-990-pf-2014
 
   graph_paths:
-    - "create_cluster >> irs_990_pf_2014_transform_csv >> load_irs_990_pf_2014_to_bq >> delete_cluster"
+    - "irs_990_pf_2014_transform_csv >> load_irs_990_pf_2014_to_bq"

@@ -56,7 +56,12 @@ resource "google_bigquery_table" "_cloud_datasets_tabular_datasets" {
       "name": "num_tables",
       "description": "Number of tables contained in this dataset",
       "type": "INTEGER"
-  }
+  },
+  {
+      "name": "is_public",
+      "description": "Whether or not the dataset is public to all users",
+      "type": "BOOLEAN"
+  }      
 ]
     EOF
   depends_on = [

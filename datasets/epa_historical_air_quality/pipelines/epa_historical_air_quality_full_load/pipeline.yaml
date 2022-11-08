@@ -60,6 +60,9 @@ resources:
     table_id: "pm25_frm_hourly_summary"
     description: "epaspc"
   - type: bigquery_table
+    table_id: "pm25_frm_daily_summary"
+    description: "epaspc"
+  - type: bigquery_table
     table_id: "pm25_nonfrm_daily_summary"
     description: "epaspc"
   - type: bigquery_table
@@ -914,6 +917,118 @@ dag:
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
+        task_id: "pm25_frm_daily_summary"
+        startup_timeout_seconds: 600
+        name: "load_data"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: epa-hist-air-quality
+        image_pull_policy: "Always"
+        image: "{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "https://aqs.epa.gov/aqsweb/airdata/daily_88101_YEAR_ITERATOR.zip"
+          START_YEAR: "1997"
+          SOURCE_FILE: "files/pm25_frm_daily_summary_data.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "epa_historical_air_quality"
+          TABLE_ID: "pm25_frm_daily_summary"
+          YEAR_FIELD_NAME: "date_local"
+          YEAR_FIELD_TYPE: "DATE"
+          SCHEMA_PATH: "data/epa_historical_air_quality/schemas/epa_pm25_frm_daily_summary_schema.json"
+          CHUNKSIZE: "1500000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/epa_historical_air_quality/pm25_frm_daily_summary/data_output.csv"
+          PIPELINE_NAME: "epa_historical_air_quality - pm25_frm_daily_summaries"
+          INPUT_CSV_HEADERS: >-
+            [
+              "State Code", "County Code", "Site Num", "Parameter Code", "POC",
+              "Latitude", "Longitude", "Datum", "Parameter Name", "Sample Duration",
+              "Pollutant Standard", "Date Local", "Units of Measure", "Event Type", "Observation Count",
+              "Observation Percent", "Arithmetic Mean", "1st Max Value", "1st Max Hour", "AQI",
+              "Method Code", "Method Name", "Local Site Name", "Address", "State Name",
+              "County Name", "City Name", "CBSA Name", "Date of Last Change"
+            ]
+          DATA_DTYPES: >-
+            {
+              "State Code": "str", "County Code": "str", "Site Num": "str", "Parameter Code": "int32", "POC": "int32",
+              "Latitude": "float64", "Longitude": "float64", "Datum": "str", "Parameter Name": "str", "Sample Duration": "str",
+              "Pollutant Standard": "str", "Date Local": "str", "Units of Measure": "str", "Event Type": "str", "Observation Count": "int32",
+              "Observation Percent": "float64", "Arithmetic Mean": "float64", "1st Max Value": "float64", "1st Max Hour": "int32", "AQI": "str",
+              "Method Code": "str", "Method Name": "str", "Local Site Name": "str", "Address": "str", "State Name": "str",
+              "County Name": "str", "City Name": "str", "CBSA Name": "str", "Date of Last Change": "str"
+            }
+          RENAME_HEADERS_LIST: >-
+            { "State Code": "state_code",
+              "County Code": "county_code",
+              "Site Num": "site_num",
+              "Parameter Code": "parameter_code",
+              "POC": "poc",
+              "Latitude": "latitude",
+              "Longitude": "longitude",
+              "Datum": "datum",
+              "Parameter Name": "parameter_name",
+              "Sample Duration": "sample_duration",
+              "Pollutant Standard": "pollutant_standard",
+              "Date Local": "date_local",
+              "Units of Measure": "units_of_measure",
+              "Event Type": "event_type",
+              "Observation Count": "observation_count",
+              "Observation Percent": "observation_percent",
+              "Arithmetic Mean": "arithmetic_mean",
+              "1st Max Value": "first_max_value",
+              "1st Max Hour": "first_max_hour",
+              "AQI": "aqi",
+              "Method Code": "method_code",
+              "Method Name": "method_name",
+              "Local Site Name": "local_site_name",
+              "Address": "address",
+              "State Name": "state_name",
+              "County Name": "county_name",
+              "City Name": "city_name",
+              "CBSA Name": "cbsa_name",
+              "Date of Last Change": "date_of_last_change"
+            }
+          OUTPUT_CSV_HEADERS: >-
+            [
+              "state_code",
+              "county_code",
+              "site_num",
+              "parameter_code",
+              "poc",
+              "latitude",
+              "longitude",
+              "datum",
+              "parameter_name",
+              "sample_duration",
+              "pollutant_standard",
+              "date_local",
+              "units_of_measure",
+              "event_type",
+              "observation_count",
+              "observation_percent",
+              "arithmetic_mean",
+              "first_max_value",
+              "first_max_hour",
+              "aqi",
+              "method_code",
+              "method_name",
+              "local_site_name",
+              "address",
+              "state_name",
+              "county_name",
+              "city_name",
+              "cbsa_name",
+              "date_of_last_change"
+            ]
+          DROP_DEST_TABLE: "N"
+        resources:
+          limit_memory: "16G"
+          limit_cpu: "2"
+
+    - operator: "GKEStartPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
         task_id: "pm25_nonfrm_daily_summary"
         startup_timeout_seconds: 600
         name: "load_data"
@@ -1727,4 +1842,4 @@ dag:
         name: epa-hist-air-quality
 
   graph_paths:
-    - "create_cluster >> [ annual_summaries, co_daily_summary, co_hourly_summary, hap_daily_summary, hap_hourly_summary, lead_daily_summary, no2_daily_summary, no2_hourly_summary, nonoxnoy_daily_summary, nonoxnoy_hourly_summary, ozone_daily_summary, ozone_hourly_summary, pm10_daily_summary, pm10_hourly_summary, pm25_frm_hourly_summary, pm25_nonfrm_daily_summary, pm25_nonfrm_hourly_summary, pm25_speciation_daily_summary, pm25_speciation_hourly_summary, pressure_daily_summary, pressure_hourly_summary, rh_and_dp_daily_summary, rh_and_dp_hourly_summary, so2_daily_summary, so2_hourly_summary, temperature_daily_summary, temperature_hourly_summary, voc_daily_summary, voc_hourly_summary, wind_daily_summary, wind_hourly_summary ] >> delete_cluster"
+    - "create_cluster >> [ annual_summaries, co_daily_summary, co_hourly_summary, hap_daily_summary, hap_hourly_summary, lead_daily_summary, no2_daily_summary, no2_hourly_summary, nonoxnoy_daily_summary, nonoxnoy_hourly_summary, ozone_daily_summary, ozone_hourly_summary, pm10_daily_summary, pm10_hourly_summary, pm25_frm_hourly_summary, pm25_frm_daily_summary, pm25_nonfrm_daily_summary, pm25_nonfrm_hourly_summary, pm25_speciation_daily_summary, pm25_speciation_hourly_summary, pressure_daily_summary, pressure_hourly_summary, rh_and_dp_daily_summary, rh_and_dp_hourly_summary, so2_daily_summary, so2_hourly_summary, temperature_daily_summary, temperature_hourly_summary, voc_daily_summary, voc_hourly_summary, wind_daily_summary, wind_hourly_summary ] >> delete_cluster"

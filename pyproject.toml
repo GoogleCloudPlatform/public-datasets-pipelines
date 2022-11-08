@@ -31,7 +31,7 @@ pandas-gbq = "==0.14.1"
 pytest = "^7.0.1"
 pytest-mock = "*"
 pytest-timeout = "*"
-"ruamel.yaml" = "==0.17.11"
+"ruamel.yaml" = "==0.17.21"
 SQLAlchemy = "==1.3.24"
 testbook = "*"
 

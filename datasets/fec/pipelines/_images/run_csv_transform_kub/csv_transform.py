@@ -37,24 +37,23 @@ def main(
     target_file: pathlib.Path,
     target_gcs_bucket: str,
     target_gcs_path: str,
-    csv_headers: typing.List[str],
     chunksize: str,
     pipeline_name: str,
+    csv_headers: typing.List[str],
 ) -> None:
-
     logging.info(
         f"FEC{pipeline_name} process started at "
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
-
     logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
-
-    if "individuals" not in pipeline_name:
+    if (
+        "individuals" not in pipeline_name
+        and "other_committee_tx_2020" not in pipeline_name
+    ):
         logging.info(f"Downloading file from {source_url}...")
         download_file(source_url, source_file_zip_file)
         unzip_file(source_file_zip_file, source_file_path)
-
         logging.info(f"Opening file {source_file}...")
         df = pd.read_table(
             source_file,
@@ -63,63 +62,42 @@ def main(
             dtype=object,
             index_col=False,
         )
-        df.columns = csv_headers
-
-        logging.info(f"Transforming {source_file}... ")
         if "candidate_20" in pipeline_name:
             logging.info("Transform: Trimming white spaces in headers... ")
+            df.columns = csv_headers
             df = df.rename(columns=lambda x: x.strip())
-
         elif "candidate_committe_20" in pipeline_name:
+            df.columns = csv_headers
             pass
-
         elif "committee_20" in pipeline_name:
+            df.columns = csv_headers
             df.drop(df[df["cmte_id"] == "C00622357"].index, inplace=True)
-
         elif "committee_contributions_20" in pipeline_name:
+            df.columns = csv_headers
             df["transaction_dt"] = df["transaction_dt"].astype(str)
             date_for_length(df, "transaction_dt")
             df = resolve_date_format(df, "transaction_dt", pipeline_name)
-
         elif "other_committee_tx_20" in pipeline_name:
+            df.columns = csv_headers
             df["transaction_dt"] = df["transaction_dt"].astype(str)
             date_for_length(df, "transaction_dt")
             df = resolve_date_format(df, "transaction_dt", pipeline_name)
-
         elif "opex" in pipeline_name:
             df = df.drop(columns=df.columns[-1], axis=1)
+            df.columns = csv_headers
             df["transaction_dt"] = df["transaction_dt"].astype(str)
             date_for_length(df, "transaction_dt")
             df = resolve_date_format(df, "transaction_dt", pipeline_name)
-
         else:
+            df.columns = csv_headers
             pass
-
-        logging.info(f"Saving to output file.. {target_file}")
-        try:
-            save_to_new_file(df, file_path=str(target_file))
-        except Exception as e:
-            logging.error(f"Error saving output file: {e}.")
-
-        logging.info(
-            f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
-        )
+        save_to_new_file(df, file_path=str(target_file))
         upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
-
-        logging.info(
-            f"FEC {pipeline_name} process completed at "
-            + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-        )
+        logging.info(f"FEC {pipeline_name} process completed")
     else:
-        logging.info(f"Downloading file gs://{source_bucket}/{source_object}")
         download_blob(source_bucket, source_object, source_file)
-
         process_source_file(
-            source_file, target_file, chunksize, csv_headers, pipeline_name
-        )
-
-        logging.info(
-            f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
+            source_file, target_file, chunksize, pipeline_name, csv_headers
         )
         upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
@@ -128,8 +106,8 @@ def process_source_file(
     source_file: str,
     target_file: str,
     chunksize: str,
-    csv_headers: typing.List[str],
     pipeline_name: str,
+    csv_headers: typing.List[str],
 ) -> None:
     logging.info(f"Opening source file {source_file}")
     csv.field_size_limit(512 << 10)
@@ -142,22 +120,22 @@ def process_source_file(
         for index, line in enumerate(csv.reader(reader, "TabDialect"), 0):
             data.append(line)
             if int(index) % int(chunksize) == 0 and int(index) > 0:
-
                 process_dataframe_chunk(
                     data,
                     target_file,
                     chunk_number,
                     pipeline_name,
+                    csv_headers,
                 )
                 data = []
                 chunk_number += 1
-
         if data:
             process_dataframe_chunk(
                 data,
                 target_file,
                 chunk_number,
                 pipeline_name,
+                csv_headers,
             )
 
 
@@ -166,34 +144,10 @@ def process_dataframe_chunk(
     target_file: str,
     chunk_number: int,
     pipeline_name: str,
+    csv_headers: typing.List[str],
 ) -> None:
     data = list([char.split("|") for item in data for char in item])
-    df = pd.DataFrame(
-        data,
-        columns=[
-            "cmte_id",
-            "amndt_ind",
-            "rpt_tp",
-            "transaction_pgi",
-            "image_num",
-            "transaction_tp",
-            "entity_tp",
-            "name",
-            "city",
-            "state",
-            "zip_code",
-            "employer",
-            "occupation",
-            "transaction_dt",
-            "transaction_amt",
-            "other_id",
-            "tran_id",
-            "file_num",
-            "memo_cd",
-            "memo_text",
-            "sub_id",
-        ],
-    )
+    df = pd.DataFrame(data, columns=csv_headers)
     target_file_batch = str(target_file).replace(
         ".csv", "-" + str(chunk_number) + ".csv"
     )
@@ -216,8 +170,13 @@ def process_chunk(
     logging.info(f"Processing batch file {target_file_batch}")
     df["image_num"] = df["image_num"].astype(str)
     df["transaction_dt"] = df["transaction_dt"].astype(str)
-    convert_string_to_int(df, "image_num")
-    fill_null_values(df, "sub_id")
+    df["image_num"] = (
+        pd.to_numeric(df["image_num"], errors="coerce")
+        .apply(lambda x: "%.0f" % x)
+        .fillna(0)
+        .replace({"nan": 0})
+    )
+    df["sub_id"] = df["sub_id"].fillna(0)
     date_for_length(df, "transaction_dt")
     df = resolve_date_format(df, "transaction_dt", pipeline_name)
     df = df.rename(columns=lambda x: x.strip())
@@ -234,7 +193,6 @@ def save_to_new_file(df: pd.DataFrame, file_path: str, sep: str = ",") -> None:
 def append_batch_file(
     target_file_batch: str, target_file: str, skip_header: bool
 ) -> None:
-
     with open(target_file_batch, "r") as data_file:
         with open(target_file, "a+") as target_file:
             if skip_header:
@@ -251,7 +209,8 @@ def append_batch_file(
                 os.remove(target_file_batch)
 
 
-def download_blob(bucket, object, target_file):
+def download_blob(bucket, object, target_file) -> None:
+    logging.info(f"Downloading file gs://{bucket}/{target_file}")
     """Downloads a blob from the bucket."""
     storage_client = storage.Client()
     bucket = storage_client.bucket(bucket)
@@ -264,12 +223,11 @@ def resolve_date_format(
     field_name: str,
     pipeline: str,
 ) -> pd.DataFrame:
+    logging.info(f"Resolving date format in field {field_name}")
     if "opex" not in pipeline:
-        logging.info("Resolving date formats")
         df[field_name] = df[field_name].apply(convert_dt_format)
         return df
     else:
-        logging.info("Resolving date formats")
         df[field_name] = df[field_name].apply(convert_dt_format_opex)
         return df
 
@@ -306,18 +264,8 @@ def convert_dt_format_opex(dt_str: str) -> str:
         )
 
 
-def fill_null_values(df: pd.DataFrame, field_name: str):
-    df[field_name] = df[field_name].fillna(0)
-
-
-def convert_string_to_int(df: pd.DataFrame, field_name: str):
-    df[field_name] = pd.to_numeric(df[field_name], errors="coerce")
-    df[field_name] = df[field_name].apply(lambda x: "%.0f" % x)
-    df[field_name] = df[field_name].fillna(0)
-    df[field_name] = df[field_name].replace({"nan": 0})
-
-
-def date_for_length(df: pd.DataFrame, field_name: str):
+def date_for_length(df: pd.DataFrame, field_name: str) -> pd.DataFrame:
+    logging.info(f"Evaluating date format on field {field_name}")
     date_list = df[field_name].values
     new_date_list = []
     for item in date_list:
@@ -341,10 +289,6 @@ def date_for_length(df: pd.DataFrame, field_name: str):
     return df[field_name]
 
 
-def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
-    df.rename(columns=rename_mappings, inplace=True)
-
-
 def download_file(source_url: str, source_file_zip_file: pathlib.Path) -> None:
     logging.info(f"Downloading {source_url} into {source_file_zip_file}")
     r = requests.get(source_url, stream=True)
@@ -365,6 +309,7 @@ def unzip_file(
 
 
 def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:
+    logging.info(f"Uploading output file to.. gs://{gcs_bucket}/{gcs_path}")
     storage_client = storage.Client()
     bucket = storage_client.bucket(gcs_bucket)
     blob = bucket.blob(gcs_path)
@@ -384,7 +329,7 @@ if __name__ == "__main__":
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
         target_gcs_bucket=os.environ.get("TARGET_GCS_BUCKET", ""),
         target_gcs_path=os.environ.get("TARGET_GCS_PATH", ""),
-        csv_headers=json.loads(os.environ["CSV_HEADERS"]),
         chunksize=os.environ.get("CHUNKSIZE", ""),
         pipeline_name=os.environ.get("PIPELINE_NAME", ""),
+        csv_headers=json.loads(os.environ["CSV_HEADERS"]),
     )
