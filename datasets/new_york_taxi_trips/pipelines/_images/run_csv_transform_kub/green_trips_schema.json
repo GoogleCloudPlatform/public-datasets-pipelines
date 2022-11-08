@@ -78,6 +78,12 @@
     "mode": "NULLABLE"
   },
   {
+    "name": "airport_fee",
+    "type": "NUMERIC",
+    "description": "",
+    "mode": "NULLABLE"
+  },
+  {
     "name": "total_amount",
     "type": "NUMERIC",
     "description": "The total amount charged to passengers. Does not include cash tips.",

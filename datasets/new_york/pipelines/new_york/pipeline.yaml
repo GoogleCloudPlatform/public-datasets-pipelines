@@ -39,11 +39,13 @@ dag:
         project_id: "{{ var.value.gcp_project }}"
         location: "us-central1-c"
         body:
-          name: new-york
-          initial_node_count: 4
+          name: pubds-new-york
+          initial_node_count: 2
           network: "{{ var.value.vpc_network }}"
+          ip_allocation_policy:
+            cluster_ipv4_cidr_block: "/26"
           node_config:
-            machine_type: e2-standard-16
+            machine_type: e2-standard-8
             oauth_scopes:
               - https://www.googleapis.com/auth/devstorage.read_write
               - https://www.googleapis.com/auth/cloud-platform
@@ -55,22 +57,22 @@ dag:
         name: "311_service_requests"
         project_id: "{{ var.value.gcp_project }}"
         location: "us-central1-c"
-        cluster_name: new-york
+        cluster_name: pubds-new-york
         namespace: "default"
         image_pull_policy: "Always"
-        image: "{{ var.json.new_york.container_registry.run_csv_transform_kub_ny_311_service_requests }}"
+        image: "{{ var.json.new_york.container_registry.run_csv_transform_kub }}"
         env_vars:
-          PIPELINE_NAME: "{{ var.json.new_york.ny_311_service_requests.pipeline_name }}"
-          SOURCE_URL: "{{ var.json.new_york.ny_311_service_requests.source_url }}"
-          CHUNKSIZE: "{{ var.json.new_york.ny_311_service_requests.chunksize }}"
-          SOURCE_FILE: "files/data_{{ var.json.new_york.ny_311_service_requests.dataset_id }}_{{ var.json.new_york.ny_311_service_requests.destination_table }}.csv"
-          TARGET_FILE: "files/data_output_{{ var.json.new_york.ny_311_service_requests.dataset_id }}_{{ var.json.new_york.ny_311_service_requests.destination_table }}.csv"
+          PIPELINE_NAME: "New York - 311 Service Requests"
+          SOURCE_URL: "https://data.cityofnewyork.us/api/views/erm2-nwe9/rows.csv"
+          CHUNKSIZE: "500000"
+          SOURCE_FILE: "files/data_new_york_311_311_service_requests.csv"
+          TARGET_FILE: "files/data_output_new_york_311_311_service_requests.csv"
           PROJECT_ID: "{{ var.value.gcp_project }}"
-          DATASET_ID: "{{ var.json.new_york.ny_311_service_requests.dataset_id }}"
-          TABLE_ID: "{{ var.json.new_york.ny_311_service_requests.destination_table }}"
+          DATASET_ID: "new_york_311"
+          TABLE_ID: "311_service_requests"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
-          TARGET_GCS_PATH: "{{ var.json.new_york.ny_311_service_requests.target_path }}"
-          SCHEMA_PATH: "{{ var.json.new_york.ny_311_service_requests.schema_path }}"
+          TARGET_GCS_PATH: "data/new_york/311_service_requests/data_output.csv"
+          SCHEMA_PATH: "data/new_york/schema/ny_311_service_requests_schema.json"
           DATA_DTYPES: >-
             {
               "Unique Key": "int",
@@ -126,7 +128,7 @@ dag:
             [
               "unique_key"
             ]
-          RENAME_HEADERS: >-
+          RENAME_HEADERS_LIST: >-
             {
               "Unique Key": "unique_key",
               "Created Date": "created_date",
@@ -215,8 +217,8 @@ dag:
               "location"
             ]
         resources:
-          request_ephemeral_storage: "32G"
-          limit_cpu: "3"
+          request_ephemeral_storage: "10G"
+          limit_cpu: "2"
 
     - operator: "GKEStartPodOperator"
       description: "Run New York Citibike Stations Pipeline"
@@ -225,23 +227,23 @@ dag:
         name: "citibike_stations"
         project_id: "{{ var.value.gcp_project }}"
         location: "us-central1-c"
-        cluster_name: new-york
+        cluster_name: pubds-new-york
         namespace: "default"
         image_pull_policy: "Always"
-        image: "{{ var.json.new_york.container_registry.run_csv_transform_kub_citibike_stations }}"
+        image: "{{ var.json.new_york.container_registry.run_csv_transform_kub }}"
         env_vars:
-          PIPELINE_NAME: "{{ var.json.new_york.citibike_stations.pipeline_name }}"
-          SOURCE_URL_STATIONS_JSON: "{{ var.json.new_york.citibike_stations.source_url_stations }}"
-          SOURCE_URL_STATUS_JSON: "{{ var.json.new_york.citibike_stations.source_url_status }}"
-          CHUNKSIZE: "{{ var.json.new_york.citibike_stations.chunksize }}"
-          SOURCE_FILE: "files/data_{{ var.json.new_york.citibike_stations.dataset_id }}_{{ var.json.new_york.citibike_stations.destination_table }}.csv"
-          TARGET_FILE: "files/data_output_{{ var.json.new_york.citibike_stations.dataset_id }}_{{ var.json.new_york.citibike_stations.destination_table }}.csv"
+          PIPELINE_NAME: "New York - Citibike Stations"
+          SOURCE_URL_STATIONS_JSON: "https://gbfs.citibikenyc.com/gbfs/en/station_information"
+          SOURCE_URL_STATUS_JSON: "https://gbfs.citibikenyc.com/gbfs/en/station_status"
+          CHUNKSIZE: "750000"
+          SOURCE_FILE: "files/data_new_york_citibike_citibike_stations.csv"
+          TARGET_FILE: "files/data_output_new_york_citibike_citibike_stations.csv"
           PROJECT_ID: "{{ var.value.gcp_project }}"
-          DATASET_ID: "{{ var.json.new_york.citibike_stations.dataset_id }}"
-          TABLE_ID: "{{ var.json.new_york.citibike_stations.destination_table }}"
+          DATASET_ID: "new_york_citibike"
+          TABLE_ID: "citibike_stations"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
-          TARGET_GCS_PATH: "{{ var.json.new_york.citibike_stations.target_path }}"
-          SCHEMA_PATH: "{{ var.json.new_york.citibike_stations.schema_path }}"
+          TARGET_GCS_PATH: "data/new_york/citibike_stations/data_output.csv"
+          SCHEMA_PATH: "data/new_york/schema/citibike_stations_schema.json"
           DATA_DTYPES: >-
             {
               "rental_uris": "str",
@@ -356,8 +358,8 @@ dag:
               "last_reported"
             ]
         resources:
-          request_ephemeral_storage: "16G"
-          limit_cpu: "3"
+          request_ephemeral_storage: "10G"
+          limit_cpu: "2"
 
     - operator: "GKEStartPodOperator"
       description: "Run New York NYPD MV Collisions Pipeline"
@@ -366,22 +368,22 @@ dag:
         name: "nypd_mv_collisions"
         project_id: "{{ var.value.gcp_project }}"
         location: "us-central1-c"
-        cluster_name: new-york
+        cluster_name: pubds-new-york
         namespace: "default"
         image_pull_policy: "Always"
-        image: "{{ var.json.new_york.container_registry.run_csv_transform_kub_nypd_mv_collisions }}"
+        image: "{{ var.json.new_york.container_registry.run_csv_transform_kub }}"
         env_vars:
-          PIPELINE_NAME: "{{ var.json.new_york.nypd_mv_collisions.pipeline_name }}"
-          SOURCE_URL: "{{ var.json.new_york.nypd_mv_collisions.source_url }}"
-          CHUNKSIZE: "{{ var.json.new_york.nypd_mv_collisions.chunksize }}"
-          SOURCE_FILE: "files/data_{{ var.json.new_york.nypd_mv_collisions.dataset_id }}_{{ var.json.new_york.nypd_mv_collisions.destination_table }}.csv"
-          TARGET_FILE: "files/data_output_{{ var.json.new_york.nypd_mv_collisions.dataset_id }}_{{ var.json.new_york.nypd_mv_collisions.destination_table }}.csv"
+          PIPELINE_NAME: "New York - NYPD Motor Vehicle Collisions"
+          SOURCE_URL: "https://nycopendata.socrata.com/api/views/h9gi-nx95/rows.csv"
+          CHUNKSIZE: "150000"
+          SOURCE_FILE: "files/data_new_york_mv_collisions_nypd_mv_collisions.csv"
+          TARGET_FILE: "files/data_output_new_york_mv_collisions_nypd_mv_collisions.csv"
           PROJECT_ID: "{{ var.value.gcp_project }}"
-          DATASET_ID: "{{ var.json.new_york.nypd_mv_collisions.dataset_id }}"
-          TABLE_ID: "{{ var.json.new_york.nypd_mv_collisions.destination_table }}"
+          DATASET_ID: "new_york_mv_collisions"
+          TABLE_ID: "nypd_mv_collisions"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
-          TARGET_GCS_PATH: "{{ var.json.new_york.nypd_mv_collisions.target_path }}"
-          SCHEMA_PATH: "{{ var.json.new_york.nypd_mv_collisions.schema_path }}"
+          TARGET_GCS_PATH: "data/new_york/nypd_mv_collisions/data_output.csv"
+          SCHEMA_PATH: "data/new_york/schema/nypd_mv_collisions_schema.json"
           DATA_DTYPES: >-
             {
               "CRASH DATE": "str",
@@ -501,8 +503,8 @@ dag:
               "zip_code"
             ]
         resources:
-          request_ephemeral_storage: "16G"
-          limit_cpu: "3"
+          request_ephemeral_storage: "10G"
+          limit_cpu: "2"
 
     - operator: "GKEStartPodOperator"
       description: "Run New York Tree Census 1995 Pipeline"
@@ -511,22 +513,22 @@ dag:
         name: "tree_census_1995"
         project_id: "{{ var.value.gcp_project }}"
         location: "us-central1-c"
-        cluster_name: new-york
+        cluster_name: pubds-new-york
         namespace: "default"
         image_pull_policy: "Always"
-        image: "{{ var.json.new_york.container_registry.run_csv_transform_kub_tree_census_1995 }}"
+        image: "{{ var.json.new_york.container_registry.run_csv_transform_kub }}"
         env_vars:
-          PIPELINE_NAME: "{{ var.json.new_york.tree_census_1995.pipeline_name }}"
-          SOURCE_URL: "{{ var.json.new_york.tree_census_1995.source_url }}"
-          CHUNKSIZE: "{{ var.json.new_york.tree_census_1995.chunksize }}"
-          SOURCE_FILE: "files/data_{{ var.json.new_york.tree_census_1995.dataset_id }}_{{ var.json.new_york.tree_census_1995.destination_table }}.csv"
-          TARGET_FILE: "files/data_output_{{ var.json.new_york.tree_census_1995.dataset_id }}_{{ var.json.new_york.tree_census_1995.destination_table }}.csv"
+          PIPELINE_NAME: "New York - Tree Census 1995"
+          SOURCE_URL: "https://data.cityofnewyork.us/api/views/kyad-zm4j/rows.csv"
+          CHUNKSIZE: "750000"
+          SOURCE_FILE: "files/data_new_york_trees_tree_census_1995.csv"
+          TARGET_FILE: "files/data_output_new_york_trees_tree_census_1995.csv"
           PROJECT_ID: "{{ var.value.gcp_project }}"
-          DATASET_ID: "{{ var.json.new_york.tree_census_1995.dataset_id }}"
-          TABLE_ID: "{{ var.json.new_york.tree_census_1995.destination_table }}"
+          DATASET_ID: "new_york_trees"
+          TABLE_ID: "tree_census_1995"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
-          TARGET_GCS_PATH: "{{ var.json.new_york.tree_census_1995.target_path }}"
-          SCHEMA_PATH: "{{ var.json.new_york.tree_census_1995.schema_path }}"
+          TARGET_GCS_PATH: "data/new_york/tree_census_1995/data_output.csv"
+          SCHEMA_PATH: "data/new_york/schema/tree_census_1995_schema.json"
           RENAME_HEADERS_LIST: >-
             {
               "RecordId": "recordid",
@@ -592,15 +594,15 @@ dag:
               "location"
             ]
         resources:
-          request_ephemeral_storage: "16G"
-          limit_cpu: "3"
+          request_ephemeral_storage: "10G"
+          limit_cpu: "2"
 
     - operator: "GKEDeleteClusterOperator"
       args:
         task_id: "delete_cluster"
         project_id: "{{ var.value.gcp_project }}"
         location: "us-central1-c"
-        name: new-york
+        name: pubds-new-york
 
   graph_paths:
-    - "create_cluster >> [transform_csv_nypd_mv_collisions, transform_csv_ny_citibike_stations, transform_csv_ny_tree_census_1995, transform_csv_ny_311_service_requests ] >> delete_cluster"
+    - "create_cluster >> [transform_csv_nypd_mv_collisions, transform_csv_ny_citibike_stations, transform_csv_ny_tree_census_1995 ] >> transform_csv_ny_311_service_requests >> delete_cluster"

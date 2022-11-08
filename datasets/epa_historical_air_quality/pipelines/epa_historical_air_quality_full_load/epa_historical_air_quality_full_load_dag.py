@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -540,6 +540,40 @@ with DAG(
             "DATA_DTYPES": '{ "state_code": "str", "county_code": "str", "site_num": "str", "parameter_code": "int32", "poc": "int32",\n  "latitude": "float64", "longitude": "float64", "datum": "str", "parameter_name": "str", "date_local": "str",\n  "time_local": "str", "date_gmt": "datetime64[ns]", "time_gmt": "str", "sample_measurement": "float64", "units_of_measure": "str",\n  "mdl": "float64", "uncertainty": "float64", "qualifier": "str", "method_type": "str", "method_code": "int32", "method_name": "str",\n  "state_name": "str", "county_name": "str", "date_of_last_change": "str" }',
             "OUTPUT_CSV_HEADERS": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "date_local",\n  "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",\n  "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",\n  "state_name", "county_name", "date_of_last_change" ]',
             "DROP_DEST_TABLE": "Y",
+        },
+        resources={"limit_memory": "16G", "limit_cpu": "2"},
+    )
+
+    # Run CSV transform within kubernetes pod
+    pm25_frm_daily_summary = kubernetes_engine.GKEStartPodOperator(
+        task_id="pm25_frm_daily_summary",
+        startup_timeout_seconds=600,
+        name="load_data",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="epa-hist-air-quality",
+        image_pull_policy="Always",
+        image="{{ var.json.epa_historical_air_quality.container_registry.run_csv_transform_kub }}",
+        env_vars={
+            "SOURCE_URL": "https://aqs.epa.gov/aqsweb/airdata/daily_88101_YEAR_ITERATOR.zip",
+            "START_YEAR": "1997",
+            "SOURCE_FILE": "files/pm25_frm_daily_summary_data.csv",
+            "PROJECT_ID": "{{ var.value.gcp_project }}",
+            "DATASET_ID": "epa_historical_air_quality",
+            "TABLE_ID": "pm25_frm_daily_summary",
+            "YEAR_FIELD_NAME": "date_local",
+            "YEAR_FIELD_TYPE": "DATE",
+            "SCHEMA_PATH": "data/epa_historical_air_quality/schemas/epa_pm25_frm_daily_summary_schema.json",
+            "CHUNKSIZE": "1500000",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
+            "TARGET_GCS_PATH": "data/epa_historical_air_quality/pm25_frm_daily_summary/data_output.csv",
+            "PIPELINE_NAME": "epa_historical_air_quality - pm25_frm_daily_summaries",
+            "INPUT_CSV_HEADERS": '[\n  "State Code", "County Code", "Site Num", "Parameter Code", "POC",\n  "Latitude", "Longitude", "Datum", "Parameter Name", "Sample Duration",\n  "Pollutant Standard", "Date Local", "Units of Measure", "Event Type", "Observation Count",\n  "Observation Percent", "Arithmetic Mean", "1st Max Value", "1st Max Hour", "AQI",\n  "Method Code", "Method Name", "Local Site Name", "Address", "State Name",\n  "County Name", "City Name", "CBSA Name", "Date of Last Change"\n]',
+            "DATA_DTYPES": '{\n  "State Code": "str", "County Code": "str", "Site Num": "str", "Parameter Code": "int32", "POC": "int32",\n  "Latitude": "float64", "Longitude": "float64", "Datum": "str", "Parameter Name": "str", "Sample Duration": "str",\n  "Pollutant Standard": "str", "Date Local": "str", "Units of Measure": "str", "Event Type": "str", "Observation Count": "int32",\n  "Observation Percent": "float64", "Arithmetic Mean": "float64", "1st Max Value": "float64", "1st Max Hour": "int32", "AQI": "str",\n  "Method Code": "str", "Method Name": "str", "Local Site Name": "str", "Address": "str", "State Name": "str",\n  "County Name": "str", "City Name": "str", "CBSA Name": "str", "Date of Last Change": "str"\n}',
+            "RENAME_HEADERS_LIST": '{ "State Code": "state_code",\n  "County Code": "county_code",\n  "Site Num": "site_num",\n  "Parameter Code": "parameter_code",\n  "POC": "poc",\n  "Latitude": "latitude",\n  "Longitude": "longitude",\n  "Datum": "datum",\n  "Parameter Name": "parameter_name",\n  "Sample Duration": "sample_duration",\n  "Pollutant Standard": "pollutant_standard",\n  "Date Local": "date_local",\n  "Units of Measure": "units_of_measure",\n  "Event Type": "event_type",\n  "Observation Count": "observation_count",\n  "Observation Percent": "observation_percent",\n  "Arithmetic Mean": "arithmetic_mean",\n  "1st Max Value": "first_max_value",\n  "1st Max Hour": "first_max_hour",\n  "AQI": "aqi",\n  "Method Code": "method_code",\n  "Method Name": "method_name",\n  "Local Site Name": "local_site_name",\n  "Address": "address",\n  "State Name": "state_name",\n  "County Name": "county_name",\n  "City Name": "city_name",\n  "CBSA Name": "cbsa_name",\n  "Date of Last Change": "date_of_last_change"\n}',
+            "OUTPUT_CSV_HEADERS": '[\n  "state_code",\n  "county_code",\n  "site_num",\n  "parameter_code",\n  "poc",\n  "latitude",\n  "longitude",\n  "datum",\n  "parameter_name",\n  "sample_duration",\n  "pollutant_standard",\n  "date_local",\n  "units_of_measure",\n  "event_type",\n  "observation_count",\n  "observation_percent",\n  "arithmetic_mean",\n  "first_max_value",\n  "first_max_hour",\n  "aqi",\n  "method_code",\n  "method_name",\n  "local_site_name",\n  "address",\n  "state_name",\n  "county_name",\n  "city_name",\n  "cbsa_name",\n  "date_of_last_change"\n]',
+            "DROP_DEST_TABLE": "N",
         },
         resources={"limit_memory": "16G", "limit_cpu": "2"},
     )
@@ -1096,6 +1130,7 @@ with DAG(
             pm10_daily_summary,
             pm10_hourly_summary,
             pm25_frm_hourly_summary,
+            pm25_frm_daily_summary,
             pm25_nonfrm_daily_summary,
             pm25_nonfrm_hourly_summary,
             pm25_speciation_daily_summary,

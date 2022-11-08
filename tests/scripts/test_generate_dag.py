@@ -272,6 +272,35 @@ def test_checks_for_task_operator_and_id():
             generate_dag.validate_task(non_existing_task_id, airflow_version)
 
 
+def test_check_custom_yaml_loader(
+    dataset_path: pathlib.Path, pipeline_path: pathlib.Path, env: str
+):
+    copy_config_files_and_set_tmp_folder_names_as_ids(dataset_path, pipeline_path)
+    custom_yaml_tag = "image: !IMAGE IMAGE_REPOSITORY"
+
+    pipeline_yaml_str = (
+        (pipeline_path / "pipeline.yaml")
+        .read_text()
+        .replace(
+            'image: "{{ var.json.DATASET_FOLDER_NAME.container_registry.IMAGE_REPOSITORY }}"',
+            custom_yaml_tag,
+        )
+    )
+    assert custom_yaml_tag in pipeline_yaml_str
+
+    generate_dag.write_to_file(pipeline_yaml_str, pipeline_path / "pipeline.yaml")
+    generate_dag.main(dataset_path.name, pipeline_path.name, env, format_code=False)
+
+    for path_prefix in (
+        pipeline_path,
+        ENV_DATASETS_PATH / dataset_path.name / "pipelines" / pipeline_path.name,
+    ):
+        assert (
+            "gcr.io/{{ var.value.gcp_project }}"
+            in (path_prefix / f"{pipeline_path.name}_dag.py").read_text()
+        )
+
+
 def test_generated_dag_file_loads_properly_in_python(
     dataset_path: pathlib.Path, pipeline_path: pathlib.Path, env: str
 ):

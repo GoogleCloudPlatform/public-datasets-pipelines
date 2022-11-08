@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,4 +23,31 @@ resource "google_bigquery_dataset" "covid19_italy" {
 
 output "bigquery_dataset-covid19_italy-dataset_id" {
   value = google_bigquery_dataset.covid19_italy.dataset_id
+}
+
+resource "google_bigquery_dataset" "covid19_italy_eu" {
+  dataset_id  = "covid19_italy_eu"
+  project     = var.project_id
+  description = "COVID-19 Italy data stored in EU region."
+  location    = "EU"
+}
+
+output "bigquery_dataset-covid19_italy_eu-dataset_id" {
+  value = google_bigquery_dataset.covid19_italy_eu.dataset_id
+}
+
+resource "google_storage_bucket" "covid19-italy-eu" {
+  name                        = "${var.bucket_name_prefix}-covid19-italy-eu"
+  force_destroy               = true
+  location                    = "EU"
+  uniform_bucket_level_access = true
+  lifecycle {
+    ignore_changes = [
+      logging,
+    ]
+  }
+}
+
+output "storage_bucket-covid19-italy-eu-name" {
+  value = google_storage_bucket.covid19-italy-eu.name
 }
