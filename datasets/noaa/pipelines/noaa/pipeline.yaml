@@ -1102,17 +1102,17 @@ dag:
           PIPELINE_NAME: "NOAA SPC Hail"
           SOURCE_URL: >-
             {
-              "hail": "https://www.spc.noaa.gov/wcm/newdata/2021-hail-prelim-reports-ytd.csv"
+              "noaa_spc_hail": "https://www.spc.noaa.gov/wcm/newdata/2021-hail-prelim-reports-ytd.csv"
             }
           SOURCE_FILE: "files/data_spc_hail.csv"
           TARGET_FILE: "files/data_output_spc_hail.csv"
           CHUNKSIZE: "500000"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "noaa_historic_severe_storms"
-          TABLE_ID: "hail"
+          TABLE_ID: "hail_reports"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/noaa/spc_hail/data_output.csv"
-          SCHEMA_PATH: "data/noaa/schema/spc_hail_schema.json"
+          SCHEMA_PATH: "data/noaa/schema/noaa_spc_hail_schema.json"
           DROP_DEST_TABLE: "N"
           INPUT_FIELD_DELIMITER: "|"
           FULL_DATA_LOAD: "N"
@@ -1120,17 +1120,17 @@ dag:
           DELETE_TARGET_FILE: "Y"
           INPUT_CSV_HEADERS: >-
             [
-              'year',
-              'month',
-              'day',
-              'time',
-              'size',
-              'location',
-              'county',
-              'state',
-              'lat',
-              'lon',
-              'comments'
+              "year",
+              "month",
+              "day",
+              "time",
+              "size",
+              "location",
+              "county",
+              "state",
+              "lat",
+              "lon",
+              "comments"
             ]
           RENAME_HEADERS_LIST: >-
             {
@@ -1169,4 +1169,4 @@ dag:
         name: noaa
 
   graph_paths:
-    - "create_cluster >> [ghcnd_states, ghcnd_stations, gsod_stations, ghcnd_countries, ghcnd_inventory] >> storms_database_by_year >> ghcnd_by_year >> ghcnd_hurricanes >> lightning_strikes_by_year >> delete_cluster"
+    - "create_cluster >> [spc_hail, ghcnd_states, ghcnd_stations, gsod_stations, ghcnd_countries, ghcnd_inventory] >> storms_database_by_year >> ghcnd_by_year >> ghcnd_hurricanes >> lightning_strikes_by_year >> delete_cluster"

@@ -85,7 +85,7 @@ with DAG(
             "DATA_DTYPES": '{\n  "id": "str",\n  "date": "str",\n  "element": "str",\n  "value": "str",\n  "mflag": "str",\n  "qflag": "str",\n  "sflag": "str",\n  "time": "str"\n}',
             "REORDER_HEADERS_LIST": '[\n  "id",\n  "date",\n  "element",\n  "value",\n  "mflag",\n  "qflag",\n  "sflag",\n  "time",\n  "source_url",\n  "etl_timestamp"\n]',
             "NULL_ROWS_LIST": '[\n  "id"\n]',
-            "DATE_FORMAT_LIST": '[\n  "date"\n]',
+            "DATE_FORMAT_LIST": '[\n  ["date", "%Y%m%d", "%Y-%m-%d" ]\n]',
         },
         resources={"request_ephemeral_storage": "16G", "limit_cpu": "3"},
     )
@@ -377,9 +377,45 @@ with DAG(
             "DELETE_TARGET_FILE": "Y",
             "START_YEAR": "1950",
             "RENAME_HEADERS_LIST": '{\n  "EPISODE_ID_x": "episode_id",\n  "EVENT_ID": "event_id",\n  "STATE": "state",\n  "STATE_FIPS": "state_fips_code",\n  "EVENT_TYPE": "event_type",\n  "CZ_TYPE": "cz_type",\n  "CZ_FIPS": "cz_fips_code",\n  "CZ_NAME": "cz_name",\n  "WFO": "wfo",\n  "BEGIN_DATE_TIME": "event_begin_time",\n  "CZ_TIMEZONE": "event_timezone",\n  "END_DATE_TIME": "event_end_time",\n  "INJURIES_DIRECT": "injuries_direct",\n  "INJURIES_INDIRECT": "injuries_indirect",\n  "DEATHS_DIRECT": "deaths_direct",\n  "DEATHS_INDIRECT": "deaths_indirect",\n  "DAMAGE_PROPERTY": "damage_property",\n  "DAMAGE_CROPS": "damage_crops",\n  "SOURCE": "source",\n  "MAGNITUDE": "magnitude",\n  "MAGNITUDE_TYPE": "magnitude_type",\n  "FLOOD_CAUSE": "flood_cause",\n  "TOR_F_SCALE": "tor_f_scale",\n  "TOR_LENGTH": "tor_length",\n  "TOR_WIDTH": "tor_width",\n  "TOR_OTHER_WFO": "tor_other_wfo",\n  "LOCATION_INDEX": "location_index",\n  "RANGE": "event_range",\n  "AZIMUTH": "event_azimuth",\n  "LOCATION": "reference_location",\n  "LATITUDE": "event_latitude",\n  "LONGITUDE": "event_longitude"\n}',
-            "DATE_FORMAT_LIST": '{\n  "event_begin_time": "%Y-%m-%d %H:%M:%S",\n  "event_end_time": "%Y-%m-%d %H:%M:%S"\n}',
+            "DATE_FORMAT_LIST": '[\n  ["event_begin_time", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M:%S" ],\n  ["event_end_time", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M:%S" ]\n]',
             "GEN_LOCATION_LIST": '{\n  "event_point": ["event_longitude", "event_latitude"]\n}',
             "REORDER_HEADERS_LIST": '[\n  "episode_id",\n  "event_id",\n  "state",\n  "state_fips_code",\n  "event_type",\n  "cz_type",\n  "cz_fips_code",\n  "cz_name",\n  "wfo",\n  "event_begin_time",\n  "event_timezone",\n  "event_end_time",\n  "injuries_direct",\n  "injuries_indirect",\n  "deaths_direct",\n  "deaths_indirect",\n  "damage_property",\n  "damage_crops",\n  "source",\n  "magnitude",\n  "magnitude_type",\n  "flood_cause",\n  "tor_f_scale",\n  "tor_length",\n  "tor_width",\n  "tor_other_wfo",\n  "location_index",\n  "event_range",\n  "event_azimuth",\n  "reference_location",\n  "event_latitude",\n  "event_longitude",\n  "event_point"\n]',
+        },
+        resources={"request_ephemeral_storage": "16G", "limit_cpu": "3"},
+    )
+
+    # Run NOAA load processes - Storms Database
+    spc_hail = kubernetes_engine.GKEStartPodOperator(
+        task_id="spc_hail",
+        name="noaa.spc_hail",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="noaa",
+        namespace="default",
+        image_pull_policy="Always",
+        image="{{ var.json.noaa.container_registry.run_csv_transform_kub }}",
+        env_vars={
+            "PIPELINE_NAME": "NOAA SPC Hail",
+            "SOURCE_URL": '{\n  "noaa_spc_hail": "https://www.spc.noaa.gov/wcm/newdata/2021-hail-prelim-reports-ytd.csv"\n}',
+            "SOURCE_FILE": "files/data_spc_hail.csv",
+            "TARGET_FILE": "files/data_output_spc_hail.csv",
+            "CHUNKSIZE": "500000",
+            "PROJECT_ID": "{{ var.value.gcp_project }}",
+            "DATASET_ID": "noaa_historic_severe_storms",
+            "TABLE_ID": "hail_reports",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
+            "TARGET_GCS_PATH": "data/noaa/spc_hail/data_output.csv",
+            "SCHEMA_PATH": "data/noaa/schema/noaa_spc_hail_schema.json",
+            "DROP_DEST_TABLE": "N",
+            "INPUT_FIELD_DELIMITER": "|",
+            "FULL_DATA_LOAD": "N",
+            "REMOVE_SOURCE_FILE": "Y",
+            "DELETE_TARGET_FILE": "Y",
+            "INPUT_CSV_HEADERS": '[\n  "year",\n  "month",\n  "day",\n  "time",\n  "size",\n  "location",\n  "county",\n  "state",\n  "lat",\n  "lon",\n  "comments"\n]',
+            "RENAME_HEADERS_LIST": '{\n  "lat": "latitude",\n  "lon": "longitude"\n}',
+            "DATE_FORMAT_LIST": '[\n  ["timestamp", "%Y-%m-%d %H%M%S", "%Y-%m-%d %H:%M:%S" ]\n]',
+            "GEN_LOCATION_LIST": '{\n  "report_point": ["longitude", "latitude"]\n}',
+            "REORDER_HEADERS_LIST": '[\n  "timestamp",\n  "time",\n  "size",\n  "location",\n  "county",\n  "state",\n  "latitude",\n  "longitude",\n  "comments",\n  "report_point"\n]',
         },
         resources={"request_ephemeral_storage": "16G", "limit_cpu": "3"},
     )
@@ -393,6 +429,7 @@ with DAG(
     (
         create_cluster
         >> [
+            spc_hail,
             ghcnd_states,
             ghcnd_stations,
             gsod_stations,

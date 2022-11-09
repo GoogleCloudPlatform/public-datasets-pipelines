@@ -205,10 +205,7 @@ def execute_pipeline(
         return None
     if pipeline_name == "NOAA SPC Hail":
         src_url = source_url[pipeline_name.replace(" ", "_").lower()]
-        download_file_http(
-            source_url=src_url,
-            source_file=source_file
-        )
+        download_file_http(source_url=src_url, source_file=source_file)
         sed(["-i", "1d", source_file])
         process_and_load_table(
             source_file=source_file,
@@ -1007,7 +1004,9 @@ def process_chunk(
         df["month"] = df["month"].apply(lambda x: str.zfill(x, 2))
         df["day"] = df["day"].apply(lambda x: str.zfill(x, 2))
         logging.info("Creating Timestamp Column")
-        df["timestamp"] = df.apply(lambda x: f"{x.year}-{x.month}-{x.day} {x.time}00", axis=1)
+        df["timestamp"] = df.apply(
+            lambda x: f"{x.year}-{x.month}-{x.day} {x.time}00", axis=1
+        )
         df = source_convert_date_formats(df, date_format_list=date_format_list)
         df = generate_location(df, gen_location_list=gen_location_list)
         df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
@@ -1125,13 +1124,13 @@ def filter_null_rows(
     return df
 
 
-def convert_dt_format(dt_str: str, from_format: str = "%Y%m%d", to_format: str = "%Y-%m-%d") -> str:
+def convert_dt_format(
+    dt_str: str, from_format: str = "%Y%m%d", to_format: str = "%Y-%m-%d"
+) -> str:
     if not dt_str or dt_str.lower() == "nan":
         return dt_str
     else:
-        return str(
-            datetime.datetime.strptime(dt_str, from_format).strftime(to_format)
-        )
+        return str(datetime.datetime.strptime(dt_str, from_format).strftime(to_format))
 
 
 def source_convert_date_formats(
@@ -1140,7 +1139,12 @@ def source_convert_date_formats(
 ) -> pd.DataFrame:
     logging.info("Converting Date Format..")
     for fld, from_format, to_format in date_format_list:
-        df[fld] = df[fld].apply(lambda x, from_format, to_format: convert_dt_format(x, from_format, to_format), args=(from_format, to_format))
+        df[fld] = df[fld].apply(
+            lambda x, from_format, to_format: convert_dt_format(
+                x, from_format, to_format
+            ),
+            args=(from_format, to_format),
+        )
     return df
 
 
