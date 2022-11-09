@@ -58,11 +58,10 @@ def main(
     data_dtypes: dict,
     reorder_headers_list: typing.List[str],
     null_rows_list: typing.List[str],
-    date_format_list: typing.List[str],
+    date_format_list: typing.List[typing.List[str]],
     slice_column_list: dict,
     regex_list: dict,
     rename_headers_list: dict,
-    reg_expr_list: typing.List[typing.List[str]],
     remove_source_file: str,
     delete_target_file: str,
     number_of_header_rows: str,
@@ -99,7 +98,6 @@ def main(
         slice_column_list=slice_column_list,
         regex_list=regex_list,
         rename_headers_list=rename_headers_list,
-        reg_expr_list=reg_expr_list,
         remove_source_file=(remove_source_file == "Y"),
         delete_target_file=(delete_target_file == "Y"),
         number_of_header_rows=int(number_of_header_rows),
@@ -133,12 +131,11 @@ def execute_pipeline(
     data_dtypes: dict,
     reorder_headers_list: typing.List[str],
     null_rows_list: typing.List[str],
-    date_format_list: typing.List[str],
+    date_format_list: typing.List[typing.List[str]],
     slice_column_list: dict,
     regex_list: dict,
     remove_source_file: bool,
     rename_headers_list: dict,
-    reg_expr_list: typing.List[typing.List[str]],
     delete_target_file: bool,
     number_of_header_rows: int,
     int_date_list: typing.List[str],
@@ -212,7 +209,35 @@ def execute_pipeline(
             source_url=src_url,
             source_file=source_file
         )
-        import pdb; pdb.set_trace()
+        sed(["-i", "1d", source_file])
+        process_and_load_table(
+            source_file=source_file,
+            target_file=target_file,
+            pipeline_name=pipeline_name,
+            source_url=src_url,
+            chunksize=chunksize,
+            project_id=project_id,
+            dataset_id=dataset_id,
+            destination_table=destination_table,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=target_gcs_path,
+            schema_path=schema_path,
+            drop_dest_table=drop_dest_table,
+            input_field_delimiter=input_field_delimiter,
+            input_csv_headers=input_csv_headers,
+            data_dtypes=data_dtypes,
+            reorder_headers_list=reorder_headers_list,
+            null_rows_list=null_rows_list,
+            date_format_list=date_format_list,
+            slice_column_list=slice_column_list,
+            regex_list=regex_list,
+            rename_headers_list=rename_headers_list,
+            remove_source_file=remove_source_file,
+            delete_target_file=delete_target_file,
+            int_date_list=int_date_list,
+            gen_location_list=gen_location_list,
+        )
+        return None
     if pipeline_name in [
         "GHCND countries",
         "GHCND inventory",
@@ -357,7 +382,7 @@ def process_storms_database_by_year(
     drop_dest_table: str,
     start_year: str,
     reorder_headers_list: typing.List[str],
-    date_format_list: typing.List[str],
+    date_format_list: typing.List[typing.List[str]],
     rename_headers_list: dict,
     gen_location_list: dict,
 ) -> None:
@@ -586,7 +611,6 @@ def FTP_to_DF(
         )
     else:
         clean_source_file(decompressed_source_file)
-        # import pdb; pdb.set_trace()
         df = pd.read_csv(
             decompressed_source_file,
             engine="python",
@@ -668,7 +692,7 @@ def process_lightning_strikes_by_year(
     data_dtypes: dict,
     reorder_headers_list: typing.List[str],
     null_rows_list: typing.List[str],
-    date_format_list: typing.List[str],
+    date_format_list: typing.List[typing.List[str]],
     slice_column_list: dict,
     regex_list: dict,
     remove_source_file: bool,
@@ -761,7 +785,7 @@ def process_and_load_table(
     data_dtypes: dict,
     reorder_headers_list: typing.List[str],
     null_rows_list: typing.List[str],
-    date_format_list: typing.List[str],
+    date_format_list: typing.List[typing.List[str]],
     slice_column_list: dict,
     regex_list: dict,
     rename_headers_list: dict,
@@ -842,7 +866,7 @@ def process_source_file(
     target_file: str,
     reorder_headers_list: typing.List[str],
     null_rows_list: typing.List[str],
-    date_format_list: typing.List[str],
+    date_format_list: typing.List[typing.List[str]],
     input_field_delimiter: str,
     slice_column_list: dict,
     regex_list: dict,
@@ -916,7 +940,7 @@ def process_dataframe_chunk(
     target_file: str,
     chunk_number: int,
     reorder_headers_list: typing.List[str],
-    date_format_list: typing.List[str],
+    date_format_list: typing.List[typing.List[str]],
     null_rows_list: typing.List[str],
     slice_column_list: dict,
     regex_list: dict,
@@ -964,7 +988,7 @@ def process_chunk(
     pipeline_name: str,
     reorder_headers_list: dict,
     null_rows_list: typing.List[str],
-    date_format_list: typing.List[str],
+    date_format_list: typing.List[typing.List[str]],
     slice_column_list: dict,
     regex_list: dict,
     rename_headers_list: dict,
@@ -975,6 +999,17 @@ def process_chunk(
         df = filter_null_rows(df, null_rows_list=null_rows_list)
         df = add_metadata_cols(df, source_url=source_url)
         df = source_convert_date_formats(df, date_format_list=date_format_list)
+        df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
+    if pipeline_name == "NOAA SPC Hail":
+        df = rename_headers(df, rename_headers_list=rename_headers_list)
+        # df = apply_regex(df, regex_list)
+        df["time"] = df["time"].apply(lambda x: str.zfill(x, 4))
+        df["month"] = df["month"].apply(lambda x: str.zfill(x, 2))
+        df["day"] = df["day"].apply(lambda x: str.zfill(x, 2))
+        logging.info("Creating Timestamp Column")
+        df["timestamp"] = df.apply(lambda x: f"{x.year}-{x.month}-{x.day} {x.time}00", axis=1)
+        df = source_convert_date_formats(df, date_format_list=date_format_list)
+        df = generate_location(df, gen_location_list=gen_location_list)
         df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
     if pipeline_name in [
         "GHCND countries",
@@ -1090,21 +1125,22 @@ def filter_null_rows(
     return df
 
 
-def convert_dt_format(dt_str: str) -> str:
+def convert_dt_format(dt_str: str, from_format: str = "%Y%m%d", to_format: str = "%Y-%m-%d") -> str:
     if not dt_str or dt_str.lower() == "nan":
         return dt_str
     else:
         return str(
-            datetime.datetime.strptime(dt_str, "%Y%m%d").date().strftime("%Y-%m-%d")
+            datetime.datetime.strptime(dt_str, from_format).strftime(to_format)
         )
 
 
 def source_convert_date_formats(
-    df: pd.DataFrame, date_format_list: typing.List[str]
+    df: pd.DataFrame,
+    date_format_list: typing.List[typing.List[str]],
 ) -> pd.DataFrame:
     logging.info("Converting Date Format..")
-    for fld in date_format_list:
-        df[fld] = df[fld].apply(convert_dt_format)
+    for fld, from_format, to_format in date_format_list:
+        df[fld] = df[fld].apply(lambda x, from_format, to_format: convert_dt_format(x, from_format, to_format), args=(from_format, to_format))
     return df
 
 
@@ -1475,7 +1511,6 @@ if __name__ == "__main__":
         date_format_list=json.loads(os.environ.get("DATE_FORMAT_LIST", r"[]")),
         slice_column_list=json.loads(os.environ.get("SLICE_COLUMN_LIST", r"{}")),
         rename_headers_list=json.loads(os.environ.get("RENAME_HEADERS_LIST", r"{}")),
-        reg_expr_list=json.loads(os.environ.get("RENAME_HEADERS_LIST", r"[]")),
         remove_source_file=os.environ.get("REMOVE_SOURCE_FILE", "N"),
         delete_target_file=os.environ.get("DELETE_TARGET_FILE", "N"),
         number_of_header_rows=os.environ.get("NUMBER_OF_HEADER_ROWS", "0"),

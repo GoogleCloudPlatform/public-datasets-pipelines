@@ -1099,7 +1099,7 @@ dag:
         image_pull_policy: "Always"
         image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
         env_vars:
-          PIPELINE_NAME: "NOAA Storms database by year"
+          PIPELINE_NAME: "NOAA SPC Hail"
           SOURCE_URL: >-
             {
               "hail": "https://www.spc.noaa.gov/wcm/newdata/2021-hail-prelim-reports-ytd.csv"
@@ -1118,19 +1118,33 @@ dag:
           FULL_DATA_LOAD: "N"
           REMOVE_SOURCE_FILE: "Y"
           DELETE_TARGET_FILE: "Y"
+          INPUT_CSV_HEADERS: >-
+            [
+              'year',
+              'month',
+              'day',
+              'time',
+              'size',
+              'location',
+              'county',
+              'state',
+              'lat',
+              'lon',
+              'comments'
+            ]
           RENAME_HEADERS_LIST: >-
             {
               "lat": "latitude",
               "lon": "longitude"
             }
-          REG_EXPR_LIST: >-
-            [
-              ["time", "^(\d)$", "000$1"],
-              ["time", "^(\d{2})$", "00$1"],
-              ["time", "^(\d{3})$", "0$1"],
-              ["month", "^(\d)$", "0$1"],
-              ["day", "^(\d)$", "0$1"]
-            ]
+          REGEX_LIST: >-
+            {
+              "time": ["^(\\d)$", "000$1", "True"],
+              "time": ["^(\\d{2})$", "00$1", "True"],
+              "time": ["^(\\d{3})$", "0$1", "True"],
+              "month": ["^(\\d)$", "0$1", "True"],
+              "day": ["^(\\d)$", "0$1", "True"],
+            }
           DATE_FORMAT_LIST: >-
             {
               "event_begin_time": "yyyy-MM-dd HHmmss"
