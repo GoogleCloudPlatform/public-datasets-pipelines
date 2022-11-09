@@ -455,6 +455,42 @@ with DAG(
         },
         resources={"request_ephemeral_storage": "16G", "limit_cpu": "3"},
     )
+
+    # Run NOAA load processes - Tornado
+    spc_tornado = kubernetes_engine.GKEStartPodOperator(
+        task_id="spc_tornado",
+        name="noaa.spc_tornado",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="noaa",
+        namespace="default",
+        image_pull_policy="Always",
+        image="{{ var.json.noaa.container_registry.run_csv_transform_kub }}",
+        env_vars={
+            "PIPELINE_NAME": "NOAA SPC Tornado",
+            "SOURCE_URL": '{\n  "noaa_spc_tornado": "https://www.spc.noaa.gov/wcm/newdata/2019-torn-prelim-reports-ytd.csv"\n}',
+            "SOURCE_FILE": "files/data_spc_tornado.csv",
+            "TARGET_FILE": "files/data_output_spc_tornado.csv",
+            "CHUNKSIZE": "500000",
+            "PROJECT_ID": "{{ var.value.gcp_project }}",
+            "DATASET_ID": "noaa_historic_severe_storms",
+            "TABLE_ID": "tornado_reports",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
+            "TARGET_GCS_PATH": "data/noaa/spc_tornado/data_output.csv",
+            "SCHEMA_PATH": "data/noaa/schema/noaa_spc_tornado_schema.json",
+            "DROP_DEST_TABLE": "N",
+            "INPUT_FIELD_DELIMITER": "|",
+            "FULL_DATA_LOAD": "N",
+            "REMOVE_SOURCE_FILE": "Y",
+            "DELETE_TARGET_FILE": "Y",
+            "INPUT_CSV_HEADERS": '[\n  "year",\n  "month",\n  "day",\n  "time",\n  "f-scale",\n  "location",\n  "county",\n  "state",\n  "lat",\n  "lon",\n  "comments"\n]',
+            "RENAME_HEADERS_LIST": '{\n  "lat": "latitude",\n  "lon": "longitude"\n}',
+            "DATE_FORMAT_LIST": '[\n  ["timestamp", "%Y-%m-%d %H%M%S", "%Y-%m-%d %H:%M:%S" ]\n]',
+            "GEN_LOCATION_LIST": '{\n  "report_point": ["longitude", "latitude"]\n}',
+            "REORDER_HEADERS_LIST": '[\n  "timestamp",\n  "time",\n  "f-scale",\n  "location",\n  "county",\n  "state",\n  "latitude",\n  "longitude",\n  "comments",\n  "report_point"\n]',
+        },
+        resources={"request_ephemeral_storage": "16G", "limit_cpu": "3"},
+    )
     delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
         task_id="delete_cluster",
         project_id="{{ var.value.gcp_project }}",
@@ -467,6 +503,7 @@ with DAG(
         >> [
             spc_hail,
             spc_wind,
+            spc_tornado,
             ghcnd_states,
             ghcnd_stations,
             gsod_stations,

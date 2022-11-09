@@ -203,7 +203,7 @@ def execute_pipeline(
                 gen_location_list=gen_location_list,
             )
         return None
-    if pipeline_name in ["NOAA SPC Hail", "NOAA SPC Wind"]:
+    if pipeline_name in ["NOAA SPC Hail", "NOAA SPC Wind", "NOAA SPC Tornado"]:
         src_url = source_url[pipeline_name.replace(" ", "_").lower()]
         download_file_http(source_url=src_url, source_file=source_file)
         sed(["-i", "1d", source_file])
@@ -1012,6 +1012,18 @@ def process_chunk(
     if pipeline_name == "NOAA SPC Wind":
         df = rename_headers(df, rename_headers_list=rename_headers_list)
         df["speed"] = df["speed"].apply(lambda x: re.sub(r"^UNK$", "", x))
+        df["time"] = df["time"].apply(lambda x: str.zfill(x, 4))
+        df["month"] = df["month"].apply(lambda x: str.zfill(x, 2))
+        df["day"] = df["day"].apply(lambda x: str.zfill(x, 2))
+        logging.info("Creating Timestamp Column")
+        df["timestamp"] = df.apply(
+            lambda x: f"{x.year}-{x.month}-{x.day} {x.time}00", axis=1
+        )
+        df = source_convert_date_formats(df, date_format_list=date_format_list)
+        df = generate_location(df, gen_location_list=gen_location_list)
+        df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
+    if pipeline_name == "NOAA SPC Tornado":
+        df = rename_headers(df, rename_headers_list=rename_headers_list)
         df["time"] = df["time"].apply(lambda x: str.zfill(x, 4))
         df["month"] = df["month"].apply(lambda x: str.zfill(x, 2))
         df["day"] = df["day"].apply(lambda x: str.zfill(x, 2))

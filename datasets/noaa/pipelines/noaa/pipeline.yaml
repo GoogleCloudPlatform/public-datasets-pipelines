@@ -1238,6 +1238,80 @@ dag:
         resources:
           request_ephemeral_storage: "16G"
           limit_cpu: "3"
+    - operator: "GKEStartPodOperator"
+      description: "Run NOAA load processes - Tornado"
+      args:
+        task_id: "spc_tornado"
+        name: "noaa.spc_tornado"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: noaa
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "NOAA SPC Tornado"
+          SOURCE_URL: >-
+            {
+              "noaa_spc_tornado": "https://www.spc.noaa.gov/wcm/newdata/2019-torn-prelim-reports-ytd.csv"
+            }
+          SOURCE_FILE: "files/data_spc_tornado.csv"
+          TARGET_FILE: "files/data_output_spc_tornado.csv"
+          CHUNKSIZE: "500000"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "noaa_historic_severe_storms"
+          TABLE_ID: "tornado_reports"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/noaa/spc_tornado/data_output.csv"
+          SCHEMA_PATH: "data/noaa/schema/noaa_spc_tornado_schema.json"
+          DROP_DEST_TABLE: "N"
+          INPUT_FIELD_DELIMITER: "|"
+          FULL_DATA_LOAD: "N"
+          REMOVE_SOURCE_FILE: "Y"
+          DELETE_TARGET_FILE: "Y"
+          INPUT_CSV_HEADERS: >-
+            [
+              "year",
+              "month",
+              "day",
+              "time",
+              "f-scale",
+              "location",
+              "county",
+              "state",
+              "lat",
+              "lon",
+              "comments"
+            ]
+          RENAME_HEADERS_LIST: >-
+            {
+              "lat": "latitude",
+              "lon": "longitude"
+            }
+          DATE_FORMAT_LIST: >-
+            [
+              ["timestamp", "%Y-%m-%d %H%M%S", "%Y-%m-%d %H:%M:%S" ]
+            ]
+          GEN_LOCATION_LIST: >-
+            {
+              "report_point": ["longitude", "latitude"]
+            }
+          REORDER_HEADERS_LIST: >-
+            [
+              "timestamp",
+              "time",
+              "f-scale",
+              "location",
+              "county",
+              "state",
+              "latitude",
+              "longitude",
+              "comments",
+              "report_point"
+            ]
+        resources:
+          request_ephemeral_storage: "16G"
+          limit_cpu: "3"
     - operator: "GKEDeleteClusterOperator"
       args:
         task_id: "delete_cluster"
@@ -1246,4 +1320,4 @@ dag:
         name: noaa
 
   graph_paths:
-    - "create_cluster >> [spc_hail, spc_wind, ghcnd_states, ghcnd_stations, gsod_stations, ghcnd_countries, ghcnd_inventory] >> storms_database_by_year >> ghcnd_by_year >> ghcnd_hurricanes >> lightning_strikes_by_year >> delete_cluster"
+    - "create_cluster >> [spc_hail, spc_wind, spc_tornado, ghcnd_states, ghcnd_stations, gsod_stations, ghcnd_countries, ghcnd_inventory] >> storms_database_by_year >> ghcnd_by_year >> ghcnd_hurricanes >> lightning_strikes_by_year >> delete_cluster"
