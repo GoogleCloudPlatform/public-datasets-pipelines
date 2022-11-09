@@ -144,7 +144,7 @@ dag:
             ]
           DATE_FORMAT_LIST: >-
             [
-              "date"
+              ["date", "%Y%m%d", "%Y-%m-%d" ]
             ]
         resources:
           request_ephemeral_storage: "16G"
@@ -1040,10 +1040,10 @@ dag:
               "LONGITUDE": "event_longitude"
             }
           DATE_FORMAT_LIST: >-
-            {
-              "event_begin_time": "%Y-%m-%d %H:%M:%S",
-              "event_end_time": "%Y-%m-%d %H:%M:%S"
-            }
+            [
+              ["event_begin_time", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M:%S" ],
+              ["event_end_time", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M:%S" ]
+            ]
           GEN_LOCATION_LIST: >-
             {
               "event_point": ["event_longitude", "event_latitude"]
@@ -1137,18 +1137,10 @@ dag:
               "lat": "latitude",
               "lon": "longitude"
             }
-          REGEX_LIST: >-
-            {
-              "time": ["^(\\d)$", "000$1", "True"],
-              "time": ["^(\\d{2})$", "00$1", "True"],
-              "time": ["^(\\d{3})$", "0$1", "True"],
-              "month": ["^(\\d)$", "0$1", "True"],
-              "day": ["^(\\d)$", "0$1", "True"],
-            }
           DATE_FORMAT_LIST: >-
-            {
-              "event_begin_time": "yyyy-MM-dd HHmmss"
-            }
+            [
+              ["timestamp", "%Y-%m-%d %H%M%S", "%Y-%m-%d %H:%M:%S" ]
+            ]
           GEN_LOCATION_LIST: >-
             {
               "report_point": ["longitude", "latitude"]
