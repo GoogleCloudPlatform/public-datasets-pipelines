@@ -36,6 +36,9 @@ resources:
     table_id: "hurricanes"
     description: "noaaspc"
   - type: bigquery_table
+    table_id: "hail_reports"
+    description: "noaaspc"
+  - type: bigquery_table
     table_id: "lightning_strikes_by_year"
     description: "noaaspc"
 
