@@ -460,7 +460,7 @@ def process_storms_database_by_year(
         )
         df = generate_location(df, gen_location_list)
         df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
-        for dt_fld in date_format_list.items():
+        for dt_fld in date_format_list:
             logging.info(f"Resolving date formats in field {dt_fld}")
             df[dt_fld[0]] = df[dt_fld[0]].apply(
                 lambda x: pd.to_datetime(str(x), format="%d-%b-%y %H:%M:%S")
