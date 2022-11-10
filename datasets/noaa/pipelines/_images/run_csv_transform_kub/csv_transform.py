@@ -235,6 +235,41 @@ def execute_pipeline(
             gen_location_list=gen_location_list,
         )
         return None
+    if pipeline_name == "NOAA GOES 16 MCMIP":
+        src_url = source_url[pipeline_name.replace(" ", "_").lower()]
+        download_file_gs(src_url, source_file)
+        if number_of_header_rows > 0:
+            remove_header_rows(source_file, number_of_header_rows=number_of_header_rows)
+        else:
+            pass
+        process_and_load_table(
+            source_file=source_file,
+            target_file=target_file,
+            pipeline_name=pipeline_name,
+            source_url=src_url,
+            chunksize=chunksize,
+            project_id=project_id,
+            dataset_id=dataset_id,
+            destination_table=destination_table,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=target_gcs_path,
+            schema_path=schema_path,
+            drop_dest_table=drop_dest_table,
+            input_field_delimiter=input_field_delimiter,
+            input_csv_headers=input_csv_headers,
+            data_dtypes=data_dtypes,
+            reorder_headers_list=reorder_headers_list,
+            null_rows_list=null_rows_list,
+            date_format_list=date_format_list,
+            slice_column_list=slice_column_list,
+            regex_list=regex_list,
+            rename_headers_list=rename_headers_list,
+            remove_source_file=remove_source_file,
+            delete_target_file=delete_target_file,
+            int_date_list=int_date_list,
+            gen_location_list=gen_location_list,
+        )
+        return None
     if pipeline_name in [
         "GHCND countries",
         "GHCND inventory",
@@ -364,6 +399,12 @@ def execute_pipeline(
             gen_location_list=gen_location_list,
         )
         return None
+
+
+def download_file_gs(source_url: str, source_file: pathlib.Path) -> None:
+    logging.info(f"Downloading {source_url} to {source_file}")
+    with open(source_file, "wb+") as file_obj:
+        storage.Client().download_blob_to_file(source_url, file_obj)
 
 
 def process_storms_database_by_year(
@@ -1033,6 +1074,9 @@ def process_chunk(
         )
         df = source_convert_date_formats(df, date_format_list=date_format_list)
         df = generate_location(df, gen_location_list=gen_location_list)
+        df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
+    if pipeline_name == "NOAA GOES 16 MCMIP":
+        df = rename_headers(df, rename_headers_list=rename_headers_list)
         df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
     if pipeline_name in [
         "GHCND countries",
