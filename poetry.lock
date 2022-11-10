@@ -888,6 +888,20 @@ optional = false
 python-versions = ">=3.6"
 
 [[package]]
+name = "db-dtypes"
+version = "1.0.4"
+description = "Pandas Data Types for SQL systems (BigQuery, Spanner)"
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+
+[package.dependencies]
+numpy = ">=1.16.6,<2.0dev"
+packaging = ">=17.0"
+pandas = ">=0.24.2,<2.0dev"
+pyarrow = ">=3.0.0,<10.0dev"
+
+[[package]]
 name = "debugpy"
 version = "1.6.3"
 description = "An implementation of the Debug Adapter Protocol for Python"
@@ -1435,15 +1449,12 @@ python-versions = ">=3.6, <3.11"
 
 [package.dependencies]
 google-api-core = {version = ">=1.31.5,<2.0.0 || >2.3.0,<3.0.0dev", extras = ["grpc"]}
-google-cloud-bigquery-storage = {version = ">=2.0.0,<3.0.0dev", optional = true, markers = "extra == \"bqstorage\""}
 google-cloud-core = ">=1.4.1,<3.0.0dev"
 google-resumable-media = ">=0.6.0,<3.0dev"
 grpcio = ">=1.38.1,<2.0dev"
 packaging = ">=14.3,<22.0dev"
-pandas = {version = ">=0.24.2", optional = true, markers = "extra == \"pandas\""}
 proto-plus = ">=1.15.0,<2.0.0dev"
 protobuf = ">=3.12.0,<4.0.0dev"
-pyarrow = {version = ">=3.0.0,<8.0dev", optional = true, markers = "extra == \"bqstorage\""}
 python-dateutil = ">=2.7.2,<3.0dev"
 requests = ">=2.18.0,<3.0.0dev"
 
@@ -3026,17 +3037,22 @@ test = ["hypothesis (>=3.58)", "pytest (>=6.0)", "pytest-xdist"]
 
 [[package]]
 name = "pandas-gbq"
-version = "0.14.1"
-description = "Pandas interface to Google BigQuery"
+version = "0.17.9"
+description = "Google BigQuery connector for pandas"
 category = "dev"
 optional = false
-python-versions = ">=3.5"
+python-versions = ">=3.7, <3.11"
 
 [package.dependencies]
-google-auth = "*"
-google-auth-oauthlib = "*"
-google-cloud-bigquery = {version = ">=1.11.1,<3.0.0dev", extras = ["bqstorage", "pandas"]}
-pandas = ">=0.20.1"
+db-dtypes = ">=0.3.1,<2.0.0"
+google-api-core = ">=1.31.5,<2.0.0 || >2.3.0,<3.0.0dev"
+google-auth = ">=1.25.0"
+google-auth-oauthlib = ">=0.0.1"
+google-cloud-bigquery = ">=1.27.2,<2.4.0 || >=2.5.0,<4.0.0dev"
+google-cloud-bigquery-storage = ">=1.1.0,<3.0.0dev"
+numpy = ">=1.16.6"
+pandas = ">=0.24.2"
+pyarrow = ">=3.0.0,<10.0dev"
 pydata-google-auth = "*"
 setuptools = "*"
 
@@ -4448,7 +4464,7 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "1.1"
 python-versions = "3.8.12"
-content-hash = "be99822d8f5297d834fb3e666a732a26cf28d6fbec5ad59600bc6a8d048d8559"
+content-hash = "2a367848167cbbb0b8b51b36cf56dc6d0a5117a436cfad66427316c29b191f8c"
 
 [metadata.files]
 absl-py = [
@@ -4792,6 +4808,10 @@ cryptography = [
 cycler = [
     {file = "cycler-0.11.0-py3-none-any.whl", hash = "sha256:3a27e95f763a428a739d2add979fa7494c912a32c17c4c38c4d5f082cad165a3"},
     {file = "cycler-0.11.0.tar.gz", hash = "sha256:9c87405839a19696e837b3b818fed3f5f69f16f1eec1a1ad77e043dcea9c772f"},
+]
+db-dtypes = [
+    {file = "db-dtypes-1.0.4.tar.gz", hash = "sha256:6527cd2ae956e1d91c6c79387fb2a2217938139efc14449f6c662bd768994e9e"},
+    {file = "db_dtypes-1.0.4-py2.py3-none-any.whl", hash = "sha256:996c0250051c0c3faef8a9bd02b30a182d553e6a9b8d34b5344a30fe2fb9de33"},
 ]
 debugpy = [
     {file = "debugpy-1.6.3-cp310-cp310-macosx_10_15_x86_64.whl", hash = "sha256:c4b2bd5c245eeb49824bf7e539f95fb17f9a756186e51c3e513e32999d8846f3"},
@@ -5896,8 +5916,8 @@ pandas = [
     {file = "pandas-1.3.5.tar.gz", hash = "sha256:1e4285f5de1012de20ca46b188ccf33521bff61ba5c5ebd78b4fb28e5416a9f1"},
 ]
 pandas-gbq = [
-    {file = "pandas-gbq-0.14.1.tar.gz", hash = "sha256:41b90794f0a6fff98180ee812d359a676ab06209d83471a2352bbd106b7e121f"},
-    {file = "pandas_gbq-0.14.1-py3-none-any.whl", hash = "sha256:d3a6ca5c704eb6aaeeb8bbe99855a050462ff5118e0d8ab22c9495ec9324a0df"},
+    {file = "pandas-gbq-0.17.9.tar.gz", hash = "sha256:066eacb9c3b18dec7bccd0a0ea67a3bdd79519255be4e59231e5d323ac984fe8"},
+    {file = "pandas_gbq-0.17.9-py2.py3-none-any.whl", hash = "sha256:e02cff40d26dd67a0131794749c086dce773d58792559cee7ed7deaefed6723c"},
 ]
 pandocfilters = [
     {file = "pandocfilters-1.5.0-py2.py3-none-any.whl", hash = "sha256:33aae3f25fd1a026079f5d27bdd52496f0e0803b3469282162bafdcbdf6ef14f"},
