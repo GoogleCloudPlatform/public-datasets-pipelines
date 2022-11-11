@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,12 @@
  */
 
 
-provider "google" {
-  project                     = var.project_id
-  impersonate_service_account = var.impersonating_acct
-  region                      = var.region
+variable "project_id" {}
+variable "bucket_name_prefix" {}
+variable "impersonating_acct" {}
+variable "region" {}
+variable "env" {}
+variable "iam_policies" {
+  default = {}
 }
 
-data "google_client_openid_userinfo" "me" {}
-
-output "impersonating-account" {
-  value = data.google_client_openid_userinfo.me.email
-}
