@@ -1079,7 +1079,11 @@ def process_chunk(
                             "NOAA GOES 16 MCMIP",
                             "NOAA GOES 16 GLM",
                             "NOAA GOES 16 Radiance",
-                            "NOAA GOES 16 CMIP"
+                            "NOAA GOES 16 CMIP",
+                            "NOAA GOES 17 MCMIP",
+                            "NOAA GOES 17 GLM",
+                            "NOAA GOES 17 Radiance",
+                            "NOAA GOES 17 CMIP"
     ]:
         df = rename_headers(df, rename_headers_list=rename_headers_list)
         df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
