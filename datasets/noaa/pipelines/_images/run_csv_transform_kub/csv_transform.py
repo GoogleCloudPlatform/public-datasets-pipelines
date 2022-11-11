@@ -1075,7 +1075,12 @@ def process_chunk(
         df = source_convert_date_formats(df, date_format_list=date_format_list)
         df = generate_location(df, gen_location_list=gen_location_list)
         df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
-    if pipeline_name == "NOAA GOES 16 MCMIP":
+    if pipeline_name in [
+                            "NOAA GOES 16 MCMIP",
+                            "NOAA GOES 16 GLM",
+                            "NOAA GOES 16 Radiance",
+                            "NOAA GOES 16 CMIP"
+    ]:
         df = rename_headers(df, rename_headers_list=rename_headers_list)
         df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
     if pipeline_name in [
