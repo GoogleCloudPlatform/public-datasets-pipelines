@@ -85,7 +85,7 @@ dag:
           PIPELINE_NAME: "GHCND by year"
           SOURCE_URL: >-
             {
-              "ghcnd_by_year": "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/by_year/.csv.gz"
+              "ghcnd_by_year": "ftp://ftp.ncei.noaa.gov/pub/data/ghcn/daily/by_year/.csv.gz"
             }
           SOURCE_FILE: "files/data_ghcnd_by_year.csv"
           TARGET_FILE: "files/data_output_ghcnd_by_year.csv"

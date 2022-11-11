@@ -61,7 +61,7 @@ with DAG(
         image="{{ var.json.noaa.container_registry.run_csv_transform_kub }}",
         env_vars={
             "PIPELINE_NAME": "GHCND by year",
-            "SOURCE_URL": '{\n  "ghcnd_by_year": "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/by_year/.csv.gz"\n}',
+            "SOURCE_URL": '{\n  "ghcnd_by_year": "ftp://ftp.ncei.noaa.gov/pub/data/ghcn/daily/by_year/.csv.gz"\n}',
             "SOURCE_FILE": "files/data_ghcnd_by_year.csv",
             "TARGET_FILE": "files/data_output_ghcnd_by_year.csv",
             "CHUNKSIZE": "750000",
