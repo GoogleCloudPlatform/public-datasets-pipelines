@@ -1964,7 +1964,7 @@ dag:
           REORDER_HEADERS_LIST: >-
             [
               "dataset_name",
-              "platform_ID",
+              "platform_id",
               "orbital_slot",
               "timeline_id",
               "scene_id",
@@ -1985,7 +1985,7 @@ dag:
               "max_radiance_value_of_valid_pixels",
               "mean_radiance_value_of_valid_pixels",
               "std_dev_radiance_value_of_valid_pixels",
-              "percent_uncorrectable_L0_errors",
+              "percent_uncorrectable_l0_errors",
               "total_size",
               "base_url"
             ]
@@ -2644,7 +2644,7 @@ dag:
           REORDER_HEADERS_LIST: >-
             [
               "dataset_name",
-              "platform_ID",
+              "platform_id",
               "orbital_slot",
               "timeline_id",
               "scene_id",
@@ -2665,7 +2665,7 @@ dag:
               "max_radiance_value_of_valid_pixels",
               "mean_radiance_value_of_valid_pixels",
               "std_dev_radiance_value_of_valid_pixels",
-              "percent_uncorrectable_L0_errors",
+              "percent_uncorrectable_l0_errors",
               "total_size",
               "base_url"
             ]
