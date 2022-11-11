@@ -29,6 +29,7 @@ def main(
     source_bucket: str,
     source_object: str,
     source_file: pathlib.Path,
+    source_storage_file: pathlib.Path,
     target_file: pathlib.Path,
     target_gcs_bucket: str,
     target_gcs_path: str,
@@ -43,12 +44,20 @@ def main(
     logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
     download_blob(source_bucket, source_object, source_file)
-    process_source_file(source_file, target_file, chunksize, pipeline_name, csv_headers)
+    process_source_file(
+        source_file,
+        source_storage_file,
+        target_file,
+        chunksize,
+        pipeline_name,
+        csv_headers,
+    )
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
 
 
 def process_source_file(
     source_file: str,
+    source_storage_file: str,
     target_file: str,
     chunksize: str,
     pipeline_name: str,
@@ -57,26 +66,40 @@ def process_source_file(
     logging.info(f"Opening source file {source_file}")
     csv.field_size_limit(512 << 10)
     csv.register_dialect("TabDialect", quotechar='"', delimiter="\t", strict=True)
-    with open(
-        source_file,
-    ) as reader:
-        data = []
+    with open(source_file, newline="") as f_input, open(
+        source_storage_file, "w", newline=""
+    ) as f_output:
+        csv_input = csv.reader(f_input, skipinitialspace=True)
+        csv_output = csv.writer(f_output, quoting=csv.QUOTE_NONNUMERIC)
+        index = 0
         chunk_number = 1
-        for index, line in enumerate(csv.reader(reader, "TabDialect"), 0):
-            data.append(line)
+        for row_input in csv_input:
+            row_output = []
+            for col in row_input:
+                try:
+                    row_output.append(int(col))
+                except ValueError:
+                    try:
+                        row_output.append(float(col))
+                    except ValueError:
+                        row_output.append(col)
+            index = index + 1
+            csv_output.writerow(row_output)
             if int(index) % int(chunksize) == 0 and int(index) > 0:
                 process_dataframe_chunk(
-                    data,
+                    source_storage_file,
                     target_file,
                     chunk_number,
                     pipeline_name,
                     csv_headers,
                 )
-                data = []
+                index = 0
                 chunk_number += 1
-        if data:
+                f = open(source_storage_file, "w+")
+                f.close()
+        if index:
             process_dataframe_chunk(
-                data,
+                source_storage_file,
                 target_file,
                 chunk_number,
                 pipeline_name,
@@ -85,14 +108,17 @@ def process_source_file(
 
 
 def process_dataframe_chunk(
-    data: typing.List[str],
+    source_storage_file: str,
     target_file: str,
     chunk_number: int,
     pipeline_name: str,
     csv_headers: typing.List[str],
 ) -> None:
-    data = list([char.split("|") for item in data for char in item])
-    df = pd.DataFrame(data, columns=csv_headers)
+    df = pd.read_csv(
+        source_storage_file, names=csv_headers, index_col=None, dtype=object, skiprows=1
+    )
+    df = df.replace("\n", "", regex=True)
+    df = df.replace("\r", "", regex=True)
     target_file_batch = str(target_file).replace(
         ".csv", "-" + str(chunk_number) + ".csv"
     )
@@ -166,6 +192,9 @@ if __name__ == "__main__":
         source_bucket=os.environ.get("SOURCE_GCS_BUCKET", ""),
         source_object=os.environ.get("SOURCE_GCS_OBJECT", ""),
         source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
+        source_storage_file=pathlib.Path(
+            os.environ["SOURCE_STORAGE_FILE"]
+        ).expanduser(),
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
         target_gcs_bucket=os.environ.get("TARGET_GCS_BUCKET", ""),
         target_gcs_path=os.environ.get("TARGET_GCS_PATH", ""),
