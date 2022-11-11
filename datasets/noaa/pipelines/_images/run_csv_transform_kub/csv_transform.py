@@ -235,7 +235,16 @@ def execute_pipeline(
             gen_location_list=gen_location_list,
         )
         return None
-    if pipeline_name == "NOAA GOES 16 MCMIP":
+    if pipeline_name in [
+        "NOAA GOES 16 MCMIP",
+        "NOAA GOES 16 GLM",
+        "NOAA GOES 16 Radiance",
+        "NOAA GOES 16 CMIP",
+        "NOAA GOES 17 MCMIP",
+        "NOAA GOES 17 GLM",
+        "NOAA GOES 17 Radiance",
+        "NOAA GOES 17 CMIP",
+    ]:
         src_url = source_url[pipeline_name.replace(" ", "_").lower()]
         download_file_gs(src_url, source_file)
         if number_of_header_rows > 0:
@@ -1076,14 +1085,14 @@ def process_chunk(
         df = generate_location(df, gen_location_list=gen_location_list)
         df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
     if pipeline_name in [
-                            "NOAA GOES 16 MCMIP",
-                            "NOAA GOES 16 GLM",
-                            "NOAA GOES 16 Radiance",
-                            "NOAA GOES 16 CMIP",
-                            "NOAA GOES 17 MCMIP",
-                            "NOAA GOES 17 GLM",
-                            "NOAA GOES 17 Radiance",
-                            "NOAA GOES 17 CMIP"
+        "NOAA GOES 16 MCMIP",
+        "NOAA GOES 16 GLM",
+        "NOAA GOES 16 Radiance",
+        "NOAA GOES 16 CMIP",
+        "NOAA GOES 17 MCMIP",
+        "NOAA GOES 17 GLM",
+        "NOAA GOES 17 Radiance",
+        "NOAA GOES 17 CMIP",
     ]:
         df = rename_headers(df, rename_headers_list=rename_headers_list)
         df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
