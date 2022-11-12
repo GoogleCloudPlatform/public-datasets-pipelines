@@ -279,6 +279,60 @@ def execute_pipeline(
             gen_location_list=gen_location_list,
         )
         return None
+    if pipeline_name in [ "NOAA GSOD 2022" ]:
+        src_url_root = source_url[pipeline_name.replace(" ", "_").lower()]
+        files = url_directory_list(source_url_path=src_url_root, file_pattern=".csv")
+        file_cnt = files.count
+        file_ptr = 1
+        for file_name in files:
+            if file_name == files[0]:
+                logging.info(f"Writing file {file_name} to {source_file} with header")
+                download_file_http(file_name, source_file, True, True)
+            else:
+                # logging.info(f"Appending file {file_name} to {source_file} with no header")
+                url_filename = os.path.basename(file_name).replace(".csv", "")
+                source_file_tmpname = str(source_file).replace(".csv", f"_{url_filename}.csv")
+                download_file_http(file_name, source_file_tmpname, True, True)
+                # sed(["-i", "1d", source_file_tmpname, " 2> /dev/null"])
+                os.system(f"sed -i 1d {source_file_tmpname} 2> /dev/null")
+                os.system(f"cat {source_file_tmpname} >> {source_file}")
+                os.system(f"rm {source_file_tmpname}")
+                time.sleep(0.5)
+            if ((file_ptr % 100) == 0) or (file_ptr == file_cnt):
+                logging.info(f"Appended {file_ptr} files of total {file_cnt} files")
+            file_ptr+=1
+        if number_of_header_rows > 0:
+            remove_header_rows(source_file, number_of_header_rows=number_of_header_rows)
+        else:
+            pass
+        process_and_load_table(
+            source_file=source_file,
+            target_file=target_file,
+            pipeline_name=pipeline_name,
+            source_url=src_url,
+            chunksize=chunksize,
+            project_id=project_id,
+            dataset_id=dataset_id,
+            destination_table=destination_table,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=target_gcs_path,
+            schema_path=schema_path,
+            drop_dest_table=drop_dest_table,
+            input_field_delimiter=input_field_delimiter,
+            input_csv_headers=input_csv_headers,
+            data_dtypes=data_dtypes,
+            reorder_headers_list=reorder_headers_list,
+            null_rows_list=null_rows_list,
+            date_format_list=date_format_list,
+            slice_column_list=slice_column_list,
+            regex_list=regex_list,
+            rename_headers_list=rename_headers_list,
+            remove_source_file=remove_source_file,
+            delete_target_file=delete_target_file,
+            int_date_list=int_date_list,
+            gen_location_list=gen_location_list,
+        )
+        return None
     if pipeline_name in [
         "GHCND countries",
         "GHCND inventory",
@@ -1096,6 +1150,8 @@ def process_chunk(
     ]:
         df = rename_headers(df, rename_headers_list=rename_headers_list)
         df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
+    if pipeline_name in [ "NOAA GSOD 2022" ]:
+        import pdb; pdb.set_trace()
     if pipeline_name in [
         "GHCND countries",
         "GHCND inventory",
@@ -1523,9 +1579,10 @@ def download_file_ftp_single_try(
 
 
 def download_file_http(
-    source_url: str, source_file: pathlib.Path, continue_on_error: bool = False
+    source_url: str, source_file: pathlib.Path, continue_on_error: bool = False, quiet_mode: bool = False
 ) -> bool:
-    logging.info(f"Downloading {source_url} to {source_file}")
+    if not quiet_mode:
+        logging.info(f"Downloading {source_url} to {source_file}")
     try:
         src_file = requests.get(source_url, stream=True)
         rtn_status_code = src_file.status_code

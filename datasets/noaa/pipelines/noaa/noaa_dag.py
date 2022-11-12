@@ -787,18 +787,10 @@ with DAG(
             ghcnd_inventory,
         ]
         >> storms_database_by_year
-        >> [
-            noaa_goes16_mcmip,
-            noaa_goes16_cmip,
-            noaa_goes16_glm,
-            noaa_goes16_radiance,
-            noaa_goes17_mcmip,
-            noaa_goes17_cmip,
-            noaa_goes17_glm,
-            noaa_goes17_radiance,
-        ]
-        >> ghcnd_by_year
-        >> ghcnd_hurricanes
-        >> lightning_strikes_by_year
+        >> [noaa_goes16_mcmip, noaa_goes16_cmip, noaa_goes16_glm]
+        >> noaa_goes16_radiance
+        >> [noaa_goes17_mcmip, noaa_goes17_cmip, noaa_goes17_glm]
+        >> noaa_goes17_radiance
+        >> [ghcnd_by_year, ghcnd_hurricanes, lightning_strikes_by_year]
         >> delete_cluster
     )

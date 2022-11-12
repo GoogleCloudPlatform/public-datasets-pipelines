@@ -2672,6 +2672,75 @@ dag:
         resources:
           request_ephemeral_storage: "16G"
           limit_cpu: "3"
+    # - operator: "GKEStartPodOperator"
+    #   description: "Run NOAA load processes - GSOD 2022"
+    #   args:
+    #     task_id: "noaa_gsod_2022"
+    #     name: "noaa.gsod_2022"
+    #     project_id: "{{ var.value.gcp_project }}"
+    #     location: "us-central1-c"
+    #     cluster_name: noaa
+    #     namespace: "default"
+    #     image_pull_policy: "Always"
+    #     image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
+    #     env_vars:
+    #       PIPELINE_NAME: "NOAA GSOD 2022"
+    #       SOURCE_URL: >-
+    #         {
+    #           "noaa_gsod_2022": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/2022/"
+    #         }
+    #       SOURCE_FILE: "files/data_gsod_2022.csv"
+    #       TARGET_FILE: "files/data_output_gsod_2022.csv"
+    #       CHUNKSIZE: "100000"
+    #       PROJECT_ID: "{{ var.value.gcp_project }}"
+    #       DATASET_ID: "noaa_gsod"
+    #       TABLE_ID: "gsod2022"
+    #       TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+    #       TARGET_GCS_PATH: "data/noaa/goes16/cmip/data_output.csv"
+    #       SCHEMA_PATH: "data/noaa/schema/noaa_gsod_2022_schema.json"
+    #       DROP_DEST_TABLE: "N"
+    #       INPUT_FIELD_DELIMITER: ","
+    #       FULL_DATA_LOAD: "N"
+    #       REMOVE_SOURCE_FILE: "N"
+    #       DELETE_TARGET_FILE: "Y"
+    #       NUMBER_OF_HEADER_ROWS: "1"
+    #       INPUT_CSV_HEADERS: >-
+    #         [
+    #           "STATION",
+    #           "DATE",
+    #           "LATITUDE",
+    #           "LONGITUDE",
+    #           "ELEVATION",
+    #           "NAME",
+    #           "TEMP",
+    #           "TEMP_ATTRIBUTES",
+    #           "DEWP",
+    #           "DEWP_ATTRIBUTES",
+    #           "SLP",
+    #           "SLP_ATTRIBUTES",
+    #           "STP",
+    #           "STP_ATTRIBUTES",
+    #           "VISIB",
+    #           "VISIB_ATTRIBUTES",
+    #           "WDSP",
+    #           "WDSP_ATTRIBUTES",
+    #           "MXSPD",
+    #           "GUST",
+    #           "MAX",
+    #           "MAX_ATTRIBUTES",
+    #           "MIN",
+    #           "MIN_ATTRIBUTES",
+    #           "PRCP",
+    #           "PRCP_ATTRIBUTES",
+    #           "SNDP",
+    #           "FRSHTT"
+    #         ]
+          # RENAME_HEADERS_LIST: >-
+          #   {
+          #   }
+          # REORDER_HEADERS_LIST: >-
+          #   [
+          #   ]
     - operator: "GKEDeleteClusterOperator"
       args:
         task_id: "delete_cluster"
@@ -2680,4 +2749,4 @@ dag:
         name: noaa
 
   graph_paths:
-    - "create_cluster >> [spc_hail, spc_wind, spc_tornado, ghcnd_states, ghcnd_stations, gsod_stations, ghcnd_countries, ghcnd_inventory] >> storms_database_by_year >> [noaa_goes16_mcmip, noaa_goes16_cmip, noaa_goes16_glm, noaa_goes16_radiance, noaa_goes17_mcmip, noaa_goes17_cmip, noaa_goes17_glm, noaa_goes17_radiance] >> ghcnd_by_year >> ghcnd_hurricanes >> lightning_strikes_by_year >> delete_cluster"
+    - "create_cluster >> [spc_hail, spc_wind, spc_tornado, ghcnd_states, ghcnd_stations, gsod_stations, ghcnd_countries, ghcnd_inventory] >> storms_database_by_year >> [noaa_goes16_mcmip, noaa_goes16_cmip, noaa_goes16_glm] >> noaa_goes16_radiance >> [noaa_goes17_mcmip, noaa_goes17_cmip, noaa_goes17_glm] >> noaa_goes17_radiance >> [ghcnd_by_year, ghcnd_hurricanes, lightning_strikes_by_year ] >> delete_cluster"
