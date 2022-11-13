@@ -23,8 +23,10 @@ import pathlib
 import re
 import time
 import typing
+import zipfile
 from urllib.request import Request, urlopen
 
+import geopandas as geo
 import numpy as np
 import pandas as pd
 import requests
@@ -39,6 +41,7 @@ def main(
     source_url: dict,
     source_file: pathlib.Path,
     target_file: pathlib.Path,
+    shape_file: str,
     chunksize: str,
     ftp_host: str,
     ftp_dir: str,
@@ -76,6 +79,7 @@ def main(
         source_url=source_url,
         source_file=source_file,
         target_file=target_file,
+        shape_file=shape_file,
         chunksize=chunksize,
         ftp_host=ftp_host,
         ftp_dir=ftp_dir,
@@ -114,6 +118,7 @@ def execute_pipeline(
     source_url: dict,
     source_file: pathlib.Path,
     target_file: pathlib.Path,
+    shape_file: str,
     chunksize: str,
     ftp_host: str,
     ftp_dir: str,
@@ -181,6 +186,7 @@ def execute_pipeline(
             process_and_load_table(
                 source_file=source_file_unzipped,
                 target_file=target_file_year,
+                shape_file=shape_file,
                 pipeline_name=pipeline_name,
                 source_url=source_url_year,
                 chunksize=chunksize,
@@ -214,6 +220,7 @@ def execute_pipeline(
         process_and_load_table(
             source_file=source_file,
             target_file=target_file,
+            shape_file=shape_file,
             pipeline_name=pipeline_name,
             source_url=src_url,
             chunksize=chunksize,
@@ -259,6 +266,7 @@ def execute_pipeline(
         process_and_load_table(
             source_file=source_file,
             target_file=target_file,
+            shape_file=shape_file,
             pipeline_name=pipeline_name,
             source_url=src_url,
             chunksize=chunksize,
@@ -314,6 +322,7 @@ def execute_pipeline(
         process_and_load_table(
             source_file=source_file,
             target_file=target_file,
+            shape_file=shape_file,
             pipeline_name=pipeline_name,
             source_url=src_url_root,
             chunksize=chunksize,
@@ -340,6 +349,46 @@ def execute_pipeline(
             gen_location_list=gen_location_list,
         )
         return None
+    if pipeline_name in ("NOAA NWS Forecast Regions"):
+        src_url_root = source_url[pipeline_name.replace(" ", "_").lower()]
+        download_file_http(src_url_root, source_file)
+        source_file_path = os.path.split(source_file)[0]
+        source_file_name = os.path.basename(src_url_root)
+        source_file_zip = f"{source_file_path}/{source_file_name}"
+        with zipfile.ZipFile(source_file_zip, 'r') as zip_ref:
+            zip_ref.extractall(os.path.split(source_file)[0])
+        df = geo.read_file(shape_file)
+        save_to_new_file(df, source_file)
+        process_and_load_table(
+            source_file=source_file,
+            target_file=target_file,
+            pipeline_name=pipeline_name,
+            source_url=src_url_root,
+            chunksize=chunksize,
+            project_id=project_id,
+            dataset_id=dataset_id,
+            destination_table=destination_table,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=target_gcs_path,
+            schema_path=schema_path,
+            drop_dest_table=drop_dest_table,
+            input_field_delimiter=input_field_delimiter,
+            input_csv_headers=input_csv_headers,
+            data_dtypes=data_dtypes,
+            reorder_headers_list=reorder_headers_list,
+            null_rows_list=null_rows_list,
+            date_format_list=date_format_list,
+            slice_column_list=slice_column_list,
+            regex_list=regex_list,
+            trim_whitespace_list=trim_whitespace_list,
+            rename_headers_list=rename_headers_list,
+            remove_source_file=remove_source_file,
+            delete_target_file=delete_target_file,
+            int_date_list=int_date_list,
+            gen_location_list=gen_location_list,
+        )
+        import pdb; pdb.set_trace()
+        return None
     if pipeline_name in [
         "GHCND countries",
         "GHCND inventory",
@@ -357,6 +406,7 @@ def execute_pipeline(
         process_and_load_table(
             source_file=source_file,
             target_file=target_file,
+            shape_file=shape_file,
             pipeline_name=pipeline_name,
             source_url=src_url,
             chunksize=chunksize,
@@ -393,6 +443,7 @@ def execute_pipeline(
         process_and_load_table(
             source_file=source_file,
             target_file=target_file,
+            shape_file=shape_file,
             pipeline_name=pipeline_name,
             source_url=src_url,
             chunksize=chunksize,
@@ -424,6 +475,7 @@ def execute_pipeline(
         process_lightning_strikes_by_year(
             source_file=source_file,
             target_file=target_file,
+            shape_file=shape_file,
             pipeline_name=pipeline_name,
             source_url=src_url,
             chunksize=chunksize,
@@ -1185,6 +1237,8 @@ def process_chunk(
         df = rename_headers(df, rename_headers_list=rename_headers_list)
         df = trim_whitespace(df, trim_whitespace_list=trim_whitespace_list)
         df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
+    if pipeline_name == "NOAA NWS Forecast Regions":
+        df = rename_headers(df, rename_headers_list=rename_headers_list)
     if pipeline_name in [
         "GHCND countries",
         "GHCND inventory",
@@ -1682,6 +1736,7 @@ if __name__ == "__main__":
         source_url=json.loads(os.environ.get("SOURCE_URL", r"{}")),
         source_file=pathlib.Path(os.environ.get("SOURCE_FILE", "")).expanduser(),
         target_file=pathlib.Path(os.environ.get("TARGET_FILE", "")).expanduser(),
+        shape_file=os.environ.get("SHAPE_FILE", ""),
         chunksize=os.environ.get("CHUNKSIZE", "100000"),
         ftp_host=os.environ.get("FTP_HOST", ""),
         ftp_dir=os.environ.get("FTP_DIR", ""),
