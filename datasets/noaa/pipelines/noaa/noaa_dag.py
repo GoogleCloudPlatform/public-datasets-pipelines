@@ -767,6 +767,76 @@ with DAG(
         },
         resources={"request_ephemeral_storage": "16G", "limit_cpu": "3"},
     )
+
+    # Run NOAA load processes - GSOD 2020
+    noaa_gsod_2020 = kubernetes_engine.GKEStartPodOperator(
+        task_id="noaa_gsod_2020",
+        name="noaa.gsod_2020",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="noaa",
+        namespace="default",
+        image_pull_policy="Always",
+        image="{{ var.json.noaa.container_registry.run_csv_transform_kub }}",
+        env_vars={
+            "PIPELINE_NAME": "NOAA GSOD 2020",
+            "SOURCE_URL": '{\n  "noaa_gsod_2020": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/2020/"\n}',
+            "SOURCE_FILE": "files/data_gsod_2020.csv",
+            "TARGET_FILE": "files/data_output_gsod_2020.csv",
+            "CHUNKSIZE": "100000",
+            "PROJECT_ID": "{{ var.value.gcp_project }}",
+            "DATASET_ID": "noaa_gsod",
+            "TABLE_ID": "gsod2020",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
+            "TARGET_GCS_PATH": "data/noaa/gsod_2020/data_output.csv",
+            "SCHEMA_PATH": "data/noaa/schema/noaa_gsod_2020_schema.json",
+            "DROP_DEST_TABLE": "N",
+            "INPUT_FIELD_DELIMITER": ",",
+            "FULL_DATA_LOAD": "N",
+            "REMOVE_SOURCE_FILE": "N",
+            "DELETE_TARGET_FILE": "Y",
+            "NUMBER_OF_HEADER_ROWS": "1",
+            "INPUT_CSV_HEADERS": '[\n  "STATION",\n  "DATE",\n  "LATITUDE",\n  "LONGITUDE",\n  "ELEVATION",\n  "NAME",\n  "TEMP",\n  "TEMP_ATTRIBUTES",\n  "DEWP",\n  "DEWP_ATTRIBUTES",\n  "SLP",\n  "SLP_ATTRIBUTES",\n  "STP",\n  "STP_ATTRIBUTES",\n  "VISIB",\n  "VISIB_ATTRIBUTES",\n  "WDSP",\n  "WDSP_ATTRIBUTES",\n  "MXSPD",\n  "GUST",\n  "MAX",\n  "MAX_ATTRIBUTES",\n  "MIN",\n  "MIN_ATTRIBUTES",\n  "PRCP",\n  "PRCP_ATTRIBUTES",\n  "SNDP",\n  "FRSHTT"\n]',
+            "RENAME_HEADERS_LIST": '{\n  "TEMP": "temp",\n  "TEMP_ATTRIBUTES": "count_temp",\n  "DEWP": "dewp",\n  "DEWP_ATTRIBUTES": "count_dewp",\n  "SLP": "slp",\n  "SLP_ATTRIBUTES": "count_slp",\n  "STP": "stp",\n  "STP_ATTRIBUTES": "count_stp",\n  "VISIB": "visib",\n  "VISIB_ATTRIBUTES": "count_visib",\n  "WDSP": "wdsp",\n  "WDSP_ATTRIBUTES": "count_wdsp",\n  "MXSPD": "mxspd",\n  "GUST": "gust",\n  "MAX": "max",\n  "MAX_ATTRIBUTES": "flag_max",\n  "MIN": "min",\n  "MIN_ATTRIBUTES": "flag_min",\n  "PRCP": "prcp",\n  "PRCP_ATTRIBUTES": "flag_prcp",\n  "SNDP": "sndp",\n  "DATE": "date"\n}',
+            "TRIM_WHITESPACE_LIST": '[\n  "stn",\n  "wban",\n  "year",\n  "mo",\n  "da",\n  "date",\n  "temp",\n  "count_temp",\n  "dewp",\n  "count_dewp",\n  "slp",\n  "count_slp",\n  "stp",\n  "count_stp",\n  "visib",\n  "count_visib",\n  "wdsp",\n  "count_wdsp",\n  "mxspd",\n  "gust",\n  "max",\n  "flag_max",\n  "min",\n  "flag_min",\n  "prcp",\n  "flag_prcp",\n  "sndp",\n  "fog",\n  "rain_drizzle",\n  "snow_ice_pellets",\n  "hail",\n  "thunder",\n  "tornado_funnel_cloud"\n]',
+            "REORDER_HEADERS_LIST": '[\n  "stn",\n  "wban",\n  "date",\n  "year",\n  "mo",\n  "da",\n  "temp",\n  "count_temp",\n  "dewp",\n  "count_dewp",\n  "slp",\n  "count_slp",\n  "stp",\n  "count_stp",\n  "visib",\n  "count_visib",\n  "wdsp",\n  "count_wdsp",\n  "mxspd",\n  "gust",\n  "max",\n  "flag_max",\n  "min",\n  "flag_min",\n  "prcp",\n  "flag_prcp",\n  "sndp",\n  "fog",\n  "rain_drizzle",\n  "snow_ice_pellets",\n  "hail",\n  "thunder",\n  "tornado_funnel_cloud"\n]',
+        },
+    )
+
+    # Run NOAA load processes - GSOD 2022
+    noaa_gsod_2022 = kubernetes_engine.GKEStartPodOperator(
+        task_id="noaa_gsod_2022",
+        name="noaa.gsod_2022",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="noaa",
+        namespace="default",
+        image_pull_policy="Always",
+        image="{{ var.json.noaa.container_registry.run_csv_transform_kub }}",
+        env_vars={
+            "PIPELINE_NAME": "NOAA GSOD 2022",
+            "SOURCE_URL": '{\n  "noaa_gsod_2022": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/2022/"\n}',
+            "SOURCE_FILE": "files/data_gsod_2022.csv",
+            "TARGET_FILE": "files/data_output_gsod_2022.csv",
+            "CHUNKSIZE": "100000",
+            "PROJECT_ID": "{{ var.value.gcp_project }}",
+            "DATASET_ID": "noaa_gsod",
+            "TABLE_ID": "gsod2022",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
+            "TARGET_GCS_PATH": "data/noaa/gsod_2022/data_output.csv",
+            "SCHEMA_PATH": "data/noaa/schema/noaa_gsod_2022_schema.json",
+            "DROP_DEST_TABLE": "N",
+            "INPUT_FIELD_DELIMITER": ",",
+            "FULL_DATA_LOAD": "N",
+            "REMOVE_SOURCE_FILE": "N",
+            "DELETE_TARGET_FILE": "Y",
+            "NUMBER_OF_HEADER_ROWS": "1",
+            "INPUT_CSV_HEADERS": '[\n  "STATION",\n  "DATE",\n  "LATITUDE",\n  "LONGITUDE",\n  "ELEVATION",\n  "NAME",\n  "TEMP",\n  "TEMP_ATTRIBUTES",\n  "DEWP",\n  "DEWP_ATTRIBUTES",\n  "SLP",\n  "SLP_ATTRIBUTES",\n  "STP",\n  "STP_ATTRIBUTES",\n  "VISIB",\n  "VISIB_ATTRIBUTES",\n  "WDSP",\n  "WDSP_ATTRIBUTES",\n  "MXSPD",\n  "GUST",\n  "MAX",\n  "MAX_ATTRIBUTES",\n  "MIN",\n  "MIN_ATTRIBUTES",\n  "PRCP",\n  "PRCP_ATTRIBUTES",\n  "SNDP",\n  "FRSHTT"\n]',
+            "RENAME_HEADERS_LIST": '{\n  "TEMP": "temp",\n  "TEMP_ATTRIBUTES": "count_temp",\n  "DEWP": "dewp",\n  "DEWP_ATTRIBUTES": "count_dewp",\n  "SLP": "slp",\n  "SLP_ATTRIBUTES": "count_slp",\n  "STP": "stp",\n  "STP_ATTRIBUTES": "count_stp",\n  "VISIB": "visib",\n  "VISIB_ATTRIBUTES": "count_visib",\n  "WDSP": "wdsp",\n  "WDSP_ATTRIBUTES": "count_wdsp",\n  "MXSPD": "mxspd",\n  "GUST": "gust",\n  "MAX": "max",\n  "MAX_ATTRIBUTES": "flag_max",\n  "MIN": "min",\n  "MIN_ATTRIBUTES": "flag_min",\n  "PRCP": "prcp",\n  "PRCP_ATTRIBUTES": "flag_prcp",\n  "SNDP": "sndp",\n  "DATE": "date"\n}',
+            "TRIM_WHITESPACE_LIST": '[\n  "stn",\n  "wban",\n  "year",\n  "mo",\n  "da",\n  "date",\n  "temp",\n  "count_temp",\n  "dewp",\n  "count_dewp",\n  "slp",\n  "count_slp",\n  "stp",\n  "count_stp",\n  "visib",\n  "count_visib",\n  "wdsp",\n  "count_wdsp",\n  "mxspd",\n  "gust",\n  "max",\n  "flag_max",\n  "min",\n  "flag_min",\n  "prcp",\n  "flag_prcp",\n  "sndp",\n  "fog",\n  "rain_drizzle",\n  "snow_ice_pellets",\n  "hail",\n  "thunder",\n  "tornado_funnel_cloud"\n]',
+            "REORDER_HEADERS_LIST": '[\n  "stn",\n  "wban",\n  "date",\n  "year",\n  "mo",\n  "da",\n  "temp",\n  "count_temp",\n  "dewp",\n  "count_dewp",\n  "slp",\n  "count_slp",\n  "stp",\n  "count_stp",\n  "visib",\n  "count_visib",\n  "wdsp",\n  "count_wdsp",\n  "mxspd",\n  "gust",\n  "max",\n  "flag_max",\n  "min",\n  "flag_min",\n  "prcp",\n  "flag_prcp",\n  "sndp",\n  "fog",\n  "rain_drizzle",\n  "snow_ice_pellets",\n  "hail",\n  "thunder",\n  "tornado_funnel_cloud"\n]',
+        },
+    )
     delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
         task_id="delete_cluster",
         project_id="{{ var.value.gcp_project }}",
@@ -776,6 +846,8 @@ with DAG(
 
     (
         create_cluster
+        >> [noaa_gsod_2020, noaa_gsod_2022]
+        >> ghcnd_inventory
         >> [
             spc_hail,
             spc_wind,
@@ -784,7 +856,6 @@ with DAG(
             ghcnd_stations,
             gsod_stations,
             ghcnd_countries,
-            ghcnd_inventory,
         ]
         >> storms_database_by_year
         >> [noaa_goes16_mcmip, noaa_goes16_cmip, noaa_goes16_glm]

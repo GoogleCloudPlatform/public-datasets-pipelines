@@ -285,7 +285,7 @@ def execute_pipeline(
             gen_location_list=gen_location_list,
         )
         return None
-    if pipeline_name in ["NOAA GSOD 2022"]:
+    if pipeline_name in ["NOAA GSOD 2020", "NOAA GSOD 2022"]:
         src_url_root = source_url[pipeline_name.replace(" ", "_").lower()]
         files = url_directory_list(source_url_path=src_url_root, file_pattern=".csv")
         file_cnt = len(files)
@@ -1168,7 +1168,7 @@ def process_chunk(
     ]:
         df = rename_headers(df, rename_headers_list=rename_headers_list)
         df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
-    if pipeline_name in ["NOAA GSOD 2022"]:
+    if pipeline_name in ["NOAA GSOD 2020", "NOAA GSOD 2022"]:
         df["stn"] = df["STATION"].apply(lambda x: "" if x == "" else x[0:6])
         df["wban"] = df["STATION"].apply(lambda x: "" if x == "" else x[6:11])
         df["year"] = df["DATE"].apply(lambda x: "" if x == "" else x[0:4])
