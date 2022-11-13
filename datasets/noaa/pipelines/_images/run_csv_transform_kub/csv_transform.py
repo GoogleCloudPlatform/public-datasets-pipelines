@@ -355,7 +355,7 @@ def execute_pipeline(
         source_file_path = os.path.split(source_file)[0]
         source_file_name = os.path.basename(src_url_root)
         source_file_zip = f"{source_file_path}/{source_file_name}"
-        with zipfile.ZipFile(source_file_zip, 'r') as zip_ref:
+        with zipfile.ZipFile(source_file_zip, "r") as zip_ref:
             zip_ref.extractall(os.path.split(source_file)[0])
         df = geo.read_file(shape_file)
         save_to_new_file(df, source_file)
@@ -387,7 +387,6 @@ def execute_pipeline(
             int_date_list=int_date_list,
             gen_location_list=gen_location_list,
         )
-        import pdb; pdb.set_trace()
         return None
     if pipeline_name in [
         "GHCND countries",
