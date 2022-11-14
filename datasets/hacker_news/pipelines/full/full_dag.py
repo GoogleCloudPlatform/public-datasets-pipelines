@@ -26,7 +26,7 @@ default_args = {
 
 
 with DAG(
-    dag_id="hacker_news.hacker_news",
+    dag_id="hacker_news.full",
     default_args=default_args,
     max_active_runs=1,
     schedule_interval="@yearly",
