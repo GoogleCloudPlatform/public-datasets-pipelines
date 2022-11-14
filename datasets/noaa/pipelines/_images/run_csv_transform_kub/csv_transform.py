@@ -21,6 +21,7 @@ import logging
 import os
 import pathlib
 import re
+import sys
 import time
 import typing
 import zipfile
@@ -359,6 +360,10 @@ def execute_pipeline(
             zip_ref.extractall(os.path.split(source_file)[0])
         df = geo.read_file(shape_file)
         save_to_new_file(df, source_file)
+        if number_of_header_rows > 0:
+            remove_header_rows(source_file, number_of_header_rows=number_of_header_rows)
+        else:
+            pass
         process_and_load_table(
             source_file=source_file,
             target_file=target_file,
@@ -1041,11 +1046,11 @@ def process_source_file(
     remove_source_file: bool = False,
 ) -> None:
     logging.info(f"Opening source file {source_file}")
-    csv.field_size_limit(512 << 10)
+    csv.field_size_limit(sys.maxsize)
     csv.register_dialect(
         "TabDialect", quotechar='"', delimiter=input_field_delimiter, strict=True
     )
-    with open(source_file, encoding=encoding, mode="r") as reader:
+    with open(source_file, encoding=encoding, mode="r", ) as reader:
         data = []
         chunk_number = 1
         for index, line in enumerate(
