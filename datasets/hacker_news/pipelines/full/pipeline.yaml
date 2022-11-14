@@ -21,7 +21,7 @@ resources:
 dag:
   airflow_version: 2
   initialize:
-    dag_id: hacker_news
+    dag_id: full
     default_args:
       owner: "Google"
       depends_on_past: False
