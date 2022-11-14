@@ -434,7 +434,7 @@ def execute_pipeline(
         return None
     if pipeline_name == "GHCND hurricanes":
         src_url = source_url[pipeline_name.replace(" ", "_").lower()]
-        download_file(src_url, source_file)
+        download_file_http(src_url, source_file)
         if number_of_header_rows > 0:
             remove_header_rows(source_file, number_of_header_rows=number_of_header_rows)
         else:
@@ -878,7 +878,7 @@ def process_lightning_strikes_by_year(
                 source_file_zipped = f"{source_file_path}/{url_file_name}"
                 source_file_year = str.replace(str(source_file), ".csv", f"_{yr}.csv")
                 target_file_year = str.replace(str(target_file), ".csv", f"_{yr}.csv")
-                download_file(url, source_file_zipped)
+                download_file_http(url, source_file_zipped)
                 gz_decompress(
                     infile=source_file_zipped,
                     tofile=source_file_year,
@@ -1621,15 +1621,15 @@ def append_batch_file(
                 os.remove(batch_file_path)
 
 
-def download_file(source_url: str, source_file: pathlib.Path) -> None:
-    logging.info(f"Downloading {source_url} to {source_file}")
-    r = requests.get(source_url, stream=True)
-    if r.status_code == 200:
-        with open(source_file, "wb") as f:
-            for chunk in r:
-                f.write(chunk)
-    else:
-        logging.error(f"Couldn't download {source_url}: {r.text}")
+# def download_file(source_url: str, source_file: pathlib.Path) -> None:
+#     logging.info(f"Downloading {source_url} to {source_file}")
+#     r = requests.get(source_url, stream=True)
+#     if r.status_code == 200:
+#         with open(source_file, "wb") as f:
+#             for chunk in r:
+#                 f.write(chunk)
+#     else:
+#         logging.error(f"Couldn't download {source_url}: {r.text}")
 
 
 def download_file_ftp(
@@ -1674,6 +1674,29 @@ def download_file_ftp_single_try(
 
 
 def download_file_http(
+    source_url: str,
+    source_file: pathlib.Path,
+    continue_on_error: bool = False,
+    quiet_mode: bool = False,
+    no_of_retries: int = 5,
+) -> bool:
+    for retries in (0, no_of_retries):
+        if not download_file_http_exec(
+            source_url=source_url,
+            source_file=source_file,
+            continue_on_error=continue_on_error,
+            quiet_mode=quiet_mode,
+        ):
+            logging.info(
+                f"Unable to download file {source_url}.  Retry {retries} of {no_of_retries}"
+            )
+            time.sleep(3)
+        else:
+            return True
+    return False
+
+
+def download_file_http_exec(
     source_url: str,
     source_file: pathlib.Path,
     continue_on_error: bool = False,
