@@ -1,0 +1,86 @@
+[
+	{
+	  "name": "title",
+	  "type": "string",
+	  "description": "Story title",
+	  "mode": "nullable"
+	},
+	{
+	  "name": "url",
+	  "type": "string",
+	  "description": "Story url",
+	  "mode": "nullable"
+	},
+	{
+	  "name": "text",
+	  "type": "string",
+	  "description": "Story or comment text",
+	  "mode": "nullable"
+	},
+	{
+	  "name": "dead",
+	  "type": "boolean",
+	  "description": "Is dead?",
+	  "mode": "nullable"
+	},
+	{
+	  "name": "by",
+	  "type": "string",
+	  "description": "The username of the item's author.",
+	  "mode": "nullable"
+	},
+	{
+	  "name": "score",
+	  "type": "integer",
+	  "description": "Story score",
+	  "mode": "nullable"
+	},
+	{
+	  "name": "time",
+	  "type": "integer",
+	  "description": "Unix time",
+	  "mode": "nullable"
+	},
+	{
+	  "name": "timestamp",
+	  "type": "timestamp",
+	  "description": "Timestamp for the unix time",
+	  "mode": "nullable"
+	},
+	{
+	  "name": "type",
+	  "type": "string",
+	  "description": "Type of details (comment, comment_ranking, poll, story, job, pollopt)",
+	  "mode": "nullable"
+	},
+	{
+	  "name": "id",
+	  "type": "integer",
+	  "description": "The item's unique id.",
+	  "mode": "nullable"
+	},
+	{
+	  "name": "parent",
+	  "type": "integer",
+	  "description": "Parent comment ID",
+	  "mode": "nullable"
+	},
+	{
+	  "name": "descendants",
+	  "type": "integer",
+	  "description": "Number of story or poll descendants",
+	  "mode": "nullable"
+	},
+	{
+	  "name": "ranking",
+	  "type": "integer",
+	  "description": "Comment ranking",
+	  "mode": "nullable"
+	},
+	{
+	  "name": "deleted",
+	  "type": "boolean",
+	  "description": "Is deleted?",
+	  "mode": "nullable"
+	}
+  ]
