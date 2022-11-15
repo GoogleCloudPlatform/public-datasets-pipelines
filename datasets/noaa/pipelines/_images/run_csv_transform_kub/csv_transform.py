@@ -187,7 +187,6 @@ def execute_pipeline(
             process_and_load_table(
                 source_file=source_file_unzipped,
                 target_file=target_file_year,
-                shape_file=shape_file,
                 pipeline_name=pipeline_name,
                 source_url=source_url_year,
                 chunksize=chunksize,
@@ -221,7 +220,6 @@ def execute_pipeline(
         process_and_load_table(
             source_file=source_file,
             target_file=target_file,
-            shape_file=shape_file,
             pipeline_name=pipeline_name,
             source_url=src_url,
             chunksize=chunksize,
@@ -267,7 +265,6 @@ def execute_pipeline(
         process_and_load_table(
             source_file=source_file,
             target_file=target_file,
-            shape_file=shape_file,
             pipeline_name=pipeline_name,
             source_url=src_url,
             chunksize=chunksize,
@@ -323,7 +320,6 @@ def execute_pipeline(
         process_and_load_table(
             source_file=source_file,
             target_file=target_file,
-            shape_file=shape_file,
             pipeline_name=pipeline_name,
             source_url=src_url_root,
             chunksize=chunksize,
@@ -410,7 +406,6 @@ def execute_pipeline(
         process_and_load_table(
             source_file=source_file,
             target_file=target_file,
-            shape_file=shape_file,
             pipeline_name=pipeline_name,
             source_url=src_url,
             chunksize=chunksize,
@@ -447,7 +442,6 @@ def execute_pipeline(
         process_and_load_table(
             source_file=source_file,
             target_file=target_file,
-            shape_file=shape_file,
             pipeline_name=pipeline_name,
             source_url=src_url,
             chunksize=chunksize,
@@ -479,7 +473,6 @@ def execute_pipeline(
         process_lightning_strikes_by_year(
             source_file=source_file,
             target_file=target_file,
-            shape_file=shape_file,
             pipeline_name=pipeline_name,
             source_url=src_url,
             chunksize=chunksize,
