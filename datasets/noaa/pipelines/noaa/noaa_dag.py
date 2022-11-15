@@ -837,40 +837,6 @@ with DAG(
             "REORDER_HEADERS_LIST": '[\n  "stn",\n  "wban",\n  "date",\n  "year",\n  "mo",\n  "da",\n  "temp",\n  "count_temp",\n  "dewp",\n  "count_dewp",\n  "slp",\n  "count_slp",\n  "stp",\n  "count_stp",\n  "visib",\n  "count_visib",\n  "wdsp",\n  "count_wdsp",\n  "mxspd",\n  "gust",\n  "max",\n  "flag_max",\n  "min",\n  "flag_min",\n  "prcp",\n  "flag_prcp",\n  "sndp",\n  "fog",\n  "rain_drizzle",\n  "snow_ice_pellets",\n  "hail",\n  "thunder",\n  "tornado_funnel_cloud"\n]',
         },
     )
-
-    # Run NOAA load processes - NWS Forecast Regions
-    nws_forecast_regions = kubernetes_engine.GKEStartPodOperator(
-        task_id="nws_forecast_regions",
-        name="noaa.nws_forecast_regions",
-        project_id="{{ var.value.gcp_project }}",
-        location="us-central1-c",
-        cluster_name="noaa",
-        namespace="default",
-        image_pull_policy="Always",
-        image="{{ var.json.noaa.container_registry.run_csv_transform_kub }}",
-        env_vars={
-            "PIPELINE_NAME": "NOAA NWS Forecast Regions",
-            "SOURCE_URL": '{\n  "noaa_nws_forecast_regions": "https://www.weather.gov/source/gis/Shapefiles/WSOM/z_22mr22.zip"\n}',
-            "SOURCE_FILE": "files/data_nws_forecast_regions.csv",
-            "TARGET_FILE": "files/data_output_nws_forecast_regions.csv",
-            "SHAPE_FILE": "files/z_22mr22/z_22mr22.shp",
-            "CHUNKSIZE": "100000",
-            "PROJECT_ID": "{{ var.value.gcp_project }}",
-            "DATASET_ID": "geo_us_boundaries",
-            "TABLE_ID": "nws_forecast_regions",
-            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
-            "TARGET_GCS_PATH": "data/noaa/nws_forecast_regions/data_output.csv",
-            "SCHEMA_PATH": "data/noaa/schema/nws_forecast_regions_schema.json",
-            "DROP_DEST_TABLE": "N",
-            "INPUT_FIELD_DELIMITER": ",",
-            "FULL_DATA_LOAD": "N",
-            "REMOVE_SOURCE_FILE": "N",
-            "DELETE_TARGET_FILE": "N",
-            "NUMBER_OF_HEADER_ROWS": "1",
-            "INPUT_CSV_HEADERS": '[\n  "state",\n  "cwa",\n  "time_zone",\n  "fe_area",\n  "zone",\n  "name",\n  "state_zone",\n  "lon",\n  "lat",\n  "shortname",\n  "shape_geometry"\n]',
-            "RENAME_HEADERS_LIST": '{\n  "STATE": "state",\n  "CWA": "cwa",\n  "TIME_ZONE": "time_zone",\n  "FE_AREA": "fe_area",\n  "ZONE": "zone",\n  "NAME": "name",\n  "STATE_ZONE": "state_zone",\n  "LON": "lon",\n  "LAT": "lat",\n  "SHORTNAME": "shortname",\n  "geometry": "shape_geometry"\n}',
-        },
-    )
     delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
         task_id="delete_cluster",
         project_id="{{ var.value.gcp_project }}",
@@ -880,8 +846,6 @@ with DAG(
 
     (
         create_cluster
-        >> [noaa_gsod_2020, noaa_gsod_2022]
-        >> nws_forecast_regions
         >> [
             ghcnd_inventory,
             spc_hail,
@@ -897,6 +861,8 @@ with DAG(
         >> noaa_goes16_radiance
         >> [noaa_goes17_mcmip, noaa_goes17_cmip, noaa_goes17_glm]
         >> noaa_goes17_radiance
-        >> [ghcnd_by_year, ghcnd_hurricanes, lightning_strikes_by_year]
+        >> [ghcnd_by_year, lightning_strikes_by_year]
+        >> ghcnd_hurricanes
+        >> [noaa_gsod_2020, noaa_gsod_2022]
         >> delete_cluster
     )

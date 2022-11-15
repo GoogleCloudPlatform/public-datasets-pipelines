@@ -1626,17 +1626,6 @@ def append_batch_file(
                 os.remove(batch_file_path)
 
 
-# def download_file(source_url: str, source_file: pathlib.Path) -> None:
-#     logging.info(f"Downloading {source_url} to {source_file}")
-#     r = requests.get(source_url, stream=True)
-#     if r.status_code == 200:
-#         with open(source_file, "wb") as f:
-#             for chunk in r:
-#                 f.write(chunk)
-#     else:
-#         logging.error(f"Couldn't download {source_url}: {r.text}")
-
-
 def download_file_ftp(
     ftp_host: str,
     ftp_dir: str,

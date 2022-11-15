@@ -2992,68 +2992,6 @@ dag:
               "thunder",
               "tornado_funnel_cloud"
             ]
-    # NWS Forecast Regions requires further grooming before it can be implemented in production
-    # - operator: "GKEStartPodOperator"
-    #   description: "Run NOAA load processes - NWS Forecast Regions"
-    #   args:
-    #     task_id: "nws_forecast_regions"
-    #     name: "noaa.nws_forecast_regions"
-    #     project_id: "{{ var.value.gcp_project }}"
-    #     location: "us-central1-c"
-    #     cluster_name: noaa
-    #     namespace: "default"
-    #     image_pull_policy: "Always"
-    #     image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
-    #     env_vars:
-    #       PIPELINE_NAME: "NOAA NWS Forecast Regions"
-    #       SOURCE_URL: >-
-    #         {
-    #           "noaa_nws_forecast_regions": "https://www.weather.gov/source/gis/Shapefiles/WSOM/z_22mr22.zip"
-    #         }
-    #       SOURCE_FILE: "files/data_nws_forecast_regions.csv"
-    #       TARGET_FILE: "files/data_output_nws_forecast_regions.csv"
-    #       SHAPE_FILE: "files/z_22mr22/z_22mr22.shp"
-    #       CHUNKSIZE: "100000"
-    #       PROJECT_ID: "{{ var.value.gcp_project }}"
-    #       DATASET_ID: "geo_us_boundaries"
-    #       TABLE_ID: "nws_forecast_regions"
-    #       TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
-    #       TARGET_GCS_PATH: "data/noaa/nws_forecast_regions/data_output.csv"
-    #       SCHEMA_PATH: "data/noaa/schema/nws_forecast_regions_schema.json"
-    #       DROP_DEST_TABLE: "N"
-    #       INPUT_FIELD_DELIMITER: ","
-    #       FULL_DATA_LOAD: "N"
-    #       REMOVE_SOURCE_FILE: "N"
-    #       DELETE_TARGET_FILE: "N"
-    #       NUMBER_OF_HEADER_ROWS: "1"
-    #       INPUT_CSV_HEADERS: >-
-    #         [
-    #           "state",
-    #           "cwa",
-    #           "time_zone",
-    #           "fe_area",
-    #           "zone",
-    #           "name",
-    #           "state_zone",
-    #           "lon",
-    #           "lat",
-    #           "shortname",
-    #           "shape_geometry"
-    #         ]
-    #       RENAME_HEADERS_LIST: >-
-    #         {
-    #           "STATE": "state",
-    #           "CWA": "cwa",
-    #           "TIME_ZONE": "time_zone",
-    #           "FE_AREA": "fe_area",
-    #           "ZONE": "zone",
-    #           "NAME": "name",
-    #           "STATE_ZONE": "state_zone",
-    #           "LON": "lon",
-    #           "LAT": "lat",
-    #           "SHORTNAME": "shortname",
-    #           "geometry": "shape_geometry"
-    #         }
     - operator: "GKEDeleteClusterOperator"
       args:
         task_id: "delete_cluster"
@@ -3062,5 +3000,4 @@ dag:
         name: noaa
 
   graph_paths:
-    - "create_cluster >> [noaa_gsod_2020, noaa_gsod_2022] >> [ ghcnd_inventory, spc_hail, spc_wind, spc_tornado, ghcnd_states, ghcnd_stations, gsod_stations, ghcnd_countries] >> storms_database_by_year >> [noaa_goes16_mcmip, noaa_goes16_cmip, noaa_goes16_glm] >> noaa_goes16_radiance >> [noaa_goes17_mcmip, noaa_goes17_cmip, noaa_goes17_glm] >> noaa_goes17_radiance >> [ghcnd_by_year, ghcnd_hurricanes, lightning_strikes_by_year ] >> delete_cluster"
-#    - "create_cluster >> [noaa_gsod_2020, noaa_gsod_2022] >> nws_forecast_regions >> [ ghcnd_inventory, spc_hail, spc_wind, spc_tornado, ghcnd_states, ghcnd_stations, gsod_stations, ghcnd_countries] >> storms_database_by_year >> [noaa_goes16_mcmip, noaa_goes16_cmip, noaa_goes16_glm] >> noaa_goes16_radiance >> [noaa_goes17_mcmip, noaa_goes17_cmip, noaa_goes17_glm] >> noaa_goes17_radiance >> [ghcnd_by_year, ghcnd_hurricanes, lightning_strikes_by_year ] >> delete_cluster"
+    - "create_cluster >> [ ghcnd_inventory, spc_hail, spc_wind, spc_tornado, ghcnd_states, ghcnd_stations, gsod_stations, ghcnd_countries] >> storms_database_by_year >> [noaa_goes16_mcmip, noaa_goes16_cmip, noaa_goes16_glm] >> noaa_goes16_radiance >> [noaa_goes17_mcmip, noaa_goes17_cmip, noaa_goes17_glm] >> noaa_goes17_radiance >> [ghcnd_by_year, lightning_strikes_by_year ] >> ghcnd_hurricanes >> [noaa_gsod_2020, noaa_gsod_2022] >> delete_cluster"
