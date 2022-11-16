@@ -1,5 +1,3 @@
 google-cloud-storage
 google-cloud-storage-transfer
-google-cloud-bigquery
-pandas
-psutil
+datetime
