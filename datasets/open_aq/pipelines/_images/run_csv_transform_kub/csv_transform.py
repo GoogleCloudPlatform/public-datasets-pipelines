@@ -27,9 +27,10 @@ from urllib.request import Request, urlopen
 import numpy as np
 import pandas as pd
 import requests
-from google.api_core.exceptions import NotFound, BadRequest
-from google.cloud import bigquery, storage
 import sh
+from google.api_core.exceptions import BadRequest, ClientError, NotFound
+from google.cloud import bigquery, storage
+from googletrans import Translator
 
 
 def main(
@@ -43,7 +44,8 @@ def main(
     target_gcs_path: str,
     schema_path: str,
     drop_dest_table: str,
-    date_format_list: typing.List[typing.List[str]]
+    date_format_list: typing.List[typing.List[str]],
+    english_translation_col_list: dict,
 ) -> None:
     logging.info(f"{pipeline_name} process started")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
@@ -58,7 +60,8 @@ def main(
         target_gcs_path=target_gcs_path,
         schema_path=schema_path,
         drop_dest_table=drop_dest_table,
-        date_format_list=date_format_list
+        date_format_list=date_format_list,
+        english_translation_col_list=english_translation_col_list,
     )
     logging.info(f"{pipeline_name} process completed")
 
@@ -74,30 +77,35 @@ def execute_pipeline(
     target_gcs_path: str,
     schema_path: str,
     drop_dest_table: str,
-    date_format_list: typing.List[typing.List[str]]
+    date_format_list: typing.List[typing.List[str]],
+    english_translation_col_list: dict,
 ) -> None:
     for url_key, url in source_url.items():
         logging.info(f"Processing table: {url_key} at url: {url}")
         src_file = str.replace(str(source_file), ".json", f"_{url_key}.json")
-        params = {
-                    "format": "json"
-                }
-        response = requests.get(url, headers={"accept": "application/json"}, params=params)
-        data = response.json() #convert to json
-        df = pd.DataFrame.from_dict(data["results"]) #convert json to dataframe
+        params = {"format": "json"}
+        response = requests.get(
+            url, headers={"accept": "application/json"}, params=params
+        )
+        data = response.json()  # convert to json
+        df = pd.DataFrame.from_dict(data["results"])  # convert json to dataframe
         df = source_convert_date_formats(df, date_format_list=date_format_list)
-        # df["firstUpdated"] = df["firstUpdated"].apply(lambda x: datetime.datetime.strptime(x, "%Y-%m-%dT%H:%M:%S%z").strftime("%Y-%m-%d %H:%M:%S"))
-        # df["lastUpdated"] = df["lastUpdated"].apply(lambda x: datetime.datetime.strptime(x, "%Y-%m-%dT%H:%M:%S%z").strftime("%Y-%m-%d %H:%M:%S"))
         df = add_metadata_cols(df=df, source_url=url)
+        logging.info("Creating english translation column")
+        translator = Translator()
+        translate_fieldname = english_translation_col_list[url_key]
+        df[f"{translate_fieldname}_en"] = df[f"{translate_fieldname}"].map(
+            lambda x: translator.translate(x, dest="en").text
+        )
         target_json_file = str(target_file).replace(".json", f"_{url_key}.json")
         logging.info(f"Writing output file to {target_json_file}")
-        df.to_json(target_json_file, orient="split")
+        df.to_json(target_json_file, orient="records", lines=True)
         if os.path.exists(target_json_file):
             upload_file_to_gcs(
-            file_path=target_json_file,
-            target_gcs_bucket=target_gcs_bucket,
-            target_gcs_path=target_gcs_path,
-        )
+                file_path=target_json_file,
+                target_gcs_bucket=target_gcs_bucket,
+                target_gcs_path=target_gcs_path,
+            )
         if drop_dest_table == "Y":
             drop_table = True
         else:
@@ -106,7 +114,9 @@ def execute_pipeline(
             project_id=project_id,
             dataset_id=dataset_id,
             table_id=url_key,
-            schema_filepath=schema_path.replace("_schema.json", f"_{url_key}_schema.json"),
+            schema_filepath=schema_path.replace(
+                "_schema.json", f"_{url_key}_schema.json"
+            ),
             bucket_name=target_gcs_bucket,
             drop_table=drop_table,
         )
@@ -118,8 +128,7 @@ def execute_pipeline(
                 file_path=target_json_file,
                 truncate_table=True,
                 source_url=url,
-                field_delimiter="|",
-                source_file_type = "json"
+                source_file_type="json",
             )
         else:
             error_msg = f"Error: Data was not loaded because the destination table {project_id}.{dataset_id}.{url_key} does not exist and/or could not be created."
@@ -128,7 +137,6 @@ def execute_pipeline(
         logging.info(
             f"Informational: The data file {target_file} was not generated because no data file was available.  Continuing."
         )
-    import pdb; pdb.set_trace()
 
 
 def download_file_http(
@@ -203,6 +211,7 @@ def add_metadata_cols(df: pd.DataFrame, source_url: str) -> pd.DataFrame:
     df["etl_timestamp"] = pd.to_datetime(
         datetime.datetime.now(), format="%Y-%m-%d %H:%M:%S", infer_datetime_format=True
     )
+    df["etl_timestamp"] = df["etl_timestamp"].apply(lambda x: str(x)[:19].replace("nan", ""))
     return df
 
 
@@ -239,7 +248,7 @@ def load_data_to_bq(
     source_url: str = "",
     field_delimiter: str = "|",
     quotechar: str = '"',
-    source_file_type: str = "csv"
+    source_file_type: str = "csv",
 ) -> None:
     logging.info(
         f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} started"
@@ -282,12 +291,11 @@ def load_data_to_bq(
         job = client.load_table_from_file(source_file, table_ref, job_config=job_config)
     try:
         job.result()
-    except BadRequest as ex:
+    # except BadRequest as ex:
+    except ClientError as e:
         logging.info("an error occurred ...")
-        import pdb; pdb.set_trace()
-        for err in ex.errors:
-            logging.info(err)
-        raise
+        print(job.errors)
+        raise e
     logging.info(
         f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} completed"
     )
@@ -436,5 +444,8 @@ if __name__ == "__main__":
         target_gcs_bucket=os.environ.get("TARGET_GCS_BUCKET", ""),
         target_gcs_path=os.environ.get("TARGET_GCS_PATH", ""),
         drop_dest_table=os.environ.get("DROP_DEST_TABLE", ""),
-        date_format_list=json.loads(os.environ.get("DATE_FORMAT_LIST", r"[]"))
+        date_format_list=json.loads(os.environ.get("DATE_FORMAT_LIST", r"[]")),
+        english_translation_col_list=json.loads(
+            os.environ.get("ENGLISH_TRANSLATION_COL_LIST", r"{}")
+        ),
     )

@@ -10,6 +10,11 @@
         "mode": "NULLABLE"
     },
     {
+        "name": "city_en",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
         "name": "count",
         "type": "INTEGER",
         "mode": "NULLABLE"
