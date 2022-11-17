@@ -15,19 +15,19 @@
 ---
 resources:
   - type: bigquery_table
-    table_id: "ghcnd_by_year"
+    table_id: "cities"
     description: "noaaspc"
 
 dag:
   airflow_version: 2
   initialize:
-    dag_id: noaa
+    dag_id: open_aq
     default_args:
       owner: "Google"
       depends_on_past: False
       start_date: '2021-03-01'
     max_active_runs: 1
-    schedule_interval: "30 1 * * *"
+    schedule_interval: "@once"
     catchup: False
     default_view: graph
 
@@ -38,8 +38,8 @@ dag:
         project_id: "{{ var.value.gcp_project }}"
         location: "us-central1-c"
         body:
-          name: open_aq
-          initial_node_count: 2
+          name: open-aq
+          initial_node_count: 1
           network: "{{ var.value.vpc_network }}"
           node_config:
             machine_type: e2-standard-16
@@ -53,7 +53,7 @@ dag:
         name: "openaq.open_aq"
         project_id: "{{ var.value.gcp_project }}"
         location: "us-central1-c"
-        cluster_name: open_aq
+        cluster_name: open-aq
         namespace: "default"
         image_pull_policy: "Always"
         image: "{{ var.json.open_aq.container_registry.run_csv_transform_kub }}"
@@ -64,6 +64,12 @@ dag:
               "cities": "https://api.openaq.org/v2/cities?limit=100000&page=1&offset=0&sort=asc&order_by=city",
               "countries": "https://api.openaq.org/v2/countries?limit=100000&page=1&offset=0&sort=asc&order_by=country",
               "locations": "https://api.openaq.org/v2/locations?limit=100&page=1&offset=0&sort=desc&radius=1000&order_by=lastUpdated&dumpRaw=false"
+            }
+          ENGLISH_TRANSLATION_COL_LIST: >-
+            {
+              "cities": [ "city" ],
+              "countries": [ "name" ],
+              "locations": [ "city", "name", "country" ]
             }
           SOURCE_FILE: "files/data.json"
           TARGET_FILE: "files/data_output.json"
@@ -79,14 +85,14 @@ dag:
               ["lastUpdated", "%Y-%m-%dT%H:%M:%S%z", "%Y-%m-%d %H:%M:%S" ]
             ]
         resources:
-          request_ephemeral_storage: "16G"
+          request_ephemeral_storage: "10G"
           limit_cpu: "3"
     - operator: "GKEDeleteClusterOperator"
       args:
         task_id: "delete_cluster"
         project_id: "{{ var.value.gcp_project }}"
         location: "us-central1-c"
-        name: open_aq
+        name: open-aq
 
   graph_paths:
-    - "create_cluster >> [ ghcnd_inventory, spc_hail, spc_wind, spc_tornado, ghcnd_states, ghcnd_stations, gsod_stations, ghcnd_countries] >> storms_database_by_year >> [noaa_goes16_mcmip, noaa_goes16_cmip, noaa_goes16_glm] >> noaa_goes16_radiance >> [noaa_goes17_mcmip, noaa_goes17_cmip, noaa_goes17_glm] >> noaa_goes17_radiance >> [ghcnd_by_year, lightning_strikes_by_year ] >> ghcnd_hurricanes >> [noaa_gsod_2020, noaa_gsod_2022] >> delete_cluster"
+    - "create_cluster >> open_aq >> delete_cluster"

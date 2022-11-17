@@ -94,9 +94,11 @@ def execute_pipeline(
         logging.info("Creating english translation column")
         translator = Translator()
         translate_fieldname = english_translation_col_list[url_key]
-        df[f"{translate_fieldname}_en"] = df[f"{translate_fieldname}"].map(
-            lambda x: translator.translate(x, dest="en").text
-        )
+        for fld in translate_fieldname:
+            logging.info(f"    ... {fld}")
+            df[f"{fld}_en"] = df[f"{fld}"].map(
+                lambda x: translator.translate(x, dest="en").text
+            )
         target_json_file = str(target_file).replace(".json", f"_{url_key}.json")
         logging.info(f"Writing output file to {target_json_file}")
         df.to_json(target_json_file, orient="records", lines=True)
@@ -104,7 +106,7 @@ def execute_pipeline(
             upload_file_to_gcs(
                 file_path=target_json_file,
                 target_gcs_bucket=target_gcs_bucket,
-                target_gcs_path=target_gcs_path,
+                target_gcs_path=target_gcs_path.replace(".json", f"_{url_key}.json"),
             )
         if drop_dest_table == "Y":
             drop_table = True
@@ -291,7 +293,6 @@ def load_data_to_bq(
         job = client.load_table_from_file(source_file, table_ref, job_config=job_config)
     try:
         job.result()
-    # except BadRequest as ex:
     except ClientError as e:
         logging.info("an error occurred ...")
         print(job.errors)
@@ -391,18 +392,26 @@ def create_table_schema(
         blob = bucket.blob(schema_filepath)
         schema_struct = json.loads(blob.download_as_bytes(client=None))
     for schema_field in schema_struct:
-        fld_name = schema_field["name"]
-        fld_type = schema_field["type"]
+        fld_name = str(schema_field["name"])
+        fld_type = str(schema_field["type"])
         try:
-            fld_descr = schema_field["description"]
+            fld_descr = str(schema_field["description"])
         except KeyError:
             fld_descr = ""
         fld_mode = schema_field["mode"]
-        schema.append(
-            bigquery.SchemaField(
-                name=fld_name, field_type=fld_type, mode=fld_mode, description=fld_descr
+        if fld_type == "RECORD":
+            fld_record = str(schema_field["fields"])
+            schema.append(
+                bigquery.SchemaField(
+                    name=fld_name, field_type=fld_type, mode=fld_mode, description=fld_descr, fields=fld_record
+                )
             )
-        )
+        else:
+            schema.append(
+                bigquery.SchemaField(
+                    name=fld_name, field_type=fld_type, mode=fld_mode, description=fld_descr
+                )
+            )
     return schema
 
 
