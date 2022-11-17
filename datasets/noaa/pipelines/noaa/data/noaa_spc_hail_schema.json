@@ -1,0 +1,58 @@
+[
+  {
+    "name": "timestamp",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "Timestamp in UTC"
+  },
+  {
+    "name": "time",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Hour in UTC"
+  },
+  {
+    "name": "size",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Size in 1/100 of an Inch (175 = 1.75in)"
+  },
+  {
+    "name": "location",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Location of report"
+  },
+  {
+    "name": "county",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "state",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "latitude",
+    "type": "FLOAT",
+    "mode": "NULLABLE",
+    "description": "Latitude to two decimal places"
+  },
+  {
+    "name": "longitude",
+    "type": "FLOAT",
+    "mode": "NULLABLE",
+    "description": "Longitude to two decimal places"
+  },
+  {
+    "name": "comments",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "report_point",
+    "type": "GEOGRAPHY",
+    "mode": "NULLABLE"
+  }
+]

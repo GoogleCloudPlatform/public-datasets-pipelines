@@ -1,0 +1,62 @@
+[
+    {
+        "name": "code",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "name",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "name_en",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "locations",
+        "type": "INTEGER",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "firstUpdated",
+        "type": "TIMESTAMP",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "lastUpdated",
+        "type": "TIMESTAMP",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "parameters",
+        "type": "STRING",
+        "mode": "REPEATED"
+    },
+    {
+        "name": "count",
+        "type": "INTEGER",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "cities",
+        "type": "INTEGER",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "sources",
+        "type": "INTEGER",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "source_url",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "etl_timestamp",
+        "type": "TIMESTAMP",
+        "mode": "NULLABLE"
+    }
+]

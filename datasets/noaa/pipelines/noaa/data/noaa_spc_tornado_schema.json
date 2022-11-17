@@ -1,0 +1,58 @@
+[
+  {
+    "name": "timestamp",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "Timestamp in UTC"
+  },
+  {
+    "name": "time",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Hour in UTC"
+  },
+  {
+    "name": "f_scale",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "The F-Scale classifies F0-F5 damage as calibrated by engineers and meteorologists across 28 different types of damage indicators (mainly various kinds of buildings, but also a few other structures as well as trees)."
+  },
+  {
+    "name": "location",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Location of report"
+  },
+  {
+    "name": "county",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "state",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "latitude",
+    "type": "FLOAT",
+    "mode": "NULLABLE",
+    "description": "Latitude to two decimal places"
+  },
+  {
+    "name": "longitude",
+    "type": "FLOAT",
+    "mode": "NULLABLE",
+    "description": "Longitude to two decimal places"
+  },
+  {
+    "name": "comments",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "report_point",
+    "type": "GEOGRAPHY",
+    "mode": "NULLABLE"
+  }
+]

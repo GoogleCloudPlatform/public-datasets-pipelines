@@ -1,0 +1,176 @@
+[
+  {
+    "name": "dataset_name",
+    "type": "string",
+    "description": "Dataset filename.",
+    "mode": "nullable"
+  },
+  {
+    "name": "platform_id",
+    "type": "string",
+    "description": "Identifier for the GOES satellite. Possible values are \"G16\" and \"G17\". Currently, \"G16\".",
+    "mode": "nullable"
+  },
+  {
+    "name": "orbital_slot",
+    "type": "string",
+    "description": "Designated operating slot for the satellite. Possible values are \"GOES-East\", \"GOES-West\", \"GOES-East\", and \"GOES-Storage\". Currently, \"GOES-East\".",
+    "mode": "nullable"
+  },
+  {
+    "name": "timeline_id",
+    "type": "string",
+    "description": "ABI scanning mode of operation. Possible values are \"ABI Mode 3\" and \"ABI Mode 4\". Full Disk images are generated in ABI scanning Mode 3 and 4, while Mesoscale and CONUS images are only generated in ABI scanning Mode 3.",
+    "mode": "nullable"
+  },
+  {
+    "name": "scene_id",
+    "type": "string",
+    "description": "One of three geographic coverage regions imaged by ABI. Possible values are \"Full Disk\", \"CONUS\", and \"Mesoscale\".",
+    "mode": "nullable"
+  },
+  {
+    "name": "band_id",
+    "type": "string",
+    "description": "ABI band or channel number. Possible values are \"01\" through \"16\". Bands 1 - 6 are reflectance factor values. Bands 7 - 16 are brightness temperature values.",
+    "mode": "nullable"
+  },
+  {
+    "name": "time_coverage_start",
+    "type": "timestamp",
+    "description": "Date and time of the first data point in the dataset (UTC). Format is YYYY-MM-DD”T”HH:MM:SS.s”Z”.",
+    "mode": "nullable"
+  },
+  {
+    "name": "time_coverage_end",
+    "type": "timestamp",
+    "description": "Date and time of the last data point in the dataset (UTC). Format is YYYY-MM-DD”T”HH:MM:SS.s”Z”.",
+    "mode": "nullable"
+  },
+  {
+    "name": "date_created",
+    "type": "timestamp",
+    "description": "Date and time when dataset file was created (UTC). Format is YYYY-MM-DD”T”HH:MM:SS.s”Z”.",
+    "mode": "nullable"
+  },
+  {
+    "name": "geospatial_westbound_longitude",
+    "type": "float",
+    "description": "Westernmost longitude in decimal degrees covered by the dataset.",
+    "mode": "nullable"
+  },
+  {
+    "name": "geospatial_northbound_latitude",
+    "type": "float",
+    "description": "Northernmost latitude in decimal degrees covered by the dataset.",
+    "mode": "nullable"
+  },
+  {
+    "name": "geospatial_eastbound_longitude",
+    "type": "float",
+    "description": "Easternmost longitude in decimal degrees covered by the dataset.",
+    "mode": "nullable"
+  },
+  {
+    "name": "geospatial_southbound_latitude",
+    "type": "float",
+    "description": "Southernmost latitude in decimal degrees covered by the dataset.",
+    "mode": "nullable"
+  },
+  {
+    "name": "nominal_satellite_subpoint_lon",
+    "type": "float",
+    "description": "Longitude of satellite subpoint in decimal degrees.",
+    "mode": "nullable"
+  },
+  {
+    "name": "total_number_of_points",
+    "type": "integer",
+    "description": "Number of geolocated/not missing pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "valid_pixel_count",
+    "type": "integer",
+    "description": "Number of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "outlier_pixel_count",
+    "type": "integer",
+    "description": "Number of cloud and moisture imagery pixels with values outside the valid measurement range.",
+    "mode": "nullable"
+  },
+  {
+    "name": "min_reflectance_factor",
+    "type": "float",
+    "description": "Minimum reflectance factor value of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "max_reflectance_factor",
+    "type": "float",
+    "description": "Maximum reflectance factor value of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "mean_reflectance_factor",
+    "type": "float",
+    "description": "Mean reflectance factor value of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "std_dev_reflectance_factor",
+    "type": "float",
+    "description": "Standard deviation of reflectance factor values of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "min_brightness_temperature",
+    "type": "float",
+    "description": "Minimum brightness temperature value of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "max_brightness_temperature",
+    "type": "float",
+    "description": "Maximum brightness temperature value of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "mean_brightness_temperature",
+    "type": "float",
+    "description": "Mean brightness temperature value of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "std_dev_brightness_temperature",
+    "type": "float",
+    "description": "Standard deviation of brightness temperature values of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "percent_uncorrectable_grb_errors",
+    "type": "float",
+    "description": "Percentage of data lost due to uncorrectable GRB errors.",
+    "mode": "nullable"
+  },
+  {
+    "name": "percent_uncorrectable_l0_errors",
+    "type": "float",
+    "description": "Percentage of data lost due to uncorrectable L0 errors.",
+    "mode": "nullable"
+  },
+  {
+    "name": "total_size",
+    "type": "integer",
+    "description": "Size of the underlying .nc file(s) in bytes.",
+    "mode": "nullable"
+  },
+  {
+    "name": "base_url",
+    "type": "string",
+    "description": "Location in Google Cloud Storage for the underlying source file.",
+    "mode": "nullable"
+  }
+]

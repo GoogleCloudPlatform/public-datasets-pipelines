@@ -1,0 +1,608 @@
+[
+  {
+    "name": "dataset_name",
+    "type": "string",
+    "description": "Dataset filename.",
+    "mode": "nullable"
+  },
+  {
+    "name": "platform_id",
+    "type": "string",
+    "description": "Identifier for the GOES satellite. Possible values are \"G16\" and \"G17\". Currently, \"G16\".",
+    "mode": "nullable"
+  },
+  {
+    "name": "orbital_slot",
+    "type": "string",
+    "description": "Designated operating slot for the satellite. Possible values are \"GOES-East\", \"GOES-West\", \"GOES-Test\", and \"GOES-Storage\". Currently, \"GOES-East\".",
+    "mode": "nullable"
+  },
+  {
+    "name": "timeline_id",
+    "type": "string",
+    "description": "ABI scanning mode of operation. Possible values are \"ABI Mode 3\" and \"ABI Mode 4\". Full Disk images are generated in ABI scanning Mode 3 and 4, while Mesoscale and CONUS images are only generated in ABI scanning Mode 3.",
+    "mode": "nullable"
+  },
+  {
+    "name": "scene_id",
+    "type": "string",
+    "description": "One of three geographic coverage regions imaged by ABI. Possible values are \"Full Disk\", \"CONUS\", and \"Mesoscale\".",
+    "mode": "nullable"
+  },
+  {
+    "name": "time_coverage_start",
+    "type": "timestamp",
+    "description": "Date and time of the first data point in the dataset (UTC). Format is YYYY-MM-DD”T”HH:MM:SS.s”Z”.",
+    "mode": "nullable"
+  },
+  {
+    "name": "time_coverage_end",
+    "type": "timestamp",
+    "description": "Date and time of the last data point in the dataset (UTC). Format is YYYY-MM-DD”T”HH:MM:SS.s”Z”.",
+    "mode": "nullable"
+  },
+  {
+    "name": "date_created",
+    "type": "timestamp",
+    "description": "Date and time when dataset file was created (UTC). Format is YYYY-MM-DD”T”HH:MM:SS.s”Z”.",
+    "mode": "nullable"
+  },
+  {
+    "name": "geospatial_westbound_longitude",
+    "type": "float",
+    "description": "Westernmost longitude in decimal degrees covered by the dataset.",
+    "mode": "nullable"
+  },
+  {
+    "name": "geospatial_northbound_latitude",
+    "type": "float",
+    "description": "Northernmost latitude in decimal degrees covered by the dataset.",
+    "mode": "nullable"
+  },
+  {
+    "name": "geospatial_eastbound_longitude",
+    "type": "float",
+    "description": "Easternmost longitude in decimal degrees covered by the dataset.",
+    "mode": "nullable"
+  },
+  {
+    "name": "geospatial_southbound_latitude",
+    "type": "float",
+    "description": "Southernmost latitude in decimal degrees covered by the dataset.",
+    "mode": "nullable"
+  },
+  {
+    "name": "nominal_satellite_subpoint_lon",
+    "type": "float",
+    "description": "Longitude of satellite subpoint in decimal degrees.",
+    "mode": "nullable"
+  },
+  {
+    "name": "outlier_pixel_count_c01",
+    "type": "integer",
+    "description": "Number of band 1 cloud and moisture imagery pixels with values outside the valid measurement range.",
+    "mode": "nullable"
+  },
+  {
+    "name": "outlier_pixel_count_c02",
+    "type": "integer",
+    "description": "Number of band 2 cloud and moisture imagery pixels with values outside the valid measurement range.",
+    "mode": "nullable"
+  },
+  {
+    "name": "outlier_pixel_count_c03",
+    "type": "integer",
+    "description": "Number of band 3 cloud and moisture imagery pixels with values outside the valid measurement range.",
+    "mode": "nullable"
+  },
+  {
+    "name": "outlier_pixel_count_c04",
+    "type": "integer",
+    "description": "Number of band 4 cloud and moisture imagery pixels with values outside the valid measurement range.",
+    "mode": "nullable"
+  },
+  {
+    "name": "outlier_pixel_count_c05",
+    "type": "integer",
+    "description": "Number of band 5 cloud and moisture imagery pixels with values outside the valid measurement range.",
+    "mode": "nullable"
+  },
+  {
+    "name": "outlier_pixel_count_c06",
+    "type": "integer",
+    "description": "Number of band 6 cloud and moisture imagery pixels with values outside the valid measurement range.",
+    "mode": "nullable"
+  },
+  {
+    "name": "outlier_pixel_count_c07",
+    "type": "integer",
+    "description": "Number of band 7 cloud and moisture imagery pixels with values outside the valid measurement range.",
+    "mode": "nullable"
+  },
+  {
+    "name": "outlier_pixel_count_c08",
+    "type": "integer",
+    "description": "Number of band 8 cloud and moisture imagery pixels with values outside the valid measurement range.",
+    "mode": "nullable"
+  },
+  {
+    "name": "outlier_pixel_count_c09",
+    "type": "integer",
+    "description": "Number of band 9 cloud and moisture imagery pixels with values outside the valid measurement range.",
+    "mode": "nullable"
+  },
+  {
+    "name": "outlier_pixel_count_c10",
+    "type": "integer",
+    "description": "Number of band 10 cloud and moisture imagery pixels with values outside the valid measurement range.",
+    "mode": "nullable"
+  },
+  {
+    "name": "outlier_pixel_count_c11",
+    "type": "integer",
+    "description": "Number of band 11 cloud and moisture imagery pixels with values outside the valid measurement range.",
+    "mode": "nullable"
+  },
+  {
+    "name": "outlier_pixel_count_c12",
+    "type": "integer",
+    "description": "Number of band 12 cloud and moisture imagery pixels with values outside the valid measurement range.",
+    "mode": "nullable"
+  },
+  {
+    "name": "outlier_pixel_count_c13",
+    "type": "integer",
+    "description": "Number of band 13 cloud and moisture imagery pixels with values outside the valid measurement range.",
+    "mode": "nullable"
+  },
+  {
+    "name": "outlier_pixel_count_c14",
+    "type": "integer",
+    "description": "Number of band 14 cloud and moisture imagery pixels with values outside the valid measurement range.",
+    "mode": "nullable"
+  },
+  {
+    "name": "outlier_pixel_count_c15",
+    "type": "integer",
+    "description": "Number of band 15 cloud and moisture imagery pixels with values outside the valid measurement range.",
+    "mode": "nullable"
+  },
+  {
+    "name": "outlier_pixel_count_c16",
+    "type": "integer",
+    "description": "Number of band 16 cloud and moisture imagery pixels with values outside the valid measurement range.",
+    "mode": "nullable"
+  },
+  {
+    "name": "min_reflectance_factor_c01",
+    "type": "float",
+    "description": "Minimum reflectance factor value for band 1 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "max_reflectance_factor_c01",
+    "type": "float",
+    "description": "Maximum reflectance factor value for band 1 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "mean_reflectance_factor_c01",
+    "type": "float",
+    "description": "Mean reflectance factor value for band 1 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "std_dev_reflectance_factor_c01",
+    "type": "float",
+    "description": "Standard deviation of reflectance factor values for band 1 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "min_reflectance_factor_c02",
+    "type": "float",
+    "description": "minimum reflectance factor value of band 2 pixels - good and conditionally usable quality pixels only",
+    "mode": "nullable"
+  },
+  {
+    "name": "max_reflectance_factor_c02",
+    "type": "float",
+    "description": "maximum reflectance factor value of band 2 pixels - good and conditionally usable quality pixels only",
+    "mode": "nullable"
+  },
+  {
+    "name": "mean_reflectance_factor_c02",
+    "type": "float",
+    "description": "mean reflectance factor value of band 2 pixels - good and conditionally usable quality pixels only",
+    "mode": "nullable"
+  },
+  {
+    "name": "std_dev_reflectance_factor_c02",
+    "type": "float",
+    "description": "standard deviation of reflectance factor values of band 2 pixels - good and conditionally usable quality pixels only",
+    "mode": "nullable"
+  },
+  {
+    "name": "min_reflectance_factor_c03",
+    "type": "float",
+    "description": "minimum reflectance factor value of band 3 pixels - good and conditionally usable quality pixels only",
+    "mode": "nullable"
+  },
+  {
+    "name": "max_reflectance_factor_c03",
+    "type": "float",
+    "description": "maximum reflectance factor value of band 3 pixels - good and conditionally usable quality pixels only",
+    "mode": "nullable"
+  },
+  {
+    "name": "mean_reflectance_factor_c03",
+    "type": "float",
+    "description": "mean reflectance factor value of band 3 pixels - good and conditionally usable quality pixels only",
+    "mode": "nullable"
+  },
+  {
+    "name": "std_dev_reflectance_factor_c03",
+    "type": "float",
+    "description": "standard deviation of reflectance factor values of band 3 pixels - good and conditionally usable quality pixels only",
+    "mode": "nullable"
+  },
+  {
+    "name": "min_reflectance_factor_c04",
+    "type": "float",
+    "description": "minimum reflectance factor value of band 4 pixels - good and conditionally usable quality pixels only",
+    "mode": "nullable"
+  },
+  {
+    "name": "max_reflectance_factor_c04",
+    "type": "float",
+    "description": "maximum reflectance factor value of band 4 pixels - good and conditionally usable quality pixels only",
+    "mode": "nullable"
+  },
+  {
+    "name": "mean_reflectance_factor_c04",
+    "type": "float",
+    "description": "mean reflectance factor value of band 4 pixels - good and conditionally usable quality pixels only",
+    "mode": "nullable"
+  },
+  {
+    "name": "std_dev_reflectance_factor_c04",
+    "type": "float",
+    "description": "standard deviation of reflectance factor values of band 4 pixels - good and conditionally usable quality pixels only",
+    "mode": "nullable"
+  },
+  {
+    "name": "min_reflectance_factor_c05",
+    "type": "float",
+    "description": "minimum reflectance factor value of band 5 pixels - good and conditionally usable quality pixels only",
+    "mode": "nullable"
+  },
+  {
+    "name": "max_reflectance_factor_c05",
+    "type": "float",
+    "description": "maximum reflectance factor value of band 5 pixels - good and conditionally usable quality pixels only",
+    "mode": "nullable"
+  },
+  {
+    "name": "mean_reflectance_factor_c05",
+    "type": "float",
+    "description": "mean reflectance factor value of band 5 pixels - good and conditionally usable quality pixels only",
+    "mode": "nullable"
+  },
+  {
+    "name": "std_dev_reflectance_factor_c05",
+    "type": "float",
+    "description": "standard deviation of reflectance factor values of band 5 pixels - good and conditionally usable quality pixels only",
+    "mode": "nullable"
+  },
+  {
+    "name": "min_reflectance_factor_c06",
+    "type": "float",
+    "description": "minimum reflectance factor value of band 6 pixels - good and conditionally usable quality pixels only",
+    "mode": "nullable"
+  },
+  {
+    "name": "max_reflectance_factor_c06",
+    "type": "float",
+    "description": "maximum reflectance factor value of band 6 pixels - good and conditionally usable quality pixels only",
+    "mode": "nullable"
+  },
+  {
+    "name": "mean_reflectance_factor_c06",
+    "type": "float",
+    "description": "mean reflectance factor value of band 6 pixels - good and conditionally usable quality pixels only",
+    "mode": "nullable"
+  },
+  {
+    "name": "std_dev_reflectance_factor_c06",
+    "type": "float",
+    "description": "standard deviation of reflectance factor values of band 6 pixels - good and conditionally usable quality pixels only",
+    "mode": "nullable"
+  },
+  {
+    "name": "min_brightness_temperature_c07",
+    "type": "float",
+    "description": "Minimum brightness temperature value for band 7 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "max_brightness_temperature_c07",
+    "type": "float",
+    "description": "Maximum brightness temperature value for band 7 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "mean_brightness_temperature_c07",
+    "type": "float",
+    "description": "Mean brightness temperature value for band 7 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "std_dev_brightness_temperature_c07",
+    "type": "float",
+    "description": "Standard deviation of brightness temperature values for band 7 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "min_brightness_temperature_c08",
+    "type": "float",
+    "description": "Minimum brightness temperature value for band 8 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "max_brightness_temperature_c08",
+    "type": "float",
+    "description": "Maximum brightness temperature value for band 8 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "mean_brightness_temperature_c08",
+    "type": "float",
+    "description": "Mean brightness temperature value for band 8 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "std_dev_brightness_temperature_c08",
+    "type": "float",
+    "description": "Standard deviation of brightness temperature values for band 8 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "min_brightness_temperature_c09",
+    "type": "float",
+    "description": "Minimum brightness temperature value for band 9 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "max_brightness_temperature_c09",
+    "type": "float",
+    "description": "Maximum brightness temperature value for band 9 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "mean_brightness_temperature_c09",
+    "type": "float",
+    "description": "Mean brightness temperature value for band 9 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "std_dev_brightness_temperature_c09",
+    "type": "float",
+    "description": "Standard deviation of brightness temperature values for band 9 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "min_brightness_temperature_c10",
+    "type": "float",
+    "description": "Minimum brightness temperature value for band 10 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "max_brightness_temperature_c10",
+    "type": "float",
+    "description": "Maximum brightness temperature value for band 10 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "mean_brightness_temperature_c10",
+    "type": "float",
+    "description": "Mean brightness temperature value for band 10 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "std_dev_brightness_temperature_c10",
+    "type": "float",
+    "description": "Standard deviation of brightness temperature values for band 10 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "min_brightness_temperature_c11",
+    "type": "float",
+    "description": "Minimum brightness temperature value for band 11 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "max_brightness_temperature_c11",
+    "type": "float",
+    "description": "Maximum brightness temperature value for band 11 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "mean_brightness_temperature_c11",
+    "type": "float",
+    "description": "Mean brightness temperature value for band 11 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "std_dev_brightness_temperature_c11",
+    "type": "float",
+    "description": "Standard deviation of brightness temperature values for band 11 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "min_brightness_temperature_c12",
+    "type": "float",
+    "description": "Minimum brightness temperature value for band 12 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "max_brightness_temperature_c12",
+    "type": "float",
+    "description": "Maximum brightness temperature value for band 12 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "mean_brightness_temperature_c12",
+    "type": "float",
+    "description": "Mean brightness temperature value for band 12 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "std_dev_brightness_temperature_c12",
+    "type": "float",
+    "description": "Standard deviation of brightness temperature values for band 12 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "min_brightness_temperature_c13",
+    "type": "float",
+    "description": "Minimum brightness temperature value for band 13 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "max_brightness_temperature_c13",
+    "type": "float",
+    "description": "Maximum brightness temperature value for band 13 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "mean_brightness_temperature_c13",
+    "type": "float",
+    "description": "Mean brightness temperature value for band 13 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "std_dev_brightness_temperature_c13",
+    "type": "float",
+    "description": "Standard deviation of brightness temperature values for band 13 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "min_brightness_temperature_c14",
+    "type": "float",
+    "description": "Minimum brightness temperature value for band 14 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "max_brightness_temperature_c14",
+    "type": "float",
+    "description": "Maximum brightness temperature value for band 14 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "mean_brightness_temperature_c14",
+    "type": "float",
+    "description": "Mean brightness temperature value for band 14 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "std_dev_brightness_temperature_c14",
+    "type": "float",
+    "description": "Standard deviation of brightness temperature values for band 14 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "min_brightness_temperature_c15",
+    "type": "float",
+    "description": "Minimum brightness temperature value for band 15 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "max_brightness_temperature_c15",
+    "type": "float",
+    "description": "Maximum brightness temperature value for band 15 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "mean_brightness_temperature_c15",
+    "type": "float",
+    "description": "Mean brightness temperature value for band 15 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "std_dev_brightness_temperature_c15",
+    "type": "float",
+    "description": "Standard deviation of brightness temperature values for band 15 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "min_brightness_temperature_c16",
+    "type": "float",
+    "description": "Minimum brightness temperature value for band 16 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "max_brightness_temperature_c16",
+    "type": "float",
+    "description": "Maximum brightness temperature value for band 16 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "mean_brightness_temperature_c16",
+    "type": "float",
+    "description": "Mean brightness temperature value for band 16 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "std_dev_brightness_temperature_c16",
+    "type": "float",
+    "description": "Standard deviation of brightness temperature values for band 16 of good and conditionally usable quality pixels.",
+    "mode": "nullable"
+  },
+  {
+    "name": "percent_uncorrectable_grb_errors",
+    "type": "float",
+    "description": "Percentage of data lost due to uncorrectable GRB errors.",
+    "mode": "nullable"
+  },
+  {
+    "name": "percent_uncorrectable_l0_errors",
+    "type": "float",
+    "description": "Percentage of data lost due to uncorrectable L0 errors.",
+    "mode": "nullable"
+  },
+  {
+    "name": "min_brightness_temperature_c06",
+    "type": "float",
+    "description": "",
+    "mode": "nullable"
+  },
+  {
+    "name": "max_brightness_temperature_c06",
+    "type": "float",
+    "description": "",
+    "mode": "nullable"
+  },
+  {
+    "name": "mean_brightness_temperature_c06",
+    "type": "float",
+    "description": "",
+    "mode": "nullable"
+  },
+  {
+    "name": "std_dev_brightness_temperature_c06",
+    "type": "float",
+    "description": "",
+    "mode": "nullable"
+  },
+  {
+    "name": "total_size",
+    "type": "integer",
+    "description": "Size of the underlying .nc file(s) in bytes.",
+    "mode": "nullable"
+  },
+  {
+    "name": "base_url",
+    "type": "string",
+    "description": "Location in Google Cloud Storage for the underlying source file.",
+    "mode": "nullable"
+  }
+]

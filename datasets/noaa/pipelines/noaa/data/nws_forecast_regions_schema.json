@@ -1,0 +1,68 @@
+[
+  {
+    "name": "state",
+    "type": "string",
+    "description": "",
+    "mode": "nullable"
+  },
+  {
+    "name": "cwa",
+    "type": "string",
+    "description": "",
+    "mode": "nullable"
+  },
+  {
+    "name": "time_zone",
+    "type": "string",
+    "description": "",
+    "mode": "nullable"
+  },
+  {
+    "name": "fe_area",
+    "type": "string",
+    "description": "",
+    "mode": "nullable"
+  },
+  {
+    "name": "zone",
+    "type": "string",
+    "description": "",
+    "mode": "nullable"
+  },
+  {
+    "name": "name",
+    "type": "string",
+    "description": "",
+    "mode": "nullable"
+  },
+  {
+    "name": "state_zone",
+    "type": "string",
+    "description": "",
+    "mode": "nullable"
+  },
+  {
+    "name": "lon",
+    "type": "float",
+    "description": "",
+    "mode": "nullable"
+  },
+  {
+    "name": "lat",
+    "type": "float",
+    "description": "",
+    "mode": "nullable"
+  },
+  {
+    "name": "shortname",
+    "type": "string",
+    "description": "",
+    "mode": "nullable"
+  },
+  {
+    "name": "shape_geometry",
+    "type": "geography",
+    "description": "",
+    "mode": "nullable"
+  }
+]

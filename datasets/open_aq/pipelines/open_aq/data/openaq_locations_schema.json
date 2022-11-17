@@ -1,0 +1,133 @@
+[
+    {
+        "name": "id",
+        "type": "INTEGER",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "city",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "city_en",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "name",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "name_en",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "entity",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "country",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "country_en",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "sources",
+        "type": "RECORD",
+        "fields": [
+            {
+                "name": "url",
+                "type": "STRING"
+            },
+            {
+                "name": "name",
+                "type": "STRING"
+            },
+            {
+                "name": "id",
+                "type": "STRING"
+            },
+            {
+                "name": "readme",
+                "type": "STRING"
+            },
+            {
+                "name": "organization",
+                "type": "STRING"
+            },
+            {
+                "name": "lifecycle_stage",
+                "type": "STRING"
+            }
+        ],
+        "mode": "REPEATED"
+     },
+    {
+        "name": "isMobile",
+        "type": "BOOLEAN",
+        "mode": "REPEATED"
+    },
+    {
+        "name": "isAnalysis",
+        "type": "BOOLEAN",
+        "mode": "REPEATED"
+    },
+    {
+        "name": "parameters",
+        "type": "STRING",
+        "mode": "REPEATED"
+    },
+    {
+        "name": "sensor_type",
+        "type": "STRING",
+        "mode": "REPEATED"
+    },
+    {
+        "name": "coordinates",
+        "type": "STRING",
+        "mode": "REPEATED"
+    },
+    {
+        "name": "lastUpdated",
+        "type": "TIMESTAMP",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "firstUpdated",
+        "type": "TIMESTAMP",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "measurements",
+        "type": "STRING",
+        "mode": "REPEATED"
+    },
+    {
+        "name": "bounds",
+        "type": "STRING",
+        "mode": "REPEATED"
+    },
+    {
+        "name": "manufacturers",
+        "type": "STRING",
+        "mode": "REPEATED"
+    },
+    {
+        "name": "source_url",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "etl_timestamp",
+        "type": "TIMESTAMP",
+        "mode": "NULLABLE"
+    }
+]
