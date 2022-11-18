@@ -493,6 +493,7 @@ def execute_pipeline(
             date_format_list=date_format_list,
             slice_column_list=slice_column_list,
             regex_list=regex_list,
+            trim_whitespace_list=trim_whitespace_list,
             rename_headers_list=rename_headers_list,
             remove_source_file=remove_source_file,
             delete_target_file=delete_target_file,

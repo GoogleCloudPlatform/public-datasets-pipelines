@@ -846,6 +846,7 @@ with DAG(
 
     (
         create_cluster
+        >> lightning_strikes_by_year
         >> [
             ghcnd_inventory,
             spc_hail,
@@ -861,7 +862,7 @@ with DAG(
         >> noaa_goes16_radiance
         >> [noaa_goes17_mcmip, noaa_goes17_cmip, noaa_goes17_glm]
         >> noaa_goes17_radiance
-        >> [ghcnd_by_year, lightning_strikes_by_year]
+        >> [ghcnd_by_year]
         >> ghcnd_hurricanes
         >> [noaa_gsod_2020, noaa_gsod_2022]
         >> delete_cluster
