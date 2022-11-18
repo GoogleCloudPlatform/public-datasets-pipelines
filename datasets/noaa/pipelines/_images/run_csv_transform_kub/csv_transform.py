@@ -1046,7 +1046,11 @@ def process_source_file(
     csv.register_dialect(
         "TabDialect", quotechar='"', delimiter=input_field_delimiter, strict=True
     )
-    with open(source_file, encoding=encoding, mode="r", ) as reader:
+    with open(
+        source_file,
+        encoding=encoding,
+        mode="r",
+    ) as reader:
         data = []
         chunk_number = 1
         for index, line in enumerate(
