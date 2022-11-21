@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 
 
 from airflow import DAG
-from airflow.contrib.operators import bigquery_operator
+from airflow.providers.google.cloud.operators import bigquery
 
 default_args = {
     "owner": "Google",
@@ -33,7 +33,7 @@ with DAG(
 ) as dag:
 
     # Task to run a BigQueryOperator
-    sample_iowa_liquor_sales_2020 = bigquery_operator.BigQueryOperator(
+    sample_iowa_liquor_sales_2020 = bigquery.BigQueryExecuteQueryOperator(
         task_id="sample_iowa_liquor_sales_2020",
         sql='SELECT date, store_name, MAX(city) as city, MAX(zip_code) as zip_code, MAX(county) as county, SUM(sale_dollars) AS sale_dollars FROM `bigquery-public-data.iowa_liquor_sales.sales` WHERE REGEXP_CONTAINS(CAST(date AS String), "2020-") GROUP BY date, store_name',
         use_legacy_sql=False,

@@ -1,0 +1,38 @@
+[
+  {
+    "name": "shape_id",
+    "type": "STRING",
+    "description": "Uniquely identifies each shape",
+    "mode": "nullable"
+  },
+  {
+    "name": "shape_point_sequence",
+    "type": "INTEGER",
+    "description": "Associates the latitude and longitude of a shape point with its sequence order along the shape. The values for shape_pt_sequence must increase throughout the trip but don't need to be consecutive.",
+    "mode": "nullable"
+  },
+  {
+    "name": "shape_point_lat",
+    "type": "FLOAT",
+    "description": "Associates a shape point's latitude with a shape ID.",
+    "mode": "nullable"
+  },
+  {
+    "name": "shape_point_lon",
+    "type": "FLOAT",
+    "description": "Associates a shape point's longitude with a shape ID.",
+    "mode": "nullable"
+  },
+  {
+    "name": "shape_point_geom",
+    "type": "GEOGRAPHY",
+    "description": "Geographic representation of the points latitude and longitude",
+    "mode": "nullable"
+  },
+  {
+    "name": "shape_distance_traveled",
+    "type": "FLOAT",
+    "description": "Provides the actual distance traveled along the shape from the first shape point to the point specified in this record. This information allows the trip planner to determine how much of the shape to draw when they show part of a trip on the map. The values used for shape_dist_traveled must increase along with shape_pt_sequence: they can't be used to show reverse travel along a route.",
+    "mode": "nullable"
+  }
+]

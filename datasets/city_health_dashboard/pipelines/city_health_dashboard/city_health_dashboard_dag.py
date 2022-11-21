@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -57,15 +57,19 @@ with DAG(
             "INPUT_FIELD_DELIMITER": ",",
             "REMOVE_SOURCE_FILE": "Y",
             "DELETE_TARGET_FILE": "Y",
-            "INPUT_CSV_HEADERS": '[\n  "state_abbr", "state_fips", "place_fips", "stpl_fips", "city_name",\n  "metric_name", "group_name", "metric_number", "group_number", "num",\n  "denom", "est", "lci", "uci", "county_indicator",\n  "multiplier_indicator", "data_yr_type", "geo_level", "date_export"\n]',
-            "DATA_DTYPES": '{\n  "state_abbr": "str",\n  "state_fips": "str",\n  "place_fips": "str",\n  "stpl_fips": "str",\n  "city_name": "str",\n  "metric_name": "str",\n  "group_name": "str",\n  "metric_number": "str",\n  "group_number": "str",\n  "num": "str",\n  "denom": "str",\n  "est": "str",\n  "lci": "str",\n  "uci": "str",\n  "county_indicator": "str",\n  "multiplier_indicator": "str",\n  "data_yr_type": "str",\n  "geo_level": "str",\n  "date_export": "str"\n}',
-            "OUTPUT_CSV_HEADERS": '[\n  "state_abbr", "state_fips", "place_fips", "stpl_fips", "city_name",\n  "metric_name", "group_name", "metric_number", "group_number", "num",\n  "denom", "est", "lci", "uci", "county_indicator",\n  "multiplier_indicator", "data_yr_type", "geo_level", "date_export", "source_url",\n  "etl_timestamp"\n]',
-            "RENAME_HEADERS_LIST": '{\n  "state_abbr": "state_abbr",\n  "state_fips": "state_fips",\n  "place_fips": "place_fips",\n  "stpl_fips": "stpl_fips",\n  "city_name": "city_name",\n  "metric_name": "metric_name",\n  "group_name": "group_name",\n  "metric_number": "metric_number",\n  "group_number": "group_number",\n  "num": "num",\n  "denom": "denom",\n  "est": "est",\n  "lci": "lci",\n  "uci": "uci",\n  "county_indicator": "county_indicator",\n  "multiplier_indicator": "multiplier_indicator",\n  "data_yr_type": "data_yr_type",\n  "geo_level": "geo_level",\n  "date_export": "date_export"\n}',
+            "INPUT_CSV_HEADERS": '[\n  "state_abbr","state_fips","city_fips","stpl_fips","stcosub_fips","city_name","metric_name","metric_number","group_name",\n  "group_number","num","denom","est","lci","uci","county_indicator","multiplier_indicator","data_yr_type","data_yr",\n  "geo_level","date_export","census_year","version","NCHS_disclaimer","suggested_citation"\n]',
+            "DATA_DTYPES": '{\n  "state_abbr": "str",\n  "state_fips": "str",\n  "city_fips": "str",\n  "stpl_fips": "str",\n  "stcosub_fips": "str",\n  "city_name": "str",\n  "metric_name": "str",\n  "metric_number": "str",\n  "group_name": "str",\n  "group_number": "str",\n  "num": "str",\n  "denom": "str",\n  "est": "str",\n  "lci": "str",\n  "uci": "str",\n  "county_indicator": "str",\n  "multiplier_indicator": "str",\n  "data_yr_type": "str",\n  "data_yr": "str",\n  "geo_level": "str",\n  "date_export": "str",\n  "census_year": "str",\n  "version": "str",\n  "NCHS_disclaimer": "str",\n  "suggested_citation": "str"\n}',
+            "OUTPUT_CSV_HEADERS": '[\n  "state_abbr","state_fips","city_fips","stpl_fips","stcosub_fips","city_name","metric_name","metric_number","group_name",\n  "group_number","num","denom","est","lci","uci","county_indicator","multiplier_indicator","data_yr_type","data_yr",\n  "geo_level","date_export","census_year","version","NCHS_disclaimer","suggested_citation","source_url",\n  "etl_timestamp"\n]',
+            "RENAME_HEADERS_LIST": '{\n  "state_abbr": "state_abbr",\n  "state_fips": "state_fips",\n  "city_fips": "city_fips",\n  "stpl_fips": "stpl_fips",\n  "stcosub_fips": "stcosub_fips",\n  "city_name": "city_name",\n  "metric_name": "metric_name",\n  "metric_number": "metric_number",\n  "group_name": "group_name",\n  "group_number": "group_number",\n  "num": "num",\n  "denom": "denom",\n  "est": "est",\n  "lci": "lci",\n  "uci": "uci",\n  "county_indicator": "county_indicator",\n  "multiplier_indicator": "multiplier_indicator",\n  "data_yr_type": "data_yr_type",\n  "data_yr": "data_yr",\n  "geo_level": "geo_level",\n  "date_export": "date_export",\n  "census_year": "census_year",\n  "version": "version",\n  "NCHS_disclaimer": "NCHS_disclaimer",\n  "suggested_citation": "suggested_citation"\n}',
             "TABLE_DESCRIPTION": "City Health Dashboard Data Tract",
             "PIPELINE_NAME": "chdb_data_city_all",
-            "FILE_NAME_PREFIX": "CHDB_data_city_all_",
+            "FILE_NAME_PREFIX": "CHDB_data_city_all_v15.1",
         },
-        resources={"limit_memory": "8G", "limit_cpu": "1"},
+        resources={
+            "request_memory": "4G",
+            "request_cpu": "1",
+            "request_ephemeral_storage": "5G",
+        },
     )
 
     # Run CSV transform within kubernetes pod
@@ -93,15 +97,19 @@ with DAG(
             "INPUT_FIELD_DELIMITER": ",",
             "REMOVE_SOURCE_FILE": "Y",
             "DELETE_TARGET_FILE": "Y",
-            "INPUT_CSV_HEADERS": '[\n  "state_abbr", "state_fips", "county_fips", "county_name", "tract_code",\n  "stcotr_fips", "stpl_fips", "city_name", "metric_name", "metric_number",\n  "group_name", "group_number", "num", "denom", "est",\n  "lci", "uci", "data_yr_type", "geo_level", "date_export"\n]',
-            "DATA_DTYPES": '{\n  "state_abbr": "str",\n  "state_fips": "str",\n  "county_fips": "str",\n  "county_name": "str",\n  "tract_code": "str",\n  "stcotr_fips": "str",\n  "stpl_fips": "str",\n  "city_name": "str",\n  "metric_name": "str",\n  "metric_number": "str",\n  "group_name": "str",\n  "group_number": "str",\n  "num": "str",\n  "denom": "str",\n  "est": "str",\n  "lci": "str",\n  "uci": "str",\n  "data_yr_type": "str",\n  "geo_level": "str",\n  "date_export": "str"\n}',
-            "OUTPUT_CSV_HEADERS": '[\n  "state_abbr", "state_fips", "county_fips", "county_name", "tract_code",\n  "stcotr_fips", "stpl_fips", "city_name", "metric_name", "metric_number",\n  "group_name", "group_number", "num", "denom", "est",\n  "lci", "uci", "data_yr_type", "geo_level", "date_export", "source_url",\n  "etl_timestamp"\n]',
-            "RENAME_HEADERS_LIST": '{\n  "state_abbr": "state_abbr",\n  "state_fips": "state_fips",\n  "county_fips": "county_fips",\n  "county_name": "county_name",\n  "tract_code": "tract_code",\n  "stcotr_fips": "stcotr_fips",\n  "stpl_fips": "stpl_fips",\n  "city_name": "city_name",\n  "metric_name": "metric_name",\n  "metric_number": "metric_number",\n  "group_name": "group_name",\n  "group_number": "group_number",\n  "num": "num",\n  "denom": "denom",\n  "est": "est",\n  "lci": "lci",\n  "uci": "uci",\n  "data_yr_type": "data_yr_type",\n  "geo_level": "geo_level",\n  "date_export": "date_export"\n}',
+            "INPUT_CSV_HEADERS": '[\n  "state_abbr","state_fips","county_name","city_fips","stpl_fips","stcosub_fips","stcotr_fips","city_name","metric_name",\n  "metric_number","group_name","group_number","num","denom","est","lci","uci","data_yr_type","data_yr","geo_level",\n  "date_export","census_year","version","suggested_citation"\n]',
+            "DATA_DTYPES": '{\n  "state_abbr": "str",\n  "state_fips": "str",\n  "county_name": "str",\n  "city_fips": "str",\n  "stpl_fips": "str",\n  "stcosub_fips": "str",\n  "stcotr_fips": "str",\n  "city_name": "str",\n  "metric_name": "str",\n  "metric_number": "str",\n  "group_name": "str",\n  "group_number": "str",\n  "num": "str",\n  "denom": "str",\n  "est": "str",\n  "lci": "str",\n  "uci": "str",\n  "data_yr_type": "str",\n  "data_yr": "str",\n  "geo_level": "str",\n  "date_export": "str",\n  "census_year": "str",\n  "version": "str",\n  "suggested_citation": "str"\n}',
+            "OUTPUT_CSV_HEADERS": '[\n  "state_abbr","state_fips","county_name","city_fips","stpl_fips","stcosub_fips","stcotr_fips","city_name","metric_name",\n  "metric_number","group_name","group_number","num","denom","est","lci","uci","data_yr_type","data_yr","geo_level",\n  "date_export","census_year","version","suggested_citation","source_url","etl_timestamp"\n]',
+            "RENAME_HEADERS_LIST": '{\n  "state_abbr": "state_abbr",\n  "state_fips": "state_fips",\n  "county_name": "county_name",\n  "city_fips": "city_fips",\n  "stpl_fips": "stpl_fips",\n  "stcosub_fips": "stcosub_fips",\n  "stcotr_fips": "stcotr_fips",\n  "city_name": "city_name",\n  "metric_name": "metric_name",\n  "metric_number": "metric_number",\n  "group_name": "group_name",\n  "group_number": "group_number",\n  "num": "num",\n  "denom": "denom",\n  "est": "est",\n  "lci": "lci",\n  "uci": "uci",\n  "data_yr_type": "data_yr_type",\n  "data_yr": "data_yr",\n  "geo_level": "geo_level",\n  "date_export": "date_export",\n  "census_year": "census_year",\n  "version": "version",\n  "suggested_citation": "suggested_citation"\n}',
             "TABLE_DESCRIPTION": "City Health Dashboard Data Tract",
             "PIPELINE_NAME": "chdb_data_tract_all",
-            "FILE_NAME_PREFIX": "CHDB_data_tract_all_",
+            "FILE_NAME_PREFIX": "CHDB_data_tract_all_v15.1",
         },
-        resources={"limit_memory": "8G", "limit_cpu": "1"},
+        resources={
+            "request_memory": "4G",
+            "request_cpu": "1",
+            "request_ephemeral_storage": "5G",
+        },
     )
 
     [chdb_data_tract, chdb_data_city]

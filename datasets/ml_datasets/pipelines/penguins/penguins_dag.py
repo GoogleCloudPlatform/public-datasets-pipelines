@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 
 
 from airflow import DAG
-from airflow.contrib.operators import gcs_to_bq, gcs_to_gcs
+from airflow.providers.google.cloud.transfers import gcs_to_bigquery, gcs_to_gcs
 
 default_args = {
     "owner": "Google",
@@ -33,18 +33,16 @@ with DAG(
 ) as dag:
 
     # Task to run a GoogleCloudStorageToGoogleCloudStorageOperator
-    copy_csv_files_to_composer_bucket = (
-        gcs_to_gcs.GoogleCloudStorageToGoogleCloudStorageOperator(
-            task_id="copy_csv_files_to_composer_bucket",
-            source_bucket="cloud-samples-data",
-            source_object="ai-platform/penguins/*.csv",
-            destination_bucket="{{ var.value.composer_bucket }}",
-            destination_object="data/ml_datasets/penguins/",
-        )
+    copy_csv_files_to_composer_bucket = gcs_to_gcs.GCSToGCSOperator(
+        task_id="copy_csv_files_to_composer_bucket",
+        source_bucket="cloud-samples-data",
+        source_object="ai-platform/penguins/*.csv",
+        destination_bucket="{{ var.value.composer_bucket }}",
+        destination_object="data/ml_datasets/penguins/",
     )
 
     # Task to load CSV data to a BigQuery table
-    penguins_gcs_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    penguins_gcs_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="penguins_gcs_to_bq",
         bucket="{{ var.value.composer_bucket }}",
         source_objects=[
@@ -67,7 +65,7 @@ with DAG(
     )
 
     # Task to load CSV data to a BigQuery table
-    penguins_gcs_to_bq_uscentral1 = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    penguins_gcs_to_bq_uscentral1 = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="penguins_gcs_to_bq_uscentral1",
         bucket="{{ var.value.composer_bucket }}",
         source_objects=[

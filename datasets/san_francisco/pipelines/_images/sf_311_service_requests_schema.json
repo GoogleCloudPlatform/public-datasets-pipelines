@@ -1,0 +1,116 @@
+[
+	{
+		"name": "unique_key",
+		"type": "INTEGER",
+		"description": "Unique case id",
+        "mode": "REQUIRED"
+    },
+	{
+		"name": "created_date",
+		"type": "TIMESTAMP",
+		"description": "The date and time when the service request was made",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "closed_date",
+		"type": "TIMESTAMP",
+		"description": "The date and time when the service request was closed",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "resolution_action_updated_date",
+		"type": "TIMESTAMP",
+		"description": "The date and time when the service request was last modified. For requests with status=closed, this will be the date the request was closed",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "status",
+		"type": "STRING",
+		"description": "The current status of the service request.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "status_notes",
+		"type": "STRING",
+		"description": "Explanation of why status was changed to current state or more details on current status than conveyed with status alone",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "agency_name",
+		"type": "STRING",
+		"description": "The agency responsible for fulfilling or otherwise addressing the service request.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "category",
+		"type": "STRING",
+		"description": "The Human readable name of the specific service request type (service_name)",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "complaint_type",
+		"type": "STRING",
+		"description": "More specific description of the problem related to the Category",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "descriptor",
+		"type": "STRING",
+		"description": "More specific description of the problem related to the Request Type",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "incident_address",
+		"type": "STRING",
+		"description": "Human readable address or description of location",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "supervisor_district",
+		"type": "INTEGER",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "neighborhood",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "location",
+		"type": "STRING",
+		"description": "Latitude and longitude using the (WGS84) projection.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "source",
+		"type": "STRING",
+		"description": "How the service request was made",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "media_url",
+		"type": "STRING",
+		"description": "Website URL",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "latitude",
+		"type": "FLOAT",
+		"description": "Latitude using the (WGS84) projection.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "longitude",
+		"type": "FLOAT",
+		"description": "Longitude using the (WGS84) projection.",
+		"mode": "NULLABLE"
+	},
+	{
+		"name": "police_district",
+		"type": "STRING",
+		"description": "",
+		"mode": "NULLABLE"
+	}
+]
