@@ -32,7 +32,7 @@ RUN python3 -m pip install --no-cache-dir -r requirements.txt
 WORKDIR /custom
 
 # Copy the specific data processing script/s in the image under /custom/*
-COPY ./script.py .
+COPY ./csv_transform.py .
 
 # Command to run the data processing script when the container is run
-CMD ["python3", "script.py"]
+CMD ["python3", "csv_transform.py"]

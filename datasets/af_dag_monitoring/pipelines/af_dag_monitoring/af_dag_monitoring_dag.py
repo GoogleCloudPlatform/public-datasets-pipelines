@@ -32,21 +32,22 @@ with DAG(
     default_view="graph",
 ) as dag:
 
-    # Send Email Notification Of Failed DAGS
-    send_email_notifications = kubernetes_pod.KubernetesPodOperator(
-        task_id="send_email_notifications",
-        name="send_email_notifications",
-        startup_timeout_seconds=600,
+    # Run CSV transform within kubernetes pod
+    af_dag_monitoring = kubernetes_pod.KubernetesPodOperator(
+        task_id="af_dag_monitoring",
+        name="af_dag_monitoring",
         namespace="composer",
         service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.af_dag_monitoring.container_registry.run_script }}",
+        env_vars={
+            "COMMAND": "{{ var.json.af_dag_monitoring.container_registry.command }}"
+        },
         resources={
             "limit_memory": "8G",
             "limit_cpu": "3",
             "request_ephemeral_storage": "10G",
         },
-        env_vars={"EMAIL_TO": "nlarge@google.com"},
     )
 
-    send_email_notifications
+    af_dag_monitoring
