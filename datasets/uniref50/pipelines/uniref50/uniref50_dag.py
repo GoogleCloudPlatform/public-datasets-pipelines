@@ -68,11 +68,7 @@ with DAG(
             "SCHEMA_PATH": "data/uniref50/uniref50_schema.json",
             "CHUNKSIZE": "100000",
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
-        },
+        resources={"request_ephemeral_storage": "10G"},
     )
 
     # Task to load CSV data to a BigQuery table
@@ -140,11 +136,7 @@ with DAG(
             "SCHEMA_PATH": "data/uniref50/uniref50_schema.json",
             "CHUNKSIZE": "100000",
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
-        },
+        resources={"request_ephemeral_storage": "10G"},
     )
 
     # Task to load CSV data to a BigQuery table
@@ -212,11 +204,7 @@ with DAG(
             "SCHEMA_PATH": "data/uniref50/uniref50_schema.json",
             "CHUNKSIZE": "100000",
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
-        },
+        resources={"request_ephemeral_storage": "10G"},
     )
 
     # Task to load CSV data to a BigQuery table
@@ -284,11 +272,7 @@ with DAG(
             "SCHEMA_PATH": "data/uniref50/uniref50_schema.json",
             "CHUNKSIZE": "100000",
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
-        },
+        resources={"request_ephemeral_storage": "10G"},
     )
 
     # Task to load CSV data to a BigQuery table
@@ -356,11 +340,7 @@ with DAG(
             "SCHEMA_PATH": "data/uniref50/uniref50_schema.json",
             "CHUNKSIZE": "100000",
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
-        },
+        resources={"request_ephemeral_storage": "10G"},
     )
 
     # Task to load CSV data to a BigQuery table
@@ -428,11 +408,7 @@ with DAG(
             "SCHEMA_PATH": "data/uniref50/uniref50_schema.json",
             "CHUNKSIZE": "100000",
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
-        },
+        resources={"request_ephemeral_storage": "10G"},
     )
 
     # Task to load CSV data to a BigQuery table
@@ -500,11 +476,7 @@ with DAG(
             "SCHEMA_PATH": "data/uniref50/uniref50_schema.json",
             "CHUNKSIZE": "100000",
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
-        },
+        resources={"request_ephemeral_storage": "10G"},
     )
 
     # Task to load CSV data to a BigQuery table
@@ -572,11 +544,7 @@ with DAG(
             "SCHEMA_PATH": "data/uniref50/uniref50_schema.json",
             "CHUNKSIZE": "100000",
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
-        },
+        resources={"request_ephemeral_storage": "10G"},
     )
 
     # Task to load CSV data to a BigQuery table

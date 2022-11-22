@@ -1,0 +1,92 @@
+[
+  {
+    "name": "dataset_name",
+    "type": "string",
+    "description": "Dataset filename.",
+    "mode": "nullable"
+  },
+  {
+    "name": "platform_ID",
+    "type": "string",
+    "description": "Identifier for the GOES satellite. Possible values are \"G16\" and \"G17\". Currently, \"G16\".",
+    "mode": "nullable"
+  },
+  {
+    "name": "orbital_slot",
+    "type": "string",
+    "description": "Designated operating slot for the satellite. Possible values are \"GOES-East\", \"GOES-West\", \"GOES-Test\", and \"GOES-Storage\". Currently, \"GOES-East\".",
+    "mode": "nullable"
+  },
+  {
+    "name": "time_coverage_start",
+    "type": "timestamp",
+    "description": "Date and time of the first data point in the dataset (UTC). Format is YYYY-MM-DD”T”HH:MM:SS.s”Z”.",
+    "mode": "nullable"
+  },
+  {
+    "name": "time_coverage_end",
+    "type": "timestamp",
+    "description": "Date and time of the last data point in the dataset (UTC). Format is YYYY-MM-DD”T”HH:MM:SS.s”Z”.",
+    "mode": "nullable"
+  },
+  {
+    "name": "date_created",
+    "type": "timestamp",
+    "description": "Date and time when dataset file was created (UTC). Format is YYYY-MM-DD”T”HH:MM:SS.s”Z”.",
+    "mode": "nullable"
+  },
+  {
+    "name": "group_time_threshold",
+    "type": "float",
+    "description": "Lightning group maximum time difference among lightning events in a group in seconds.",
+    "mode": "nullable"
+  },
+  {
+    "name": "flash_time_threshold",
+    "type": "float",
+    "description": "Lightning flash maximum time difference among lightning events in a flash in seconds.",
+    "mode": "nullable"
+  },
+  {
+    "name": "event_count",
+    "type": "integer",
+    "description": "Count number of lightning events in product.",
+    "mode": "nullable"
+  },
+  {
+    "name": "group_count",
+    "type": "integer",
+    "description": "Count number of lightning groups in product.",
+    "mode": "nullable"
+  },
+  {
+    "name": "flash_count",
+    "type": "float",
+    "description": "Count number of lightning flashes in product.",
+    "mode": "nullable"
+  },
+  {
+    "name": "percent_navigated_L1b_events",
+    "type": "float",
+    "description": "Percent of lightning events navigated by instrument after false event filtering.",
+    "mode": "nullable"
+  },
+  {
+    "name": "percent_uncorrectable_L0_errors",
+    "type": "float",
+    "description": "Percentage of data lost due to uncorrectable L0 errors.",
+    "mode": "nullable"
+  },
+  {
+    "name": "total_size",
+    "type": "string",
+    "description": "Size of the underlying .nc file(s) in bytes.",
+    "mode": "nullable"
+  },
+  {
+    "name": "base_url",
+    "type": "string",
+    "description": "Location in Google Cloud Storage for the underlying source file.",
+    "mode": "nullable"
+  }
+]
