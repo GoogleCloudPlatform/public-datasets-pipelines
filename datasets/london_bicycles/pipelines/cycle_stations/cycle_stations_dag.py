@@ -52,8 +52,8 @@ with DAG(
             "FLOAT_COLS": '["lat", "long"]',
             "STRING_COLS": '["installed","locked", "name", "temporary"]',
             "OUTPUT_FILE": "./files/cycle_stations_data_output.csv",
-            "GCS_BUCKET": "{{ var.value.composer_bucket }}",
-            "TARGET_GCS_PATH": "data/london_bicycles/cycle_stations/cycle_stations_data_output.csv",
+            "GCS_BUCKET": "{{ var.json.london_bicycles.storage_bucket }}",
+            "TARGET_GCS_PATH": "cycle_stations/cycle_stations_data_output.csv",
         },
         resources={"request_memory": "128M", "request_cpu": "128m"},
     )
@@ -61,10 +61,8 @@ with DAG(
     # Task to load CSV data to a BigQuery table
     load_cycle_stations_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_cycle_stations_to_bq",
-        bucket="{{ var.value.composer_bucket }}",
-        source_objects=[
-            "data/london_bicycles/cycle_stations/cycle_stations_data_output.csv"
-        ],
+        bucket="{{ var.json.london_bicycles.storage_bucket }}",
+        source_objects=["cycle_stations/cycle_stations_data_output.csv"],
         source_format="CSV",
         destination_project_dataset_table="london_bicycles.cycle_stations",
         skip_leading_rows=1,

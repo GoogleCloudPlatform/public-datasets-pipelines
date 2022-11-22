@@ -23,3 +23,7 @@ resources:
   - type: bigquery_dataset
     dataset_id: london_bicycles
     description: "This dataset consists live bicycle hire updates of London city"
+  - type: storage_bucket
+    name: "london-bicycles"
+    uniform_bucket_level_access: True
+    location: EU
