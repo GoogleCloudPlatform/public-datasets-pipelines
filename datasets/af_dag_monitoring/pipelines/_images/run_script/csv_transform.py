@@ -12,18 +12,62 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import logging
-import airflow.providers.google
-import google.cloud
 import os
 
+# import airflow as af
+# import airflow.api.client.api_client as dag_api
+import airflow.models as model
+
+# import google.cloud
 import pandas as pd
+
+# import airflow.providers.google as af
+# from airflow import DAG as dag_obj
+
+# from airflow.contrib.operators import gcs_to_bq, gcs_to_gcs
+# from airflow.operators import bash as bash_op
 
 
 def main(command: str) -> None:
     logging.info(f"process started")
+    logging.info(f"Executing command... {command}")
+    dags = model.DagBag(dag_folder="/", include_examples=False, safe_mode=True, read_dags_from_db=True)
+    for daga in dags.dags:
+        print(daga)
+    # logging.info(str(api.Client.get_pools()))
+    # logging.info(af.__all__)
+
+
+    # logging.info(bag.DagBag("dags").dagbag_report())
+    # test = bash_op.BashOperator(
+    #     task_id="my_test",
+    #     env={
+    #         "airflow_home": "{{ var.value.airflow_home }}"
+    #     },
+    #     bash_command=command
+    # )
+    # test
     # os.system("airflow dags list")
-    os.system(command)
+    # os.system(command)
     logging.info(f"process completed")
+
+# def list_dags() -> None:
+#     with client.ApiClient(configuration) as api_client:
+#         # Create an instance of the API class
+#         api_instance = dag_api.DAGApi(api_client)
+#         limit = 100
+#         offset = 0
+#         order_by = "order_by_example"
+#         tags = [
+#             "tags_example",
+#         ]
+#         only_active = True
+#         try:
+#             # List DAGs
+#             api_response = api_instance.get_dags(limit=limit, offset=offset, order_by=order_by, tags=tags, only_active=only_active)
+#             pprint(api_response)
+#         except client.ApiException as e:
+#             print("Exception when calling DAGApi->get_dags: %s\n" % e)
 
 
 if __name__ == "__main__":

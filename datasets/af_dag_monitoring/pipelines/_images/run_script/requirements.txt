@@ -1,3 +1,3 @@
-apache-airflow-providers-google
-google-cloud-sdk
+apache-airflow
+apache-airflow[cncf.kubernetes]
 pandas
