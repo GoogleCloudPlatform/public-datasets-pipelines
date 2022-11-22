@@ -24,3 +24,19 @@ resource "google_bigquery_dataset" "london_bicycles" {
 output "bigquery_dataset-london_bicycles-dataset_id" {
   value = google_bigquery_dataset.london_bicycles.dataset_id
 }
+
+resource "google_storage_bucket" "london-bicycles" {
+  name                        = "${var.bucket_name_prefix}-london-bicycles"
+  force_destroy               = true
+  location                    = "EU"
+  uniform_bucket_level_access = true
+  lifecycle {
+    ignore_changes = [
+      logging,
+    ]
+  }
+}
+
+output "storage_bucket-london-bicycles-name" {
+  value = google_storage_bucket.london-bicycles.name
+}
