@@ -30,10 +30,14 @@ import pandas as pd
 
 def main(command: str) -> None:
     logging.info(f"process started")
-    logging.info(f"Executing command... {command}")
-    dags = model.DagBag(dag_folder="/", include_examples=False, safe_mode=True, read_dags_from_db=True)
-    for daga in dags.dags:
-        print(daga)
+
+    os.system("gcloud composer environments run dev-v2 dags list --location us-central1 -- -o json")
+
+
+    # logging.info(f"Executing command... {command}")
+    # dags = model.DagBag(dag_folder="/", include_examples=False, safe_mode=True, read_dags_from_db=True)
+    # for daga in dags.dags:
+    #     print(daga)
     # logging.info(str(api.Client.get_pools()))
     # logging.info(af.__all__)
 
