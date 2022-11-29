@@ -90,6 +90,39 @@ with DAG(
         resources={"request_ephemeral_storage": "16G", "limit_cpu": "3"},
     )
 
+    # Run NOAA load processes - GHCN-M
+    noaa_ghcn_m = kubernetes_engine.GKEStartPodOperator(
+        task_id="noaa_ghcn_m",
+        name="noaa.ghcn_m",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="noaa",
+        namespace="default",
+        image_pull_policy="Always",
+        image="{{ var.json.noaa.container_registry.run_csv_transform_kub }}",
+        env_vars={
+            "PIPELINE_NAME": "NOAA GHCN-M",
+            "SOURCE_URL": '{\n  "tmin": "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/v3/ghcnm.tmin.latest.qca.tar.gz",\n  "tavg": "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/v3/ghcnm.tavg.latest.qca.tar.gz",\n  "tmax": "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/v3/ghcnm.tmax.latest.qca.tar.gz"\n}',
+            "SOURCE_FILE": "files/data_ghcn_m.csv",
+            "TARGET_FILE": "files/data_output_ghcn_m.csv",
+            "CHUNKSIZE": "100000",
+            "PROJECT_ID": "{{ var.value.gcp_project }}",
+            "DATASET_ID": "ghcn_m",
+            "TABLE_ID": "ghcnm_",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
+            "TARGET_GCS_PATH": "data/noaa/ghcn_m/data_output.csv",
+            "SCHEMA_PATH": "data/noaa/schema/noaa_ghcn_m__schema.json",
+            "DROP_DEST_TABLE": "N",
+            "INPUT_FIELD_DELIMITER": "|",
+            "CONVERT_INT_LIST": '{\n  "data": [\n            "id",\n            "year",\n            "value1",\n            "value2",\n            "value3",\n            "value4",\n            "value5",\n            "value6",\n            "value7",\n            "value8",\n            "value9",\n            "value10",\n            "value11",\n            "value12"\n  ],\n  "stations": [\n                "id",\n                "grelev",\n                "popsiz",\n                "ocndis",\n                "towndis"\n  ]\n}',
+            "NULL_ROWS_LIST": '[\n  "id"\n]',
+            "FULL_DATA_LOAD": "N",
+            "REMOVE_SOURCE_FILE": "N",
+            "DELETE_TARGET_FILE": "N",
+            "INPUT_CSV_FIELD_POS": '[\n  {\n    "data": [\n              ["id", "0", "10"],\n              ["year", "11", "14"],\n              ["element", "15", "18"],\n              ["value1", "19", "23"],\n              ["dmflag1", "24", "24"],\n              ["qcflag1", "25", "25"],\n              ["dsflag1", "26", "26"],\n              ["value2", "27", "31"],\n              ["dmflag2", "32", "32"],\n              ["qcflag2", "33", "33"],\n              ["dsflag2", "34", "34"],\n              ["value3", "35", "39"],\n              ["dmflag3", "40", "40"],\n              ["qcflag3", "41", "41"],\n              ["dsflag3", "42", "42"],\n              ["value4", "43", "47"],\n              ["dmflag4", "48", "48"],\n              ["qcflag4", "49", "49"],\n              ["dsflag4", "50", "50"],\n              ["value5", "51", "55"],\n              ["dmflag5", "56", "56"],\n              ["qcflag5", "57", "57"],\n              ["dsflag5", "58", "58"],\n              ["value6", "59", "63"],\n              ["dmflag6", "64", "64"],\n              ["qcflag6", "65", "65"],\n              ["dsflag6", "66", "66"],\n              ["value7", "67", "71"],\n              ["dmflag7", "72", "72"],\n              ["qcflag7", "73", "73"],\n              ["dsflag7", "74", "74"],\n              ["value8", "75", "79"],\n              ["dmflag8", "80", "80"],\n              ["qcflag8", "81", "81"],\n              ["dsflag8", "82", "82"],\n              ["value9", "83", "87"],\n              ["dmflag9", "88", "88"],\n              ["qcflag9", "89", "89"],\n              ["dsflag9", "90", "90"],\n              ["value10", "91", "95"],\n              ["dmflag10", "96", "96"],\n              ["qcflag10", "97", "97"],\n              ["dsflag10", "98", "98"],\n              ["value11", "99", "103"],\n              ["dmflag11", "104", "104"],\n              ["qcflag11", "105", "105"],\n              ["dsflag11", "106", "106"],\n              ["value12", "107", "111"],\n              ["dmflag12", "112", "112"],\n              ["qcflag12", "113", "113"],\n              ["dsflag12", "114", "114"]\n    ],\n    "stations": [\n              ["id", "0", "10"],\n              ["latitude", "11", "19"],\n              ["longitude", "20", "29"],\n              ["stnelev", "30", "36"],\n              ["name", "37", "67"],\n              ["grelev", "68", "72"],\n              ["popcls", "73", "73"],\n              ["popsiz", "74", "78"],\n              ["topo", "79", "80"],\n              ["stveg", "81", "82"],\n              ["stloc", "83", "84"],\n              ["ocndis", "85", "86"],\n              ["airstn", "87", "87"],\n              ["towndis", "88", "89"],\n              ["grveg", "90", "105"],\n              ["popcss", "106", "106"]\n    ]\n  }\n]',
+        },
+    )
+
     # Run NOAA load processes
     ghcnd_countries = kubernetes_engine.GKEStartPodOperator(
         task_id="ghcnd_countries",
@@ -846,7 +879,7 @@ with DAG(
 
     (
         create_cluster
-        >> lightning_strikes_by_year
+        >> noaa_ghcn_m
         >> [
             ghcnd_inventory,
             spc_hail,
@@ -862,7 +895,7 @@ with DAG(
         >> noaa_goes16_radiance
         >> [noaa_goes17_mcmip, noaa_goes17_cmip, noaa_goes17_glm]
         >> noaa_goes17_radiance
-        >> [ghcnd_by_year]
+        >> [ghcnd_by_year, lightning_strikes_by_year]
         >> ghcnd_hurricanes
         >> [noaa_gsod_2020, noaa_gsod_2022]
         >> delete_cluster
