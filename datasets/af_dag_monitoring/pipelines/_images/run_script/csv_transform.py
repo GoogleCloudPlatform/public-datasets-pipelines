@@ -16,10 +16,10 @@ import os
 
 # import airflow as af
 # import airflow.api.client.api_client as dag_api
-import airflow.models as model
+# import airflow.models as model
 
 # import google.cloud
-import pandas as pd
+# import pandas as pd
 
 # import airflow.providers.google as af
 # from airflow import DAG as dag_obj
@@ -28,11 +28,17 @@ import pandas as pd
 # from airflow.operators import bash as bash_op
 
 
-def main(command: str) -> None:
+def main(
+            command: str,
+            environment: str
+         ) -> None:
     logging.info(f"process started")
 
-    os.system("gcloud composer environments run dev-v2 dags list --location us-central1 -- -o json")
-
+    # cmd = f"gcloud composer environments run {environment} dags list --location us-central1 -- -o json"
+    logging.info("running command:")
+    logging.info(command)
+    os.system(command)
+    logging.info("completed command")
 
     # logging.info(f"Executing command... {command}")
     # dags = model.DagBag(dag_folder="/", include_examples=False, safe_mode=True, read_dags_from_db=True)
@@ -77,5 +83,6 @@ def main(command: str) -> None:
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
     main(
-        command=os.environ.get("COMMAND", "ls")
+        command=os.environ.get("COMMAND", "ls"),
+        environment=os.environ.get("ENVIRONMENT", "")
     )

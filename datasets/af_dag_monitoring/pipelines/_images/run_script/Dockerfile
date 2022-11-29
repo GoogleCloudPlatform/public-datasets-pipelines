@@ -29,11 +29,12 @@ RUN python3 -m pip install --no-cache-dir -r requirements.txt
 RUN python3 -m pip install --upgrade pip
 
 # Install gcloud
-RUN apt-get -y update && apt-get install -y apt-transport-https ca-certificates gnupg &&\
-    echo "deb https://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list &&\
-    curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - &&\
-    apt-get -y update && apt-get install -y google-cloud-sdk
-RUN apt-get install google-cloud-sdk-gke-gcloud-auth-plugin
+RUN apt-get -y update && apt-get install -y apt-transport-https ca-certificates gnupg && \
+    echo "deb https://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && \
+    curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - && \
+    apt-get -y update && apt-get install -y google-cloud-sdk && \
+    apt-get install google-cloud-sdk-gke-gcloud-auth-plugin && \
+    apt-get install kubectl
 
 # Return gcloud installation folder
 RUN gcloud info --format="value(installation.sdk_root)"

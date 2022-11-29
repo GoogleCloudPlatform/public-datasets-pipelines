@@ -41,7 +41,8 @@ with DAG(
         image_pull_policy="Always",
         image="{{ var.json.af_dag_monitoring.container_registry.run_script }}",
         env_vars={
-            "COMMAND": "{{ var.json.af_dag_monitoring.container_registry.command }}"
+            "COMMAND": "{{ var.json.af_dag_monitoring.container_registry.command }}",
+            "ENVIRONMENT": "{{ var.json.af_dag_monitoring.container_registry.environment }}",
         },
         resources={
             "limit_memory": "8G",
