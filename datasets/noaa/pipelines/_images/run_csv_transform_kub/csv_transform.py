@@ -230,7 +230,7 @@ def execute_pipeline(
             src_file_path = os.path.dirname(str(source_file))
             ftp_full_path = os.path.split(src_url)[0].replace("ftp://", "")
             ftp_host = ftp_full_path.split("/")[0]
-            ftp_path = ftp_full_path[len(ftp_host):]
+            ftp_path = ftp_full_path[len(ftp_host) :]
             source_zip_file = f"{src_file_path}/{src_zip_file_name}"
             download_file_ftp(
                 ftp_host=ftp_host,
@@ -240,33 +240,39 @@ def execute_pipeline(
                 source_url=src_url,
             )
             logging.info(f"Unzipping source file {source_zip_file}")
-            shutil.unpack_archive(
-                filename=source_zip_file, extract_dir=src_file_path
-            )
+            shutil.unpack_archive(filename=source_zip_file, extract_dir=src_file_path)
             for file_content_type in input_csv_field_pos[0]:
-                ext = ("dat" if file_content_type == "data" else "inv")
-                for source_file_name in glob.glob(f"{src_file_path}/**/*{file_id}*.{ext}", recursive=True):
+                ext = "dat" if file_content_type == "data" else "inv"
+                for source_file_name in glob.glob(
+                    f"{src_file_path}/**/*{file_id}*.{ext}", recursive=True
+                ):
                     df = process_ghcn_m_file(
                         source_file_name=source_file_name,
-                        file_content_type = file_content_type,
-                        input_csv_field_pos=input_csv_field_pos
+                        file_content_type=file_content_type,
+                        input_csv_field_pos=input_csv_field_pos,
                     )
                     df = filter_null_rows(df, null_rows_list=null_rows_list)
                     df = strip_dataframe_whitespace(df)
                     df = convert_cols_to_integer(
                         df=df,
-                        convert_int_list_section=convert_int_list[file_content_type]
+                        convert_int_list_section=convert_int_list[file_content_type],
                     )
-                    targ_file_path = str(target_file).replace(".csv", f"_{file_id}_{file_content_type}.csv")
-                    dest_table = (f"{destination_table}{file_id}")
-                    dest_table = (f"{dest_table}" if file_content_type == "data" else f"{dest_table}_{file_content_type}")
-                    save_to_new_file(
-                        df=df,
-                        file_path=targ_file_path,
-                        sep="|"
+                    targ_file_path = str(target_file).replace(
+                        ".csv", f"_{file_id}_{file_content_type}.csv"
                     )
-                    gcs_path = target_gcs_path.replace(".csv", f"_{file_id}_{file_content_type}.csv")
-                    schema_file = schema_path.replace("_schema.json", f"{file_content_type}_schema.json")
+                    dest_table = f"{destination_table}{file_id}"
+                    dest_table = (
+                        f"{dest_table}"
+                        if file_content_type == "data"
+                        else f"{dest_table}_{file_content_type}"
+                    )
+                    save_to_new_file(df=df, file_path=targ_file_path, sep="|")
+                    gcs_path = target_gcs_path.replace(
+                        ".csv", f"_{file_id}_{file_content_type}.csv"
+                    )
+                    schema_file = schema_path.replace(
+                        "_schema.json", f"{file_content_type}_schema.json"
+                    )
                     post_processing(
                         target_file=targ_file_path,
                         source_url=src_url,
@@ -277,7 +283,7 @@ def execute_pipeline(
                         target_gcs_path=gcs_path,
                         schema_path=schema_file,
                         drop_dest_table=drop_dest_table,
-                        delete_target_file=delete_target_file
+                        delete_target_file=delete_target_file,
                     )
     if pipeline_name in ["NOAA SPC Hail", "NOAA SPC Wind", "NOAA SPC Tornado"]:
         src_url = source_url[pipeline_name.replace(" ", "_").lower()]
@@ -589,12 +595,10 @@ def execute_pipeline(
         return None
 
 
-def strip_dataframe_whitespace(
-    df: pd.DataFrame
-) -> pd.DataFrame:
+def strip_dataframe_whitespace(df: pd.DataFrame) -> pd.DataFrame:
     logging.info("Stripping Whitespace in Columns")
     for col in df.columns:
-        if str(df[col].dtype).lower == 'object':
+        if str(df[col].dtype).lower == "object":
             print(f"    column: {col}")
             df[col] = df[col].map(str.strip)
         else:
@@ -603,8 +607,7 @@ def strip_dataframe_whitespace(
 
 
 def convert_cols_to_integer(
-    df: pd.DataFrame,
-    convert_int_list_section: typing.List[str]
+    df: pd.DataFrame, convert_int_list_section: typing.List[str]
 ) -> pd.DataFrame:
     logging.info("Converting Respective Columns To Integer")
     for col in convert_int_list_section:
@@ -623,21 +626,21 @@ def convert_to_integer_string(input: typing.Union[str, float]) -> str:
 
 
 def process_ghcn_m_file(
-        source_file_name: str,
-        file_content_type: str,
-        input_csv_field_pos: typing.List[dict]
-    ) -> pd.DataFrame:
-        logging.info(f"Extracting {file_content_type} from FWF file {source_file_name}")
-        field_names = []
-        col_specs = []
-        for schema in input_csv_field_pos[0][file_content_type]:
-            field_name = str(schema[0])
-            col_spec_x = int(schema[1])
-            col_spec_y = int(schema[2]) + 1
-            field_names += [ (field_name) ]
-            col_specs += [(col_spec_x, col_spec_y)]
-        df = pd.read_fwf(source_file_name, colspecs=col_specs, names=field_names)
-        return df
+    source_file_name: str,
+    file_content_type: str,
+    input_csv_field_pos: typing.List[dict],
+) -> pd.DataFrame:
+    logging.info(f"Extracting {file_content_type} from FWF file {source_file_name}")
+    field_names = []
+    col_specs = []
+    for schema in input_csv_field_pos[0][file_content_type]:
+        field_name = str(schema[0])
+        col_spec_x = int(schema[1])
+        col_spec_y = int(schema[2]) + 1
+        field_names += [(field_name)]
+        col_specs += [(col_spec_x, col_spec_y)]
+    df = pd.read_fwf(source_file_name, colspecs=col_specs, names=field_names)
+    return df
 
 
 def download_file_gs(source_url: str, source_file: pathlib.Path) -> None:
@@ -1108,7 +1111,7 @@ def process_and_load_table(
         schema_path=schema_path,
         drop_dest_table=drop_dest_table,
         delete_target_file=delete_target_file,
-        truncate_table=truncate_table
+        truncate_table=truncate_table,
     )
 
 
@@ -1123,7 +1126,7 @@ def post_processing(
     schema_path: str,
     drop_dest_table: str,
     delete_target_file: bool,
-    truncate_table: bool = True
+    truncate_table: bool = True,
 ) -> None:
     if os.path.exists(target_file):
         upload_file_to_gcs(
