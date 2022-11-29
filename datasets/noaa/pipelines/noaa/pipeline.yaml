@@ -18,6 +18,24 @@ resources:
     table_id: "ghcnd_by_year"
     description: "noaaspc"
   - type: bigquery_table
+    table_id: "ghcnm_tmin"
+    description: "noaaspc"
+  - type: bigquery_table
+    table_id: "ghcnm_tmin_stations"
+    description: "noaaspc"
+  - type: bigquery_table
+    table_id: "ghcnm_tavg"
+    description: "noaaspc"
+  - type: bigquery_table
+    table_id: "ghcnm_tavg_stations"
+    description: "noaaspc"
+  - type: bigquery_table
+    table_id: "ghcnm_tmax"
+    description: "noaaspc"
+  - type: bigquery_table
+    table_id: "ghcnm_tmax_stations"
+    description: "noaaspc"
+  - type: bigquery_table
     table_id: "ghcnd_countries"
     description: "noaaspc"
   - type: bigquery_table
@@ -36,10 +54,37 @@ resources:
     table_id: "hurricanes"
     description: "noaaspc"
   - type: bigquery_table
+    table_id: "lightning_strikes_by_year"
+    description: "noaaspc"
+  - type: bigquery_table
+    table_id: "storms"
+    description: "noaaspc"
+  - type: bigquery_table
     table_id: "hail_reports"
     description: "noaaspc"
   - type: bigquery_table
-    table_id: "lightning_strikes_by_year"
+    table_id: "wind_reports"
+    description: "noaaspc"
+  - type: bigquery_table
+    table_id: "tornado_reports"
+    description: "noaaspc"
+  - type: bigquery_table
+    table_id: "abi_l2_mcmip"
+    description: "noaaspc"
+  - type: bigquery_table
+    table_id: "abi_l2_lcfa"
+    description: "noaaspc"
+  - type: bigquery_table
+    table_id: "abi_l2_cmip"
+    description: "noaaspc"
+  - type: bigquery_table
+    table_id: "abi_lib_radiance"
+    description: "noaaspc"
+  - type: bigquery_table
+    table_id: "gsod2020"
+    description: "noaaspc"
+  - type: bigquery_table
+    table_id: "gsod2022"
     description: "noaaspc"
 
 dag:
@@ -152,6 +197,145 @@ dag:
         resources:
           request_ephemeral_storage: "16G"
           limit_cpu: "3"
+    - operator: "GKEStartPodOperator"
+      description: "Run NOAA load processes - GHCN-M"
+      args:
+        task_id: "noaa_ghcn_m"
+        name: "noaa.ghcn_m"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: noaa
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "NOAA GHCN-M"
+          SOURCE_URL: >-
+            {
+              "tmin": "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/v3/ghcnm.tmin.latest.qca.tar.gz",
+              "tavg": "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/v3/ghcnm.tavg.latest.qca.tar.gz",
+              "tmax": "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/v3/ghcnm.tmax.latest.qca.tar.gz"
+            }
+          SOURCE_FILE: "files/data_ghcn_m.csv"
+          TARGET_FILE: "files/data_output_ghcn_m.csv"
+          CHUNKSIZE: "100000"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "ghcn_m"
+          TABLE_ID: "ghcnm_"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/noaa/ghcn_m/data_output.csv"
+          SCHEMA_PATH: "data/noaa/schema/noaa_ghcn_m__schema.json"
+          DROP_DEST_TABLE: "N"
+          INPUT_FIELD_DELIMITER: "|"
+          CONVERT_INT_LIST: >-
+            {
+              "data": [
+                        "id",
+                        "year",
+                        "value1",
+                        "value2",
+                        "value3",
+                        "value4",
+                        "value5",
+                        "value6",
+                        "value7",
+                        "value8",
+                        "value9",
+                        "value10",
+                        "value11",
+                        "value12"
+              ],
+              "stations": [
+                            "id",
+                            "grelev",
+                            "popsiz",
+                            "ocndis",
+                            "towndis"
+              ]
+            }
+          NULL_ROWS_LIST: >-
+            [
+              "id"
+            ]
+          FULL_DATA_LOAD: "N"
+          REMOVE_SOURCE_FILE: "N"
+          DELETE_TARGET_FILE: "N"
+          INPUT_CSV_FIELD_POS: >-
+            [
+              {
+                "data": [
+                          ["id", "0", "10"],
+                          ["year", "11", "14"],
+                          ["element", "15", "18"],
+                          ["value1", "19", "23"],
+                          ["dmflag1", "24", "24"],
+                          ["qcflag1", "25", "25"],
+                          ["dsflag1", "26", "26"],
+                          ["value2", "27", "31"],
+                          ["dmflag2", "32", "32"],
+                          ["qcflag2", "33", "33"],
+                          ["dsflag2", "34", "34"],
+                          ["value3", "35", "39"],
+                          ["dmflag3", "40", "40"],
+                          ["qcflag3", "41", "41"],
+                          ["dsflag3", "42", "42"],
+                          ["value4", "43", "47"],
+                          ["dmflag4", "48", "48"],
+                          ["qcflag4", "49", "49"],
+                          ["dsflag4", "50", "50"],
+                          ["value5", "51", "55"],
+                          ["dmflag5", "56", "56"],
+                          ["qcflag5", "57", "57"],
+                          ["dsflag5", "58", "58"],
+                          ["value6", "59", "63"],
+                          ["dmflag6", "64", "64"],
+                          ["qcflag6", "65", "65"],
+                          ["dsflag6", "66", "66"],
+                          ["value7", "67", "71"],
+                          ["dmflag7", "72", "72"],
+                          ["qcflag7", "73", "73"],
+                          ["dsflag7", "74", "74"],
+                          ["value8", "75", "79"],
+                          ["dmflag8", "80", "80"],
+                          ["qcflag8", "81", "81"],
+                          ["dsflag8", "82", "82"],
+                          ["value9", "83", "87"],
+                          ["dmflag9", "88", "88"],
+                          ["qcflag9", "89", "89"],
+                          ["dsflag9", "90", "90"],
+                          ["value10", "91", "95"],
+                          ["dmflag10", "96", "96"],
+                          ["qcflag10", "97", "97"],
+                          ["dsflag10", "98", "98"],
+                          ["value11", "99", "103"],
+                          ["dmflag11", "104", "104"],
+                          ["qcflag11", "105", "105"],
+                          ["dsflag11", "106", "106"],
+                          ["value12", "107", "111"],
+                          ["dmflag12", "112", "112"],
+                          ["qcflag12", "113", "113"],
+                          ["dsflag12", "114", "114"]
+                ],
+                "stations": [
+                          ["id", "0", "10"],
+                          ["latitude", "11", "19"],
+                          ["longitude", "20", "29"],
+                          ["stnelev", "30", "36"],
+                          ["name", "37", "67"],
+                          ["grelev", "68", "72"],
+                          ["popcls", "73", "73"],
+                          ["popsiz", "74", "78"],
+                          ["topo", "79", "80"],
+                          ["stveg", "81", "82"],
+                          ["stloc", "83", "84"],
+                          ["ocndis", "85", "86"],
+                          ["airstn", "87", "87"],
+                          ["towndis", "88", "89"],
+                          ["grveg", "90", "105"],
+                          ["popcss", "106", "106"]
+                ]
+              }
+            ]
     - operator: "GKEStartPodOperator"
       description: "Run NOAA load processes"
       args:
@@ -3000,4 +3184,4 @@ dag:
         name: noaa
 
   graph_paths:
-    - "create_cluster >> lightning_strikes_by_year >> [ ghcnd_inventory, spc_hail, spc_wind, spc_tornado, ghcnd_states, ghcnd_stations, gsod_stations, ghcnd_countries] >> storms_database_by_year >> [noaa_goes16_mcmip, noaa_goes16_cmip, noaa_goes16_glm] >> noaa_goes16_radiance >> [noaa_goes17_mcmip, noaa_goes17_cmip, noaa_goes17_glm] >> noaa_goes17_radiance >> [ghcnd_by_year ] >> ghcnd_hurricanes >> [noaa_gsod_2020, noaa_gsod_2022] >> delete_cluster"
+    - "create_cluster >> noaa_ghcn_m >> [ ghcnd_inventory, spc_hail, spc_wind, spc_tornado, ghcnd_states, ghcnd_stations, gsod_stations, ghcnd_countries] >> storms_database_by_year >> [noaa_goes16_mcmip, noaa_goes16_cmip, noaa_goes16_glm] >> noaa_goes16_radiance >> [noaa_goes17_mcmip, noaa_goes17_cmip, noaa_goes17_glm] >> noaa_goes17_radiance >> [ghcnd_by_year, lightning_strikes_by_year ] >> ghcnd_hurricanes >> [noaa_gsod_2020, noaa_gsod_2022] >> delete_cluster"
