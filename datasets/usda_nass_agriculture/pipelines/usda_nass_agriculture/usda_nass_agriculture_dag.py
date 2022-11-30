@@ -1,0 +1,62 @@
+# Copyright 2022 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+from airflow import DAG
+from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+
+default_args = {
+    "owner": "Google",
+    "depends_on_past": False,
+    "start_date": "2022-11-29",
+}
+
+
+with DAG(
+    dag_id="usda_nass_agriculture.usda_nass_agriculture",
+    default_args=default_args,
+    max_active_runs=1,
+    schedule_interval="@weekly",
+    catchup=False,
+    default_view="graph",
+) as dag:
+
+    # ETL within the kubernetes pod
+    kub_csv_transform = kubernetes_pod.KubernetesPodOperator(
+        task_id="kub_csv_transform",
+        startup_timeout_seconds=1000,
+        name="load_data",
+        namespace="composer",
+        service_account_name="datasets",
+        image_pull_policy="Always",
+        image="{{ var.json.usda_nass_agriculture.container_registry.run_csv_transform_kub }}",
+        env_vars={
+            "SOURCE_GCS_PATH": "data/usda_nass_agriculture/raw_files/",
+            "DESTINATION_GCS_PATH": "data/usda_nass_agriculture/transformed_files/",
+            "PROJECT_ID": "{{ var.value.gcp_project }}",
+            "DATASET_ID": "usda_nass_agriculture",
+            "GCS_BUCKET": "{{ var.value.composer_bucket }}",
+            "SCHEMA_FILEPATH": "schema.json",
+            "RENAME_MAPPINGS": '{"SOURCE_DESC": "source_desc", "SECTOR_DESC": "sector_desc", "GROUP_DESC": "group_desc", "COMMODITY_DESC": "commodity_desc", "CLASS_DESC": "class_desc", "PRODN_PRACTICE_DESC": "prodn_practice_desc", "UTIL_PRACTICE_DESC": "util_practice_desc", "STATISTICCAT_DESC": "statisticcat_desc", "UNIT_DESC": "unit_desc", "SHORT_DESC": "short_desc", "DOMAIN_DESC": "domain_desc", "DOMAINCAT_DESC": "domaincat_desc", "AGG_LEVEL_DESC": "agg_level_desc", "STATE_ANSI": "state_ansi", "STATE_FIPS_CODE": "state_fips_code", "STATE_ALPHA": "state_alpha", "STATE_NAME": "state_name", "ASD_CODE": "asd_code", "ASD_DESC": "asd_desc", "COUNTY_ANSI": "county_ansi", "COUNTY_CODE": "county_code", "COUNTY_NAME": "county_name", "REGION_DESC": "region_desc", "ZIP_5": "zip_5", "WATERSHED_CODE": "watershed_code", "WATERSHED_DESC": "watershed_desc", "CONGR_DISTRICT_CODE": "congr_district_code", "COUNTRY_CODE": "country_code", "COUNTRY_NAME": "country_name", "LOCATION_DESC": "location_desc", "YEAR": "year", "FREQ_DESC": "freq_desc", "BEGIN_CODE": "begin_code", "END_CODE": "end_code", "REFERENCE_PERIOD_DESC": "reference_period_desc", "WEEK_ENDING": "week_ending", "LOAD_TIME": "load_time", "VALUE": "value", "CV_%": "cv_percent"}',
+            "HEADERS": '["source_desc", "sector_desc", "group_desc", "commodity_desc", "class_desc", "prodn_practice_desc", "util_practice_desc", "statisticcat_desc", "unit_desc", "short_desc", "domain_desc", "domaincat_desc", "agg_level_desc", "state_ansi", "state_fips_code", "state_alpha", "state_name", "asd_code", "asd_desc", "county_ansi", "county_code", "county_name", "region_desc", "zip_5", "watershed_code", "watershed_desc", "congr_district_code", "country_code", "country_name", "location_desc", "year", "freq_desc", "begin_code", "end_code", "reference_period_desc", "week_ending", "load_time", "value", "cv_percent"]',
+            "DOWNLOAD_PATH": "",
+        },
+        resources={
+            "request_memory": "8G",
+            "request_cpu": "2",
+            "request_ephemeral_storage": "10G",
+        },
+    )
+
+    kub_csv_transform
