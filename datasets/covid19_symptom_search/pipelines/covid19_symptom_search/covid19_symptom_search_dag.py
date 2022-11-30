@@ -19,7 +19,7 @@ from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
 default_args = {
     "owner": "Google",
     "depends_on_past": False,
-    "start_date": "2022-11-16",
+    "start_date": "2022-11-30",
 }
 
 
@@ -27,7 +27,7 @@ with DAG(
     dag_id="covid19_symptom_search.covid19_symptom_search",
     default_args=default_args,
     max_active_runs=1,
-    schedule_interval="@monthly",
+    schedule_interval="@daily",
     catchup=False,
     default_view="graph",
 ) as dag:
