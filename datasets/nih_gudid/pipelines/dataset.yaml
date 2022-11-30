@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,17 +13,13 @@
 # limitations under the License.
 
 dataset:
-  name: london_bicycles
-  friendly_name: london_bicycles
-  description: London bicycle stations live hire updates dataset
+  name: nih_gudid
+  friendly_name: nih_gudid
+  description: ~
   dataset_sources: ~
   terms_of_use: ~
 
 resources:
   - type: bigquery_dataset
-    dataset_id: london_bicycles
-    description: "This dataset consists live bicycle hire updates of London city"
-  - type: storage_bucket
-    name: "london-bicycles"
-    uniform_bucket_level_access: True
-    location: EU
+    dataset_id: nih_gudid
+    description: The Global Unique Device Identification Database (GUDID) contains key device identification information submitted to the FDA about medical devices that have Unique Device Identifiers (UDI).
