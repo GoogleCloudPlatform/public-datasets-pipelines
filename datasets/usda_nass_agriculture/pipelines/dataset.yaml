@@ -15,11 +15,11 @@
 dataset:
   name: usda_nass_agriculture
   friendly_name: usda_nass_agriculture
-  description: 
+  description:
   dataset_sources: ~
   terms_of_use: ~
 
 resources:
   - type: bigquery_dataset
     dataset_id: usda_nass_agriculture
-    description: 
+    description:
