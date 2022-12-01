@@ -23,32 +23,32 @@ dag:
     default_args:
       owner: "Google"
       depends_on_past: False
-      start_date: "2022-11-29"
+      start_date: "2022-11-30"
     max_active_runs: 1
     schedule_interval: "@weekly"
     catchup: False
     default_view: graph
 
   tasks:
-    # - operator: "BashOperator"
-    #   description: "Download data"
-    #   args:
-    #     task_id: "bash_download"
-    #     bash_command: "wget -O /home/airflow/gcs/data/usda_nass_agriculture/raw_files/census2002.txt.gz ftp://ftp.nass.usda.gov/quickstats/qs.census2002.txt.gz ;
-    #                    wget -O /home/airflow/gcs/data/usda_nass_agriculture/raw_files/census2007.txt.gz ftp://ftp.nass.usda.gov/quickstats/qs.census2007.txt.gz ;
-    #                    wget -O /home/airflow/gcs/data/usda_nass_agriculture/raw_files/census2012.txt.gz ftp://ftp.nass.usda.gov/quickstats/qs.census2012.txt.gz ;
-    #                    wget -O /home/airflow/gcs/data/usda_nass_agriculture/raw_files/animal_products.txt.gz ftp://ftp.nass.usda.gov/quickstats/qs.animals_products_20221129.txt.gz ;
-    #                    wget -O /home/airflow/gcs/data/usda_nass_agriculture/raw_files/economics.txt.gz ftp://ftp.nass.usda.gov/quickstats/qs.economics_20221129.txt.gz ;"
+    - operator: "BashOperator"
+      description: "Download data"
+      args:
+        task_id: "bash_download"
+        bash_command: "wget -O /home/airflow/gcs/data/usda_nass_agriculture/raw_files/census2002.txt.gz ftp://ftp.nass.usda.gov/quickstats/qs.census2002.txt.gz ;
+                       wget -O /home/airflow/gcs/data/usda_nass_agriculture/raw_files/census2007.txt.gz ftp://ftp.nass.usda.gov/quickstats/qs.census2007.txt.gz ;
+                       wget -O /home/airflow/gcs/data/usda_nass_agriculture/raw_files/census2012.txt.gz ftp://ftp.nass.usda.gov/quickstats/qs.census2012.txt.gz ;
+                       wget -O /home/airflow/gcs/data/usda_nass_agriculture/raw_files/animal_products.txt.gz ftp://ftp.nass.usda.gov/quickstats/qs.animals_products_20221129.txt.gz ;
+                       wget -O /home/airflow/gcs/data/usda_nass_agriculture/raw_files/economics.txt.gz ftp://ftp.nass.usda.gov/quickstats/qs.economics_20221129.txt.gz ;"
 
-    # - operator: "BashOperator"
-    #   description: "Unzip data"
-    #   args:
-    #     task_id: "bash_unzip"
-    #     bash_command: "gunzip -f -v -k /home/airflow/gcs/data/usda_nass_agriculture/raw_files/census2002.txt.gz ; 
-    #                    gunzip -f -v -k /home/airflow/gcs/data/usda_nass_agriculture/raw_files/census2007.txt.gz ;
-    #                    gunzip -f -v -k /home/airflow/gcs/data/usda_nass_agriculture/raw_files/census2012.txt.gz ;
-    #                    gunzip -f -v -k /home/airflow/gcs/data/usda_nass_agriculture/raw_files/animal_products.txt.gz ;
-    #                    gunzip -f -v -k /home/airflow/gcs/data/usda_nass_agriculture/raw_files/economics.txt.gz ;"
+    - operator: "BashOperator"
+      description: "Unzip data"
+      args:
+        task_id: "bash_unzip"
+        bash_command: "gunzip -f -v -k /home/airflow/gcs/data/usda_nass_agriculture/raw_files/census2002.txt.gz ;
+                       gunzip -f -v -k /home/airflow/gcs/data/usda_nass_agriculture/raw_files/census2007.txt.gz ;
+                       gunzip -f -v -k /home/airflow/gcs/data/usda_nass_agriculture/raw_files/census2012.txt.gz ;
+                       gunzip -f -v -k /home/airflow/gcs/data/usda_nass_agriculture/raw_files/animal_products.txt.gz ;
+                       gunzip -f -v -k /home/airflow/gcs/data/usda_nass_agriculture/raw_files/economics.txt.gz ;"
 
     - operator: "KubernetesPodOperator"
       description: "ETL within the kubernetes pod"
@@ -77,5 +77,4 @@ dag:
 
 
   graph_paths:
-    # - "bash_download >> bash_unzip >> kub_csv_transform"
-    - "kub_csv_transform"
+    - "bash_download >> bash_unzip >> kub_csv_transform"

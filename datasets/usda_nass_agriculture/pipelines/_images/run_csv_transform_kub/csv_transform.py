@@ -77,9 +77,6 @@ def execute_pipeline(
         upload_transformed_file(
             destination_gcs_path, gcs_bucket, final_filename, pipeline_name
         )
-        logging.info("Deleting source and transformed files post upload.")
-        os.remove(final_filename)
-        os.remove(download_path+pipeline_name)
         client = storage.Client()
         blob = client.list_blobs(
             gcs_bucket, prefix=destination_gcs_path + pipeline_name
@@ -116,24 +113,32 @@ def check_file(download_path, pipeline_name):
 
 
 def transform_file(download_path, pipeline_name, rename_mappings, headers):
-    df = pd.read_csv(download_path + pipeline_name, sep="\t",encoding_errors="ignore",nrows=1000000)
     logging.info("Transforming file")
-    rename_headers(df, rename_mappings)
-    reorder_headers(df, headers)
-    final_filename = save_to_file(df, download_path, pipeline_name)
-    del df
+    with pd.read_csv(
+        download_path + pipeline_name,
+        sep="\t",
+        encoding_errors="ignore",
+        chunksize=1000000,
+    ) as reader:
+        logging.info("Deleting source file to avoid space consumption.")
+        os.remove(download_path + pipeline_name)
+        for df in reader:
+            logging.info("Processing chunk df")
+            rename_headers(df, rename_mappings)
+            reorder_headers(df, headers)
+            final_filename = save_to_file(df, download_path, pipeline_name)
     return final_filename
 
 
 def save_to_file(df, download_path, pipeline_name):
-    filename = download_path + pipeline_name[:-4]+".csv"
-    df.to_csv(filename, index=False)
+    filename = download_path + pipeline_name[:-4] + ".csv"
+    df.to_csv(filename, index=False, header=False, mode="a")
     return filename
 
 
 def reorder_headers(df, headers):
     logging.info("Reordering headers")
-    df=df[headers]
+    df = df[headers]
 
 
 def rename_headers(df, rename_mappings):
@@ -192,7 +197,7 @@ def create_table_schema(schema_filepath, table_id) -> list:
     logging.info("Defining table schema")
     schema = []
     with open(schema_filepath) as f:
-        schema_dict=json.load(f)
+        schema_dict = json.load(f)
     for line_field in schema_dict:
         fld_name = line_field["name"]
         fld_type = line_field["type"]
@@ -215,8 +220,10 @@ def upload_transformed_file(
     logging.info("Uploading file to GCS")
     client = storage.Client()
     bucket = client.bucket(gcs_bucket)
-    blob = bucket.blob(destination_gcs_path + pipeline_name)
+    blob = bucket.blob(destination_gcs_path + pipeline_name[:-4] + ".csv")
     blob.upload_from_filename(final_filename)
+    logging.info("Deleting file post upload")
+    os.remove(final_filename)
 
 
 def load_data_to_bq(
@@ -233,7 +240,7 @@ def load_data_to_bq(
     client = bigquery.Client(project=project_id)
     table_ref = f"{project_id}.{dataset_id}.{table_id}"
     job_config = bigquery.LoadJobConfig(
-        skip_leading_rows=1, source_format=bigquery.SourceFormat.CSV
+        skip_leading_rows=0, source_format=bigquery.SourceFormat.CSV
     )
     job = client.load_table_from_uri(
         f"gs://{gcs_bucket}/{source_gcs_path}{pipeline_name}",

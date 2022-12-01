@@ -19,7 +19,7 @@ from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
 default_args = {
     "owner": "Google",
     "depends_on_past": False,
-    "start_date": "2022-11-29",
+    "start_date": "2022-11-30",
 }
 
 
