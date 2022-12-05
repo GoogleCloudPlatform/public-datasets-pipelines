@@ -223,15 +223,39 @@ def execute_pipeline(
             )
         return None
     if pipeline_name in ["NOAA HRRR Failover", "NOAA HRRR ARL Formatting"]:
-        src_url = source_url[pipeline_name.replace(" ", "_").lower()].replace("~DATE~", datetime.datetime.today().strftime('%Y%m%d'))
-        src_file_list = url_directory_list(src_url, "hrrr")
+        todays_date = datetime.datetime.today().strftime('%Y%m%d')
+        src_url = source_url[pipeline_name.replace(" ", "_").lower()].replace("~DATE~", todays_date)
+        src_file_list = url_directory_list(src_url, "")
+        bucket_file_list = gcs_bucket_files_list(
+            gcs_bucket=target_gcs_bucket,
+            gcs_path=str(target_gcs_path).replace('~DATE~', todays_date )
+        )
+        import pdb; pdb.set_trace()
+        cnt = 1
+        logging.info(f"Checking transferral status of { len(src_file_list) } files ...")
         for src_file in src_file_list:
-            dest_gcs_file = ""
-            tmp_src_file = ""
-            if not(check_gcs_file_exists(file_path = dest_gcs_file, bucket_name=target_gcs_bucket)):
-                download_file_http(source_url=src_file, source_file=tmp_src_file, continue_on_error=True)
-                if os.path.exists(tmp_src_file):
-                    upload_file_to_gcs(tmp_src_file, target_gcs_bucket=target_gcs_bucket, target_gcs_path=dest_gcs_file)
+            if not(src_file[:-19] == "/Parent%20Directory") and not(src_file[:-1] == "/"):
+                dest_gcs_filename = os.path.basename(src_file)
+                dest_gcs_path = f"{ str(target_gcs_path).replace('~DATE~', todays_date )}/{ dest_gcs_filename }"
+                tmp_src_file = f"{source_file}/{dest_gcs_filename}"
+                logging.info(f" ... {src_file} ... {dest_gcs_filename} ... {dest_gcs_path} ... {tmp_src_file}")
+                if not(check_gcs_file_exists(file_path = dest_gcs_path, bucket_name=target_gcs_bucket)):
+                    download_file_http(source_url=src_file, source_file=tmp_src_file, continue_on_error=True, quiet_mode=True)
+                    if os.path.exists(tmp_src_file):
+                        upload_file_to_gcs(
+                            file_path=tmp_src_file,
+                            target_gcs_bucket=target_gcs_bucket,
+                            target_gcs_path=dest_gcs_path
+                        )
+                    else:
+                        pass
+                else:
+                    pass
+            else:
+                pass
+            if (cnt % 100) == 0:
+                logging.info(f" ... Checked {cnt} files are transferred.")
+            cnt += 1
         import pdb; pdb.set_trace()
         return None
     if pipeline_name in ["NOAA GHCN-M"]:
@@ -1459,6 +1483,25 @@ def convert_date_from_int(df: pd.DataFrame, int_date_list: dict) -> pd.DataFrame
     return df
 
 
+def gcs_bucket_files_list(
+    gcs_bucket: str,
+    gcs_path: str
+) -> typing.List[str]:
+    client = storage.Client()
+    bucket = storage.Bucket(client, gcs_bucket)
+    if gcs_path == "":
+        blobs = bucket.list_blobs()
+    else:
+        blobs = bucket.list_blobs(prefix=gcs_path)
+    return list(blobs)
+
+
+# def url_dir_list_recursive(
+#     source_url_path: str, file_pattern: str = ""
+# ) -> typing.List[str]:
+#     if url_
+
+
 def url_directory_list(
     source_url_path: str, file_pattern: str = ""
 ) -> typing.List[str]:
@@ -1472,14 +1515,49 @@ def url_directory_list(
         file_name = i.extract().get_text()
         url_new = url + file_name
         url_new = url_new.replace(" ", "%20")
-        if file_pattern == "":
-            rtn_list.append(url_new)
+        # logging.info(f"{ str(i) } ... { file_name } ... { url_new }")
+        if str(i)[-5:] == "/</a>":
+            rtn_list.append(
+                url_directory_list(source_url_path=f"{source_url_path}{file_name}",
+                                   file_pattern=file_pattern)
+            )
         else:
-            if re.search("" + file_pattern, file_name):
+            if file_pattern == "":
                 rtn_list.append(url_new)
             else:
-                pass
+                if re.search("" + file_pattern, file_name):
+                    rtn_list.append(url_new)
+                else:
+                    pass
+        # import pdb; pdb.set_trace()
     return rtn_list
+
+
+# def url_directory_list(
+#     source_url_path: str, file_pattern: str = ""
+# ) -> typing.List[str]:
+#     rtn_list = []
+#     url = source_url_path.replace(" ", "%20")
+#     req = Request(url)
+#     a = urlopen(req).read()
+#     soup = BeautifulSoup(a, "html.parser")
+#     x = soup.find_all("a")
+#     for i in x:
+#         file_name = i.extract().get_text()
+#         url_new = url + file_name
+#         url_new = url_new.replace(" ", "%20")
+#         if str(i)[-5:] == "/</a>":
+#             rtn_list.append(url_directory_list(source_url_path=i, file_pattern=file_pattern))
+#         else:
+#             if file_pattern == "":
+#                 rtn_list.append(url_new)
+#             else:
+#                 if re.search("" + file_pattern, file_name):
+#                     rtn_list.append(url_new)
+#                 else:
+#                     pass
+#         import pdb; pdb.set_trace()
+#     return rtn_list
 
 
 def rename_headers(df: pd.DataFrame, rename_headers_list: dict) -> pd.DataFrame:
