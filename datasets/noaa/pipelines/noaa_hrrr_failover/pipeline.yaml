@@ -1,0 +1,59 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+resources:
+  - type: bigquery_table
+    table_id: "gsod2022"
+    description: "noaaspc"
+
+dag:
+  airflow_version: 2
+  initialize:
+    dag_id: noaa_hrrr
+    default_args:
+      owner: "Google"
+      depends_on_past: False
+      start_date: '2021-03-01'
+    max_active_runs: 1
+    schedule_interval: "@once"
+    catchup: False
+    default_view: graph
+
+  tasks:
+    - operator: "GKEStartPodOperator"
+      description: "Run NOAA load processes - HRRR Failover"
+      args:
+        task_id: "hrrr_failover"
+        name: "noaa.hrrr_failover"
+        namespace: "composer"
+        service_account_name: "datasets"
+        image_pull_policy: "Always"
+        image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "NOAA HRRR Failover"
+          SOURCE_URL: >-
+            {
+              "noaa_hrrr_failover": "https://nomads.ncep.noaa.gov/pub/data/nccf/com/hrrr/prod/hrrr.~DATE~/conus/"
+            }
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/noaa/ghcn_m/data_output.csv"
+          SCHEMA_PATH: "data/noaa/schema/noaa_ghcn_m__schema.json"
+        resources:
+          request_ephemeral_storage: "16G"
+          limit_cpu: "3"
+
+  graph_paths:
+    - "create_cluster >> noaa_ghcn_m >> [ ghcnd_inventory, spc_hail, spc_wind, spc_tornado, ghcnd_states, ghcnd_stations, gsod_stations, ghcnd_countries] >> storms_database_by_year >> [noaa_goes16_mcmip, noaa_goes16_cmip, noaa_goes16_glm] >> noaa_goes16_radiance >> [noaa_goes17_mcmip, noaa_goes17_cmip, noaa_goes17_glm] >> noaa_goes17_radiance >> [ghcnd_by_year, lightning_strikes_by_year ] >> ghcnd_hurricanes >> [noaa_gsod_2020, noaa_gsod_2022] >> delete_cluster"

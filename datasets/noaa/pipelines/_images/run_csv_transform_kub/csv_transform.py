@@ -28,7 +28,7 @@ import sys
 import time
 import typing
 import zipfile
-from urllib.request import Request, urlopen
+from urllib.request import Request, urlopen, urlretrieve
 
 import geopandas as geo
 import numpy as np
@@ -221,6 +221,18 @@ def execute_pipeline(
                 int_date_list=int_date_list,
                 gen_location_list=gen_location_list,
             )
+        return None
+    if pipeline_name in ["NOAA HRRR Failover", "NOAA HRRR ARL Formatting"]:
+        src_url = source_url[pipeline_name.replace(" ", "_").lower()].replace("~DATE~", datetime.datetime.today().strftime('%Y%m%d'))
+        src_file_list = url_directory_list(src_url, "hrrr")
+        for src_file in src_file_list:
+            dest_gcs_file = ""
+            tmp_src_file = ""
+            if not(check_gcs_file_exists(file_path = dest_gcs_file, bucket_name=target_gcs_bucket)):
+                download_file_http(source_url=src_file, source_file=tmp_src_file, continue_on_error=True)
+                if os.path.exists(tmp_src_file):
+                    upload_file_to_gcs(tmp_src_file, target_gcs_bucket=target_gcs_bucket, target_gcs_path=dest_gcs_file)
+        import pdb; pdb.set_trace()
         return None
     if pipeline_name in ["NOAA GHCN-M"]:
         for file_id in source_url:
