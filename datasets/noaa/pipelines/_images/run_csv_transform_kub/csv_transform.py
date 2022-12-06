@@ -222,45 +222,32 @@ def execute_pipeline(
                 gen_location_list=gen_location_list,
             )
         return None
-    if pipeline_name in ["NOAA HRRR Failover", "NOAA HRRR ARL Formatting"]:
+    if pipeline_name in ["NOAA HRRR Failover"]:
         todays_date = datetime.datetime.today().strftime('%Y%m%d')
-        # todays_date = '20221205'
         src_url = source_url[pipeline_name.replace(" ", "_").lower()].replace("~DATE~", todays_date)
         logging.info("Extracting list of collected bucket files")
         bucket_file_list =  gcs_bucket_files_list(
                                 gcs_bucket=target_gcs_bucket,
                                 gcs_path=str(target_gcs_path).replace('~DATE~', todays_date )
                             )
-        import pdb; pdb.set_trace()
         logging.info("Extracting and flattening list of source files")
-        src_file_list = url_directory_list(src_url, "")
-        import pdb; pdb.set_trace()
+        src_url_list = url_directory_list(src_url, "")
         cnt = 1
-        logging.info(f"Checking transferral status of { len(src_file_list) } files ...")
-        for src_file in src_file_list:
-            if not(src_file[:-19] == "/Parent%20Directory") and not(src_file[:-1] == "/"):
-                dest_gcs_filename = os.path.basename(src_file)
-                dest_gcs_path = f"{ str(target_gcs_path).replace('~DATE~', todays_date )}/{ dest_gcs_filename }"
-                tmp_src_file = f"{source_file}/{dest_gcs_filename}"
-                logging.info(f" ... {src_file} ... {dest_gcs_filename} ... {dest_gcs_path} ... {tmp_src_file}")
-                if not(check_gcs_file_exists(file_path = dest_gcs_path, bucket_name=target_gcs_bucket)):
-                    download_file_http(source_url=src_file, source_file=tmp_src_file, continue_on_error=True, quiet_mode=True)
-                    if os.path.exists(tmp_src_file):
-                        upload_file_to_gcs(
-                            file_path=tmp_src_file,
-                            target_gcs_bucket=target_gcs_bucket,
-                            target_gcs_path=dest_gcs_path
-                        )
-                    else:
-                        pass
-                else:
-                    pass
-            else:
-                pass
+        logging.info(f"Checking transferral status of { len(src_url_list) } files ...")
+        est_number_files = len(src_url_list) - len(bucket_file_list)
+        logging.info(f" ... Estimated number of files to copy { est_number_files }")
+        for file_src_url in src_url_list:
+            bucket_file_path = file_src_url.split("prod/")[1]
+            if bucket_file_path not in bucket_file_list:
+                upload_hrrr_file(
+                    target_gcs_bucket=target_gcs_bucket,
+                    target_gcs_path=f"{target_gcs_path}/{bucket_file_path}",
+                    source_url=file_src_url,
+                    source_file=source_file
+                )
             if (cnt % 100) == 0:
                 logging.info(f" ... Checked {cnt} files are transferred.")
             cnt += 1
-        import pdb; pdb.set_trace()
         return None
     if pipeline_name in ["NOAA GHCN-M"]:
         for file_id in source_url:
@@ -633,6 +620,29 @@ def execute_pipeline(
             gen_location_list=gen_location_list,
         )
         return None
+
+
+def upload_hrrr_file(
+        target_gcs_bucket: str,
+        target_gcs_path: str,
+        source_url: str,
+        source_file: str
+) -> None:
+    dest_gcs_filename = os.path.basename(source_url)
+    dest_gcs_path = f"{target_gcs_path}/{ dest_gcs_filename }"
+    tmp_src_file = f"{source_file}/{dest_gcs_filename}"
+    download_file_http(
+        source_url=source_url,
+        source_file=tmp_src_file,
+        continue_on_error=True,
+        quiet_mode=False
+    )
+    if os.path.exists(tmp_src_file):
+        upload_file_to_gcs(
+            file_path=tmp_src_file,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=dest_gcs_path
+        )
 
 
 def strip_dataframe_whitespace(df: pd.DataFrame) -> pd.DataFrame:
@@ -1527,13 +1537,16 @@ def url_directory_list(
             rtn_list.append(subdir_list)
             rtn_list = sorted(list(pd.core.common.flatten(rtn_list)))
         else:
-            if file_pattern == "":
-                rtn_list.append(url_new)
-            else:
-                if re.search("" + file_pattern, file_name):
+            if str(url_new).find("Parent%20Directory") == -1:
+                if file_pattern == "":
                     rtn_list.append(url_new)
                 else:
-                    pass
+                    if re.search("" + file_pattern, file_name):
+                        rtn_list.append(url_new)
+                    else:
+                        pass
+            else:
+                pass
     return sorted(rtn_list)
 
 
