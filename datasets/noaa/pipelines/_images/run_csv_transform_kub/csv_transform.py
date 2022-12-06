@@ -223,18 +223,17 @@ def execute_pipeline(
             )
         return None
     if pipeline_name in ["NOAA HRRR Failover", "NOAA HRRR ARL Formatting"]:
-        # todays_date = datetime.datetime.today().strftime('%Y%m%d')
-        todays_date = '20221205'
+        todays_date = datetime.datetime.today().strftime('%Y%m%d')
+        # todays_date = '20221205'
         src_url = source_url[pipeline_name.replace(" ", "_").lower()].replace("~DATE~", todays_date)
         logging.info("Extracting list of collected bucket files")
         bucket_file_list =  gcs_bucket_files_list(
                                 gcs_bucket=target_gcs_bucket,
                                 gcs_path=str(target_gcs_path).replace('~DATE~', todays_date )
                             )
-        logging.info("Flattening list of collected bucket files")
-        bucket_file_list = flatten_nested_list(bucket_file_list)
+        import pdb; pdb.set_trace()
         logging.info("Extracting and flattening list of source files")
-        src_file_list = flatten_nested_list(url_directory_list(src_url, ""))
+        src_file_list = url_directory_list(src_url, "")
         import pdb; pdb.set_trace()
         cnt = 1
         logging.info(f"Checking transferral status of { len(src_file_list) } files ...")
@@ -634,17 +633,6 @@ def execute_pipeline(
             gen_location_list=gen_location_list,
         )
         return None
-
-
-def flatten_nested_list(lst: typing.List[str]) -> typing.List[str]:
-    out_list = []
-    for item in lst:
-        if type(item) == list:
-            flatten_nested_list(item)
-        else:
-            out_list.append(str(item))
-    # import pdb; pdb.set_trace()
-    return sorted(out_list)
 
 
 def strip_dataframe_whitespace(df: pd.DataFrame) -> pd.DataFrame:
@@ -1510,20 +1498,17 @@ def gcs_bucket_files_list(
     else:
         blobs = bucket.list_blobs(prefix=gcs_path)
     blob_list = list(blobs)
+    str_blob_list = []
     for blob in blob_list:
-        blob = str(blob)
-    return blob_list
-
-
-# def url_dir_list_recursive(
-#     source_url_path: str, file_pattern: str = ""
-# ) -> typing.List[str]:
-#     if url_
+        str_blob = str(str.strip(str.split(str(blob), ",")[1]))
+        str_blob_list.append(str_blob)
+    return str_blob_list
 
 
 def url_directory_list(
     source_url_path: str, file_pattern: str = ""
 ) -> typing.List[str]:
+    logging.info(f"Extracting list of files and directories from {source_url_path}")
     rtn_list = []
     url = source_url_path.replace(" ", "%20")
     req = Request(url)
@@ -1534,12 +1519,13 @@ def url_directory_list(
         file_name = i.extract().get_text()
         url_new = url + file_name
         url_new = url_new.replace(" ", "%20")
-        # logging.info(f"{ str(i) } ... { file_name } ... { url_new }")
-        if str(i)[-5:] == "/</a>":
-            rtn_list.append(
-                url_directory_list(source_url_path=f"{source_url_path}{file_name}",
-                                   file_pattern=file_pattern)
+        if url_new[-1:] == "/":
+            subdir_list = url_directory_list(
+                source_url_path=url_new,
+                file_pattern=file_pattern
             )
+            rtn_list.append(subdir_list)
+            rtn_list = sorted(list(pd.core.common.flatten(rtn_list)))
         else:
             if file_pattern == "":
                 rtn_list.append(url_new)
@@ -1548,35 +1534,7 @@ def url_directory_list(
                     rtn_list.append(url_new)
                 else:
                     pass
-        # import pdb; pdb.set_trace()
-    return rtn_list
-
-
-# def url_directory_list(
-#     source_url_path: str, file_pattern: str = ""
-# ) -> typing.List[str]:
-#     rtn_list = []
-#     url = source_url_path.replace(" ", "%20")
-#     req = Request(url)
-#     a = urlopen(req).read()
-#     soup = BeautifulSoup(a, "html.parser")
-#     x = soup.find_all("a")
-#     for i in x:
-#         file_name = i.extract().get_text()
-#         url_new = url + file_name
-#         url_new = url_new.replace(" ", "%20")
-#         if str(i)[-5:] == "/</a>":
-#             rtn_list.append(url_directory_list(source_url_path=i, file_pattern=file_pattern))
-#         else:
-#             if file_pattern == "":
-#                 rtn_list.append(url_new)
-#             else:
-#                 if re.search("" + file_pattern, file_name):
-#                     rtn_list.append(url_new)
-#                 else:
-#                     pass
-#         import pdb; pdb.set_trace()
-#     return rtn_list
+    return sorted(rtn_list)
 
 
 def rename_headers(df: pd.DataFrame, rename_headers_list: dict) -> pd.DataFrame:
