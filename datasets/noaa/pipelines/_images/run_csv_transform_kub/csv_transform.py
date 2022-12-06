@@ -223,13 +223,18 @@ def execute_pipeline(
             )
         return None
     if pipeline_name in ["NOAA HRRR Failover", "NOAA HRRR ARL Formatting"]:
-        todays_date = datetime.datetime.today().strftime('%Y%m%d')
+        # todays_date = datetime.datetime.today().strftime('%Y%m%d')
+        todays_date = '20221205'
         src_url = source_url[pipeline_name.replace(" ", "_").lower()].replace("~DATE~", todays_date)
-        src_file_list = url_directory_list(src_url, "")
-        bucket_file_list = gcs_bucket_files_list(
-            gcs_bucket=target_gcs_bucket,
-            gcs_path=str(target_gcs_path).replace('~DATE~', todays_date )
-        )
+        logging.info("Extracting list of collected bucket files")
+        bucket_file_list =  gcs_bucket_files_list(
+                                gcs_bucket=target_gcs_bucket,
+                                gcs_path=str(target_gcs_path).replace('~DATE~', todays_date )
+                            )
+        logging.info("Flattening list of collected bucket files")
+        bucket_file_list = flatten_nested_list(bucket_file_list)
+        logging.info("Extracting and flattening list of source files")
+        src_file_list = flatten_nested_list(url_directory_list(src_url, ""))
         import pdb; pdb.set_trace()
         cnt = 1
         logging.info(f"Checking transferral status of { len(src_file_list) } files ...")
@@ -629,6 +634,17 @@ def execute_pipeline(
             gen_location_list=gen_location_list,
         )
         return None
+
+
+def flatten_nested_list(lst: typing.List[str]) -> typing.List[str]:
+    out_list = []
+    for item in lst:
+        if type(item) == list:
+            flatten_nested_list(item)
+        else:
+            out_list.append(str(item))
+    # import pdb; pdb.set_trace()
+    return sorted(out_list)
 
 
 def strip_dataframe_whitespace(df: pd.DataFrame) -> pd.DataFrame:
@@ -1493,7 +1509,10 @@ def gcs_bucket_files_list(
         blobs = bucket.list_blobs()
     else:
         blobs = bucket.list_blobs(prefix=gcs_path)
-    return list(blobs)
+    blob_list = list(blobs)
+    for blob in blob_list:
+        blob = str(blob)
+    return blob_list
 
 
 # def url_dir_list_recursive(
