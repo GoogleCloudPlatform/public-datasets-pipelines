@@ -634,7 +634,7 @@ def upload_hrrr_file(
         source_url=source_url,
         source_file=tmp_src_file,
         continue_on_error=True,
-        quiet_mode=False,
+        quiet_mode=True,
     )
     if os.path.exists(tmp_src_file):
         upload_file_to_gcs(
@@ -1950,12 +1950,16 @@ def download_file_http_exec(
 
 
 def upload_file_to_gcs(
-    file_path: pathlib.Path, target_gcs_bucket: str, target_gcs_path: str
+    file_path: pathlib.Path,
+    target_gcs_bucket: str,
+    target_gcs_path: str,
+    quiet_mode: bool = False,
 ) -> None:
     if os.path.exists(file_path):
-        logging.info(
-            f"Uploading output file to gs://{target_gcs_bucket}/{target_gcs_path}"
-        )
+        if not quiet_mode:
+            logging.info(
+                f"Uploading output file to gs://{target_gcs_bucket}/{target_gcs_path}"
+            )
         storage_client = storage.Client()
         bucket = storage_client.bucket(target_gcs_bucket)
         blob = bucket.blob(target_gcs_path)
