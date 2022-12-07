@@ -14,9 +14,6 @@
 
 ---
 resources:
-  - type: bigquery_table
-    table_id: "gsod2022"
-    description: "noaaspc"
 
 dag:
   airflow_version: 2
@@ -32,11 +29,12 @@ dag:
     default_view: graph
 
   tasks:
-    - operator: "GKEStartPodOperator"
+    - operator: "KubernetesPodOperator"
       description: "Run NOAA load processes - HRRR Failover"
       args:
         task_id: "hrrr_failover"
-        name: "noaa.hrrr_failover"
+        startup_timeout_seconds: 600
+        name: "hrrr_failover"
         namespace: "composer"
         service_account_name: "datasets"
         image_pull_policy: "Always"
@@ -49,11 +47,12 @@ dag:
             }
           SOURCE_FILE: "files"
           PROJECT_ID: "{{ var.value.gcp_project }}"
-          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
-          TARGET_GCS_PATH: "hrrr.~DATE~/conus"
+          TARGET_GCS_BUCKET: "{{ var.json.noaa.noaa_hrrr_failover.target_gcs_bucket }}"
+          TARGET_GCS_PATH: "data/noaa/hrrr_failover"
         resources:
-          request_ephemeral_storage: "16G"
+          limit_memory: "16G"
           limit_cpu: "3"
+          request_ephemeral_storage: "16G"
 
   graph_paths:
     - "hrrr_failover"

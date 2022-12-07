@@ -28,7 +28,7 @@ import sys
 import time
 import typing
 import zipfile
-from urllib.request import Request, urlopen, urlretrieve
+from urllib.request import Request, urlopen
 
 import geopandas as geo
 import numpy as np
@@ -223,13 +223,15 @@ def execute_pipeline(
             )
         return None
     if pipeline_name in ["NOAA HRRR Failover"]:
-        todays_date = datetime.datetime.today().strftime('%Y%m%d')
-        src_url = source_url[pipeline_name.replace(" ", "_").lower()].replace("~DATE~", todays_date)
+        todays_date = datetime.datetime.today().strftime("%Y%m%d")
+        src_url = source_url[pipeline_name.replace(" ", "_").lower()].replace(
+            "~DATE~", todays_date
+        )
         logging.info("Extracting list of collected bucket files")
-        bucket_file_list =  gcs_bucket_files_list(
-                                gcs_bucket=target_gcs_bucket,
-                                gcs_path=str(target_gcs_path).replace('~DATE~', todays_date )
-                            )
+        bucket_file_list = gcs_bucket_files_list(
+            gcs_bucket=target_gcs_bucket,
+            gcs_path=str(target_gcs_path).replace("~DATE~", todays_date),
+        )
         logging.info("Extracting and flattening list of source files")
         src_url_list = url_directory_list(src_url, "")
         cnt = 1
@@ -243,7 +245,7 @@ def execute_pipeline(
                     target_gcs_bucket=target_gcs_bucket,
                     target_gcs_path=f"{target_gcs_path}/{bucket_file_path}",
                     source_url=file_src_url,
-                    source_file=source_file
+                    source_file=source_file,
                 )
             if (cnt % 100) == 0:
                 logging.info(f" ... Checked {cnt} files are transferred.")
@@ -623,10 +625,7 @@ def execute_pipeline(
 
 
 def upload_hrrr_file(
-        target_gcs_bucket: str,
-        target_gcs_path: str,
-        source_url: str,
-        source_file: str
+    target_gcs_bucket: str, target_gcs_path: str, source_url: str, source_file: str
 ) -> None:
     dest_gcs_filename = os.path.basename(source_url)
     dest_gcs_path = f"{target_gcs_path}/{ dest_gcs_filename }"
@@ -635,13 +634,13 @@ def upload_hrrr_file(
         source_url=source_url,
         source_file=tmp_src_file,
         continue_on_error=True,
-        quiet_mode=False
+        quiet_mode=False,
     )
     if os.path.exists(tmp_src_file):
         upload_file_to_gcs(
             file_path=tmp_src_file,
             target_gcs_bucket=target_gcs_bucket,
-            target_gcs_path=dest_gcs_path
+            target_gcs_path=dest_gcs_path,
         )
 
 
@@ -1497,10 +1496,7 @@ def convert_date_from_int(df: pd.DataFrame, int_date_list: dict) -> pd.DataFrame
     return df
 
 
-def gcs_bucket_files_list(
-    gcs_bucket: str,
-    gcs_path: str
-) -> typing.List[str]:
+def gcs_bucket_files_list(gcs_bucket: str, gcs_path: str) -> typing.List[str]:
     client = storage.Client()
     bucket = storage.Bucket(client, gcs_bucket)
     if gcs_path == "":
@@ -1531,8 +1527,7 @@ def url_directory_list(
         url_new = url_new.replace(" ", "%20")
         if url_new[-1:] == "/":
             subdir_list = url_directory_list(
-                source_url_path=url_new,
-                file_pattern=file_pattern
+                source_url_path=url_new, file_pattern=file_pattern
             )
             rtn_list.append(subdir_list)
             rtn_list = sorted(list(pd.core.common.flatten(rtn_list)))
