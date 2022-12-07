@@ -233,7 +233,9 @@ def execute_pipeline(
             gcs_path=str(target_gcs_path).replace("~DATE~", todays_date),
         )
         logging.info("Extracting and flattening list of source files")
-        src_url_list = url_directory_list(src_url, "")
+        src_url_list = url_directory_list(
+            source_url_path=src_url, file_pattern="", recurse_directories=False
+        )
         cnt = 1
         cnt_transferred = 0
         logging.info(f"Checking transferral status of { len(src_url_list) } files ...")
@@ -1517,7 +1519,7 @@ def gcs_bucket_files_list(gcs_bucket: str, gcs_path: str) -> typing.List[str]:
 
 
 def url_directory_list(
-    source_url_path: str, file_pattern: str = ""
+    source_url_path: str, file_pattern: str = "", recurse_directories: bool = True
 ) -> typing.List[str]:
     logging.info(f"Extracting list of files and directories from {source_url_path}")
     rtn_list = []
@@ -1531,11 +1533,14 @@ def url_directory_list(
         url_new = url + file_name
         url_new = url_new.replace(" ", "%20")
         if url_new[-1:] == "/":
-            subdir_list = url_directory_list(
-                source_url_path=url_new, file_pattern=file_pattern
-            )
-            rtn_list.append(subdir_list)
-            rtn_list = sorted(list(pd.core.common.flatten(rtn_list)))
+            if recurse_directories:
+                subdir_list = url_directory_list(
+                    source_url_path=url_new, file_pattern=file_pattern
+                )
+                rtn_list.append(subdir_list)
+                rtn_list = sorted(list(pd.core.common.flatten(rtn_list)))
+            else:
+                pass
         else:
             if str(url_new).find("Parent%20Directory") == -1:
                 if file_pattern == "":
