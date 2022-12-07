@@ -641,6 +641,7 @@ def upload_hrrr_file(
             file_path=tmp_src_file,
             target_gcs_bucket=target_gcs_bucket,
             target_gcs_path=dest_gcs_path,
+            quiet_mode=True
         )
 
 
