@@ -235,6 +235,7 @@ def execute_pipeline(
         logging.info("Extracting and flattening list of source files")
         src_url_list = url_directory_list(src_url, "")
         cnt = 1
+        cnt_transferred = 0
         logging.info(f"Checking transferral status of { len(src_url_list) } files ...")
         est_number_files = len(src_url_list) - len(bucket_file_list)
         logging.info(f" ... Estimated number of files to copy { est_number_files }")
@@ -247,8 +248,11 @@ def execute_pipeline(
                     source_url=file_src_url,
                     source_file=source_file,
                 )
-            if (cnt % 100) == 0:
-                logging.info(f" ... Checked {cnt} files are transferred.")
+                cnt_transferred += 1
+            if (cnt % 100) == 0 or (cnt == len(src_url_list)):
+                logging.info(
+                    f" ... Checked {cnt} files are transferred.  Number of files copied {cnt_transferred}"
+                )
             cnt += 1
         return None
     if pipeline_name in ["NOAA GHCN-M"]:

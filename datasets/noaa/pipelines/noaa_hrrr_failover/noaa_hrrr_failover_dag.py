@@ -52,7 +52,7 @@ with DAG(
         resources={
             "limit_memory": "16G",
             "limit_cpu": "3",
-            "request_ephemeral_storage": "16G",
+            "request_ephemeral_storage": "10G",
         },
     )
 
