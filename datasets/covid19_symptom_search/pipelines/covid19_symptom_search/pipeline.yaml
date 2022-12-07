@@ -23,9 +23,9 @@ dag:
     default_args:
       owner: "Google"
       depends_on_past: False
-      start_date: "2022-11-16"
+      start_date: "2022-11-30"
     max_active_runs: 1
-    schedule_interval: "@monthly"
+    schedule_interval: "@daily"
     catchup: False
     default_view: graph
 
