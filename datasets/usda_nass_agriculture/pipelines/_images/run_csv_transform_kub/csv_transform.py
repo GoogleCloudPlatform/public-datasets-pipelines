@@ -21,10 +21,17 @@ def main(
     source_file_names = fetch_gcs_file_names(source_gcs_path, gcs_bucket)
     for each_file in source_file_names:
         pipeline_name = each_file
-        table_id = each_file[:-4]
+        table_id = each_file.split(".")[1]
+        i = 3
+        while i < len(table_id):
+            if "_" in table_id:
+                if table_id[i].isdigit() and table_id[i - 1] == "_":
+                    table_id = table_id[: i - 1]
+                    i = 2
+            else:
+                break
+            i += 1
         logging.info(f"Started Extraction and Load process for {pipeline_name} ---->")
-        if pipeline_name.startswith("environmental"):
-            continue
         execute_pipeline(
             download_path,
             source_gcs_path,
@@ -91,7 +98,7 @@ def execute_pipeline(
             )
             if table_exists:
                 load_data_to_bq(
-                    pipeline_name=pipeline_name,
+                    pipeline_name=final_filename,
                     project_id=project_id,
                     dataset_id=dataset_id,
                     table_id=table_id,
@@ -180,7 +187,7 @@ def create_dest_table(
             f"Table {table_ref} currently does not exist.  Attempting to create table."
         )
         if schema_filepath:
-            schema = create_table_schema(schema_filepath, table_id)
+            schema = create_table_schema(schema_filepath)
             table = bigquery.Table(table_ref, schema=schema)
             client.create_table(table)
             logging.info(f"Table {table_id} was created")
@@ -193,7 +200,7 @@ def create_dest_table(
     return table_exists
 
 
-def create_table_schema(schema_filepath, table_id) -> list:
+def create_table_schema(schema_filepath) -> list:
     logging.info("Defining table schema")
     schema = []
     with open(schema_filepath) as f:
@@ -235,7 +242,7 @@ def load_data_to_bq(
     source_gcs_path: str,
 ) -> None:
     logging.info(
-        f"Loading output data from {source_gcs_path} into {project_id}.{dataset_id}.{table_id} ...."
+        f"Loading output data from {source_gcs_path} into table {project_id}.{dataset_id}.{table_id} ...."
     )
     client = bigquery.Client(project=project_id)
     table_ref = f"{project_id}.{dataset_id}.{table_id}"
