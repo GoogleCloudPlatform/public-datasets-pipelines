@@ -37,9 +37,20 @@ dag:
       args:
         task_id: "bash_gcs_to_gcs"
         bash_command: |
-          gsutil cp -R gs://pdp-feeds-staging/Libraries/libraries-1.4.0-2018-12-22/repositories-1.4.0-2018-12-22.csv gs://{{ var.value.composer_bucket }}/data/libraries_io/repositories/repositories.csv
-          split -l 13000000 --additional-suffix=.csv /home/airflow/gcs/data/libraries_io/repositories/repositories.csv /home/airflow/gcs/data/libraries_io/repositories/
-          rm /home/airflow/gcs/data/libraries_io/repositories/repositories.csv
+          if test -f /home/airflow/gcs/data/libraries_io/lib-1.6.0.tar.gz;
+          then
+              mkdir /home/airflow/gcs/data/libraries_io/repositories/
+              cp  /home/airflow/gcs/data/libraries_io/libraries-1.4.0-2018-12-22/repositories-1.4.0-2018-12-22.csv /home/airflow/gcs/data/libraries_io/repositories/repositories.csv
+              split -l 13000000 --additional-suffix=.csv /home/airflow/gcs/data/libraries_io/repositories/repositories.csv /home/airflow/gcs/data/libraries_io/repositories/
+              rm /home/airflow/gcs/data/libraries_io/repositories/repositories.csv
+          else
+              curl -o /home/airflow/gcs/data/libraries_io/lib-1.6.0.tar.gz -L https://zenodo.org/record/2536573/files/Libraries.io-open-data-1.4.0.tar.gz
+              tar -xf /home/airflow/gcs/data/libraries_io/lib-1.6.0.tar.gz -C /home/airflow/gcs/data/libraries_io/
+              mkdir /home/airflow/gcs/data/libraries_io/repositories/
+              cp  /home/airflow/gcs/data/libraries_io/libraries-1.4.0-2018-12-22/repositories-1.4.0-2018-12-22.csv /home/airflow/gcs/data/libraries_io/repositories/repositories.csv
+              split -l 13000000 --additional-suffix=.csv /home/airflow/gcs/data/libraries_io/repositories/repositories.csv /home/airflow/gcs/data/libraries_io/repositories/
+              rm /home/airflow/gcs/data/libraries_io/repositories/repositories.csv
+          fi
 
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod"

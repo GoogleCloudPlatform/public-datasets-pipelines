@@ -121,7 +121,10 @@ def process_chunk(
     skip_header: bool,
 ) -> None:
     logging.info(f"Processing batch file {target_file_batch}")
-    df = df[df["id"] != 218061700]
+    if "repository_dependencies" in pipeline_name:
+        df = df[df["id"] != 218061700]
+    elif "versions" in pipeline_name:
+        fix_timestamp(df, "created_timestamp")
     save_to_new_file(df, file_path=str(target_file_batch), sep=",")
     append_batch_file(target_file_batch, target_file, skip_header)
     logging.info(f"Processing batch file {target_file_batch} completed")
@@ -130,6 +133,19 @@ def process_chunk(
 def save_to_new_file(df: pd.DataFrame, file_path: str, sep: str = ",") -> None:
     logging.info(f"Saving data to target file.. {file_path} ...")
     df.to_csv(file_path, index=False, sep=",")
+
+
+def fix_timestamp(df: pd.DataFrame, column: str) -> None:
+    empty_list = []
+    df[column] = df[column].astype(str)
+    for item in df[column]:
+        if len(item.strip()) < 11:
+            item = item.strip() + " " + "00:00:00 UTC"
+            empty_list.append(item)
+            print(empty_list)
+        else:
+            empty_list.append(item)
+    df[column] = empty_list
 
 
 def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
