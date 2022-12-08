@@ -629,6 +629,8 @@ def execute_pipeline(
             gen_location_list=gen_location_list,
         )
         return None
+
+
 # endregion Main
 
 
@@ -715,7 +717,9 @@ def shorthand_to_number(x) -> float:
             return float(x.replace("Q", "")) * 10**15
         return 10**15
     return 0.0
-#endregion Conversion Functions
+
+
+# endregion Conversion Functions
 
 
 def apply_regex(df: pd.DataFrame, regex_list: dict) -> pd.DataFrame:
@@ -822,7 +826,7 @@ def reorder_headers(
     return df[reorder_headers_list]
 
 
-#endregion Transform Functions
+# endregion Transform Functions
 
 
 # region Pipeline Subprocessing
@@ -842,6 +846,7 @@ def process_ghcn_m_file(
         col_specs += [(col_spec_x, col_spec_y)]
     df = pd.read_fwf(source_file_name, colspecs=col_specs, names=field_names)
     return df
+
 
 # region Lightning Strikes
 def process_lightning_strikes_by_year(
@@ -940,7 +945,8 @@ def process_lightning_strikes_by_year(
                     truncate_table=False,
                 )
 
-#endregion
+
+# endregion
 
 # region Storms
 def process_storms_database_by_year(
@@ -1118,7 +1124,8 @@ def fix_data_anomolies_storms(df: pd.DataFrame) -> pd.DataFrame:
     )
     return df
 
-#endregion
+
+# endregion
 
 # region HRRR Processes
 def upload_hrrr_file(
@@ -1139,12 +1146,14 @@ def upload_hrrr_file(
             target_gcs_bucket=target_gcs_bucket,
             target_gcs_path=dest_gcs_path,
             quiet_mode=True,
+            delete_source_file=True,
         )
-#endregion HRRR Processes
 
 
+# endregion HRRR Processes
 
-#endregion Pipeline Subprocessing
+
+# endregion Pipeline Subprocessing
 
 
 # region Helper Functions
@@ -1176,7 +1185,9 @@ def set_df_datatypes(df: pd.DataFrame, data_dtypes: dict) -> pd.DataFrame:
     for key, item in data_dtypes.items():
         df[key] = df[key].astype(item)
     return df
-#endregion
+
+
+# endregion
 
 
 # region Common Functions
@@ -1185,6 +1196,7 @@ def upload_file_to_gcs(
     target_gcs_bucket: str,
     target_gcs_path: str,
     quiet_mode: bool = False,
+    delete_source_file: bool = False,
 ) -> None:
     if os.path.exists(file_path):
         if not quiet_mode:
@@ -1195,6 +1207,8 @@ def upload_file_to_gcs(
         bucket = storage_client.bucket(target_gcs_bucket)
         blob = bucket.blob(target_gcs_path)
         blob.upload_from_filename(file_path)
+        if delete_source_file:
+            os.remove(file_path)
     else:
         logging.info(
             f"Cannot upload file to gs://{target_gcs_bucket}/{target_gcs_path} as it does not exist."
@@ -1745,7 +1759,9 @@ def create_table_schema(
             )
         )
     return schema
-#endregion Create And Load Table Functions
+
+
+# endregion Create And Load Table Functions
 
 
 # region Download
@@ -1995,7 +2011,7 @@ def append_batch_file(
                 os.remove(batch_file_path)
 
 
-#endregion Common Functions
+# endregion Common Functions
 
 
 # def get_column_country_code(col_val: str) -> str:

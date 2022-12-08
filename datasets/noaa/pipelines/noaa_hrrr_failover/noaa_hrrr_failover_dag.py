@@ -49,11 +49,7 @@ with DAG(
             "TARGET_GCS_BUCKET": "{{ var.json.noaa.noaa_hrrr_failover.target_gcs_bucket }}",
             "TARGET_GCS_PATH": "data/noaa/hrrr_failover",
         },
-        resources={
-            "limit_memory": "16G",
-            "limit_cpu": "3",
-            "request_ephemeral_storage": "10G",
-        },
+        resources={"limit_memory": "10G", "limit_cpu": "3"},
     )
 
     hrrr_failover
