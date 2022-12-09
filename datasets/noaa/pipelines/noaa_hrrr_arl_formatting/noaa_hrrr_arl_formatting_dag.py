@@ -49,7 +49,11 @@ with DAG(
             "TARGET_GCS_BUCKET": "{{ var.json.noaa.noaa_hrrr_arl.target_gcs_bucket }}",
             "TARGET_GCS_PATH": "{{ var.json.noaa.noaa_hrrr_arl.target_gcs_path }}",
         },
-        resources={"limit_memory": "10G", "limit_cpu": "3"},
+        resources={
+            "request_memory": "16G",
+            "request_cpu": "1",
+            "request_ephemeral_storage": "10G",
+        },
     )
 
     hrrr_arl
