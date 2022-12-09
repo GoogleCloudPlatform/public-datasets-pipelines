@@ -24,7 +24,7 @@ default_args = {
 
 
 with DAG(
-    dag_id="noaa.noaa_hrrr",
+    dag_id="noaa.noaa_hrrr_arl",
     default_args=default_args,
     max_active_runs=1,
     schedule_interval="@once",
@@ -33,23 +33,23 @@ with DAG(
 ) as dag:
 
     # Run NOAA load processes - HRRR Failover
-    hrrr_failover = kubernetes_pod.KubernetesPodOperator(
-        task_id="hrrr_failover",
+    hrrr_arl = kubernetes_pod.KubernetesPodOperator(
+        task_id="hrrr_arl",
         startup_timeout_seconds=600,
-        name="hrrr_failover",
+        name="hrrr_arl",
         namespace="composer",
         service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.noaa.container_registry.run_csv_transform_kub }}",
         env_vars={
-            "PIPELINE_NAME": "NOAA HRRR Failover",
-            "SOURCE_URL": '{\n  "noaa_hrrr_failover": "https://nomads.ncep.noaa.gov/pub/data/nccf/com/hrrr/prod/hrrr.~DATE~/conus/"\n}',
+            "PIPELINE_NAME": "NOAA HRRR ARL Formatting",
+            "SOURCE_URL": '{\n  "noaa_hrrr_arl_formatting": "ftp://arlftp.arlhq.noaa.gov/forecast/~DATE~/"\n}',
             "SOURCE_FILE": "files",
             "PROJECT_ID": "{{ var.value.gcp_project }}",
-            "TARGET_GCS_BUCKET": "{{ var.json.noaa.noaa_hrrr_failover.target_gcs_bucket }}",
-            "TARGET_GCS_PATH": "{{ var.json.noaa.noaa_hrrr_failover.target_gcs_path }}",
+            "TARGET_GCS_BUCKET": "{{ var.json.noaa.noaa_hrrr_arl.target_gcs_bucket }}",
+            "TARGET_GCS_PATH": "{{ var.json.noaa.noaa_hrrr_arl.target_gcs_path }}",
         },
         resources={"limit_memory": "10G", "limit_cpu": "3"},
     )
 
-    hrrr_failover
+    hrrr_arl

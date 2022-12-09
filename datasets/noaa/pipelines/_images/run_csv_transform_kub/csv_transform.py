@@ -196,8 +196,8 @@ def execute_pipeline(
             gen_location_list=gen_location_list,
         )
         return None
-    if pipeline_name in ["NOAA HRRR Failover"]:
-        process_noaa_hrrr_failover(
+    if pipeline_name in ["NOAA HRRR Failover", "NOAA HRRR ARL Formatting"]:
+        process_noaa_hrrr(
             pipeline_name=pipeline_name,
             source_url=source_url,
             source_file=source_file,
@@ -225,7 +225,34 @@ def execute_pipeline(
         )
         return None
     if pipeline_name in ["NOAA SPC Hail", "NOAA SPC Wind", "NOAA SPC Tornado"]:
-        process_spc_tables()
+        process_spc_tables(
+            pipeline_name=pipeline_name,
+            source_url=source_url,
+            source_file=source_file,
+            target_file=target_file,
+            chunksize=chunksize,
+            project_id=project_id,
+            dataset_id=dataset_id,
+            destination_table=destination_table,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=target_gcs_path,
+            schema_path=schema_path,
+            drop_dest_table=drop_dest_table,
+            input_field_delimiter=input_field_delimiter,
+            input_csv_headers=input_csv_headers,
+            data_dtypes=data_dtypes,
+            reorder_headers_list=reorder_headers_list,
+            null_rows_list=null_rows_list,
+            date_format_list=date_format_list,
+            slice_column_list=slice_column_list,
+            regex_list=regex_list,
+            remove_source_file=remove_source_file,
+            trim_whitespace_list=trim_whitespace_list,
+            rename_headers_list=rename_headers_list,
+            delete_target_file=delete_target_file,
+            int_date_list=int_date_list,
+            gen_location_list=gen_location_list,
+        )
         return None
     if pipeline_name in [
         "NOAA GOES 16 MCMIP",
@@ -883,39 +910,62 @@ def process_gsod_year(
 # endregion GSOD Year
 
 # region HRRR Processes
-def process_noaa_hrrr_failover(
+def process_noaa_hrrr(
     pipeline_name: str,
     source_url: dict,
     source_file: pathlib.Path,
     target_gcs_bucket: str,
     target_gcs_path: str,
 ) -> None:
-    todays_date = datetime.datetime.today().strftime("%Y%m%d")
+    # todays_date = datetime.datetime.today().strftime("%Y%m%d")
+    todays_date = "20221208"
     src_url = source_url[pipeline_name.replace(" ", "_").lower()].replace(
         "~DATE~", todays_date
     )
+    target_gs_path = target_gcs_path.replace("~DATE~", todays_date)
     logging.info("Extracting list of collected bucket files")
     bucket_file_list = gcs_bucket_files_list(
         gcs_bucket=target_gcs_bucket,
         gcs_path=str(target_gcs_path).replace("~DATE~", todays_date),
     )
     logging.info("Extracting and flattening list of source files")
-    src_url_list = url_directory_list(
-        source_url_path=src_url, file_pattern="", recurse_directories=False
-    )
+    if pipeline_name == "NOAA HRRR Failover":
+        src_url_list = url_directory_list(
+            source_url_path=src_url, file_pattern="", recurse_directories=False
+        )
+    elif pipeline_name == "NOAA HRRR ARL Formatting":
+        ftp_link = source_url[pipeline_name.replace(" ", "_").lower()].replace(
+            "~DATE~", todays_date
+        )
+        ftp_host = str.split(str(ftp_link), "ftp://")[1].split("/")[0]
+        ftp_dir = ftp_link[6 + len(ftp_host) : -1]
+        src_url_list = ftp_list_of_files(
+            host=ftp_host,
+            cwd=ftp_dir,
+            filter_expr="hysplit.t[0-9]{2}z.hrrrf*$",
+            filter_is_regex=True,
+        )
+    else:
+        return None
     cnt = 1
     cnt_transferred = 0
     logging.info(f"Checking transferral status of { len(src_url_list) } files ...")
     est_number_files = len(src_url_list) - len(bucket_file_list)
     logging.info(f" ... Estimated number of files to copy { est_number_files }")
     for file_src_url in src_url_list:
-        bucket_file_path = file_src_url.split("prod/")[1]
+        if pipeline_name == "NOAA HRRR Failover":
+            bucket_file_path = file_src_url.split("prod/")[1]
+        else:
+            bucket_file_path = file_src_url
         if bucket_file_path not in bucket_file_list:
             upload_hrrr_file(
+                pipeline_name=pipeline_name,
                 target_gcs_bucket=target_gcs_bucket,
-                target_gcs_path=f"{target_gcs_path}/{bucket_file_path}",
-                source_url=file_src_url,
-                source_file=source_file,
+                target_gcs_path=f"{target_gs_path}/{bucket_file_path}",
+                source_url=file_src_url
+                if pipeline_name == "NOAA HRRR Failover"
+                else f"{src_url}{file_src_url}",
+                source_file=str(source_file),
             )
             cnt_transferred += 1
         if (cnt % 100) == 0 or (cnt == len(src_url_list)):
@@ -927,17 +977,34 @@ def process_noaa_hrrr_failover(
 
 
 def upload_hrrr_file(
-    target_gcs_bucket: str, target_gcs_path: str, source_url: str, source_file: str
+    pipeline_name: str,
+    target_gcs_bucket: str,
+    target_gcs_path: str,
+    source_url: str,
+    source_file: str,
 ) -> None:
     dest_gcs_filename = os.path.basename(source_url)
     dest_gcs_path = f"{target_gcs_path}/{ dest_gcs_filename }"
     tmp_src_file = f"{source_file}/{dest_gcs_filename}"
-    download_file_http(
-        source_url=source_url,
-        source_file=tmp_src_file,
-        continue_on_error=True,
-        quiet_mode=True,
-    )
+    if pipeline_name == "NOAA HRRR Failover":
+        download_file_http(
+            source_url=source_url,
+            source_file=tmp_src_file,
+            continue_on_error=True,
+            quiet_mode=True,
+        )
+    elif pipeline_name == "NOAA HRRR ARL Formatting":
+        ftp_host = str.split(str(source_url), "ftp://")[1].split("/")[0]
+        ftp_dir = os.path.split(source_url[6 + len(ftp_host) : -1])[0]
+        download_file_ftp(
+            ftp_host=ftp_host,
+            ftp_dir=ftp_dir,
+            ftp_filename=dest_gcs_filename,
+            local_file=tmp_src_file,
+            source_url=source_url,
+        )
+    else:
+        pass
     if os.path.exists(tmp_src_file):
         upload_file_to_gcs(
             file_path=tmp_src_file,
@@ -2406,19 +2473,33 @@ def FTP_to_DF(
     return df
 
 
-def ftp_list_of_files(host: str, cwd: str, filter_expr: str = "") -> typing.List[str]:
+def ftp_list_of_files(
+    host: str, cwd: str, filter_expr: str = "", filter_is_regex: bool = False
+) -> typing.List[str]:
     try_count = 0
     while True:
         try:
             ftp = ftplib.FTP(host)
             ftp.login()
             ftp.cwd(cwd)
+            ftp.pwd()
             file_list = ftp.nlst()
             if filter != "":
-                file_list = list(
-                    filter(lambda x: str(x).find(filter_expr) >= 0, file_list)
-                )
+                if filter_is_regex:
+                    file_list = list(
+                        filter(
+                            lambda x: str(x)
+                            if re.match(r"" + filter_expr, str(x))
+                            else "",
+                            file_list,
+                        )
+                    )
+                else:
+                    file_list = list(
+                        filter(lambda x: str(x).find(filter_expr) >= 0, file_list)
+                    )
             ftp.quit()
+            print(file_list)
             return file_list
         except TimeoutError as e:
             try_count += 1
