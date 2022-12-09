@@ -917,8 +917,7 @@ def process_noaa_hrrr(
     target_gcs_bucket: str,
     target_gcs_path: str,
 ) -> None:
-    # todays_date = datetime.datetime.today().strftime("%Y%m%d")
-    todays_date = "20221208"
+    todays_date = datetime.datetime.today().strftime("%Y%m%d")
     src_url = source_url[pipeline_name.replace(" ", "_").lower()].replace(
         "~DATE~", todays_date
     )
