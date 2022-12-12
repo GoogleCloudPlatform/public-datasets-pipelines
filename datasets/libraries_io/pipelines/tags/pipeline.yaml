@@ -39,12 +39,15 @@ dag:
         bash_command: |
           if test -f /home/airflow/gcs/data/libraries_io/lib-1.6.0.tar.gz;
           then
+              mkdir /home/airflow/gcs/data/libraries_io/tags/
               cp /home/airflow/gcs/data/libraries_io/libraries-1.4.0-2018-12-22/tags-1.4.0-2018-12-22.csv /home/airflow/gcs/data/libraries_io/tags/tags.csv
               split -l 20000000 --additional-suffix=.csv /home/airflow/gcs/data/libraries_io/tags/tags.csv /home/airflow/gcs/data/libraries_io/tags/
               rm /home/airflow/gcs/data/libraries_io/tags/tags.csv
           else
+              mkdir /home/airflow/gcs/data/libraries_io/
               curl -o /home/airflow/gcs/data/libraries_io/lib-1.6.0.tar.gz -L https://zenodo.org/record/2536573/files/Libraries.io-open-data-1.4.0.tar.gz
               tar -xf /home/airflow/gcs/data/libraries_io/lib-1.6.0.tar.gz -C /home/airflow/gcs/data/libraries_io/
+              mkdir /home/airflow/gcs/data/libraries_io/tags/
               cp /home/airflow/gcs/data/libraries_io/libraries-1.4.0-2018-12-22/tags-1.4.0-2018-12-22.csv /home/airflow/gcs/data/libraries_io/tags/tags.csv
               split -l 20000000 --additional-suffix=.csv /home/airflow/gcs/data/libraries_io/tags/tags.csv /home/airflow/gcs/data/libraries_io/tags/
               rm /home/airflow/gcs/data/libraries_io/tags/tags.csv
