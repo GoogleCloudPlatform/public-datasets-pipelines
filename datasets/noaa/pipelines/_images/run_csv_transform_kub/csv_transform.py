@@ -15,16 +15,22 @@
 import csv
 import datetime
 import ftplib
+import glob
 import gzip
 import json
 import logging
+import math
 import os
 import pathlib
 import re
+import shutil
+import sys
 import time
 import typing
+import zipfile
 from urllib.request import Request, urlopen
 
+import geopandas as geo
 import numpy as np
 import pandas as pd
 import requests
@@ -39,6 +45,7 @@ def main(
     source_url: dict,
     source_file: pathlib.Path,
     target_file: pathlib.Path,
+    shape_file: str,
     chunksize: str,
     ftp_host: str,
     ftp_dir: str,
@@ -57,13 +64,16 @@ def main(
     input_csv_headers: typing.List[str],
     data_dtypes: dict,
     reorder_headers_list: typing.List[str],
+    convert_int_list: dict,
     null_rows_list: typing.List[str],
-    date_format_list: typing.List[str],
+    date_format_list: typing.List[typing.List[str]],
     slice_column_list: dict,
     regex_list: dict,
+    trim_whitespace_list: typing.List[str],
     rename_headers_list: dict,
     remove_source_file: str,
     delete_target_file: str,
+    input_csv_field_pos: typing.List[dict],
     number_of_header_rows: str,
     int_date_list: typing.List[str],
     gen_location_list: dict,
@@ -75,6 +85,7 @@ def main(
         source_url=source_url,
         source_file=source_file,
         target_file=target_file,
+        shape_file=shape_file,
         chunksize=chunksize,
         ftp_host=ftp_host,
         ftp_dir=ftp_dir,
@@ -93,13 +104,16 @@ def main(
         input_csv_headers=input_csv_headers,
         data_dtypes=data_dtypes,
         reorder_headers_list=reorder_headers_list,
+        convert_int_list=convert_int_list,
         null_rows_list=null_rows_list,
         date_format_list=date_format_list,
         slice_column_list=slice_column_list,
         regex_list=regex_list,
+        trim_whitespace_list=trim_whitespace_list,
         rename_headers_list=rename_headers_list,
         remove_source_file=(remove_source_file == "Y"),
         delete_target_file=(delete_target_file == "Y"),
+        input_csv_field_pos=input_csv_field_pos,
         number_of_header_rows=int(number_of_header_rows),
         int_date_list=int_date_list,
         gen_location_list=gen_location_list,
@@ -112,6 +126,7 @@ def execute_pipeline(
     source_url: dict,
     source_file: pathlib.Path,
     target_file: pathlib.Path,
+    shape_file: str,
     chunksize: str,
     ftp_host: str,
     ftp_dir: str,
@@ -130,13 +145,16 @@ def execute_pipeline(
     input_csv_headers: typing.List[str],
     data_dtypes: dict,
     reorder_headers_list: typing.List[str],
+    convert_int_list: dict,
     null_rows_list: typing.List[str],
-    date_format_list: typing.List[str],
+    date_format_list: typing.List[typing.List[str]],
     slice_column_list: dict,
     regex_list: dict,
     remove_source_file: bool,
+    trim_whitespace_list: typing.List[str],
     rename_headers_list: dict,
     delete_target_file: bool,
+    input_csv_field_pos: typing.List[dict],
     number_of_header_rows: int,
     int_date_list: typing.List[str],
     gen_location_list: dict,
@@ -196,12 +214,252 @@ def execute_pipeline(
                 date_format_list=date_format_list,
                 slice_column_list=slice_column_list,
                 regex_list=regex_list,
+                trim_whitespace_list=trim_whitespace_list,
                 rename_headers_list=rename_headers_list,
                 remove_source_file=remove_source_file,
                 delete_target_file=delete_target_file,
                 int_date_list=int_date_list,
                 gen_location_list=gen_location_list,
             )
+        return None
+    if pipeline_name in ["NOAA GHCN-M"]:
+        for file_id in source_url:
+            logging.info(f"Processing {str(file_id).upper()} data ...")
+            src_url = source_url[file_id]
+            src_zip_file_name = os.path.basename(src_url)
+            src_file_path = os.path.dirname(str(source_file))
+            ftp_full_path = os.path.split(src_url)[0].replace("ftp://", "")
+            ftp_host = ftp_full_path.split("/")[0]
+            ftp_path = ftp_full_path[len(ftp_host) :]
+            source_zip_file = f"{src_file_path}/{src_zip_file_name}"
+            download_file_ftp(
+                ftp_host=ftp_host,
+                ftp_dir=ftp_path,
+                ftp_filename=src_zip_file_name,
+                local_file=source_zip_file,
+                source_url=src_url,
+            )
+            logging.info(f"Unzipping source file {source_zip_file}")
+            shutil.unpack_archive(filename=source_zip_file, extract_dir=src_file_path)
+            for file_content_type in input_csv_field_pos[0]:
+                ext = "dat" if file_content_type == "data" else "inv"
+                for source_file_name in glob.glob(
+                    f"{src_file_path}/**/*{file_id}*.{ext}", recursive=True
+                ):
+                    df = process_ghcn_m_file(
+                        source_file_name=source_file_name,
+                        file_content_type=file_content_type,
+                        input_csv_field_pos=input_csv_field_pos,
+                    )
+                    df = filter_null_rows(df, null_rows_list=null_rows_list)
+                    df = strip_dataframe_whitespace(df)
+                    df = convert_cols_to_integer(
+                        df=df,
+                        convert_int_list_section=convert_int_list[file_content_type],
+                    )
+                    targ_file_path = str(target_file).replace(
+                        ".csv", f"_{file_id}_{file_content_type}.csv"
+                    )
+                    dest_table = f"{destination_table}{file_id}"
+                    dest_table = (
+                        f"{dest_table}"
+                        if file_content_type == "data"
+                        else f"{dest_table}_{file_content_type}"
+                    )
+                    save_to_new_file(df=df, file_path=targ_file_path, sep="|")
+                    gcs_path = target_gcs_path.replace(
+                        ".csv", f"_{file_id}_{file_content_type}.csv"
+                    )
+                    schema_file = schema_path.replace(
+                        "_schema.json", f"{file_content_type}_schema.json"
+                    )
+                    post_processing(
+                        target_file=targ_file_path,
+                        source_url=src_url,
+                        project_id=project_id,
+                        dataset_id=dataset_id,
+                        destination_table=dest_table,
+                        target_gcs_bucket=target_gcs_bucket,
+                        target_gcs_path=gcs_path,
+                        schema_path=schema_file,
+                        drop_dest_table=drop_dest_table,
+                        delete_target_file=delete_target_file,
+                    )
+    if pipeline_name in ["NOAA SPC Hail", "NOAA SPC Wind", "NOAA SPC Tornado"]:
+        src_url = source_url[pipeline_name.replace(" ", "_").lower()]
+        download_file_http(source_url=src_url, source_file=source_file)
+        sed(["-i", "1d", source_file])
+        process_and_load_table(
+            source_file=source_file,
+            target_file=target_file,
+            pipeline_name=pipeline_name,
+            source_url=src_url,
+            chunksize=chunksize,
+            project_id=project_id,
+            dataset_id=dataset_id,
+            destination_table=destination_table,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=target_gcs_path,
+            schema_path=schema_path,
+            drop_dest_table=drop_dest_table,
+            input_field_delimiter=input_field_delimiter,
+            input_csv_headers=input_csv_headers,
+            data_dtypes=data_dtypes,
+            reorder_headers_list=reorder_headers_list,
+            null_rows_list=null_rows_list,
+            date_format_list=date_format_list,
+            slice_column_list=slice_column_list,
+            regex_list=regex_list,
+            trim_whitespace_list=trim_whitespace_list,
+            rename_headers_list=rename_headers_list,
+            remove_source_file=remove_source_file,
+            delete_target_file=delete_target_file,
+            int_date_list=int_date_list,
+            gen_location_list=gen_location_list,
+        )
+        return None
+    if pipeline_name in [
+        "NOAA GOES 16 MCMIP",
+        "NOAA GOES 16 GLM",
+        "NOAA GOES 16 Radiance",
+        "NOAA GOES 16 CMIP",
+        "NOAA GOES 17 MCMIP",
+        "NOAA GOES 17 GLM",
+        "NOAA GOES 17 Radiance",
+        "NOAA GOES 17 CMIP",
+    ]:
+        src_url = source_url[pipeline_name.replace(" ", "_").lower()]
+        download_file_gs(src_url, source_file)
+        if number_of_header_rows > 0:
+            remove_header_rows(source_file, number_of_header_rows=number_of_header_rows)
+        else:
+            pass
+        process_and_load_table(
+            source_file=source_file,
+            target_file=target_file,
+            pipeline_name=pipeline_name,
+            source_url=src_url,
+            chunksize=chunksize,
+            project_id=project_id,
+            dataset_id=dataset_id,
+            destination_table=destination_table,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=target_gcs_path,
+            schema_path=schema_path,
+            drop_dest_table=drop_dest_table,
+            input_field_delimiter=input_field_delimiter,
+            input_csv_headers=input_csv_headers,
+            data_dtypes=data_dtypes,
+            reorder_headers_list=reorder_headers_list,
+            null_rows_list=null_rows_list,
+            date_format_list=date_format_list,
+            slice_column_list=slice_column_list,
+            regex_list=regex_list,
+            trim_whitespace_list=trim_whitespace_list,
+            rename_headers_list=rename_headers_list,
+            remove_source_file=remove_source_file,
+            delete_target_file=delete_target_file,
+            int_date_list=int_date_list,
+            gen_location_list=gen_location_list,
+        )
+        return None
+    if pipeline_name in ["NOAA GSOD 2020", "NOAA GSOD 2022"]:
+        src_url_root = source_url[pipeline_name.replace(" ", "_").lower()]
+        files = url_directory_list(source_url_path=src_url_root, file_pattern=".csv")
+        file_cnt = len(files)
+        file_ptr = 1
+        for file_name in files:
+            if file_name == files[0]:
+                logging.info(f"Writing file {file_name} to {source_file} with header")
+                download_file_http(file_name, source_file, True, True)
+            else:
+                url_filename = os.path.basename(file_name).replace(".csv", "")
+                source_file_tmpname = str(source_file).replace(
+                    ".csv", f"_{url_filename}.csv"
+                )
+                download_file_http(file_name, source_file_tmpname, True, True)
+                os.system(f"sed -i 1d {source_file_tmpname} 2> /dev/null")
+                os.system(f"cat {source_file_tmpname} >> {source_file}")
+                os.system(f"rm {source_file_tmpname}")
+                time.sleep(0.5)
+            if ((file_ptr % 100) == 0) or (file_ptr == file_cnt):
+                logging.info(f"Appended {file_ptr} files of total {file_cnt} files")
+            file_ptr += 1
+        if number_of_header_rows > 0:
+            remove_header_rows(source_file, number_of_header_rows=number_of_header_rows)
+        else:
+            pass
+        process_and_load_table(
+            source_file=source_file,
+            target_file=target_file,
+            pipeline_name=pipeline_name,
+            source_url=src_url_root,
+            chunksize=chunksize,
+            project_id=project_id,
+            dataset_id=dataset_id,
+            destination_table=destination_table,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=target_gcs_path,
+            schema_path=schema_path,
+            drop_dest_table=drop_dest_table,
+            input_field_delimiter=input_field_delimiter,
+            input_csv_headers=input_csv_headers,
+            data_dtypes=data_dtypes,
+            reorder_headers_list=reorder_headers_list,
+            null_rows_list=null_rows_list,
+            date_format_list=date_format_list,
+            slice_column_list=slice_column_list,
+            regex_list=regex_list,
+            trim_whitespace_list=trim_whitespace_list,
+            rename_headers_list=rename_headers_list,
+            remove_source_file=remove_source_file,
+            delete_target_file=delete_target_file,
+            int_date_list=int_date_list,
+            gen_location_list=gen_location_list,
+        )
+        return None
+    if pipeline_name in ("NOAA NWS Forecast Regions"):
+        src_url_root = source_url[pipeline_name.replace(" ", "_").lower()]
+        download_file_http(src_url_root, source_file)
+        source_file_path = os.path.split(source_file)[0]
+        source_file_name = os.path.basename(src_url_root)
+        source_file_zip = f"{source_file_path}/{source_file_name}"
+        with zipfile.ZipFile(source_file_zip, "r") as zip_ref:
+            zip_ref.extractall(os.path.split(source_file)[0])
+        df = geo.read_file(shape_file)
+        save_to_new_file(df, source_file)
+        if number_of_header_rows > 0:
+            remove_header_rows(source_file, number_of_header_rows=number_of_header_rows)
+        else:
+            pass
+        process_and_load_table(
+            source_file=source_file,
+            target_file=target_file,
+            pipeline_name=pipeline_name,
+            source_url=src_url_root,
+            chunksize=chunksize,
+            project_id=project_id,
+            dataset_id=dataset_id,
+            destination_table=destination_table,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=target_gcs_path,
+            schema_path=schema_path,
+            drop_dest_table=drop_dest_table,
+            input_field_delimiter=input_field_delimiter,
+            input_csv_headers=input_csv_headers,
+            data_dtypes=data_dtypes,
+            reorder_headers_list=reorder_headers_list,
+            null_rows_list=null_rows_list,
+            date_format_list=date_format_list,
+            slice_column_list=slice_column_list,
+            regex_list=regex_list,
+            trim_whitespace_list=trim_whitespace_list,
+            rename_headers_list=rename_headers_list,
+            remove_source_file=remove_source_file,
+            delete_target_file=delete_target_file,
+            int_date_list=int_date_list,
+            gen_location_list=gen_location_list,
+        )
         return None
     if pipeline_name in [
         "GHCND countries",
@@ -238,6 +496,7 @@ def execute_pipeline(
             date_format_list=date_format_list,
             slice_column_list=slice_column_list,
             regex_list=regex_list,
+            trim_whitespace_list=trim_whitespace_list,
             rename_headers_list=rename_headers_list,
             remove_source_file=remove_source_file,
             delete_target_file=delete_target_file,
@@ -247,7 +506,7 @@ def execute_pipeline(
         return None
     if pipeline_name == "GHCND hurricanes":
         src_url = source_url[pipeline_name.replace(" ", "_").lower()]
-        download_file(src_url, source_file)
+        download_file_http(src_url, source_file)
         if number_of_header_rows > 0:
             remove_header_rows(source_file, number_of_header_rows=number_of_header_rows)
         else:
@@ -273,6 +532,7 @@ def execute_pipeline(
             date_format_list=date_format_list,
             slice_column_list=slice_column_list,
             regex_list=regex_list,
+            trim_whitespace_list=trim_whitespace_list,
             rename_headers_list=rename_headers_list,
             remove_source_file=remove_source_file,
             delete_target_file=delete_target_file,
@@ -305,6 +565,7 @@ def execute_pipeline(
             date_format_list=date_format_list,
             slice_column_list=slice_column_list,
             regex_list=regex_list,
+            trim_whitespace_list=trim_whitespace_list,
             rename_headers_list=rename_headers_list,
             remove_source_file=remove_source_file,
             delete_target_file=delete_target_file,
@@ -334,6 +595,60 @@ def execute_pipeline(
         return None
 
 
+def strip_dataframe_whitespace(df: pd.DataFrame) -> pd.DataFrame:
+    logging.info("Stripping Whitespace in Columns")
+    for col in df.columns:
+        if str(df[col].dtype).lower == "object":
+            print(f"    column: {col}")
+            df[col] = df[col].map(str.strip)
+        else:
+            pass
+    return df
+
+
+def convert_cols_to_integer(
+    df: pd.DataFrame, convert_int_list_section: typing.List[str]
+) -> pd.DataFrame:
+    logging.info("Converting Respective Columns To Integer")
+    for col in convert_int_list_section:
+        print(f"    column: {col}")
+        df[col] = df[col].apply(lambda x: convert_to_integer_string(x))
+    return df
+
+
+def convert_to_integer_string(input: typing.Union[str, float]) -> str:
+    str_val = ""
+    if not input or (math.isnan(input)):
+        str_val = ""
+    else:
+        str_val = str(int(round(input, 0)))
+    return str_val
+
+
+def process_ghcn_m_file(
+    source_file_name: str,
+    file_content_type: str,
+    input_csv_field_pos: typing.List[dict],
+) -> pd.DataFrame:
+    logging.info(f"Extracting {file_content_type} from FWF file {source_file_name}")
+    field_names = []
+    col_specs = []
+    for schema in input_csv_field_pos[0][file_content_type]:
+        field_name = str(schema[0])
+        col_spec_x = int(schema[1])
+        col_spec_y = int(schema[2]) + 1
+        field_names += [(field_name)]
+        col_specs += [(col_spec_x, col_spec_y)]
+    df = pd.read_fwf(source_file_name, colspecs=col_specs, names=field_names)
+    return df
+
+
+def download_file_gs(source_url: str, source_file: pathlib.Path) -> None:
+    logging.info(f"Downloading {source_url} to {source_file}")
+    with open(source_file, "wb+") as file_obj:
+        storage.Client().download_blob_to_file(source_url, file_obj)
+
+
 def process_storms_database_by_year(
     source_url: dict,
     source_file: pathlib.Path,
@@ -347,7 +662,7 @@ def process_storms_database_by_year(
     drop_dest_table: str,
     start_year: str,
     reorder_headers_list: typing.List[str],
-    date_format_list: typing.List[str],
+    date_format_list: typing.List[typing.List[str]],
     rename_headers_list: dict,
     gen_location_list: dict,
 ) -> None:
@@ -428,7 +743,7 @@ def process_storms_database_by_year(
         )
         df = generate_location(df, gen_location_list)
         df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
-        for dt_fld in date_format_list.items():
+        for dt_fld in date_format_list:
             logging.info(f"Resolving date formats in field {dt_fld}")
             df[dt_fld[0]] = df[dt_fld[0]].apply(
                 lambda x: pd.to_datetime(str(x), format="%d-%b-%y %H:%M:%S")
@@ -576,7 +891,6 @@ def FTP_to_DF(
         )
     else:
         clean_source_file(decompressed_source_file)
-        # import pdb; pdb.set_trace()
         df = pd.read_csv(
             decompressed_source_file,
             engine="python",
@@ -658,11 +972,12 @@ def process_lightning_strikes_by_year(
     data_dtypes: dict,
     reorder_headers_list: typing.List[str],
     null_rows_list: typing.List[str],
-    date_format_list: typing.List[str],
+    date_format_list: typing.List[typing.List[str]],
     slice_column_list: dict,
     regex_list: dict,
     remove_source_file: bool,
     rename_headers_list: dict,
+    trim_whitespace_list: typing.List[str],
     delete_target_file: bool,
     number_of_header_rows: int,
     int_date_list: typing.List[str],
@@ -683,7 +998,7 @@ def process_lightning_strikes_by_year(
                 source_file_zipped = f"{source_file_path}/{url_file_name}"
                 source_file_year = str.replace(str(source_file), ".csv", f"_{yr}.csv")
                 target_file_year = str.replace(str(target_file), ".csv", f"_{yr}.csv")
-                download_file(url, source_file_zipped)
+                download_file_http(url, source_file_zipped)
                 gz_decompress(
                     infile=source_file_zipped,
                     tofile=source_file_year,
@@ -725,6 +1040,7 @@ def process_lightning_strikes_by_year(
                     slice_column_list=slice_column_list,
                     regex_list=regex_list,
                     rename_headers_list=rename_headers_list,
+                    trim_whitespace_list=trim_whitespace_list,
                     remove_source_file=remove_source_file,
                     delete_target_file=delete_target_file,
                     int_date_list=int_date_list,
@@ -751,9 +1067,10 @@ def process_and_load_table(
     data_dtypes: dict,
     reorder_headers_list: typing.List[str],
     null_rows_list: typing.List[str],
-    date_format_list: typing.List[str],
+    date_format_list: typing.List[typing.List[str]],
     slice_column_list: dict,
     regex_list: dict,
+    trim_whitespace_list: typing.List[str],
     rename_headers_list: dict,
     remove_source_file: bool,
     delete_target_file: bool,
@@ -776,12 +1093,41 @@ def process_and_load_table(
         input_field_delimiter=input_field_delimiter,
         slice_column_list=slice_column_list,
         regex_list=regex_list,
+        trim_whitespace_list=trim_whitespace_list,
         rename_headers_list=rename_headers_list,
         remove_source_file=remove_source_file,
         int_date_list=int_date_list,
         gen_location_list=gen_location_list,
         encoding=encoding,
     )
+    post_processing(
+        target_file=target_file,
+        source_url=source_url,
+        project_id=project_id,
+        dataset_id=dataset_id,
+        destination_table=destination_table,
+        target_gcs_bucket=target_gcs_bucket,
+        target_gcs_path=target_gcs_path,
+        schema_path=schema_path,
+        drop_dest_table=drop_dest_table,
+        delete_target_file=delete_target_file,
+        truncate_table=truncate_table,
+    )
+
+
+def post_processing(
+    target_file: str,
+    source_url: str,
+    project_id: str,
+    dataset_id: str,
+    destination_table: str,
+    target_gcs_bucket: str,
+    target_gcs_path: str,
+    schema_path: str,
+    drop_dest_table: str,
+    delete_target_file: bool,
+    truncate_table: bool = True,
+) -> None:
     if os.path.exists(target_file):
         upload_file_to_gcs(
             file_path=target_file,
@@ -832,10 +1178,11 @@ def process_source_file(
     target_file: str,
     reorder_headers_list: typing.List[str],
     null_rows_list: typing.List[str],
-    date_format_list: typing.List[str],
+    date_format_list: typing.List[typing.List[str]],
     input_field_delimiter: str,
     slice_column_list: dict,
     regex_list: dict,
+    trim_whitespace_list: typing.List[str],
     rename_headers_list: dict,
     int_date_list: typing.List[str],
     gen_location_list: dict,
@@ -843,11 +1190,15 @@ def process_source_file(
     remove_source_file: bool = False,
 ) -> None:
     logging.info(f"Opening source file {source_file}")
-    csv.field_size_limit(512 << 10)
+    csv.field_size_limit(sys.maxsize)
     csv.register_dialect(
         "TabDialect", quotechar='"', delimiter=input_field_delimiter, strict=True
     )
-    with open(source_file, encoding=encoding, mode="r") as reader:
+    with open(
+        source_file,
+        encoding=encoding,
+        mode="r",
+    ) as reader:
         data = []
         chunk_number = 1
         for index, line in enumerate(
@@ -868,6 +1219,7 @@ def process_source_file(
                     null_rows_list=null_rows_list,
                     slice_column_list=slice_column_list,
                     regex_list=regex_list,
+                    trim_whitespace_list=trim_whitespace_list,
                     rename_headers_list=rename_headers_list,
                     int_date_list=int_date_list,
                     gen_location_list=gen_location_list,
@@ -889,6 +1241,7 @@ def process_source_file(
                 null_rows_list=null_rows_list,
                 slice_column_list=slice_column_list,
                 regex_list=regex_list,
+                trim_whitespace_list=trim_whitespace_list,
                 rename_headers_list=rename_headers_list,
                 int_date_list=int_date_list,
                 gen_location_list=gen_location_list,
@@ -906,10 +1259,11 @@ def process_dataframe_chunk(
     target_file: str,
     chunk_number: int,
     reorder_headers_list: typing.List[str],
-    date_format_list: typing.List[str],
+    date_format_list: typing.List[typing.List[str]],
     null_rows_list: typing.List[str],
     slice_column_list: dict,
     regex_list: dict,
+    trim_whitespace_list: typing.List[str],
     rename_headers_list: dict,
     int_date_list: typing.List[str],
     gen_location_list: dict,
@@ -932,6 +1286,7 @@ def process_dataframe_chunk(
         null_rows_list=null_rows_list,
         slice_column_list=slice_column_list,
         regex_list=regex_list,
+        trim_whitespace_list=trim_whitespace_list,
         rename_headers_list=rename_headers_list,
         int_date_list=int_date_list,
         gen_location_list=gen_location_list,
@@ -954,9 +1309,10 @@ def process_chunk(
     pipeline_name: str,
     reorder_headers_list: dict,
     null_rows_list: typing.List[str],
-    date_format_list: typing.List[str],
+    date_format_list: typing.List[typing.List[str]],
     slice_column_list: dict,
     regex_list: dict,
+    trim_whitespace_list: typing.List[str],
     rename_headers_list: dict,
     int_date_list: typing.List[str],
     gen_location_list: dict,
@@ -966,6 +1322,74 @@ def process_chunk(
         df = add_metadata_cols(df, source_url=source_url)
         df = source_convert_date_formats(df, date_format_list=date_format_list)
         df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
+    if pipeline_name == "NOAA SPC Hail":
+        df = rename_headers(df, rename_headers_list=rename_headers_list)
+        df["time"] = df["time"].apply(lambda x: str.zfill(x, 4))
+        df["month"] = df["month"].apply(lambda x: str.zfill(x, 2))
+        df["day"] = df["day"].apply(lambda x: str.zfill(x, 2))
+        logging.info("Creating Timestamp Column")
+        df["timestamp"] = df.apply(
+            lambda x: f"{x.year}-{x.month}-{x.day} {x.time}00", axis=1
+        )
+        df = source_convert_date_formats(df, date_format_list=date_format_list)
+        df = generate_location(df, gen_location_list=gen_location_list)
+        df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
+    if pipeline_name == "NOAA SPC Wind":
+        df = rename_headers(df, rename_headers_list=rename_headers_list)
+        df["speed"] = df["speed"].apply(lambda x: re.sub(r"^UNK$", "", x))
+        df["time"] = df["time"].apply(lambda x: str.zfill(x, 4))
+        df["month"] = df["month"].apply(lambda x: str.zfill(x, 2))
+        df["day"] = df["day"].apply(lambda x: str.zfill(x, 2))
+        logging.info("Creating Timestamp Column")
+        df["timestamp"] = df.apply(
+            lambda x: f"{x.year}-{x.month}-{x.day} {x.time}00", axis=1
+        )
+        df = source_convert_date_formats(df, date_format_list=date_format_list)
+        df = generate_location(df, gen_location_list=gen_location_list)
+        df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
+    if pipeline_name == "NOAA SPC Tornado":
+        df = rename_headers(df, rename_headers_list=rename_headers_list)
+        df["time"] = df["time"].apply(lambda x: str.zfill(x, 4))
+        df["month"] = df["month"].apply(lambda x: str.zfill(x, 2))
+        df["day"] = df["day"].apply(lambda x: str.zfill(x, 2))
+        logging.info("Creating Timestamp Column")
+        df["timestamp"] = df.apply(
+            lambda x: f"{x.year}-{x.month}-{x.day} {x.time}00", axis=1
+        )
+        df = source_convert_date_formats(df, date_format_list=date_format_list)
+        df = generate_location(df, gen_location_list=gen_location_list)
+        df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
+    if pipeline_name in [
+        "NOAA GOES 16 MCMIP",
+        "NOAA GOES 16 GLM",
+        "NOAA GOES 16 Radiance",
+        "NOAA GOES 16 CMIP",
+        "NOAA GOES 17 MCMIP",
+        "NOAA GOES 17 GLM",
+        "NOAA GOES 17 Radiance",
+        "NOAA GOES 17 CMIP",
+    ]:
+        df = rename_headers(df, rename_headers_list=rename_headers_list)
+        df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
+    if pipeline_name in ["NOAA GSOD 2020", "NOAA GSOD 2022"]:
+        df["stn"] = df["STATION"].apply(lambda x: "" if x == "" else x[0:6])
+        df["wban"] = df["STATION"].apply(lambda x: "" if x == "" else x[6:11])
+        df["year"] = df["DATE"].apply(lambda x: "" if x == "" else x[0:4])
+        df["mo"] = df["DATE"].apply(lambda x: "" if x == "" else x[5:7])
+        df["da"] = df["DATE"].apply(lambda x: "" if x == "" else x[8:10])
+        df["fog"] = df["FRSHTT"].apply(lambda x: "" if x == "" else x[0:1])
+        df["rain_drizzle"] = df["FRSHTT"].apply(lambda x: "" if x == "" else x[1:2])
+        df["snow_ice_pellets"] = df["FRSHTT"].apply(lambda x: "" if x == "" else x[2:3])
+        df["hail"] = df["FRSHTT"].apply(lambda x: "" if x == "" else x[3:4])
+        df["thunder"] = df["FRSHTT"].apply(lambda x: "" if x == "" else x[4:5])
+        df["tornado_funnel_cloud"] = df["FRSHTT"].apply(
+            lambda x: "" if x == "" else x[5:6]
+        )
+        df = rename_headers(df, rename_headers_list=rename_headers_list)
+        df = trim_whitespace(df, trim_whitespace_list=trim_whitespace_list)
+        df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
+    if pipeline_name == "NOAA NWS Forecast Regions":
+        df = rename_headers(df, rename_headers_list=rename_headers_list)
     if pipeline_name in [
         "GHCND countries",
         "GHCND inventory",
@@ -997,6 +1421,16 @@ def process_chunk(
         df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
     save_to_new_file(df, file_path=str(target_file_batch))
     append_batch_file(target_file_batch, target_file, skip_header, not (skip_header))
+
+
+def trim_whitespace(
+    df: pd.DataFrame, trim_whitespace_list: typing.List[str]
+) -> pd.DataFrame:
+    logging.info("Trimming whitespace ...")
+    for col in trim_whitespace_list:
+        logging.info(f"    on {col} ...")
+        df[col] = df[col].apply(lambda x: str(x).strip())
+    return df
 
 
 def convert_date_from_int(df: pd.DataFrame, int_date_list: dict) -> pd.DataFrame:
@@ -1080,21 +1514,27 @@ def filter_null_rows(
     return df
 
 
-def convert_dt_format(dt_str: str) -> str:
+def convert_dt_format(
+    dt_str: str, from_format: str = "%Y%m%d", to_format: str = "%Y-%m-%d"
+) -> str:
     if not dt_str or dt_str.lower() == "nan":
         return dt_str
     else:
-        return str(
-            datetime.datetime.strptime(dt_str, "%Y%m%d").date().strftime("%Y-%m-%d")
-        )
+        return str(datetime.datetime.strptime(dt_str, from_format).strftime(to_format))
 
 
 def source_convert_date_formats(
-    df: pd.DataFrame, date_format_list: typing.List[str]
+    df: pd.DataFrame,
+    date_format_list: typing.List[typing.List[str]],
 ) -> pd.DataFrame:
     logging.info("Converting Date Format..")
-    for fld in date_format_list:
-        df[fld] = df[fld].apply(convert_dt_format)
+    for fld, from_format, to_format in date_format_list:
+        df[fld] = df[fld].apply(
+            lambda x, from_format, to_format: convert_dt_format(
+                x, from_format, to_format
+            ),
+            args=(from_format, to_format),
+        )
     return df
 
 
@@ -1334,17 +1774,6 @@ def append_batch_file(
                 os.remove(batch_file_path)
 
 
-def download_file(source_url: str, source_file: pathlib.Path) -> None:
-    logging.info(f"Downloading {source_url} to {source_file}")
-    r = requests.get(source_url, stream=True)
-    if r.status_code == 200:
-        with open(source_file, "wb") as f:
-            for chunk in r:
-                f.write(chunk)
-    else:
-        logging.error(f"Couldn't download {source_url}: {r.text}")
-
-
 def download_file_ftp(
     ftp_host: str,
     ftp_dir: str,
@@ -1386,6 +1815,65 @@ def download_file_ftp_single_try(
                 time.sleep(try_count * 30)
 
 
+def download_file_http(
+    source_url: str,
+    source_file: pathlib.Path,
+    continue_on_error: bool = False,
+    quiet_mode: bool = False,
+    no_of_retries: int = 5,
+) -> bool:
+    for retries in (0, no_of_retries):
+        if not download_file_http_exec(
+            source_url=source_url,
+            source_file=source_file,
+            continue_on_error=continue_on_error,
+            quiet_mode=quiet_mode,
+        ):
+            logging.info(
+                f"Unable to download file {source_url}.  Retry {retries} of {no_of_retries}"
+            )
+            time.sleep(3)
+        else:
+            return True
+    return False
+
+
+def download_file_http_exec(
+    source_url: str,
+    source_file: pathlib.Path,
+    continue_on_error: bool = False,
+    quiet_mode: bool = False,
+) -> bool:
+    if not quiet_mode:
+        logging.info(f"Downloading {source_url} to {source_file}")
+    try:
+        src_file = requests.get(source_url, stream=True)
+        rtn_status_code = src_file.status_code
+        if 400 <= rtn_status_code <= 499:
+            logging.info(
+                f"Unable to download file {source_url} (error code was {rtn_status_code})"
+            )
+            return False
+        else:
+            with open(source_file, "wb") as f:
+                for chunk in src_file:
+                    f.write(chunk)
+            return True
+    except requests.exceptions.RequestException as e:
+        if e == requests.exceptions.HTTPError:
+            err_msg = "A HTTP error occurred."
+        elif e == requests.exceptions.Timeout:
+            err_msg = "A HTTP timeout error occurred."
+        elif e == requests.exceptions.TooManyRedirects:
+            err_msg = "Too Many Redirects occurred."
+        if not continue_on_error:
+            logging.info(f"{err_msg} Unable to obtain {source_url}")
+            raise SystemExit(e)
+        else:
+            logging.info(f"{err_msg} Unable to obtain {source_url}.")
+        return False
+
+
 def upload_file_to_gcs(
     file_path: pathlib.Path, target_gcs_bucket: str, target_gcs_path: str
 ) -> None:
@@ -1411,6 +1899,7 @@ if __name__ == "__main__":
         source_url=json.loads(os.environ.get("SOURCE_URL", r"{}")),
         source_file=pathlib.Path(os.environ.get("SOURCE_FILE", "")).expanduser(),
         target_file=pathlib.Path(os.environ.get("TARGET_FILE", "")).expanduser(),
+        shape_file=os.environ.get("SHAPE_FILE", ""),
         chunksize=os.environ.get("CHUNKSIZE", "100000"),
         ftp_host=os.environ.get("FTP_HOST", ""),
         ftp_dir=os.environ.get("FTP_DIR", ""),
@@ -1429,12 +1918,15 @@ if __name__ == "__main__":
         input_csv_headers=json.loads(os.environ.get("INPUT_CSV_HEADERS", r"[]")),
         data_dtypes=json.loads(os.environ.get("DATA_DTYPES", r"{}")),
         reorder_headers_list=json.loads(os.environ.get("REORDER_HEADERS_LIST", r"[]")),
+        convert_int_list=json.loads(os.environ.get("CONVERT_INT_LIST", r"{}")),
         null_rows_list=json.loads(os.environ.get("NULL_ROWS_LIST", r"[]")),
         date_format_list=json.loads(os.environ.get("DATE_FORMAT_LIST", r"[]")),
         slice_column_list=json.loads(os.environ.get("SLICE_COLUMN_LIST", r"{}")),
+        trim_whitespace_list=json.loads(os.environ.get("TRIM_WHITESPACE_LIST", r"[]")),
         rename_headers_list=json.loads(os.environ.get("RENAME_HEADERS_LIST", r"{}")),
         remove_source_file=os.environ.get("REMOVE_SOURCE_FILE", "N"),
         delete_target_file=os.environ.get("DELETE_TARGET_FILE", "N"),
+        input_csv_field_pos=json.loads(os.environ.get("INPUT_CSV_FIELD_POS", r"[]")),
         number_of_header_rows=os.environ.get("NUMBER_OF_HEADER_ROWS", "0"),
         regex_list=json.loads(os.environ.get("REGEX_LIST", r"{}")),
         int_date_list=json.loads(os.environ.get("INT_DATE_LIST", r"[]")),
