@@ -39,12 +39,15 @@ dag:
         bash_command: |
           if test -f /home/airflow/gcs/data/libraries_io/lib-1.6.0.tar.gz;
           then
+              mkdir /home/airflow/gcs/data/libraries_io/dependencies/
               cp /home/airflow/gcs/data/libraries_io/libraries-1.4.0-2018-12-22/dependencies-1.4.0-2018-12-22.csv /home/airflow/gcs/data/libraries_io/dependencies/dependencies.csv
               split -l 40000000 --additional-suffix=.csv /home/airflow/gcs/data/libraries_io/dependencies/dependencies.csv /home/airflow/gcs/data/libraries_io/dependencies/
               rm /home/airflow/gcs/data/libraries_io/dependencies/dependencies.csv
           else
+              mkdir /home/airflow/gcs/data/libraries_io/
               curl -o /home/airflow/gcs/data/libraries_io/lib-1.6.0.tar.gz -L https://zenodo.org/record/2536573/files/Libraries.io-open-data-1.4.0.tar.gz
               tar -xf /home/airflow/gcs/data/libraries_io/lib-1.6.0.tar.gz -C /home/airflow/gcs/data/libraries_io/
+              mkdir /home/airflow/gcs/data/libraries_io/dependencies/
               cp /home/airflow/gcs/data/libraries_io/libraries-1.4.0-2018-12-22/dependencies-1.4.0-2018-12-22.csv /home/airflow/gcs/data/libraries_io/dependencies/dependencies.csv
               split -l 40000000 --additional-suffix=.csv /home/airflow/gcs/data/libraries_io/dependencies/dependencies.csv /home/airflow/gcs/data/libraries_io/dependencies/
               rm /home/airflow/gcs/data/libraries_io/dependencies/dependencies.c
