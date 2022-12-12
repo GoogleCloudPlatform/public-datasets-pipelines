@@ -44,6 +44,7 @@ dag:
               split -l 13000000 --additional-suffix=.csv /home/airflow/gcs/data/libraries_io/repositories/repositories.csv /home/airflow/gcs/data/libraries_io/repositories/
               rm /home/airflow/gcs/data/libraries_io/repositories/repositories.csv
           else
+              mkdir /home/airflow/gcs/data/libraries_io/
               curl -o /home/airflow/gcs/data/libraries_io/lib-1.6.0.tar.gz -L https://zenodo.org/record/2536573/files/Libraries.io-open-data-1.4.0.tar.gz
               tar -xf /home/airflow/gcs/data/libraries_io/lib-1.6.0.tar.gz -C /home/airflow/gcs/data/libraries_io/
               mkdir /home/airflow/gcs/data/libraries_io/repositories/
