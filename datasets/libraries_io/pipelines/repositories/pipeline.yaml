@@ -1,0 +1,705 @@
+# Copyright 2022 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# requestations under the License.
+
+---
+resources:
+  - type: bigquery_table
+    table_id: repositories
+    description:
+
+dag:
+  airflow_version: 2
+  initialize:
+    dag_id: repositories
+    default_args:
+      owner: "Google"
+      depends_on_past: False
+      start_date: "2022-11-15"
+    max_active_runs: 1
+    schedule_interval: "@daily"
+    catchup: False
+    default_view: graph
+
+  tasks:
+    - operator: "BashOperator"
+      description: "Fetch data gcs - gcs"
+      args:
+        task_id: "bash_gcs_to_gcs"
+        bash_command: |
+          if test -f /home/airflow/gcs/data/libraries_io/lib-1.6.0.tar.gz;
+          then
+              mkdir /home/airflow/gcs/data/libraries_io/repositories/
+              cp  /home/airflow/gcs/data/libraries_io/libraries-1.4.0-2018-12-22/repositories-1.4.0-2018-12-22.csv /home/airflow/gcs/data/libraries_io/repositories/repositories.csv
+              split -l 13000000 --additional-suffix=.csv /home/airflow/gcs/data/libraries_io/repositories/repositories.csv /home/airflow/gcs/data/libraries_io/repositories/
+              rm /home/airflow/gcs/data/libraries_io/repositories/repositories.csv
+          else
+              mkdir /home/airflow/gcs/data/libraries_io/
+              curl -o /home/airflow/gcs/data/libraries_io/lib-1.6.0.tar.gz -L https://zenodo.org/record/2536573/files/Libraries.io-open-data-1.4.0.tar.gz
+              tar -xf /home/airflow/gcs/data/libraries_io/lib-1.6.0.tar.gz -C /home/airflow/gcs/data/libraries_io/
+              mkdir /home/airflow/gcs/data/libraries_io/repositories/
+              cp  /home/airflow/gcs/data/libraries_io/libraries-1.4.0-2018-12-22/repositories-1.4.0-2018-12-22.csv /home/airflow/gcs/data/libraries_io/repositories/repositories.csv
+              split -l 13000000 --additional-suffix=.csv /home/airflow/gcs/data/libraries_io/repositories/repositories.csv /home/airflow/gcs/data/libraries_io/repositories/
+              rm /home/airflow/gcs/data/libraries_io/repositories/repositories.csv
+          fi
+
+    - operator: "KubernetesPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "transform_repositories"
+        startup_timeout_seconds: 600
+        name: "repositories"
+        namespace: "composer"
+        service_account_name: "datasets"
+        image_pull_policy: "Always"
+        image: "{{ var.json.libraries_io.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          SOURCE_GCS_OBJECT: "data/libraries_io/repositories/aa.csv"
+          SOURCE_FILE: "files/repositories.csv"
+          TARGET_FILE: "files/data_repositories.csv"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/libraries_io/repositories/data_repositories_1.csv"
+          CHUNKSIZE: "100000"
+          PIPELINE_NAME: "repositories"
+          RENAME_MAPPINGS: >-
+            {"ID":"id","Host Type":"host_type","Name with Owner":"name_with_owner","Description":"description","Fork":"fork",
+            "Created Timestamp":"created_timestamp","Updated Timestamp":"updated_timestamp","Last pushed Timestamp":"last_pushed_timestamp",
+            "Homepage URL":"homepage_url","Size":"size","Stars Count":"stars_count","Language":"language","Issues enable":"issues_enabled",
+            "Wiki enabled":"wiki_enabled","Pages enabled":"pages_enabled","Forks Count":"forks_count","Mirror URL":"mirror_url",
+            "Open Issues Count":"open_issues_count","Default branch":"default_branch","Watchers Count":"watchers_count","UUID":"uuid",
+            "Fork Source Name with Owner":"fork_source_name_with_owner","License":"license","Contributors Count":"contributors_count",
+            "Readme filename":"readme_filename","Changelog filename":"changelog_filename","Contributing guidelines filename":"contributing_guidelines_filename",
+            "License filename":"license_filename","Code of Conduct filename":"code_of_conduct_filename",
+            "Security Threat Model filename":"security_threat_model_filename","Security Audit filename":"security_audit_filename",
+            "Status":"status","Last Synced Timestamp":"last_synced_timestamp","SourceRank":"sourcerank","Display Name":"display_name",
+            "SCM typ":"scm_type","Pull requests enabled":"pull_requests_enabled","Logo URL":"logo_url","Keywords":"keywords","39":"an"}
+          CSV_HEADERS: >-
+            ["id","host_type","name_with_owner","description","fork","created_timestamp","updated_timestamp","last_pushed_timestamp",
+            "homepage_url","size","stars_count","language","issues_enabled","wiki_enabled","pages_enabled","forks_count","mirror_url",
+            "open_issues_count","default_branch","watchers_count","uuid","fork_source_name_with_owner","license","contributors_count",
+            "readme_filename","changelog_filename","contributing_guidelines_filename","license_filename","code_of_conduct_filename",
+            "security_threat_model_filename","security_audit_filename","status","last_synced_timestamp","sourcerank","display_name",
+            "scm_type","pull_requests_enabled","logo_url","keywords","an"]
+        resources:
+          request_memory: "4G"
+          request_cpu: "1"
+          request_ephemeral_storage: "10G"
+
+    - operator: "GoogleCloudStorageToBigQueryOperator"
+      description: "Task to load CSV data to a BigQuery table"
+      args:
+        task_id: "load_repositories_to_bq"
+        bucket: "{{ var.value.composer_bucket }}"
+        source_objects: ["data/libraries_io/repositories/data_repositories_1.csv"]
+        source_format: "CSV"
+        destination_project_dataset_table: "libraries_io.repositories"
+        skip_leading_rows: 2
+        allow_quoted_newlines: True
+        write_disposition: "WRITE_TRUNCATE"
+        schema_fields:
+          - name: "id"
+            type: "integer"
+            description: "he unique primary key of the repository in the Libraries.io database."
+            mode: "nullable"
+          - name: "host_type"
+            type: "string"
+            description: "Which website the repository is hosted on either GitHub GitLab or Bitbucket."
+            mode: "nullable"
+          - name: "name_with_owner"
+            type: "string"
+            description: "The repository name and owner seperated by a slash also maps to the url slug on the given repository host e.g. librariesio/libraries.io."
+            mode: "nullable"
+          - name: "description"
+            type: "string"
+            description: "Description of repository."
+            mode: "nullable"
+          - name: "fork"
+            type: "boolean"
+            description: "Is the repository a fork of another."
+            mode: "nullable"
+          - name: "created_timestamp"
+            type: "timestamp"
+            description: "Timestamp of when the repository was created on the host."
+            mode: "nullable"
+          - name: "updated_timestamp"
+            type: "timestamp"
+            description: "Timestamp of when the repository was last saved by Libraries.io."
+            mode: "nullable"
+          - name: "last_pushed_timestamp"
+            type: "timestamp"
+            description: "Timestamp of when the repository was last pushed to only available for GitHub repositories."
+            mode: "nullable"
+          - name: "homepage_url"
+            type: "string"
+            description: "URL of a declared homepage or other website for the repository."
+            mode: "nullable"
+          - name: "size"
+            type: "integer"
+            description: "Size of the repository in kilobytes only available for GitHub and Bitbucket."
+            mode: "nullable"
+          - name: "stars_count"
+            type: "integer"
+            description: "Number of stars on the repository only available for GitHub and GitLab."
+            mode: "nullable"
+          - name: "language"
+            type: "string"
+            description: "Primary programming language the project is written in only available for GitHub and Bitbucket."
+            mode: "nullable"
+          - name: "issues_enabled"
+            type: "boolean"
+            description: "Is the bug tracker enabled for this repository?."
+            mode: "nullable"
+          - name: "wiki_enabled"
+            type: "boolean"
+            description: "Is the wiki enabled for this repository?."
+            mode: "nullable"
+          - name: "pages_enabled"
+            type: "boolean"
+            description: "Is GitHub pages enabled for this repository? only possible for GitHub."
+            mode: "nullable"
+          - name: "forks_count"
+            type: "integer"
+            description: "Number of forks of this repository."
+            mode: "nullable"
+          - name: "mirror_url"
+            type: "string"
+            description: "URL of the repositroy of which this is a mirror of only present if this repository is a mirror of another."
+            mode: "nullable"
+          - name: "open_issues_count"
+            type: "integer"
+            description: "Number of open issues on the repository bug tracker only available for GitHub and GitLab."
+            mode: "nullable"
+          - name: "default_branch"
+            type: "string"
+            description: "Primary branch of the repository."
+            mode: "nullable"
+          - name: "watchers_count"
+            type: "integer"
+            description: "Number of subscribers to all notifications for the repository only available for GitHub and Bitbucket."
+            mode: "nullable"
+          - name: "uuid"
+            type: "string"
+            description: "ID of the repository on the remote host not unique between GitLab and GitHub repositories."
+            mode: "nullable"
+          - name: "fork_source_name_with_owner"
+            type: "string"
+            description: "If the repository is a fork the repository name and owner seperated by a slash of the repository if was forked from."
+            mode: "nullable"
+          - name: "license"
+            type: "string"
+            description: "SPDX identifier of the license of the repository only available for GitHub repositories."
+            mode: "nullable"
+          - name: "contributors_count"
+            type: "integer"
+            description: "Number of unique contributors that have committed to the default branch."
+            mode: "nullable"
+          - name: "readme_filename"
+            type: "string"
+            description: "If a readme file has been detected the full name of the readme file e.g README.md."
+            mode: "nullable"
+          - name: "changelog_filename"
+            type: "string"
+            description: "If a changelog file has been detected the full name of the changelog file e.g changelog.txt."
+            mode: "nullable"
+          - name: "contributing_guidelines_filename"
+            type: "string"
+            description: "If a contributing guidelines file has been detected the full name of the contributing guidelines file e.g contributing.md."
+            mode: "nullable"
+          - name: "license_filename"
+            type: "string"
+            description: "If a license file has been detected the full name of the license file e.g LICENSE."
+            mode: "nullable"
+          - name: "code_of_conduct_filename"
+            type: "string"
+            description: "If a code of conduct file has been detected the full name of the code of conduct file e.g code_of_conduct.md."
+            mode: "nullable"
+          - name: "security_threat_model_filename"
+            type: "string"
+            description: "If a Security Threat Model file has been detected the full name of the Security Threat Model file e.g threatmodel.md."
+            mode: "nullable"
+          - name: "security_audit_filename"
+            type: "string"
+            description: "If a Security Audit file has been detected the full name of the Security Audit file e.g security.md."
+            mode: "nullable"
+          - name: "status"
+            type: "string"
+            description: "Either Active Deprecated Unmaintained Help Wanted Removed no value also means active. Updated when detected by Libraries.io or su. manually by Libraries.io user via \"repo suggection\" feature."
+            mode: "nullable"
+          - name: "last_synced_timestamp"
+            type: "timestamp"
+            description: "Timestamp of when Libraries.io last synced the repository from the host API."
+            mode: "nullable"
+          - name: "sourcerank"
+            type: "integer"
+            description: "Libraries.io defined score based on quality popularity and community metrics."
+            mode: "nullable"
+          - name: "display_name"
+            type: "string"
+            description: "Display name for the repository only available for GitLab repositories."
+            mode: "nullable"
+          - name: "scm_type"
+            type: "string"
+            description: "Type of source control repository uses always \"git\" for GitHub and GitLab."
+            mode: "nullable"
+          - name: "pull_requests_enabled"
+            type: "string"
+            description: "Are pull requests enabled for this repository? Only available for GitLab repositories."
+            mode: "nullable"
+          - name: "logo_url"
+            type: "string"
+            description: "Custom logo url for repository only available for GitLab repositories."
+            mode: "nullable"
+          - name: "keywords"
+            type: "string"
+            description: "Comma separated array of keywords called \"topics\" on GitHub only available for GitHub and GitLab."
+            mode: "nullable"
+          - name: "an"
+            type: "string"
+            description: ""
+            mode: "nullable"
+
+    - operator: "KubernetesPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "transform_repositories_2"
+        startup_timeout_seconds: 600
+        name: "repositories"
+        namespace: "composer"
+        service_account_name: "datasets"
+        image_pull_policy: "Always"
+        image: "{{ var.json.libraries_io.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          SOURCE_GCS_OBJECT: "data/libraries_io/repositories/ab.csv"
+          SOURCE_FILE: "files/repositories.csv"
+          TARGET_FILE: "files/data_repositories.csv"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/libraries_io/repositories/data_repositories_2.csv"
+          CHUNKSIZE: "100000"
+          PIPELINE_NAME: "repositories"
+          RENAME_MAPPINGS: >-
+            {"ID":"id","Host Type":"host_type","Name with Owner":"name_with_owner","Description":"description","Fork":"fork",
+            "Created Timestamp":"created_timestamp","Updated Timestamp":"updated_timestamp","Last pushed Timestamp":"last_pushed_timestamp",
+            "Homepage URL":"homepage_url","Size":"size","Stars Count":"stars_count","Language":"language","Issues enable":"issues_enabled",
+            "Wiki enabled":"wiki_enabled","Pages enabled":"pages_enabled","Forks Count":"forks_count","Mirror URL":"mirror_url",
+            "Open Issues Count":"open_issues_count","Default branch":"default_branch","Watchers Count":"watchers_count","UUID":"uuid",
+            "Fork Source Name with Owner":"fork_source_name_with_owner","License":"license","Contributors Count":"contributors_count",
+            "Readme filename":"readme_filename","Changelog filename":"changelog_filename","Contributing guidelines filename":"contributing_guidelines_filename",
+            "License filename":"license_filename","Code of Conduct filename":"code_of_conduct_filename",
+            "Security Threat Model filename":"security_threat_model_filename","Security Audit filename":"security_audit_filename",
+            "Status":"status","Last Synced Timestamp":"last_synced_timestamp","SourceRank":"sourcerank","Display Name":"display_name",
+            "SCM typ":"scm_type","Pull requests enabled":"pull_requests_enabled","Logo URL":"logo_url","Keywords":"keywords","39":"an"}
+          CSV_HEADERS: >-
+            ["id","host_type","name_with_owner","description","fork","created_timestamp","updated_timestamp","last_pushed_timestamp",
+            "homepage_url","size","stars_count","language","issues_enabled","wiki_enabled","pages_enabled","forks_count","mirror_url",
+            "open_issues_count","default_branch","watchers_count","uuid","fork_source_name_with_owner","license","contributors_count",
+            "readme_filename","changelog_filename","contributing_guidelines_filename","license_filename","code_of_conduct_filename",
+            "security_threat_model_filename","security_audit_filename","status","last_synced_timestamp","sourcerank","display_name",
+            "scm_type","pull_requests_enabled","logo_url","keywords","an"]
+        resources:
+          request_memory: "4G"
+          request_cpu: "1"
+          request_ephemeral_storage: "10G"
+
+    - operator: "GoogleCloudStorageToBigQueryOperator"
+      description: "Task to load CSV data to a BigQuery table"
+      args:
+        task_id: "load_repositories_to_bq_2"
+        bucket: "{{ var.value.composer_bucket }}"
+        source_objects: ["data/libraries_io/repositories/data_repositories_2.csv"]
+        source_format: "CSV"
+        destination_project_dataset_table: "libraries_io.repositories"
+        skip_leading_rows: 2
+        allow_quoted_newlines: True
+        write_disposition: "WRITE_APPEND"
+        schema_fields:
+          - name: "id"
+            type: "integer"
+            description: "he unique primary key of the repository in the Libraries.io database."
+            mode: "nullable"
+          - name: "host_type"
+            type: "string"
+            description: "Which website the repository is hosted on either GitHub GitLab or Bitbucket."
+            mode: "nullable"
+          - name: "name_with_owner"
+            type: "string"
+            description: "The repository name and owner seperated by a slash also maps to the url slug on the given repository host e.g. librariesio/libraries.io."
+            mode: "nullable"
+          - name: "description"
+            type: "string"
+            description: "Description of repository."
+            mode: "nullable"
+          - name: "fork"
+            type: "boolean"
+            description: "Is the repository a fork of another."
+            mode: "nullable"
+          - name: "created_timestamp"
+            type: "timestamp"
+            description: "Timestamp of when the repository was created on the host."
+            mode: "nullable"
+          - name: "updated_timestamp"
+            type: "timestamp"
+            description: "Timestamp of when the repository was last saved by Libraries.io."
+            mode: "nullable"
+          - name: "last_pushed_timestamp"
+            type: "timestamp"
+            description: "Timestamp of when the repository was last pushed to only available for GitHub repositories."
+            mode: "nullable"
+          - name: "homepage_url"
+            type: "string"
+            description: "URL of a declared homepage or other website for the repository."
+            mode: "nullable"
+          - name: "size"
+            type: "integer"
+            description: "Size of the repository in kilobytes only available for GitHub and Bitbucket."
+            mode: "nullable"
+          - name: "stars_count"
+            type: "integer"
+            description: "Number of stars on the repository only available for GitHub and GitLab."
+            mode: "nullable"
+          - name: "language"
+            type: "string"
+            description: "Primary programming language the project is written in only available for GitHub and Bitbucket."
+            mode: "nullable"
+          - name: "issues_enabled"
+            type: "boolean"
+            description: "Is the bug tracker enabled for this repository?."
+            mode: "nullable"
+          - name: "wiki_enabled"
+            type: "boolean"
+            description: "Is the wiki enabled for this repository?."
+            mode: "nullable"
+          - name: "pages_enabled"
+            type: "boolean"
+            description: "Is GitHub pages enabled for this repository? only possible for GitHub."
+            mode: "nullable"
+          - name: "forks_count"
+            type: "integer"
+            description: "Number of forks of this repository."
+            mode: "nullable"
+          - name: "mirror_url"
+            type: "string"
+            description: "URL of the repositroy of which this is a mirror of only present if this repository is a mirror of another."
+            mode: "nullable"
+          - name: "open_issues_count"
+            type: "integer"
+            description: "Number of open issues on the repository bug tracker only available for GitHub and GitLab."
+            mode: "nullable"
+          - name: "default_branch"
+            type: "string"
+            description: "Primary branch of the repository."
+            mode: "nullable"
+          - name: "watchers_count"
+            type: "integer"
+            description: "Number of subscribers to all notifications for the repository only available for GitHub and Bitbucket."
+            mode: "nullable"
+          - name: "uuid"
+            type: "string"
+            description: "ID of the repository on the remote host not unique between GitLab and GitHub repositories."
+            mode: "nullable"
+          - name: "fork_source_name_with_owner"
+            type: "string"
+            description: "If the repository is a fork the repository name and owner seperated by a slash of the repository if was forked from."
+            mode: "nullable"
+          - name: "license"
+            type: "string"
+            description: "SPDX identifier of the license of the repository only available for GitHub repositories."
+            mode: "nullable"
+          - name: "contributors_count"
+            type: "integer"
+            description: "Number of unique contributors that have committed to the default branch."
+            mode: "nullable"
+          - name: "readme_filename"
+            type: "string"
+            description: "If a readme file has been detected the full name of the readme file e.g README.md."
+            mode: "nullable"
+          - name: "changelog_filename"
+            type: "string"
+            description: "If a changelog file has been detected the full name of the changelog file e.g changelog.txt."
+            mode: "nullable"
+          - name: "contributing_guidelines_filename"
+            type: "string"
+            description: "If a contributing guidelines file has been detected the full name of the contributing guidelines file e.g contributing.md."
+            mode: "nullable"
+          - name: "license_filename"
+            type: "string"
+            description: "If a license file has been detected the full name of the license file e.g LICENSE."
+            mode: "nullable"
+          - name: "code_of_conduct_filename"
+            type: "string"
+            description: "If a code of conduct file has been detected the full name of the code of conduct file e.g code_of_conduct.md."
+            mode: "nullable"
+          - name: "security_threat_model_filename"
+            type: "string"
+            description: "If a Security Threat Model file has been detected the full name of the Security Threat Model file e.g threatmodel.md."
+            mode: "nullable"
+          - name: "security_audit_filename"
+            type: "string"
+            description: "If a Security Audit file has been detected the full name of the Security Audit file e.g security.md."
+            mode: "nullable"
+          - name: "status"
+            type: "string"
+            description: "Either Active Deprecated Unmaintained Help Wanted Removed no value also means active. Updated when detected by Libraries.io or su. manually by Libraries.io user via \"repo suggection\" feature."
+            mode: "nullable"
+          - name: "last_synced_timestamp"
+            type: "timestamp"
+            description: "Timestamp of when Libraries.io last synced the repository from the host API."
+            mode: "nullable"
+          - name: "sourcerank"
+            type: "integer"
+            description: "Libraries.io defined score based on quality popularity and community metrics."
+            mode: "nullable"
+          - name: "display_name"
+            type: "string"
+            description: "Display name for the repository only available for GitLab repositories."
+            mode: "nullable"
+          - name: "scm_type"
+            type: "string"
+            description: "Type of source control repository uses always \"git\" for GitHub and GitLab."
+            mode: "nullable"
+          - name: "pull_requests_enabled"
+            type: "string"
+            description: "Are pull requests enabled for this repository? Only available for GitLab repositories."
+            mode: "nullable"
+          - name: "logo_url"
+            type: "string"
+            description: "Custom logo url for repository only available for GitLab repositories."
+            mode: "nullable"
+          - name: "keywords"
+            type: "string"
+            description: "Comma separated array of keywords called \"topics\" on GitHub only available for GitHub and GitLab."
+            mode: "nullable"
+          - name: "an"
+            type: "string"
+            description: ""
+            mode: "nullable"
+
+    - operator: "KubernetesPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "transform_repositories_3"
+        startup_timeout_seconds: 600
+        name: "repositories"
+        namespace: "composer"
+        service_account_name: "datasets"
+        image_pull_policy: "Always"
+        image: "{{ var.json.libraries_io.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          SOURCE_GCS_OBJECT: "data/libraries_io/repositories/ac.csv"
+          SOURCE_FILE: "files/repositories.csv"
+          TARGET_FILE: "files/data_repositories.csv"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/libraries_io/repositories/data_repositories_3.csv"
+          CHUNKSIZE: "100000"
+          PIPELINE_NAME: "repositories"
+          RENAME_MAPPINGS: >-
+            {"ID":"id","Host Type":"host_type","Name with Owner":"name_with_owner","Description":"description","Fork":"fork",
+            "Created Timestamp":"created_timestamp","Updated Timestamp":"updated_timestamp","Last pushed Timestamp":"last_pushed_timestamp",
+            "Homepage URL":"homepage_url","Size":"size","Stars Count":"stars_count","Language":"language","Issues enable":"issues_enabled",
+            "Wiki enabled":"wiki_enabled","Pages enabled":"pages_enabled","Forks Count":"forks_count","Mirror URL":"mirror_url",
+            "Open Issues Count":"open_issues_count","Default branch":"default_branch","Watchers Count":"watchers_count","UUID":"uuid",
+            "Fork Source Name with Owner":"fork_source_name_with_owner","License":"license","Contributors Count":"contributors_count",
+            "Readme filename":"readme_filename","Changelog filename":"changelog_filename","Contributing guidelines filename":"contributing_guidelines_filename",
+            "License filename":"license_filename","Code of Conduct filename":"code_of_conduct_filename",
+            "Security Threat Model filename":"security_threat_model_filename","Security Audit filename":"security_audit_filename",
+            "Status":"status","Last Synced Timestamp":"last_synced_timestamp","SourceRank":"sourcerank","Display Name":"display_name",
+            "SCM typ":"scm_type","Pull requests enabled":"pull_requests_enabled","Logo URL":"logo_url","Keywords":"keywords","39":"an"}
+          CSV_HEADERS: >-
+            ["id","host_type","name_with_owner","description","fork","created_timestamp","updated_timestamp","last_pushed_timestamp",
+            "homepage_url","size","stars_count","language","issues_enabled","wiki_enabled","pages_enabled","forks_count","mirror_url",
+            "open_issues_count","default_branch","watchers_count","uuid","fork_source_name_with_owner","license","contributors_count",
+            "readme_filename","changelog_filename","contributing_guidelines_filename","license_filename","code_of_conduct_filename",
+            "security_threat_model_filename","security_audit_filename","status","last_synced_timestamp","sourcerank","display_name",
+            "scm_type","pull_requests_enabled","logo_url","keywords","an"]
+        resources:
+          request_memory: "4G"
+          request_cpu: "1"
+          request_ephemeral_storage: "10G"
+
+    - operator: "GoogleCloudStorageToBigQueryOperator"
+      description: "Task to load CSV data to a BigQuery table"
+      args:
+        task_id: "load_repositories_to_bq_3"
+        bucket: "{{ var.value.composer_bucket }}"
+        source_objects: ["data/libraries_io/repositories/data_repositories_3.csv"]
+        source_format: "CSV"
+        destination_project_dataset_table: "libraries_io.repositories"
+        skip_leading_rows: 2
+        allow_quoted_newlines: True
+        write_disposition: "WRITE_TRUNCATE"
+        schema_fields:
+          - name: "id"
+            type: "integer"
+            description: "he unique primary key of the repository in the Libraries.io database."
+            mode: "nullable"
+          - name: "host_type"
+            type: "string"
+            description: "Which website the repository is hosted on either GitHub GitLab or Bitbucket."
+            mode: "nullable"
+          - name: "name_with_owner"
+            type: "string"
+            description: "The repository name and owner seperated by a slash also maps to the url slug on the given repository host e.g. librariesio/libraries.io."
+            mode: "nullable"
+          - name: "description"
+            type: "string"
+            description: "Description of repository."
+            mode: "nullable"
+          - name: "fork"
+            type: "boolean"
+            description: "Is the repository a fork of another."
+            mode: "nullable"
+          - name: "created_timestamp"
+            type: "timestamp"
+            description: "Timestamp of when the repository was created on the host."
+            mode: "nullable"
+          - name: "updated_timestamp"
+            type: "timestamp"
+            description: "Timestamp of when the repository was last saved by Libraries.io."
+            mode: "nullable"
+          - name: "last_pushed_timestamp"
+            type: "timestamp"
+            description: "Timestamp of when the repository was last pushed to only available for GitHub repositories."
+            mode: "nullable"
+          - name: "homepage_url"
+            type: "string"
+            description: "URL of a declared homepage or other website for the repository."
+            mode: "nullable"
+          - name: "size"
+            type: "integer"
+            description: "Size of the repository in kilobytes only available for GitHub and Bitbucket."
+            mode: "nullable"
+          - name: "stars_count"
+            type: "integer"
+            description: "Number of stars on the repository only available for GitHub and GitLab."
+            mode: "nullable"
+          - name: "language"
+            type: "string"
+            description: "Primary programming language the project is written in only available for GitHub and Bitbucket."
+            mode: "nullable"
+          - name: "issues_enabled"
+            type: "boolean"
+            description: "Is the bug tracker enabled for this repository?."
+            mode: "nullable"
+          - name: "wiki_enabled"
+            type: "boolean"
+            description: "Is the wiki enabled for this repository?."
+            mode: "nullable"
+          - name: "pages_enabled"
+            type: "boolean"
+            description: "Is GitHub pages enabled for this repository? only possible for GitHub."
+            mode: "nullable"
+          - name: "forks_count"
+            type: "integer"
+            description: "Number of forks of this repository."
+            mode: "nullable"
+          - name: "mirror_url"
+            type: "string"
+            description: "URL of the repositroy of which this is a mirror of only present if this repository is a mirror of another."
+            mode: "nullable"
+          - name: "open_issues_count"
+            type: "integer"
+            description: "Number of open issues on the repository bug tracker only available for GitHub and GitLab."
+            mode: "nullable"
+          - name: "default_branch"
+            type: "string"
+            description: "Primary branch of the repository."
+            mode: "nullable"
+          - name: "watchers_count"
+            type: "integer"
+            description: "Number of subscribers to all notifications for the repository only available for GitHub and Bitbucket."
+            mode: "nullable"
+          - name: "uuid"
+            type: "string"
+            description: "ID of the repository on the remote host not unique between GitLab and GitHub repositories."
+            mode: "nullable"
+          - name: "fork_source_name_with_owner"
+            type: "string"
+            description: "If the repository is a fork the repository name and owner seperated by a slash of the repository if was forked from."
+            mode: "nullable"
+          - name: "license"
+            type: "string"
+            description: "SPDX identifier of the license of the repository only available for GitHub repositories."
+            mode: "nullable"
+          - name: "contributors_count"
+            type: "integer"
+            description: "Number of unique contributors that have committed to the default branch."
+            mode: "nullable"
+          - name: "readme_filename"
+            type: "string"
+            description: "If a readme file has been detected the full name of the readme file e.g README.md."
+            mode: "nullable"
+          - name: "changelog_filename"
+            type: "string"
+            description: "If a changelog file has been detected the full name of the changelog file e.g changelog.txt."
+            mode: "nullable"
+          - name: "contributing_guidelines_filename"
+            type: "string"
+            description: "If a contributing guidelines file has been detected the full name of the contributing guidelines file e.g contributing.md."
+            mode: "nullable"
+          - name: "license_filename"
+            type: "string"
+            description: "If a license file has been detected the full name of the license file e.g LICENSE."
+            mode: "nullable"
+          - name: "code_of_conduct_filename"
+            type: "string"
+            description: "If a code of conduct file has been detected the full name of the code of conduct file e.g code_of_conduct.md."
+            mode: "nullable"
+          - name: "security_threat_model_filename"
+            type: "string"
+            description: "If a Security Threat Model file has been detected the full name of the Security Threat Model file e.g threatmodel.md."
+            mode: "nullable"
+          - name: "security_audit_filename"
+            type: "string"
+            description: "If a Security Audit file has been detected the full name of the Security Audit file e.g security.md."
+            mode: "nullable"
+          - name: "status"
+            type: "string"
+            description: "Either Active Deprecated Unmaintained Help Wanted Removed no value also means active. Updated when detected by Libraries.io or su. manually by Libraries.io user via \"repo suggection\" feature."
+            mode: "nullable"
+          - name: "last_synced_timestamp"
+            type: "timestamp"
+            description: "Timestamp of when Libraries.io last synced the repository from the host API."
+            mode: "nullable"
+          - name: "sourcerank"
+            type: "integer"
+            description: "Libraries.io defined score based on quality popularity and community metrics."
+            mode: "nullable"
+          - name: "display_name"
+            type: "string"
+            description: "Display name for the repository only available for GitLab repositories."
+            mode: "nullable"
+          - name: "scm_type"
+            type: "string"
+            description: "Type of source control repository uses always \"git\" for GitHub and GitLab."
+            mode: "nullable"
+          - name: "pull_requests_enabled"
+            type: "string"
+            description: "Are pull requests enabled for this repository? Only available for GitLab repositories."
+            mode: "nullable"
+          - name: "logo_url"
+            type: "string"
+            description: "Custom logo url for repository only available for GitLab repositories."
+            mode: "nullable"
+          - name: "keywords"
+            type: "string"
+            description: "Comma separated array of keywords called \"topics\" on GitHub only available for GitHub and GitLab."
+            mode: "nullable"
+          - name: "an"
+            type: "string"
+            description: ""
+            mode: "nullable"
+
+  graph_paths:
+    - "bash_gcs_to_gcs >> [transform_repositories,transform_repositories_2,transform_repositories_3] >> load_repositories_to_bq >> load_repositories_to_bq_2 >> load_repositories_to_bq_3"
