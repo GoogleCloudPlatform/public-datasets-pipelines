@@ -2,6 +2,7 @@ bs4
 geopandas
 google-cloud-bigquery
 google-cloud-storage
+gsutil
 numpy
 pandas
 sh

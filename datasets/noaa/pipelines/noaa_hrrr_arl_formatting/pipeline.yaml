@@ -53,6 +53,14 @@ dag:
           request_memory: "16G"
           request_cpu: "1"
           request_ephemeral_storage: "10G"
+    # - operator: "SFTPToGCSOperator"
+    #   description: "Run NOAA load processes - HRRR ARL Formatting"
+    #   args:
+    #     task_id: "hrrr_arl"
+    #     source_path: "arlftp.arlhq.noaa.gov/forecast/20221208/hysplit.t00z.hrrrf"
+    #     destination_bucket: "us-central1-dev-v2-cd7f5f38-bucket"
+    #     destination_path: "data/noaa/hrrr_arl/20221208/"
+
 
   graph_paths:
     - "hrrr_arl"

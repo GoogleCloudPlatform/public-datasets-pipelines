@@ -197,13 +197,20 @@ def execute_pipeline(
         )
         return None
     if pipeline_name in ["NOAA HRRR Failover", "NOAA HRRR ARL Formatting"]:
-        process_noaa_hrrr(
-            pipeline_name=pipeline_name,
-            source_url=source_url,
-            source_file=source_file,
-            target_gcs_bucket=target_gcs_bucket,
-            target_gcs_path=target_gcs_path,
-        )
+        os.system("curl ftp://arlftp.arlhq.noaa.gov/forecast/20221208/hysplit.t00z.hrrrf | gsutil cp - gs://us-central1-dev-v2-cd7f5f38-bucket/data/noaa/hrrr_arl/20221208/hysplit.t00z.hrrrf")
+        # os.system("ls -la /home/airflow")
+        # transfer_sftp_gcs(
+        #     source_path="arlftp.arlhq.noaa.gov/forecast/20221208/hysplit.t00z.hrrrf",
+        #     destination_bucket=target_gcs_bucket
+        #     destination_path="data/noaa/hrrr_arl/20221208/hysplit.t00z.hrrrf"
+        # )
+        # process_noaa_hrrr(
+        #     pipeline_name=pipeline_name,
+        #     source_url=source_url,
+        #     source_file=source_file,
+        #     target_gcs_bucket=target_gcs_bucket,
+        #     target_gcs_path=target_gcs_path,
+        # )
         return None
     if pipeline_name in ["NOAA GHCN-M"]:
         process_ghcn_m(
@@ -481,6 +488,26 @@ def execute_pipeline(
         )
         return None
 
+def transfer_sftp_gcs(
+    source_path: str,
+    destination_bucket: str,
+    destination_path: str
+) -> None:
+    # from airflow import AirflowException
+    # from airflow.gcp.hooks.gcs import GCSHook
+    # from airflow.models import BaseOperator
+    # from airflow.providers.sftp.hooks.sftp_hook import SFTPHook
+    # from airflow.utils.decorators import apply_defaults
+    # from airflow.operators.generic_transfer
+
+    # SFTPToGCSOperator(
+    #     task_id="file-move-sftp-to-gcs-destination",
+    #     source_path=f"{FILE_LOCAL_PATH}/{OBJECT_SRC_2}",
+    #     destination_bucket=BUCKET_NAME,
+    #     destination_path="destination_dir/destination_filename.bin",
+    #     move_object=False,
+    # )
+    os.system("curl ftp://arlftp.arlhq.noaa.gov/forecast/20221208/hysplit.t00z.hrrrf | gsutil cp - gs://us-central1-dev-v2-cd7f5f38-bucket/data/noaa/hrrr_arl/20221208/hysplit.t00z.hrrrf")
 
 # region Pipeline Subprocessing
 # region GHCN-D
