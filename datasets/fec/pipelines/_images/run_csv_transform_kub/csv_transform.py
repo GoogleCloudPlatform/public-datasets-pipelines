@@ -50,6 +50,7 @@ def main(
     if (
         "individuals" not in pipeline_name
         and "other_committee_tx_2020" not in pipeline_name
+        and "other_committee_tx_2022" not in pipeline_name
     ):
         logging.info(f"Downloading file from {source_url}...")
         download_file(source_url, source_file_zip_file)
