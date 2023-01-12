@@ -23,7 +23,7 @@ dag:
     default_args:
       owner: "Google"
       depends_on_past: False
-      start_date: "2022-12-06"
+      start_date: "2022-12-12"
     max_active_runs: 1
     schedule_interval: "@daily"
     catchup: False
@@ -43,7 +43,7 @@ dag:
         env_vars:
           DIRECTORY: "quickstats"
           HOST: "ftp.nass.usda.gov"
-          GCS_BUCKET: "us-central1-dev-v2-cd7f5f38-bucket"
+          GCS_BUCKET: "{{ var.value.composer_bucket }}"
           GCS_PATH: "data/usda_nass_agriculture/raw_files/"
         resources:
           request_memory: "8G"
