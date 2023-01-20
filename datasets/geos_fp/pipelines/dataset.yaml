@@ -21,4 +21,5 @@ dataset:
 resources:
   - type: storage_bucket
     name: geos-fp
+    location: US
     uniform_bucket_level_access: True
