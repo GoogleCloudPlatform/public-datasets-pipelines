@@ -249,10 +249,10 @@ dag:
               "rental_uris": "str",
               "lat": "float64",
               "eightd_station_services": "str",
-              "legacy_id_x": "int64",
+              "legacy_id_x": "str",
               "short_name": "str",
               "external_id": "str",
-              "station_id": "int64",
+              "station_id": "str",
               "rental_methods": "str",
               "station_type": "str",
               "short_name": "str",
@@ -273,7 +273,7 @@ dag:
               "num_ebikes_available": "int64",
               "is_returning": "int64",
               "is_renting": "int64",
-              "legacy_id_y": "int64",
+              "legacy_id_y": "str",
               "valet": "str",
               "eightd_active_station_services": "str"
             }
@@ -295,7 +295,6 @@ dag:
             ]
           RESOLVE_DATATYPES_LIST: >-
             {
-              "station_id": "Int64",
               "region_id": "Int64",
               "rental_methods": "string"
             }
