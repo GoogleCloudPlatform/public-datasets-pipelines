@@ -753,7 +753,9 @@ def process_storms_database_by_year(
                     lambda x: f"{year_to_process}-{str(x)[5:]}"
                 )
             df = fix_data_anomolies_storms(df)
-            targ_file_yr = str.replace(str(target_file), ".csv", f"_{year_to_process}.csv")
+            targ_file_yr = str.replace(
+                str(target_file), ".csv", f"_{year_to_process}.csv"
+            )
             save_to_new_file(df=df, file_path=targ_file_yr, sep="|", quotechar="^")
             sed(["-i", "s/|nan|/||/g", targ_file_yr])
             sed(["-i", "s/|<NA>/|/g", targ_file_yr])
@@ -782,7 +784,9 @@ def process_storms_database_by_year(
                     quotechar="^",
                 )
         else:
-            logging.info(f"Storms details file does not exist for year {year_to_process}")
+            logging.info(
+                f"Storms details file does not exist for year {year_to_process}"
+            )
 
 
 def clean_source_file(source_file: str) -> None:
