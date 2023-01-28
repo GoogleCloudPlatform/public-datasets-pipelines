@@ -691,95 +691,98 @@ def process_storms_database_by_year(
                 list_of_details_files,
             )
         )
-        if locations_file:
-            ftp_filename = locations_file[0]
+        if details_file:
+            if locations_file:
+                ftp_filename = locations_file[0]
+                local_file = str(source_file).replace(
+                    ".csv", f"_{str(year_to_process)}_locations.csv"
+                )
+                local_zipfile = f"{os.path.dirname(local_file)}/{ftp_filename}"
+                ftp_zipfile_path = f'{source_url["root"]}/{ftp_filename}'
+                logging.info("Processing Storms Locations File  ...")
+                logging.info(
+                    f"     host={host} cwd={cwd} ftp_filename={ftp_filename} local_file={local_file} local_zipfile={local_zipfile} source_url={ftp_zipfile_path} "
+                )
+                df_locations = FTP_to_DF(
+                    host=host,
+                    cwd=cwd,
+                    ftp_filename=ftp_filename,
+                    local_file=local_zipfile,
+                    source_url=ftp_zipfile_path,
+                )
+            else:
+                logging.info("Storms Locations File does not exist!")
+                df_locations = create_storms_locations_df()
+            ftp_filename = details_file[0]
             local_file = str(source_file).replace(
-                ".csv", f"_{str(year_to_process)}_locations.csv"
+                ".csv", f"_{str(year_to_process)}_detail.csv"
             )
             local_zipfile = f"{os.path.dirname(local_file)}/{ftp_filename}"
             ftp_zipfile_path = f'{source_url["root"]}/{ftp_filename}'
-            logging.info("Processing Storms Locations File  ...")
+            logging.info("Processing Storms Detail File ...")
             logging.info(
                 f"     host={host} cwd={cwd} ftp_filename={ftp_filename} local_file={local_file} local_zipfile={local_zipfile} source_url={ftp_zipfile_path} "
             )
-            df_locations = FTP_to_DF(
+            df_details = FTP_to_DF(
                 host=host,
                 cwd=cwd,
                 ftp_filename=ftp_filename,
                 local_file=local_zipfile,
                 source_url=ftp_zipfile_path,
             )
-        else:
-            logging.info("Storms Locations File does not exist!")
-            df_locations = create_storms_locations_df()
-        ftp_filename = details_file[0]
-        local_file = str(source_file).replace(
-            ".csv", f"_{str(year_to_process)}_detail.csv"
-        )
-        local_zipfile = f"{os.path.dirname(local_file)}/{ftp_filename}"
-        ftp_zipfile_path = f'{source_url["root"]}/{ftp_filename}'
-        logging.info("Processing Storms Detail File ...")
-        logging.info(
-            f"     host={host} cwd={cwd} ftp_filename={ftp_filename} local_file={local_file} local_zipfile={local_zipfile} source_url={ftp_zipfile_path} "
-        )
-        df_details = FTP_to_DF(
-            host=host,
-            cwd=cwd,
-            ftp_filename=ftp_filename,
-            local_file=local_zipfile,
-            source_url=ftp_zipfile_path,
-        )
-        logging.info("Merging Details and Locations files")
-        df = pd.merge(
-            df_details,
-            df_locations,
-            left_on="EVENT_ID",
-            right_on="EVENT_ID",
-            how="left",
-        )
-        df = rename_headers(df=df, rename_headers_list=rename_headers_list)
-        df["event_latitude"] = df["event_latitude"].apply(
-            lambda x: x - 60 if x > 90 else x
-        )
-        df = generate_location(df, gen_location_list)
-        df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
-        for dt_fld in date_format_list:
-            logging.info(f"Resolving date formats in field {dt_fld}")
-            df[dt_fld[0]] = df[dt_fld[0]].apply(
-                lambda x: pd.to_datetime(str(x), format="%d-%b-%y %H:%M:%S")
+            logging.info("Merging Details and Locations files")
+            df = pd.merge(
+                df_details,
+                df_locations,
+                left_on="EVENT_ID",
+                right_on="EVENT_ID",
+                how="left",
             )
-            df[dt_fld[0]] = df[dt_fld[0]].apply(
-                lambda x: f"{year_to_process}-{str(x)[5:]}"
+            df = rename_headers(df=df, rename_headers_list=rename_headers_list)
+            df["event_latitude"] = df["event_latitude"].apply(
+                lambda x: x - 60 if x > 90 else x
             )
-        df = fix_data_anomolies_storms(df)
-        targ_file_yr = str.replace(str(target_file), ".csv", f"_{year_to_process}.csv")
-        save_to_new_file(df=df, file_path=targ_file_yr, sep="|", quotechar="^")
-        sed(["-i", "s/|nan|/||/g", targ_file_yr])
-        sed(["-i", "s/|<NA>/|/g", targ_file_yr])
-        upload_file_to_gcs(
-            file_path=targ_file_yr,
-            target_gcs_bucket=target_gcs_bucket,
-            target_gcs_path=target_gcs_path,
-        )
-        drop_table = drop_dest_table == "Y"
-        table_exists = create_dest_table(
-            project_id=project_id,
-            dataset_id=dataset_id,
-            table_id=f"{destination_table}_{str(year_to_process)}",
-            schema_filepath=schema_path,
-            bucket_name=target_gcs_bucket,
-            drop_table=drop_table,
-        )
-        if table_exists:
-            load_data_to_bq(
+            df = generate_location(df, gen_location_list)
+            df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
+            for dt_fld in date_format_list:
+                logging.info(f"Resolving date formats in field {dt_fld}")
+                df[dt_fld[0]] = df[dt_fld[0]].apply(
+                    lambda x: pd.to_datetime(str(x), format="%d-%b-%y %H:%M:%S")
+                )
+                df[dt_fld[0]] = df[dt_fld[0]].apply(
+                    lambda x: f"{year_to_process}-{str(x)[5:]}"
+                )
+            df = fix_data_anomolies_storms(df)
+            targ_file_yr = str.replace(str(target_file), ".csv", f"_{year_to_process}.csv")
+            save_to_new_file(df=df, file_path=targ_file_yr, sep="|", quotechar="^")
+            sed(["-i", "s/|nan|/||/g", targ_file_yr])
+            sed(["-i", "s/|<NA>/|/g", targ_file_yr])
+            upload_file_to_gcs(
+                file_path=targ_file_yr,
+                target_gcs_bucket=target_gcs_bucket,
+                target_gcs_path=target_gcs_path,
+            )
+            drop_table = drop_dest_table == "Y"
+            table_exists = create_dest_table(
                 project_id=project_id,
                 dataset_id=dataset_id,
                 table_id=f"{destination_table}_{str(year_to_process)}",
-                file_path=targ_file_yr,
-                truncate_table=True,
-                field_delimiter="|",
-                quotechar="^",
+                schema_filepath=schema_path,
+                bucket_name=target_gcs_bucket,
+                drop_table=drop_table,
             )
+            if table_exists:
+                load_data_to_bq(
+                    project_id=project_id,
+                    dataset_id=dataset_id,
+                    table_id=f"{destination_table}_{str(year_to_process)}",
+                    file_path=targ_file_yr,
+                    truncate_table=True,
+                    field_delimiter="|",
+                    quotechar="^",
+                )
+        else:
+            logging.info(f"Storms details file does not exist for year {year_to_process}")
 
 
 def clean_source_file(source_file: str) -> None:
