@@ -26,7 +26,7 @@ default_args = {
 
 
 with DAG(
-    dag_id="fec.individuals_2016",
+    dag_id="fec.individuals_2022",
     default_args=default_args,
     max_active_runs=1,
     schedule_interval="@daily",
@@ -40,15 +40,15 @@ with DAG(
         bash_command="mkdir -p $data_dir/individuals\ncurl -o $data_dir/individuals/indiv16.zip -L $fec\nunzip $data_dir/individuals/indiv16.zip -d $data_dir/individuals/\nrm -f $data_dir/individuals/indiv16.zip\n",
         env={
             "data_dir": "/home/airflow/gcs/data/fec",
-            "fec": "https://cg-519a459a-0ea3-42c2-b7bc-fa1143481f74.s3-us-gov-west-1.amazonaws.com/bulk-downloads/2016/indiv16.zip",
+            "fec": "https://cg-519a459a-0ea3-42c2-b7bc-fa1143481f74.s3-us-gov-west-1.amazonaws.com/bulk-downloads/2022/indiv16.zip",
         },
     )
 
     # Run CSV transform within kubernetes pod
-    individuals_2016_transform_csv = kubernetes_pod.KubernetesPodOperator(
-        task_id="individuals_2016_transform_csv",
+    individuals_2022_transform_csv = kubernetes_pod.KubernetesPodOperator(
+        task_id="individuals_2022_transform_csv",
         startup_timeout_seconds=600,
-        name="individuals_2016",
+        name="individuals_2022",
         namespace="composer",
         service_account_name="datasets",
         image_pull_policy="Always",
@@ -61,7 +61,7 @@ with DAG(
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/fec/individuals/data_output.csv",
             "CHUNKSIZE": "1000000",
-            "PIPELINE_NAME": "individuals_2016",
+            "PIPELINE_NAME": "individuals_2022",
             "CSV_HEADERS": '["cmte_id","amndt_ind","rpt_tp","transaction_pgi","image_num","transaction_tp","entity_tp","name","city","state", "zip_code","employer","occupation","transaction_dt","transaction_amt","other_id","tran_id","file_num", "memo_cd","memo_text","sub_id"]',
         },
         resources={
@@ -72,12 +72,12 @@ with DAG(
     )
 
     # Task to load CSV data to a BigQuery table
-    load_individuals_2016_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
-        task_id="load_individuals_2016_to_bq",
+    load_individuals_2022_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
+        task_id="load_individuals_2022_to_bq",
         bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/fec/individuals/data_output.csv"],
         source_format="CSV",
-        destination_project_dataset_table="fec.individuals_2016",
+        destination_project_dataset_table="fec.individuals_2022",
         skip_leading_rows=1,
         allow_quoted_newlines=True,
         write_disposition="WRITE_TRUNCATE",
@@ -211,4 +211,4 @@ with DAG(
         ],
     )
 
-    download_zip_file >> individuals_2016_transform_csv >> load_individuals_2016_to_bq
+    download_zip_file >> individuals_2022_transform_csv >> load_individuals_2022_to_bq
