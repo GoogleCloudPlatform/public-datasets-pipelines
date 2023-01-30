@@ -17,7 +17,7 @@ resources:
 
   - type: bigquery_table
     table_id: other_committee_tx_2020
-    description: "FEC table"
+    description: "FEC Table"
 
 dag:
   airflow_version: 2
