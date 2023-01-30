@@ -40,7 +40,7 @@ with DAG(
         bash_command="mkdir -p $data_dir/individuals\ncurl -o $data_dir/individuals/indiv16.zip -L $fec\nunzip $data_dir/individuals/indiv16.zip -d $data_dir/individuals/\nrm -f $data_dir/individuals/indiv16.zip\n",
         env={
             "data_dir": "/home/airflow/gcs/data/fec",
-            "fec": "https://cg-519a459a-0ea3-42c2-b7bc-fa1143481f74.s3-us-gov-west-1.amazonaws.com/bulk-downloads/2022/indiv16.zip",
+            "fec": "https://cg-519a459a-0ea3-42c2-b7bc-fa1143481f74.s3-us-gov-west-1.amazonaws.com/bulk-downloads/2022/indiv22.zip",
         },
     )
 

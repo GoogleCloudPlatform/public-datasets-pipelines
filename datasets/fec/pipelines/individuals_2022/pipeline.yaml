@@ -38,13 +38,13 @@ dag:
         task_id: "download_zip_file"
         bash_command: |
           mkdir -p $data_dir/individuals
-          curl -o $data_dir/individuals/indiv16.zip -L $fec
-          unzip $data_dir/individuals/indiv16.zip -d $data_dir/individuals/
-          rm -f $data_dir/individuals/indiv16.zip
+          curl -o $data_dir/individuals/indiv22.zip -L $fec
+          unzip $data_dir/individuals/indiv22.zip -d $data_dir/individuals/
+          rm -f $data_dir/individuals/indiv22.zip
 
         env:
           data_dir: /home/airflow/gcs/data/fec
-          fec: https://cg-519a459a-0ea3-42c2-b7bc-fa1143481f74.s3-us-gov-west-1.amazonaws.com/bulk-downloads/2022/indiv16.zip
+          fec: https://cg-519a459a-0ea3-42c2-b7bc-fa1143481f74.s3-us-gov-west-1.amazonaws.com/bulk-downloads/2022/indiv22.zip
 
 
     - operator: "KubernetesPodOperator"
