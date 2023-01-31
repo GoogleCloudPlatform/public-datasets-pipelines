@@ -26,7 +26,7 @@ default_args = {
 
 
 with DAG(
-    dag_id="fec.other_committee_tx_2020",
+    dag_id="fec.other_committee_tx_2022",
     default_args=default_args,
     max_active_runs=1,
     schedule_interval="@daily",
@@ -34,34 +34,34 @@ with DAG(
     default_view="graph",
 ) as dag:
 
-    # Task to copy `other_committee_tx_2020` to gcs
+    # Task to copy `other_committee_tx_2022` to gcs
     download_zip_file = bash.BashOperator(
         task_id="download_zip_file",
-        bash_command="mkdir -p $data_dir/other_committee_tx_2020\ncurl -o $data_dir/other_committee_tx_2020/other_committee_tx_2020.zip -L $fec\nunzip $data_dir/other_committee_tx_2020/other_committee_tx_2020.zip -d $data_dir/other_committee_tx_2020/\nrm -f $data_dir/other_committee_tx_2020/other_committee_tx_2020.zip\n",
+        bash_command="mkdir -p $data_dir/other_committee_tx_2022\ncurl -o $data_dir/other_committee_tx_2022/other_committee_tx_2022.zip -L $fec\nunzip $data_dir/other_committee_tx_2022/other_committee_tx_2022.zip -d $data_dir/other_committee_tx_2022/\nrm -f $data_dir/other_committee_tx_2022/other_committee_tx_2022.zip\n",
         env={
             "data_dir": "/home/airflow/gcs/data/fec",
-            "fec": "https://www.fec.gov/files/bulk-downloads/2020/oth20.zip",
+            "fec": "https://www.fec.gov/files/bulk-downloads/2022/oth22.zip",
         },
     )
 
     # Run CSV transform within kubernetes pod
-    other_committee_tx_2020_transform_csv = kubernetes_pod.KubernetesPodOperator(
-        task_id="other_committee_tx_2020_transform_csv",
+    other_committee_tx_2022_transform_csv = kubernetes_pod.KubernetesPodOperator(
+        task_id="other_committee_tx_2022_transform_csv",
         startup_timeout_seconds=600,
-        name="other_committee_tx_2020",
+        name="other_committee_tx_2022",
         namespace="composer",
         service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.fec.container_registry.run_csv_transform_kub }}",
         env_vars={
             "SOURCE_GCS_BUCKET": "{{ var.value.composer_bucket }}",
-            "SOURCE_GCS_OBJECT": "data/fec/other_committee_tx_2020/itoth.txt",
+            "SOURCE_GCS_OBJECT": "data/fec/other_committee_tx_2022/itoth.txt",
             "SOURCE_FILE": "files/itoth.txt",
             "TARGET_FILE": "files/data_output.csv",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
-            "TARGET_GCS_PATH": "data/fec/other_committee_tx_2020/data_output.csv",
+            "TARGET_GCS_PATH": "data/fec/other_committee_tx_2022/data_output.csv",
             "CHUNKSIZE": "1000000",
-            "PIPELINE_NAME": "other_committee_tx_2020",
+            "PIPELINE_NAME": "other_committee_tx_2022",
             "CSV_HEADERS": '["cmte_id","amndt_ind","rpt_tp","transaction_pgi","image_num","transaction_tp","entity_tp","name","city","state", "zip_code","employer","occupation","transaction_dt","transaction_amt","other_id","tran_id" ,"file_num", "memo_cd","memo_text","sub_id"]',
         },
         resources={
@@ -72,12 +72,12 @@ with DAG(
     )
 
     # Task to load CSV data to a BigQuery table
-    load_other_committee_tx_2020_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
-        task_id="load_other_committee_tx_2020_to_bq",
+    load_other_committee_tx_2022_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
+        task_id="load_other_committee_tx_2022_to_bq",
         bucket="{{ var.value.composer_bucket }}",
-        source_objects=["data/fec/other_committee_tx_2020/data_output.csv"],
+        source_objects=["data/fec/other_committee_tx_2022/data_output.csv"],
         source_format="CSV",
-        destination_project_dataset_table="fec.other_committee_tx_2020",
+        destination_project_dataset_table="fec.other_committee_tx_2022",
         skip_leading_rows=1,
         allow_quoted_newlines=True,
         write_disposition="WRITE_TRUNCATE",
@@ -213,6 +213,6 @@ with DAG(
 
     (
         download_zip_file
-        >> other_committee_tx_2020_transform_csv
-        >> load_other_committee_tx_2020_to_bq
+        >> other_committee_tx_2022_transform_csv
+        >> load_other_committee_tx_2022_to_bq
     )

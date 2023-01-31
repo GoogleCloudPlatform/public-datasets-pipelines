@@ -25,7 +25,7 @@ default_args = {
 
 
 with DAG(
-    dag_id="fec.candidate_committee_2016",
+    dag_id="fec.candidate_committee_2022",
     default_args=default_args,
     max_active_runs=1,
     schedule_interval="@daily",
@@ -34,23 +34,23 @@ with DAG(
 ) as dag:
 
     # Run CSV transform within kubernetes pod
-    candidate_committee_2016_transform_csv = kubernetes_pod.KubernetesPodOperator(
-        task_id="candidate_committee_2016_transform_csv",
+    candidate_committee_2022_transform_csv = kubernetes_pod.KubernetesPodOperator(
+        task_id="candidate_committee_2022_transform_csv",
         startup_timeout_seconds=600,
-        name="candidate_committee_2016",
+        name="candidate_committee_2022",
         namespace="composer",
         service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.fec.container_registry.run_csv_transform_kub }}",
         env_vars={
-            "SOURCE_URL": "https://cg-519a459a-0ea3-42c2-b7bc-fa1143481f74.s3-us-gov-west-1.amazonaws.com/bulk-downloads/2016/ccl16.zip",
+            "SOURCE_URL": "https://cg-519a459a-0ea3-42c2-b7bc-fa1143481f74.s3-us-gov-west-1.amazonaws.com/bulk-downloads/2022/ccl22.zip",
             "SOURCE_FILE_ZIP_FILE": "files/zip_file.zip",
             "SOURCE_FILE_PATH": "files/",
             "SOURCE_FILE": "files/ccl.txt",
             "TARGET_FILE": "files/data_output.csv",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
-            "TARGET_GCS_PATH": "data/fec/candidate_committee_2016/data_output.csv",
-            "PIPELINE_NAME": "candidate_committee_2016",
+            "TARGET_GCS_PATH": "data/fec/candidate_committee_2022/data_output.csv",
+            "PIPELINE_NAME": "candidate_committee_2022",
             "CSV_HEADERS": '["cand_id","cand_election_yr","fec_election_yr","cmte_id","cmte_tp","cmte_design","linkage_id"]',
         },
         resources={
@@ -61,12 +61,12 @@ with DAG(
     )
 
     # Task to load CSV data to a BigQuery table
-    load_candidate_committee_2016_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
-        task_id="load_candidate_committee_2016_to_bq",
+    load_candidate_committee_2022_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
+        task_id="load_candidate_committee_2022_to_bq",
         bucket="{{ var.value.composer_bucket }}",
-        source_objects=["data/fec/candidate_committee_2016/data_output.csv"],
+        source_objects=["data/fec/candidate_committee_2022/data_output.csv"],
         source_format="CSV",
-        destination_project_dataset_table="fec.candidate_committee_2016",
+        destination_project_dataset_table="fec.candidate_committee_2022",
         skip_leading_rows=1,
         allow_quoted_newlines=True,
         write_disposition="WRITE_TRUNCATE",
@@ -116,4 +116,4 @@ with DAG(
         ],
     )
 
-    candidate_committee_2016_transform_csv >> load_candidate_committee_2016_to_bq
+    candidate_committee_2022_transform_csv >> load_candidate_committee_2022_to_bq

@@ -38,9 +38,9 @@ dag:
         task_id: "download_zip_file"
         bash_command: |
           mkdir -p $data_dir/individuals
-          curl -o $data_dir/individuals/indiv22.zip -L $fec
-          unzip $data_dir/individuals/indiv22.zip -d $data_dir/individuals/
-          rm -f $data_dir/individuals/indiv22.zip
+          curl -o $data_dir/individuals/indiv16.zip -L $fec
+          unzip $data_dir/individuals/indiv16.zip -d $data_dir/individuals/
+          rm -f $data_dir/individuals/indiv16.zip
 
         env:
           data_dir: /home/airflow/gcs/data/fec
