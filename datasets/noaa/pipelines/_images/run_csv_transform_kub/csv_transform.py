@@ -397,7 +397,7 @@ def execute_pipeline(
                 delete_target_file=delete_target_file,
                 number_of_header_rows=number_of_header_rows,
                 int_date_list=int_date_list,
-                gen_location_list=gen_location_list
+                gen_location_list=gen_location_list,
             )
         return None
     if pipeline_name in ("NOAA NWS Forecast Regions"):
@@ -578,44 +578,48 @@ def execute_pipeline(
 
 
 def run_gsod_by_year(
-        year_to_process: int,
-        source_url: str,
-        pipeline_name: str,
-        source_file: str,
-        target_file: str,
-        chunksize: str,
-        project_id: str,
-        dataset_id: str,
-        destination_table: str,
-        target_gcs_bucket: str,
-        target_gcs_path: str,
-        schema_path: str,
-        drop_dest_table: str,
-        input_field_delimiter: str,
-        input_csv_headers: typing.List[str],
-        data_dtypes: dict,
-        reorder_headers_list: typing.List[str],
-        null_rows_list: typing.List[str],
-        date_format_list: typing.List[typing.List[str]],
-        slice_column_list: dict,
-        regex_list: dict,
-        remove_source_file: bool,
-        trim_whitespace_list: typing.List[str],
-        rename_headers_list: dict,
-        delete_target_file: bool,
-        number_of_header_rows: int,
-        int_date_list: typing.List[str],
-        gen_location_list: dict,
-    ) -> None:
+    year_to_process: int,
+    source_url: str,
+    pipeline_name: str,
+    source_file: str,
+    target_file: str,
+    chunksize: str,
+    project_id: str,
+    dataset_id: str,
+    destination_table: str,
+    target_gcs_bucket: str,
+    target_gcs_path: str,
+    schema_path: str,
+    drop_dest_table: str,
+    input_field_delimiter: str,
+    input_csv_headers: typing.List[str],
+    data_dtypes: dict,
+    reorder_headers_list: typing.List[str],
+    null_rows_list: typing.List[str],
+    date_format_list: typing.List[typing.List[str]],
+    slice_column_list: dict,
+    regex_list: dict,
+    remove_source_file: bool,
+    trim_whitespace_list: typing.List[str],
+    rename_headers_list: dict,
+    delete_target_file: bool,
+    number_of_header_rows: int,
+    int_date_list: typing.List[str],
+    gen_location_list: dict,
+) -> None:
     logging.info(f" ... Processing year {year_to_process}")
-    src_url_root = f"{source_url[pipeline_name.replace(' ', '_').lower()]}{year_to_process}/"
+    src_url_root = (
+        f"{source_url[pipeline_name.replace(' ', '_').lower()]}{year_to_process}/"
+    )
     files = url_directory_list(source_url_path=src_url_root, file_pattern=".csv")
     file_cnt = len(files)
     file_ptr = 1
     for file_name in files:
         if file_name == files[0]:
             source_file = str(source_file).replace("~YEAR~", str(year_to_process))
-            pathlib.Path(os.path.dirname(source_file)).mkdir(parents=True, exist_ok=True)
+            pathlib.Path(os.path.dirname(source_file)).mkdir(
+                parents=True, exist_ok=True
+            )
             logging.info(f"Writing file {file_name} to {source_file} with header")
             download_file_http(file_name, source_file, True, True)
         else:
