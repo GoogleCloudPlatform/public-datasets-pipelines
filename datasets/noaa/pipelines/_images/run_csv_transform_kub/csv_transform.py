@@ -363,60 +363,42 @@ def execute_pipeline(
             gen_location_list=gen_location_list,
         )
         return None
-    if pipeline_name in ["NOAA GSOD 2020", "NOAA GSOD 2022"]:
-        src_url_root = source_url[pipeline_name.replace(" ", "_").lower()]
-        files = url_directory_list(source_url_path=src_url_root, file_pattern=".csv")
-        file_cnt = len(files)
-        file_ptr = 1
-        for file_name in files:
-            if file_name == files[0]:
-                logging.info(f"Writing file {file_name} to {source_file} with header")
-                download_file_http(file_name, source_file, True, True)
-            else:
-                url_filename = os.path.basename(file_name).replace(".csv", "")
-                source_file_tmpname = str(source_file).replace(
-                    ".csv", f"_{url_filename}.csv"
-                )
-                download_file_http(file_name, source_file_tmpname, True, True)
-                os.system(f"sed -i 1d {source_file_tmpname} 2> /dev/null")
-                os.system(f"cat {source_file_tmpname} >> {source_file}")
-                os.system(f"rm {source_file_tmpname}")
-                time.sleep(0.5)
-            if ((file_ptr % 100) == 0) or (file_ptr == file_cnt):
-                logging.info(f"Appended {file_ptr} files of total {file_cnt} files")
-            file_ptr += 1
-        if number_of_header_rows > 0:
-            remove_header_rows(source_file, number_of_header_rows=number_of_header_rows)
+    if pipeline_name == "NOAA GSOD By Year":
+        if full_data_load == "N":
+            start_year = 2020
         else:
-            pass
-        process_and_load_table(
-            source_file=source_file,
-            target_file=target_file,
-            pipeline_name=pipeline_name,
-            source_url=src_url_root,
-            chunksize=chunksize,
-            project_id=project_id,
-            dataset_id=dataset_id,
-            destination_table=destination_table,
-            target_gcs_bucket=target_gcs_bucket,
-            target_gcs_path=target_gcs_path,
-            schema_path=schema_path,
-            drop_dest_table=drop_dest_table,
-            input_field_delimiter=input_field_delimiter,
-            input_csv_headers=input_csv_headers,
-            data_dtypes=data_dtypes,
-            reorder_headers_list=reorder_headers_list,
-            null_rows_list=null_rows_list,
-            date_format_list=date_format_list,
-            slice_column_list=slice_column_list,
-            regex_list=regex_list,
-            trim_whitespace_list=trim_whitespace_list,
-            rename_headers_list=rename_headers_list,
-            remove_source_file=remove_source_file,
-            delete_target_file=delete_target_file,
-            int_date_list=int_date_list,
-            gen_location_list=gen_location_list,
-        )
+            start_year = int(start_year)
+        for year_to_process in range(start_year, datetime.datetime.now().year + 1):
+            run_gsod_by_year(
+                year_to_process=year_to_process,
+                source_url=source_url,
+                pipeline_name=pipeline_name,
+                source_file=source_file,
+                target_file=target_file,
+                chunksize=chunksize,
+                project_id=project_id,
+                dataset_id=dataset_id,
+                destination_table=destination_table,
+                target_gcs_bucket=target_gcs_bucket,
+                target_gcs_path=target_gcs_path,
+                schema_path=schema_path,
+                drop_dest_table=drop_dest_table,
+                input_field_delimiter=input_field_delimiter,
+                input_csv_headers=input_csv_headers,
+                data_dtypes=data_dtypes,
+                reorder_headers_list=reorder_headers_list,
+                null_rows_list=null_rows_list,
+                date_format_list=date_format_list,
+                slice_column_list=slice_column_list,
+                regex_list=regex_list,
+                remove_source_file=remove_source_file,
+                trim_whitespace_list=trim_whitespace_list,
+                rename_headers_list=rename_headers_list,
+                delete_target_file=delete_target_file,
+                number_of_header_rows=number_of_header_rows,
+                int_date_list=int_date_list,
+                gen_location_list=gen_location_list
+            )
         return None
     if pipeline_name in ("NOAA NWS Forecast Regions"):
         src_url_root = source_url[pipeline_name.replace(" ", "_").lower()]
@@ -593,6 +575,96 @@ def execute_pipeline(
             gen_location_list=gen_location_list,
         )
         return None
+
+
+def run_gsod_by_year(
+        year_to_process: int,
+        source_url: str,
+        pipeline_name: str,
+        source_file: str,
+        target_file: str,
+        chunksize: str,
+        project_id: str,
+        dataset_id: str,
+        destination_table: str,
+        target_gcs_bucket: str,
+        target_gcs_path: str,
+        schema_path: str,
+        drop_dest_table: str,
+        input_field_delimiter: str,
+        input_csv_headers: typing.List[str],
+        data_dtypes: dict,
+        reorder_headers_list: typing.List[str],
+        null_rows_list: typing.List[str],
+        date_format_list: typing.List[typing.List[str]],
+        slice_column_list: dict,
+        regex_list: dict,
+        remove_source_file: bool,
+        trim_whitespace_list: typing.List[str],
+        rename_headers_list: dict,
+        delete_target_file: bool,
+        number_of_header_rows: int,
+        int_date_list: typing.List[str],
+        gen_location_list: dict,
+    ) -> None:
+    logging.info(f" ... Processing year {year_to_process}")
+    src_url_root = f"{source_url[pipeline_name.replace(' ', '_').lower()]}{year_to_process}/"
+    files = url_directory_list(source_url_path=src_url_root, file_pattern=".csv")
+    file_cnt = len(files)
+    file_ptr = 1
+    for file_name in files:
+        if file_name == files[0]:
+            source_file = str(source_file).replace("~YEAR~", str(year_to_process))
+            pathlib.Path(os.path.dirname(source_file)).mkdir(parents=True, exist_ok=True)
+            logging.info(f"Writing file {file_name} to {source_file} with header")
+            download_file_http(file_name, source_file, True, True)
+        else:
+            url_filename = os.path.basename(file_name).replace(".csv", "")
+            source_file_tmpname = str(source_file).replace(
+                ".csv", f"_{url_filename}.csv"
+            )
+            download_file_http(file_name, source_file_tmpname, True, True)
+            os.system(f"sed -i 1d {source_file_tmpname} 2> /dev/null")
+            if os.path.getsize(source_file_tmpname) > 0:
+                os.system(f"cat {source_file_tmpname} >> {source_file}")
+            os.system(f"rm {source_file_tmpname}")
+            time.sleep(0.5)
+        if ((file_ptr % 100) == 0) or (file_ptr == file_cnt):
+            logging.info(f"Appended {file_ptr} files of total {file_cnt} files")
+        file_ptr += 1
+    if number_of_header_rows > 0:
+        remove_header_rows(source_file, number_of_header_rows=number_of_header_rows)
+    else:
+        pass
+    process_and_load_table(
+        source_file=str(source_file).replace("~YEAR~", str(year_to_process)),
+        target_file=str(target_file).replace("~YEAR~", str(year_to_process)),
+        pipeline_name=pipeline_name,
+        source_url=src_url_root,
+        chunksize=chunksize,
+        project_id=project_id,
+        dataset_id=dataset_id,
+        destination_table=f"{destination_table}{year_to_process}",
+        target_gcs_bucket=target_gcs_bucket,
+        target_gcs_path=target_gcs_path,
+        schema_path=schema_path,
+        drop_dest_table=drop_dest_table,
+        input_field_delimiter=input_field_delimiter,
+        input_csv_headers=input_csv_headers,
+        data_dtypes=data_dtypes,
+        reorder_headers_list=reorder_headers_list,
+        null_rows_list=null_rows_list,
+        date_format_list=date_format_list,
+        slice_column_list=slice_column_list,
+        regex_list=regex_list,
+        trim_whitespace_list=trim_whitespace_list,
+        rename_headers_list=rename_headers_list,
+        remove_source_file=remove_source_file,
+        delete_target_file=delete_target_file,
+        int_date_list=int_date_list,
+        gen_location_list=gen_location_list,
+    )
+    logging.info(f" ... Processing year {year_to_process} completed")
 
 
 def strip_dataframe_whitespace(df: pd.DataFrame) -> pd.DataFrame:
@@ -1378,7 +1450,7 @@ def process_chunk(
     ]:
         df = rename_headers(df, rename_headers_list=rename_headers_list)
         df = reorder_headers(df, reorder_headers_list=reorder_headers_list)
-    if pipeline_name in ["NOAA GSOD 2020", "NOAA GSOD 2022"]:
+    if pipeline_name == "NOAA GSOD By Year":
         df["stn"] = df["STATION"].apply(lambda x: "" if x == "" else x[0:6])
         df["wban"] = df["STATION"].apply(lambda x: "" if x == "" else x[6:11])
         df["year"] = df["DATE"].apply(lambda x: "" if x == "" else x[0:4])
