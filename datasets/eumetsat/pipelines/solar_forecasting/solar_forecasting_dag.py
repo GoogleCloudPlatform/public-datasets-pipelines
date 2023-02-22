@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -42,7 +42,8 @@ with DAG(
         source_bucket="{{ var.json.eumetsat.solar_forecasting.source_bucket }}",
         object_conditions={
             "includePrefixes": [
-                "satellite/EUMETSAT/SEVIRI_RSS/v3/eumetsat_seviri_hrv_uk.zarr"
+                "satellite/EUMETSAT/SEVIRI_RSS/v3/eumetsat_seviri_hrv_uk.zarr",
+                "satellite/EUMETSAT/SEVIRI_RSS/v4/eumetsat_seviri_hrv_uk.zarr",
             ]
         },
         destination_bucket="{{ var.json.eumetsat.solar_forecasting.destination_bucket }}",
