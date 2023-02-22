@@ -26,6 +26,7 @@ dag:
         object_conditions:
           includePrefixes:
             - satellite/EUMETSAT/SEVIRI_RSS/v3/eumetsat_seviri_hrv_uk.zarr
+            - satellite/EUMETSAT/SEVIRI_RSS/v4/eumetsat_seviri_hrv_uk.zarr
         destination_bucket: "{{ var.json.eumetsat.solar_forecasting.destination_bucket }}"
         google_impersonation_chain: "{{ var.json.eumetsat.solar_forecasting.service_account }}"
 
