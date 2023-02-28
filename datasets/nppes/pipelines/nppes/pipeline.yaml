@@ -68,8 +68,13 @@ dag:
           SOURCE_URL: "https://download.cms.gov/nppes/NPPES_Data_Dissemination_MM_YYYY.zip"
           SOURCE_FILE: "files/data.csv"
           TARGET_FILE: "files/data_output.csv"
+          SOURCE_NPI_DATA_FILE_REGEXP: "npidata_pfile_[0-9]+-[0-9]+.csv"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
-          TARGET_GCS_PATH: "data/race_and_economic_opportunity/commuting_zone_income_rank_statistics_by_race_and_parent_income_percentile/data_output.csv"
+          TARGET_GCS_PATH: "data/nppes/npi_data_output.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "nppes"
+          TABLE_ID: "npi_raw"
+          SCHEMA_PATH: "data/nppes/schema/npi_raw_schema.json"
           CSV_HEADERS: >-
            [
               "npi",
