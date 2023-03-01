@@ -18,8 +18,12 @@ import logging
 import os
 import pathlib
 import re
-import requests
+import subprocess
 from zipfile import ZipFile
+
+import pandas as pd
+import requests
+from dateutil.relativedelta import relativedelta
 from google.api_core.exceptions import NotFound
 from google.cloud import bigquery, storage
 
@@ -44,27 +48,40 @@ def main(
     logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
 
-    # logging.info(f"Downloading file {source_url}")
+    logging.info(f"Downloading most recent source file")
     src_url = source_url \
                     .replace("_MM", f"_{str(datetime.datetime.now().strftime('%B'))}") \
                     .replace("_YYYY", f"_{str(datetime.datetime.now().strftime('%Y'))}")
     src_zip_file = f"{os.path.dirname(source_file)}/{os.path.basename(src_url)}"
-    # download_file(src_url, src_zip_file)
+    if not download_file(src_url, src_zip_file):
+        logging.info(f" ... file {src_url} is unavailable")
+        one_month_ago = datetime.date.today() - relativedelta(months=1)
+        src_url = source_url \
+                        .replace("_MM", f"_{one_month_ago.strftime('%B')}") \
+                        .replace("_YYYY", f"_{one_month_ago.strftime('%Y')}")
+        logging.info(f" ... attempting to download file {src_url} instead ...")
+        src_zip_file = f"{os.path.dirname(source_file)}/{os.path.basename(src_url)}"
+        download_file(src_url, src_zip_file)
 
+    logging.info(f" ... file {src_url} download complete")
     logging.info(f"Searching for source NPI data file within {src_zip_file}")
     with ZipFile(src_zip_file, 'r') as src_zip:
         listOfFileNames = src_zip.namelist()
         for fileName in listOfFileNames:
             if re.match(rf'{source_npi_data_file_regexp}', fileName):
                 logging.info(f"Found data file {fileName}, extracting ...")
-                # src_zip.extract(fileName, os.path.dirname(target_file))
+                src_zip.extract(fileName, os.path.dirname(target_file))
                 target_file = f"{os.path.dirname(target_file)}/{fileName}"
-                # if os.path.exists(target_file):
-                #     upload_file_to_gcs(
-                #         file_path=target_file,
-                #         target_gcs_bucket=target_gcs_bucket,
-                #         target_gcs_path=target_gcs_path,
-                #     )
+                logging.info("Resolving Date Format")
+                # os.system(["sed", "-i", "-r", "-E" "'s/([0-9]{2})\/([0-9]{2})\/([0-9]{4})/\3-\1-\2/g'", target_file], shell=True)
+                sed_cmd = "sed -i -r -E 's/([0-9]{2})\/([0-9]{2})\/([0-9]{4})/\\3-\\1-\\2/g'"
+                subprocess.call([f"{sed_cmd} {target_file}"], shell=True)
+                if os.path.exists(target_file):
+                    upload_file_to_gcs(
+                        file_path=target_file,
+                        target_gcs_bucket=target_gcs_bucket,
+                        target_gcs_path=target_gcs_path,
+                    )
                 table_exists = create_dest_table(
                     project_id=project_id,
                     dataset_id=dataset_id,
@@ -201,15 +218,17 @@ def create_table_schema(
     return schema
 
 
-def download_file(source_url: str, source_file: pathlib.Path) -> None:
+def download_file(source_url: str, source_file: pathlib.Path) -> bool:
     logging.info(f"Downloading {source_url} into {source_file}")
     r = requests.get(source_url, stream=True)
     if r.status_code == 200:
         with open(source_file, "wb") as f:
             for chunk in r:
                 f.write(chunk)
+        return True
     else:
         logging.error(f"Couldn't download {source_url}: {r.text}")
+        return False
 
 
 def upload_file_to_gcs(

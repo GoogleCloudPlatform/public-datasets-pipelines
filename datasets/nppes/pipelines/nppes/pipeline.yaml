@@ -23,7 +23,7 @@ dag:
 
   airflow_version: 2
   initialize:
-    dag_id: commuting_zone_income_rank_statistics_by_race_and_parent_income_percentile
+    dag_id: nppes
     default_args:
       owner: "Google"
       depends_on_past: False
@@ -41,11 +41,11 @@ dag:
         project_id: "{{ var.value.gcp_project }}"
         location: "us-central1-c"
         body:
-          name: race-and-econ-opportunity--czirsbrapip
-          initial_node_count: 1
+          name: pubds-nppes
+          initial_node_count: 2
           network: "{{ var.value.vpc_network }}"
           node_config:
-            machine_type: e2-small
+            machine_type: e2-highmem-2
             oauth_scopes:
               - https://www.googleapis.com/auth/devstorage.read_write
               - https://www.googleapis.com/auth/cloud-platform
@@ -53,16 +53,15 @@ dag:
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
-        task_id: "income_statistics_transform_csv"
+        task_id: "nppes"
         startup_timeout_seconds: 600
-        name: "race_and_economic_opportunity_commuting_zone_income_rank_statistics_by_race_and_parent_income_percentile"
+        name: "nppes"
         project_id: "{{ var.value.gcp_project }}"
         location: "us-central1-c"
-        cluster_name: race-and-econ-opportunity--czirsbrapip
+        cluster_name: pubds-nppes
         namespace: "default"
-
         image_pull_policy: "Always"
-        image: "{{ var.json.race_and_economic_opportunity.container_registry.run_csv_transform_kub }}"
+        image: "{{ var.json.nppes.container_registry.run_csv_transform_kub }}"
 
         env_vars:
           SOURCE_URL: "https://download.cms.gov/nppes/NPPES_Data_Dissemination_MM_YYYY.zip"
@@ -408,96 +407,17 @@ dag:
               "healthcare_provider_taxonomy_group_15",
               "certification_date"
            ]
-          RENAME_MAPPINGS: >-
-           {"cz": "cz","cz_name": "cz_name","cz_pop2000": "cz_pop2000","cz_pop_black2000": "cz_pop_black2000","cz_pop_hisp2000": "cz_pop_hisp2000","cz_pop_white2000": "cz_pop_white2000","kfr_pooled_p25": "kfr_pooled_p25","kfr_black_pooled_p25": "kfr_black_pooled_p25","kfr_white_pooled_p25": "kfr_white_pooled_p25","kir_black_female_p25": "kir_black_female_p25","kir_black_female_p75": "kir_black_female_p75","kir_black_male_p25": "kir_black_male_p25","kir_black_male_p75": "kir_black_male_p75","kir_hisp_female_p25": "kir_hisp_female_p25","kir_hisp_female_p75": "kir_hisp_female_p75","kir_hisp_male_p25": "kir_hisp_male_p25","kir_hisp_male_p75": "kir_hisp_male_p75","kir_white_female_p25": "kir_white_female_p25","kir_white_female_p75": "kir_white_female_p75","kir_white_male_p25": "kir_white_male_p25","kir_white_male_p75": "kir_white_male_p75"}
-          PIPELINE_NAME: "commuting_zone_income_rank_statistics_by_race_and_parent_income_percentile"
-
+          PIPELINE_NAME: "NPPES"
         resources:
-          limit_memory: "2G"
+          limit_memory: "16G"
           limit_cpu: "1"
-
-    - operator: "GoogleCloudStorageToBigQueryOperator"
-      description: "Task to load CSV data to a BigQuery table"
-      args:
-        task_id: "load_income_statistics_to_bq"
-        bucket: "{{ var.value.composer_bucket }}"
-        source_objects: ["data/race_and_economic_opportunity/commuting_zone_income_rank_statistics_by_race_and_parent_income_percentile/data_output.csv"]
-        source_format: "CSV"
-        destination_project_dataset_table: "race_and_economic_opportunity.commuting_zone_income_rank_statistics_by_race_and_parent_income_percentile"
-        skip_leading_rows: 1
-        write_disposition: "WRITE_TRUNCATE"
-
-        schema_fields:
-          - name: "cz"
-            type: "INTEGER"
-            mode: "NULLABLE"
-          - name: "cz_name"
-            type: "STRING"
-            mode: "NULLABLE"
-          - name: "cz_pop2000"
-            type: "INTEGER"
-            mode: "NULLABLE"
-          - name: "cz_pop_black2000"
-            type: "INTEGER"
-            mode: "NULLABLE"
-          - name: "cz_pop_white2000"
-            type: "INTEGER"
-            mode: "NULLABLE"
-          - name: "cz_pop_hisp2000"
-            type: "INTEGER"
-            mode: "NULLABLE"
-          - name: "kfr_pooled_p25"
-            type: "FLOAT"
-            mode: "NULLABLE"
-          - name: "kfr_black_pooled_p25"
-            type: "FLOAT"
-            mode: "NULLABLE"
-          - name: "kfr_white_pooled_p25"
-            type: "FLOAT"
-            mode: "NULLABLE"
-          - name: "kir_black_female_p25"
-            type: "FLOAT"
-            mode: "NULLABLE"
-          - name: "kir_black_female_p75"
-            type: "FLOAT"
-            mode: "NULLABLE"
-          - name: "kir_black_male_p25"
-            type: "FLOAT"
-            mode: "NULLABLE"
-          - name: "kir_black_male_p75"
-            type: "FLOAT"
-            mode: "NULLABLE"
-          - name: "kir_hisp_female_p25"
-            type: "FLOAT"
-            mode: "NULLABLE"
-          - name: "kir_hisp_female_p75"
-            type: "FLOAT"
-            mode: "NULLABLE"
-          - name: "kir_hisp_male_p25"
-            type: "FLOAT"
-            mode: "NULLABLE"
-          - name: "kir_hisp_male_p75"
-            type: "FLOAT"
-            mode: "NULLABLE"
-          - name: "kir_white_female_p25"
-            type: "FLOAT"
-            mode: "NULLABLE"
-          - name: "kir_white_female_p75"
-            type: "FLOAT"
-            mode: "NULLABLE"
-          - name: "kir_white_male_p25"
-            type: "FLOAT"
-            mode: "NULLABLE"
-          - name: "kir_white_male_p75"
-            type: "FLOAT"
-            mode: "NULLABLE"
 
     - operator: "GKEDeleteClusterOperator"
       args:
         task_id: "delete_cluster"
         project_id: "{{ var.value.gcp_project }}"
         location: "us-central1-c"
-        name: race-and-econ-opportunity--czirsbrapip
+        name: pubds-nppes
 
   graph_paths:
-    - "create_cluster >> income_statistics_transform_csv >> load_income_statistics_to_bq >> delete_cluster"
+    - "create_cluster >> nppes >> delete_cluster"
