@@ -34,35 +34,15 @@ dag:
     default_view: graph
 
   tasks:
-
-    - operator: "GKECreateClusterOperator"
-      args:
-        task_id: "create_cluster"
-        project_id: "{{ var.value.gcp_project }}"
-        location: "us-central1-c"
-        body:
-          name: pubds-nppes
-          initial_node_count: 2
-          network: "{{ var.value.vpc_network }}"
-          node_config:
-            machine_type: e2-highmem-2
-            oauth_scopes:
-              - https://www.googleapis.com/auth/devstorage.read_write
-              - https://www.googleapis.com/auth/cloud-platform
-
-    - operator: "GKEStartPodOperator"
+    - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
-        task_id: "nppes"
+        task_id: "load_npi_raw"
         startup_timeout_seconds: 600
         name: "nppes"
-        project_id: "{{ var.value.gcp_project }}"
-        location: "us-central1-c"
-        cluster_name: pubds-nppes
         namespace: "default"
         image_pull_policy: "Always"
         image: "{{ var.json.nppes.container_registry.run_csv_transform_kub }}"
-
         env_vars:
           SOURCE_URL: "https://download.cms.gov/nppes/NPPES_Data_Dissemination_MM_YYYY.zip"
           SOURCE_FILE: "files/data.csv"
@@ -409,15 +389,9 @@ dag:
            ]
           PIPELINE_NAME: "NPPES"
         resources:
+          request_ephemeral_storage: "10G"
           limit_memory: "16G"
           limit_cpu: "1"
 
-    - operator: "GKEDeleteClusterOperator"
-      args:
-        task_id: "delete_cluster"
-        project_id: "{{ var.value.gcp_project }}"
-        location: "us-central1-c"
-        name: pubds-nppes
-
   graph_paths:
-    - "create_cluster >> nppes >> delete_cluster"
+    - "load_npi_raw"

@@ -18,10 +18,9 @@ import logging
 import os
 import pathlib
 import re
-import subprocess
+import typing
 from zipfile import ZipFile
 
-import pandas as pd
 import requests
 from dateutil.relativedelta import relativedelta
 from google.api_core.exceptions import NotFound
@@ -39,15 +38,73 @@ def main(
     table_id: str,
     schema_path: str,
     source_npi_data_file_regexp: str,
+    csv_headers: typing.List[str],
     pipeline_name: str,
 ) -> None:
-
     logging.info(
         f"{pipeline_name} load process started at {str(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))}"
     )
-    logging.info("Creating 'files' folder")
-    pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
+    logging.info("Creating destination folder")
+    pathlib.Path(f"{os.path.dirname(source_file)}").mkdir(parents=True, exist_ok=True)
+    src_zip_file = download_source_file(source_url, source_file)
+    if src_zip_file:
+        logging.info(f"Searching for source NPI data file within {src_zip_file}")
+        with ZipFile(src_zip_file, 'r') as src_zip:
+            listOfFileNames = src_zip.namelist()
+            for fileName in listOfFileNames:
+                if re.match(rf'{source_npi_data_file_regexp}', fileName):
+                    logging.info(f"Found data file {fileName}, extracting ...")
+                    python_mem_obj = re.sub(r"([0-9]{2})\/([0-9]{2})\/([0-9]{4})", "\\3-\\1-\\2",
+                                            extract_zip_to_mem(input_zip = src_zip_file,
+                                            filename_to_read = fileName)
+                                        )
+                    logging.info("Writing to target file")
+                    csv_header = ','.join(str(itm) for itm in csv_headers)
+                    with open(target_file, "w") as text_file:
+                        text_file.write(f"{csv_header}\n")
+                    with open(target_file, "a") as text_file:
+                        text_file.write(python_mem_obj[python_mem_obj.find("\n") + 1:])
+                    if os.path.exists(target_file):
+                        upload_file_to_gcs(
+                            file_path=target_file,
+                            target_gcs_bucket=target_gcs_bucket,
+                            target_gcs_path=target_gcs_path,
+                        )
+                    table_exists = create_dest_table(
+                        project_id=project_id,
+                        dataset_id=dataset_id,
+                        table_id=table_id,
+                        schema_filepath=schema_path,
+                        bucket_name=target_gcs_bucket,
+                        drop_table=False,
+                    )
+                    if table_exists:
+                        load_data_to_bq(
+                            project_id=project_id,
+                            dataset_id=dataset_id,
+                            table_id=table_id,
+                            file_path=target_file,
+                            truncate_table=True,
+                            field_delimiter=",",
+                        )
+                    else:
+                        error_msg = f"Error: Data was not loaded because the destination table {project_id}.{dataset_id}.{destination_table} does not exist and/or could not be created."
+                        raise ValueError(error_msg)
+        logging.info(
+            f"{pipeline_name} load process completed at {str(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))}"
+        )
+    else:
+        logging.print("Failed: source zip file is invalid")
 
+
+def extract_zip_to_mem(input_zip: str, filename_to_read: str) -> str:
+    zip_obj = ZipFile(input_zip)
+    mem_obj = zip_obj.read(filename_to_read).decode("UTF-8")
+    zip_obj.close()
+    return mem_obj
+
+
+def download_source_file(source_url: str, source_file: str) -> str:
     logging.info(f"Downloading most recent source file")
     src_url = source_url \
                     .replace("_MM", f"_{str(datetime.datetime.now().strftime('%B'))}") \
@@ -62,49 +119,9 @@ def main(
         logging.info(f" ... attempting to download file {src_url} instead ...")
         src_zip_file = f"{os.path.dirname(source_file)}/{os.path.basename(src_url)}"
         download_file(src_url, src_zip_file)
-
-    logging.info(f" ... file {src_url} download complete")
-    logging.info(f"Searching for source NPI data file within {src_zip_file}")
-    with ZipFile(src_zip_file, 'r') as src_zip:
-        listOfFileNames = src_zip.namelist()
-        for fileName in listOfFileNames:
-            if re.match(rf'{source_npi_data_file_regexp}', fileName):
-                logging.info(f"Found data file {fileName}, extracting ...")
-                src_zip.extract(fileName, os.path.dirname(target_file))
-                target_file = f"{os.path.dirname(target_file)}/{fileName}"
-                logging.info("Resolving Date Format")
-                # os.system(["sed", "-i", "-r", "-E" "'s/([0-9]{2})\/([0-9]{2})\/([0-9]{4})/\3-\1-\2/g'", target_file], shell=True)
-                sed_cmd = "sed -i -r -E 's/([0-9]{2})\/([0-9]{2})\/([0-9]{4})/\\3-\\1-\\2/g'"
-                subprocess.call([f"{sed_cmd} {target_file}"], shell=True)
-                if os.path.exists(target_file):
-                    upload_file_to_gcs(
-                        file_path=target_file,
-                        target_gcs_bucket=target_gcs_bucket,
-                        target_gcs_path=target_gcs_path,
-                    )
-                table_exists = create_dest_table(
-                    project_id=project_id,
-                    dataset_id=dataset_id,
-                    table_id=table_id,
-                    schema_filepath=schema_path,
-                    bucket_name=target_gcs_bucket,
-                    drop_table=False,
-                )
-                if table_exists:
-                    load_data_to_bq(
-                        project_id=project_id,
-                        dataset_id=dataset_id,
-                        table_id=table_id,
-                        file_path=target_file,
-                        truncate_table=True,
-                        field_delimiter=",",
-                    )
-                else:
-                    error_msg = f"Error: Data was not loaded because the destination table {project_id}.{dataset_id}.{destination_table} does not exist and/or could not be created."
-                    raise ValueError(error_msg)
-    logging.info(
-        f"{pipeline_name} load process completed at {str(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))}"
-    )
+    if src_zip_file:
+        logging.info(f" ... file {src_url} download complete")
+    return src_zip_file
 
 
 def load_data_to_bq(
@@ -262,5 +279,6 @@ if __name__ == "__main__":
         project_id=os.environ.get("PROJECT_ID", ""),
         dataset_id=os.environ.get("DATASET_ID", ""),
         table_id=os.environ.get("TABLE_ID", ""),
+        csv_headers=json.loads(os.environ.get("CSV_HEADERS", r"[]")),
         schema_path=os.environ.get("SCHEMA_PATH", ""),
     )
