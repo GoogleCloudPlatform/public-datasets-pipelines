@@ -14,7 +14,7 @@
 
 
 from airflow import DAG
-from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.operators import kubernetes_engine
 
 default_args = {
     "owner": "Google",
@@ -28,15 +28,36 @@ with DAG(
     default_args=default_args,
     max_active_runs=1,
     schedule_interval="@daily",
+    dagrun_timeout=3600,
     catchup=False,
     default_view="graph",
 ) as dag:
+    create_cluster = kubernetes_engine.GKECreateClusterOperator(
+        task_id="create_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        body={
+            "name": "pubds-nppes",
+            "initial_node_count": 2,
+            "network": "{{ var.value.vpc_network }}",
+            "node_config": {
+                "machine_type": "e2-highmem-4",
+                "oauth_scopes": [
+                    "https://www.googleapis.com/auth/devstorage.read_write",
+                    "https://www.googleapis.com/auth/cloud-platform",
+                ],
+            },
+        },
+    )
 
     # Run CSV transform within kubernetes pod
-    load_npi_raw = kubernetes_pod.KubernetesPodOperator(
+    load_npi_raw = kubernetes_engine.GKEStartPodOperator(
         task_id="load_npi_raw",
-        startup_timeout_seconds=600,
-        name="nppes",
+        startup_timeout_seconds=3600,
+        name="load_npi_raw",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pubds-nppes",
         namespace="default",
         image_pull_policy="Always",
         image="{{ var.json.nppes.container_registry.run_csv_transform_kub }}",
@@ -56,9 +77,15 @@ with DAG(
         },
         resources={
             "request_ephemeral_storage": "10G",
-            "limit_memory": "16G",
-            "limit_cpu": "1",
+            "limit_memory": "48G",
+            "limit_cpu": "2",
         },
     )
+    delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
+        task_id="delete_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        name="pubds-nppes",
+    )
 
-    load_npi_raw
+    create_cluster >> load_npi_raw >> delete_cluster
