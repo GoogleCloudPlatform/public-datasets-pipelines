@@ -41,6 +41,8 @@ def main(
     table_id: str,
     schema_path: str,
     source_npi_data_file_regexp: str,
+    int_fields: typing.List[str],
+    date_fields: typing.List[str],
     csv_headers: typing.List[str],
     data_dtypes: dict,
     pipeline_name: str,
@@ -71,6 +73,8 @@ def main(
                 dataset_id=dataset_id,
                 table_id=table_id,
                 schema_path=schema_path,
+                int_fields=int_fields,
+                date_fields=date_fields,
                 csv_headers=csv_headers,
                 data_dtypes=data_dtypes,
                 chunk_size=chunk_size,
@@ -139,7 +143,11 @@ def process_source_file(
 
 
 def transform_data(
-    fileName: str, csv_headers: typing.List[str], data_dtypes: dict
+    fileName: str,
+    int_fields: typing.List[str],
+    date_fields: typing.List[str],
+    csv_headers: typing.List[str],
+    data_dtypes: dict
 ) -> None:
     logging.info("Transforms ...")
     logging.info(" ... Transform -> Adding header")
@@ -149,20 +157,10 @@ def transform_data(
     logging.info(" ... Transform -> Resolving date format")
     df = pd.read_csv(fileName, sep=",", dtype=data_dtypes)
     logging.info("Transforming int columns")
-    for int_fld in [
-        "entity_type_code",
-        "provider_other_organization_name_type_code",
-        "provider_other_last_name_type_code",
-    ]:
+    for int_fld in int_fields:
         df[int_fld] = df[int_fld].astype(pd.Int64Dtype(), errors="ignore")
     logging.info("Transforming date format columns")
-    for date_fld in [
-        "provider_enumeration_date",
-        "last_update_date",
-        "npi_deactivation_date",
-        "npi_reactivation_date",
-        "certification_date",
-    ]:
+    for date_fld in date_fields:
         df[date_fld] = pd.to_datetime(df[date_fld], format="%m/%d/%Y", errors="ignore")
     df.to_csv(fileName, sep="|", index=False)
     logging.info("Transforms completed")

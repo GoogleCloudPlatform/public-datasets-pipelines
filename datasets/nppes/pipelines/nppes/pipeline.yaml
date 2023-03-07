@@ -83,11 +83,11 @@ dag:
             ]
           DATE_FIELDS: >-
             [
-              'provider_enumeration_date',
-              'last_update_date',
-              'npi_deactivation_date',
-              'npi_reactivation_date',
-              'certification_date'
+              "provider_enumeration_date",
+              "last_update_date",
+              "npi_deactivation_date",
+              "npi_reactivation_date",
+              "certification_date"
             ]
           CSV_HEADERS: >-
            [
