@@ -21,9 +21,9 @@ import pathlib
 import re
 import subprocess
 import typing
-from zipfile import Path, ZipFile
+from zipfile import ZipFile
 
-import numpy as np
+import pandas as pd
 import requests
 from dateutil.relativedelta import relativedelta
 from google.api_core.exceptions import NotFound
@@ -42,8 +42,9 @@ def main(
     schema_path: str,
     source_npi_data_file_regexp: str,
     csv_headers: typing.List[str],
+    data_dtypes: dict,
     pipeline_name: str,
-    chunk_size: int
+    chunk_size: int,
 ) -> None:
     logging.info(
         f"{pipeline_name} load process started at {str(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))}"
@@ -54,23 +55,25 @@ def main(
     source_file_list = []
     if src_zip_file:
         logging.info(f"Searching for source NPI data file within {src_zip_file}")
-        with ZipFile(src_zip_file, 'r') as src_zip:
+        with ZipFile(src_zip_file, "r") as src_zip:
             listOfFileNames = src_zip.namelist()
             for fileName in listOfFileNames:
-                if re.match(rf'{source_npi_data_file_regexp}', fileName):
+                if re.match(rf"{source_npi_data_file_regexp}", fileName):
                     source_file_list += [fileName]
         logging.info(source_file_list)
         for fileName in source_file_list:
-            process_source_file(input_zip = src_zip_file,
-                                fileName = fileName,
-                                target_gcs_bucket = target_gcs_bucket,
-                                target_gcs_path = target_gcs_path,
-                                project_id = project_id,
-                                dataset_id = dataset_id,
-                                table_id = table_id,
-                                schema_path = schema_path,
-                                csv_headers = csv_headers,
-                                chunk_size = chunk_size
+            process_source_file(
+                input_zip=src_zip_file,
+                fileName=fileName,
+                target_gcs_bucket=target_gcs_bucket,
+                target_gcs_path=target_gcs_path,
+                project_id=project_id,
+                dataset_id=dataset_id,
+                table_id=table_id,
+                schema_path=schema_path,
+                csv_headers=csv_headers,
+                data_dtypes=data_dtypes,
+                chunk_size=chunk_size,
             )
     else:
         logging.print("Failed: source zip file is invalid")
@@ -88,24 +91,37 @@ def process_source_file(
     dataset_id: str,
     table_id: str,
     schema_path: str,
+    int_fields: typing.List[str],
+    date_fields: typing.List[str],
     csv_headers: typing.List[str],
+    data_dtypes: dict,
     chunk_size: int,
 ) -> None:
     logging.info(f"Found data file {fileName}, extracting and splitting ...")
     zip_path = os.path.dirname(input_zip)
     cmd = f"unzip -p {input_zip} {fileName} | tail -n +2 | split -l { str(chunk_size)} --additional-suffix '.csv' -d --filter='gzip -v9 > { zip_path }/$FILE.gz'"
     subprocess.run(cmd, shell=True)
+    logging.info("Copying zip files to GCS bucket ...")
+    for zip_file in sorted(pathlib.Path(zip_path).glob("x*.csv.gz")):
+        gcs_zip_file_path = (
+            f"{os.path.dirname(target_gcs_path)}/{os.path.basename(zip_file)}"
+        )
+        upload_file_to_gcs(
+            file_path=zip_file,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=gcs_zip_file_path,
+        )
     logging.info("Processing individual zip files ...")
-    for zip_file in sorted(pathlib.Path(zip_path).glob('x*.csv.gz')):
+    for zip_file in sorted(pathlib.Path(zip_path).glob("x*.csv.gz")):
         logging.info(f" ... File {zip_file}")
         extracted_chunk = str(zip_file).replace(".gz", "")
-        gz_decompress(
-            infile=zip_file,
-            tofile=extracted_chunk,
-            delete_zipfile=True)
+        gz_decompress(infile=zip_file, tofile=extracted_chunk, delete_zipfile=True)
         transform_data(
-            fileName = extracted_chunk,
-            csv_headers=csv_headers
+            fileName=extracted_chunk,
+            int_fields=int_fields,
+            date_fields=date_fields,
+            csv_headers=csv_headers,
+            data_dtypes=data_dtypes,
         )
         load_source_file_to_bq(
             target_file=extracted_chunk,
@@ -115,23 +131,40 @@ def process_source_file(
             dataset_id=dataset_id,
             table_id=table_id,
             schema_path=schema_path,
-            truncate_table=(True if os.path.basename(extracted_chunk) == "x00.csv" else False),
-            field_delimiter=","
+            truncate_table=(
+                True if os.path.basename(extracted_chunk) == "x00.csv" else False
+            ),
+            field_delimiter="|",
         )
 
 
 def transform_data(
-    fileName: str,
-    csv_headers: typing.List[str]
+    fileName: str, csv_headers: typing.List[str], data_dtypes: dict
 ) -> None:
     logging.info("Transforms ...")
     logging.info(" ... Transform -> Adding header")
-    csv_header = ','.join(str(itm) for itm in csv_headers)
+    csv_header = ",".join(str(itm) for itm in csv_headers)
     cmd = f"sed -i '1s/^/{csv_header}\\n/' {fileName}"
     subprocess.run(cmd, shell=True)
     logging.info(" ... Transform -> Resolving date format")
-    cmd = "sed -i -r -E 's/([0-9]{2})\/([0-9]{2})\/([0-9]{4})/\3-\1-\2/g;' " + f"{fileName}"
-    subprocess.run(cmd, shell=True)
+    df = pd.read_csv(fileName, sep=",", dtype=data_dtypes)
+    logging.info("Transforming int columns")
+    for int_fld in [
+        "entity_type_code",
+        "provider_other_organization_name_type_code",
+        "provider_other_last_name_type_code",
+    ]:
+        df[int_fld] = df[int_fld].astype(pd.Int64Dtype(), errors="ignore")
+    logging.info("Transforming date format columns")
+    for date_fld in [
+        "provider_enumeration_date",
+        "last_update_date",
+        "npi_deactivation_date",
+        "npi_reactivation_date",
+        "certification_date",
+    ]:
+        df[date_fld] = pd.to_datetime(df[date_fld], format="%m/%d/%Y", errors="ignore")
+    df.to_csv(fileName, sep="|", index=False)
     logging.info("Transforms completed")
 
 
@@ -144,7 +177,7 @@ def load_source_file_to_bq(
     table_id: str,
     schema_path: str,
     truncate_table: bool,
-    field_delimiter: str
+    field_delimiter: str,
 ):
     fileName = os.path.basename(str(target_file))
     if os.path.exists(target_file):
@@ -172,7 +205,7 @@ def load_source_file_to_bq(
         )
         os.remove(target_file)
     else:
-        error_msg = f"Error: Data was not loaded because the destination table {project_id}.{dataset_id}.{destination_table} does not exist and/or could not be created."
+        error_msg = f"Error: Data was not loaded because the destination table {project_id}.{dataset_id}.{table_id} does not exist and/or could not be created."
         raise ValueError(error_msg)
 
 
@@ -184,18 +217,19 @@ def gz_decompress(infile: str, tofile: str, delete_zipfile: bool = False) -> Non
     if delete_zipfile:
         os.remove(infile)
 
+
 def download_source_file(source_url: str, source_file: str) -> str:
-    logging.info(f"Downloading most recent source file")
-    src_url = source_url \
-                    .replace("_MM", f"_{str(datetime.datetime.now().strftime('%B'))}") \
-                    .replace("_YYYY", f"_{str(datetime.datetime.now().strftime('%Y'))}")
+    logging.info("Downloading most recent source file")
+    src_url = source_url.replace(
+        "_MM", f"_{str(datetime.datetime.now().strftime('%B'))}"
+    ).replace("_YYYY", f"_{str(datetime.datetime.now().strftime('%Y'))}")
     src_zip_file = f"{os.path.dirname(source_file)}/{os.path.basename(src_url)}"
     if not download_file(src_url, src_zip_file):
         logging.info(f" ... file {src_url} is unavailable")
         one_month_ago = datetime.date.today() - relativedelta(months=1)
-        src_url = source_url \
-                        .replace("_MM", f"_{one_month_ago.strftime('%B')}") \
-                        .replace("_YYYY", f"_{one_month_ago.strftime('%Y')}")
+        src_url = source_url.replace("_MM", f"_{one_month_ago.strftime('%B')}").replace(
+            "_YYYY", f"_{one_month_ago.strftime('%Y')}"
+        )
         logging.info(f" ... attempting to download file {src_url} instead ...")
         src_zip_file = f"{os.path.dirname(source_file)}/{os.path.basename(src_url)}"
         download_file(src_url, src_zip_file)
@@ -359,7 +393,10 @@ if __name__ == "__main__":
         project_id=os.environ.get("PROJECT_ID", ""),
         dataset_id=os.environ.get("DATASET_ID", ""),
         table_id=os.environ.get("TABLE_ID", ""),
+        int_fields=json.loads(os.environ.get("INT_FIELDS", r"[]")),
+        date_fields=json.loads(os.environ.get("DATE_FIELDS", r"[]")),
         csv_headers=json.loads(os.environ.get("CSV_HEADERS", r"[]")),
+        data_dtypes=json.loads(os.environ.get("DATA_DTYPES", r"{}")),
         schema_path=os.environ.get("SCHEMA_PATH", ""),
         chunk_size=int(os.environ.get("CHUNKSIZE", "100000")),
     )
