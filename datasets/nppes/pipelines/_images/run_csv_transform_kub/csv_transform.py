@@ -146,11 +146,12 @@ def load_source_file_to_bq(
     truncate_table: bool,
     field_delimiter: str
 ):
+    fileName = os.path.basename(str(target_file))
     if os.path.exists(target_file):
         upload_file_to_gcs(
             file_path=target_file,
             target_gcs_bucket=target_gcs_bucket,
-            target_gcs_path=f"{str.replace(target_gcs_path, '.csv', { os.path.basename(target_file) })}",
+            target_gcs_path=f"{str.replace(target_gcs_path, '.csv', fileName)}",
         )
     table_exists = create_dest_table(
         project_id=project_id,
