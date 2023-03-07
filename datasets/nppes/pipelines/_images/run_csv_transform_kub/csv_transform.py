@@ -147,7 +147,7 @@ def transform_data(
     int_fields: typing.List[str],
     date_fields: typing.List[str],
     csv_headers: typing.List[str],
-    data_dtypes: dict
+    data_dtypes: dict,
 ) -> None:
     logging.info("Transforms ...")
     logging.info(" ... Transform -> Adding header")
