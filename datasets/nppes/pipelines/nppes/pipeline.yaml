@@ -74,7 +74,7 @@ dag:
           DATASET_ID: "nppes"
           TABLE_ID: "npi_raw"
           SCHEMA_PATH: "data/nppes/schema/npi_raw_schema.json"
-          CHUNKSIZE: 1000
+          CHUNKSIZE: "1000000"
           CSV_HEADERS: >-
            [
               "npi",
@@ -411,8 +411,8 @@ dag:
           PIPELINE_NAME: "NPPES"
         resources:
           request_ephemeral_storage: "10G"
-          limit_memory: "48G"
-          limit_cpu: "2"
+          limit_memory: "16G"
+          limit_cpu: "1"
 
     - operator: "GKEDeleteClusterOperator"
       args:
