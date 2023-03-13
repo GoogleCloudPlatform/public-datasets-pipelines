@@ -1,0 +1,2582 @@
+[
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "country_region_code",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "country_region",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "sub_region_1",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "sub_region_1_code",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "sub_region_2",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "sub_region_2_code",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "place_id",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "date",
+    "type": "DATE"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Abdominal_obesity",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Abdominal_pain",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Acne",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Actinic_keratosis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Acute_bronchitis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Adrenal_crisis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Ageusia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Alcoholism",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Allergic_conjunctivitis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Allergy",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Amblyopia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Amenorrhea",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Amnesia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Anal_fissure",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Anaphylaxis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Anemia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Angina_pectoris",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Angioedema",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Angular_cheilitis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Anosmia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Anxiety",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Aphasia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Aphonia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Apnea",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Arthralgia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Arthritis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Ascites",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Asperger_syndrome",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Asphyxia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Asthma",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Astigmatism",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Ataxia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Atheroma",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Attention_deficit_hyperactivity_disorder",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Auditory_hallucination",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Autoimmune_disease",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Avoidant_personality_disorder",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Back_pain",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Bacterial_vaginosis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Balance_disorder",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Beaus_lines",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Bells_palsy",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Biliary_colic",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Binge_eating",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Bleeding",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Bleeding_on_probing",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Blepharospasm",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Bloating",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Blood_in_stool",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Blurred_vision",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Blushing",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Boil",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Bone_fracture",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Bone_tumor",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Bowel_obstruction",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Bradycardia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Braxton_Hicks_contractions",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Breakthrough_bleeding",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Breast_pain",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Bronchitis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Bruise",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Bruxism",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Bunion",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Burn",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Burning_Chest_Pain",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Burning_mouth_syndrome",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Candidiasis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Canker_sore",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Cardiac_arrest",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Carpal_tunnel_syndrome",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Cataplexy",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Cataract",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Chancre",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Cheilitis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Chest_pain",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Chills",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Chorea",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Chronic_pain",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Cirrhosis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Cleft_lip_and_cleft_palate",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Clouding_of_consciousness",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Cluster_headache",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Colitis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Coma",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Common_cold",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Compulsive_behavior",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Compulsive_hoarding",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Confusion",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Congenital_heart_defect",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Conjunctivitis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Constipation",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Convulsion",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Cough",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Crackles",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Cramp",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Crepitus",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Croup",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Cyanosis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Dandruff",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Delayed_onset_muscle_soreness",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Dementia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Dentin_hypersensitivity",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Depersonalization",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Depression",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Dermatitis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Desquamation",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Developmental_disability",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Diabetes",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Diabetic_ketoacidosis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Diarrhea",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Dizziness",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Dry_eye_syndrome",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Dysautonomia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Dysgeusia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Dysmenorrhea",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Dyspareunia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Dysphagia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Dysphoria",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Dystonia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Dysuria",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Ear_pain",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Eczema",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Edema",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Encephalitis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Encephalopathy",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Epidermoid_cyst",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Epilepsy",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Epiphora",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Erectile_dysfunction",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Erythema",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Erythema_chronicum_migrans",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Esophagitis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Excessive_daytime_sleepiness",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Eye_pain",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Eye_strain",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Facial_nerve_paralysis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Facial_swelling",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Fasciculation",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Fatigue",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Fatty_liver_disease",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Fecal_incontinence",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Fever",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Fibrillation",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Fibrocystic_breast_changes",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Fibromyalgia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Flatulence",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Floater",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Focal_seizure",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Folate_deficiency",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Food_craving",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Food_intolerance",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Frequent_urination",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Gastroesophageal_reflux_disease",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Gastroparesis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Generalized_anxiety_disorder",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Generalized_tonic_clonic_seizure",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Genital_wart",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Gingival_recession",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Gingivitis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Globus_pharyngis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Goitre",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Gout",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Grandiosity",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Granuloma",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Guilt",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hair_loss",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Halitosis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hay_fever",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Headache",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Heart_arrhythmia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Heart_murmur",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Heartburn",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hematochezia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hematoma",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hematuria",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hemolysis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hemoptysis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hemorrhoids",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hepatic_encephalopathy",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hepatitis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hepatotoxicity",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hiccup",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hip_pain",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hives",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hot_flash",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hydrocephalus",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hypercalcaemia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hypercapnia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hypercholesterolemia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hyperemesis_gravidarum",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hyperglycemia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hyperkalemia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hyperlipidemia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hypermobility",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hyperpigmentation",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hypersomnia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hypertension",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hyperthermia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hyperthyroidism",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hypertriglyceridemia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hypertrophy",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hyperventilation",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hypocalcaemia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hypochondriasis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hypoglycemia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hypogonadism",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hypokalemia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hypomania",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hyponatremia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hypotension",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hypothyroidism",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hypoxemia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Hypoxia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Impetigo",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Implantation_bleeding",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Impulsivity",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Indigestion",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Infection",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Inflammation",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Inflammatory_bowel_disease",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Ingrown_hair",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Insomnia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Insulin_resistance",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Intermenstrual_bleeding",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Intracranial_pressure",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Iron_deficiency",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Irregular_menstruation",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Itch",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Jaundice",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Kidney_failure",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Kidney_stone",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Knee_Pain",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Kyphosis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Lactose_intolerance",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Laryngitis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Leg_cramps",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Lesion",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Leukorrhea",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Lightheadedness",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Low_back_pain",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Low_grade_fever",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Lymphedema",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Major_depressive_disorder",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Malabsorption",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Male_infertility",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Manic_Disorder",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Melasma",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Melena",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Meningitis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Menorrhagia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Middle_back_pain",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Migraine",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Milium",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Mitral_insufficiency",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Mood_disorder",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Mood_swing",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Morning_sickness",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Motion_sickness",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Mouth_ulcer",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Muscle_atrophy",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Muscle_weakness",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Myalgia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Mydriasis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Myocardial_infarction",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Myoclonus",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Nasal_congestion",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Nasal_polyp",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Nausea",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Neck_mass",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Neck_pain",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Neonatal_jaundice",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Nerve_injury",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Neuralgia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Neutropenia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Night_sweats",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Night_terror",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Nocturnal_enuresis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Nodule",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Nosebleed",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Nystagmus",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Obesity",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Onychorrhexis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Oral_candidiasis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Orthostatic_hypotension",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Osteopenia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Osteophyte",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Osteoporosis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Otitis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Otitis_externa",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Otitis_media",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Pain",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Palpitations",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Panic_attack",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Papule",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Paranoia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Paresthesia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Pelvic_inflammatory_disease",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Pericarditis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Periodontal_disease",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Periorbital_puffiness",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Peripheral_neuropathy",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Perspiration",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Petechia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Phlegm",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Photodermatitis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Photophobia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Photopsia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Pleural_effusion",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Pleurisy",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Pneumonia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Podalgia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Polycythemia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Polydipsia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Polyneuropathy",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Polyuria",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Poor_posture",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Post_nasal_drip",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Postural_orthostatic_tachycardia_syndrome",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Prediabetes",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Proteinuria",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Pruritus_ani",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Psychosis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Ptosis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Pulmonary_edema",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Pulmonary_hypertension",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Purpura",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Pus",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Pyelonephritis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Radiculopathy",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Rectal_pain",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Rectal_prolapse",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Red_eye",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Renal_colic",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Restless_legs_syndrome",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Rheum",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Rhinitis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Rhinorrhea",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Rosacea",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Round_ligament_pain",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Rumination",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Scar",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Sciatica",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Scoliosis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Seborrheic_dermatitis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Self_harm",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Sensitivity_to_sound",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Sexual_dysfunction",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Shallow_breathing",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Sharp_pain",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Shivering",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Shortness_of_breath",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Shyness",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Sinusitis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Skin_condition",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Skin_rash",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Skin_tag",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Skin_ulcer",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Sleep_apnea",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Sleep_deprivation",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Sleep_disorder",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Snoring",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Sore_throat",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Spasticity",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Splenomegaly",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Sputum",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Stomach_rumble",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Strabismus",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Stretch_marks",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Stridor",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Stroke",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Stuttering",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Subdural_hematoma",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Suicidal_ideation",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Swelling",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Swollen_feet",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Swollen_lymph_nodes",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Syncope",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Tachycardia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Tachypnea",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Telangiectasia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Tenderness",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Testicular_pain",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Throat_irritation",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Thrombocytopenia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Thyroid_nodule",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Tic",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Tinnitus",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Tonsillitis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Toothache",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Tremor",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Trichoptilosis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Tumor",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Type_2_diabetes",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Unconsciousness",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Underweight",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Upper_respiratory_tract_infection",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Urethritis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Urinary_incontinence",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Urinary_tract_infection",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Urinary_urgency",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Uterine_contraction",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Vaginal_bleeding",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Vaginal_discharge",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Vaginitis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Varicose_veins",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Vasculitis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Ventricular_fibrillation",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Ventricular_tachycardia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Vertigo",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Viral_pneumonia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Visual_acuity",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Vomiting",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Wart",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Water_retention",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Weakness",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Weight_gain",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Wheeze",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Xeroderma",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Xerostomia",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_Yawn",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_hyperhidrosis",
+    "type": "FLOAT"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "symptom_pancreatitis",
+    "type": "FLOAT"
+  }
+]
