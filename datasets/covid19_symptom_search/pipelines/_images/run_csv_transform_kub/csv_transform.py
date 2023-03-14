@@ -28,38 +28,36 @@ def main(
 ) -> None:
     # create zipfile in path
     archive_name = f"{download_path}/data_{table_id}.zip"
-    # logging.info(f"Creating archive {archive_name}")
-    zipped_filename = f"data_{table_id}.csv"
-    # with ZipFile(archive_name, 'w') as my_zip:
-    #     pass
-    # source_file_names = fetch_gcs_file_names(
-    #     source_gcs_key,
-    #     source_gcs_path,
-    #     gcs_bucket
-    # )
-    # # final_df = ""
-    # file_ordinal = 0
-    # for filepath in source_file_names:
-    #     if file_ordinal == 0 or ( file_ordinal % 25 == 0):
-    #         logging.info(f"Compressing {file_ordinal} files so far, working on it :) ...")
-    #     filename = os.path.basename(filepath)
-    #     staged_file = f"{download_path}/{table_id}_{ str(file_ordinal).zfill(15) }.csv"
-    #     download_file_gcs(
-    #         project_id=project_id,
-    #         source_location=f"gs://{gcs_bucket}/{filepath}",
-    #         destination_folder=download_path,
-    #         filename_override = os.path.basename(staged_file)
-    #     )
-    #     # pipeline_name = each_file
-    #     cmd = f"sed -i '1d' {staged_file}"
-    #     subprocess.check_call(cmd, shell=True)
-    #     append_datafile_to_zipfile(
-    #         zipfile_archive_name=archive_name,
-    #         append_data_file=staged_file
-    #     )
-    #     os.remove(staged_file)
-    #     file_ordinal += 1
-    # logging.info(f"Compressed all {file_ordinal} files.")
+    logging.info(f"Creating archive {archive_name}")
+    # zipped_filename = f"data_{table_id}.csv"
+    with ZipFile(archive_name, 'w') as my_zip:
+        pass
+    source_file_names = fetch_gcs_file_names(
+        source_gcs_key,
+        source_gcs_path,
+        target_gcs_bucket
+    )
+    file_ordinal = 0
+    for filepath in source_file_names:
+        if file_ordinal == 0 or ( file_ordinal % 25 == 0):
+            logging.info(f"Compressing {file_ordinal} files so far, working on it :) ...")
+        # filename = os.path.basename(filepath)
+        staged_file = f"{download_path}/{table_id}_{ str(file_ordinal).zfill(15) }.csv"
+        download_file_gcs(
+            project_id=project_id,
+            source_location=f"gs://{target_gcs_bucket}/{filepath}",
+            destination_folder=download_path,
+            filename_override = os.path.basename(staged_file)
+        )
+        cmd = f"sed -i '1d' {staged_file}"
+        subprocess.check_call(cmd, shell=True)
+        append_datafile_to_zipfile(
+            zipfile_archive_name=archive_name,
+            append_data_file=staged_file
+        )
+        os.remove(staged_file)
+        file_ordinal += 1
+    logging.info(f"Compressed all {file_ordinal} files.")
     with ZipFile(archive_name, "r") as src_zip:
         listOfFileNames = src_zip.namelist()
         for fileName in sorted(listOfFileNames):
@@ -82,6 +80,83 @@ def main(
             )
     # TODO: Upload zipped file to GCS
     import pdb; pdb.set_trace()
+
+
+def generate_load_batch_data_file(
+    input_zip: str,
+    batch_load_filename: str,
+    project_id: str,
+    dataset_id: str,
+    target_gcs_bucket: str,
+    schema_path: str,
+    table_id: str,
+    chunk_size: int
+) -> None:
+    zip_path = os.path.dirname(input_zip)
+    unzip_path = f"{zip_path}/{table_id}"
+    batch_number = 1
+    # For every fileName in zipfile:
+    with ZipFile(input_zip, "r") as src_zip:
+        listOfFileNames = src_zip.namelist()
+        for fileName in sorted(listOfFileNames):
+            # Unzip fileName
+            unzip_fileName = f"{unzip_path}/{fileName}"
+            cmd = f"unzip -p {input_zip} {fileName} > {unzip_fileName}"
+            subprocess.run(cmd, shell=True)
+            # Evaluate batch file name
+            batch_file = f"{unzip_path}/data_batch_{str(batch_number).zfill(15)}.csv"
+            number_lines_batch_file = count_lines_file(batch_file)
+            number_lines_data_file = count_lines_file(unzip_fileName)
+            # if (this is the last file in the zipfile)
+            # or ( wc-l batch_load_filename + wc -l fileName ) > chunk_size
+            if (fileName == listOfFileNames[-1:]) \
+                 or (number_lines_batch_file + number_lines_data_file >= chunk_size):
+                append_file_to_batchfile(
+                    batch_file=batch_file,
+                    file_to_append=unzip_fileName,
+                    remove_file=True
+                )
+                # load the data
+                load_source_file_to_bq(
+                    target_file=batch_file,
+                    target_gcs_bucket=target_gcs_bucket,
+                    project_id=project_id,
+                    dataset_id=dataset_id,
+                    table_id=table_id,
+                    schema_path=schema_path,
+                    truncate_table=(
+                        (batch_number == 1)
+                    ),
+                    field_delimiter=",",
+                )
+                # delete batch_load_filename
+                os.remove(batch_file)
+                batch_number += 1
+            else:
+                # append fileName to batch_load_filename
+                append_file_to_batchfile(
+                    batch_file=batch_file,
+                    file_to_append=unzip_fileName,
+                    remove_file=True
+                )
+
+
+def count_lines_file(
+    input_file: str
+) -> int:
+    cmd = f"wc -l {input_file}"
+    return int(str(subprocess.run(cmd, shell=True, capture_output=True, text=True).stdout).split("\n")[0].split(" ")[0])
+
+
+def append_file_to_batchfile(
+    batch_file: str,
+    file_to_append: str,
+    remove_file: bool = True
+) -> None:
+    cmd = f"cat {file_to_append} >> {batch_file}"
+    subprocess.run(cmd, shell=True)
+    if remove_file:
+        os.remove(file_to_append)
 
 
 def process_source_file(
@@ -152,57 +227,6 @@ def load_source_file_to_bq(
         else:
             error_msg = f"Error: Data was not loaded because the destination table {project_id}.{dataset_id}.{table_id} does not exist and/or could not be created."
             raise ValueError(error_msg)
-
-
-
-    #  ______________________________________________________________
-
-    #     logging.info(f"Started Extraction and Load process for {pipeline_name} --->")
-    #     # final_df = execute_pipeline(
-    #     #     download_path=download_path,
-    #     #     source_gcs_path=filepath,
-    #     #     gcs_bucket=gcs_bucket,
-    #     #     pipeline_name=pipeline_name,
-    #     #     final_df=final_df,
-    #     # )
-    #     print()
-
-    # schema_fields = rectify_header_names(list(final_df.columns))
-    # schema_dict = prepare_schema_dict(table_id, schema_fields, {})
-    # prepare_upload_schema_file(
-    #     download_path,
-    #     gcs_bucket,
-    #     destination_gcs_path,
-    #     schema_filepath,
-    #     schema_dict,
-    # )
-    # filepath, filename = save_to_file(final_df, download_path)
-    # upload_transformed_file(destination_gcs_path, gcs_bucket, filepath, filename)
-    # client = storage.Client()
-    # blob = client.list_blobs(gcs_bucket, prefix=destination_gcs_path + filename)
-    # if blob:
-    #     table_exists = create_dest_table(
-    #         project_id=project_id,
-    #         dataset_id=dataset_id,
-    #         table_id=table_id,
-    #         schema_filepath=schema_filepath,
-    #         schema_dict=schema_dict,
-    #         drop_table=True,
-    #     )
-    #     if table_exists:
-    #         load_data_to_bq(
-    #             pipeline_name=filename,
-    #             project_id=project_id,
-    #             dataset_id=dataset_id,
-    #             table_id=table_id,
-    #             gcs_bucket=gcs_bucket,
-    #             source_gcs_path=destination_gcs_path,
-    #         )
-    #     else:
-    #         error_msg = f"Error: Data was not loaded because the destination table {project_id}.{dataset_id}.{table_id} does not exist and/or could not be created."
-    #         raise ValueError(error_msg)
-    # else:
-    #     logging.info(f"Informational: The data file {blob} is unavailable")
 
 
 def gz_decompress(infile: str, tofile: str, delete_zipfile: bool = False) -> None:
