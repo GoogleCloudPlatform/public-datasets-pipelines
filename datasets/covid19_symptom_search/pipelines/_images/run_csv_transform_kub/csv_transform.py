@@ -1,25 +1,28 @@
 import json
 import logging
 import os
-
 import pandas as pd
+import typing
+
 from google.api_core.exceptions import NotFound
 from google.cloud import bigquery, storage
 
 
 def main(
-    download_path,
-    source_gcs_key,
-    source_gcs_path,
-    destination_gcs_path,
-    project_id,
-    dataset_id,
-    gcs_bucket,
-    schema_filepath,
-    table_id,
+    download_path: str,
+    source_gcs_key: str,
+    source_gcs_path: str,
+    destination_gcs_path: str,
+    project_id: str,
+    dataset_id: str,
+    gcs_bucket: str,
+    schema_filepath: str,
+    table_id: str
 ) -> None:
     source_file_names = fetch_gcs_file_names(
-        source_gcs_key, source_gcs_path, gcs_bucket
+        source_gcs_key,
+        source_gcs_path,
+        gcs_bucket
     )
     final_df = ""
     for filepath in source_file_names:
@@ -72,7 +75,11 @@ def main(
         logging.info(f"Informational: The data file {blob} is unavailable")
 
 
-def fetch_gcs_file_names(source_gcs_key, source_gcs_path, gcs_bucket):
+def fetch_gcs_file_names(
+    source_gcs_key,
+    source_gcs_path,
+    gcs_bucket
+) -> typing.List[str]:
     source_file_names = []
     client = storage.Client()
     blobs = client.list_blobs(gcs_bucket, prefix=source_gcs_path)
@@ -88,7 +95,9 @@ def fetch_gcs_file_names(source_gcs_key, source_gcs_path, gcs_bucket):
     return source_file_names
 
 
-def rectify_header_names(schema_fields):
+def rectify_header_names(
+    schema_fields: typing.List[str]
+) -> typing.List[str]:
     bq_fields = []
     for i in list(schema_fields):
         i = i.lower()
@@ -107,11 +116,18 @@ def rectify_header_names(schema_fields):
 
 
 def execute_pipeline(
-    download_path, source_gcs_path, gcs_bucket, pipeline_name, final_df
-):
+    download_path: str,
+    source_gcs_path: str,
+    gcs_bucket: str,
+    pipeline_name: str,
+    final_df: pd.DataFrame
+) -> pd.DataFrame:
     logging.info(f"ETL started for {pipeline_name}")
-    pipeline_name = download_file(
-        download_path, source_gcs_path, gcs_bucket, pipeline_name
+    pipeline_name = download_file_gcs(
+        download_path=download_path,
+        source_gcs_path=source_gcs_path,
+        gcs_bucket=gcs_bucket,
+        pipeline_name=pipeline_name
     )
     if check_file(download_path, pipeline_name):
         final_df = transform_file(download_path, pipeline_name, final_df)
@@ -126,7 +142,11 @@ def check_file(download_path, pipeline_name):
         return f.read()
 
 
-def transform_file(download_path, pipeline_name, final_df):
+def transform_file(
+    download_path: str,
+    pipeline_name: str,
+    final_df: pd.DataFrame
+) -> pd.DataFrame:
     if not len(final_df):
         logging.info("Framing the target dataframe")
         final_df = pd.read_csv(download_path + pipeline_name)
@@ -140,14 +160,21 @@ def transform_file(download_path, pipeline_name, final_df):
     return final_df
 
 
-def save_to_file(df, download_path):
+def save_to_file(
+    df: pd.DataFrame,
+    download_path: str
+):
     filename_ = "final_output.csv"
     filepath = download_path + filename_
     df.to_csv(filepath, index=False)
     return filepath, filename_
 
 
-def prepare_schema_dict(table_id, schema_fields, schema_dict):
+def prepare_schema_dict(
+    table_id: str,
+    schema_fields: typing.List[str],
+    schema_dict: dict
+) -> dict:
     schema_dict[table_id] = []
     for i in schema_fields:
         schema_dict[table_id].append({"name": i, "type": "STRING", "mode": "NULLABLE"})
@@ -155,8 +182,12 @@ def prepare_schema_dict(table_id, schema_fields, schema_dict):
 
 
 def prepare_upload_schema_file(
-    download_path, gcs_bucket, destination_gcs_path, schema_filepath, schema_dict
-):
+    download_path: str,
+    gcs_bucket: str,
+    destination_gcs_path: str,
+    schema_filepath: str,
+    schema_dict: dict
+) -> None:
     logging.info("Preparing schema file")
     with open(download_path + schema_filepath, "w") as file:
         json.dump(schema_dict, file)
@@ -168,7 +199,12 @@ def prepare_upload_schema_file(
     blob.upload_from_filename(download_path + schema_filepath)
 
 
-def download_file(download_path, source_gcs_path, gcs_bucket, pipeline_name):
+def download_file_gcs(
+    download_path: str,
+    source_gcs_path: str,
+    gcs_bucket: str,
+    pipeline_name: str
+) -> str:
     client = storage.Client()
     bucket = client.bucket(gcs_bucket)
     blob = bucket.blob(source_gcs_path)
@@ -216,7 +252,10 @@ def create_dest_table(
     return table_exists
 
 
-def create_table_schema(schema_dict, table_id) -> list:
+def create_table_schema(
+    schema_dict: dict,
+    table_id: str
+) -> typing.List[str]:
     logging.info("Defining table schema")
     schema = []
     for schema_field in schema_dict[table_id]:
@@ -235,7 +274,12 @@ def create_table_schema(schema_dict, table_id) -> list:
     return schema
 
 
-def upload_transformed_file(destination_gcs_path, gcs_bucket, filepath, filename):
+def upload_transformed_file(
+    destination_gcs_path: str,
+    gcs_bucket: str,
+    filepath: str,
+    filename: str
+) -> None:
     logging.info("Uploading file to GCS")
     client = storage.Client()
     bucket = client.bucket(gcs_bucket)
