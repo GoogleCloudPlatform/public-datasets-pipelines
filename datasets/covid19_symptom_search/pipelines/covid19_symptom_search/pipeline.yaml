@@ -154,6 +154,32 @@ dag:
     - operator: "KubernetesPodOperator"
       description: "ETL within the kubernetes pod"
       args:
+        task_id: "symptom_search_sub_region_2_daily"
+        startup_timeout_seconds: 1000
+        name: "load_data"
+        namespace: "composer"
+        service_account_name: "datasets"
+        image_pull_policy: "Always"
+        image: "{{ var.json.covid19_symptom_search.container_registry.run_csv_transform_kub }}"
+        env_vars:
+            DOWNLOAD_PATH: ""
+            SOURCE_GCS_KEY: '["sub_region_2", "daily"]'
+            SOURCE_GCS_PATH: "data/covid19_symptom_search/ssd_i18n_expansion/"
+            DESTINATION_GCS_PATH: "data/covid19_symptom_search/symptom_search_sub_region_2_daily/"
+            PROJECT_ID: "{{ var.value.gcp_project }}"
+            DATASET_ID: "covid19_symptom_search"
+            GCS_BUCKET: "{{ var.value.composer_bucket }}"
+            SCHEMA_FILEPATH: "schema.json"
+            TABLE_ID: "symptom_search_sub_region_2_daily"
+        resources:
+            request_memory: "16G"
+            request_cpu: "1"
+            request_ephemeral_storage: "10G"
+
+
+    - operator: "KubernetesPodOperator"
+      description: "ETL within the kubernetes pod"
+      args:
         task_id: "symptom_search_sub_region_2_weekly"
         startup_timeout_seconds: 1000
         name: "load_data"
@@ -178,4 +204,4 @@ dag:
 
 
   graph_paths:
-    - "sts >> [symptom_search_country_daily , symptom_search_country_weekly , symptom_search_sub_region_1_daily , symptom_search_sub_region_1_weekly , symptom_search_sub_region_2_weekly]"
+    - "sts >> [symptom_search_country_daily , symptom_search_country_weekly , symptom_search_sub_region_1_daily , symptom_search_sub_region_1_weekly , symptom_search_sub_region_2_weekly] >> symptom_search_sub_region_2_daily"
