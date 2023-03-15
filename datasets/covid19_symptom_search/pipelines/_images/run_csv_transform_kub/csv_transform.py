@@ -2,13 +2,12 @@ import gzip
 import json
 import logging
 import os
-import pandas as pd
 import pathlib
+import shutil
 import subprocess
 import typing
 import zipfile
 from zipfile import ZipFile
-
 
 from google.api_core.exceptions import NotFound
 from google.cloud import bigquery, storage
@@ -24,99 +23,106 @@ def main(
     target_gcs_bucket: str,
     schema_filepath: str,
     table_id: str,
-    chunk_size: int
+    chunk_size: int,
 ) -> None:
-    # create zipfile in path
     archive_name = f"{download_path}/data_{table_id}.zip"
+    zip_path = os.path.dirname(archive_name)
+    unzip_path = f"{zip_path}/{table_id}"
+    shutil.rmtree(unzip_path)
+    pathlib.Path(unzip_path).mkdir(parents=True, exist_ok=True)
     logging.info(f"Creating archive {archive_name}")
-    # zipped_filename = f"data_{table_id}.csv"
-    with ZipFile(archive_name, 'w') as my_zip:
+    with ZipFile(archive_name, "w"):
         pass
+    compress_source_files(
+        source_gcs_key=source_gcs_key,
+        source_gcs_path=source_gcs_path,
+        archive_name=archive_name,
+        download_path=download_path,
+        project_id=project_id,
+        table_id=table_id,
+        target_gcs_bucket=target_gcs_bucket,
+    )
+    upload_file_to_gcs(
+        file_path=archive_name,
+        target_gcs_bucket=target_gcs_bucket,
+        target_gcs_path=f"{destination_gcs_path}/{ os.path.basename(archive_name) }",
+    )
+    generate_load_batch_data_file(
+        input_zip=archive_name,
+        project_id=project_id,
+        dataset_id=dataset_id,
+        target_gcs_bucket=target_gcs_bucket,
+        schema_path=schema_filepath,
+        table_id=table_id,
+        chunk_size=chunk_size,
+    )
+
+
+def compress_source_files(
+    source_gcs_key: str,
+    source_gcs_path: str,
+    archive_name: str,
+    download_path: str,
+    project_id: str,
+    table_id: str,
+    target_gcs_bucket: str,
+) -> None:
     source_file_names = fetch_gcs_file_names(
-        source_gcs_key,
-        source_gcs_path,
-        target_gcs_bucket
+        source_gcs_key, source_gcs_path, target_gcs_bucket
     )
     file_ordinal = 0
     for filepath in source_file_names:
-        if file_ordinal == 0 or ( file_ordinal % 25 == 0):
-            logging.info(f"Compressing {file_ordinal} files so far, working on it :) ...")
-        # filename = os.path.basename(filepath)
+        if file_ordinal == 0 or (file_ordinal % 25 == 0):
+            logging.info(
+                f"Compressing {file_ordinal} files so far, working on it :) ..."
+            )
         staged_file = f"{download_path}/{table_id}_{ str(file_ordinal).zfill(15) }.csv"
         download_file_gcs(
             project_id=project_id,
             source_location=f"gs://{target_gcs_bucket}/{filepath}",
             destination_folder=download_path,
-            filename_override = os.path.basename(staged_file)
+            filename_override=os.path.basename(staged_file),
         )
         cmd = f"sed -i '1d' {staged_file}"
         subprocess.check_call(cmd, shell=True)
         append_datafile_to_zipfile(
-            zipfile_archive_name=archive_name,
-            append_data_file=staged_file
+            zipfile_archive_name=archive_name, append_data_file=staged_file
         )
         os.remove(staged_file)
         file_ordinal += 1
-    logging.info(f"Compressed all {file_ordinal} files.")
-    with ZipFile(archive_name, "r") as src_zip:
-        listOfFileNames = src_zip.namelist()
-        for fileName in sorted(listOfFileNames):
-            truncate_table = (fileName[-19:] == f"{('0' * 15)}.csv")
-            logging.info("----------------------------------------------------------------------")
-            logging.info(f"Processing and Loading data file {fileName} with truncate {str(truncate_table)}")
-            logging.info("----------------------------------------------------------------------")
-            logging.info("")
-            process_source_file(
-                input_zip=archive_name,
-                fileName=fileName,
-                target_gcs_bucket=target_gcs_bucket,
-                target_gcs_path=destination_gcs_path,
-                project_id=project_id,
-                dataset_id=dataset_id,
-                table_id=table_id,
-                schema_path=schema_filepath,
-                truncate_table=truncate_table,
-                chunk_size=chunk_size
-            )
-    # TODO: Upload zipped file to GCS
-    import pdb; pdb.set_trace()
 
 
 def generate_load_batch_data_file(
     input_zip: str,
-    batch_load_filename: str,
     project_id: str,
     dataset_id: str,
     target_gcs_bucket: str,
     schema_path: str,
     table_id: str,
-    chunk_size: int
+    chunk_size: int,
 ) -> None:
     zip_path = os.path.dirname(input_zip)
     unzip_path = f"{zip_path}/{table_id}"
     batch_number = 1
-    # For every fileName in zipfile:
     with ZipFile(input_zip, "r") as src_zip:
         listOfFileNames = src_zip.namelist()
         for fileName in sorted(listOfFileNames):
-            # Unzip fileName
             unzip_fileName = f"{unzip_path}/{fileName}"
             cmd = f"unzip -p {input_zip} {fileName} > {unzip_fileName}"
             subprocess.run(cmd, shell=True)
-            # Evaluate batch file name
             batch_file = f"{unzip_path}/data_batch_{str(batch_number).zfill(15)}.csv"
             number_lines_batch_file = count_lines_file(batch_file)
             number_lines_data_file = count_lines_file(unzip_fileName)
-            # if (this is the last file in the zipfile)
-            # or ( wc-l batch_load_filename + wc -l fileName ) > chunk_size
-            if (fileName == listOfFileNames[-1:]) \
-                 or (number_lines_batch_file + number_lines_data_file >= chunk_size):
+            #  if (this is the last file in the zipfile)
+            #     or ( wc-l batch_load_filename + wc -l fileName ) > chunk_size
+            if (fileName == listOfFileNames[-1:]) or (
+                number_lines_batch_file + number_lines_data_file >= chunk_size
+            ):
                 append_file_to_batchfile(
                     batch_file=batch_file,
                     file_to_append=unzip_fileName,
-                    remove_file=True
+                    remove_file=True,
                 )
-                # load the data
                 load_source_file_to_bq(
                     target_file=batch_file,
                     target_gcs_bucket=target_gcs_bucket,
@@ -124,76 +130,42 @@ def generate_load_batch_data_file(
                     dataset_id=dataset_id,
                     table_id=table_id,
                     schema_path=schema_path,
-                    truncate_table=(
-                        (batch_number == 1)
-                    ),
+                    truncate_table=((batch_number == 1)),
                     field_delimiter=",",
                 )
-                # delete batch_load_filename
-                os.remove(batch_file)
+                if os.path.exists(batch_file):
+                    os.remove(batch_file)
                 batch_number += 1
+                logging.info(f"Processing batch #{batch_number}")
             else:
-                # append fileName to batch_load_filename
                 append_file_to_batchfile(
                     batch_file=batch_file,
                     file_to_append=unzip_fileName,
-                    remove_file=True
+                    remove_file=True,
                 )
 
 
-def count_lines_file(
-    input_file: str
-) -> int:
+def count_lines_file(input_file: str) -> int:
     cmd = f"wc -l {input_file}"
-    return int(str(subprocess.run(cmd, shell=True, capture_output=True, text=True).stdout).split("\n")[0].split(" ")[0])
+    returnval = (
+        str(subprocess.run(cmd, shell=True, capture_output=True, text=True).stdout)
+        .split("\n")[0]
+        .split(" ")[0]
+    )  # .strip()
+    if returnval == "":
+        return 0
+    else:
+        return int(returnval)
 
 
 def append_file_to_batchfile(
-    batch_file: str,
-    file_to_append: str,
-    remove_file: bool = True
+    batch_file: str, file_to_append: str, remove_file: bool = True
 ) -> None:
     cmd = f"cat {file_to_append} >> {batch_file}"
     subprocess.run(cmd, shell=True)
     if remove_file:
         os.remove(file_to_append)
 
-
-def process_source_file(
-    input_zip: str,
-    fileName: str,
-    target_gcs_bucket: str,
-    target_gcs_path: str,
-    project_id: str,
-    dataset_id: str,
-    table_id: str,
-    schema_path: str,
-    truncate_table: bool,
-    chunk_size: int,
-) -> None:
-    # logging.info(f"Processing data file {fileName}, extracting and splitting ...")
-    zip_path = os.path.dirname(input_zip)
-    unzip_path = f"{zip_path}/{table_id}"
-    pathlib.Path(unzip_path).mkdir(parents=True, exist_ok=True)
-    for p in pathlib.Path(unzip_path).glob("*.csv"):
-        p.unlink()
-    cmd = f"unzip -op {input_zip} {fileName} | split -l {chunk_size} --additional-suffix '.csv' -d --filter='cat > {unzip_path}/$FILE'"
-    subprocess.run(cmd, shell=True)
-    for extracted_chunk in sorted(pathlib.Path(unzip_path).glob("*.csv")):
-        # logging.info(f" ... File {zip_file}")
-        load_source_file_to_bq(
-            target_file=extracted_chunk,
-            target_gcs_bucket=target_gcs_bucket,
-            project_id=project_id,
-            dataset_id=dataset_id,
-            table_id=table_id,
-            schema_path=schema_path,
-            truncate_table=(
-                #True if ( os.path.basename(extracted_chunk) == "x00.csv" ) and (truncate_table) else False
-                ( os.path.basename(extracted_chunk) == "x00.csv" ) and (truncate_table)
-            ),
-            field_delimiter=",",
-        )
 
 def load_source_file_to_bq(
     target_file: str,
@@ -238,42 +210,16 @@ def gz_decompress(infile: str, tofile: str, delete_zipfile: bool = False) -> Non
         os.remove(infile)
 
 
-# def download_source_file(
-#     source_url: str,
-#     source_file: str
-# ) -> str:
-#     logging.info("Downloading most recent source file")
-#     src_url = source_url.replace(
-#         "_MM", f"_{str(datetime.datetime.now().strftime('%B'))}"
-#     ).replace("_YYYY", f"_{str(datetime.datetime.now().strftime('%Y'))}")
-#     src_zip_file = f"{os.path.dirname(source_file)}/{os.path.basename(src_url)}"
-#     if not download_file(src_url, src_zip_file):
-#         logging.info(f" ... file {src_url} is unavailable")
-#         one_month_ago = datetime.date.today() - relativedelta(months=1)
-#         src_url = source_url.replace("_MM", f"_{one_month_ago.strftime('%B')}").replace(
-#             "_YYYY", f"_{one_month_ago.strftime('%Y')}"
-#         )
-#         logging.info(f" ... attempting to download file {src_url} instead ...")
-#         src_zip_file = f"{os.path.dirname(source_file)}/{os.path.basename(src_url)}"
-#         download_file(src_url, src_zip_file)
-#     if src_zip_file:
-#         logging.info(f" ... file {src_url} download complete")
-#     return src_zip_file
-
-
 def append_datafile_to_zipfile(
-    zipfile_archive_name: str,
-    append_data_file: str
+    zipfile_archive_name: str, append_data_file: str
 ) -> None:
-    with zipfile.ZipFile(zipfile_archive_name, 'a', zipfile.ZIP_DEFLATED) as my_zip:
+    with zipfile.ZipFile(zipfile_archive_name, "a", zipfile.ZIP_DEFLATED) as my_zip:
         # zipped_file.write(data_file.readlines())
         my_zip.write(append_data_file, os.path.basename(append_data_file))
 
 
 def fetch_gcs_file_names(
-    source_gcs_key,
-    source_gcs_path,
-    gcs_bucket
+    source_gcs_key, source_gcs_path, gcs_bucket
 ) -> typing.List[str]:
     source_file_names = []
     client = storage.Client()
@@ -290,115 +236,11 @@ def fetch_gcs_file_names(
     return source_file_names
 
 
-# def rectify_header_names(
-#     schema_fields: typing.List[str]
-# ) -> typing.List[str]:
-#     bq_fields = []
-#     for i in list(schema_fields):
-#         i = i.lower()
-#         if ord(i[0]) < 97 or ord(i[0]) > 122 or i[0].isdigit():
-#             i = "_" + i
-#         char = list(i)
-#         for j in char:
-#             if (
-#                 ord(j) < 97 or ord(j) > 122
-#             ):  # anything other than alphabets, digits and underscore
-#                 if not j.isdigit():
-#                     if j != "_":
-#                         i = i.replace(j, "_")
-#         bq_fields.append(i)
-#     return bq_fields
-
-
-def execute_pipeline(
-    download_path: str,
-    source_gcs_path: str,
-    gcs_bucket: str,
-    pipeline_name: str,
-    final_df: pd.DataFrame
-) -> pd.DataFrame:
-    logging.info(f"ETL started for {pipeline_name}")
-    pipeline_name = download_file_gcs(
-        download_path=download_path,
-        source_gcs_path=source_gcs_path,
-        gcs_bucket=gcs_bucket,
-        pipeline_name=pipeline_name
-    )
-    if check_file(download_path, pipeline_name):
-        final_df = transform_file(download_path, pipeline_name, final_df)
-    else:
-        logging.info(f"File {pipeline_name} empty/corrupted")
-    return final_df
-
-
-def check_file(download_path, pipeline_name):
-    logging.info("Check for empty file")
-    with open(download_path + pipeline_name) as f:
-        return f.read()
-
-
-def transform_file(
-    download_path: str,
-    pipeline_name: str,
-    final_df: pd.DataFrame
-) -> pd.DataFrame:
-    if not len(final_df):
-        logging.info("Framing the target dataframe")
-        final_df = pd.read_csv(download_path + pipeline_name)
-    else:
-        df = pd.read_csv(download_path + pipeline_name)
-        logging.info("Concatenating")
-        final_df = pd.concat([final_df, df], axis=0)
-        del df  # saving memory
-    logging.info("Removing the file once loaded in df")
-    os.remove(download_path + pipeline_name)
-    return final_df
-
-
-def save_to_file(
-    df: pd.DataFrame,
-    download_path: str
-):
-    filename_ = "final_output.csv"
-    filepath = download_path + filename_
-    df.to_csv(filepath, index=False)
-    return filepath, filename_
-
-
-def prepare_schema_dict(
-    table_id: str,
-    schema_fields: typing.List[str],
-    schema_dict: dict
-) -> dict:
-    schema_dict[table_id] = []
-    for i in schema_fields:
-        schema_dict[table_id].append({"name": i, "type": "STRING", "mode": "NULLABLE"})
-    return schema_dict
-
-
-def prepare_upload_schema_file(
-    download_path: str,
-    gcs_bucket: str,
-    destination_gcs_path: str,
-    schema_filepath: str,
-    schema_dict: dict
-) -> None:
-    logging.info("Preparing schema file")
-    with open(download_path + schema_filepath, "w") as file:
-        json.dump(schema_dict, file)
-    logging.info("Uploading schema file to GCS")
-    client = storage.Client()
-    bucket = client.bucket(gcs_bucket)
-    destination_gcs_path = destination_gcs_path
-    blob = bucket.blob(destination_gcs_path + schema_filepath)
-    blob.upload_from_filename(download_path + schema_filepath)
-
-
 def download_file_gcs(
     project_id: str,
     source_location: str,
     destination_folder: str,
-    filename_override: str = ""
+    filename_override: str = "",
 ) -> None:
     object_name = os.path.basename(source_location)
     if filename_override == "":
@@ -422,7 +264,6 @@ def create_dest_table(
     drop_table: bool = False,
 ) -> bool:
     table_ref = f"{project_id}.{dataset_id}.{table_id}"
-    logging.info(f"Attempting to create table {table_ref} if it doesn't already exist")
     client = bigquery.Client()
     table_exists = False
     try:
@@ -436,11 +277,6 @@ def create_dest_table(
     except NotFound:
         table = None
     if not table:
-        logging.info(
-            (
-                f"Table {table_ref} currently does not exist.  Attempting to create table."
-            )
-        )
         if check_gcs_file_exists(schema_filepath, bucket_name):
             schema = create_table_schema([], bucket_name, schema_filepath)
             table = bigquery.Table(table_ref, schema=schema)
@@ -494,19 +330,6 @@ def create_table_schema(
     return schema
 
 
-# def upload_transformed_file(
-#     destination_gcs_path: str,
-#     gcs_bucket: str,
-#     filepath: str,
-#     filename: str
-# ) -> None:
-#     logging.info("Uploading file to GCS")
-#     client = storage.Client()
-#     bucket = client.bucket(gcs_bucket)
-#     blob = bucket.blob(destination_gcs_path + filename)
-#     blob.upload_from_filename(filepath)
-
-
 def load_data_to_bq(
     project_id: str,
     dataset_id: str,
@@ -527,14 +350,10 @@ def load_data_to_bq(
         job_config.write_disposition = "WRITE_TRUNCATE"
     else:
         job_config.write_disposition = "WRITE_APPEND"
-    # job_config.skip_leading_rows = 1  # ignore the header
     job_config.autodetect = False
     with open(file_path, "rb") as source_file:
         job = client.load_table_from_file(source_file, table_ref, job_config=job_config)
     job.result()
-    logging.info(
-        f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} completed"
-    )
 
 
 def upload_file_to_gcs(
