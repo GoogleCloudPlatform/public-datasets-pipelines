@@ -109,7 +109,7 @@ def generate_load_batch_data_file(
     batch_number = 1
     with ZipFile(input_zip, "r") as src_zip:
         listOfFileNames = src_zip.namelist()
-        lastFileName = str(''.join(sorted(listOfFileNames)[-1:])).strip()
+        lastFileName = str("".join(sorted(listOfFileNames)[-1:])).strip()
         for fileName in sorted(listOfFileNames):
             unzip_fileName = f"{unzip_path}/{fileName}"
             cmd = f"unzip -p {input_zip} {fileName} > {unzip_fileName}"
@@ -140,7 +140,7 @@ def generate_load_batch_data_file(
                 if os.path.exists(batch_file):
                     os.remove(batch_file)
                 batch_number += 1
-                if (fileName != lastFileName):
+                if fileName != lastFileName:
                     logging.info(f"Processing batch #{batch_number}")
             else:
                 append_file_to_batchfile(
@@ -170,7 +170,9 @@ def append_file_to_batchfile(
     subprocess.run(cmd, shell=True)
     number_lines_batch_file = count_lines_file(batch_file)
     number_lines_data_file = count_lines_file(file_to_append)
-    logging.info(f" ... Appended file { os.path.basename(file_to_append) } ( {number_lines_data_file} rows ) to batch file { os.path.basename(batch_file) } ( {number_lines_batch_file} rows )")
+    logging.info(
+        f" ... Appended file { os.path.basename(file_to_append) } ( {number_lines_data_file} rows ) to batch file { os.path.basename(batch_file) } ( {number_lines_batch_file} rows )"
+    )
     if remove_file:
         os.remove(file_to_append)
 
@@ -187,7 +189,9 @@ def load_source_file_to_bq(
 ):
     if os.path.exists(target_file):
         number_lines_batch_file = count_lines_file(target_file)
-        logging.info(f"Loading batch file {target_file} into table {table_id} with {number_lines_batch_file} rows. truncate table: { str(truncate_table) }")
+        logging.info(
+            f"Loading batch file {target_file} into table {table_id} with {number_lines_batch_file} rows. truncate table: { str(truncate_table) }"
+        )
         table_exists = create_dest_table(
             project_id=project_id,
             dataset_id=dataset_id,
