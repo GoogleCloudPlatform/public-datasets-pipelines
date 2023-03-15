@@ -27,8 +27,11 @@ def main(
 ) -> None:
     archive_name = f"{download_path}/data_{table_id}.zip"
     zip_path = os.path.dirname(archive_name)
-    unzip_path = f"{zip_path}/{table_id}"
-    shutil.rmtree(unzip_path)
+    unzip_path = f"{zip_path}{table_id}"
+    logging.info(f"zip_path = {zip_path}, unzip_path = {unzip_path}")
+    logging.info(f"Removing folder {unzip_path} if it exists")
+    shutil.rmtree(unzip_path, ignore_errors=True)
+    logging.info(f"Creating folder {unzip_path}")
     pathlib.Path(unzip_path).mkdir(parents=True, exist_ok=True)
     logging.info(f"Creating archive {archive_name}")
     with ZipFile(archive_name, "w"):

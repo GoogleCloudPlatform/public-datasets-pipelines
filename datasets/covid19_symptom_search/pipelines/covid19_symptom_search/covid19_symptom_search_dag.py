@@ -222,14 +222,11 @@ with DAG(
         },
     )
 
-    (
-        sts
-        >> [
-            symptom_search_country_daily,
-            symptom_search_country_weekly,
-            symptom_search_sub_region_1_daily,
-            symptom_search_sub_region_1_weekly,
-            symptom_search_sub_region_2_weekly,
-        ]
-        >> symptom_search_sub_region_2_daily
-    )
+    sts >> [
+        symptom_search_country_daily,
+        symptom_search_country_weekly,
+        symptom_search_sub_region_1_daily,
+        symptom_search_sub_region_1_weekly,
+        symptom_search_sub_region_2_weekly,
+        symptom_search_sub_region_2_daily,
+    ]
