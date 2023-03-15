@@ -64,7 +64,7 @@ with DAG(
         image_pull_policy="Always",
         image="{{ var.json.covid19_symptom_search.container_registry.run_csv_transform_kub }}",
         env_vars={
-            "DOWNLOAD_PATH": "",
+            "DOWNLOAD_PATH": "/symptom_search_country_daily",
             "SOURCE_GCS_KEY": '["country", "daily"]',
             "SOURCE_GCS_PATH": "data/covid19_symptom_search/ssd_i18n_expansion/",
             "DESTINATION_GCS_PATH": "data/covid19_symptom_search/symptom_search_country_daily/",
@@ -92,7 +92,7 @@ with DAG(
         image_pull_policy="Always",
         image="{{ var.json.covid19_symptom_search.container_registry.run_csv_transform_kub }}",
         env_vars={
-            "DOWNLOAD_PATH": "",
+            "DOWNLOAD_PATH": "/symptom_search_country_weekly",
             "SOURCE_GCS_KEY": '["country", "weekly"]',
             "SOURCE_GCS_PATH": "data/covid19_symptom_search/ssd_i18n_expansion/",
             "DESTINATION_GCS_PATH": "data/covid19_symptom_search/symptom_search_country_weekly/",
@@ -120,7 +120,7 @@ with DAG(
         image_pull_policy="Always",
         image="{{ var.json.covid19_symptom_search.container_registry.run_csv_transform_kub }}",
         env_vars={
-            "DOWNLOAD_PATH": "",
+            "DOWNLOAD_PATH": "/symptom_search_sub_region_1_daily",
             "SOURCE_GCS_KEY": '["sub_region_1", "daily"]',
             "SOURCE_GCS_PATH": "data/covid19_symptom_search/ssd_i18n_expansion/",
             "DESTINATION_GCS_PATH": "data/covid19_symptom_search/symptom_search_sub_region_1_daily/",
@@ -148,7 +148,7 @@ with DAG(
         image_pull_policy="Always",
         image="{{ var.json.covid19_symptom_search.container_registry.run_csv_transform_kub }}",
         env_vars={
-            "DOWNLOAD_PATH": "",
+            "DOWNLOAD_PATH": "/symptom_search_sub_region_1_weekly",
             "SOURCE_GCS_KEY": '["sub_region_1", "weekly"]',
             "SOURCE_GCS_PATH": "data/covid19_symptom_search/ssd_i18n_expansion/",
             "DESTINATION_GCS_PATH": "data/covid19_symptom_search/symptom_search_sub_region_1_weekly/",
@@ -176,7 +176,7 @@ with DAG(
         image_pull_policy="Always",
         image="{{ var.json.covid19_symptom_search.container_registry.run_csv_transform_kub }}",
         env_vars={
-            "DOWNLOAD_PATH": "",
+            "DOWNLOAD_PATH": "/symptom_search_sub_region_2_daily",
             "SOURCE_GCS_KEY": '["sub_region_2", "daily"]',
             "SOURCE_GCS_PATH": "data/covid19_symptom_search/ssd_i18n_expansion/",
             "DESTINATION_GCS_PATH": "data/covid19_symptom_search/symptom_search_sub_region_2_daily/",
@@ -204,7 +204,7 @@ with DAG(
         image_pull_policy="Always",
         image="{{ var.json.covid19_symptom_search.container_registry.run_csv_transform_kub }}",
         env_vars={
-            "DOWNLOAD_PATH": "",
+            "DOWNLOAD_PATH": "/symptom_search_sub_region_2_weekly",
             "SOURCE_GCS_KEY": '["sub_region_2", "weekly"]',
             "SOURCE_GCS_PATH": "data/covid19_symptom_search/ssd_i18n_expansion/",
             "DESTINATION_GCS_PATH": "data/covid19_symptom_search/symptom_search_sub_region_2_weekly/",

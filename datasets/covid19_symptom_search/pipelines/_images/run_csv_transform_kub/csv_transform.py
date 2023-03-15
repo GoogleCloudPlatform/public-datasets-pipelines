@@ -27,7 +27,7 @@ def main(
 ) -> None:
     archive_name = f"{download_path}/data_{table_id}.zip"
     zip_path = os.path.dirname(archive_name)
-    unzip_path = f"{zip_path}{table_id}"
+    unzip_path = f"{zip_path}/{table_id}"
     logging.info(f"zip_path = {zip_path}, unzip_path = {unzip_path}")
     logging.info(f"Removing folder {unzip_path} if it exists")
     shutil.rmtree(unzip_path, ignore_errors=True)
@@ -109,6 +109,7 @@ def generate_load_batch_data_file(
     batch_number = 1
     with ZipFile(input_zip, "r") as src_zip:
         listOfFileNames = src_zip.namelist()
+        lastFileName = str(''.join(sorted(listOfFileNames)[-1:])).strip()
         for fileName in sorted(listOfFileNames):
             unzip_fileName = f"{unzip_path}/{fileName}"
             cmd = f"unzip -p {input_zip} {fileName} > {unzip_fileName}"
@@ -118,7 +119,7 @@ def generate_load_batch_data_file(
             number_lines_data_file = count_lines_file(unzip_fileName)
             #  if (this is the last file in the zipfile)
             #     or ( wc-l batch_load_filename + wc -l fileName ) > chunk_size
-            if (fileName == listOfFileNames[-1:]) or (
+            if (fileName == lastFileName) or (
                 number_lines_batch_file + number_lines_data_file >= chunk_size
             ):
                 append_file_to_batchfile(
@@ -139,7 +140,8 @@ def generate_load_batch_data_file(
                 if os.path.exists(batch_file):
                     os.remove(batch_file)
                 batch_number += 1
-                logging.info(f"Processing batch #{batch_number}")
+                if (fileName != lastFileName):
+                    logging.info(f"Processing batch #{batch_number}")
             else:
                 append_file_to_batchfile(
                     batch_file=batch_file,
@@ -166,6 +168,9 @@ def append_file_to_batchfile(
 ) -> None:
     cmd = f"cat {file_to_append} >> {batch_file}"
     subprocess.run(cmd, shell=True)
+    number_lines_batch_file = count_lines_file(batch_file)
+    number_lines_data_file = count_lines_file(file_to_append)
+    logging.info(f" ... Appended file { os.path.basename(file_to_append) } ( {number_lines_data_file} rows ) to batch file { os.path.basename(batch_file) } ( {number_lines_batch_file} rows )")
     if remove_file:
         os.remove(file_to_append)
 
@@ -181,6 +186,8 @@ def load_source_file_to_bq(
     field_delimiter: str,
 ):
     if os.path.exists(target_file):
+        number_lines_batch_file = count_lines_file(target_file)
+        logging.info(f"Loading batch file {target_file} into table {table_id} with {number_lines_batch_file} rows. truncate table: { str(truncate_table) }")
         table_exists = create_dest_table(
             project_id=project_id,
             dataset_id=dataset_id,
@@ -217,7 +224,6 @@ def append_datafile_to_zipfile(
     zipfile_archive_name: str, append_data_file: str
 ) -> None:
     with zipfile.ZipFile(zipfile_archive_name, "a", zipfile.ZIP_DEFLATED) as my_zip:
-        # zipped_file.write(data_file.readlines())
         my_zip.write(append_data_file, os.path.basename(append_data_file))
 
 
