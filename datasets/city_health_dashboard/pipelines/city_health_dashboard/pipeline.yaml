@@ -130,7 +130,7 @@ dag:
             }
           TABLE_DESCRIPTION: "City Health Dashboard Data Tract"
           PIPELINE_NAME: "chdb_data_city_all"
-          FILE_NAME_PREFIX: "CHDB_data_city_all_v15.1"
+          FILE_NAME_PREFIX: "CHDB_data_city_all_*.*"
         resources:
           request_memory: "4G"
           request_cpu: "1"
@@ -229,7 +229,7 @@ dag:
             }
           TABLE_DESCRIPTION: "City Health Dashboard Data Tract"
           PIPELINE_NAME: "chdb_data_tract_all"
-          FILE_NAME_PREFIX: "CHDB_data_tract_all_v15.1"
+          FILE_NAME_PREFIX: "CHDB_data_tract_all_*.*"
         resources:
           request_memory: "4G"
           request_cpu: "1"
