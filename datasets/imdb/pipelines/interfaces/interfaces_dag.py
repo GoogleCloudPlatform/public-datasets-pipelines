@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -53,7 +53,11 @@ with DAG(
             "CSV_HEADERS": '["nconst", "primary_name", "birth_year", "death_year", "primary_profession", "known_for_titles"]',
             "RENAME_MAPPINGS": '{"nconst": "nconst", "primaryName": "primary_name", "birthYear": "birth_year", "deathYear": "death_year",\n "primaryProfession": "primary_profession", "knownForTitles": "known_for_titles"}',
         },
-        resources={"request_memory": "4G", "request_cpu": "1"},
+        resources={
+            "request_ephemeral_storage": "10G",
+            "request_memory": "12G",
+            "request_cpu": "1",
+        },
     )
 
     # Task to load CSV data to a BigQuery table
@@ -127,9 +131,9 @@ with DAG(
             "RENAME_MAPPINGS": '{"titleId": "title_id", "ordering": "ordering", "title": "title", "region": "region", "language": "language", "types": "types", "attributes": "attributes", "isOriginalTitle": "is_original_title"}',
         },
         resources={
-            "request_memory": "8G",
-            "request_cpu": "3",
             "request_ephemeral_storage": "10G",
+            "request_memory": "12G",
+            "request_cpu": "3",
         },
     )
 
@@ -214,7 +218,11 @@ with DAG(
             "CSV_HEADERS": '["tconst", "title_type", "primary_title", "original_title", "is_adult", "start_year", "end_year", "runtime_minutes", "genres"]',
             "RENAME_MAPPINGS": '{"tconst": "tconst", "titleType": "title_type", "primaryTitle": "primary_title", "originalTitle": "original_title",\n "isAdult": "is_adult", "startYear": "start_year", "endYear": "end_year", "runtimeMinutes": "runtime_minutes", "genres": "genres"}',
         },
-        resources={"request_memory": "4G", "request_cpu": "1"},
+        resources={
+            "request_ephemeral_storage": "10G",
+            "request_memory": "12G",
+            "request_cpu": "1",
+        },
     )
 
     # Task to load CSV data to a BigQuery table
@@ -304,7 +312,11 @@ with DAG(
             "CSV_HEADERS": '["tconst", "directors", "writers"]',
             "RENAME_MAPPINGS": '{"tconst": "tconst", "directors": "directors", "writers": "writers"}',
         },
-        resources={"request_memory": "4G", "request_cpu": "1"},
+        resources={
+            "request_ephemeral_storage": "10G",
+            "request_memory": "12G",
+            "request_cpu": "1",
+        },
     )
 
     # Task to load CSV data to a BigQuery table
@@ -358,7 +370,11 @@ with DAG(
             "CSV_HEADERS": '["tconst", "parent_tconst", "season_number", "episode_number"]',
             "RENAME_MAPPINGS": '{"tconst": "tconst", "parentTconst": "parent_tconst", "seasonNumber": "season_number", "episodeNumber": "episode_number"}',
         },
-        resources={"request_memory": "4G", "request_cpu": "1"},
+        resources={
+            "request_ephemeral_storage": "10G",
+            "request_memory": "12G",
+            "request_cpu": "1",
+        },
     )
 
     # Task to load CSV data to a BigQuery table
@@ -420,9 +436,9 @@ with DAG(
             "RENAME_MAPPINGS": '{"tconst": "tconst", "ordering": "ordering", "nconst": "nconst", "category": "category",\n "job": "job", "characters": "characters"}',
         },
         resources={
-            "request_memory": "8G",
-            "request_cpu": "3",
             "request_ephemeral_storage": "10G",
+            "request_memory": "12G",
+            "request_cpu": "3",
         },
     )
 
@@ -495,7 +511,11 @@ with DAG(
             "CSV_HEADERS": '["tconst", "average_rating", "num_votes"]',
             "RENAME_MAPPINGS": '{"tconst": "tconst", "averageRating": "average_rating", "numVotes": "num_votes"}',
         },
-        resources={"request_memory": "4G", "request_cpu": "1"},
+        resources={
+            "request_ephemeral_storage": "10G",
+            "request_memory": "12G",
+            "request_cpu": "1",
+        },
     )
 
     # Task to load CSV data to a BigQuery table
