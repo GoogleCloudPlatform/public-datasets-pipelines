@@ -34,26 +34,6 @@ dag:
     default_view: graph
 
   tasks:
-    - operator: "BashOperator"
-      description: "Task to copy `uniref50.fasta` to gcs"
-      args:
-        task_id: "download_zip_file"
-        bash_command: |
-          mkdir -p $data_dir/uniref
-          curl -o $data_dir/uniref/uniref50.fasta.gz -L $uniref50
-          gunzip $data_dir/uniref/uniref50.fasta.gz
-          awk 'BEGIN {n_seq=0;} /^>/ {if(n_seq%10000000==0){file=sprintf("/home/airflow/gcs/data/uniref50/uniref/myseq%d.fa",n_seq);}
-          print >> file; n_seq++; next;} { print >> file; }' < $data_dir/uniref/uniref50.fasta
-          awk 'BEGIN {n_seq=0;} /^>/ {if(n_seq%3500000==0){file=sprintf("/home/airflow/gcs/data/uniref50/uniref/myseq_1%d.fa",n_seq);}
-          print >> file; n_seq++; next;} { print >> file; }' < $data_dir/uniref/myseq0.fa
-          rm $data_dir/uniref/uniref50.fasta.gz
-          rm $data_dir/uniref/uniref50.fasta
-          rm $data_dir/uniref/myseq0.fa
-
-        env:
-          data_dir: /home/airflow/gcs/data/uniref50
-          uniref50: https://ftp.uniprot.org/pub/databases/uniprot/uniref/uniref50/uniref50.fasta.gz
-
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
@@ -77,9 +57,12 @@ dag:
           DATASET_ID: "uniref50"
           TABLE_ID: "uniref50"
           SCHEMA_PATH: "data/uniref50/uniref50_schema.json"
-          CHUNKSIZE: "100000"
+          CHUNKSIZE: "50000"
         resources:
           request_ephemeral_storage: "10G"
+          request_memory: "12G"
+          request_cpu: "1"
+
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
@@ -145,9 +128,11 @@ dag:
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "uniref50"
           SCHEMA_PATH: "data/uniref50/uniref50_schema.json"
-          CHUNKSIZE: "100000"
+          CHUNKSIZE: "50000"
         resources:
           request_ephemeral_storage: "10G"
+          request_memory: "12G"
+          request_cpu: "1"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
@@ -213,9 +198,12 @@ dag:
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "uniref50"
           SCHEMA_PATH: "data/uniref50/uniref50_schema.json"
-          CHUNKSIZE: "100000"
+          CHUNKSIZE: "50000"
         resources:
           request_ephemeral_storage: "10G"
+          request_memory: "12G"
+          request_cpu: "1"
+
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
@@ -281,9 +269,12 @@ dag:
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "uniref50"
           SCHEMA_PATH: "data/uniref50/uniref50_schema.json"
-          CHUNKSIZE: "100000"
+          CHUNKSIZE: "50000"
         resources:
           request_ephemeral_storage: "10G"
+          request_memory: "12G"
+          request_cpu: "1"
+
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
@@ -349,9 +340,12 @@ dag:
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "uniref50"
           SCHEMA_PATH: "data/uniref50/uniref50_schema.json"
-          CHUNKSIZE: "100000"
+          CHUNKSIZE: "50000"
         resources:
           request_ephemeral_storage: "10G"
+          request_memory: "12G"
+          request_cpu: "1"
+
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
@@ -417,9 +411,12 @@ dag:
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "uniref50"
           SCHEMA_PATH: "data/uniref50/uniref50_schema.json"
-          CHUNKSIZE: "100000"
+          CHUNKSIZE: "50000"
         resources:
           request_ephemeral_storage: "10G"
+          request_memory: "12G"
+          request_cpu: "1"
+
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
@@ -485,9 +482,11 @@ dag:
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "uniref50"
           SCHEMA_PATH: "data/uniref50/uniref50_schema.json"
-          CHUNKSIZE: "100000"
+          CHUNKSIZE: "50000"
         resources:
           request_ephemeral_storage: "10G"
+          request_memory: "12G"
+          request_cpu: "1"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
@@ -553,9 +552,11 @@ dag:
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "uniref50"
           SCHEMA_PATH: "data/uniref50/uniref50_schema.json"
-          CHUNKSIZE: "100000"
+          CHUNKSIZE: "50000"
         resources:
           request_ephemeral_storage: "10G"
+          request_memory: "12G"
+          request_cpu: "1"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
@@ -598,4 +599,4 @@ dag:
             description: ""
             mode: "NULLABLE"
   graph_paths:
-    - "download_zip_file >> [ uniref50_transform_csv_1, uniref50_transform_csv_2, uniref50_transform_csv_3, uniref50_transform_csv_4, uniref50_transform_csv_5, uniref50_transform_csv_6, uniref50_transform_csv_7, uniref50_transform_csv_8 ] >> load_uniref50_to_bq_1 >> load_uniref50_to_bq_2 >> load_uniref50_to_bq_3 >> load_uniref50_to_bq_4 >> load_uniref50_to_bq_5 >> load_uniref50_to_bq_6 >> load_uniref50_to_bq_7 >> load_uniref50_to_bq_8 "
+    - uniref50_transform_csv_1 >> uniref50_transform_csv_2 >> uniref50_transform_csv_3 >> uniref50_transform_csv_4 >> uniref50_transform_csv_5 >> uniref50_transform_csv_6 >> uniref50_transform_csv_7 >> uniref50_transform_csv_8 >> load_uniref50_to_bq_1 >> load_uniref50_to_bq_2 >> load_uniref50_to_bq_3 >> load_uniref50_to_bq_4 >> load_uniref50_to_bq_5 >> load_uniref50_to_bq_6 >> load_uniref50_to_bq_7 >> load_uniref50_to_bq_8

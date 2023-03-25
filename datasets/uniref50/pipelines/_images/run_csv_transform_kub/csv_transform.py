@@ -18,7 +18,7 @@ import logging
 import os
 import pathlib
 
-from Bio import SeqIO
+# from Bio import SeqIO
 from google.api_core.exceptions import NotFound
 from google.cloud import bigquery, storage
 
@@ -39,179 +39,8 @@ def main(
     target_gcs_path: str,
 ) -> None:
     logging.info(f"{pipeline_name} process started")
-    pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
-    execute_pipeline(
-        source_gcs_bucket=source_gcs_bucket,
-        source_gcs_object=source_gcs_object,
-        source_file=source_file,
-        batch_file=batch_file,
-        target_file=target_file,
-        project_id=project_id,
-        dataset_id=dataset_id,
-        destination_table=table_id,
-        schema_path=schema_path,
-        chunksize=chunksize,
-        target_gcs_bucket=target_gcs_bucket,
-        target_gcs_path=target_gcs_path,
-    )
+    os.system('ls /home/airflow/gcs/data/uniref50/*', shell=True)
     logging.info(f"{pipeline_name} process completed")
-
-
-def execute_pipeline(
-    source_gcs_bucket: str,
-    source_gcs_object: str,
-    source_file: pathlib.Path,
-    batch_file: str,
-    target_file: pathlib.Path,
-    project_id: str,
-    dataset_id: str,
-    destination_table: str,
-    schema_path: str,
-    chunksize: str,
-    target_gcs_bucket: str,
-    target_gcs_path: str,
-) -> None:
-    download_blob(source_gcs_bucket, source_gcs_object, source_file)
-    process_source_file(
-        source_file=source_file,
-        batch_file=batch_file,
-        target_file=target_file,
-        chunksize=chunksize,
-    )
-    if os.path.exists(target_file):
-        upload_file_to_gcs(
-            file_path=target_file,
-            target_gcs_bucket=target_gcs_bucket,
-            target_gcs_path=target_gcs_path,
-        )
-        table_exists = create_dest_table(
-            project_id=project_id,
-            dataset_id=dataset_id,
-            table_id=destination_table,
-            schema_filepath=schema_path,
-            bucket_name=target_gcs_bucket,
-        )
-        if table_exists:
-            load_data_to_bq(
-                project_id=project_id,
-                dataset_id=dataset_id,
-                table_id=destination_table,
-                file_path=target_file,
-                truncate_table=False,
-                field_delimiter=",",
-            )
-        else:
-            error_msg = f"Error: Data was not loaded because the destination table {project_id}.{dataset_id}.{destination_table} does not exist and/or could not be created."
-            raise ValueError(error_msg)
-    else:
-        logging.info(
-            f"Informational: The data file {target_file} was not generated because no data file was available.  Continuing."
-        )
-
-
-def download_blob(source_gcs_bucket: str, source_gcs_object: str, source_file: str):
-    """Downloads a blob from the bucket."""
-    logging.info(
-        f"Downloading data from gs://{source_gcs_bucket}/{source_gcs_object} to {source_file} ..."
-    )
-    storage_client = storage.Client()
-    bucket = storage_client.bucket(source_gcs_bucket)
-    blob = bucket.blob(source_gcs_object)
-    blob.download_to_filename(source_file)
-    logging.info("Downloading Completed.")
-
-
-def process_source_file(
-    source_file: str,
-    batch_file: str,
-    target_file: str,
-    chunksize: str,
-) -> None:
-    logging.info(f"Opening source file {source_file}")
-    csv.field_size_limit(512 << 10)
-    csv.register_dialect("TabDialect", quotechar='"', delimiter=",", strict=True)
-    append_header_data(
-        batch_file,
-        headers_list=[
-            "ClusterID",
-            "RepID",
-            "TaxID",
-            "Sequence",
-            "ClusterName",
-            "Organism",
-            "Size",
-        ],
-    )
-    fasta_sequences = SeqIO.parse(open(source_file), "fasta")
-    logging.info(f"Finished opening source file {source_file}")
-    row_position = 0
-    for fasta in fasta_sequences:
-        description, sequence = str(fasta.description), str(fasta.seq)
-        description_list = description.split(" ")
-        row_list = []
-        string = ""
-        append_row_list(description_list, sequence, row_list)
-        description_list = [" {0}".format(elem) for elem in description_list]
-        iteration_list = iter(description_list[1:])
-        iteration_string = ""
-        for item in description_list:
-            try:
-                iteration_string = next(iteration_list)
-                if " n=" in iteration_string:
-                    string = string + item
-                    row_list.append(string.lstrip())
-                    string = ""
-                elif " n=" in item:
-                    string = string + item
-                    row_list.append(string.lstrip()[2:])
-                    string = ""
-                else:
-                    string = string + item
-            except StopIteration:
-                string = string + item
-                row_list.append(string.lstrip()[4:])
-
-        write_batch_file(batch_file, row_list)
-        row_position = row_position + 1
-        if row_position % int(chunksize) == 0 and row_position > 0:
-            process_chunk(
-                batch_file=batch_file,
-                target_file=target_file,
-            )
-            row_position = 0
-
-    if row_position != 0:
-        process_chunk(
-            batch_file=batch_file,
-            target_file=target_file,
-        )
-
-
-def append_row_list(description_list: list, sequence: str, row_list: list) -> None:
-    row_list.append(description_list.pop(0))
-    row_list.append(description_list.pop()[6:])
-    row_list.append(description_list.pop()[6:])
-    row_list.append(str(sequence))
-    return row_list
-
-
-def write_batch_file(batch_file: str, row_list: list) -> None:
-    with open(
-        batch_file,
-        "a",
-    ) as rowobj:
-        row_append = csv.writer(rowobj)
-        row_append.writerow(row_list)
-
-
-def process_chunk(
-    batch_file: str,
-    target_file: str,
-) -> None:
-    logging.info("Processing batch file")
-    target_file_batch = batch_file
-    append_batch_file(target_file_batch, target_file)
-    logging.info(f"Processing batch file {target_file_batch} completed")
 
 
 def load_data_to_bq(
@@ -242,12 +71,6 @@ def load_data_to_bq(
     logging.info(
         f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} completed"
     )
-
-
-def append_header_data(batch_file: str, headers_list: list) -> None:
-    with open(batch_file, "w") as headerobj:
-        header_write = csv.writer(headerobj)
-        header_write.writerow(headers_list)
 
 
 def create_dest_table(
@@ -325,18 +148,6 @@ def create_table_schema(
             )
         )
     return schema
-
-
-def append_batch_file(target_file_batch: str, target_file: str) -> None:
-
-    with open(target_file_batch, "r") as data_file:
-        with open(target_file, "a+") as _target_file:
-            logging.info(f"Appending batch file {target_file_batch} to {target_file}")
-            logging.info(f"Size of target file is {os.path.getsize(target_file_batch)}")
-            logging.info(f"Size of target file is {os.path.getsize(target_file)}")
-            _target_file.write(data_file.read())
-            if os.path.exists(target_file_batch):
-                os.remove(target_file_batch)
 
 
 def upload_file_to_gcs(

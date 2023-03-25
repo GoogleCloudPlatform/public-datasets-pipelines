@@ -1,0 +1,51 @@
+# Copyright 2022 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
+resources:
+
+  - type: bigquery_table
+    table_id: uniref50
+    description: "The Uniref Dataset"
+
+dag:
+  airflow_version: 2
+  initialize:
+    dag_id: uniref50_download_source
+    default_args:
+      owner: "Google"
+      depends_on_past: False
+      start_date: '2022-06-10'
+    max_active_runs: 1
+    schedule_interval: "@once"
+    catchup: False
+    default_view: graph
+
+  tasks:
+    - operator: "BashOperator"
+      description: "Task to copy `uniref50.fasta` to gcs"
+      args:
+        task_id: "download_zip_file"
+        bash_command: |
+          mkdir -p $data_dir/uniref
+          curl -o $data_dir/uniref/uniref50.fasta.gz -L $uniref50
+          gunzip -c $data_dir/uniref/uniref50.fasta.gz |sed 's/:>/|/g' |sed 's/ TaxID=/|Size=/g' |sed 's/>\(UniRef50_[^[:space:]]*[[:space:]]\)/ClusterID=\1|TaxID=/;s/ |/|/' |sed 's/ RepID=/|ClusterName=/g' |sed 's/ Tax=/|Sequence=/g' |sed 's/ n=/|RepID=/g' |sed 's/ClusterID=//g' |sed 's/TaxID=//g' |sed 's/RepID=//g' |sed 's/Sequence=//g' |sed 's/Size=//g' |sed 's/ClusterName=//g' |sed '/^UniRef50_/ s/$/|ENDOFHEADERROW/' |sed '/|ENDOFHEADERROW/! s/$/-/' |perl -p -e 's/-\n/-/g' |sed 's/\-UniRef/-\nUniRef/g' |perl -p -e 's/\|ENDOFHEADERROW\n/|/g' |sed 's/-$//g' | split -a 3 -d -l 2000000 --numeric-suffixes --filter='gzip -9 > $data_dir/uniref/$FILE.txt.gz'
+          rm $data_dir/uniref/uniref50.fasta.gz
+        env:
+          data_dir: /home/airflow/gcs/data/uniref50
+          uniref50: https://ftp.uniprot.org/pub/databases/uniprot/uniref/uniref50/uniref50.fasta.gz
+
+  graph_paths:
+    - "download_zip_file"

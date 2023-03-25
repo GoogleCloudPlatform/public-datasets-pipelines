@@ -14,7 +14,6 @@
 
 
 from airflow import DAG
-from airflow.operators import bash
 from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
 from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
@@ -33,16 +32,6 @@ with DAG(
     catchup=False,
     default_view="graph",
 ) as dag:
-
-    # Task to copy `uniref50.fasta` to gcs
-    download_zip_file = bash.BashOperator(
-        task_id="download_zip_file",
-        bash_command='mkdir -p $data_dir/uniref\ncurl -o $data_dir/uniref/uniref50.fasta.gz -L $uniref50\ngunzip $data_dir/uniref/uniref50.fasta.gz\nawk \u0027BEGIN {n_seq=0;} /^\u003e/ {if(n_seq%10000000==0){file=sprintf("/home/airflow/gcs/data/uniref50/uniref/myseq%d.fa",n_seq);}\nprint \u003e\u003e file; n_seq++; next;} { print \u003e\u003e file; }\u0027 \u003c $data_dir/uniref/uniref50.fasta\nawk \u0027BEGIN {n_seq=0;} /^\u003e/ {if(n_seq%3500000==0){file=sprintf("/home/airflow/gcs/data/uniref50/uniref/myseq_1%d.fa",n_seq);}\nprint \u003e\u003e file; n_seq++; next;} { print \u003e\u003e file; }\u0027 \u003c $data_dir/uniref/myseq0.fa\nrm $data_dir/uniref/uniref50.fasta.gz\nrm $data_dir/uniref/uniref50.fasta\nrm $data_dir/uniref/myseq0.fa\n',
-        env={
-            "data_dir": "/home/airflow/gcs/data/uniref50",
-            "uniref50": "https://ftp.uniprot.org/pub/databases/uniprot/uniref/uniref50/uniref50.fasta.gz",
-        },
-    )
 
     # Run CSV transform within kubernetes pod
     uniref50_transform_csv_1 = kubernetes_pod.KubernetesPodOperator(
@@ -66,9 +55,13 @@ with DAG(
             "DATASET_ID": "uniref50",
             "TABLE_ID": "uniref50",
             "SCHEMA_PATH": "data/uniref50/uniref50_schema.json",
-            "CHUNKSIZE": "100000",
+            "CHUNKSIZE": "50000",
         },
-        resources={"request_ephemeral_storage": "10G"},
+        resources={
+            "request_ephemeral_storage": "10G",
+            "request_memory": "12G",
+            "request_cpu": "1",
+        },
     )
 
     # Task to load CSV data to a BigQuery table
@@ -134,9 +127,13 @@ with DAG(
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "uniref50",
             "SCHEMA_PATH": "data/uniref50/uniref50_schema.json",
-            "CHUNKSIZE": "100000",
+            "CHUNKSIZE": "50000",
         },
-        resources={"request_ephemeral_storage": "10G"},
+        resources={
+            "request_ephemeral_storage": "10G",
+            "request_memory": "12G",
+            "request_cpu": "1",
+        },
     )
 
     # Task to load CSV data to a BigQuery table
@@ -202,9 +199,13 @@ with DAG(
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "uniref50",
             "SCHEMA_PATH": "data/uniref50/uniref50_schema.json",
-            "CHUNKSIZE": "100000",
+            "CHUNKSIZE": "50000",
         },
-        resources={"request_ephemeral_storage": "10G"},
+        resources={
+            "request_ephemeral_storage": "10G",
+            "request_memory": "12G",
+            "request_cpu": "1",
+        },
     )
 
     # Task to load CSV data to a BigQuery table
@@ -270,9 +271,13 @@ with DAG(
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "uniref50",
             "SCHEMA_PATH": "data/uniref50/uniref50_schema.json",
-            "CHUNKSIZE": "100000",
+            "CHUNKSIZE": "50000",
         },
-        resources={"request_ephemeral_storage": "10G"},
+        resources={
+            "request_ephemeral_storage": "10G",
+            "request_memory": "12G",
+            "request_cpu": "1",
+        },
     )
 
     # Task to load CSV data to a BigQuery table
@@ -338,9 +343,13 @@ with DAG(
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "uniref50",
             "SCHEMA_PATH": "data/uniref50/uniref50_schema.json",
-            "CHUNKSIZE": "100000",
+            "CHUNKSIZE": "50000",
         },
-        resources={"request_ephemeral_storage": "10G"},
+        resources={
+            "request_ephemeral_storage": "10G",
+            "request_memory": "12G",
+            "request_cpu": "1",
+        },
     )
 
     # Task to load CSV data to a BigQuery table
@@ -406,9 +415,13 @@ with DAG(
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "uniref50",
             "SCHEMA_PATH": "data/uniref50/uniref50_schema.json",
-            "CHUNKSIZE": "100000",
+            "CHUNKSIZE": "50000",
         },
-        resources={"request_ephemeral_storage": "10G"},
+        resources={
+            "request_ephemeral_storage": "10G",
+            "request_memory": "12G",
+            "request_cpu": "1",
+        },
     )
 
     # Task to load CSV data to a BigQuery table
@@ -474,9 +487,13 @@ with DAG(
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "uniref50",
             "SCHEMA_PATH": "data/uniref50/uniref50_schema.json",
-            "CHUNKSIZE": "100000",
+            "CHUNKSIZE": "50000",
         },
-        resources={"request_ephemeral_storage": "10G"},
+        resources={
+            "request_ephemeral_storage": "10G",
+            "request_memory": "12G",
+            "request_cpu": "1",
+        },
     )
 
     # Task to load CSV data to a BigQuery table
@@ -542,9 +559,13 @@ with DAG(
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "uniref50",
             "SCHEMA_PATH": "data/uniref50/uniref50_schema.json",
-            "CHUNKSIZE": "100000",
+            "CHUNKSIZE": "50000",
         },
-        resources={"request_ephemeral_storage": "10G"},
+        resources={
+            "request_ephemeral_storage": "10G",
+            "request_memory": "12G",
+            "request_cpu": "1",
+        },
     )
 
     # Task to load CSV data to a BigQuery table
@@ -589,17 +610,14 @@ with DAG(
     )
 
     (
-        download_zip_file
-        >> [
-            uniref50_transform_csv_1,
-            uniref50_transform_csv_2,
-            uniref50_transform_csv_3,
-            uniref50_transform_csv_4,
-            uniref50_transform_csv_5,
-            uniref50_transform_csv_6,
-            uniref50_transform_csv_7,
-            uniref50_transform_csv_8,
-        ]
+        uniref50_transform_csv_1
+        >> uniref50_transform_csv_2
+        >> uniref50_transform_csv_3
+        >> uniref50_transform_csv_4
+        >> uniref50_transform_csv_5
+        >> uniref50_transform_csv_6
+        >> uniref50_transform_csv_7
+        >> uniref50_transform_csv_8
         >> load_uniref50_to_bq_1
         >> load_uniref50_to_bq_2
         >> load_uniref50_to_bq_3
