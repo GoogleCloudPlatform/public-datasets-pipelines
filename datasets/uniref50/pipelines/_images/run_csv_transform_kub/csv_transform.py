@@ -13,10 +13,14 @@
 # limitations under the License.
 
 import csv
+import gzip
 import json
 import logging
 import os
 import pathlib
+import pandas as pd
+import subprocess
+import typing
 
 # from Bio import SeqIO
 from google.api_core.exceptions import NotFound
@@ -26,21 +30,149 @@ from google.cloud import bigquery, storage
 def main(
     pipeline_name: str,
     source_gcs_bucket: str,
-    source_gcs_object: str,
-    source_file: pathlib.Path,
-    batch_file: str,
-    target_file: pathlib.Path,
+    source_gcs_path: str,
+    target_gcs_bucket: str,
+    target_gcs_path: str,
+    destination_folder: str,
     project_id: str,
     dataset_id: str,
     table_id: str,
+    csv_headers: typing.List[str],
     schema_path: str,
     chunksize: str,
-    target_gcs_bucket: str,
-    target_gcs_path: str,
 ) -> None:
     logging.info(f"{pipeline_name} process started")
-    os.system('ls /home/airflow/gcs/data/uniref50/*', shell=True)
+    pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
+    execute_pipeline(
+        source_gcs_bucket=source_gcs_bucket,
+        source_gcs_path=source_gcs_path,
+        target_gcs_bucket=target_gcs_bucket,
+        target_gcs_path=target_gcs_path,
+        destination_folder=destination_folder,
+        project_id=project_id,
+        dataset_id=dataset_id,
+        table_id=table_id,
+        csv_headers=csv_headers,
+        schema_path=schema_path,
+        chunksize=chunksize,
+    )
     logging.info(f"{pipeline_name} process completed")
+
+
+def execute_pipeline(
+    source_gcs_bucket: str,
+    source_gcs_path: str,
+    target_gcs_bucket: str,
+    target_gcs_path: str,
+    destination_folder: str,
+    project_id: str,
+    dataset_id: str,
+    table_id: str,
+    csv_headers: typing.List[str],
+    schema_path: str,
+    chunksize: str,
+) -> None:
+    # find all zipfiles for loading
+    logging.info("Processing individual zip files ...")
+    # for zip_file in sorted(pathlib.Path(zip_path).glob("x*.csv.gz")):
+    for zip_file in sorted(list_gcs_files(project_id, source_gcs_bucket, source_gcs_path, "x", ".txt.gz")):
+        source_location = f"gs://{source_gcs_bucket}/{source_gcs_path}/{zip_file}"
+        logging.info(f" Downloading, processing and loading source data file {source_location} ...")
+        #copy file to pod
+        download_file_gcs(
+            project_id=project_id,
+            source_location=source_location,
+            destination_folder=destination_folder
+        )
+        extracted_chunk = str(zip_file).replace(".gz", "")
+        gz_decompress(infile=f"{destination_folder}/{zip_file}", tofile=extracted_chunk, delete_zipfile=True)
+        transform_data(
+            fileName=extracted_chunk,
+            csv_headers=csv_headers
+        )
+        load_source_file_to_bq(
+            target_file=extracted_chunk,
+            target_gcs_bucket=target_gcs_bucket,
+            target_gcs_path=target_gcs_path,
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_id=table_id,
+            schema_path=schema_path,
+            truncate_table=(
+                True if os.path.basename(extracted_chunk) == "x000.csv" else False
+            ),
+            field_delimiter="|",
+        )
+
+
+def transform_data(
+    fileName: str,
+    csv_headers: typing.List[str]
+) -> None:
+    logging.info("Transforms ...")
+    logging.info(" ... Transform -> Adding header")
+    csv_header = ",".join(str(itm) for itm in csv_headers)
+    cmd = f"sed -i '1s/^/{csv_header}\\n/' {fileName}"
+    subprocess.run(cmd, shell=True)
+    logging.info(" ... Transform -> Cleaning Organism Data Column")
+    df = pd.read_csv(fileName, sep="|")
+    df["Organism"] = df["Organism"].apply(lambda x: x.replace("-", "\n"))
+    df.to_csv(fileName, sep="|", index=False)
+    logging.info("Transforms completed")
+
+
+def list_gcs_files(
+    project_id: str,
+    source_gcs_bucket: str,
+    source_gcs_path: str,
+    file_prefix: str,
+    file_suffix: str
+) -> typing.List[str]:
+    storage_client = storage.Client(project_id)
+    blobs = list(storage_client.list_blobs(source_gcs_bucket, prefix=source_gcs_path, fields="items(name)"))
+    blob_names = [blob_name.name[len(source_gcs_path):] for blob_name in blobs if blob_name.name != source_gcs_path]
+    bucket_files = sorted(blob_names)
+    rtn_list = []
+    for bucket_file in bucket_files:
+        if bucket_file[:(len(file_prefix)+1)] == f"/{file_prefix}" \
+            and bucket_file[-(len(file_suffix)):] == file_suffix:
+                rtn_list += [bucket_file[1:]]
+    return rtn_list
+
+
+def download_file_gcs(
+    project_id: str,
+    source_location: str,
+    destination_folder: str,
+    filename_override: str = "",
+) -> None:
+    object_name = os.path.basename(source_location)
+    if filename_override == "":
+        dest_object = f"{destination_folder}/{object_name}"
+    else:
+        dest_object = f"{destination_folder}/{filename_override}"
+    storage_client = storage.Client(project_id)
+    bucket_name = str.split(source_location, "gs://")[1].split("/")[0]
+    bucket = storage_client.bucket(bucket_name)
+    source_object_path = str.split(source_location, f"gs://{bucket_name}/")[1]
+    blob = bucket.blob(source_object_path)
+    blob.download_to_filename(dest_object)
+
+
+def gz_decompress(infile: str, tofile: str, delete_zipfile: bool = False) -> None:
+    logging.info(f"Decompressing {infile}")
+    with open(infile, "rb") as inf, open(tofile, "w", encoding="utf8") as tof:
+        decom_str = gzip.decompress(inf.read()).decode("utf-8")
+        tof.write(decom_str)
+    if delete_zipfile:
+        os.remove(infile)
+
+
+def check_gcs_file_exists(file_path: str, bucket_name: str) -> bool:
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(bucket_name)
+    exists = storage.Blob(bucket=bucket, name=file_path).exists(storage_client)
+    return exists
 
 
 def load_data_to_bq(
@@ -174,17 +306,14 @@ if __name__ == "__main__":
     main(
         pipeline_name=os.environ.get("PIPELINE_NAME"),
         source_gcs_bucket=os.environ.get("SOURCE_GCS_BUCKET"),
-        source_gcs_object=os.environ.get("SOURCE_GCS_OBJECT"),
-        source_file=pathlib.Path(os.environ.get("SOURCE_FILE")).expanduser(),
-        batch_file=os.environ.get("BATCH_FILE"),
-        target_file=pathlib.Path(os.environ.get("TARGET_FILE")).expanduser(),
-        chunksize=os.environ.get("CHUNKSIZE"),
-        target_gcs_bucket=os.environ.get(
-            "TARGET_GCS_BUCKET",
-        ),
+        source_gcs_path=os.environ.get("SOURCE_GCS_PATH"),
+        target_gcs_bucket=os.environ.get("TARGET_GCS_BUCKET"),
         target_gcs_path=os.environ.get("TARGET_GCS_PATH"),
+        destination_folder=os.environ.get("DESTINATION_FOLDER"),
         project_id=os.environ.get("PROJECT_ID"),
         dataset_id=os.environ.get("DATASET_ID"),
         table_id=os.environ["TABLE_ID"],
+        csv_headers=json.loads(os.environ.get("CSV_HEADERS", r"[]")),
         schema_path=os.environ["SCHEMA_PATH"],
+        chunksize=os.environ.get("CHUNKSIZE"),
     )
