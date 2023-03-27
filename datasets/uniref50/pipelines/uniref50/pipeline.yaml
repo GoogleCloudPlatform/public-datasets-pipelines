@@ -48,18 +48,18 @@ dag:
             oauth_scopes:
               - https://www.googleapis.com/auth/devstorage.read_write
               - https://www.googleapis.com/auth/cloud-platform
-    - operator: "BashOperator"
-      description: "Task to copy `uniref50.fasta` to gcs"
-      args:
-        task_id: "download_zip_file"
-        bash_command: |
-          mkdir -p $data_dir/uniref
-          curl -o $data_dir/uniref/uniref50.fasta.gz -L $uniref50
-          gunzip -c $data_dir/uniref/uniref50.fasta.gz |sed 's/:>/~/g' |sed 's/ TaxID=/~Size=/g' |sed 's/>\(UniRef50_[^[:space:]]*[[:space:]]\)/ClusterID=\1~TaxID=/;s/ ~/~/' |sed 's/ RepID=/~ClusterName=/g' |sed 's/ Tax=/~Sequence=/g' |sed 's/ n=/~RepID=/g' |sed 's/ClusterID=//g' |sed 's/TaxID=//g' |sed 's/RepID=//g' |sed 's/Sequence=//g' |sed 's/Size=//g' |sed 's/ClusterName=//g' |sed '/^UniRef50_/ s/$/~ENDOFHEADERROW/' |sed '/~ENDOFHEADERROW/! s/$/-/' |perl -p -e 's/-\n/-/g' |sed 's/\-UniRef/-\nUniRef/g' |perl -p -e 's/~ENDOFHEADERROW\n/~/g' |sed 's/-$//g' | split -a 3 -d -l 2000000 --numeric-suffixes --filter='gzip -9 > $data_dir/uniref/$FILE.txt.gz'
-          rm $data_dir/uniref/uniref50.fasta.gz
-        env:
-          data_dir: /home/airflow/gcs/data/uniref50
-          uniref50: https://ftp.uniprot.org/pub/databases/uniprot/uniref/uniref50/uniref50.fasta.gz
+    # - operator: "BashOperator"
+    #   description: "Task to copy `uniref50.fasta` to gcs"
+    #   args:
+    #     task_id: "download_zip_file"
+    #     bash_command: |
+    #       mkdir -p $data_dir/uniref
+    #       curl -o $data_dir/uniref/uniref50.fasta.gz -L $uniref50
+    #       gunzip -c $data_dir/uniref/uniref50.fasta.gz |sed 's/:>/~/g' |sed 's/ TaxID=/~Size=/g' |sed 's/>\(UniRef50_[^[:space:]]*[[:space:]]\)/ClusterID=\1~TaxID=/;s/ ~/~/' |sed 's/ RepID=/~ClusterName=/g' |sed 's/ Tax=/~Sequence=/g' |sed 's/ n=/~RepID=/g' |sed 's/ClusterID=//g' |sed 's/TaxID=//g' |sed 's/RepID=//g' |sed 's/Sequence=//g' |sed 's/Size=//g' |sed 's/ClusterName=//g' |sed '/^UniRef50_/ s/$/~ENDOFHEADERROW/' |sed '/~ENDOFHEADERROW/! s/$/-/' |perl -p -e 's/-\n/-/g' |sed 's/\-UniRef/-\nUniRef/g' |perl -p -e 's/~ENDOFHEADERROW\n/~/g' |sed 's/-$//g' | split -a 3 -d -l 2000000 --numeric-suffixes --filter='gzip -9 > $data_dir/uniref/$FILE.txt.gz'
+    #       rm $data_dir/uniref/uniref50.fasta.gz
+    #     env:
+    #       data_dir: /home/airflow/gcs/data/uniref50
+    #       uniref50: https://ftp.uniprot.org/pub/databases/uniprot/uniref/uniref50/uniref50.fasta.gz
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
@@ -117,4 +117,5 @@ dag:
         name: "pubds-uniref"
 
   graph_paths:
-    - "create_cluster >> download_zip_file >> transform_load_csv >> delete_cluster"
+    #- "create_cluster >> download_zip_file >> transform_load_csv >> delete_cluster"
+    - "create_cluster >> transform_load_csv >> delete_cluster"

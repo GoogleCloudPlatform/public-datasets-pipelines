@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import gc as garbage_collector
 import gzip
 import json
 import logging
@@ -30,7 +31,6 @@ def main(
     source_gcs_bucket: str,
     source_gcs_path: str,
     target_gcs_bucket: str,
-    target_gcs_path: str,
     destination_folder: str,
     project_id: str,
     dataset_id: str,
@@ -113,6 +113,8 @@ def execute_pipeline(
             else:
                 error_msg = f"Error: Data was not loaded because the destination table {project_id}.{dataset_id}.{destination_table} does not exist and/or could not be created."
                 raise ValueError(error_msg)
+            del df
+            garbage_collector.collect()
         else:
             logging.info(
                 f"Informational: The data file {target_file} was not generated because no data file was available.  Continuing."
@@ -310,7 +312,6 @@ if __name__ == "__main__":
         source_gcs_bucket=os.environ.get("SOURCE_GCS_BUCKET"),
         source_gcs_path=os.environ.get("SOURCE_GCS_PATH"),
         target_gcs_bucket=os.environ.get("TARGET_GCS_BUCKET"),
-        target_gcs_path=os.environ.get("TARGET_GCS_PATH"),
         destination_folder=os.environ.get("DESTINATION_FOLDER"),
         project_id=os.environ.get("PROJECT_ID"),
         dataset_id=os.environ.get("DATASET_ID"),
