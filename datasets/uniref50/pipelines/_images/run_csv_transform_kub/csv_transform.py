@@ -21,8 +21,6 @@ import pathlib
 import pandas as pd
 import subprocess
 import typing
-
-# from Bio import SeqIO
 from google.api_core.exceptions import NotFound
 from google.cloud import bigquery, storage
 
@@ -38,6 +36,8 @@ def main(
     dataset_id: str,
     table_id: str,
     csv_headers: typing.List[str],
+    reorder_headers_list: typing.List[str],
+    field_separator: str,
     schema_path: str,
     chunksize: str,
 ) -> None:
@@ -53,6 +53,8 @@ def main(
         dataset_id=dataset_id,
         table_id=table_id,
         csv_headers=csv_headers,
+        reorder_headers_list=reorder_headers_list,
+        field_separator=field_separator,
         schema_path=schema_path,
         chunksize=chunksize,
     )
@@ -69,56 +71,78 @@ def execute_pipeline(
     dataset_id: str,
     table_id: str,
     csv_headers: typing.List[str],
+    reorder_headers_list: typing.List[str],
+    field_separator: str,
     schema_path: str,
     chunksize: str,
 ) -> None:
-    # find all zipfiles for loading
     logging.info("Processing individual zip files ...")
-    # for zip_file in sorted(pathlib.Path(zip_path).glob("x*.csv.gz")):
     for zip_file in sorted(list_gcs_files(project_id, source_gcs_bucket, source_gcs_path, "x", ".txt.gz")):
         source_location = f"gs://{source_gcs_bucket}/{source_gcs_path}/{zip_file}"
         logging.info(f" Downloading, processing and loading source data file {source_location} ...")
-        #copy file to pod
         download_file_gcs(
             project_id=project_id,
             source_location=source_location,
             destination_folder=destination_folder
         )
-        extracted_chunk = str(zip_file).replace(".gz", "")
-        gz_decompress(infile=f"{destination_folder}/{zip_file}", tofile=extracted_chunk, delete_zipfile=True)
-        transform_data(
-            fileName=extracted_chunk,
-            csv_headers=csv_headers
+        extracted_chunk = f"{destination_folder}/{str(zip_file).replace('.gz', '')}"
+        # extracted_chunk_output_file = extracted_chunk.replace(".txt", "_data_output.txt")
+        gz_decompress(
+            infile=f"{destination_folder}/{zip_file}",
+            tofile=f"{extracted_chunk}",
+            delete_zipfile=True
         )
-        load_source_file_to_bq(
-            target_file=extracted_chunk,
-            target_gcs_bucket=target_gcs_bucket,
-            target_gcs_path=target_gcs_path,
-            project_id=project_id,
-            dataset_id=dataset_id,
-            table_id=table_id,
-            schema_path=schema_path,
-            truncate_table=(
-                True if os.path.basename(extracted_chunk) == "x000.csv" else False
-            ),
-            field_delimiter="|",
+        df = transform_data(
+            source_filename=extracted_chunk,
+            csv_headers=csv_headers,
+            reorder_headers_list=reorder_headers_list,
+            field_separator=field_separator
         )
+        if os.path.exists(extracted_chunk):
+            os.remove(extracted_chunk)
+            table_exists = create_dest_table(
+                project_id=project_id,
+                dataset_id=dataset_id,
+                table_id=table_id,
+                schema_filepath=schema_path,
+                bucket_name=target_gcs_bucket,
+            )
+            if table_exists:
+                load_df_to_bq(
+                    df=df,
+                    project_id=project_id,
+                    dataset_id=dataset_id,
+                    table_id=table_id,
+                    schema_field_headers_list=reorder_headers_list,
+                    truncate_table=(True if os.path.basename(extracted_chunk) == "x000.txt" else False)
+                )
+            else:
+                error_msg = f"Error: Data was not loaded because the destination table {project_id}.{dataset_id}.{destination_table} does not exist and/or could not be created."
+                raise ValueError(error_msg)
+        else:
+            logging.info(
+                f"Informational: The data file {target_file} was not generated because no data file was available.  Continuing."
+            )
 
 
 def transform_data(
-    fileName: str,
-    csv_headers: typing.List[str]
-) -> None:
+    source_filename: str,
+    csv_headers: typing.List[str],
+    reorder_headers_list: typing.List[str],
+    field_separator: str = '~'
+) -> pd.DataFrame:
     logging.info("Transforms ...")
     logging.info(" ... Transform -> Adding header")
-    csv_header = ",".join(str(itm) for itm in csv_headers)
-    cmd = f"sed -i '1s/^/{csv_header}\\n/' {fileName}"
+    csv_header = field_separator.join(str(itm) for itm in csv_headers)
+    cmd = f"sed -i '1s/^/{csv_header}\\n/' {source_filename}"
     subprocess.run(cmd, shell=True)
     logging.info(" ... Transform -> Cleaning Organism Data Column")
-    df = pd.read_csv(fileName, sep="|")
+    df = pd.read_csv(source_filename, sep=field_separator)
     df["Organism"] = df["Organism"].apply(lambda x: x.replace("-", "\n"))
-    df.to_csv(fileName, sep="|", index=False)
+    df = df[reorder_headers_list]
+    df = df[df['ClusterID'] != "ClusterID"]
     logging.info("Transforms completed")
+    return df
 
 
 def list_gcs_files(
@@ -175,34 +199,36 @@ def check_gcs_file_exists(file_path: str, bucket_name: str) -> bool:
     return exists
 
 
-def load_data_to_bq(
+def load_df_to_bq(
+    df: pd.DataFrame,
     project_id: str,
     dataset_id: str,
     table_id: str,
-    file_path: str,
-    truncate_table: bool,
-    field_delimiter: str,
+    schema_field_headers_list: str,
+    truncate_table: bool
 ) -> None:
-    logging.info(
-        f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} started"
-    )
+    logging.info(f"Loading { df.count()[0] } data rows to {project_id}:{dataset_id}.{table_id} with truncate table {str(truncate_table)}")
     client = bigquery.Client(project=project_id)
     table_ref = client.dataset(dataset_id).table(table_id)
-    job_config = bigquery.LoadJobConfig()
-    job_config.source_format = bigquery.SourceFormat.CSV
-    job_config.field_delimiter = field_delimiter
     if truncate_table:
-        job_config.write_disposition = "WRITE_TRUNCATE"
+        write_disposition="WRITE_TRUNCATE"
     else:
-        job_config.write_disposition = "WRITE_APPEND"
-    job_config.skip_leading_rows = 1  # ignore the header
-    job_config.autodetect = False
-    with open(file_path, "rb") as source_file:
-        job = client.load_table_from_file(source_file, table_ref, job_config=job_config)
-    job.result()
-    logging.info(
-        f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} completed"
+        write_disposition="WRITE_APPEND"
+    schema=[]
+    for fld in schema_field_headers_list:
+        schema += [bigquery.SchemaField(fld, bigquery.enums.SqlTypeNames.STRING)]
+    job_config = bigquery.LoadJobConfig(
+        schema=schema,
+        write_disposition=write_disposition,
+        source_format = bigquery.SourceFormat.NEWLINE_DELIMITED_JSON
     )
+    json_data = df.to_json(orient='records')
+    json_object=json.loads(json_data)
+    job = client.load_table_from_json(
+        json_object, table_ref, job_config=job_config
+    )
+    job.result()
+    logging.info("Completed data load")
 
 
 def create_dest_table(
@@ -282,24 +308,6 @@ def create_table_schema(
     return schema
 
 
-def upload_file_to_gcs(
-    file_path: pathlib.Path, target_gcs_bucket: str, target_gcs_path: str
-) -> None:
-    if os.path.exists(file_path):
-        logging.info(
-            f"Uploading output file to gs://{target_gcs_bucket}/{target_gcs_path}"
-        )
-        storage_client = storage.Client()
-        bucket = storage_client.bucket(target_gcs_bucket)
-        blob = bucket.blob(target_gcs_path)
-        blob.upload_from_filename(file_path)
-
-    else:
-        logging.info(
-            f"Cannot upload file to gs://{target_gcs_bucket}/{target_gcs_path} as it does not exist."
-        )
-
-
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
 
@@ -314,6 +322,8 @@ if __name__ == "__main__":
         dataset_id=os.environ.get("DATASET_ID"),
         table_id=os.environ["TABLE_ID"],
         csv_headers=json.loads(os.environ.get("CSV_HEADERS", r"[]")),
+        reorder_headers_list=json.loads(os.environ.get("REORDER_HEADERS_LIST", r"[]")),
+        field_separator=os.environ["FIELD_SEPARATOR"],
         schema_path=os.environ["SCHEMA_PATH"],
         chunksize=os.environ.get("CHUNKSIZE"),
     )
