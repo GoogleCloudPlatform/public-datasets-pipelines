@@ -14,7 +14,7 @@
 
 
 from airflow import DAG
-from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.operators import kubernetes_engine
 
 default_args = {
     "owner": "Google",
@@ -31,14 +31,33 @@ with DAG(
     catchup=False,
     default_view="graph",
 ) as dag:
+    create_cluster = kubernetes_engine.GKECreateClusterOperator(
+        task_id="create_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        body={
+            "name": "pubds-uniref",
+            "initial_node_count": 1,
+            "network": "{{ var.value.vpc_network }}",
+            "node_config": {
+                "machine_type": "e2-highmem-4",
+                "oauth_scopes": [
+                    "https://www.googleapis.com/auth/devstorage.read_write",
+                    "https://www.googleapis.com/auth/cloud-platform",
+                ],
+            },
+        },
+    )
 
     # Run CSV transform within kubernetes pod
-    transform_load_csv = kubernetes_pod.KubernetesPodOperator(
+    transform_load_csv = kubernetes_engine.GKEStartPodOperator(
         task_id="transform_load_csv",
         startup_timeout_seconds=600,
-        name="uniref50",
-        namespace="composer",
-        service_account_name="datasets",
+        name="uniref",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pubds-uniref",
+        namespace="default",
         image_pull_policy="Always",
         image="{{ var.json.uniref50.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -59,9 +78,15 @@ with DAG(
         },
         resources={
             "request_ephemeral_storage": "10G",
-            "request_memory": "12G",
-            "request_cpu": "1",
+            "limit_memory": "16G",
+            "limit_cpu": "2",
         },
     )
+    delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
+        task_id="delete_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        name="pubds-uniref",
+    )
 
-    transform_load_csv
+    create_cluster >> transform_load_csv >> delete_cluster
