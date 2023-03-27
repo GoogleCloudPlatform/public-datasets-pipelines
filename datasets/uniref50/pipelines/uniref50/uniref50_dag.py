@@ -40,7 +40,7 @@ with DAG(
             "initial_node_count": 1,
             "network": "{{ var.value.vpc_network }}",
             "node_config": {
-                "machine_type": "e2-highmem-4",
+                "machine_type": "e2-highmem-8",
                 "oauth_scopes": [
                     "https://www.googleapis.com/auth/devstorage.read_write",
                     "https://www.googleapis.com/auth/cloud-platform",
@@ -52,7 +52,7 @@ with DAG(
     # Run CSV transform within kubernetes pod
     transform_load_csv = kubernetes_engine.GKEStartPodOperator(
         task_id="transform_load_csv",
-        startup_timeout_seconds=600,
+        startup_timeout_seconds=6000,
         name="uniref",
         project_id="{{ var.value.gcp_project }}",
         location="us-central1-c",
@@ -78,8 +78,8 @@ with DAG(
         },
         resources={
             "request_ephemeral_storage": "10G",
-            "limit_memory": "16G",
-            "limit_cpu": "2",
+            "limit_memory": "32G",
+            "limit_cpu": "4",
         },
     )
     delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
