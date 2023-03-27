@@ -14,6 +14,7 @@
 
 
 from airflow import DAG
+from airflow.operators import bash
 from airflow.providers.google.cloud.operators import kubernetes_engine
 
 default_args = {
@@ -27,7 +28,7 @@ with DAG(
     dag_id="uniref50.uniref50",
     default_args=default_args,
     max_active_runs=1,
-    schedule_interval="@once",
+    schedule_interval="5 0 * * 6",
     catchup=False,
     default_view="graph",
 ) as dag:
@@ -46,6 +47,16 @@ with DAG(
                     "https://www.googleapis.com/auth/cloud-platform",
                 ],
             },
+        },
+    )
+
+    # Task to copy `uniref50.fasta` to gcs
+    download_zip_file = bash.BashOperator(
+        task_id="download_zip_file",
+        bash_command="mkdir -p $data_dir/uniref\ncurl -o $data_dir/uniref/uniref50.fasta.gz -L $uniref50\ngunzip -c $data_dir/uniref/uniref50.fasta.gz |sed \u0027s/:\u003e/~/g\u0027 |sed \u0027s/ TaxID=/~Size=/g\u0027 |sed \u0027s/\u003e\\(UniRef50_[^[:space:]]*[[:space:]]\\)/ClusterID=\\1~TaxID=/;s/ ~/~/\u0027 |sed \u0027s/ RepID=/~ClusterName=/g\u0027 |sed \u0027s/ Tax=/~Sequence=/g\u0027 |sed \u0027s/ n=/~RepID=/g\u0027 |sed \u0027s/ClusterID=//g\u0027 |sed \u0027s/TaxID=//g\u0027 |sed \u0027s/RepID=//g\u0027 |sed \u0027s/Sequence=//g\u0027 |sed \u0027s/Size=//g\u0027 |sed \u0027s/ClusterName=//g\u0027 |sed \u0027/^UniRef50_/ s/$/~ENDOFHEADERROW/\u0027 |sed \u0027/~ENDOFHEADERROW/! s/$/-/\u0027 |perl -p -e \u0027s/-\\n/-/g\u0027 |sed \u0027s/\\-UniRef/-\\nUniRef/g\u0027 |perl -p -e \u0027s/~ENDOFHEADERROW\\n/~/g\u0027 |sed \u0027s/-$//g\u0027 | split -a 3 -d -l 2000000 --numeric-suffixes --filter=\u0027gzip -9 \u003e $data_dir/uniref/$FILE.txt.gz\u0027\nrm $data_dir/uniref/uniref50.fasta.gz\n",
+        env={
+            "data_dir": "/home/airflow/gcs/data/uniref50",
+            "uniref50": "https://ftp.uniprot.org/pub/databases/uniprot/uniref/uniref50/uniref50.fasta.gz",
         },
     )
 
@@ -89,4 +100,4 @@ with DAG(
         name="pubds-uniref",
     )
 
-    create_cluster >> transform_load_csv >> delete_cluster
+    create_cluster >> download_zip_file >> transform_load_csv >> delete_cluster
