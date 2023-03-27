@@ -46,6 +46,7 @@ dag:
         image: "{{ var.json.uniref50.container_registry.run_csv_transform_kub }}"
         env_vars:
           PIPELINE_NAME: "uniref50"
+          DESTINATION_FOLDER: "files"
           SOURCE_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           SOURCE_GCS_PATH: "data/uniref50/uniref"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
@@ -82,4 +83,4 @@ dag:
           request_cpu: "1"
 
   graph_paths:
-    - uniref50_transform_csv
+    - transform_load_csv

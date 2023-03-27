@@ -12,15 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import csv
 import gzip
 import json
 import logging
 import os
 import pathlib
-import pandas as pd
 import subprocess
 import typing
+
+import pandas as pd
 from google.api_core.exceptions import NotFound
 from google.cloud import bigquery, storage
 
@@ -38,8 +38,7 @@ def main(
     csv_headers: typing.List[str],
     reorder_headers_list: typing.List[str],
     field_separator: str,
-    schema_path: str,
-    chunksize: str,
+    schema_path: str
 ) -> None:
     logging.info(f"{pipeline_name} process started")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
@@ -47,7 +46,6 @@ def main(
         source_gcs_bucket=source_gcs_bucket,
         source_gcs_path=source_gcs_path,
         target_gcs_bucket=target_gcs_bucket,
-        target_gcs_path=target_gcs_path,
         destination_folder=destination_folder,
         project_id=project_id,
         dataset_id=dataset_id,
@@ -55,8 +53,7 @@ def main(
         csv_headers=csv_headers,
         reorder_headers_list=reorder_headers_list,
         field_separator=field_separator,
-        schema_path=schema_path,
-        chunksize=chunksize,
+        schema_path=schema_path
     )
     logging.info(f"{pipeline_name} process completed")
 
@@ -65,7 +62,6 @@ def execute_pipeline(
     source_gcs_bucket: str,
     source_gcs_path: str,
     target_gcs_bucket: str,
-    target_gcs_path: str,
     destination_folder: str,
     project_id: str,
     dataset_id: str,
@@ -74,7 +70,6 @@ def execute_pipeline(
     reorder_headers_list: typing.List[str],
     field_separator: str,
     schema_path: str,
-    chunksize: str,
 ) -> None:
     logging.info("Processing individual zip files ...")
     for zip_file in sorted(list_gcs_files(project_id, source_gcs_bucket, source_gcs_path, "x", ".txt.gz")):
@@ -86,7 +81,6 @@ def execute_pipeline(
             destination_folder=destination_folder
         )
         extracted_chunk = f"{destination_folder}/{str(zip_file).replace('.gz', '')}"
-        # extracted_chunk_output_file = extracted_chunk.replace(".txt", "_data_output.txt")
         gz_decompress(
             infile=f"{destination_folder}/{zip_file}",
             tofile=f"{extracted_chunk}",
@@ -324,6 +318,5 @@ if __name__ == "__main__":
         csv_headers=json.loads(os.environ.get("CSV_HEADERS", r"[]")),
         reorder_headers_list=json.loads(os.environ.get("REORDER_HEADERS_LIST", r"[]")),
         field_separator=os.environ["FIELD_SEPARATOR"],
-        schema_path=os.environ["SCHEMA_PATH"],
-        chunksize=os.environ.get("CHUNKSIZE"),
+        schema_path=os.environ["SCHEMA_PATH"]
     )
