@@ -14,6 +14,7 @@
 
 
 from airflow import DAG
+from airflow.operators import bash
 from airflow.providers.google.cloud.operators import kubernetes_engine
 
 default_args = {
@@ -49,6 +50,12 @@ with DAG(
         },
     )
 
+    # Task to copy `uniref50.fasta` to gcs
+    download_zip_file = bash.BashOperator(
+        task_id="download_zip_file",
+        bash_command='# mkdir -p /home/airflow/gcs/data/uniref50/uniref\n# curl -o /home/airflow/gcs/data/uniref50/uniref/uniref50.fasta.gz -L $uniref50\n# gunzip -c /home/airflow/gcs/data/uniref50/uniref/uniref50.fasta.gz |sed \u0027s/:\u003e/~@/g\u0027 |sed \u0027s/ TaxID=/~@Size=/g\u0027 |sed \u0027s/\u003e\\(UniRef50_[^[:space:]]*[[:space:]]\\)/ClusterID=\\1~@TaxID=/;s/ ~@/~@/\u0027 |sed \u0027s/ RepID=/~@ClusterName=/g\u0027 |sed \u0027s/ Tax=/~@Sequence=/g\u0027 |sed \u0027s/ n=/~@RepID=/g\u0027 |sed \u0027s/ClusterID=//g\u0027 |sed \u0027s/TaxID=//g\u0027 |sed \u0027s/RepID=//g\u0027 |sed \u0027s/Sequence=//g\u0027 |sed \u0027s/Size=//g\u0027 |sed \u0027s/ClusterName=//g\u0027 |sed \u0027/^UniRef50_/ s/$/~@ENDOFHEADERROW/\u0027 |sed \u0027/~@ENDOFHEADERROW/! s/$/-/\u0027 |perl -p -e \u0027s/-\\n/-/g\u0027 |sed \u0027s/\\-UniRef/-\\nUniRef/g\u0027 |perl -p -e \u0027s/~@ENDOFHEADERROW\\n/~@/g\u0027 |sed \u0027s/~@$//g\u0027 | split -a 3 -d -l 1000000 --numeric-suffixes --filter=\u0027gzip -9 \u003e /home/airflow/gcs/data/uniref50/uniref/$FILE.txt.gz; echo "Compressed to file $FILE.txt.gz"\u0027\ngunzip -c /home/airflow/gcs/data/uniref50/uniref/uniref50.fasta.gz |sed \u0027s/:\u003e/~@/g\u0027 |sed \u0027s/ TaxID=/~@Size=/g\u0027 |sed \u0027s/\u003e\\(UniRef50_[^[:space:]]*[[:space:]]\\)/ClusterID=\\1~@TaxID=/;s/ ~@/~@/\u0027 |sed \u0027s/ RepID=/~@ClusterName=/g\u0027 |sed \u0027s/ Tax=/~@Sequence=/g\u0027 |sed \u0027s/ n=/~@RepID=/g\u0027 |sed \u0027s/ClusterID=//g\u0027 |sed \u0027s/TaxID=//g\u0027 |sed \u0027s/RepID=//g\u0027 |sed \u0027s/Sequence=//g\u0027 |sed \u0027s/Size=//g\u0027 |sed \u0027s/ClusterName=//g\u0027 |sed \u0027/^UniRef50_/ s/$/~@ENDOFHEADERROW/\u0027 |sed \u0027/~@ENDOFHEADERROW/! s/$/-/\u0027 |perl -p -e \u0027s/-\\n/-/g\u0027 |sed \u0027s/\\-UniRef/-\\nUniRef/g\u0027 |perl -p -e \u0027s/ENDOFHEADERROW\\n//g\u0027 |sed \u0027s/~@$//g\u0027 | split -a 3 -d -l 1000000 --numeric-suffixes --filter=\u0027gzip -9 \u003e /home/airflow/gcs/data/uniref50/uniref/$FILE.txt.gz; echo "Compressed to file $FILE.txt.gz"\u0027\n# gunzip -c /home/airflow/gcs/data/uniref50/uniref/uniref50.fasta.gz |sed \u0027s/:\u003e//g\u0027 |sed \u0027s/ TaxID=/~@Size=/g\u0027 |sed \u0027s/\\(UniRef50_[^[:space:]]*[[:space:]]\\)/ClusterID=\\1~@TaxID=/;s/ ~@/~@/\u0027 |sed \u0027s/ RepID=/~@ClusterName=/g\u0027 |sed \u0027s/ Tax=/~@Sequence=/g\u0027 |sed \u0027s/ n=/~@RepID=/g\u0027 |sed \u0027s/ClusterID=//g\u0027 |sed \u0027s/TaxID=//g\u0027 |sed \u0027s/RepID=//g\u0027 |sed \u0027s/Sequence=//g\u0027 |sed \u0027s/Size=//g\u0027 |sed \u0027s/ClusterName=//g\u0027 |sed \u0027/^UniRef50_/ s/$/~@ENDOFHEADERROW/\u0027 |sed \u0027/~@ENDOFHEADERROW/! s/$/-/\u0027 |perl -p -e \u0027s/-\\n/-/g\u0027 |sed \u0027s/\\-UniRef/-\\nUniRef/g\u0027 |perl -p -e \u0027s/~@ENDOFHEADERROW\\n/~@/g\u0027 |sed \u0027s/~@$//g\u0027 | split -a 3 -d -l 1000000 --numeric-suffixes --filter=\u0027gzip -9 \u003e /home/airflow/gcs/data/uniref50/uniref/$FILE.txt.gz\u0027\n# rm /home/airflow/gcs/data/uniref50/uniref/uniref50.fasta.gz\n',
+    )
+
     # Run CSV transform within kubernetes pod
     transform_load_csv = kubernetes_engine.GKEStartPodOperator(
         task_id="transform_load_csv",
@@ -70,9 +77,10 @@ with DAG(
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "uniref50",
             "TABLE_ID": "uniref50",
-            "CSV_HEADERS": '[\n  "ClusterID",\n  "TaxID",\n  "RepID",\n  "Sequence",\n  "Size",\n  "ClusterName",\n  "Organism"\n]',
+            "CSV_HEADERS": '[\n  "ClusterID",\n  "ClusterName",\n  "Size",\n  "Organism",\n  "TaxID",\n  "RepID",\n  "Sequence"\n]',
+            "DATA_DTYPES": '{\n  "ClusterID": "str",\n  "ClusterName": "str",\n  "Size": "str",\n  "Organism": "str",\n  "TaxID": "str",\n  "RepID": "str",\n  "Sequence": "str"\n}',
             "REORDER_HEADERS_LIST": '[\n  "ClusterID",\n  "RepID",\n  "TaxID",\n  "Sequence",\n  "ClusterName",\n  "Size",\n  "Organism"\n]',
-            "FIELD_SEPARATOR": "~",
+            "FIELD_SEPARATOR": "~@",
             "SCHEMA_PATH": "data/uniref50/uniref50_schema.json",
             "CHUNKSIZE": "100000",
         },
@@ -82,11 +90,5 @@ with DAG(
             "limit_cpu": "4",
         },
     )
-    delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
-        task_id="delete_cluster",
-        project_id="{{ var.value.gcp_project }}",
-        location="us-central1-c",
-        name="pubds-uniref",
-    )
 
-    create_cluster >> transform_load_csv >> delete_cluster
+    create_cluster >> download_zip_file >> transform_load_csv

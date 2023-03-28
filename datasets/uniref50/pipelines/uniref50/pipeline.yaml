@@ -48,18 +48,17 @@ dag:
             oauth_scopes:
               - https://www.googleapis.com/auth/devstorage.read_write
               - https://www.googleapis.com/auth/cloud-platform
-    # - operator: "BashOperator"
-    #   description: "Task to copy `uniref50.fasta` to gcs"
-    #   args:
-    #     task_id: "download_zip_file"
-    #     bash_command: |
-    #       mkdir -p $data_dir/uniref
-    #       curl -o $data_dir/uniref/uniref50.fasta.gz -L $uniref50
-    #       gunzip -c $data_dir/uniref/uniref50.fasta.gz |sed 's/:>/~/g' |sed 's/ TaxID=/~Size=/g' |sed 's/>\(UniRef50_[^[:space:]]*[[:space:]]\)/ClusterID=\1~TaxID=/;s/ ~/~/' |sed 's/ RepID=/~ClusterName=/g' |sed 's/ Tax=/~Sequence=/g' |sed 's/ n=/~RepID=/g' |sed 's/ClusterID=//g' |sed 's/TaxID=//g' |sed 's/RepID=//g' |sed 's/Sequence=//g' |sed 's/Size=//g' |sed 's/ClusterName=//g' |sed '/^UniRef50_/ s/$/~ENDOFHEADERROW/' |sed '/~ENDOFHEADERROW/! s/$/-/' |perl -p -e 's/-\n/-/g' |sed 's/\-UniRef/-\nUniRef/g' |perl -p -e 's/~ENDOFHEADERROW\n/~/g' |sed 's/-$//g' | split -a 3 -d -l 2000000 --numeric-suffixes --filter='gzip -9 > $data_dir/uniref/$FILE.txt.gz'
-    #       rm $data_dir/uniref/uniref50.fasta.gz
-    #     env:
-    #       data_dir: /home/airflow/gcs/data/uniref50
-    #       uniref50: https://ftp.uniprot.org/pub/databases/uniprot/uniref/uniref50/uniref50.fasta.gz
+    - operator: "BashOperator"
+      description: "Task to copy `uniref50.fasta` to gcs"
+      args:
+        task_id: "download_zip_file"
+        bash_command: |
+            # mkdir -p /home/airflow/gcs/data/uniref50/uniref
+            # curl -o /home/airflow/gcs/data/uniref50/uniref/uniref50.fasta.gz -L $uniref50
+            # gunzip -c /home/airflow/gcs/data/uniref50/uniref/uniref50.fasta.gz |sed 's/:>/~@/g' |sed 's/ TaxID=/~@Size=/g' |sed 's/>\(UniRef50_[^[:space:]]*[[:space:]]\)/ClusterID=\1~@TaxID=/;s/ ~@/~@/' |sed 's/ RepID=/~@ClusterName=/g' |sed 's/ Tax=/~@Sequence=/g' |sed 's/ n=/~@RepID=/g' |sed 's/ClusterID=//g' |sed 's/TaxID=//g' |sed 's/RepID=//g' |sed 's/Sequence=//g' |sed 's/Size=//g' |sed 's/ClusterName=//g' |sed '/^UniRef50_/ s/$/~@ENDOFHEADERROW/' |sed '/~@ENDOFHEADERROW/! s/$/-/' |perl -p -e 's/-\n/-/g' |sed 's/\-UniRef/-\nUniRef/g' |perl -p -e 's/~@ENDOFHEADERROW\n/~@/g' |sed 's/~@$//g' | split -a 3 -d -l 1000000 --numeric-suffixes --filter='gzip -9 > /home/airflow/gcs/data/uniref50/uniref/$FILE.txt.gz; echo "Compressed to file $FILE.txt.gz"'
+            gunzip -c /home/airflow/gcs/data/uniref50/uniref/uniref50.fasta.gz |sed 's/:>/~@/g' |sed 's/ TaxID=/~@Size=/g' |sed 's/>\(UniRef50_[^[:space:]]*[[:space:]]\)/ClusterID=\1~@TaxID=/;s/ ~@/~@/' |sed 's/ RepID=/~@ClusterName=/g' |sed 's/ Tax=/~@Sequence=/g' |sed 's/ n=/~@RepID=/g' |sed 's/ClusterID=//g' |sed 's/TaxID=//g' |sed 's/RepID=//g' |sed 's/Sequence=//g' |sed 's/Size=//g' |sed 's/ClusterName=//g' |sed '/^UniRef50_/ s/$/~@ENDOFHEADERROW/' |sed '/~@ENDOFHEADERROW/! s/$/-/' |perl -p -e 's/-\n/-/g' |sed 's/\-UniRef/-\nUniRef/g' |perl -p -e 's/ENDOFHEADERROW\n//g' |sed 's/~@$//g' | split -a 3 -d -l 1000000 --numeric-suffixes --filter='gzip -9 > /home/airflow/gcs/data/uniref50/uniref/$FILE.txt.gz; echo "Compressed to file $FILE.txt.gz"'
+            # gunzip -c /home/airflow/gcs/data/uniref50/uniref/uniref50.fasta.gz |sed 's/:>//g' |sed 's/ TaxID=/~@Size=/g' |sed 's/\(UniRef50_[^[:space:]]*[[:space:]]\)/ClusterID=\1~@TaxID=/;s/ ~@/~@/' |sed 's/ RepID=/~@ClusterName=/g' |sed 's/ Tax=/~@Sequence=/g' |sed 's/ n=/~@RepID=/g' |sed 's/ClusterID=//g' |sed 's/TaxID=//g' |sed 's/RepID=//g' |sed 's/Sequence=//g' |sed 's/Size=//g' |sed 's/ClusterName=//g' |sed '/^UniRef50_/ s/$/~@ENDOFHEADERROW/' |sed '/~@ENDOFHEADERROW/! s/$/-/' |perl -p -e 's/-\n/-/g' |sed 's/\-UniRef/-\nUniRef/g' |perl -p -e 's/~@ENDOFHEADERROW\n/~@/g' |sed 's/~@$//g' | split -a 3 -d -l 1000000 --numeric-suffixes --filter='gzip -9 > /home/airflow/gcs/data/uniref50/uniref/$FILE.txt.gz'
+            # rm /home/airflow/gcs/data/uniref50/uniref/uniref50.fasta.gz
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
@@ -85,13 +84,23 @@ dag:
           CSV_HEADERS: >-
             [
               "ClusterID",
+              "ClusterName",
+              "Size",
+              "Organism",
               "TaxID",
               "RepID",
-              "Sequence",
-              "Size",
-              "ClusterName",
-              "Organism"
+              "Sequence"
             ]
+          DATA_DTYPES: >-
+            {
+              "ClusterID": "str",
+              "ClusterName": "str",
+              "Size": "str",
+              "Organism": "str",
+              "TaxID": "str",
+              "RepID": "str",
+              "Sequence": "str"
+            }
           REORDER_HEADERS_LIST: >-
             [
               "ClusterID",
@@ -102,20 +111,21 @@ dag:
               "Size",
               "Organism"
             ]
-          FIELD_SEPARATOR: "~"
+          FIELD_SEPARATOR: "~@"
           SCHEMA_PATH: "data/uniref50/uniref50_schema.json"
           CHUNKSIZE: "100000"
         resources:
           request_ephemeral_storage: "10G"
           limit_memory: "32G"
           limit_cpu: "4"
-    - operator: "GKEDeleteClusterOperator"
-      args:
-        task_id: "delete_cluster"
-        project_id: "{{ var.value.gcp_project }}"
-        location: "us-central1-c"
-        name: "pubds-uniref"
+    # - operator: "GKEDeleteClusterOperator"
+    #   args:
+    #     task_id: "delete_cluster"
+    #     project_id: "{{ var.value.gcp_project }}"
+    #     location: "us-central1-c"
+    #     name: "pubds-uniref"
 
   graph_paths:
-    #- "create_cluster >> download_zip_file >> transform_load_csv >> delete_cluster"
-    - "create_cluster >> transform_load_csv >> delete_cluster"
+    - "create_cluster >> download_zip_file >> transform_load_csv"
+    # - "create_cluster >> download_zip_file >> transform_load_csv >> delete_cluster"
+    # - "create_cluster >> transform_load_csv >> delete_cluster"

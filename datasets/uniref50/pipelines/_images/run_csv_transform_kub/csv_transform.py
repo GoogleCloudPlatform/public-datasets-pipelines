@@ -36,6 +36,7 @@ def main(
     dataset_id: str,
     table_id: str,
     csv_headers: typing.List[str],
+    data_dtypes: dict,
     reorder_headers_list: typing.List[str],
     field_separator: str,
     schema_path: str
@@ -51,6 +52,7 @@ def main(
         dataset_id=dataset_id,
         table_id=table_id,
         csv_headers=csv_headers,
+        data_dtypes=data_dtypes,
         reorder_headers_list=reorder_headers_list,
         field_separator=field_separator,
         schema_path=schema_path
@@ -67,6 +69,7 @@ def execute_pipeline(
     dataset_id: str,
     table_id: str,
     csv_headers: typing.List[str],
+    data_dtypes: dict,
     reorder_headers_list: typing.List[str],
     field_separator: str,
     schema_path: str,
@@ -89,6 +92,7 @@ def execute_pipeline(
         df = transform_data(
             source_filename=extracted_chunk,
             csv_headers=csv_headers,
+            data_dtypes=data_dtypes,
             reorder_headers_list=reorder_headers_list,
             field_separator=field_separator
         )
@@ -124,6 +128,7 @@ def execute_pipeline(
 def transform_data(
     source_filename: str,
     csv_headers: typing.List[str],
+    data_dtypes: dict,
     reorder_headers_list: typing.List[str],
     field_separator: str = '~'
 ) -> pd.DataFrame:
@@ -133,8 +138,14 @@ def transform_data(
     cmd = f"sed -i '1s/^/{csv_header}\\n/' {source_filename}"
     subprocess.run(cmd, shell=True)
     logging.info(" ... Transform -> Cleaning Organism Data Column")
-    df = pd.read_csv(source_filename, sep=field_separator)
-    df["Organism"] = df["Organism"].apply(lambda x: x.replace("-", "\n"))
+    df = pd.read_csv(
+        source_filename,
+        engine='python',
+        encoding="utf-8",
+        sep=field_separator,
+        dtype=data_dtypes,
+    )
+    df["Organism"] = df["Organism"].apply(lambda x: str(x).replace("-", "\n"))
     df = df[reorder_headers_list]
     df = df[df['ClusterID'] != "ClusterID"]
     logging.info("Transforms completed")
@@ -216,7 +227,8 @@ def load_df_to_bq(
     job_config = bigquery.LoadJobConfig(
         schema=schema,
         write_disposition=write_disposition,
-        source_format = bigquery.SourceFormat.NEWLINE_DELIMITED_JSON
+        source_format = bigquery.SourceFormat.NEWLINE_DELIMITED_JSON,
+        autodetect=False
     )
     json_data = df.to_json(orient='records')
     json_object=json.loads(json_data)
@@ -317,6 +329,7 @@ if __name__ == "__main__":
         dataset_id=os.environ.get("DATASET_ID"),
         table_id=os.environ["TABLE_ID"],
         csv_headers=json.loads(os.environ.get("CSV_HEADERS", r"[]")),
+        data_dtypes=json.loads(os.environ.get("DATA_DTYPES", r"{}")),
         reorder_headers_list=json.loads(os.environ.get("REORDER_HEADERS_LIST", r"[]")),
         field_separator=os.environ["FIELD_SEPARATOR"],
         schema_path=os.environ["SCHEMA_PATH"]
