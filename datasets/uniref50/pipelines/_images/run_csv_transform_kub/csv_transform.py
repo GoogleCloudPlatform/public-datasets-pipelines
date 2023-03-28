@@ -39,7 +39,7 @@ def main(
     data_dtypes: dict,
     reorder_headers_list: typing.List[str],
     field_separator: str,
-    schema_path: str
+    schema_path: str,
 ) -> None:
     logging.info(f"{pipeline_name} process started")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
@@ -55,7 +55,7 @@ def main(
         data_dtypes=data_dtypes,
         reorder_headers_list=reorder_headers_list,
         field_separator=field_separator,
-        schema_path=schema_path
+        schema_path=schema_path,
     )
     logging.info(f"{pipeline_name} process completed")
 
@@ -75,26 +75,30 @@ def execute_pipeline(
     schema_path: str,
 ) -> None:
     logging.info("Processing individual zip files ...")
-    for zip_file in sorted(list_gcs_files(project_id, source_gcs_bucket, source_gcs_path, "x", ".txt.gz")):
+    for zip_file in sorted(
+        list_gcs_files(project_id, source_gcs_bucket, source_gcs_path, "x", ".txt.gz")
+    ):
         source_location = f"gs://{source_gcs_bucket}/{source_gcs_path}/{zip_file}"
-        logging.info(f" Downloading, processing and loading source data file {source_location} ...")
+        logging.info(
+            f" Downloading, processing and loading source data file {source_location} ..."
+        )
         download_file_gcs(
             project_id=project_id,
             source_location=source_location,
-            destination_folder=destination_folder
+            destination_folder=destination_folder,
         )
         extracted_chunk = f"{destination_folder}/{str(zip_file).replace('.gz', '')}"
         gz_decompress(
             infile=f"{destination_folder}/{zip_file}",
             tofile=f"{extracted_chunk}",
-            delete_zipfile=True
+            delete_zipfile=True,
         )
         df = transform_data(
             source_filename=extracted_chunk,
             csv_headers=csv_headers,
             data_dtypes=data_dtypes,
             reorder_headers_list=reorder_headers_list,
-            field_separator=field_separator
+            field_separator=field_separator,
         )
         if os.path.exists(extracted_chunk):
             os.remove(extracted_chunk)
@@ -112,16 +116,20 @@ def execute_pipeline(
                     dataset_id=dataset_id,
                     table_id=table_id,
                     schema_field_headers_list=reorder_headers_list,
-                    truncate_table=(True if os.path.basename(extracted_chunk) == "x000.txt" else False)
+                    truncate_table=(
+                        True
+                        if os.path.basename(extracted_chunk) == "x000.txt"
+                        else False
+                    ),
                 )
             else:
-                error_msg = f"Error: Data was not loaded because the destination table {project_id}.{dataset_id}.{destination_table} does not exist and/or could not be created."
+                error_msg = f"Error: Data was not loaded because the destination table {project_id}.{dataset_id}.{table_id} does not exist and/or could not be created."
                 raise ValueError(error_msg)
             del df
             garbage_collector.collect()
         else:
             logging.info(
-                f"Informational: The data file {target_file} was not generated because no data file was available.  Continuing."
+                f"Informational: The data file {extracted_chunk} was not generated because no data file was available.  Continuing."
             )
 
 
@@ -130,7 +138,7 @@ def transform_data(
     csv_headers: typing.List[str],
     data_dtypes: dict,
     reorder_headers_list: typing.List[str],
-    field_separator: str = '~'
+    field_separator: str = "~",
 ) -> pd.DataFrame:
     logging.info("Transforms ...")
     logging.info(" ... Transform -> Adding header")
@@ -140,7 +148,7 @@ def transform_data(
     logging.info(" ... Transform -> Loading source file to pandas")
     df = pd.read_csv(
         source_filename,
-        engine='python',
+        engine="python",
         encoding="utf-8",
         sep=field_separator,
         dtype=data_dtypes,
@@ -158,17 +166,27 @@ def list_gcs_files(
     source_gcs_bucket: str,
     source_gcs_path: str,
     file_prefix: str,
-    file_suffix: str
+    file_suffix: str,
 ) -> typing.List[str]:
     storage_client = storage.Client(project_id)
-    blobs = list(storage_client.list_blobs(source_gcs_bucket, prefix=source_gcs_path, fields="items(name)"))
-    blob_names = [blob_name.name[len(source_gcs_path):] for blob_name in blobs if blob_name.name != source_gcs_path]
+    blobs = list(
+        storage_client.list_blobs(
+            source_gcs_bucket, prefix=source_gcs_path, fields="items(name)"
+        )
+    )
+    blob_names = [
+        blob_name.name[len(source_gcs_path) :]
+        for blob_name in blobs
+        if blob_name.name != source_gcs_path
+    ]
     bucket_files = sorted(blob_names)
     rtn_list = []
     for bucket_file in bucket_files:
-        if bucket_file[:(len(file_prefix)+1)] == f"/{file_prefix}" \
-            and bucket_file[-(len(file_suffix)):] == file_suffix:
-                rtn_list += [bucket_file[1:]]
+        if (
+            bucket_file[: (len(file_prefix) + 1)] == f"/{file_prefix}"
+            and bucket_file[-(len(file_suffix)) :] == file_suffix
+        ):
+            rtn_list += [bucket_file[1:]]
     return rtn_list
 
 
@@ -213,29 +231,29 @@ def load_df_to_bq(
     dataset_id: str,
     table_id: str,
     schema_field_headers_list: str,
-    truncate_table: bool
+    truncate_table: bool,
 ) -> None:
-    logging.info(f"Loading { df.count()[0] } data rows to {project_id}:{dataset_id}.{table_id} with truncate table {str(truncate_table)}")
+    logging.info(
+        f"Loading { df.count()[0] } data rows to {project_id}:{dataset_id}.{table_id} with truncate table {str(truncate_table)}"
+    )
     client = bigquery.Client(project=project_id)
     table_ref = client.dataset(dataset_id).table(table_id)
     if truncate_table:
-        write_disposition="WRITE_TRUNCATE"
+        write_disposition = "WRITE_TRUNCATE"
     else:
-        write_disposition="WRITE_APPEND"
-    schema=[]
+        write_disposition = "WRITE_APPEND"
+    schema = []
     for fld in schema_field_headers_list:
         schema += [bigquery.SchemaField(fld, bigquery.enums.SqlTypeNames.STRING)]
     job_config = bigquery.LoadJobConfig(
         schema=schema,
         write_disposition=write_disposition,
-        source_format = bigquery.SourceFormat.NEWLINE_DELIMITED_JSON,
-        autodetect=False
+        source_format=bigquery.SourceFormat.NEWLINE_DELIMITED_JSON,
+        autodetect=False,
     )
-    json_data = df.to_json(orient='records')
-    json_object=json.loads(json_data)
-    job = client.load_table_from_json(
-        json_object, table_ref, job_config=job_config
-    )
+    json_data = df.to_json(orient="records")
+    json_object = json.loads(json_data)
+    job = client.load_table_from_json(json_object, table_ref, job_config=job_config)
     job.result()
     logging.info("Completed data load")
 
@@ -282,13 +300,6 @@ def create_dest_table(
     return table_exists
 
 
-def check_gcs_file_exists(file_path: str, bucket_name: str) -> bool:
-    storage_client = storage.Client()
-    bucket = storage_client.bucket(bucket_name)
-    exists = storage.Blob(bucket=bucket, name=file_path).exists(storage_client)
-    return exists
-
-
 def create_table_schema(
     schema_structure: list, bucket_name: str = "", schema_filepath: str = ""
 ) -> list:
@@ -333,5 +344,5 @@ if __name__ == "__main__":
         data_dtypes=json.loads(os.environ.get("DATA_DTYPES", r"{}")),
         reorder_headers_list=json.loads(os.environ.get("REORDER_HEADERS_LIST", r"[]")),
         field_separator=os.environ["FIELD_SEPARATOR"],
-        schema_path=os.environ["SCHEMA_PATH"]
+        schema_path=os.environ["SCHEMA_PATH"],
     )
