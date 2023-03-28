@@ -55,7 +55,7 @@ dag:
         bash_command: |
             mkdir -p /home/airflow/gcs/data/uniref50/uniref
             rm /home/airflow/gcs/data/uniref50/uniref/*.gz
-            curl -o /home/airflow/gcs/data/uniref50/uniref/uniref50.fasta.gz -L $uniref50
+            curl https://ftp.uniprot.org/pub/databases/uniprot/uniref/uniref50/uniref50.fasta.gz -o /home/airflow/gcs/data/uniref50/uniref/uniref50.fasta.gz
             gunzip -c /home/airflow/gcs/data/uniref50/uniref/uniref50.fasta.gz |sed 's/:>/~@/g' |sed 's/ TaxID=/~@Size=/g' |sed 's/>\(UniRef50_[^[:space:]]*[[:space:]]\)/ClusterID=\1~@TaxID=/;s/ ~@/~@/' |sed 's/ RepID=/~@ClusterName=/g' |sed 's/ Tax=/~@Sequence=/g' |sed 's/ n=/~@RepID=/g' |sed 's/ClusterID=//g' |sed 's/TaxID=//g' |sed 's/RepID=//g' |sed 's/Sequence=//g' |sed 's/Size=//g' |sed 's/ClusterName=//g' |sed '/^UniRef50_/ s/$/~@ENDOFHEADERROW/' |sed '/~@ENDOFHEADERROW/! s/$/-/' |perl -p -e 's/-\n/-/g' |sed 's/\-UniRef/-\nUniRef/g' |perl -p -e 's/ENDOFHEADERROW\n//g' |sed 's/~@$//g' | split -a 3 -d -l 1000000 --numeric-suffixes --filter='gzip -9 > /home/airflow/gcs/data/uniref50/uniref/$FILE.txt.gz; echo "Compressed to file $FILE.txt.gz"'
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
