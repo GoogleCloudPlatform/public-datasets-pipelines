@@ -137,7 +137,7 @@ def transform_data(
     csv_header = field_separator.join(str(itm) for itm in csv_headers)
     cmd = f"sed -i '1s/^/{csv_header}\\n/' {source_filename}"
     subprocess.run(cmd, shell=True)
-    logging.info(" ... Transform -> Cleaning Organism Data Column")
+    logging.info(" ... Transform -> Loading source file to pandas")
     df = pd.read_csv(
         source_filename,
         engine='python',
@@ -145,9 +145,10 @@ def transform_data(
         sep=field_separator,
         dtype=data_dtypes,
     )
-    df["Organism"] = df["Organism"].apply(lambda x: str(x).replace("-", "\n"))
+    logging.info(" ... Transform -> Reordering columns")
     df = df[reorder_headers_list]
-    df = df[df['ClusterID'] != "ClusterID"]
+    logging.info(" ... Transform -> Cleaning sequence column")
+    df["Sequence"] = df["Sequence"].apply(lambda x: str(x).replace("-", "\n"))
     logging.info("Transforms completed")
     return df
 
