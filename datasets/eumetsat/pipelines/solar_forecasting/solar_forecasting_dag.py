@@ -27,7 +27,7 @@ with DAG(
     dag_id="eumetsat.solar_forecasting",
     default_args=default_args,
     max_active_runs=1,
-    schedule_interval="@once",
+    schedule_interval="0 1 * * 6",
     catchup=False,
     default_view="graph",
 ) as dag:
@@ -38,7 +38,7 @@ with DAG(
         timeout=43200,
         retries=0,
         wait=True,
-        project_id="bigquery-public-data",
+        project_id="bigquery-public-data-dev",
         source_bucket="{{ var.json.eumetsat.solar_forecasting.source_bucket }}",
         object_conditions={
             "includePrefixes": [
