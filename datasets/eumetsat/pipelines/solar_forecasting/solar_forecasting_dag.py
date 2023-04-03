@@ -38,7 +38,7 @@ with DAG(
         timeout=43200,
         retries=0,
         wait=True,
-        project_id="bigquery-public-data-dev",
+        project_id="bigquery-public-data",
         source_bucket="{{ var.json.eumetsat.solar_forecasting.source_bucket }}",
         object_conditions={
             "includePrefixes": [
