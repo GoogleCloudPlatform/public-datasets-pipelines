@@ -27,7 +27,7 @@ with DAG(
     dag_id="eumetsat.solar_forecasting",
     default_args=default_args,
     max_active_runs=1,
-    schedule_interval="@once",
+    schedule_interval="0 1 * * 6",
     catchup=False,
     default_view="graph",
 ) as dag:
