@@ -33,21 +33,29 @@ with DAG(
 ) as dag:
 
     # Task to run a GCS to GCS operation using Google resources
-    copy_gcs_bucket = cloud_storage_transfer_service.CloudDataTransferServiceGCSToGCSOperator(
-        task_id="copy_gcs_bucket",
+    copy_gcs_bucket_v3 = cloud_storage_transfer_service.CloudDataTransferServiceGCSToGCSOperator(
+        task_id="copy_gcs_bucket_v3",
         timeout=43200,
         retries=0,
         wait=True,
         project_id="bigquery-public-data",
         source_bucket="{{ var.json.eumetsat.solar_forecasting.source_bucket }}",
-        object_conditions={
-            "includePrefixes": [
-                "satellite/EUMETSAT/SEVIRI_RSS/v3/eumetsat_seviri_hrv_uk.zarr",
-                "satellite/EUMETSAT/SEVIRI_RSS/v4/eumetsat_seviri_hrv_uk.zarr",
-            ]
-        },
+        object_conditions={"includePrefixes": ["satellite/EUMETSAT/SEVIRI_RSS/v3"]},
         destination_bucket="{{ var.json.eumetsat.solar_forecasting.destination_bucket }}",
         google_impersonation_chain="{{ var.json.eumetsat.solar_forecasting.service_account }}",
     )
 
-    copy_gcs_bucket
+    # Task to run a GCS to GCS operation using Google resources
+    copy_gcs_bucket_v4 = cloud_storage_transfer_service.CloudDataTransferServiceGCSToGCSOperator(
+        task_id="copy_gcs_bucket_v4",
+        timeout=43200,
+        retries=0,
+        wait=True,
+        project_id="bigquery-public-data",
+        source_bucket="{{ var.json.eumetsat.solar_forecasting.source_bucket }}",
+        object_conditions={"includePrefixes": ["satellite/EUMETSAT/SEVIRI_RSS/v4"]},
+        destination_bucket="{{ var.json.eumetsat.solar_forecasting.destination_bucket }}",
+        google_impersonation_chain="{{ var.json.eumetsat.solar_forecasting.service_account }}",
+    )
+
+    copy_gcs_bucket_v3 >> copy_gcs_bucket_v4
