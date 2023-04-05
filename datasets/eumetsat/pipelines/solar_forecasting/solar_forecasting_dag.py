@@ -35,7 +35,7 @@ with DAG(
     # Task to run a GCS to GCS operation using Google resources
     copy_gcs_bucket_v3 = cloud_storage_transfer_service.CloudDataTransferServiceGCSToGCSOperator(
         task_id="copy_gcs_bucket_v3",
-        timeout=43200,
+        timeout=172800,
         retries=0,
         wait=True,
         project_id="bigquery-public-data",
@@ -48,7 +48,7 @@ with DAG(
     # Task to run a GCS to GCS operation using Google resources
     copy_gcs_bucket_v4 = cloud_storage_transfer_service.CloudDataTransferServiceGCSToGCSOperator(
         task_id="copy_gcs_bucket_v4",
-        timeout=43200,
+        timeout=172800,
         retries=0,
         wait=True,
         project_id="bigquery-public-data",

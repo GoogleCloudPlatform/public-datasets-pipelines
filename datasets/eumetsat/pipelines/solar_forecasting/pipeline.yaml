@@ -18,7 +18,7 @@ dag:
       description: "Task to run a GCS to GCS operation using Google resources"
       args:
         task_id: copy_gcs_bucket_v3
-        timeout: 43200  # 12 hours
+        timeout: 172800  # 24 hours
         retries: 0
         wait: True
         project_id: bigquery-public-data
@@ -32,7 +32,7 @@ dag:
       description: "Task to run a GCS to GCS operation using Google resources"
       args:
         task_id: copy_gcs_bucket_v4
-        timeout: 43200  # 12 hours
+        timeout: 172800  # 24 hours
         retries: 0
         wait: True
         project_id: bigquery-public-data
