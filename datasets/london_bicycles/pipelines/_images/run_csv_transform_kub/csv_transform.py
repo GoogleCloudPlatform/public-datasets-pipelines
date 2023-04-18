@@ -18,14 +18,27 @@ import json
 import logging
 import os
 import pathlib
+import typing
+from io import StringIO
 from xml.etree import ElementTree
 
+import bs4
 import requests
+
+import selenium.webdriver as web
 from google.cloud import storage
+from lxml import etree
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+from webdriver_manager.chrome import ChromeDriverManager
 
 
 def main(
-    source_url: str,
+    source_url: dict,
     source_file: str,
     required_cols: list,
     rename_mappings: dict,
@@ -36,26 +49,72 @@ def main(
     output_file: str,
     gcs_bucket: str,
     target_gcs_path: str,
+    pipeline: str
 ) -> None:
     logging.info(
-        f'London Cycle Stations Dataset pipeline process started at {str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))}'
+        f'{pipeline} pipeline process started at {str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))}'
     )
-    pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
-    download_file(source_url, source_file)
-    process_xml(
-        source_file,
-        output_file,
-        required_cols,
-        rename_mappings,
-        date_cols,
-        integer_cols,
-        float_cols,
-        string_cols,
-    )
-    upload_file_to_gcs(output_file, gcs_bucket, target_gcs_path)
+    source_folder = os.path.split(source_file)[0]
+    pathlib.Path(source_folder).mkdir(parents=True, exist_ok=True)
+    if pipeline == "London Cycle Stations Dataset":
+        for src_url in source_url:
+            src_file_name = os.path.basename(source_url[src_url])
+            dest_file = f"{source_folder}/{src_file_name}"
+            # import pdb; pdb.set_trace()
+            download_file(source_url[src_url], dest_file)
+            process_xml(
+                source_file,
+                output_file,
+                required_cols,
+                rename_mappings,
+                date_cols,
+                integer_cols,
+                float_cols,
+                string_cols,
+            )
+            upload_file_to_gcs(output_file, gcs_bucket, target_gcs_path)
+    elif pipeline == "London Cycle Trips Dataset":
+        # import pdb; pdb.set_trace()
+        files_list = https_list_all_file_links(url=source_url["trips"])
+        logging.info(files_list)
     logging.info(
-        f'London Cycle Stations Dataset pipeline process completed at {str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))}'
+        f'{pipeline} pipeline process completed at {str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))}'
     )
+
+
+def https_list_all_file_links(url: str) -> typing.List[str]:
+    serv = ChromeService(ChromeDriverManager().install())
+    serv.start()
+    caps = DesiredCapabilities().CHROME
+    caps["pageLoadStrategy"] = "eager"
+    opt = Options()
+    opt.add_argument("--no-sandbox")
+    opt.add_argument("--headless")
+    opt.add_argument("--disable-dev-shm-usage")
+    opt.add_argument("--window-size=1920x1080")
+    driver = web.Chrome(service=serv, desired_capabilities=caps, options=opt)
+    driver.maximize_window()
+    driver.get('https://cycling.data.tfl.gov.uk')
+    driver.refresh()
+    try:
+        elem = WebDriverWait(driver, 30).until(
+        EC.presence_of_element_located((By.LINK_TEXT, "cycling-load.json")) #This is a dummy element
+        )
+        logging.info(f"found element {elem}")
+    finally:
+        pass
+    driver.execute_script("window.scrollTo(0,document.body.scrollHeight);")
+    parser = etree.HTMLParser()
+    page = driver.execute_script('return document.body;')
+    body = page.get_attribute('innerHTML')
+    soup=bs4.BeautifulSoup(body,"html.parser")
+    links = []
+    for link in soup.findAll('a'): links += [link.get('href')]
+    serv.stop()
+    tree = etree.parse(StringIO(body), parser=parser)
+    refs = tree.xpath("//a")
+    links = [link.get('href', '') for link in refs]
+    return links
 
 
 def download_file(source_url: str, source_file: str) -> None:
@@ -151,7 +210,7 @@ def upload_file_to_gcs(
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
     main(
-        source_url=os.environ.get("SOURCE_URL", ""),
+        source_url=json.loads(os.environ.get("SOURCE_URL", "")),
         source_file=os.environ.get("SOURCE_FILE", ""),
         required_cols=json.loads(os.environ.get("REQUIRED_COLS", "[]")),
         rename_mappings=json.loads(os.environ.get("RENAME_MAPPINGS", "{}")),
@@ -162,4 +221,5 @@ if __name__ == "__main__":
         output_file=os.environ.get("OUTPUT_FILE", ""),
         gcs_bucket=os.environ.get("GCS_BUCKET", ""),
         target_gcs_path=os.environ.get("TARGET_GCS_PATH", ""),
+        pipeline=os.environ.get("PIPELINE", "")
     )

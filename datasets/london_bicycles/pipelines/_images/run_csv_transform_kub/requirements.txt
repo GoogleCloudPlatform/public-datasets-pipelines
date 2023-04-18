@@ -1,2 +1,8 @@
+bs4
+lxml
+selenium
+webdriver_manager
 google-cloud-storage
+pyvirtualdisplay
 requests
+xvfbwrapper

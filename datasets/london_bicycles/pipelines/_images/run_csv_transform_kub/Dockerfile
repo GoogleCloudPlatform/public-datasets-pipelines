@@ -17,6 +17,7 @@ FROM python:3.8
 
 # Allow statements and log messages to appear in Cloud logs
 ENV PYTHONUNBUFFERED True
+ENV DEBIAN_FRONTEND noninteractive
 
 # Copy the requirements file into the image
 COPY requirements.txt ./
@@ -24,10 +25,14 @@ COPY requirements.txt ./
 # Install the packages specified in the requirements file
 RUN python3 -m pip install --no-cache-dir -r requirements.txt
 
-# The WORKDIR instruction sets the working directory for any RUN, CMD,
-# ENTRYPOINT, COPY and ADD instructions that follow it in the Dockerfile.
-# If the WORKDIR doesn’t exist, it will be created even if it’s not used in
-# any subsequent Dockerfile instruction
+# Upgrade pip
+RUN python3 -m pip install --upgrade pip
+
+RUN apt-get update && apt-get install -y wget
+RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list
+RUN apt-get update && apt-get -y install google-chrome-stable
+
 WORKDIR /custom
 
 # Copy the specific data processing script/s in the image under /custom/*
