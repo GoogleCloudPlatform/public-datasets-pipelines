@@ -12,43 +12,45 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import bs4
 import csv
 import datetime
+from io import StringIO
 import json
 import logging
 import os
+import pandas as pd
 import pathlib
-import typing
-from io import StringIO
-from xml.etree import ElementTree
-
-import bs4
 import requests
+import typing
 
-import selenium.webdriver as web
 from google.cloud import storage
 from lxml import etree
+import selenium.webdriver as web
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
+from xml.etree import ElementTree
 from webdriver_manager.chrome import ChromeDriverManager
 
 
 def main(
     source_url: dict,
     source_file: str,
-    required_cols: list,
+    required_cols: typing.List[str],
     rename_mappings: dict,
-    date_cols: list,
-    integer_cols: list,
-    float_cols: list,
-    string_cols: list,
+    date_cols: typing.List[str],
+    integer_cols: typing.List[str],
+    float_cols: typing.List[str],
+    string_cols: typing.List[str],
     output_file: str,
+    output_csv_headers: typing.List[str],
     gcs_bucket: str,
     target_gcs_path: str,
+    page_refresh_dummy_element: str,
     pipeline: str
 ) -> None:
     logging.info(
@@ -60,7 +62,6 @@ def main(
         for src_url in source_url:
             src_file_name = os.path.basename(source_url[src_url])
             dest_file = f"{source_folder}/{src_file_name}"
-            # import pdb; pdb.set_trace()
             download_file(source_url[src_url], dest_file)
             process_xml(
                 source_file,
@@ -74,15 +75,41 @@ def main(
             )
             upload_file_to_gcs(output_file, gcs_bucket, target_gcs_path)
     elif pipeline == "London Cycle Trips Dataset":
-        # import pdb; pdb.set_trace()
-        files_list = https_list_all_file_links(url=source_url["trips"])
+        files_list = https_list_all_file_links(url=source_url["trips"], page_refresh_dummy_element=page_refresh_dummy_element)
+        extract_list = [ s for s in files_list if 'JourneyDataExtract' in s]
+        df_extract_list = pd.DataFrame(extract_list, columns = ['link_addr'])
+        df_extract_list['id'] = df_extract_list['link_addr'].apply(lambda x: os.path.basename(str(x)).split('JourneyDataExtract')[0])
+        df_extract_list['date_from_extr'] = df_extract_list['link_addr'].apply(lambda x: int(clean_date(os.path.basename(str(x)).split('JourneyDataExtract')[1].replace('.csv', '').replace('.xlsx', '').split('-')[0])))
+        df_extract_list['date_to_extr'] = df_extract_list['link_addr'].apply(lambda x: int(clean_date(os.path.basename(str(x)).split('JourneyDataExtract')[1].replace('.csv', '').replace('.xlsx', '').split('-')[1])))
+        download_link_addr = df_extract_list.loc[df_extract_list['date_to_extr'].idxmax()]['link_addr']
+        download_file(source_url=download_link_addr, source_file=source_file)
+        df_journey = pd.read_csv(source_file, sep=",", quotechar='"')
+        rename_headers(df_journey, rename_mappings)
+        df_journey = df_journey[output_csv_headers]
+        df_journey['start_date'] = df_journey['start_date'].apply(lambda x: x if len(x) < 1 else f'{x}:00')
+        df_journey['end_date'] = df_journey['end_date'].apply(lambda x: x if len(x) < 1 else f'{x}:00')
+        import pdb; pdb.set_trace()
         logging.info(files_list)
     logging.info(
         f'{pipeline} pipeline process completed at {str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))}'
     )
 
 
-def https_list_all_file_links(url: str) -> typing.List[str]:
+def clean_date(datestr: str) -> str:
+    datestr = datestr.strip()
+    if len(datestr) < 9:
+        datestr = f'{datestr[:-2]}20{datestr[-2:]}'
+    if datestr[:-4][-3].isnumeric:
+        if datestr[:-4][-2:] == 'Fe':
+            datestr = f'{datestr[:-6]}Feb{datestr[-4:]}'
+    if len(datestr) == 9:
+        datestr = datetime.datetime.strptime(datestr, '%d%b%Y').strftime('%Y%m%d')
+    else:
+        datestr = datetime.datetime.strptime(datestr, '%d%B%Y').strftime('%Y%m%d')
+    return datestr
+
+
+def https_list_all_file_links(url: str, page_refresh_dummy_element: str) -> typing.List[str]:
     serv = ChromeService(ChromeDriverManager().install())
     serv.start()
     caps = DesiredCapabilities().CHROME
@@ -94,11 +121,11 @@ def https_list_all_file_links(url: str) -> typing.List[str]:
     opt.add_argument("--window-size=1920x1080")
     driver = web.Chrome(service=serv, desired_capabilities=caps, options=opt)
     driver.maximize_window()
-    driver.get('https://cycling.data.tfl.gov.uk')
+    driver.get(url)
     driver.refresh()
     try:
         elem = WebDriverWait(driver, 30).until(
-        EC.presence_of_element_located((By.LINK_TEXT, "cycling-load.json")) #This is a dummy element
+        EC.presence_of_element_located((By.LINK_TEXT, page_refresh_dummy_element))
         )
         logging.info(f"found element {elem}")
     finally:
@@ -196,6 +223,11 @@ def process_xml(
     logging.info("Process completed for converting .xml to .csv")
 
 
+def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
+    logging.info("Renaming headers...")
+    df.rename(columns=rename_mappings, inplace=True)
+
+
 def upload_file_to_gcs(
     target_csv_file: str, target_gcs_bucket: str, target_gcs_path: str
 ) -> None:
@@ -219,7 +251,9 @@ if __name__ == "__main__":
         float_cols=json.loads(os.environ.get("FLOAT_COLS", "[]")),
         string_cols=json.loads(os.environ.get("STRING_COLS", "[]")),
         output_file=os.environ.get("OUTPUT_FILE", ""),
+        output_csv_headers=json.loads(os.environ.get("OUTPUT_CSV_HEADERS", "[]")),
         gcs_bucket=os.environ.get("GCS_BUCKET", ""),
+        page_refresh_dummy_element=os.environ.get("PAGE_REFRESH_DUMMY_ELEMENT", ""),
         target_gcs_path=os.environ.get("TARGET_GCS_PATH", ""),
         pipeline=os.environ.get("PIPELINE", "")
     )

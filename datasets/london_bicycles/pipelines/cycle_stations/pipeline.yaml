@@ -137,21 +137,37 @@ dag:
             {
               "trips": "https://cycling.data.tfl.gov.uk"
             }
-          SOURCE_FILE: "./files/livecyclehireupdates.xml"
-          REQUIRED_COLS: >-
-            ["id", "installed", "lat", "locked", "long", "name", "nbBikes", "nbDocks", "nbEmptyDocks", "temporary", "terminalName", "installDate", "removalDate"]
+          SOURCE_FILE: "./files/journey.csv"
           RENAME_MAPPINGS: >-
-            {"id": "id", "installed": "installed", "lat": "latitude", "locked": "locked", "long": "longitude", "name": "name", "nbBikes": "bikes_count", "nbDocks": "docks_count", "nbEmptyDocks": "nbEmptyDocks", "temporary": "temporary", "terminalName": "terminal_name", "installDate": "install_date", "removalDate": "removal_date"}
-          DATE_COLS: >-
-            ["installDate", "removalDate"]
-          INTEGER_COLS: >-
-            ["id", "nbBikes", "nbDocks", "nbEmptyDocks", "terminalName"]
-          FLOAT_COLS: >-
-            ["lat", "long"]
-          STRING_COLS: >-
-            ["installed","locked", "name", "temporary"]
+            {
+              "Number": "rental_id",
+              "Start date": "start_date",
+              "Start station number": "start_station_id",
+              "Start station": "start_station_name",
+              "End date": "end_date",
+              "End station number": "end_station_id",
+              "End station": "end_station_name",
+              "Bike number": "bike_id",
+              "Bike model": "bike_model",
+              "Total duration": "duration",
+              "Total duration (ms)": "duration_ms"
+            }
           OUTPUT_FILE: "./files/cycle_trips_data_output.csv"
           GCS_BUCKET: "{{ var.json.london_bicycles.storage_bucket }}"
+          OUTPUT_CSV_HEADERS: >-
+            [
+              "rental_id",
+              "duration",
+              "duration_ms",
+              "bike_id",
+              "bike_model",
+              "end_date",
+              "end_station_id",
+              "end_station_name",
+              "start_date",
+              "start_station_id",
+              "start_station_name"
+            ]
           TARGET_GCS_PATH: "london_bicycle/cycle_trips_data_output.csv"
           PIPELINE: "London Cycle Trips Dataset"
         resources:
