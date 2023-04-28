@@ -45,6 +45,7 @@ def main(
     project_id: str,
     dataset_id: str,
     table_id: str,
+    load_start_date_floor: str,
     required_cols: typing.List[str],
     rename_mappings: dict,
     date_cols: typing.List[str],
@@ -66,117 +67,189 @@ def main(
     source_folder = os.path.split(source_file)[0]
     pathlib.Path(source_folder).mkdir(parents=True, exist_ok=True)
     if pipeline == "London Cycle Stations Dataset":
-        for src_url in source_url:
-            src_file_name = os.path.basename(source_url[src_url])
-            dest_file = f"{source_folder}/{src_file_name}"
-            download_file(source_url[src_url], dest_file)
-            process_xml(
-                source_file,
-                output_file,
-                required_cols,
-                rename_mappings,
-                date_cols,
-                integer_cols,
-                float_cols,
-                string_cols,
-            )
-            upload_file_to_gcs(output_file, gcs_bucket, target_gcs_path)
+        process_cycle_stations(
+            source_url=source_url,
+            source_file=source_file,
+            source_folder=source_folder,
+            required_cols=required_cols,
+            rename_mappings=rename_mappings,
+            date_cols=date_cols,
+            integer_cols=integer_cols,
+            float_cols=float_cols,
+            string_cols=string_cols,
+            output_file=output_file,
+            gcs_bucket=gcs_bucket,
+            target_gcs_path=target_gcs_path
+        )
     elif pipeline == "London Cycle Trips Dataset":
-        # files_list = https_list_all_file_links(url=source_url["trips"], page_refresh_dummy_element=page_refresh_dummy_element)
-        files_list = list_files_in_gcs_bucket(source_gcs_bucket=source_url["trips"].replace("gs://", ""), source_gcs_path="")
-        extract_list = [ s for s in files_list if 'JourneyDataExtract' in s]
-        df_extract_list = pd.DataFrame(extract_list, columns = ['source_file_name'])
-        df_extract_list['id'] = df_extract_list['source_file_name'].apply(lambda x: os.path.basename(str(x)).split('JourneyDataExtract')[0])
-        df_extract_list['date_from_extr'] = df_extract_list['source_file_name'].apply(lambda x: int(clean_date(os.path.basename(str(x)).split('JourneyDataExtract')[1].replace('.csv', '').replace('.xlsx', '').split('-')[0])))
-        df_extract_list['date_to_extr'] = df_extract_list['source_file_name'].apply(lambda x: int(clean_date(os.path.basename(str(x)).split('JourneyDataExtract')[1].replace('.csv', '').replace('.xlsx', '').split('-')[1])))
-        df_extract_list = df_extract_list.sort_values(by=["date_to_extr"], ascending=True)
-        df_extract_list = df_extract_list.loc[(df_extract_list['date_from_extr'] > 20170613)]
-        df_extract_list['bq_start_date_from'] = df_extract_list['date_from_extr'].apply(lambda x: f"{str(x)[:4]}-{str(x)[4:6]}-{str(x)[6:8]}")
-        df_extract_list['bq_start_date_to'] = df_extract_list['date_to_extr'].apply(lambda x: f"{str(x)[:4]}-{str(x)[4:6]}-{str(x)[6:8]}")
-        for download_file_name in df_extract_list['source_file_name']:
-            bq_start_date_from = str(df_extract_list.loc[(df_extract_list['source_file_name'] == download_file_name)]['bq_start_date_from']).split("    ")[1][0:10]
-            bq_start_date_to = str(df_extract_list.loc[(df_extract_list['source_file_name'] == download_file_name)]['bq_start_date_to']).split("    ")[1][0:10]
-            # download_file_name = df_extract_list.loc[df_extract_list['date_to_extr'].idxmax()]['source_file_name']
-            # download_file_basename = os.path.basename(download_file_name)
-            number_rows = count_number_rows_between_date(
-                                project_id=project_id,
-                                dataset_id=dataset_id,
-                                table_name=table_id,
-                                start_date_from = bq_start_date_from,
-                                start_date_to = bq_start_date_to
-                            )
-            if number_rows == -1:
-                table_exists = create_dest_table(
-                    project_id=project_id,
-                    dataset_id=dataset_id,
-                    table_id=table_id,
-                    schema_filepath=schema_path,
-                    bucket_name=gcs_bucket,
-                )
-                number_rows = 0
-            if number_rows == 0:
-                source_location = f"{source_url['trips']}/{download_file_name}"
-                destination_folder = os.path.dirname(source_file)
-                destination_filename = f"{destination_folder}/{download_file_name}"
-                download_file_gcs(
-                    project_id=project_id,
-                    source_location=source_location,
-                    destination_folder=destination_folder
-                )
-                df_journey = pd.read_csv(destination_filename, sep=",", quotechar='"', dtype=data_dtypes)
-                df_journey = rename_headers(df_journey, rename_mappings)
-                df_journey['duration_str'] = df_journey['duration_str'].astype('Int32', errors='ignore')
-                df_journey['bike_id'] = df_journey['bike_id'].astype('Int32', errors='ignore')
-                df_journey['start_station_id'] = df_journey['start_station_id'].astype('Int32', errors='ignore')
-                df_journey['end_station_id'] = df_journey['end_station_id'].astype('Int32', errors='ignore')
-                # if duration_ms exists then:
-                if 'duration_ms' in df_journey.columns:
-                    df_journey['duration_str'] = df_journey['duration_ms'].apply(lambda x: x if pd.isnull(x) else round(x / 1000))
-                else:
-                    df_journey['duration_ms'] = df_journey['duration_str'].apply(lambda x: x if pd.isnull(x) else round(x * 1000))
-                if 'bike_model' not in df_journey.columns:
-                    df_journey['bike_model'] = ''
-                else:
-                    pass
-                df_journey['start_date'] = df_journey['start_date'].apply(lambda x: x if len(str(x)) < 1 else f'{x}:00')
-                df_journey['start_date'] = df_journey['start_date'].apply(lambda x: '' if x == 'nan:00' else datetime.datetime.strptime(x, '%d/%m/%Y %H:%M:%S').strftime('%Y-%m-%d %H:%M:%S'))
-                df_journey['end_date'] = df_journey['end_date'].apply(lambda x: x if len(str(x)) < 1 else f'{x}:00')
-                df_journey['end_date'] = df_journey['end_date'].apply(lambda x: '' if x == 'nan:00' else datetime.datetime.strptime(x, '%d/%m/%Y %H:%M:%S').strftime('%Y-%m-%d %H:%M:%S'))
-                df_journey['end_station_logical_terminal'] = ""
-                df_journey['start_station_logical_terminal'] = ""
-                df_journey['end_station_priority_id'] = ""
-                df_journey.rename(columns={'duration_str': 'duration'}, inplace=True)
-                df_journey[output_csv_headers].to_csv(output_file, sep="|", quotechar='"', index=False)
-                if os.path.exists(output_file):
-                    # table_exists = create_dest_table(
-                    #     project_id=project_id,
-                    #     dataset_id=dataset_id,
-                    #     table_id=table_id,
-                    #     schema_filepath=schema_path,
-                    #     bucket_name=gcs_bucket,
-                    # )
-                    if table_exists:
-                        load_data_to_bq(
-                            project_id=project_id,
-                            dataset_id=dataset_id,
-                            table_id=table_id,
-                            file_path=output_file,
-                            truncate_table=False,
-                            field_delimiter="|",
-                        )
-                    else:
-                        error_msg = f"Error: Data was not loaded because the destination table {project_id}.{dataset_id}.{table_id} does not exist and/or could not be created."
-                        raise ValueError(error_msg)
-                else:
-                    logging.info(
-                        f"Informational: The data file {output_file} was not generated because no data file was available.  Continuing."
-                    )
-            else:
-                logging.info(f"Datafile {download_file_name} already loaded.  Skipping.")
-        logging.info(files_list)
+        process_cycle_hire(
+            source_url=source_url,
+            source_file=source_file,
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_id=table_id,
+            load_start_date_floor=load_start_date_floor,
+            rename_mappings=rename_mappings,
+            output_file=output_file,
+            data_dtypes=data_dtypes,
+            output_csv_headers=output_csv_headers,
+            gcs_bucket=gcs_bucket,
+            schema_path=schema_path
+        )
     logging.info(
         f'{pipeline} pipeline process completed at {str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))}'
     )
+
+
+def process_cycle_hire(
+    source_url: dict,
+    source_file: str,
+    project_id: str,
+    dataset_id: str,
+    table_id: str,
+    load_start_date_floor: str,
+    rename_mappings: dict,
+    output_file: str,
+    data_dtypes: dict,
+    output_csv_headers: typing.List[str],
+    gcs_bucket: str,
+    schema_path: str,
+):
+    files_list = list_files_in_gcs_bucket(
+        source_gcs_bucket=source_url["trips"].replace("gs://", ""),
+        source_gcs_path=""
+    )
+    extract_list = [ s for s in files_list if 'JourneyDataExtract' in s]
+    df_extract_list = pd.DataFrame(extract_list, columns = ['source_file_name'])
+    df_extract_list['id'] = df_extract_list['source_file_name'].apply(
+        lambda x: os.path.basename(str(x)).split('JourneyDataExtract')[0]
+    )
+    df_extract_list['date_from_extr'] = df_extract_list['source_file_name'].apply(
+        lambda x: int(
+                clean_date(
+                    os.path.basename(str(x))
+                        .split('JourneyDataExtract')[1]
+                        .replace('.csv', '')
+                        .split('-')[0]
+                )
+            )
+    )
+    df_extract_list['date_to_extr'] = df_extract_list['source_file_name'].apply(
+        lambda x: int(
+                clean_date(
+                    os.path.basename(str(x))
+                        .split('JourneyDataExtract')[1]
+                        .replace('.csv', '')
+                        .split('-')[1]
+                )
+            )
+    )
+    df_extract_list = df_extract_list.sort_values(
+        by=["date_to_extr"],
+        ascending=True
+    )
+    df_extract_list = df_extract_list.loc[(df_extract_list['date_from_extr'] > int(load_start_date_floor))]
+    df_extract_list['bq_start_date_from'] = df_extract_list['date_from_extr'].apply(lambda x: f"{str(x)[:4]}-{str(x)[4:6]}-{str(x)[6:8]}")
+    df_extract_list['bq_start_date_to'] = df_extract_list['date_to_extr'].apply(lambda x: f"{str(x)[:4]}-{str(x)[4:6]}-{str(x)[6:8]}")
+    for download_file_name in df_extract_list['source_file_name']:
+        bq_start_date_from = str(df_extract_list.loc[(df_extract_list['source_file_name'] == download_file_name)]['bq_start_date_from']).split("    ")[1][0:10]
+        bq_start_date_to = str(df_extract_list.loc[(df_extract_list['source_file_name'] == download_file_name)]['bq_start_date_to']).split("    ")[1][0:10]
+        number_rows = count_number_rows_between_date(
+                            project_id=project_id,
+                            dataset_id=dataset_id,
+                            table_name=table_id,
+                            start_date_from = bq_start_date_from,
+                            start_date_to = bq_start_date_to
+                        )
+        if number_rows == -1:
+            create_dest_table(
+                project_id=project_id,
+                dataset_id=dataset_id,
+                table_id=table_id,
+                schema_filepath=schema_path,
+                bucket_name=gcs_bucket,
+            )
+            number_rows = 0
+        if number_rows == 0:
+            source_location = f"{source_url['trips']}/{download_file_name}"
+            destination_folder = os.path.dirname(source_file)
+            destination_filename = f"{destination_folder}/{download_file_name}"
+            download_file_gcs(
+                project_id=project_id,
+                source_location=source_location,
+                destination_folder=destination_folder
+            )
+            df_journey = pd.read_csv(destination_filename, sep=",", quotechar='"', dtype=data_dtypes)
+            df_journey = rename_headers(df_journey, rename_mappings)
+            df_journey['duration_str'] = df_journey['duration_str'].astype('Int32', errors='ignore')
+            df_journey['bike_id'] = df_journey['bike_id'].astype('Int32', errors='ignore')
+            df_journey['start_station_id'] = df_journey['start_station_id'].astype('Int32', errors='ignore')
+            df_journey['end_station_id'] = df_journey['end_station_id'].astype('Int32', errors='ignore')
+            if 'duration_ms' in df_journey.columns:
+                df_journey['duration_str'] = df_journey['duration_ms'].apply(lambda x: x if pd.isnull(x) else round(x / 1000))
+            else:
+                df_journey['duration_ms'] = df_journey['duration_str'].apply(lambda x: x if pd.isnull(x) else round(x * 1000))
+            if 'bike_model' not in df_journey.columns:
+                df_journey['bike_model'] = ''
+            else:
+                pass
+            df_journey['start_date'] = df_journey['start_date'].apply(lambda x: x if len(str(x)) < 1 else f'{x}:00')
+            df_journey['start_date'] = df_journey['start_date'].apply(lambda x: '' if x == 'nan:00' else datetime.datetime.strptime(x, '%d/%m/%Y %H:%M:%S').strftime('%Y-%m-%d %H:%M:%S'))
+            df_journey['end_date'] = df_journey['end_date'].apply(lambda x: x if len(str(x)) < 1 else f'{x}:00')
+            df_journey['end_date'] = df_journey['end_date'].apply(lambda x: '' if x == 'nan:00' else datetime.datetime.strptime(x, '%d/%m/%Y %H:%M:%S').strftime('%Y-%m-%d %H:%M:%S'))
+            df_journey['end_station_logical_terminal'] = ""
+            df_journey['start_station_logical_terminal'] = ""
+            df_journey['end_station_priority_id'] = ""
+            df_journey.rename(columns={'duration_str': 'duration'}, inplace=True)
+            df_journey[output_csv_headers].to_csv(output_file, sep="|", quotechar='"', index=False)
+            if os.path.exists(output_file):
+                load_data_to_bq(
+                    project_id=project_id,
+                    dataset_id=dataset_id,
+                    table_id=table_id,
+                    file_path=output_file,
+                    truncate_table=False,
+                    field_delimiter="|",
+                )
+            else:
+                logging.info(
+                    f"Informational: The data file {output_file} was not generated because no data file was available.  Continuing."
+                )
+        else:
+            logging.info(f"Datafile {download_file_name} already loaded.  Skipping.")
+    logging.info(files_list)
+
+
+def process_cycle_stations(
+    source_url: dict,
+    source_file: str,
+    source_folder: str,
+    required_cols: typing.List[str],
+    rename_mappings: dict,
+    date_cols: typing.List[str],
+    integer_cols: typing.List[str],
+    float_cols: typing.List[str],
+    string_cols: typing.List[str],
+    output_file: str,
+    gcs_bucket: str,
+    target_gcs_path: str,
+):
+    for src_url in source_url:
+        src_file_name = os.path.basename(source_url[src_url])
+        dest_file = f"{source_folder}/{src_file_name}"
+        download_file(source_url[src_url], dest_file)
+        process_xml(
+            source_file,
+            output_file,
+            required_cols,
+            rename_mappings,
+            date_cols,
+            integer_cols,
+            float_cols,
+            string_cols,
+        )
+        upload_file_to_gcs(output_file, gcs_bucket, target_gcs_path)
+
 
 
 def create_dest_table(
@@ -519,6 +592,7 @@ if __name__ == "__main__":
         project_id=os.environ.get("PROJECT_ID", ""),
         dataset_id=os.environ.get("DATASET_ID", ""),
         table_id=os.environ.get("TABLE_ID", ""),
+        load_start_date_floor=os.environ.get("LOAD_START_DATE_FLOOR", ""),
         required_cols=json.loads(os.environ.get("REQUIRED_COLS", "[]")),
         rename_mappings=json.loads(os.environ.get("RENAME_MAPPINGS", "{}")),
         output_file=os.environ.get("OUTPUT_FILE", ""),
