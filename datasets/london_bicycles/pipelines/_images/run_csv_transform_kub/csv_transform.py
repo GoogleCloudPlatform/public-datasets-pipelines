@@ -12,31 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import bs4
 import csv
 import datetime
-from io import StringIO
 import json
 import logging
-import numpy as np
 import os
-import pandas as pd
 import pathlib
-import requests
+import re
 import typing
+from xml.etree import ElementTree
 
+import pandas as pd
+import requests
 from google.api_core.exceptions import NotFound
 from google.cloud import bigquery, storage
-from lxml import etree
-import selenium.webdriver as web
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service as ChromeService
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
-from xml.etree import ElementTree
-from webdriver_manager.chrome import ChromeDriverManager
 
 
 def main(
@@ -59,7 +48,7 @@ def main(
     target_gcs_path: str,
     schema_path: str,
     # page_refresh_dummy_element: str,
-    pipeline: str
+    pipeline: str,
 ) -> None:
     logging.info(
         f'{pipeline} pipeline process started at {str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))}'
@@ -79,7 +68,7 @@ def main(
             string_cols=string_cols,
             output_file=output_file,
             gcs_bucket=gcs_bucket,
-            target_gcs_path=target_gcs_path
+            target_gcs_path=target_gcs_path,
         )
     elif pipeline == "London Cycle Trips Dataset":
         process_cycle_hire(
@@ -94,7 +83,7 @@ def main(
             data_dtypes=data_dtypes,
             output_csv_headers=output_csv_headers,
             gcs_bucket=gcs_bucket,
-            schema_path=schema_path
+            schema_path=schema_path,
         )
     logging.info(
         f'{pipeline} pipeline process completed at {str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))}'
@@ -116,51 +105,63 @@ def process_cycle_hire(
     schema_path: str,
 ):
     files_list = list_files_in_gcs_bucket(
-        source_gcs_bucket=source_url["trips"].replace("gs://", ""),
-        source_gcs_path=""
+        source_gcs_bucket=source_url["trips"].replace("gs://", ""), source_gcs_path=""
     )
-    extract_list = [ s for s in files_list if 'JourneyDataExtract' in s]
-    df_extract_list = pd.DataFrame(extract_list, columns = ['source_file_name'])
-    df_extract_list['id'] = df_extract_list['source_file_name'].apply(
-        lambda x: os.path.basename(str(x)).split('JourneyDataExtract')[0]
+    extract_list = [s for s in files_list if "JourneyDataExtract" in s]
+    df_extract_list = pd.DataFrame(extract_list, columns=["source_file_name"])
+    df_extract_list["id"] = df_extract_list["source_file_name"].apply(
+        lambda x: os.path.basename(str(x)).split("JourneyDataExtract")[0]
     )
-    df_extract_list['date_from_extr'] = df_extract_list['source_file_name'].apply(
+    df_extract_list["date_from_extr"] = df_extract_list["source_file_name"].apply(
         lambda x: int(
-                clean_date(
-                    os.path.basename(str(x))
-                        .split('JourneyDataExtract')[1]
-                        .replace('.csv', '')
-                        .split('-')[0]
-                )
+            clean_date(
+                os.path.basename(str(x))
+                .split("JourneyDataExtract")[1]
+                .replace(".csv", "")
+                .replace(".xlsx", "")
+                .split("-")[0]
             )
+        )
     )
-    df_extract_list['date_to_extr'] = df_extract_list['source_file_name'].apply(
+    df_extract_list["date_to_extr"] = df_extract_list["source_file_name"].apply(
         lambda x: int(
-                clean_date(
-                    os.path.basename(str(x))
-                        .split('JourneyDataExtract')[1]
-                        .replace('.csv', '')
-                        .split('-')[1]
-                )
+            clean_date(
+                os.path.basename(str(x))
+                .split("JourneyDataExtract")[1]
+                .replace(".csv", "")
+                .replace(".xlsx", "")
+                .split("-")[1]
             )
+        )
     )
-    df_extract_list = df_extract_list.sort_values(
-        by=["date_to_extr"],
-        ascending=True
+    df_extract_list = df_extract_list.sort_values(by=["date_to_extr"], ascending=True)
+    df_extract_list = df_extract_list.loc[
+        (df_extract_list["date_from_extr"] > int(load_start_date_floor))
+    ]
+    df_extract_list["bq_start_date_from"] = df_extract_list["date_from_extr"].apply(
+        lambda x: f"{str(x)[:4]}-{str(x)[4:6]}-{str(x)[6:8]}"
     )
-    df_extract_list = df_extract_list.loc[(df_extract_list['date_from_extr'] > int(load_start_date_floor))]
-    df_extract_list['bq_start_date_from'] = df_extract_list['date_from_extr'].apply(lambda x: f"{str(x)[:4]}-{str(x)[4:6]}-{str(x)[6:8]}")
-    df_extract_list['bq_start_date_to'] = df_extract_list['date_to_extr'].apply(lambda x: f"{str(x)[:4]}-{str(x)[4:6]}-{str(x)[6:8]}")
-    for download_file_name in df_extract_list['source_file_name']:
-        bq_start_date_from = str(df_extract_list.loc[(df_extract_list['source_file_name'] == download_file_name)]['bq_start_date_from']).split("    ")[1][0:10]
-        bq_start_date_to = str(df_extract_list.loc[(df_extract_list['source_file_name'] == download_file_name)]['bq_start_date_to']).split("    ")[1][0:10]
+    df_extract_list["bq_start_date_to"] = df_extract_list["date_to_extr"].apply(
+        lambda x: f"{str(x)[:4]}-{str(x)[4:6]}-{str(x)[6:8]}"
+    )
+    for download_file_name in df_extract_list["source_file_name"]:
+        bq_start_date_from = str(
+            df_extract_list.loc[
+                (df_extract_list["source_file_name"] == download_file_name)
+            ]["bq_start_date_from"]
+        ).split("    ")[1][0:10]
+        bq_start_date_to = str(
+            df_extract_list.loc[
+                (df_extract_list["source_file_name"] == download_file_name)
+            ]["bq_start_date_to"]
+        ).split("    ")[1][0:10]
         number_rows = count_number_rows_between_date(
-                            project_id=project_id,
-                            dataset_id=dataset_id,
-                            table_name=table_id,
-                            start_date_from = bq_start_date_from,
-                            start_date_to = bq_start_date_to
-                        )
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_name=table_id,
+            start_date_from=bq_start_date_from,
+            start_date_to=bq_start_date_to,
+        )
         if number_rows == -1:
             create_dest_table(
                 project_id=project_id,
@@ -173,35 +174,81 @@ def process_cycle_hire(
         if number_rows == 0:
             source_location = f"{source_url['trips']}/{download_file_name}"
             destination_folder = os.path.dirname(source_file)
-            destination_filename = f"{destination_folder}/{download_file_name}"
+            destination_filename = (
+                f"{destination_folder}/{os.path.basename(download_file_name)}"
+            )
             download_file_gcs(
                 project_id=project_id,
                 source_location=source_location,
-                destination_folder=destination_folder
+                destination_folder=destination_folder,
             )
-            df_journey = pd.read_csv(destination_filename, sep=",", quotechar='"', dtype=data_dtypes)
+            df_journey = pd.read_csv(
+                destination_filename, sep=",", quotechar='"', dtype=data_dtypes
+            )
             df_journey = rename_headers(df_journey, rename_mappings)
-            df_journey['duration_str'] = df_journey['duration_str'].astype('Int32', errors='ignore')
-            df_journey['bike_id'] = df_journey['bike_id'].astype('Int32', errors='ignore')
-            df_journey['start_station_id'] = df_journey['start_station_id'].astype('Int32', errors='ignore')
-            df_journey['end_station_id'] = df_journey['end_station_id'].astype('Int32', errors='ignore')
-            if 'duration_ms' in df_journey.columns:
-                df_journey['duration_str'] = df_journey['duration_ms'].apply(lambda x: x if pd.isnull(x) else round(x / 1000))
-            else:
-                df_journey['duration_ms'] = df_journey['duration_str'].apply(lambda x: x if pd.isnull(x) else round(x * 1000))
-            if 'bike_model' not in df_journey.columns:
-                df_journey['bike_model'] = ''
+            df_journey["duration_str"] = df_journey["duration_str"].astype(
+                "Int32", errors="ignore"
+            )
+            df_journey["bike_id"] = df_journey["bike_id"].astype(
+                "Int32", errors="ignore"
+            )
+            df_journey["start_station_id"] = df_journey["start_station_id"].astype(
+                "Int32", errors="ignore"
+            )
+            if "end_station_id" not in df_journey.columns:
+                df_journey["end_station_id"] = ""
             else:
                 pass
-            df_journey['start_date'] = df_journey['start_date'].apply(lambda x: x if len(str(x)) < 1 else f'{x}:00')
-            df_journey['start_date'] = df_journey['start_date'].apply(lambda x: '' if x == 'nan:00' else datetime.datetime.strptime(x, '%d/%m/%Y %H:%M:%S').strftime('%Y-%m-%d %H:%M:%S'))
-            df_journey['end_date'] = df_journey['end_date'].apply(lambda x: x if len(str(x)) < 1 else f'{x}:00')
-            df_journey['end_date'] = df_journey['end_date'].apply(lambda x: '' if x == 'nan:00' else datetime.datetime.strptime(x, '%d/%m/%Y %H:%M:%S').strftime('%Y-%m-%d %H:%M:%S'))
-            df_journey['end_station_logical_terminal'] = ""
-            df_journey['start_station_logical_terminal'] = ""
-            df_journey['end_station_priority_id'] = ""
-            df_journey.rename(columns={'duration_str': 'duration'}, inplace=True)
-            df_journey[output_csv_headers].to_csv(output_file, sep="|", quotechar='"', index=False)
+            df_journey["end_station_id"] = df_journey["end_station_id"].astype(
+                "Int32", errors="ignore"
+            )
+            if "duration_ms" in df_journey.columns:
+                df_journey["duration_str"] = df_journey["duration_ms"].apply(
+                    lambda x: x if pd.isnull(x) else round(x / 1000)
+                )
+            else:
+                df_journey["duration_ms"] = df_journey["duration_str"].apply(
+                    lambda x: x if pd.isnull(x) else round(x * 1000)
+                )
+            if "bike_model" not in df_journey.columns:
+                df_journey["bike_model"] = ""
+            else:
+                pass
+            df_journey["start_date"] = df_journey["start_date"].apply(
+                lambda x: x if len(str(x)) < 1 else f"{x}:00"
+            )
+            df_journey["start_date"] = df_journey["start_date"].apply(
+                lambda x: fix_date(x)
+            )
+            df_journey["end_date"] = df_journey["end_date"].apply(
+                lambda x: x if len(str(x)) < 1 else f"{x}:00"
+            )
+            df_journey["end_date"] = df_journey["end_date"].apply(lambda x: fix_date(x))
+            df_journey["rental_id"] = df_journey["rental_id"].apply(
+                lambda x: re.sub(r"\W+", "", str(x))
+            )
+            df_journey["duration_str"] = df_journey["duration_str"].apply(
+                lambda x: re.sub(r"\W+", "", str(x))
+            )
+            df_journey["duration_ms"] = df_journey["duration_ms"].apply(
+                lambda x: re.sub(r"\W+", "", str(x))
+            )
+            df_journey["bike_id"] = df_journey["bike_id"].apply(
+                lambda x: re.sub(r"\W+", "", str(x))
+            )
+            df_journey["start_station_id"] = df_journey["start_station_id"].apply(
+                lambda x: re.sub(r"\W+", "", str(x))
+            )
+            df_journey["end_station_id"] = df_journey["end_station_id"].apply(
+                lambda x: re.sub(r"\W+", "", str(x))
+            )
+            df_journey["end_station_logical_terminal"] = ""
+            df_journey["start_station_logical_terminal"] = ""
+            df_journey["end_station_priority_id"] = ""
+            df_journey.rename(columns={"duration_str": "duration"}, inplace=True)
+            df_journey[output_csv_headers].to_csv(
+                output_file, sep="|", quotechar='"', index=False
+            )
             if os.path.exists(output_file):
                 load_data_to_bq(
                     project_id=project_id,
@@ -211,13 +258,27 @@ def process_cycle_hire(
                     truncate_table=False,
                     field_delimiter="|",
                 )
+                os.unlink(destination_filename)
+                os.unlink(output_file)
             else:
                 logging.info(
                     f"Informational: The data file {output_file} was not generated because no data file was available.  Continuing."
                 )
         else:
             logging.info(f"Datafile {download_file_name} already loaded.  Skipping.")
-    logging.info(files_list)
+
+
+def fix_date(dt_val: str) -> str:
+    if dt_val == "nan:00":
+        rtn_val = ""
+    elif dt_val.find("/") == -1:
+        rtn_val = dt_val
+    else:
+        rtn_val = datetime.datetime.strptime(dt_val, "%d/%m/%Y %H:%M:%S").strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
+    # import pdb; pdb.set_trace()
+    return rtn_val
 
 
 def process_cycle_stations(
@@ -249,7 +310,6 @@ def process_cycle_stations(
             string_cols,
         )
         upload_file_to_gcs(output_file, gcs_bucket, target_gcs_path)
-
 
 
 def create_dest_table(
@@ -394,11 +454,9 @@ def count_number_rows_between_date(
     dataset_id: str,
     table_name: str,
     start_date_from: str,
-    start_date_to: str
+    start_date_to: str,
 ) -> int:
-    check_field_exists = field_exists(
-        project_id, dataset_id, table_name, 'start_date'
-    )
+    check_field_exists = field_exists(project_id, dataset_id, table_name, "start_date")
     if check_field_exists:
         client = bigquery.Client(project=project_id)
         query = f"""
@@ -443,50 +501,15 @@ def list_files_in_gcs_bucket(source_gcs_bucket: str, source_gcs_path: str) -> li
 def clean_date(datestr: str) -> str:
     datestr = datestr.strip()
     if len(datestr) < 9:
-        datestr = f'{datestr[:-2]}20{datestr[-2:]}'
+        datestr = f"{datestr[:-2]}20{datestr[-2:]}"
     if datestr[:-4][-3].isnumeric:
-        if datestr[:-4][-2:] == 'Fe':
-            datestr = f'{datestr[:-6]}Feb{datestr[-4:]}'
+        if datestr[:-4][-2:] == "Fe":
+            datestr = f"{datestr[:-6]}Feb{datestr[-4:]}"
     if len(datestr) == 9:
-        datestr = datetime.datetime.strptime(datestr, '%d%b%Y').strftime('%Y%m%d')
+        datestr = datetime.datetime.strptime(datestr, "%d%b%Y").strftime("%Y%m%d")
     else:
-        datestr = datetime.datetime.strptime(datestr, '%d%B%Y').strftime('%Y%m%d')
+        datestr = datetime.datetime.strptime(datestr, "%d%B%Y").strftime("%Y%m%d")
     return datestr
-
-
-def https_list_all_file_links(url: str, page_refresh_dummy_element: str) -> typing.List[str]:
-    serv = ChromeService(ChromeDriverManager().install())
-    serv.start()
-    caps = DesiredCapabilities().CHROME
-    caps["pageLoadStrategy"] = "eager"
-    opt = Options()
-    opt.add_argument("--no-sandbox")
-    opt.add_argument("--headless")
-    opt.add_argument("--disable-dev-shm-usage")
-    opt.add_argument("--window-size=1920x1080")
-    driver = web.Chrome(service=serv, desired_capabilities=caps, options=opt)
-    driver.maximize_window()
-    driver.get(url)
-    driver.refresh()
-    try:
-        elem = WebDriverWait(driver, 30).until(
-        EC.presence_of_element_located((By.LINK_TEXT, page_refresh_dummy_element))
-        )
-        logging.info(f"found element {elem}")
-    finally:
-        pass
-    driver.execute_script("window.scrollTo(0,document.body.scrollHeight);")
-    parser = etree.HTMLParser()
-    page = driver.execute_script('return document.body;')
-    body = page.get_attribute('innerHTML')
-    soup=bs4.BeautifulSoup(body,"html.parser")
-    links = []
-    for link in soup.findAll('a'): links += [link.get('href')]
-    serv.stop()
-    tree = etree.parse(StringIO(body), parser=parser)
-    refs = tree.xpath("//a")
-    links = [link.get('href', '') for link in refs]
-    return links
 
 
 def download_file(source_url: str, source_file: str) -> None:
@@ -605,5 +628,5 @@ if __name__ == "__main__":
         schema_path=os.environ.get("SCHEMA_PATH", ""),
         output_csv_headers=json.loads(os.environ.get("OUTPUT_CSV_HEADERS", "[]")),
         target_gcs_path=os.environ.get("TARGET_GCS_PATH", ""),
-        pipeline=os.environ.get("PIPELINE", "")
+        pipeline=os.environ.get("PIPELINE", ""),
     )

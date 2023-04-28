@@ -138,6 +138,7 @@ dag:
               "trips": "https://cycling.data.tfl.gov.uk"
             }
           SOURCE_FILE: "./files/journey.csv"
+          LOAD_START_DATE_FLOOR: "{{ var.json.london_bicycles.cycle_hire.load_start_date_floor }}"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "london_bicycles"
           TABLE_ID: "cycle_hire"
