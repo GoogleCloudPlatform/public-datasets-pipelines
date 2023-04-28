@@ -63,7 +63,7 @@ dag:
     #         ["installed","locked", "name", "temporary"]
     #       OUTPUT_FILE: "./files/cycle_stations_data_output.csv"
     #       GCS_BUCKET: "{{ var.json.london_bicycles.storage_bucket }}"
-    #       TARGET_GCS_PATH: "london_bicycle/cycle_stations_data_output.csv"
+    #       TARGET_GCS_PATH: "data/london_bicycles/cycle_stations_data_output.csv"
     #       PIPELINE: "London Cycle Stations Dataset"
     #     resources:
     #       limit_memory: "8G"
@@ -138,8 +138,25 @@ dag:
               "trips": "https://cycling.data.tfl.gov.uk"
             }
           SOURCE_FILE: "./files/journey.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "london_bicycles"
+          TABLE_ID: "cycle_hire"
           RENAME_MAPPINGS: >-
             {
+              "Rental Id": "rental_id",
+              "Duration_Seconds": "duration_str",
+              "Duration": "duration_str",
+              "Bike Id": "bike_id",
+              "End Date": "end_date",
+              "EndStation Id": "end_station_id",
+              "End Station Id": "end_station_id",
+              "EndStation Name": "end_station_name",
+              "End Station Name": "end_station_name",
+              "Start Date": "start_date",
+              "StartStation Id": "start_station_id",
+              "Start Station Id": "start_station_id",
+              "StartStation Name": "start_station_name",
+              "Start Station Name": "start_station_name",
               "Number": "rental_id",
               "Start date": "start_date",
               "Start station number": "start_station_id",
@@ -149,11 +166,29 @@ dag:
               "End station": "end_station_name",
               "Bike number": "bike_id",
               "Bike model": "bike_model",
-              "Total duration": "duration",
+              "Total duration": "duration_str",
               "Total duration (ms)": "duration_ms"
             }
           OUTPUT_FILE: "./files/cycle_trips_data_output.csv"
           GCS_BUCKET: "{{ var.json.london_bicycles.storage_bucket }}"
+          SCHEMA_PATH: "data/london_bicycles/schema/cycle_hire_schema.json"
+          DATA_DTYPES: >-
+            {
+              "rental_id": "int32",
+              "duration_str": "int32",
+              "duration_ms": "int32",
+              "bike_id": "int32",
+              "bike_model": "str",
+              "end_date": "datetime64",
+              "end_station_id": "int32",
+              "end_station_name": "str",
+              "start_date": "datetime64",
+              "start_station_id": "int32",
+              "start_station_name": "str",
+              "end_station_logical_terminal": "int32",
+              "start_station_logical_terminal": "int32",
+              "end_station_priority_id": "int32"
+            }
           OUTPUT_CSV_HEADERS: >-
             [
               "rental_id",
@@ -166,9 +201,13 @@ dag:
               "end_station_name",
               "start_date",
               "start_station_id",
-              "start_station_name"
+              "start_station_name",
+              "end_station_logical_terminal",
+              "start_station_logical_terminal",
+              "end_station_priority_id"
             ]
-          TARGET_GCS_PATH: "london_bicycle/cycle_trips_data_output.csv"
+          PAGE_REFRESH_DUMMY_ELEMENT: "cyclehireusagestats-2014.zip"
+          # TARGET_GCS_PATH: "data/london_bicycles/cycle_trips_data_output.csv"
           PIPELINE: "London Cycle Trips Dataset"
         resources:
           limit_memory: "8G"
