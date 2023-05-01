@@ -1,8 +1,5 @@
-bs4
-lxml
-selenium
-webdriver_manager
+google-cloud-bigquery
 google-cloud-storage
-pyvirtualdisplay
+lxml
+pandas
 requests
-xvfbwrapper

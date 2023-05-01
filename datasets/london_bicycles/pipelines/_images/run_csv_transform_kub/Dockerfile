@@ -17,21 +17,12 @@ FROM python:3.8
 
 # Allow statements and log messages to appear in Cloud logs
 ENV PYTHONUNBUFFERED True
-ENV DEBIAN_FRONTEND noninteractive
 
 # Copy the requirements file into the image
 COPY requirements.txt ./
 
 # Install the packages specified in the requirements file
 RUN python3 -m pip install --no-cache-dir -r requirements.txt
-
-# Upgrade pip
-RUN python3 -m pip install --upgrade pip
-
-RUN apt-get update && apt-get install -y wget
-RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list
-RUN apt-get update && apt-get -y install google-chrome-stable
 
 WORKDIR /custom
 
