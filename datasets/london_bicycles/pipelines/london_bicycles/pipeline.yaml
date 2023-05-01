@@ -181,7 +181,7 @@ dag:
         env_vars:
           SOURCE_URL: >-
             {
-              "trips": "https://cycling.data.tfl.gov.uk"
+              "trips": "gs://london-cycling-data"
             }
           SOURCE_FILE: "./files/journey.csv"
           LOAD_START_DATE_FLOOR: "{{ var.json.london_bicycles.cycle_hire.load_start_date_floor }}"
@@ -217,7 +217,7 @@ dag:
               "Total duration (ms)": "duration_ms"
             }
           OUTPUT_FILE: "./files/cycle_trips_data_output.csv"
-          GCS_BUCKET: "{{ var.json.london_bicycles.storage_bucket }}"
+          GCS_BUCKET: "{{ var.value.composer_bucket }}"
           SCHEMA_PATH: "data/london_bicycles/schema/cycle_hire_schema.json"
           DATA_DTYPES: >-
             {
@@ -260,6 +260,4 @@ dag:
           request_ephemeral_storage: "10G"
 
   graph_paths:
-    # - "stations_csv_transform"
     - "stations_csv_transform >> load_cycle_stations_to_bq >> trips_csv_transform"
-    # - "trips_csv_transform"

@@ -100,7 +100,7 @@ with DAG(
         image_pull_policy="Always",
         image="{{ var.json.london_bicycles.container_registry.run_csv_transform_kub }}",
         env_vars={
-            "SOURCE_URL": '{\n  "trips": "https://cycling.data.tfl.gov.uk"\n}',
+            "SOURCE_URL": '{\n  "trips": "gs://london-cycling-data"\n}',
             "SOURCE_FILE": "./files/journey.csv",
             "LOAD_START_DATE_FLOOR": "{{ var.json.london_bicycles.cycle_hire.load_start_date_floor }}",
             "PROJECT_ID": "{{ var.value.gcp_project }}",
@@ -108,7 +108,7 @@ with DAG(
             "TABLE_ID": "cycle_hire",
             "RENAME_MAPPINGS": '{\n  "Rental Id": "rental_id",\n  "Duration_Seconds": "duration_str",\n  "Duration": "duration_str",\n  "Bike Id": "bike_id",\n  "End Date": "end_date",\n  "EndStation Id": "end_station_id",\n  "End Station Id": "end_station_id",\n  "EndStation Name": "end_station_name",\n  "End Station Name": "end_station_name",\n  "Start Date": "start_date",\n  "StartStation Id": "start_station_id",\n  "Start Station Id": "start_station_id",\n  "StartStation Name": "start_station_name",\n  "Start Station Name": "start_station_name",\n  "Number": "rental_id",\n  "Start date": "start_date",\n  "Start station number": "start_station_id",\n  "Start station": "start_station_name",\n  "End date": "end_date",\n  "End station number": "end_station_id",\n  "End station": "end_station_name",\n  "Bike number": "bike_id",\n  "Bike model": "bike_model",\n  "Total duration": "duration_str",\n  "Total duration (ms)": "duration_ms"\n}',
             "OUTPUT_FILE": "./files/cycle_trips_data_output.csv",
-            "GCS_BUCKET": "{{ var.json.london_bicycles.storage_bucket }}",
+            "GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "SCHEMA_PATH": "data/london_bicycles/schema/cycle_hire_schema.json",
             "DATA_DTYPES": '{\n  "rental_id": "int32",\n  "duration_str": "int32",\n  "duration_ms": "int32",\n  "bike_id": "int32",\n  "bike_model": "str",\n  "end_date": "datetime64",\n  "end_station_id": "int32",\n  "end_station_name": "str",\n  "start_date": "datetime64",\n  "start_station_id": "int32",\n  "start_station_name": "str",\n  "end_station_logical_terminal": "int32",\n  "start_station_logical_terminal": "int32",\n  "end_station_priority_id": "int32"\n}',
             "OUTPUT_CSV_HEADERS": '[\n  "rental_id",\n  "duration",\n  "duration_ms",\n  "bike_id",\n  "bike_model",\n  "end_date",\n  "end_station_id",\n  "end_station_name",\n  "start_date",\n  "start_station_id",\n  "start_station_name",\n  "end_station_logical_terminal",\n  "start_station_logical_terminal",\n  "end_station_priority_id"\n]',
