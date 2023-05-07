@@ -87,6 +87,12 @@ def main(
     df = read_csv_file(zip_file, csv_file)
 
     logging.info(f"Transforming.. {csv_file}")
+    if "Spend_HRK" not in df.columns:
+        df["Spend_HRK"] = 0
+    if "Spend_Range_Max_HRK" not in df.columns:
+        df["Spend_Range_Max_HRK"] = 0
+    if "Spend_Range_Min_HRK" not in df.columns:
+        df["Spend_Range_Min_HRK"] = 0
 
     logging.info(f"Transform: Rename columns for {table_name}..")
     rename_headers(df, rename_mappings)
