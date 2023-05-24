@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ with DAG(
     dag_id="cloud_storage_geo_index.cloud_storage_geo_index",
     default_args=default_args,
     max_active_runs=1,
-    schedule_interval="* 1 * * 6",
+    schedule_interval="0 */12 * * *",
     catchup=False,
     default_view="graph",
 ) as dag:
