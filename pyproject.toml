@@ -12,7 +12,7 @@ python = "3.8.12"
 pre-commit = "*"
 
 [tool.poetry.group.pipelines.dependencies]
-apache-airflow = "==2.2.5"
+apache-airflow = "==2.6.0"
 apache-airflow-providers-amazon = "*"
 apache-airflow-providers-apache-beam = ">=2.38.0"
 apache-airflow-providers-cncf-kubernetes = "*"
