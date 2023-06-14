@@ -1,0 +1,100 @@
+# Copyright 2023 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+resources:
+
+dag:
+  airflow_version: 2
+  initialize:
+    dag_id: nlm_rxnorm
+    default_args:
+      owner: "Google"
+      depends_on_past: False
+      start_date: '2023-03-01'
+    max_active_runs: 1
+    schedule_interval: "59 00 * * 6"
+    catchup: False
+    default_view: graph
+
+  tasks:
+
+    - operator: "GKECreateClusterOperator"
+      args:
+        task_id: "create_cluster"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        body:
+          name: pubds-nlm-rxnorm
+          initial_node_count: 1
+          network: "{{ var.value.vpc_network }}"
+          node_config:
+            machine_type: e2-medium
+            oauth_scopes:
+              - https://www.googleapis.com/auth/devstorage.read_write
+              - https://www.googleapis.com/auth/cloud-platform
+
+    - operator: "GKEStartPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+
+      args:
+
+        task_id: "transform_csv"
+        name: "film_locations"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: pubds-nlm-rxnorm
+        namespace: "default"
+
+        image_pull_policy: "Always"
+        image: "{{ var.json.san_francisco_film_locations.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "NLM RXNORM Pipeline"
+          SOURCE_URL: "https://uts-ws.nlm.nih.gov/download?url=https://download.nlm.nih.gov/umls/kss/rxnorm/~file_name~&apiKey="
+          ZIP_PATH: "files"
+          API_KEY: "{{ var.json.nlm_rxnorm.api_key }}"
+          TABLES_LIST: >-
+            [
+              {'rxnatomarchive': 'RXNATOMARCHIVE.RRF'},
+              {'rxnconso': 'RXNCONSO.RRF'},
+              {'rxncui': 'RXNCUI.RRF'},
+              {'rxncuichange': 'RXNCUICHANGES.RRF'},
+              {'rxndoc': 'RXNDOC.RRF'},
+              {'rxnrel': 'RXNREL.RRF'},
+              {'rxnsab': 'RXNSAB.RRF'},
+              {'rxnsat': 'RXNSAT.RRF'},
+              {'rxnsty': 'RXNSTY.RRF'}
+            ]
+          CHUNKSIZE: "750000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/nlm_rxnorm"
+          SCHEMA_FILE: "data/nlm_rxnorm/schema"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "nlm_rxnorm"
+        resources:
+          limit_memory: "8G"
+          limit_cpu: "3"
+
+    - operator: "GoogleCloudStorageToBigQueryOperator"
+      description: "Task to load CSV data to a BigQuery table"
+
+    - operator: "GKEDeleteClusterOperator"
+      args:
+        task_id: "delete_cluster"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        name: san-francisco-bikeshare--film-loc
+
+  graph_paths:
+    - "create_cluster >> transform_csv >> load_to_bq >> delete_cluster"
