@@ -77,14 +77,18 @@ def main(
                 source_url=source_url, month_date=next_month_int, api_key=api_key
             )
             zip_file_name = os.path.basename(source_file_url).split("&apiKey")[0]
+            zip_file_path = os.path.join(zip_path, zip_file_name)
             download_file(
                 source_url=source_file_url,
-                source_file=os.path.join(zip_path, zip_file_name),
+                source_file=zip_file_path,
             )
             upload_file_to_gcs(
-                file_path=os.path.join(zip_path, zip_file_name),
+                file_path=zip_file_path,
                 gcs_bucket=target_gcs_bucket,
                 gcs_path=target_gcs_path,
+            )
+            print(
+                f"source_file_url : {source_file_url}  zip_file_path : {zip_file_path}"
             )
         else:
             file_prefix = os.path.basename(source_url).split("~file_date~")[0]
@@ -101,7 +105,7 @@ def main(
             )
         # process_and_load()
         # Add 1 month to obtain the next month-date for processing
-        next_month_date = load_datetime + relativedelta(months=1)
+        next_month_date = next_month_date + relativedelta(months=1)
         next_month_int = next_month_date.strftime("%Y%m")
 
     logging.info("San Francisco - Film Locations process completed")
@@ -180,9 +184,11 @@ def load_source_data(
             table_id=table_id,
             file_path=extracted_member_path,
             truncate_table=True,
-            field_delimiter = "|",
-            ignore_unknown_values = True
+            skip_leading_rows=0,
+            field_delimiter="|",
+            ignore_unknown_values=True,
         )
+    os.unlink(extracted_member_path)
 
 
 def list_bq_tables(
@@ -283,8 +289,9 @@ def load_data_to_bq(
     table_id: str,
     file_path: str,
     truncate_table: bool,
+    skip_leading_rows: int = 0,
     field_delimiter: str = "|",
-    ignore_unknown_values: bool = False
+    ignore_unknown_values: bool = False,
 ) -> None:
     logging.info(
         f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} started"
@@ -298,7 +305,8 @@ def load_data_to_bq(
         job_config.write_disposition = "WRITE_TRUNCATE"
     else:
         job_config.write_disposition = "WRITE_APPEND"
-    job_config.skip_leading_rows = 1
+    if skip_leading_rows > 0:
+        job_config.skip_leading_rows = skip_leading_rows
     job_config.ignore_unknown_values = ignore_unknown_values
     job_config.autodetect = False
     with open(file_path, "rb") as source_file:
