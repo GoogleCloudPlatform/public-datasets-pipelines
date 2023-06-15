@@ -99,45 +99,10 @@ def main(
                 schema_filepath=schema_filepath,
                 chunksize=chunksize,
             )
-
-        import pdb
-
-        pdb.set_trace()
         # process_and_load()
         # Add 1 month to obtain the next month-date for processing
         next_month_date = load_datetime + relativedelta(months=1)
-        next_month_int = int(next_month_date.strftime("%Y%m"))
-
-    # bq_table_list['mmyyyy'] = bq_table_list.apply(lambda x: )
-    # extract_month_year(list_tables)
-    print(df_bq_tables_list)
-    print("--------------------------")
-    print(bq_table_list)
-
-    import pdb
-
-    pdb.set_trace()
-
-    # for table in bq_table_list:
-    #     [print(f"{key}  {val}") for key, val in table.items()]
-
-    # download_file(source_url, source_file)
-
-    # chunksz = int(chunksize)
-
-    # with pd.read_csv(
-    #     source_file, engine="python", encoding="utf-8", quotechar='"', chunksize=chunksz
-    # ) as reader:
-    #     for chunk_number, chunk in enumerate(reader):
-    #         logging.info(f"Processing batch {chunk_number}")
-    #         target_file_batch = str(target_file).replace(
-    #             ".csv", "-" + str(chunk_number) + ".csv"
-    #         )
-    #         df = pd.DataFrame()
-    #         df = pd.concat([df, chunk])
-    #         process_chunk(df, target_file_batch, target_file, (not chunk_number == 0))
-
-    # upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
+        next_month_int = next_month_date.strftime("%Y%m")
 
     logging.info("San Francisco - Film Locations process completed")
 
@@ -184,10 +149,6 @@ def load_process_filegroup_data(
         print(
             f"zip file does not exist for the given month {month_to_load} in path {zip_path}."
         )
-    import pdb
-
-    pdb.set_trace()
-    # For each file, load into a new table if it doesnt exist
 
 
 def load_source_data(
@@ -219,12 +180,9 @@ def load_source_data(
             table_id=table_id,
             file_path=extracted_member_path,
             truncate_table=True,
-            field_delimiter = "|"
+            field_delimiter = "|",
+            ignore_unknown_values = True
         )
-
-    import pdb
-
-    pdb.set_trace()
 
 
 def list_bq_tables(
@@ -326,6 +284,7 @@ def load_data_to_bq(
     file_path: str,
     truncate_table: bool,
     field_delimiter: str = "|",
+    ignore_unknown_values: bool = False
 ) -> None:
     logging.info(
         f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} started"
@@ -340,6 +299,7 @@ def load_data_to_bq(
     else:
         job_config.write_disposition = "WRITE_APPEND"
     job_config.skip_leading_rows = 1
+    job_config.ignore_unknown_values = ignore_unknown_values
     job_config.autodetect = False
     with open(file_path, "rb") as source_file:
         job = client.load_table_from_file(source_file, table_ref, job_config=job_config)
