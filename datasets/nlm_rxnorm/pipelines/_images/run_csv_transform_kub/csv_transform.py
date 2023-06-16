@@ -35,15 +35,12 @@ def main(
     process_filegroup: str,
     zip_path: str,
     api_key: str,
-    # tables_list: typing.List[str],
-    chunksize: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
     schema_filepath: str,
     project_id: str,
     dataset_id: str,
 ) -> None:
-
     logging.info(f"{pipeline_name} process started")
     pathlib.Path(f"{zip_path}").mkdir(parents=True, exist_ok=True)
     # Grab the list of tables for the respective data group
@@ -101,8 +98,7 @@ def main(
                 dataset_id=dataset_id,
                 target_gcs_bucket=target_gcs_bucket,
                 target_gcs_path=os.path.join(target_gcs_path, "DOWNLOAD_ONLY"),
-                schema_filepath=schema_filepath,
-                chunksize=chunksize,
+                schema_filepath=schema_filepath
             )
         # Add 1 month to obtain the next month-date for processing
         next_month_date = next_month_date + relativedelta(months=1)
@@ -119,8 +115,7 @@ def load_process_filegroup_data(
     dataset_id: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
-    schema_filepath: str,
-    chunksize: str,
+    schema_filepath: str
 ) -> None:
     logging.info(f"Loading filegroup data for {process_filegroup} for month {month_to_load}")
     #  Walk tree in source folder for zipfiles begining date of month after
@@ -137,15 +132,8 @@ def load_process_filegroup_data(
     download_file_gcs(
         project_id = project_id,
         source_location = source_location_gcs,
-        destination_folder = zip_path # os.path.join(zip_path, os.path.basename(zip_file))
+        destination_folder = zip_path
     )
-    # for file in os.listdir(zip_path):
-    #     logging.info(f"   found: { os.path.join(zip_path, file) }")
-    #     re_filter = re.compile(re_file_search)
-    #     if re_filter.match(file):
-    #         zip_file = file
-    #         logging.info(f"   matched: { os.path.join(zip_path, file) }")
-    #         break
     if zip_file != "":
         # load the data file
         logging.info(f"zip file { os.path.join(zip_path, zip_file) } exists.  Loading...")
@@ -157,8 +145,7 @@ def load_process_filegroup_data(
             process_filegroup=process_filegroup,
             schema_filepath=schema_filepath,
             target_file=os.path.join(zip_path, os.path.basename(zip_file)),
-            target_gcs_bucket=target_gcs_bucket,
-            chunksize=chunksize,
+            target_gcs_bucket=target_gcs_bucket
         )
     else:
         # zip file does not exist
@@ -215,9 +202,11 @@ def load_source_data(
     schema_filepath: str,
     target_file: str,
     target_gcs_bucket: str,
-    chunksize: str,
 ) -> None:
-    member_path = f"rrf/{ str.upper(process_filegroup) }.RRF"
+    if process_filegroup == "rxncuichange":
+        member_path = f"rrf/RXNCUICHANGES.RRF"
+    else:
+        member_path = f"rrf/{ str.upper(process_filegroup) }.RRF"
     with ZipFile(target_file, "r") as zip_file:
         zip_file.extract(member=member_path, path=os.path.dirname(target_file))
     extracted_member_path = os.path.join(os.path.dirname(target_file), member_path)
@@ -485,8 +474,6 @@ if __name__ == "__main__":
         process_filegroup=os.environ.get("PROCESS_FILEGROUP", ""),
         zip_path=os.environ.get("ZIP_PATH", ""),
         api_key=os.environ.get("API_KEY", ""),
-        # tables_list=json.loads(os.environ.get("TABLES_LIST", r"[]")),
-        chunksize=os.environ.get("CHUNKSIZE", ""),
         target_gcs_bucket=os.environ.get("TARGET_GCS_BUCKET", ""),
         target_gcs_path=os.environ.get("TARGET_GCS_PATH", ""),
         schema_filepath=os.environ.get("SCHEMA_FILEPATH", ""),

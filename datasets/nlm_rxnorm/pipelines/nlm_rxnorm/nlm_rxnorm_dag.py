@@ -140,7 +140,7 @@ with DAG(
         env_vars={
             "PIPELINE_NAME": "NLM RXNORM Pipeline - Process rxncuichange data",
             "SOURCE_URL": "https://uts-ws.nlm.nih.gov/download?url=https://download.nlm.nih.gov/umls/kss/rxnorm/RxNorm_full_~file_date~.zip&apiKey=~api_key~",
-            "PROCESS_FILEGROUP": "rxncuichanges",
+            "PROCESS_FILEGROUP": "rxncuichange",
             "ZIP_PATH": "./files",
             "API_KEY": "{{ var.json.nlm_rxnorm.api_key }}",
             "CHUNKSIZE": "750000",
