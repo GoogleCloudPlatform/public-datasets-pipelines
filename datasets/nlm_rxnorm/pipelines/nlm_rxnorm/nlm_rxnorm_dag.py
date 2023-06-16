@@ -49,6 +49,32 @@ with DAG(
         },
     )
 
+    # Download all NLM RXNorm files
+    download_source_files = kubernetes_engine.GKEStartPodOperator(
+        task_id="download_source_files",
+        name="download_source_files",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pubds-nlm-rxnorm",
+        namespace="default",
+        image_pull_policy="Always",
+        image="{{ var.json.nlm_rxnorm.container_registry.run_csv_transform_kub }}",
+        env_vars={
+            "PIPELINE_NAME": "NLM RXNORM Pipeline - DOWNLOAD FILES ONLY",
+            "SOURCE_URL": "https://uts-ws.nlm.nih.gov/download?url=https://download.nlm.nih.gov/umls/kss/rxnorm/RxNorm_full_~file_date~.zip&apiKey=~api_key~",
+            "PROCESS_FILEGROUP": "DOWNLOAD_ONLY",
+            "ZIP_PATH": "./files",
+            "API_KEY": "{{ var.json.nlm_rxnorm.api_key }}",
+            "CHUNKSIZE": "750000",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
+            "TARGET_GCS_PATH": "data/nlm_rxnorm",
+            "SCHEMA_FILEPATH": "data/nlm_rxnorm/schema",
+            "PROJECT_ID": "{{ var.value.gcp_project }}",
+            "DATASET_ID": "nlm_rxnorm",
+        },
+        resources={"limit_memory": "8G", "limit_cpu": "3"},
+    )
+
     # Execute RXN ATOM Archive Load Process
     process_rxnatomarchive = kubernetes_engine.GKEStartPodOperator(
         task_id="process_rxnatomarchive",
@@ -282,15 +308,26 @@ with DAG(
         },
         resources={"limit_memory": "8G", "limit_cpu": "3"},
     )
+    delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
+        task_id="delete_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        name="pubds-nlm-rxnorm",
+    )
 
-    create_cluster >> [
-        process_rxnatomarchive,
-        process_rxnconso,
-        process_rxncui,
-        process_rxncuichange,
-        process_rxndoc,
-        process_rxnrel,
-        process_rxnsab,
-        process_rxnsat,
-        process_rxnsty,
-    ]
+    (
+        create_cluster
+        >> download_source_files
+        >> [
+            process_rxnatomarchive,
+            process_rxnconso,
+            process_rxncui,
+            process_rxncuichange,
+            process_rxndoc,
+            process_rxnrel,
+            process_rxnsab,
+            process_rxnsat,
+            process_rxnsty,
+        ]
+        >> delete_cluster
+    )

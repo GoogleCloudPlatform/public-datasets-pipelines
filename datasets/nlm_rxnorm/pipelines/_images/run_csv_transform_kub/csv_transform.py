@@ -82,7 +82,9 @@ def main(
             upload_file_to_gcs(
                 file_path=zip_file_path,
                 gcs_bucket=target_gcs_bucket,
-                gcs_path=os.path.join(target_gcs_path, process_filegroup, zip_file_name),
+                gcs_path=os.path.join(
+                    target_gcs_path, process_filegroup, zip_file_name
+                ),
             )
             logging.info(
                 f"source_file_url : {source_file_url}  zip_file_path : {zip_file_path}"
@@ -98,7 +100,7 @@ def main(
                 dataset_id=dataset_id,
                 target_gcs_bucket=target_gcs_bucket,
                 target_gcs_path=os.path.join(target_gcs_path, "DOWNLOAD_ONLY"),
-                schema_filepath=schema_filepath
+                schema_filepath=schema_filepath,
             )
         # Add 1 month to obtain the next month-date for processing
         next_month_date = next_month_date + relativedelta(months=1)
@@ -115,28 +117,32 @@ def load_process_filegroup_data(
     dataset_id: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
-    schema_filepath: str
+    schema_filepath: str,
 ) -> None:
-    logging.info(f"Loading filegroup data for {process_filegroup} for month {month_to_load}")
+    logging.info(
+        f"Loading filegroup data for {process_filegroup} for month {month_to_load}"
+    )
     #  Walk tree in source folder for zipfiles begining date of month after
     #  the most recent load of the process_filegroup data.
     month = month_to_load[-2:]
     year = month_to_load[:4]
     re_file_search = rf"{file_prefix[:-1]}_{month}([0-9][0-9]){year}.zip"
     zip_file = fetch_gcs_file_names(
-        gcs_bucket = target_gcs_bucket,
-        gcs_path = target_gcs_path,
-        regex_file_expr = re_file_search
+        gcs_bucket=target_gcs_bucket,
+        gcs_path=target_gcs_path,
+        regex_file_expr=re_file_search,
     )[0]
     source_location_gcs = os.path.join("gs://", target_gcs_bucket, zip_file)
     download_file_gcs(
-        project_id = project_id,
-        source_location = source_location_gcs,
-        destination_folder = zip_path
+        project_id=project_id,
+        source_location=source_location_gcs,
+        destination_folder=zip_path,
     )
     if zip_file != "":
         # load the data file
-        logging.info(f"zip file { os.path.join(zip_path, zip_file) } exists.  Loading...")
+        logging.info(
+            f"zip file { os.path.join(zip_path, zip_file) } exists.  Loading..."
+        )
         table_id = f"{process_filegroup}_{month}_{year[-2:]}"
         load_source_data(
             project_id=project_id,
@@ -145,7 +151,7 @@ def load_process_filegroup_data(
             process_filegroup=process_filegroup,
             schema_filepath=schema_filepath,
             target_file=os.path.join(zip_path, os.path.basename(zip_file)),
-            target_gcs_bucket=target_gcs_bucket
+            target_gcs_bucket=target_gcs_bucket,
         )
     else:
         # zip file does not exist
@@ -155,9 +161,7 @@ def load_process_filegroup_data(
 
 
 def fetch_gcs_file_names(
-    gcs_bucket: str,
-    gcs_path: str,
-    regex_file_expr: str = ""
+    gcs_bucket: str, gcs_path: str, regex_file_expr: str = ""
 ) -> typing.List[str]:
     client = storage.Client()
     blobs = client.list_blobs(gcs_bucket, prefix=gcs_path)
@@ -193,7 +197,6 @@ def download_file_gcs(
     blob.download_to_filename(dest_object)
 
 
-
 def load_source_data(
     project_id: str,
     dataset_id: str,
@@ -204,7 +207,7 @@ def load_source_data(
     target_gcs_bucket: str,
 ) -> None:
     if process_filegroup == "rxncuichange":
-        member_path = f"rrf/RXNCUICHANGES.RRF"
+        member_path = "rrf/RXNCUICHANGES.RRF"
     else:
         member_path = f"rrf/{ str.upper(process_filegroup) }.RRF"
     with ZipFile(target_file, "r") as zip_file:
