@@ -85,9 +85,9 @@ def main(
             upload_file_to_gcs(
                 file_path=zip_file_path,
                 gcs_bucket=target_gcs_bucket,
-                gcs_path=target_gcs_path,
+                gcs_path=os.path.join(target_gcs_path, process_filegroup, zip_file_name),
             )
-            print(
+            logging.info(
                 f"source_file_url : {source_file_url}  zip_file_path : {zip_file_path}"
             )
         else:
@@ -100,6 +100,7 @@ def main(
                 project_id=project_id,
                 dataset_id=dataset_id,
                 target_gcs_bucket=target_gcs_bucket,
+                target_gcs_path=os.path.join(target_gcs_path, "DOWNLOAD_ONLY"),
                 schema_filepath=schema_filepath,
                 chunksize=chunksize,
             )
@@ -117,24 +118,37 @@ def load_process_filegroup_data(
     project_id: str,
     dataset_id: str,
     target_gcs_bucket: str,
+    target_gcs_path: str,
     schema_filepath: str,
     chunksize: str,
 ) -> None:
-    print(f"Loading filegroup data for {process_filegroup} for month {month_to_load}")
+    logging.info(f"Loading filegroup data for {process_filegroup} for month {month_to_load}")
     #  Walk tree in source folder for zipfiles begining date of month after
     #  the most recent load of the process_filegroup data.
     month = month_to_load[-2:]
     year = month_to_load[:4]
     re_file_search = rf"{file_prefix[:-1]}_{month}([0-9][0-9]){year}.zip"
-    zip_file = ""
-    for file in os.listdir(zip_path):
-        re_filter = re.compile(re_file_search)
-        if re_filter.match(file):
-            zip_file = file
-            break
+    zip_file = fetch_gcs_file_names(
+        gcs_bucket = target_gcs_bucket,
+        gcs_path = target_gcs_path,
+        regex_file_expr = re_file_search
+    )[0]
+    source_location_gcs = os.path.join("gs://", target_gcs_bucket, zip_file)
+    download_file_gcs(
+        project_id = project_id,
+        source_location = source_location_gcs,
+        destination_folder = zip_path # os.path.join(zip_path, os.path.basename(zip_file))
+    )
+    # for file in os.listdir(zip_path):
+    #     logging.info(f"   found: { os.path.join(zip_path, file) }")
+    #     re_filter = re.compile(re_file_search)
+    #     if re_filter.match(file):
+    #         zip_file = file
+    #         logging.info(f"   matched: { os.path.join(zip_path, file) }")
+    #         break
     if zip_file != "":
         # load the data file
-        print(f"zip file { os.path.join(zip_path, zip_file) } exists.  Loading...")
+        logging.info(f"zip file { os.path.join(zip_path, zip_file) } exists.  Loading...")
         table_id = f"{process_filegroup}_{month}_{year[-2:]}"
         load_source_data(
             project_id=project_id,
@@ -142,15 +156,55 @@ def load_process_filegroup_data(
             table_id=table_id,
             process_filegroup=process_filegroup,
             schema_filepath=schema_filepath,
-            target_file=os.path.join(zip_path, zip_file),
+            target_file=os.path.join(zip_path, os.path.basename(zip_file)),
             target_gcs_bucket=target_gcs_bucket,
             chunksize=chunksize,
         )
     else:
         # zip file does not exist
-        print(
+        logging.info(
             f"zip file does not exist for the given month {month_to_load} in path {zip_path}."
         )
+
+
+def fetch_gcs_file_names(
+    gcs_bucket: str,
+    gcs_path: str,
+    regex_file_expr: str = ""
+) -> typing.List[str]:
+    client = storage.Client()
+    blobs = client.list_blobs(gcs_bucket, prefix=gcs_path)
+    source_file_names = []
+    for blob in blobs:
+        path = os.path.dirname(blob.name)
+        filename = os.path.basename(blob.name)
+        if regex_file_expr == "":
+            source_file_names.append(blob.name)
+        else:
+            re_filter = re.compile(rf"{regex_file_expr}")
+            if re_filter.match(filename):
+                source_file_names.append(os.path.join(path, filename))
+    return source_file_names
+
+
+def download_file_gcs(
+    project_id: str,
+    source_location: str,
+    destination_folder: str,
+    filename_override: str = "",
+) -> None:
+    object_name = os.path.basename(source_location)
+    if filename_override == "":
+        dest_object = f"{destination_folder}/{object_name}"
+    else:
+        dest_object = f"{destination_folder}/{filename_override}"
+    storage_client = storage.Client(project_id)
+    bucket_name = str.split(source_location, "gs://")[1].split("/")[0]
+    bucket = storage_client.bucket(bucket_name)
+    source_object_path = str.split(source_location, f"gs://{bucket_name}/")[1]
+    blob = bucket.blob(source_object_path)
+    blob.download_to_filename(dest_object)
+
 
 
 def load_source_data(
@@ -232,7 +286,7 @@ def create_dest_table(
             schema = create_table_schema([], bucket_name, schema_filepath)
             table = bigquery.Table(table_ref, schema=schema)
             client.create_table(table)
-            print(f"Table {table_ref} was created".format(table_id))
+            logging.info(f"Table {table_ref} was created".format(table_id))
             table_exists = True
         else:
             file_name = os.path.split(schema_filepath)[1]
@@ -343,7 +397,7 @@ def find_source_file(
         )
         file_found = http_file_exists(src_url)
         if file_found:
-            print(f"Source file found: {file_date}")
+            logging.info(f"Source file found: {file_date}")
             return src_url
         else:
             file_date = file_date + timedelta(days=1)
