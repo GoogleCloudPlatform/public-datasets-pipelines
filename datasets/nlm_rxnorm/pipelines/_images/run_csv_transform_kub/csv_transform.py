@@ -12,20 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from datetime import datetime, timedelta
-from dateutil.relativedelta import relativedelta
-from google.api_core.exceptions import NotFound
-from google.cloud import bigquery, storage
-from zipfile import ZipFile
 import json
 import logging
 import os
 import pathlib
-import pandas as pd
 import re
-import requests
 import typing
 import urllib
+from datetime import datetime, timedelta
+from zipfile import ZipFile
+
+import pandas as pd
+import requests
+from dateutil.relativedelta import relativedelta
+from google.api_core.exceptions import NotFound
+from google.cloud import bigquery, storage
 
 
 def main(
@@ -45,7 +46,6 @@ def main(
 
     logging.info(f"{pipeline_name} process started")
     pathlib.Path(f"{zip_path}").mkdir(parents=True, exist_ok=True)
-
     # Grab the list of tables for the respective data group
     # bq_table_list = list_bq_tables(project_id, dataset_id, r"rxnsat_([0-9]*)_([0-9]*)")
     if process_filegroup == "DOWNLOAD_ONLY":
@@ -103,12 +103,10 @@ def main(
                 schema_filepath=schema_filepath,
                 chunksize=chunksize,
             )
-        # process_and_load()
         # Add 1 month to obtain the next month-date for processing
         next_month_date = next_month_date + relativedelta(months=1)
         next_month_int = next_month_date.strftime("%Y%m")
-
-    logging.info("San Francisco - Film Locations process completed")
+    logging.info(f"{pipeline_name} process completed")
 
 
 def load_process_filegroup_data(
