@@ -40,7 +40,7 @@ with DAG(
             "initial_node_count": 1,
             "network": "{{ var.value.vpc_network }}",
             "node_config": {
-                "machine_type": "e2-medium",
+                "machine_type": "e2-standard-16",
                 "oauth_scopes": [
                     "https://www.googleapis.com/auth/devstorage.read_write",
                     "https://www.googleapis.com/auth/cloud-platform",
