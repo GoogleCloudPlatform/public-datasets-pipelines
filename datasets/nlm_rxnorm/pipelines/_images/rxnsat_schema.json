@@ -1,0 +1,80 @@
+[
+    {
+      "name": "rxcui",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Unique identifier for concept (concept id)"
+    },
+    {
+      "name": "lui",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Unique identifier for term (no value provided)"
+    },
+    {
+      "name": "sui",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Unique identifier for string (no value provided)"
+    },
+    {
+      "name": "rxaui",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "RxNorm atom identifier (RXAUI) or RxNorm relationship identifier (RUI)."
+    },
+    {
+      "name": "stype",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "The name of the column in RXNCONSO.RRF or RXNREL.RRF that contains the identifier to which the attribute is attached, e.g., CUI, AUI."
+    },
+    {
+      "name": "code",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Most useful source asserted identifier (if the source vocabulary has more than one identifier), or a RxNorm-generated source entry identifier (if the source vocabulary has none.)"
+    },
+    {
+      "name": "atui",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Unique identifier for attribute"
+    },
+    {
+      "name": "satui",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Source asserted attribute identifier (optional - present if it exists)"
+    },
+    {
+      "name": "atn",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Attribute name. Possible values appear in RXNDOC.RRF and are described on the UMLS Attribute Names page"
+    },
+    {
+      "name": "sab",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Abbreviation of the source of the attribute. Possible values appear in RXNSAB.RRF and are listed on the UMLS Source Vocabularies page"
+    },
+    {
+      "name": "atv",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Attribute value described under specific attribute name on the UMLS Attribute Names page. A few attribute values exceed 1,000 characters. Many of the abbreviations used in attribute values are explained in RXNDOC.RRF and included UMLS Abbreviations Used in Data Elements page"
+    },
+    {
+      "name": "suppress",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Suppressible flag. Values = O, Y, or N. Reflects the suppressible status of the attribute. N - Attribute is not suppressed. O - Attribute is suppressed at source level. Y - Attribute is suppressed by RxNorm editors."
+    },
+    {
+      "name": "cvf",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Content view flag. RxNorm includes one value, 4096, to denote inclusion in the Current Prescribable Content subset. All rows with CVF=4096 can be found in the subset."
+    }
+  ]

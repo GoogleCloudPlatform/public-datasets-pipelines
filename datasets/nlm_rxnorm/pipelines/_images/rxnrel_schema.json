@@ -1,0 +1,98 @@
+[
+    {
+      "name": "rxcui1",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Unique identifier of first concept"
+    },
+    {
+      "name": "rxaui1",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Unique identifier for first atom"
+    },
+    {
+      "name": "stype1",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "The name of the column in RXNCONSO.RRF that contains the identifier used for the first concept or first atom in source of the relationship"
+    },
+    {
+      "name": "rel",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Relationship of second concept or atom to first concept or atom"
+    },
+    {
+      "name": "rxcui2",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Unique identifier of second concept"
+    },
+    {
+      "name": "rxaui2",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Unique identifier for second atom"
+    },
+    {
+      "name": "stype2",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "The name of the column in RXNCONSO.RRF that contains the identifier used for the second concept or second atom in the source of the relationship"
+    },
+    {
+      "name": "rela",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Additional (more specific) relationship label (optional)"
+    },
+    {
+      "name": "rui",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Unique identifier for relationship"
+    },
+    {
+      "name": "srui",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Source asserted relationship identifier, if present (no value provided)"
+    },
+    {
+      "name": "sab",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Abbreviation of the source of relationship"
+    },
+    {
+      "name": "sl",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Source of relationship labels (no value provided)"
+    },
+    {
+      "name": "dir",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Source asserted directionality flag. (no value provided) Y indicates that this is the direction of the relationship in its source; N indicates that it is not; a blank indicates that it is not important or has not yet been determined."
+    },
+    {
+      "name": "rg",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Machine generated and unverified indicator (optional)"
+    },
+    {
+      "name": "suppress",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Suppressible flag. Values = Y, E, or N. Reflects the suppressible status of the relationship; not yet in use. See also SUPPRESS in MRCONSO.RRF and MRDEF.RRF and MRREL.RRF in the UMLS Reference Manual."
+    },
+    {
+      "name": "cvf",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Content view flag. RxNorm includes one value, 4096, to denote inclusion in the Current Prescribable Content subset. All rows with CVF=4096 can be found in the subset."
+    }
+  ]

@@ -1,0 +1,32 @@
+[
+    {
+      "name": "cui1",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Unique identifier of retired concept"
+    },
+    {
+      "name": "vsab_start",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Version Source Abbreviation of the first RxNorm release CUI1 appeared in"
+    },
+    {
+      "name": "vsab_end",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Version Source Abbreviation of the last RxNorm release CUI1 appeared in"
+    },
+    {
+      "name": "cardinality",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "The number of RXCUIs that CUI1 was moved or split to."
+    },
+    {
+      "name": "cui2",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Unique identifier of synonymous concept for CUI1"
+    }
+]

@@ -1,0 +1,152 @@
+[
+    {
+      "name": "vcui",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "CUI of the versioned SRC concept for a source"
+    },
+    {
+      "name": "rcui",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "CUI of the root SRC concept for a source"
+    },
+    {
+      "name": "vsab",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "The versioned source abbreviation for a source, e.g., NDDF_2004_11_03"
+    },
+    {
+      "name": "rsab",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "The root source abbreviation, for a source e.g. NDDF"
+    },
+    {
+      "name": "son",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "The official name for a source"
+    },
+    {
+      "name": "sf",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "The Source Family for a source"
+    },
+    {
+      "name": "sver",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "The source version, e.g., 2001"
+    },
+    {
+      "name": "vstart",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "The date a source became active, e.g., 2001_04_03"
+    },
+    {
+      "name": "vend",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "The date a source ceased to be active, e.g., 2001_05_10"
+    },
+    {
+      "name": "imeta",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "The version of the Metathesaurus a source first appeared, e.g., 2001AB"
+    },
+    {
+      "name": "rmeta",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "The version of the Metathesaurus a source was removed, e.g., 2001AC"
+    },
+    {
+      "name": "slc",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "The source license contact information. A semi-colon separated list containing the following fields: Name; Title; Organization; Address 1; Address 2; City; State or Province; Country; Zip or Postal Code; Telephone; Contact Fax; Email; URL"
+    },
+    {
+      "name": "scc",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "The source content contact information. A semi-colon separated list containing the following fields: Name; Title; Organization; Address 1; Address 2; City; State or Province; Country; Zip or Postal Code; Telephone; Contact Fax; Email; URL"
+    },
+    {
+      "name": "srl",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "0,1,2,3,4 - explained in the License Agreement."
+    },
+    {
+      "name": "tfr",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "The number of terms for this source in RXNCONSO.RRF, e.g., 12343 (not implemented yet)"
+    },
+    {
+      "name": "cfr",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "The number of CUIs associated with this source, e.g., 10234 (not implemented yet)"
+    },
+    {
+      "name": "cxty",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "The type of relationship label (Section 2.4.2 of UMLS Reference Manual)"
+    },
+    {
+      "name": "ttyl",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Term type list from source, e.g., MH,EN,PM,TQ"
+    },
+    {
+      "name": "atnl",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "The attribute name list, e.g., MUI,RN,TH,..."
+    },
+    {
+      "name": "lat",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "The language of the terms in the source"
+    },
+    {
+      "name": "cenc",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Character set as specified by the IANA official names for character assignments http://www.iana.org/assignments/character-sets"
+    },
+    {
+      "name": "curver",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "A Y or N flag indicating whether or not this row corresponds to the current version of the named source"
+    },
+    {
+      "name": "sabin",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "A Y or N flag indicating whether or not this row is represented in the current MetamorphoSys subset. Initially always Y where CURVER is Y, but later is recomputed by MetamorphoSys."
+    },
+    {
+      "name": "ssn",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "The short name of a source as used by the NLM Knowledge Source Server."
+    },
+    {
+      "name": "scit",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Citation information for a source. A semi-colon separated list containing the following fields: Author(s); Author(s) address; Author(s) organization; Editor(s); Title; Content Designator; Medium Designator; Edition; Place of Publication; Publisher; Date of Publication/copyright; Date of revision; Location; Extent; Series; Availability Statement (URL); Language; Notes"
+    }
+]
