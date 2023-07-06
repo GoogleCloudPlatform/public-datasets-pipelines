@@ -1,7 +1,7 @@
 [
   {
     "name": "trip_id",
-    "type": "INTEGER",
+    "type": "STRING",
     "mode": "NULLABLE",
     "description": "Numeric ID of bike trip"
   },
