@@ -91,7 +91,7 @@ def execute_pipeline(
     rename_headers_list: dict,
     reorder_headers_list: typing.List[str],
 ) -> None:
-    download_file_http(source_url, source_file)
+    # download_file_http(source_url, source_file)
     process_source_file(
         source_file=source_file,
         chunksize=chunksize,
@@ -171,6 +171,7 @@ def process_source_file(
             )
             df = pd.DataFrame()
             df = pd.concat([df, chunk])
+            import pdb; pdb.set_trace()
             process_chunk(
                 df=df,
                 target_file_batch=target_file_batch,

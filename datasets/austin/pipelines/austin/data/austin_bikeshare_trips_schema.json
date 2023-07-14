@@ -18,6 +18,12 @@
     "description": "ID of bike used"
   },
   {
+    "name": "bike_type",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Type of bike used"
+  },
+  {
     "name": "start_time",
     "type": "TIMESTAMP",
     "mode": "NULLABLE",
