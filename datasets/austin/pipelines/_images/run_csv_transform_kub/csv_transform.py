@@ -171,7 +171,6 @@ def process_source_file(
             )
             df = pd.DataFrame()
             df = pd.concat([df, chunk])
-            import pdb; pdb.set_trace()
             process_chunk(
                 df=df,
                 target_file_batch=target_file_batch,
