@@ -91,7 +91,7 @@ def execute_pipeline(
     rename_headers_list: dict,
     reorder_headers_list: typing.List[str],
 ) -> None:
-    # download_file_http(source_url, source_file)
+    download_file_http(source_url, source_file)
     process_source_file(
         source_file=source_file,
         chunksize=chunksize,
