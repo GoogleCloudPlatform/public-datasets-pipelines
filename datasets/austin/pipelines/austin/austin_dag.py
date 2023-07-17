@@ -90,10 +90,10 @@ with DAG(
             "SCHEMA_PATH": "data/austin_bikeshare/schema/austin_bikeshare_trips_schema.json",
             "DATE_FORMAT_LIST": '{\n  "start_time": "%Y-%m-%d %H:%M:%S"\n}',
             "NULL_ROWS_LIST": '[\n  "trip_id"\n]',
-            "INPUT_CSV_HEADERS": '[\n  "Trip ID",\n  "Membership Type",\n  "Bicycle ID",\n  "Bike Type",\n  "Checkout Date",\n  "Checkout Time",\n  "Checkout Kiosk ID",\n  "Checkout Kiosk",\n  "Return Kiosk ID",\n  "Return Kiosk",\n  "Trip Duration Minutes",\n  "Month",\n  "Year"\n]',
+            "INPUT_CSV_HEADERS": '[\n  "Trip ID",\n  "Membership Type",\n  "Bicycle ID",\n  "Bike Type",\n  "Checkout Datetime",\n  "Checkout Date",\n  "Checkout Time",\n  "Checkout Kiosk ID",\n  "Checkout Kiosk",\n  "Return Kiosk ID",\n  "Return Kiosk",\n  "Trip Duration Minutes",\n  "Month",\n  "Year"\n]',
             "DATA_DTYPES": '{\n  "Trip ID": "str",\n  "Membership Type": "str",\n  "Bicycle ID": "str",\n  "Bike Type": "str",\n  "Checkout Date": "str",\n  "Checkout Time": "str",\n  "Checkout Kiosk ID": "str",\n  "Checkout Kiosk": "str",\n  "Return Kiosk ID": "str",\n  "Return Kiosk": "str",\n  "Trip Duration Minutes": "str",\n  "Month": "str",\n  "Year": "str"\n}',
-            "RENAME_HEADERS_LIST": '{\n  "Trip ID": "trip_id",\n  "Membership Type": "subscriber_type",\n  "Bicycle ID": "bikeid",\n  "Checkout Date": "time",\n  "Checkout Kiosk ID": "start_station_id",\n  "Checkout Kiosk": "start_station_name",\n  "Return Kiosk ID": "end_station_id",\n  "Return Kiosk": "end_station_name",\n  "Trip Duration Minutes": "duration_minutes",\n  "Checkout Time": "checkout_time",\n  "Month": "month",\n  "Year": "year"\n}',
-            "REORDER_HEADERS_LIST": '[\n  "trip_id",\n  "subscriber_type",\n  "bikeid",\n  "start_time",\n  "start_station_id",\n  "start_station_name",\n  "end_station_id",\n  "end_station_name",\n  "duration_minutes"\n]',
+            "RENAME_HEADERS_LIST": '{\n  "Trip ID": "trip_id",\n  "Membership Type": "subscriber_type",\n  "Bicycle ID": "bikeid",\n  "Bike Type": "bike_type",\n  "Checkout Date": "time",\n  "Checkout Kiosk ID": "start_station_id",\n  "Checkout Kiosk": "start_station_name",\n  "Return Kiosk ID": "end_station_id",\n  "Return Kiosk": "end_station_name",\n  "Trip Duration Minutes": "duration_minutes",\n  "Checkout Time": "checkout_time",\n  "Month": "month",\n  "Year": "year"\n}',
+            "REORDER_HEADERS_LIST": '[\n  "trip_id",\n  "subscriber_type",\n  "bikeid",\n  "bike_type",\n  "start_time",\n  "start_station_id",\n  "start_station_name",\n  "end_station_id",\n  "end_station_name",\n  "duration_minutes"\n]',
         },
         resources={
             "limit_memory": "8G",
