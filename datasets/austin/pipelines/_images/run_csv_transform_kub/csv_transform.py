@@ -318,6 +318,7 @@ def load_data_to_bq(
         job_config.write_disposition = "WRITE_TRUNCATE"
     else:
         job_config.write_disposition = "WRITE_APPEND"
+    job_config.create_disposition = "CREATE_IF_NEEDED"
     job_config.skip_leading_rows = 1  # ignore the header
     job_config.autodetect = False
     with open(file_path, "rb") as source_file:
