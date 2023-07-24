@@ -37,10 +37,10 @@ with DAG(
         location="us-central1-c",
         body={
             "name": "noaa",
-            "initial_node_count": 2,
+            "initial_node_count": 1,
             "network": "{{ var.value.vpc_network }}",
             "node_config": {
-                "machine_type": "e2-standard-16",
+                "machine_type": "e2-highmem-16",
                 "oauth_scopes": [
                     "https://www.googleapis.com/auth/devstorage.read_write",
                     "https://www.googleapis.com/auth/cloud-platform",
@@ -845,6 +845,8 @@ with DAG(
 
     (
         create_cluster
+        >> [ghcnd_by_year, lightning_strikes_by_year]
+        >> ghcnd_hurricanes
         >> noaa_ghcn_m
         >> [
             ghcnd_inventory,
@@ -856,13 +858,11 @@ with DAG(
             gsod_stations,
             ghcnd_countries,
         ]
+        >> noaa_gsod_by_year
         >> storms_database_by_year
         >> [noaa_goes16_mcmip, noaa_goes16_cmip, noaa_goes16_glm]
         >> noaa_goes16_radiance
         >> [noaa_goes17_mcmip, noaa_goes17_cmip, noaa_goes17_glm]
         >> noaa_goes17_radiance
-        >> [ghcnd_by_year, lightning_strikes_by_year]
-        >> ghcnd_hurricanes
-        >> noaa_gsod_by_year
         >> delete_cluster
     )
