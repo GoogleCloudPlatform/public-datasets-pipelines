@@ -289,10 +289,7 @@ def execute_pipeline(
     if pipeline_name in ["NOAA SPC Hail", "NOAA SPC Wind", "NOAA SPC Tornado"]:
         src_url = source_url[pipeline_name.replace(" ", "_").lower()]
         download_file_http(source_url=src_url, source_file=source_file)
-        remove_header_rows(
-            source_file=source_file,
-            number_of_header_rows=1
-        )
+        remove_header_rows(source_file=source_file, number_of_header_rows=1)
         process_and_load_table(
             source_file=source_file,
             target_file=target_file,
