@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import csv
-import datetime
 import ftplib
 import glob
 import gzip
@@ -28,6 +27,7 @@ import sys
 import time
 import typing
 import zipfile
+from datetime import date, datetime
 from urllib.request import Request, urlopen
 
 import geopandas as geo
@@ -35,6 +35,7 @@ import numpy as np
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
+from dateutil.relativedelta import relativedelta
 from google.api_core.exceptions import NotFound
 from google.cloud import bigquery, storage
 from sh import sed
@@ -161,11 +162,11 @@ def execute_pipeline(
 ) -> None:
     if pipeline_name == "GHCND by year":
         if full_data_load == "N":
-            start = str(datetime.datetime.now().year - 6)
+            start = str(datetime.now().year - 1)
         else:
             start = start_year
         ftp_batch = 1
-        for yr in range(int(start), datetime.datetime.now().year + 1):
+        for yr in range(int(start), datetime.now().year + 1):
             yr_str = str(yr)
             source_zipfile = str.replace(str(source_file), ".csv", f"_{yr_str}.csv.gz")
             source_file_unzipped = str.replace(str(source_zipfile), ".csv.gz", ".csv")
@@ -288,7 +289,10 @@ def execute_pipeline(
     if pipeline_name in ["NOAA SPC Hail", "NOAA SPC Wind", "NOAA SPC Tornado"]:
         src_url = source_url[pipeline_name.replace(" ", "_").lower()]
         download_file_http(source_url=src_url, source_file=source_file)
-        sed(["-i", "1d", source_file])
+        remove_header_rows(
+            source_file=source_file,
+            number_of_header_rows=1
+        )
         process_and_load_table(
             source_file=source_file,
             target_file=target_file,
@@ -365,10 +369,11 @@ def execute_pipeline(
         return None
     if pipeline_name == "NOAA GSOD By Year":
         if full_data_load == "N":
-            start_year = 2020
+            # if not a full data load then load from last year onwards
+            start_year = int((datetime.now() - relativedelta(years=1)).strftime("%Y"))
         else:
             start_year = int(start_year)
-        for year_to_process in range(start_year, datetime.datetime.now().year + 1):
+        for year_to_process in range(start_year, datetime.now().year + 1):
             run_gsod_by_year(
                 year_to_process=year_to_process,
                 source_url=source_url,
@@ -628,10 +633,13 @@ def run_gsod_by_year(
                 ".csv", f"_{url_filename}.csv"
             )
             download_file_http(file_name, source_file_tmpname, True, True)
-            os.system(f"sed -i 1d {source_file_tmpname} 2> /dev/null")
-            if os.path.getsize(source_file_tmpname) > 0:
-                os.system(f"cat {source_file_tmpname} >> {source_file}")
-            os.system(f"rm {source_file_tmpname}")
+            remove_header_rows(
+                source_file=source_file_tmpname,
+                number_of_header_rows=1,
+                output_file_override=source_file,
+                output_file_append=True,
+            )
+            os.unlink(source_file_tmpname)
             time.sleep(0.5)
         if ((file_ptr % 100) == 0) or (file_ptr == file_cnt):
             logging.info(f"Appended {file_ptr} files of total {file_cnt} files")
@@ -750,7 +758,7 @@ def process_storms_database_by_year(
     list_of_locations_files = sorted(
         ftp_list_of_files(host=host, cwd=cwd, filter_expr="StormEvents_locations")
     )
-    for year_to_process in range(int(start_year), datetime.date.today().year + 1):
+    for year_to_process in range(int(start_year), date.today().year + 1):
         locations_file = list(
             filter(
                 lambda x: x.startswith(
@@ -1070,10 +1078,10 @@ def process_lightning_strikes_by_year(
     file_pattern = str.split(os.path.split(source_url)[1], "*")[0]
     url_list = url_directory_list(f"{url_path}/", file_pattern)
     if full_data_load == "N":
-        start = datetime.datetime.now().year - 6
+        start = datetime.now().year - 1
     else:
         start = int(start_year)
-    for yr in range(start, datetime.datetime.now().year):
+    for yr in range(start, datetime.now().year):
         for url in url_list:
             url_file_name = os.path.split(url)[1]
             if str(url_file_name).find(f"{file_pattern}{yr}") >= 0:
@@ -1558,16 +1566,27 @@ def rename_headers(df: pd.DataFrame, rename_headers_list: dict) -> pd.DataFrame:
     return df
 
 
-def remove_header_rows(source_file: str, number_of_header_rows: int) -> None:
-    logging.info(f"Removing header from {source_file}")
-    os.system(f"sed -i '1,{number_of_header_rows}d' {source_file} ")
+def remove_header_rows(
+    source_file: str,
+    number_of_header_rows: int,
+    output_file_override: str = "",
+    output_file_append: bool = False,
+) -> None:
+    logging.info(f"Removing {number_of_header_rows} header rows from {source_file}")
+    with open(source_file, "r") as fin:
+        data = fin.read().splitlines(True)
+    with open(
+        file=(source_file if output_file_override == "" else output_file_override),
+        mode=("a" if output_file_append else "w"),
+    ) as fout:
+        fout.writelines(data[number_of_header_rows:])
 
 
 def add_metadata_cols(df: pd.DataFrame, source_url: str) -> pd.DataFrame:
     logging.info("Adding metadata columns")
     df["source_url"] = source_url
     df["etl_timestamp"] = pd.to_datetime(
-        datetime.datetime.now(), format="%Y-%m-%d %H:%M:%S", infer_datetime_format=True
+        datetime.now(), format="%Y-%m-%d %H:%M:%S", infer_datetime_format=True
     )
     return df
 
@@ -1603,7 +1622,7 @@ def convert_dt_format(
     if not dt_str or dt_str.lower() == "nan":
         return dt_str
     else:
-        return str(datetime.datetime.strptime(dt_str, from_format).strftime(to_format))
+        return str(datetime.strptime(dt_str, from_format).strftime(to_format))
 
 
 def source_convert_date_formats(
