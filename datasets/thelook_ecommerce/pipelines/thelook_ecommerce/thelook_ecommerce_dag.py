@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 
 from airflow import DAG
 from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.operators import bigquery
 from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
@@ -41,7 +42,7 @@ with DAG(
         namespace="composer",
         service_account_name="datasets",
         image_pull_policy="Always",
-        image="gcr.io/{{ var.value.gcp_project }}/thelook_ecommerce__run_thelook_kub",
+        image="{{ var.json.thelook_ecommerce.docker_image }}",
         env_vars={
             "NUM_OF_USERS": "100000",
             "NUM_OF_GHOST_EVENTS": "5",
@@ -225,12 +226,30 @@ with DAG(
         ],
     )
 
-    generate_thelook >> [
-        load_products_to_bq,
-        load_events_to_bq,
-        load_inventory_items_to_bq,
-        load_order_items_to_bq,
-        load_orders_to_bq,
-        load_users_to_bq,
-        load_distribution_centers_to_bq,
-    ]
+    # Task to create the user geom column from the latitude and longitude columns
+    create_user_geom_column = bigquery.BigQueryInsertJobOperator(
+        task_id="create_user_geom_column",
+        query="ALTER TABLE `bigquery-public-data.thelook_ecommerce.users` ADD COLUMN IF NOT EXISTS user_geom GEOGRAPHY;\nUPDATE `bigquery-public-data.thelook_ecommerce.users` SET user_geom = SAFE.ST_GeogFromText(CONCAT(\u0027POINT(\u0027,CAST(longitude AS STRING), \u0027 \u0027, CAST(latitude as STRING), \u0027)\u0027)) WHERE longitude IS NOT NULL AND latitude IS NOT NULL;\n# Use Legacy SQL should be false for any query that uses a DML statement",
+        useLegacySql=False,
+    )
+
+    # Task to create the distribution center geom column from the latitude and longitude columns
+    create_distribution_center_geom_column = bigquery.BigQueryInsertJobOperator(
+        task_id="create_distribution_center_geom_column",
+        query="ALTER TABLE `bigquery-public-data.thelook_ecommerce.distribution_centers` ADD COLUMN IF NOT EXISTS distribution_center_geom GEOGRAPHY;\nUPDATE `bigquery-public-data.thelook_ecommerce.distribution_centers` SET distribution_center_geom = SAFE.ST_GeogFromText(CONCAT(\u0027POINT(\u0027,CAST(longitude AS STRING), \u0027 \u0027, CAST(latitude as STRING), \u0027)\u0027)) WHERE longitude IS NOT NULL AND latitude IS NOT NULL;\n# Use Legacy SQL should be false for any query that uses a DML statement",
+        useLegacySql=False,
+    )
+
+    (
+        generate_thelook
+        >> [
+            load_products_to_bq,
+            load_events_to_bq,
+            load_inventory_items_to_bq,
+            load_order_items_to_bq,
+            load_orders_to_bq,
+            load_users_to_bq,
+            load_distribution_centers_to_bq,
+        ]
+        >> [create_user_geom_column, create_distribution_center_geom_column]
+    )
