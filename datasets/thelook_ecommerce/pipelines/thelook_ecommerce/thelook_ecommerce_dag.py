@@ -229,15 +229,21 @@ with DAG(
     # Task to create the user geom column from the latitude and longitude columns
     create_user_geom_column = bigquery.BigQueryInsertJobOperator(
         task_id="create_user_geom_column",
-        query="ALTER TABLE `bigquery-public-data.thelook_ecommerce.users` ADD COLUMN IF NOT EXISTS user_geom GEOGRAPHY;\nUPDATE `bigquery-public-data.thelook_ecommerce.users` SET user_geom = SAFE.ST_GeogFromText(CONCAT(\u0027POINT(\u0027,CAST(longitude AS STRING), \u0027 \u0027, CAST(latitude as STRING), \u0027)\u0027)) WHERE longitude IS NOT NULL AND latitude IS NOT NULL;\n# Use Legacy SQL should be false for any query that uses a DML statement",
-        useLegacySql=False,
+        configuration={
+            "query": {
+                "query": "ALTER TABLE `bigquery-public-data.thelook_ecommerce.users` ADD COLUMN IF NOT EXISTS user_geom GEOGRAPHY;\nUPDATE `bigquery-public-data.thelook_ecommerce.users`\n   SET user_geom = SAFE.ST_GeogFromText(CONCAT('POINT(',CAST(longitude AS STRING), ' ', CAST(latitude as STRING), ')'))\n WHERE longitude IS NOT NULL AND latitude IS NOT NULL;",
+                "useLegacySql": False,
+            }
+        },
     )
 
     # Task to create the distribution center geom column from the latitude and longitude columns
     create_distribution_center_geom_column = bigquery.BigQueryInsertJobOperator(
         task_id="create_distribution_center_geom_column",
-        query="ALTER TABLE `bigquery-public-data.thelook_ecommerce.distribution_centers` ADD COLUMN IF NOT EXISTS distribution_center_geom GEOGRAPHY;\nUPDATE `bigquery-public-data.thelook_ecommerce.distribution_centers` SET distribution_center_geom = SAFE.ST_GeogFromText(CONCAT(\u0027POINT(\u0027,CAST(longitude AS STRING), \u0027 \u0027, CAST(latitude as STRING), \u0027)\u0027)) WHERE longitude IS NOT NULL AND latitude IS NOT NULL;\n# Use Legacy SQL should be false for any query that uses a DML statement",
-        useLegacySql=False,
+        configuration={
+            "query": "ALTER TABLE `bigquery-public-data.thelook_ecommerce.distribution_centers`\n  ADD COLUMN IF NOT EXISTS distribution_center_geom GEOGRAPHY;\nUPDATE `bigquery-public-data.thelook_ecommerce.distribution_centers`\n   SET distribution_center_geom = SAFE.ST_GeogFromText(CONCAT('POINT(',CAST(longitude AS STRING), ' ', CAST(latitude as STRING), ')'))\n WHERE longitude IS NOT NULL\n   AND latitude IS NOT NULL;\n# Use Legacy SQL should be false for any query that uses a DML statement",
+            "useLegacySql": False,
+        },
     )
 
     (
