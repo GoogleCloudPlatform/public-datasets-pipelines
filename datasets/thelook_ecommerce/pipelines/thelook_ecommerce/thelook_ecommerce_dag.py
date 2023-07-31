@@ -257,5 +257,6 @@ with DAG(
             load_users_to_bq,
             load_distribution_centers_to_bq,
         ]
-        >> [create_user_geom_column, create_distribution_center_geom_column]
+        >> create_user_geom_column
+        >> create_distribution_center_geom_column
     )
