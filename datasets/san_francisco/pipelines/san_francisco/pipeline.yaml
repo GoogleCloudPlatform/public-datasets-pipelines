@@ -1286,7 +1286,7 @@ dag:
             }
           DATE_FORMAT_LIST: >-
             {
-              "plant_date": "%Y-%m-%d %H:%M:%S"
+              "plant_date": "%m/%d/%Y %H:%M:%S %p"
             }
           EMPTY_KEY_LIST: >-
             [

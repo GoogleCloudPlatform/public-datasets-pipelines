@@ -1292,6 +1292,7 @@ def load_data_to_bq(
     table_ref = client.dataset(dataset_id).table(table_id)
     job_config = bigquery.LoadJobConfig()
     job_config.source_format = bigquery.SourceFormat.CSV
+    job_config.allow_quoted_newlines = True
     job_config.field_delimiter = field_delimiter
     if truncate_table:
         job_config.write_disposition = "WRITE_TRUNCATE"
