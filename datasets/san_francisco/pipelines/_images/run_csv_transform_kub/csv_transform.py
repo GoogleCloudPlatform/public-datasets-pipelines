@@ -1498,14 +1498,18 @@ def convert_dt_format(dt_str: str, to_format: str = '"%Y-%m-%d %H:%M:%S"') -> st
             # Date and Time
             return str(
                 pd.to_datetime(
-                    dt_str, format=f"{to_format}", errors="ignore" #, infer_datetime_format=True
+                    dt_str,
+                    format=f"{to_format}",
+                    errors="ignore",
                 )
             )
         else:
             # Date Only
             return str(
                 pd.to_datetime(
-                    dt_str, format=f"{to_format}", errors="ignore" #, infer_datetime_format=True
+                    dt_str,
+                    format=f"{to_format}",
+                    errors="ignore",
                 ).date()
             )
 
