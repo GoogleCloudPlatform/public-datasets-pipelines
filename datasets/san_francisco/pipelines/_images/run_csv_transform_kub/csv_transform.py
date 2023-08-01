@@ -925,7 +925,8 @@ def handle_tripdata(
         subset=["key_val"], keep="last", inplace=True, ignore_index=False
     )
     df_trip_data.set_index("key", inplace=True)
-    df = df_trip_data.append(df_tripdata, sort=True)
+    # df = df_trip_data.append(df_tripdata, sort=True)
+    df = pd.concat([df_trip_data, df_tripdata], ignore_index=True, sort=True)
     df["subscriber_type_new"] = df.apply(
         lambda x: str(x.subscription_type)
         if not str(x.subscriber_type)
@@ -973,7 +974,6 @@ def download_file_http(source_url: str, source_file: pathlib.Path) -> None:
 
 def unpack_file(infile: str, dest_path: str, compression_type: str = "zip") -> None:
     if compression_type == "zip":
-        logging.info(f"Unpacking {infile} to {dest_path}")
         zip_decompress(infile=infile, dest_path=dest_path)
     else:
         logging.info(
@@ -1498,14 +1498,14 @@ def convert_dt_format(dt_str: str, to_format: str = '"%Y-%m-%d %H:%M:%S"') -> st
             # Date and Time
             return str(
                 pd.to_datetime(
-                    dt_str, format=f"{to_format}", infer_datetime_format=True
+                    dt_str, format=f"{to_format}", errors="ignore" #, infer_datetime_format=True
                 )
             )
         else:
             # Date Only
             return str(
                 pd.to_datetime(
-                    dt_str, format=f"{to_format}", infer_datetime_format=True
+                    dt_str, format=f"{to_format}", errors="ignore" #, infer_datetime_format=True
                 ).date()
             )
 

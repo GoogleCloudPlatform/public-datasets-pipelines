@@ -906,8 +906,8 @@ dag:
             }
           DATE_FORMAT_LIST: >-
             {
-              "start_date": "%Y-%m-%d %H:%M:%S",
-              "end_date": "%Y-%m-%d %H:%M:%S"
+              "start_date": "%m/%d/%Y %H:%M",
+              "end_date": "%m/%d/%Y %H:%M"
             }
           GEN_LOCATION_LIST: >-
             {
