@@ -906,8 +906,10 @@ dag:
             }
           DATE_FORMAT_LIST: >-
             {
-              "start_date": "%m/%d/%Y %H:%M",
-              "end_date": "%m/%d/%Y %H:%M"
+              "start_date_trip_data": "%m/%d/%Y %H:%M",
+              "end_date_trip_data": "%m/%d/%Y %H:%M",
+              "start_date_tripdata": "%Y-%m-%d %H:%M:%S",
+              "end_date_tripdata": "%Y-%m-%d %H:%M:%S"
             }
           GEN_LOCATION_LIST: >-
             {
@@ -1144,16 +1146,16 @@ dag:
             }
           DATE_FORMAT_LIST: >-
             {
-              "call_date": "%Y-%m-%d",
-              "watch_date": "%Y-%m-%d",
-              "available_timestamp": "%Y-%m-%d %H:%M:%S",
-              "dispatch_timestamp": "%Y-%m-%d %H:%M:%S",
-              "entry_timestamp": "%Y-%m-%d %H:%M:%S",
-              "on_scene_timestamp": "%Y-%m-%d %H:%M:%S",
-              "received_timestamp": "%Y-%m-%d %H:%M:%S",
-              "response_timestamp": "%Y-%m-%d %H:%M:%S",
-              "transport_timestamp": "%Y-%m-%d %H:%M:%S",
-              "hospital_timestamp": "%Y-%m-%d %H:%M:%S"
+              "call_date": "%m/%d/%Y",
+              "watch_date": "%m/%d/%Y",
+              "available_timestamp": "%m/%d/%Y %H:%M:%S %p",
+              "dispatch_timestamp": "%m/%d/%Y %H:%M:%S %p",
+              "entry_timestamp": "%m/%d/%Y %H:%M:%S %p",
+              "on_scene_timestamp": "%m/%d/%Y %H:%M:%S %p",
+              "received_timestamp": "%m/%d/%Y %H:%M:%S %p",
+              "response_timestamp": "%m/%d/%Y %H:%M:%S %p",
+              "transport_timestamp": "%m/%d/%Y %H:%M:%S %p",
+              "hospital_timestamp": "%m/%d/%Y %H:%M:%S %p"
             }
           REORDER_HEADERS_LIST: >-
             [

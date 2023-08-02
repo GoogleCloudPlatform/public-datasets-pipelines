@@ -925,7 +925,6 @@ def handle_tripdata(
         subset=["key_val"], keep="last", inplace=True, ignore_index=False
     )
     df_trip_data.set_index("key", inplace=True)
-    # df = df_trip_data.append(df_tripdata, sort=True)
     df = pd.concat([df_trip_data, df_tripdata], ignore_index=True, sort=True)
     df["subscriber_type_new"] = df.apply(
         lambda x: str(x.subscription_type)
@@ -1224,9 +1223,19 @@ def process_chunk(
         df = reorder_headers(df, reorder_headers_list)
     elif destination_table == "bikeshare_trips":
         if str(target_file).find("_trip_data.csv") > -1:
-            df = resolve_date_format(df, date_format_list)
+            list_trip_data = {
+                k.replace("_trip_data", ""): v
+                for (k, v) in date_format_list.items()
+                if k[-10:] == "_trip_data"
+            }
+            df = resolve_date_format(df, list_trip_data)
         if str(target_file).find("_tripdata.csv") > -1:
-            df = resolve_date_format(df, date_format_list)
+            list_tripdata = {
+                k.replace("_tripdata", ""): v
+                for (k, v) in date_format_list.items()
+                if k[-9:] == "_tripdata"
+            }
+            df = resolve_date_format(df, list_tripdata)
             df = generate_location(df, gen_location_list)
         df = add_key(df)
     elif destination_table == "film_locations":
@@ -1486,31 +1495,37 @@ def resolve_date_format(
     logging.info("Resolving date formats")
     for dt_fld in date_format_list.items():
         logging.info(f"Resolving date formats in field {dt_fld}")
-        df[dt_fld[0]] = df[dt_fld[0]].apply(convert_dt_format, to_format=dt_fld[1])
+        df[dt_fld[0]] = df[dt_fld[0]].apply(convert_dt_format, from_format=dt_fld[1])
     return df
 
 
-def convert_dt_format(dt_str: str, to_format: str = '"%Y-%m-%d %H:%M:%S"') -> str:
+def convert_dt_format(dt_str: str, from_format: str = '"%Y-%m-%d %H:%M:%S"') -> str:
     if not dt_str or str(dt_str).lower() == "nan" or str(dt_str).lower() == "nat":
         return ""
     else:
-        if to_format.find(" ") > 0:
+        if from_format.find(" ") > 0:
             # Date and Time
             return str(
-                pd.to_datetime(
-                    dt_str,
-                    format=f"{to_format}",
-                    errors="ignore",
+                datetime.strftime(
+                    pd.to_datetime(
+                        (dt_str if from_format[-2:] == "%p" else dt_str[:19]),
+                        format=f"{from_format}",
+                        errors="ignore",
+                    ),
+                    "%Y-%m-%d %H:%M:%S",
                 )
             )
         else:
             # Date Only
             return str(
-                pd.to_datetime(
-                    dt_str,
-                    format=f"{to_format}",
-                    errors="ignore",
-                ).date()
+                datetime.strftime(
+                    pd.to_datetime(
+                        dt_str[:10],
+                        format=f"{from_format}",
+                        errors="ignore",
+                    ),
+                    "%Y-%m-%d",
+                )
             )
 
 
