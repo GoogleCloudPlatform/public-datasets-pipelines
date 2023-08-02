@@ -207,29 +207,29 @@ def get_address(
     # type checking is used to provide flexibility of inputs to function (ie. can be dict with proportions, or could be single string value)
     universe = []
     if postal_code != "*":
-        if type(postal_code) == str:
+        if type(postal_code) is str:
             universe += list(
                 filter(lambda row: row["postal_code"] == postal_code, LOCATION_DATA)
             )
-        elif type(postal_code) == dict:
+        elif type(postal_code) is dict:
             universe += list(
                 filter(
                     lambda row: row["postal_code"] in postal_code.keys(), LOCATION_DATA
                 )
             )
     if state != "*":
-        if type(state) == str:
+        if type(state) is str:
             universe += list(filter(lambda row: row["state"] == state, LOCATION_DATA))
-        elif type(state) == dict:
+        elif type(state) is dict:
             universe += list(
                 filter(lambda row: row["state"] in state.keys(), LOCATION_DATA)
             )
     if country != "*":
-        if type(country) == str:
+        if type(country) is str:
             universe += list(
                 filter(lambda row: row["country"] == country, LOCATION_DATA)
             )
-        elif type(country) == dict:
+        elif type(country) is dict:
             universe += list(
                 filter(lambda row: row["country"] in country.keys(), LOCATION_DATA)
             )
@@ -240,10 +240,10 @@ def get_address(
 
     for loc in universe:
         loc["population"] = int(loc["population"])
-        if type(postal_code) == dict:
+        if type(postal_code) is dict:
             if loc["postal_code"] in postal_code.keys():
                 loc["population"] = postal_code[loc["postal_code"]] * total_pop
-        if type(state) == dict:
+        if type(state) is dict:
             if loc["state"] in state.keys():
                 loc["population"] = (
                     state[loc["state"]]
@@ -259,7 +259,7 @@ def get_address(
                     )
                     * total_pop
                 )
-        if type(country) == dict:
+        if type(country) is dict:
             if loc["country"] in country.keys():
                 loc["population"] = (
                     country[loc["country"]]
