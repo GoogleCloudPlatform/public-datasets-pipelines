@@ -1200,11 +1200,11 @@ def process_chunk(
     elif destination_table == "sfpd_incidents":
         df = rename_headers(df=df, rename_headers_list=rename_headers_list)
         df = remove_empty_key_rows(df, empty_key_list)
-        df = resolve_date_format(df, date_format_list)
+        # df = resolve_date_format(df, date_format_list)
         df["timestamp"] = df.apply(
             lambda x: datetime.strftime(
                 datetime.strptime(
-                    (x["Date"][:10] + " " + x["Time"] + ":00"), "%Y-%m-%d %H:%M:%S"
+                    (x["Date"][:10] + " " + x["Time"] + ":00"), "%m/%d/%Y %H:%M:%S"
                 ),
                 "%Y-%m-%d %H:%M:%S",
             ),
@@ -1276,7 +1276,7 @@ def download_file_json(
     source_file_csv: pathlib.Path,
     subnode_name: str,
 ) -> None:
-    logging.info(f"Downloading file {source_url}.json.")
+    logging.info(f"Downloading file {source_url}.")
     r = requests.get(source_url, stream=True)
     with open(f"{source_file_json}.json", "wb") as f:
         for chunk in r:

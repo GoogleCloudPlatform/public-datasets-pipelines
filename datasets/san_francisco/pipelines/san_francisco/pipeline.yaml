@@ -122,9 +122,9 @@ dag:
             ]
           DATE_FORMAT_LIST: >-
             {
-              "created_date": "%Y-%m-%d %H:%M:%S",
-              "closed_date": "%Y-%m-%d %H:%M:%S",
-              "resolution_action_updated_date": "%Y-%m-%d %H:%M:%S"
+              "created_date": "%m/%d/%Y %H:%M:%S %p",
+              "closed_date": "%m/%d/%Y %H:%M:%S %p",
+              "resolution_action_updated_date": "%m/%d/%Y %H:%M:%S %p"
             }
           REORDER_HEADERS_LIST: >-
             [

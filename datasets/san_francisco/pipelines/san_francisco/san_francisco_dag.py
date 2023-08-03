@@ -62,7 +62,7 @@ with DAG(
             "REMOVE_PAREN_LIST": '[\n  "latitude",\n  "longitude"\n]',
             "STRIP_NEWLINES_LIST": '[\n  "status_notes",\n  "descriptor"\n]',
             "STRIP_WHITESPACE_LIST": '[\n  "incident_address"\n]',
-            "DATE_FORMAT_LIST": '{\n  "created_date": "%Y-%m-%d %H:%M:%S",\n  "closed_date": "%Y-%m-%d %H:%M:%S",\n  "resolution_action_updated_date": "%Y-%m-%d %H:%M:%S"\n}',
+            "DATE_FORMAT_LIST": '{\n  "created_date": "%m/%d/%Y %H:%M:%S %p",\n  "closed_date": "%m/%d/%Y %H:%M:%S %p",\n  "resolution_action_updated_date": "%m/%d/%Y %H:%M:%S %p"\n}',
             "REORDER_HEADERS_LIST": '[\n    "unique_key",\n    "created_date",\n    "closed_date",\n    "resolution_action_updated_date",\n    "status",\n    "status_notes",\n    "agency_name",\n    "category",\n    "complaint_type",\n    "descriptor",\n    "incident_address",\n    "supervisor_district",\n    "neighborhood",\n    "location",\n    "source",\n    "media_url",\n    "latitude",\n    "longitude",\n    "police_district"\n]',
         },
         resources={
