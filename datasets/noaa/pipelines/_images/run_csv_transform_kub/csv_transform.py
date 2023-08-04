@@ -904,7 +904,7 @@ def fix_data_anomolies_storms(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def shorthand_to_number(x) -> float:
-    if type(x) == float or type(x) == int:
+    if isinstance(x, float) or isinstance(x, int):
         return x
     if "K" in x:
         if len(x) > 1:
