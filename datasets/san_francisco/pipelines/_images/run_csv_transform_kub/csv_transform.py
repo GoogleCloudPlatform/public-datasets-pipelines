@@ -1212,7 +1212,6 @@ def process_chunk(
     elif destination_table == "sfpd_incidents":
         df = rename_headers(df=df, rename_headers_list=rename_headers_list)
         df = remove_empty_key_rows(df, empty_key_list)
-        # df = resolve_date_format(df, date_format_list)
         df["timestamp"] = df.apply(
             lambda x: datetime.strftime(
                 datetime.strptime(
