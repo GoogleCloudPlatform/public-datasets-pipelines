@@ -257,9 +257,25 @@ def execute_pipeline(
             source_url=source_url_dict["sfpd_incidents"], source_file=source_file
         )
     elif destination_table == "bikeshare_station_info":
-        source_url_json = f"{source_url}.json"
-        source_file_json = str(source_file).replace(".csv", "") + "_stations.json"
-        download_file_json(source_url_json, source_file_json, source_file, "stations")
+        download_file_http(source_url, source_file)
+        process_source_file(
+            source_file=source_file,
+            target_file=target_file,
+            chunksize=int(chunksize),
+            input_headers=input_headers,
+            data_dtypes=data_dtypes,
+            destination_table=destination_table,
+            rename_headers_list=rename_headers_list,
+            empty_key_list=empty_key_list,
+            gen_location_list=gen_location_list,
+            resolve_datatypes_list=resolve_datatypes_list,
+            remove_paren_list=remove_paren_list,
+            strip_newlines_list=strip_newlines_list,
+            strip_whitespace_list=strip_whitespace_list,
+            date_format_list=date_format_list,
+            reorder_headers_list=reorder_headers_list,
+            header_row_ordinal=0,
+        )
     elif destination_table == "bikeshare_station_status":
         source_url_json = f"{source_url}.json"
         source_file_json = str(source_file).replace(".csv", "") + "_status.json"
@@ -337,17 +353,13 @@ def execute_pipeline(
             target_gcs_bucket=target_gcs_bucket,
             target_gcs_path=target_gcs_path,
         )
-        if drop_dest_table == "Y":
-            drop_table = True
-        else:
-            drop_table = False
         table_exists = create_dest_table(
             project_id=project_id,
             dataset_id=dataset_id,
             table_id=destination_table,
             schema_filepath=schema_path,
             bucket_name=target_gcs_bucket,
-            drop_table=drop_table,
+            drop_table=(drop_dest_table == "Y"),
         )
         if table_exists:
             load_data_to_bq(
@@ -1214,8 +1226,9 @@ def process_chunk(
     elif destination_table == "bikeshare_station_info":
         df = rename_headers(df, rename_headers_list)
         df = remove_empty_key_rows(df, empty_key_list)
-        df = generate_location(df, gen_location_list)
-        df = resolve_datatypes(df, resolve_datatypes_list)
+        df['eightd_has_key_dispenser'] = ""
+        df['external_id'] = ""
+        df['rental_methods'] = ""
         df = reorder_headers(df, reorder_headers_list)
     elif destination_table == "bikeshare_station_status":
         df = rename_headers(df, rename_headers_list)

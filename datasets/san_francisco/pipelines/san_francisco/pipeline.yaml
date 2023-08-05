@@ -614,31 +614,53 @@ dag:
         image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
         env_vars:
           PIPELINE_NAME: "San Francisco Bikeshare Stations"
-          SOURCE_URL: "https://gbfs.baywheels.com/gbfs/fr/station_information"
+          SOURCE_URL: "https://data.sfgov.org/api/views/7jbp-yzp3/rows.csv"
           CHUNKSIZE: "750000"
           SOURCE_FILE: "files/data_bikeshare_station_info.csv"
           TARGET_FILE: "files/data_output_bikeshare_station_info.csv"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "san_francisco_bikeshare"
           TABLE_ID: "bikeshare_station_info"
-          DROP_DEST_TABLE: "Y"
+          DROP_DEST_TABLE: "N"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/san_francisco/bikeshare_stations/data_output.csv"
           SCHEMA_PATH: "data/san_francisco/schema/sf_bikeshare_station_info_schema.json"
           HEADER_ROW_ORDINAL: "0"
+          INPUT_CSV_HEADERS: >-
+            [
+              "Station ID",
+              "Station Name",
+              "Station ID DOMO",
+              "Has Kiosk",
+              "Dock Count",
+              "Station Latitude",
+              "Station Longitude",
+              "Region_ID",
+              "shape"
+            ]
+          DATA_DTYPES: >-
+            {
+              "Station ID": "str",
+              "Station Name":"str",
+              "Station ID DOMO": "str",
+              "Has Kiosk": "str",
+              "Dock Count": "str",
+              "Station Latitude": "str",
+              "Station Longitude": "str",
+              "Region_ID": "str",
+              "shape": "str"
+            }
           RENAME_HEADERS_LIST: >-
             {
-              "data.stations.station_id": "station_id",
-              "data.stations.name": "name",
-              "data.stations.short_name": "short_name",
-              "data.stations.lat": "lat",
-              "data.stations.lon": "lon",
-              "data.stations.region_id": "region_id",
-              "data.stations.rental_methods": "rental_methods",
-              "data.stations.capacity": "capacity",
-              "data.stations.eightd_has_key_dispenser": "eightd_has_key_dispenser",
-              "data.stations.has_kiosk": "has_kiosk",
-              "data.stations.external_id": "external_id"
+              "Station ID": "station_id",
+              "Station Name": "name",
+              "Station ID DOMO": "short_name",
+              "Station Latitude": "lat",
+              "Station Longitude": "lon",
+              "Region_ID": "region_id",
+              "Dock Count": "capacity",
+              "Has Kiosk": "has_kiosk",
+              "shape": "station_geom"
             }
           EMPTY_KEY_LIST: >-
             [
@@ -647,29 +669,6 @@ dag:
               "lat",
               "lon"
             ]
-          GEN_LOCATION_LIST: >-
-            {
-              "station_geom": [ "lon", "lat" ]
-            }
-          RESOLVE_DATATYPES_LIST: >-
-            {
-              "region_id": "Int64"
-            }
-          REMOVE_PAREN_LIST: >-
-            [
-              "latitude",
-              "longitude"
-            ]
-          STRIP_WHITESPACE_LIST: >-
-            [
-              "incident_address"
-            ]
-          DATE_FORMAT_LIST: >-
-            {
-              "created_date": "%Y-%m-%d %H:%M:%S",
-              "closed_date": "%Y-%m-%d %H:%M:%S",
-              "resolution_action_updated_date": "%Y-%m-%d %H:%M:%S"
-            }
           REORDER_HEADERS_LIST: >-
             [
               "station_id",
