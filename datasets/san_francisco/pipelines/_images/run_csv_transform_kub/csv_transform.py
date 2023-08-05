@@ -1226,9 +1226,9 @@ def process_chunk(
     elif destination_table == "bikeshare_station_info":
         df = rename_headers(df, rename_headers_list)
         df = remove_empty_key_rows(df, empty_key_list)
-        df['eightd_has_key_dispenser'] = ""
-        df['external_id'] = ""
-        df['rental_methods'] = ""
+        df["eightd_has_key_dispenser"] = ""
+        df["external_id"] = ""
+        df["rental_methods"] = ""
         df = reorder_headers(df, reorder_headers_list)
     elif destination_table == "bikeshare_station_status":
         df = rename_headers(df, rename_headers_list)
