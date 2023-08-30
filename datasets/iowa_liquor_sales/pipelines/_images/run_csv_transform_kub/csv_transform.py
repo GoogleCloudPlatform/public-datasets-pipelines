@@ -102,6 +102,7 @@ def processChunk(
     logging.info("Reordering headers..")
     df = df[headers]
     df["county_number"] = df["county_number"].astype("Int64")
+    df["pack"] = df["pack"].astype("Int64")
     try:
         save_to_new_file(df, file_path=str(target_file_batch))
     except Exception as e:
@@ -149,13 +150,13 @@ def upload_file_to_gcs(
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
     main(
-        source_url=os.environ["SOURCE_URL"],
-        download_location=os.environ["DOWNLOAD_LOCATION"],
-        target_file=os.environ["TARGET_FILE"],
-        chunksize=os.environ["CHUNKSIZE"],
-        target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
-        source_gcs_path=os.environ["SOURCE_GCS_PATH"],
-        target_gcs_path=os.environ["TARGET_GCS_PATH"],
-        headers=json.loads(os.environ["HEADERS"]),
-        rename_mappings=json.loads(os.environ["RENAME_MAPPINGS"]),
+        source_url=os.environ.get("SOURCE_URL", ""),
+        download_location=os.environ.get("DOWNLOAD_LOCATION", ""),
+        target_file=os.environ.get("TARGET_FILE", ""),
+        chunksize=os.environ.get("CHUNKSIZE", ""),
+        target_gcs_bucket=os.environ.get("TARGET_GCS_BUCKET", ""),
+        source_gcs_path=os.environ.get("SOURCE_GCS_PATH", ""),
+        target_gcs_path=os.environ.get("TARGET_GCS_PATH", ""),
+        headers=json.loads(os.environ.get("HEADERS", "[]")),
+        rename_mappings=json.loads(os.environ.get("RENAME_MAPPINGS", "{}")),
     )
