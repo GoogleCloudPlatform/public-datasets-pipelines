@@ -8,7 +8,7 @@ authors = ["Adler Santos <adlersantos@users.noreply.github.com>",
 packages = []
 
 [tool.poetry.dependencies]
-python = "3.8.12"
+python = "3.8.18"
 pre-commit = "*"
 
 [tool.poetry.group.pipelines.dependencies]
