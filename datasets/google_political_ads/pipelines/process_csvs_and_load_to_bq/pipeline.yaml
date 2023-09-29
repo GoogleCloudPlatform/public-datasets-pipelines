@@ -205,7 +205,8 @@ dag:
               "spend_twd",
               "spend_brl",
               "spend_ars",
-              "spend_zar"
+              "spend_zar",
+              "spend_clp"
             ]
           RENAME_MAPPINGS: >-
             {
@@ -230,7 +231,8 @@ dag:
               "Spend_TWD": "spend_twd",
               "Spend_BRL": "spend_brl",
               "Spend_ARS": "spend_ars",
-              "Spend_ZAR": "spend_zar"
+              "Spend_ZAR": "spend_zar",
+              "Spend_CLP": "spend_clp"
             }
         resources:
           request_memory: "1G"
@@ -336,6 +338,10 @@ dag:
             type: "integer"
             description: "Total amount in ZAR spent on election ads in this region."
             mode: "nullable"
+          - name: "spend_clp"
+            type: "integer"
+            description: "Total amount in CLP spent on election ads in this region."
+            mode: "nullable"
 
     # advertiser_stats
     - operator: "KubernetesPodOperator"
@@ -382,7 +388,8 @@ dag:
               "spend_twd",
               "spend_brl"
               "spend_ars",
-              "spend_zar"
+              "spend_zar",
+              "spend_clp"
             ]
           RENAME_MAPPINGS: >-
             {
@@ -409,7 +416,8 @@ dag:
               "Spend_TWD": "spend_twd",
               "Spend_BRL": "spend_brl",
               "Spend_ARS": "spend_ars",
-              "Spend_ZAR": "spend_zar"
+              "Spend_ZAR": "spend_zar",
+              "Spend_CLP": "spend_clp"
             }
         resources:
           request_memory: "1G"
@@ -523,6 +531,10 @@ dag:
             type: "integer"
             description: "Total amount in ZAR spent on election ads by the advertiser."
             mode: "nullable"
+          - name: "spend_clp"
+            type: "integer"
+            description: "Total amount in CLP spent on election ads by the advertiser."
+            mode: "nullable"
 
     # advertiser_weekly_spend
     - operator: "KubernetesPodOperator"
@@ -567,7 +579,8 @@ dag:
               "spend_twd",
               "spend_brl",
               "spend_ars",
-              "spend_zar"
+              "spend_zar",
+              "spend_clp"
             ]
           RENAME_MAPPINGS: >-
             {
@@ -592,7 +605,8 @@ dag:
               "Spend_TWD": "spend_twd",
               "Spend_BRL": "spend_brl",
               "Spend_ARS": "spend_ars",
-              "Spend_ZAR": "spend_zar"
+              "Spend_ZAR": "spend_zar",
+              "Spend_CLP": "spend_clp"
             }
         resources:
           request_memory: "1G"
@@ -698,6 +712,10 @@ dag:
             type: "integer"
             description: "The amount in ZAR spent on election ads during the given week by the advertiser."
             mode: "nullable"
+          - name: "spend_clp"
+            type: "integer"
+            description: "The amount in CLP spent on election ads during the given week by the advertiser."
+            mode: "nullable"
 
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod"
@@ -729,7 +747,8 @@ dag:
               "end_date",
               "ads_list",
               "advertiser_id",
-              "advertiser_name"]
+              "advertiser_name"
+            ]
           RENAME_MAPPINGS: >-
             {
               "Campaign_ID": "campaign_id",
@@ -874,7 +893,9 @@ dag:
               "spend_range_min_ars",
               "spend_range_max_ars"
               "spend_range_min_zar",
-              "spend_range_max_zar"
+              "spend_range_max_zar",
+              "spend_range_min_clp",
+              "spend_range_max_clp"
             ]
           RENAME_MAPPINGS: >-
             {
@@ -926,6 +947,8 @@ dag:
               "Spend_Range_Max_ARS": "spend_range_max_ars",
               "Spend_Range_Min_ZAR": "spend_range_min_zar",
               "Spend_Range_Max_ZAR": "spend_range_max_zar",
+              "Spend_Range_Min_CLP": "spend_range_min_clp",
+              "Spend_Range_Max_CLP": "spend_range_max_clp",
               "Age_Targeting": "age_targeting",
               "Gender_Targeting": "gender_targeting",
               "Geo_Targeting_Included": "geo_targeting_included",
@@ -1166,6 +1189,14 @@ dag:
             type: "integer"
             description: "Upper bound of the amount in ZAR spent by the advertiser on the election ad."
             mode: "nullable"
+          - name: "spend_range_min_clp"
+            type: "integer"
+            description: "Lower bound of the amount in CLP spent by the advertiser on the election ad."
+            mode: "nullable"
+          - name: "spend_range_max_clp"
+            type: "integer"
+            description: "Upper bound of the amount in CLP spent by the advertiser on the election ad."
+            mode: "nullable"
 
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod"
@@ -1208,7 +1239,8 @@ dag:
               "spend_twd",
               "spend_brl",
               "spend_ars",
-              "spend_zar"
+              "spend_zar",
+              "spend_clp"
             ]
           RENAME_MAPPINGS: >-
             {
@@ -1231,7 +1263,8 @@ dag:
               "Spend_TWD": "spend_twd",
               "Spend_BRL": "spend_brl",
               "Spend_ARS": "spend_ars",
-              "Spend_ZAR": "spend_zar"
+              "Spend_ZAR": "spend_zar",
+              "Spend_CLP": "spend_clp",
             }
         resources:
           request_memory: "1G"
@@ -1331,6 +1364,10 @@ dag:
           - name: "spend_zar"
             type: "integer"
             description: "Total amount in ZAR spent on election ads in this region."
+            mode: "nullable"
+          - name: "spend_clp"
+            type: "integer"
+            description: "Total amount in CLP spent on election ads in this region."
             mode: "nullable"
 
     - operator: "KubernetesPodOperator"
