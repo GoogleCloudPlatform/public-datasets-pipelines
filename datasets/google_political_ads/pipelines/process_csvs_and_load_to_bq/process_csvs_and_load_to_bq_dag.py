@@ -143,8 +143,8 @@ with DAG(
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/google_political_ads/advertiser_geo_spend/data_output.csv",
             "TABLE_NAME": "advertiser_geo_spend",
-            "CSV_HEADERS": '[\n  "advertiser_id",\n  "advertiser_name",\n  "country",\n  "country_subdivision_primary",\n  "spend_usd",\n  "spend_eur",\n  "spend_inr",\n  "spend_bgn",\n  "spend_czk",\n  "spend_dkk",\n  "spend_huf",\n  "spend_pln",\n  "spend_ron",\n  "spend_sek",\n  "spend_gbp",\n  "spend_nzd",\n  "spend_ils",\n  "spend_aud",\n  "spend_twd",\n  "spend_brl",\n  "spend_ars",\n  "spend_zar",\n  "spend_clp"\n]',
-            "RENAME_MAPPINGS": '{\n  "Advertiser_ID": "advertiser_id",\n  "Advertiser_Name": "advertiser_name",\n  "Country": "country",\n  "Country_Subdivision_Primary": "country_subdivision_primary",\n  "Spend_USD": "spend_usd",\n  "Spend_EUR": "spend_eur",\n  "Spend_INR": "spend_inr",\n  "Spend_BGN": "spend_bgn",\n  "Spend_CZK": "spend_czk",\n  "Spend_DKK": "spend_dkk",\n  "Spend_HUF": "spend_huf",\n  "Spend_PLN": "spend_pln",\n  "Spend_RON": "spend_ron",\n  "Spend_SEK": "spend_sek",\n  "Spend_GBP": "spend_gbp",\n  "Spend_NZD": "spend_nzd",\n  "Spend_ILS": "spend_ils",\n  "Spend_AUD": "spend_aud",\n  "Spend_TWD": "spend_twd",\n  "Spend_BRL": "spend_brl",\n  "Spend_ARS": "spend_ars",\n  "Spend_ZAR": "spend_zar",\n  "Spend_CLP": "spend_clp"\n}',
+            "CSV_HEADERS": '[\n  "advertiser_id",\n  "advertiser_name",\n  "country",\n  "country_subdivision_primary",\n  "spend_usd",\n  "spend_eur",\n  "spend_inr",\n  "spend_bgn",\n  "spend_hrk",\n  "spend_czk",\n  "spend_dkk",\n  "spend_huf",\n  "spend_pln",\n  "spend_ron",\n  "spend_sek",\n  "spend_gbp",\n  "spend_nzd",\n  "spend_ils",\n  "spend_aud",\n  "spend_twd",\n  "spend_brl",\n  "spend_ars",\n  "spend_zar",\n  "spend_clp"\n]',
+            "RENAME_MAPPINGS": '{\n  "Advertiser_ID": "advertiser_id",\n  "Advertiser_Name": "advertiser_name",\n  "Country": "country",\n  "Country_Subdivision_Primary": "country_subdivision_primary",\n  "Spend_USD": "spend_usd",\n  "Spend_EUR": "spend_eur",\n  "Spend_INR": "spend_inr",\n  "Spend_BGN": "spend_bgn",\n  "Spend_HRK": "spend_hrk",\n  "Spend_CZK": "spend_czk",\n  "Spend_DKK": "spend_dkk",\n  "Spend_HUF": "spend_huf",\n  "Spend_PLN": "spend_pln",\n  "Spend_RON": "spend_ron",\n  "Spend_SEK": "spend_sek",\n  "Spend_GBP": "spend_gbp",\n  "Spend_NZD": "spend_nzd",\n  "Spend_ILS": "spend_ils",\n  "Spend_AUD": "spend_aud",\n  "Spend_TWD": "spend_twd",\n  "Spend_BRL": "spend_brl",\n  "Spend_ARS": "spend_ars",\n  "Spend_ZAR": "spend_zar",\n  "Spend_CLP": "spend_clp"\n}',
         },
         resources={"request_memory": "1G", "request_cpu": "200m"},
     )
@@ -207,6 +207,12 @@ with DAG(
                 "name": "spend_bgn",
                 "type": "integer",
                 "description": "Total amount in BGN spent on election ads in this region.",
+                "mode": "nullable",
+            },
+            {
+                "name": "spend_hrk",
+                "type": "integer",
+                "description": "Total amount in HRK spent on election ads in this region.",
                 "mode": "nullable",
             },
             {
@@ -320,8 +326,8 @@ with DAG(
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/google_political_ads/advertiser_stats/data_output.csv",
             "TABLE_NAME": "advertiser_stats",
-            "CSV_HEADERS": '[\n  "advertiser_id",\n  "advertiser_name",\n  "public_ids_list",\n  "regions",\n  "elections",\n  "total_creatives",\n  "spend_usd",\n  "spend_eur",\n  "spend_inr",\n  "spend_bgn",\n  "spend_czk",\n  "spend_dkk",\n  "spend_huf",\n  "spend_pln",\n  "spend_ron",\n  "spend_sek",\n  "spend_gbp",\n  "spend_nzd",\n  "spend_ils",\n  "spend_aud",\n  "spend_twd",\n  "spend_brl"\n  "spend_ars",\n  "spend_zar",\n  "spend_clp"\n]',
-            "RENAME_MAPPINGS": '{\n  "Advertiser_ID": "advertiser_id",\n  "Advertiser_Name": "advertiser_name",\n  "Public_IDs_List": "public_ids_list",\n  "Regions": "regions",\n  "Elections": "elections",\n  "Total_Creatives": "total_creatives",\n  "Spend_USD": "spend_usd",\n  "Spend_EUR": "spend_eur",\n  "Spend_INR": "spend_inr",\n  "Spend_BGN": "spend_bgn",\n  "Spend_CZK": "spend_czk",\n  "Spend_DKK": "spend_dkk",\n  "Spend_HUF": "spend_huf",\n  "Spend_PLN": "spend_pln",\n  "Spend_RON": "spend_ron",\n  "Spend_SEK": "spend_sek",\n  "Spend_GBP": "spend_gbp",\n  "Spend_NZD": "spend_nzd",\n  "Spend_ILS": "spend_ils",\n  "Spend_AUD": "spend_aud",\n  "Spend_TWD": "spend_twd",\n  "Spend_BRL": "spend_brl",\n  "Spend_ARS": "spend_ars",\n  "Spend_ZAR": "spend_zar",\n  "Spend_CLP": "spend_clp"\n}',
+            "CSV_HEADERS": '[\n  "advertiser_id",\n  "advertiser_name",\n  "public_ids_list",\n  "regions",\n  "elections",\n  "total_creatives",\n  "spend_usd",\n  "spend_eur",\n  "spend_inr",\n  "spend_bgn",\n  "spend_hrk",\n  "spend_czk",\n  "spend_dkk",\n  "spend_huf",\n  "spend_pln",\n  "spend_ron",\n  "spend_sek",\n  "spend_gbp",\n  "spend_nzd",\n  "spend_ils",\n  "spend_aud",\n  "spend_twd",\n  "spend_brl"\n  "spend_ars",\n  "spend_zar",\n  "spend_clp"\n]',
+            "RENAME_MAPPINGS": '{\n  "Advertiser_ID": "advertiser_id",\n  "Advertiser_Name": "advertiser_name",\n  "Public_IDs_List": "public_ids_list",\n  "Regions": "regions",\n  "Elections": "elections",\n  "Total_Creatives": "total_creatives",\n  "Spend_USD": "spend_usd",\n  "Spend_EUR": "spend_eur",\n  "Spend_INR": "spend_inr",\n  "Spend_BGN": "spend_bgn",\n  "Spend_HRK": "spend_hrk",\n  "Spend_CZK": "spend_czk",\n  "Spend_DKK": "spend_dkk",\n  "Spend_HUF": "spend_huf",\n  "Spend_PLN": "spend_pln",\n  "Spend_RON": "spend_ron",\n  "Spend_SEK": "spend_sek",\n  "Spend_GBP": "spend_gbp",\n  "Spend_NZD": "spend_nzd",\n  "Spend_ILS": "spend_ils",\n  "Spend_AUD": "spend_aud",\n  "Spend_TWD": "spend_twd",\n  "Spend_BRL": "spend_brl",\n  "Spend_ARS": "spend_ars",\n  "Spend_ZAR": "spend_zar",\n  "Spend_CLP": "spend_clp"\n}',
         },
         resources={"request_memory": "1G", "request_cpu": "200m"},
     )
@@ -394,6 +400,12 @@ with DAG(
                 "name": "spend_bgn",
                 "type": "integer",
                 "description": "Total amount in BGN spent on election ads by the advertiser.",
+                "mode": "nullable",
+            },
+            {
+                "name": "spend_hrk",
+                "type": "integer",
+                "description": "Total amount in HRK spent on election ads by the advertiser.",
                 "mode": "nullable",
             },
             {
@@ -507,8 +519,8 @@ with DAG(
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/google_political_ads/advertiser_weekly_spend/data_output.csv",
             "TABLE_NAME": "advertiser_weekly_spend",
-            "CSV_HEADERS": '[\n  "advertiser_id",\n  "advertiser_name",\n  "election_cycle",\n  "week_start_date",\n  "spend_usd",\n  "spend_eur",\n  "spend_inr",\n  "spend_bgn",\n  "spend_czk",\n  "spend_dkk",\n  "spend_huf",\n  "spend_pln",\n  "spend_ron",\n  "spend_sek",\n  "spend_gbp",\n  "spend_nzd",\n  "spend_ils",\n  "spend_aud",\n  "spend_twd",\n  "spend_brl",\n  "spend_ars",\n  "spend_zar",\n  "spend_clp"\n]',
-            "RENAME_MAPPINGS": '{\n  "Advertiser_ID": "advertiser_id",\n  "Advertiser_Name": "advertiser_name",\n  "Election_Cycle": "election_cycle",\n  "Week_Start_Date": "week_start_date",\n  "Spend_USD": "spend_usd",\n  "Spend_EUR": "spend_eur",\n  "Spend_INR": "spend_inr",\n  "Spend_BGN": "spend_bgn",\n  "Spend_CZK": "spend_czk",\n  "Spend_DKK": "spend_dkk",\n  "Spend_HUF": "spend_huf",\n  "Spend_PLN": "spend_pln",\n  "Spend_RON": "spend_ron",\n  "Spend_SEK": "spend_sek",\n  "Spend_GBP": "spend_gbp",\n  "Spend_NZD": "spend_nzd",\n  "Spend_NZD": "spend_ils",\n  "Spend_AUD": "spend_aud",\n  "Spend_TWD": "spend_twd",\n  "Spend_BRL": "spend_brl",\n  "Spend_ARS": "spend_ars",\n  "Spend_ZAR": "spend_zar",\n  "Spend_CLP": "spend_clp"\n}',
+            "CSV_HEADERS": '[\n  "advertiser_id",\n  "advertiser_name",\n  "election_cycle",\n  "week_start_date",\n  "spend_usd",\n  "spend_eur",\n  "spend_inr",\n  "spend_bgn",\n  "spend_hrk",\n  "spend_czk",\n  "spend_dkk",\n  "spend_huf",\n  "spend_pln",\n  "spend_ron",\n  "spend_sek",\n  "spend_gbp",\n  "spend_nzd",\n  "spend_ils",\n  "spend_aud",\n  "spend_twd",\n  "spend_brl",\n  "spend_ars",\n  "spend_zar",\n  "spend_clp"\n]',
+            "RENAME_MAPPINGS": '{\n  "Advertiser_ID": "advertiser_id",\n  "Advertiser_Name": "advertiser_name",\n  "Election_Cycle": "election_cycle",\n  "Week_Start_Date": "week_start_date",\n  "Spend_USD": "spend_usd",\n  "Spend_EUR": "spend_eur",\n  "Spend_INR": "spend_inr",\n  "Spend_BGN": "spend_bgn",\n  "Spend_HRK": "spend_hrk",\n  "Spend_CZK": "spend_czk",\n  "Spend_DKK": "spend_dkk",\n  "Spend_HUF": "spend_huf",\n  "Spend_PLN": "spend_pln",\n  "Spend_RON": "spend_ron",\n  "Spend_SEK": "spend_sek",\n  "Spend_GBP": "spend_gbp",\n  "Spend_NZD": "spend_nzd",\n  "Spend_NZD": "spend_ils",\n  "Spend_AUD": "spend_aud",\n  "Spend_TWD": "spend_twd",\n  "Spend_BRL": "spend_brl",\n  "Spend_ARS": "spend_ars",\n  "Spend_ZAR": "spend_zar",\n  "Spend_CLP": "spend_clp"\n}',
         },
         resources={"request_memory": "1G", "request_cpu": "200m"},
     )
@@ -571,6 +583,12 @@ with DAG(
                 "name": "spend_bgn",
                 "type": "integer",
                 "description": "The amount in BGN spent on election ads during the given week by the advertiser.",
+                "mode": "nullable",
+            },
+            {
+                "name": "spend_hrk",
+                "type": "integer",
+                "description": "The amount in HRK spent on election ads during the given week by the advertiser.",
                 "mode": "nullable",
             },
             {
@@ -1158,8 +1176,8 @@ with DAG(
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/google_political_ads/geo_spend/data_output.csv",
             "TABLE_NAME": "geo_spend",
-            "CSV_HEADERS": '[\n  "country",\n  "country_subdivision_primary",\n  "country_subdivision_secondary",\n  "spend_usd",\n  "spend_eur",\n  "spend_inr",\n  "spend_bgn",\n  "spend_czk",\n  "spend_dkk",\n  "spend_huf",\n  "spend_pln",\n  "spend_ron",\n  "spend_sek",\n  "spend_gbp",\n  "spend_nzd",\n  "spend_ils",\n  "spend_aud",\n  "spend_twd",\n  "spend_brl",\n  "spend_ars",\n  "spend_zar",\n  "spend_clp"\n]',
-            "RENAME_MAPPINGS": '{\n  "Country": "country",\n  "Country_Subdivision_Primary": "country_subdivision_primary",\n  "Country_Subdivision_Secondary": "country_subdivision_secondary",\n  "Spend_USD": "spend_usd",\n  "Spend_EUR": "spend_eur",\n  "Spend_INR": "spend_inr",\n  "Spend_BGN": "spend_bgn",\n  "Spend_CZK": "spend_czk",\n  "Spend_DKK": "spend_dkk",\n  "Spend_HUF": "spend_huf",\n  "Spend_PLN": "spend_pln",\n  "Spend_RON": "spend_ron",\n  "Spend_SEK": "spend_sek",\n  "Spend_GBP": "spend_gbp",\n  "Spend_NZD": "spend_nzd",\n  "Spend_ILS": "spend_ils",\n  "Spend_TWD": "spend_twd",\n  "Spend_BRL": "spend_brl",\n  "Spend_ARS": "spend_ars",\n  "Spend_ZAR": "spend_zar",\n  "Spend_CLP": "spend_clp",\n}',
+            "CSV_HEADERS": '[\n  "country",\n  "country_subdivision_primary",\n  "country_subdivision_secondary",\n  "spend_usd",\n  "spend_eur",\n  "spend_inr",\n  "spend_bgn",\n  "spend_hrk",\n  "spend_czk",\n  "spend_dkk",\n  "spend_huf",\n  "spend_pln",\n  "spend_ron",\n  "spend_sek",\n  "spend_gbp",\n  "spend_nzd",\n  "spend_ils",\n  "spend_aud",\n  "spend_twd",\n  "spend_brl",\n  "spend_ars",\n  "spend_zar",\n  "spend_clp"\n]',
+            "RENAME_MAPPINGS": '{\n  "Country": "country",\n  "Country_Subdivision_Primary": "country_subdivision_primary",\n  "Country_Subdivision_Secondary": "country_subdivision_secondary",\n  "Spend_USD": "spend_usd",\n  "Spend_EUR": "spend_eur",\n  "Spend_INR": "spend_inr",\n  "Spend_BGN": "spend_bgn",\n  "Spend_HRK": "spend_hrk",\n  "Spend_CZK": "spend_czk",\n  "Spend_DKK": "spend_dkk",\n  "Spend_HUF": "spend_huf",\n  "Spend_PLN": "spend_pln",\n  "Spend_RON": "spend_ron",\n  "Spend_SEK": "spend_sek",\n  "Spend_GBP": "spend_gbp",\n  "Spend_NZD": "spend_nzd",\n  "Spend_ILS": "spend_ils",\n  "Spend_TWD": "spend_twd",\n  "Spend_BRL": "spend_brl",\n  "Spend_ARS": "spend_ars",\n  "Spend_ZAR": "spend_zar",\n  "Spend_CLP": "spend_clp",\n}',
         },
         resources={"request_memory": "1G", "request_cpu": "200m"},
     )
@@ -1214,6 +1232,12 @@ with DAG(
                 "name": "spend_bgn",
                 "type": "integer",
                 "description": "Total amount in BGN spent on election ads in this region.",
+                "mode": "nullable",
+            },
+            {
+                "name": "spend_hrk",
+                "type": "integer",
+                "description": "Total amount in HRK spent on election ads in this region.",
                 "mode": "nullable",
             },
             {

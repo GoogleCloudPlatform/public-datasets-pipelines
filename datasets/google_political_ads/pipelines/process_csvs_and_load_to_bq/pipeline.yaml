@@ -192,6 +192,7 @@ dag:
               "spend_eur",
               "spend_inr",
               "spend_bgn",
+              "spend_hrk",
               "spend_czk",
               "spend_dkk",
               "spend_huf",
@@ -218,6 +219,7 @@ dag:
               "Spend_EUR": "spend_eur",
               "Spend_INR": "spend_inr",
               "Spend_BGN": "spend_bgn",
+              "Spend_HRK": "spend_hrk",
               "Spend_CZK": "spend_czk",
               "Spend_DKK": "spend_dkk",
               "Spend_HUF": "spend_huf",
@@ -281,6 +283,10 @@ dag:
           - name: "spend_bgn"
             type: "integer"
             description: "Total amount in BGN spent on election ads in this region."
+            mode: "nullable"
+          - name: "spend_hrk"
+            type: "integer"
+            description: "Total amount in HRK spent on election ads in this region."
             mode: "nullable"
           - name: "spend_czk"
             type: "integer"
@@ -375,6 +381,7 @@ dag:
               "spend_eur",
               "spend_inr",
               "spend_bgn",
+              "spend_hrk",
               "spend_czk",
               "spend_dkk",
               "spend_huf",
@@ -403,6 +410,7 @@ dag:
               "Spend_EUR": "spend_eur",
               "Spend_INR": "spend_inr",
               "Spend_BGN": "spend_bgn",
+              "Spend_HRK": "spend_hrk",
               "Spend_CZK": "spend_czk",
               "Spend_DKK": "spend_dkk",
               "Spend_HUF": "spend_huf",
@@ -474,6 +482,10 @@ dag:
           - name: "spend_bgn"
             type: "integer"
             description: "Total amount in BGN spent on election ads by the advertiser."
+            mode: "nullable"
+          - name: "spend_hrk"
+            type: "integer"
+            description: "Total amount in HRK spent on election ads by the advertiser."
             mode: "nullable"
           - name: "spend_czk"
             type: "integer"
@@ -566,6 +578,7 @@ dag:
               "spend_eur",
               "spend_inr",
               "spend_bgn",
+              "spend_hrk",
               "spend_czk",
               "spend_dkk",
               "spend_huf",
@@ -592,6 +605,7 @@ dag:
               "Spend_EUR": "spend_eur",
               "Spend_INR": "spend_inr",
               "Spend_BGN": "spend_bgn",
+              "Spend_HRK": "spend_hrk",
               "Spend_CZK": "spend_czk",
               "Spend_DKK": "spend_dkk",
               "Spend_HUF": "spend_huf",
@@ -655,6 +669,10 @@ dag:
           - name: "spend_bgn"
             type: "integer"
             description: "The amount in BGN spent on election ads during the given week by the advertiser."
+            mode: "nullable"
+          - name: "spend_hrk"
+            type: "integer"
+            description: "The amount in HRK spent on election ads during the given week by the advertiser."
             mode: "nullable"
           - name: "spend_czk"
             type: "integer"
@@ -1226,6 +1244,7 @@ dag:
               "spend_eur",
               "spend_inr",
               "spend_bgn",
+              "spend_hrk",
               "spend_czk",
               "spend_dkk",
               "spend_huf",
@@ -1251,6 +1270,7 @@ dag:
               "Spend_EUR": "spend_eur",
               "Spend_INR": "spend_inr",
               "Spend_BGN": "spend_bgn",
+              "Spend_HRK": "spend_hrk",
               "Spend_CZK": "spend_czk",
               "Spend_DKK": "spend_dkk",
               "Spend_HUF": "spend_huf",
@@ -1308,6 +1328,10 @@ dag:
           - name: "spend_bgn"
             type: "integer"
             description: "Total amount in BGN spent on election ads in this region."
+            mode: "nullable"
+          - name: "spend_hrk"
+            type: "integer"
+            description: "Total amount in HRK spent on election ads in this region."
             mode: "nullable"
           - name: "spend_czk"
             type: "integer"

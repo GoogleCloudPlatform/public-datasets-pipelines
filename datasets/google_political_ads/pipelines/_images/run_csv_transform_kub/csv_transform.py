@@ -46,16 +46,21 @@ NUMERIC_COLUMNS = [
     "spend_eur",
     "spend_inr",
     "spend_bgn",
-    "spend_hrk",
     "spend_czk",
     "spend_dkk",
     "spend_huf",
     "spend_pln",
     "spend_ron",
-    "spend_gbp",
     "spend_sek",
+    "spend_gbp",
     "spend_nzd",
+    "spend_ils",
+    "spend_aud",
+    "spend_twd",
     "spend_brl",
+    "spend_ars",
+    "spend_zar",
+    "spend_clp"
 ]
 
 
