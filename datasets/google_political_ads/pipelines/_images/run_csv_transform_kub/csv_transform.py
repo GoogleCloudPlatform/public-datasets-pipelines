@@ -47,6 +47,7 @@ NUMERIC_COLUMNS = [
     "spend_inr",
     "spend_bgn",
     "spend_czk",
+    "spend_hrk",
     "spend_dkk",
     "spend_huf",
     "spend_pln",
