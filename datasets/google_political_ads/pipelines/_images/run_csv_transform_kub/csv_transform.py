@@ -61,7 +61,7 @@ NUMERIC_COLUMNS = [
     "spend_brl",
     "spend_ars",
     "spend_zar",
-    "spend_clp"
+    "spend_clp",
 ]
 
 
