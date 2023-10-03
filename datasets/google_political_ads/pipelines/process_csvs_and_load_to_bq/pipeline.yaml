@@ -907,9 +907,9 @@ dag:
               "spend_range_min_twd",
               "spend_range_max_twd",
               "spend_range_min_brl",
-              "spend_range_max_brl"
+              "spend_range_max_brl",
               "spend_range_min_ars",
-              "spend_range_max_ars"
+              "spend_range_max_ars",
               "spend_range_min_zar",
               "spend_range_max_zar",
               "spend_range_min_clp",
