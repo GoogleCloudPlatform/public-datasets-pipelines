@@ -1,5 +1,79 @@
 # Changelog
 
+## [6.0.0](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v5.2.0...v6.0.0) (2023-10-04)
+
+
+### ⚠ BREAKING CHANGES
+
+* Remove support for Airflow 1 ([#447](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/447))
+
+### cleanup
+
+* Remove support for Airflow 1 ([#447](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/447)) ([dce8581](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/dce8581c04c2b886a3deb453b98ecea3cdb09c44))
+
+
+### Features
+
+* Add `cycle_hire` to London Bicycles dataset ([#596](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/596)) ([889c47c](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/889c47c2ee580324fce93cebd267a6e9927bdea3))
+* Add Year 2023 To NOAA GSOD Pipelines ([#564](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/564)) ([5764649](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/5764649c7a0208581e6333fdf91a84237ed7113f))
+* Adding pipelines to NOAA Dataset ([#531](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/531)) ([0989924](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/098992483257f8bd1c772a290a763faa4021862f))
+* Create load process to onboard NPPES npi_raw table data ([#567](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/567)) ([2a8bbba](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/2a8bbbab555e9ba0e184a665740d5e24e5737e45))
+* IDC v12 release ([#530](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/530)) ([9ab5ad6](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/9ab5ad6c76d5ea16c0ff38fc8e218933fc8f76f7))
+* Migrate the Xenon dataset Covid19 JHU  ([#525](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/525)) ([9e93676](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/9e93676e567b22f560874b69af2eaaf6a08be67c))
+* Migrate the Xenon dataset Covid19 Symptom Search ([#534](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/534)) ([09b8f34](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/09b8f34feba579aeaa881615b717a45e50398545))
+* Migrate the Xenon dataset USDA NASS Agriculture ([#547](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/547)) ([f1001f3](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/f1001f32c30984072f48db3547a6a7aa4858899c))
+* Onboard Austin 311 Service Requests Dataset ([#526](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/526)) ([9c864d3](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/9c864d306fd0bb26092d27a62a03a1c1e87867a2))
+* onboard chicago taxi trips dataset ([#533](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/533)) ([4ee3b84](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/4ee3b8478be05feddf594639eab9f01988e52949))
+* Onboard dataset MIMIC-III ([#456](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/456)) ([bd1582a](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/bd1582ac33bbc7e3a5abc4488562ffda1882989a))
+* Onboard GHCN_M Pipelines to NOAA dataset ([#545](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/545)) ([82c7616](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/82c7616fe1aa53e3327a6888dbbe0bcc248a0992))
+* Onboard Hacker News dataset ([#532](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/532)) ([788273f](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/788273f92ef799629cf2c8b4b98100bd4689c544))
+* Onboard Libraries IO dataset-2 ([#551](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/551)) ([93063b9](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/93063b9b104d2df3a11b8ad356559cb22ebaec15))
+* Onboard Llibraries IO dataset ([#540](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/540)) ([950a290](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/950a290c827664d5ab20eb04ca3abf042ca9d4ea))
+* onboard london cycle stations dataset ([#537](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/537)) ([f81d1c6](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/f81d1c62b84113ed3e2acbdd7878d75e55861756))
+* onboard NIH GUDID historic data dataset ([#544](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/544)) ([2656e49](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/2656e49f2db90b9fc236a4009e1036699ee069fa))
+* Onboard NLM RXNorm Dataset ([#605](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/605)) ([80bd8c0](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/80bd8c0daecf7b60dea74f2a342d7fbaeeaf7178))
+* Onboard the dataset Open Buildings v2 ([#553](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/553)) ([a18bd17](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/a18bd1727ebde0078139a0b327492d1ca8ef0c70))
+* Onboard Uniref50 Protein data ([#524](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/524)) ([f1cfae2](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/f1cfae2ee08f19e7293fff2aa78df2cfd9d7d088))
+
+
+### Bug Fixes
+
+* Add bike type field to Austin bikeshare trips schema. ([#609](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/609)) ([541751d](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/541751d7462e1c35f433c19e449a4214a1cfeeb5))
+* Add IDC v13 datasets. ([#561](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/561)) ([70c0aba](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/70c0abac20c391c4d9be1cc2dc3a654ed28253d6))
+* Add some fields and remove some fields from google_political_ads dataset. ([#661](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/661)) ([8fc022a](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/8fc022aedd154356ab2a7b38ab971fbbfc07949e))
+* Adding v4. ([#566](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/566)) ([5e64914](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/5e6491462c41ea579d17519379c16a4aee935524))
+* Change bucket variable for USDA NASS Agriculture ([#552](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/552)) ([7b476cc](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/7b476cc950790a56358c286e4fda4327f6a10e7b))
+* Change DAG frequency for the dataset Covid19 Symptom Search ([#546](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/546)) ([89b54eb](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/89b54eb0730d3e5430a22ba9c25005e894ffcefd))
+* Change schedule for EUMETSAT pipeline ([#585](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/585)) ([9909d6a](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/9909d6a022c53f57ad2eccac63d4d23871bfd452))
+* Change schedule of open targets dataset updates to 00:01 on 1st of each month. ([#611](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/611)) ([b2a6756](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/b2a6756a4526c43bde0a35af589374c47c3eb2d9))
+* Changed schedule time to every 12 hours for cloud_storage_geo_index. ([#599](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/599)) ([fbbd4b4](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/fbbd4b449e63adf709bbcd4105ffb0317104a83f))
+* Extended transfer timeout for EUMETSAT dag pipelines. ([#590](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/590)) ([a00ddc6](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/a00ddc6143e147fe7f94b09f927cd94fc80c119e))
+* fix to omission google political ads. ([#674](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/674)) ([fbd5ec2](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/fbd5ec2eab2aed0d3fbc4fb7ce4964b3f32f96b0))
+* Fixing a small typo ([#474](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/474)) ([5b7e8d9](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/5b7e8d9e3655109491ab3b2dfea441a336ed25b5))
+* lint errors ([#619](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/619)) ([b5f342c](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/b5f342cb034054894b5ef5e0b28d002c76833273))
+* Missing commas in pipeline.yaml in google_political_ads dataset. ([#671](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/671)) ([f224a89](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/f224a891e5081631830259128b74916ff92a027a))
+* modified source file location ([#538](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/538)) ([f602101](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/f6021019d99cddafa078011b320b292cccf6937e))
+* Multiple fixes to San Francisco dataset. ([#618](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/618)) ([78261b9](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/78261b9451b9e5adf622d5a3f7692e8d6767bff4))
+* Overwrite destination table for open_targets BQ copy operation ([#548](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/548)) ([9183019](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/918301993b5fd599f4d7510985e5fd8fd2b8a49e))
+* Re-engineer UniRef 50 ETL process due to resource constraints failing execution ([#584](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/584)) ([a8ca0e0](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/a8ca0e04618099ff776e82b78550c41fb4cba4af))
+* Resolution to issue where Spend_HRK fields no longer exist in source file for google_political_ads data load process ([#598](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/598)) ([09008dc](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/09008dc9f122ee4edae0b27fbd881c9d700893f7))
+* Resolve data file does not exist in Storms database pipeline. ([#559](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/559)) ([ba0263b](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/ba0263bf1c0403817c6e4877a127437796d3b2dd))
+* Resolve data type change trip_id from integer to string in austin.bikeshare_trips dataset. ([#607](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/607)) ([1020008](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/10200083bf745b1a12080aa73c989a395c1366ca))
+* Resolve datatype switch for New York - station_id from int to guid ([#557](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/557)) ([5daf41d](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/5daf41de3495223bcfb6979f560ddcbe155b9568))
+* Resolve GKEPod pickup process ([#556](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/556)) ([3d8ed98](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/3d8ed986a7181f79f78297caef01c115dbbb3cb9))
+* Resolve issue with ordinal positioning of output file for loading FDA food enforcement data. ([#614](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/614)) ([a3e2606](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/a3e260650dc340f367e6a022bdfd9f0881862d20))
+* Resolve issues causing gsod_by_year pipeline to break in noaa dag. ([#613](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/613)) ([8b7615f](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/8b7615f950edbfb64a6b58667a9b127f8f0f2360))
+* Resolve missing references in pipeline.yaml Austin Bikeshare Trips. ([#610](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/610)) ([a55d895](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/a55d89573f29fb593c51c1984f27df1b36b41d28))
+* Resolve out of memory issues with Covid 19 symptom search dataset. ([#568](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/568)) ([2ff1ff4](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/2ff1ff4694c2a88cab0801ef4993d48906470500))
+* Resolve Resource Issue In Production Version Of Austin Pipeline ([#528](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/528)) ([b2befa4](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/b2befa4acf1081efe2791eaf2944e73036af4199))
+* Resolve syntax error no 2 in pipeline.yaml for google political ads dataset. ([#672](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/672)) ([8dd6fcc](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/8dd6fcc08c0881e2cbd3208992ec87a3fd353701))
+* Resolve syntax error no 3 in pipeline.yaml for google political ads. ([#673](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/673)) ([395381f](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/395381f91f9002accaeb42d3eac0157ca3cd3fc0))
+* Resolve variables for bucket and project in Open Buildings Dataset. ([#465](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/465)) ([d916ad3](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/d916ad338787f9ddd7c6e8ec86752a7b76aa22d2))
+* Resolved dtype error causing DAG failure for IMDB and adjusted memory and ephemeral storage appropriately. ([#583](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/583)) ([350455a](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/350455af9a8a6b434184e7e86a8092247ce49d3d))
+* Resolved version increment auto-detect when updating City Health Dashboard dataset ([#582](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/582)) ([1045874](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/1045874dd9cab69763ca6febac95decdd1b4ec41))
+* Resolves lint errors in both noaa and thelook_ecommerce dataset deployments. ([#617](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/617)) ([d4b0909](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/d4b0909dbdb60c8d0c73ad80819caf8368ce1a0f))
+* Split EUMETSAT DAG to v3 and v4 tasks. ([#589](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/issues/589)) ([f386ccc](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/commit/f386ccc7efffca036a0319ddb8bbf431b25a0c4f))
+
 ## [5.2.0](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/compare/v5.1.0...v5.2.0) (2022-11-01)
 
 
