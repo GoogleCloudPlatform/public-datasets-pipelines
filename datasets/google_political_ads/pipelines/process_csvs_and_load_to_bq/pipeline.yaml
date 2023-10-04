@@ -614,7 +614,7 @@ dag:
               "Spend_SEK": "spend_sek",
               "Spend_GBP": "spend_gbp",
               "Spend_NZD": "spend_nzd",
-              "Spend_NZD": "spend_ils",
+              "Spend_ILS": "spend_ils",
               "Spend_AUD": "spend_aud",
               "Spend_TWD": "spend_twd",
               "Spend_BRL": "spend_brl",
@@ -884,6 +884,8 @@ dag:
               "spend_range_max_inr",
               "spend_range_min_bgn",
               "spend_range_max_bgn",
+              "spend_range_min_hrk",
+              "spend_range_max_hrk",
               "spend_range_min_czk",
               "spend_range_max_czk",
               "spend_range_min_dkk",
@@ -937,6 +939,8 @@ dag:
               "Spend_Range_Max_INR": "spend_range_max_inr",
               "Spend_Range_Min_BGN": "spend_range_min_bgn",
               "Spend_Range_Max_BGN": "spend_range_max_bgn",
+              "Spend_Range_Min_HRK": "spend_range_min_hrk",
+              "Spend_Range_Max_HRK": "spend_range_max_hrk",
               "Spend_Range_Min_CZK": "spend_range_min_czk",
               "Spend_Range_Max_CZK": "spend_range_max_czk",
               "Spend_Range_Min_DKK": "spend_range_min_dkk",
@@ -1284,7 +1288,7 @@ dag:
               "Spend_BRL": "spend_brl",
               "Spend_ARS": "spend_ars",
               "Spend_ZAR": "spend_zar",
-              "Spend_CLP": "spend_clp",
+              "Spend_CLP": "spend_clp"
             }
         resources:
           request_memory: "1G"
