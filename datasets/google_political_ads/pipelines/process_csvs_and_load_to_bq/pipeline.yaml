@@ -1284,6 +1284,7 @@ dag:
               "Spend_GBP": "spend_gbp",
               "Spend_NZD": "spend_nzd",
               "Spend_ILS": "spend_ils",
+              "Spend_AUD": "spend_aud",
               "Spend_TWD": "spend_twd",
               "Spend_BRL": "spend_brl",
               "Spend_ARS": "spend_ars",
