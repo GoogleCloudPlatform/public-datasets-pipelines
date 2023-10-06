@@ -1,0 +1,4 @@
+numpy
+pandas
+google-cloud-storage
+gsutil
