@@ -129,10 +129,10 @@ dag:
         location: "us-central1-c"
         body:
           name: epa-hist-air-quality
-          initial_node_count: 8
+          initial_node_count: 1
           network: "{{ var.value.vpc_network }}"
           node_config:
-            machine_type: e2-standard-16
+            machine_type: e2-highmem-16
             oauth_scopes:
               - https://www.googleapis.com/auth/devstorage.read_write
               - https://www.googleapis.com/auth/cloud-platform
@@ -1839,4 +1839,4 @@ dag:
         name: epa-hist-air-quality
 
   graph_paths:
-    - "create_cluster >> [ annual_summaries, co_daily_summary, co_hourly_summary, hap_daily_summary, hap_hourly_summary, lead_daily_summary, no2_daily_summary, no2_hourly_summary, nonoxnoy_daily_summary, nonoxnoy_hourly_summary, ozone_daily_summary, ozone_hourly_summary, pm10_daily_summary, pm10_hourly_summary, pm25_frm_hourly_summary, pm25_frm_daily_summary, pm25_nonfrm_daily_summary, pm25_nonfrm_hourly_summary, pm25_speciation_daily_summary, pm25_speciation_hourly_summary, pressure_daily_summary, pressure_hourly_summary, rh_and_dp_daily_summary, rh_and_dp_hourly_summary, so2_daily_summary, so2_hourly_summary, temperature_daily_summary, temperature_hourly_summary, voc_daily_summary, voc_hourly_summary, wind_daily_summary, wind_hourly_summary ] >> delete_cluster"
+    - "create_cluster >> [ annual_summaries, co_daily_summary, co_hourly_summary, hap_daily_summary ] >> hap_hourly_summary >> [ lead_daily_summary, no2_daily_summary, no2_hourly_summary, nonoxnoy_daily_summary ] >> nonoxnoy_hourly_summary >> [ ozone_daily_summary, ozone_hourly_summary, pm10_daily_summary, pm10_hourly_summary ] >> pm25_frm_hourly_summary >> [ pm25_frm_daily_summary, pm25_nonfrm_daily_summary, pm25_nonfrm_hourly_summary, pm25_speciation_daily_summary ] >> pm25_speciation_hourly_summary >> [ pressure_daily_summary, pressure_hourly_summary, rh_and_dp_daily_summary, rh_and_dp_hourly_summary ] >> so2_daily_summary >> [ so2_hourly_summary, temperature_daily_summary, temperature_hourly_summary, voc_daily_summary ] >> voc_hourly_summary >> [ wind_daily_summary, wind_hourly_summary ] >> delete_cluster"
