@@ -1,0 +1,26 @@
+[
+  {
+    "name": "question_id_1",
+    "type": "INTEGER",
+    "description": "Complementary pair question 1 id",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "question_id_2",
+    "type": "INTEGER",
+    "description": "Complementary pair question 2 id",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "source_url",
+    "type": "STRING",
+    "description": "Original URL location of source file",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "etl_timestamp",
+    "type": "TIMESTAMP",
+    "description": "Date and time this data was loaded to BQ",
+    "mode": "NULLABLE"
+  }
+]

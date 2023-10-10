@@ -1,0 +1,32 @@
+[
+  {
+    "name": "image_id",
+    "type": "INTEGER",
+    "description": "",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "question",
+    "type": "STRING",
+    "description": "",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "question_id",
+    "type": "INTEGER",
+    "description": "",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "source_url",
+    "type": "STRING",
+    "description": "Original URL location of source file",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "etl_timestamp",
+    "type": "TIMESTAMP",
+    "description": "Date and time this data was loaded to BQ",
+    "mode": "NULLABLE"
+  }
+]
