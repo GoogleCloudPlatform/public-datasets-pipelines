@@ -138,7 +138,7 @@ with DAG(
         image_pull_policy="Always",
         image="{{ var.json.cloud_storage_geo_index.container_registry.run_csv_transform_kub }}",
         env_vars={
-            "PIPELINE_NAME": "Cloud Storage GEO Index - Sentinel 2 Index",
+            "PIPELINE_NAME": "Cloud Storage GEO Index - Sentinel 2 Index [Int_Test]",
             "SOURCE_URL": "https://storage.googleapis.com/gcp-public-data-sentinel-2/index.csv.gz",
             "SOURCE_ZIPFILE": "files/cloud_storage_geo_index-sentinel_2-data.csv.gz",
             "SOURCE_FILE": "files/cloud_storage_geo_index-sentinel_2-data.csv",
