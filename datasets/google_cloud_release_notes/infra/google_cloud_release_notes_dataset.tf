@@ -18,7 +18,7 @@
 resource "google_bigquery_dataset" "google_cloud_release_notes" {
   dataset_id  = "google_cloud_release_notes"
   project     = var.project_id
-  description = "This dataset contains release notes for the majority of generally available Google Cloud products found on cloud.google.com. You can use this BigQuery public dataset to consume release notes programmatically across all products. HTML versions of release notes are available within each product\u0027s documentation and also in a filterable format at https://console.cloud.google.com/release-notes."
+  description = "This dataset contains release notes for the majority of generally available Google Cloud products found on cloud.google.com. You can use this BigQuery public dataset to consume release notes programmatically across all products. HTML versions of release notes are available within each product\u0027s documentation and also in a filterable format at https://console.cloud.google.com/release-notes. Note: The release notes in this dataset are delayed a few days compared to the HTML versions."
 }
 
 output "bigquery_dataset-google_cloud_release_notes-dataset_id" {
