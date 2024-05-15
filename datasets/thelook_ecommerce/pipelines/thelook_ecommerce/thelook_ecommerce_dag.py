@@ -241,8 +241,10 @@ with DAG(
     create_distribution_center_geom_column = bigquery.BigQueryInsertJobOperator(
         task_id="create_distribution_center_geom_column",
         configuration={
-            "query": "ALTER TABLE `bigquery-public-data.thelook_ecommerce.distribution_centers`\n  ADD COLUMN IF NOT EXISTS distribution_center_geom GEOGRAPHY;\nUPDATE `bigquery-public-data.thelook_ecommerce.distribution_centers`\n   SET distribution_center_geom = SAFE.ST_GeogFromText(CONCAT('POINT(',CAST(longitude AS STRING), ' ', CAST(latitude as STRING), ')'))\n WHERE longitude IS NOT NULL\n   AND latitude IS NOT NULL;\n# Use Legacy SQL should be false for any query that uses a DML statement",
-            "useLegacySql": False,
+            "query": {
+                "query": "ALTER TABLE `bigquery-public-data.thelook_ecommerce.distribution_centers`\n  ADD COLUMN IF NOT EXISTS distribution_center_geom GEOGRAPHY;\nUPDATE `bigquery-public-data.thelook_ecommerce.distribution_centers`\n   SET distribution_center_geom = SAFE.ST_GeogFromText(CONCAT('POINT(',CAST(longitude AS STRING), ' ', CAST(latitude as STRING), ')'))\n WHERE longitude IS NOT NULL\n   AND latitude IS NOT NULL;\n# Use Legacy SQL should be false for any query that uses a DML statement",
+                "useLegacySql": False,
+            }
         },
     )
 
