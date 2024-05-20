@@ -87,45 +87,6 @@ with DAG(
         },
         resources={"limit_memory": "32G", "limit_cpu": "2"},
     )
-
-    # Run CSV transform within kubernetes pod
-    sentinel_2_index = kubernetes_engine.GKEStartPodOperator(
-        task_id="sentinel_2_index",
-        name="sentinel_2_index",
-        project_id="{{ var.value.gcp_project }}",
-        location="us-central1-c",
-        cluster_name="cloud-storage-geo-index",
-        namespace="default",
-        image_pull_policy="Always",
-        image="{{ var.json.cloud_storage_geo_index.container_registry.run_csv_transform_kub }}",
-        env_vars={
-            "PIPELINE_NAME": "Cloud Storage GEO Index - Sentinel 2 Index",
-            "SOURCE_URL": "https://storage.googleapis.com/gcp-public-data-sentinel-2/index.csv.gz",
-            "SOURCE_ZIPFILE": "files/cloud_storage_geo_index-sentinel_2-data.csv.gz",
-            "SOURCE_FILE": "files/cloud_storage_geo_index-sentinel_2-data.csv",
-            "TARGET_FILE": "files/cloud_storage_geo_index-sentinel_2-data_output.csv",
-            "CHUNKSIZE": "1000000",
-            "PROJECT_ID": "{{ var.value.gcp_project }}",
-            "DATASET_ID": "cloud_storage_geo_index",
-            "TABLE_ID": "sentinel_2_index",
-            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
-            "TARGET_GCS_PATH": "data/cloud_storage_geo_index/sentinel_2_index/data_output.csv",
-            "SCHEMA_PATH": "data/cloud_storage_geo_index/schema/cloud_storage_geo_index_sentinel_2_schema.json",
-            "DROP_DEST_TABLE": "Y",
-            "INPUT_FIELD_DELIMITER": ",",
-            "REMOVE_SOURCE_FILE": "Y",
-            "DELETE_TARGET_FILE": "Y",
-            "INPUT_CSV_HEADERS": '[\n  "GRANULE_ID",\n  "PRODUCT_ID",\n  "DATATAKE_IDENTIFIER",\n  "MGRS_TILE",\n  "SENSING_TIME",\n  "TOTAL_SIZE",\n  "CLOUD_COVER",\n  "GEOMETRIC_QUALITY_FLAG",\n  "GENERATION_TIME",\n  "NORTH_LAT",\n  "SOUTH_LAT",\n  "WEST_LON",\n  "EAST_LON",\n  "BASE_URL"\n]',
-            "DATA_DTYPES": '{\n  "GRANULE_ID": "str",\n  "PRODUCT_ID": "str",\n  "DATATAKE_IDENTIFIER": "str",\n  "MGRS_TILE": "str",\n  "SENSING_TIME": "str",\n  "TOTAL_SIZE": "str",\n  "CLOUD_COVER": "str",\n  "GEOMETRIC_QUALITY_FLAG": "str",\n  "GENERATION_TIME": "str",\n  "NORTH_LAT": "str",\n  "SOUTH_LAT": "str",\n  "WEST_LON": "str",\n  "EAST_LON": "str",\n  "BASE_URL": "str"\n}',
-            "RENAME_HEADERS_LIST": '{\n  "GRANULE_ID": "granule_id",\n  "PRODUCT_ID": "product_id",\n  "DATATAKE_IDENTIFIER": "datatake_identifier",\n  "MGRS_TILE": "mgrs_tile",\n  "SENSING_TIME": "sensing_time",\n  "TOTAL_SIZE": "total_size",\n  "CLOUD_COVER": "cloud_cover",\n  "GEOMETRIC_QUALITY_FLAG": "geometric_quality_flag",\n  "GENERATION_TIME": "generation_time",\n  "NORTH_LAT": "north_lat",\n  "SOUTH_LAT": "south_lat",\n  "WEST_LON": "west_lon",\n  "EAST_LON": "east_lon",\n  "BASE_URL": "base_url"\n}',
-            "REORDER_HEADERS_LIST": '[\n  "granule_id",\n  "product_id",\n  "datatake_identifier",\n  "mgrs_tile",\n  "sensing_time",\n  "geometric_quality_flag",\n  "generation_time",\n  "north_lat",\n  "south_lat",\n  "west_lon",\n  "east_lon",\n  "base_url",\n  "total_size",\n  "cloud_cover"\n]',
-            "TABLE_DESCRIPTION": "Sentinel 2 table",
-            "TABLE_CLUSTERING_FIELD_LIST": '[\n  "product_id",\n  "mgrs_tile",\n  "generation_time",\n  "datatake_identifier"\n]',
-            "TABLE_PARTITION_FIELD": "sensing_time",
-            "TABLE_PARTITION_FIELD_TYPE": "MONTH",
-        },
-        resources={"limit_memory": "48G", "limit_cpu": "2"},
-    )
     delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
         task_id="delete_cluster",
         project_id="{{ var.value.gcp_project }}",
@@ -133,4 +94,4 @@ with DAG(
         name="cloud-storage-geo-index",
     )
 
-    create_cluster >> [landsat_index, sentinel_2_index] >> delete_cluster
+    create_cluster >> landsat_index >> delete_cluster
