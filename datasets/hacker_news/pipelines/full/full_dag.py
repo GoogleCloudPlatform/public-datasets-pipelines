@@ -29,7 +29,7 @@ with DAG(
     dag_id="hacker_news.full",
     default_args=default_args,
     max_active_runs=1,
-    schedule_interval="@yearly",
+    schedule_interval="0 10 * * *",
     catchup=False,
     default_view="graph",
 ) as dag:
@@ -70,7 +70,7 @@ with DAG(
         source_objects=["data/hacker_news/batch/hn_processed_*.csv"],
         source_format="CSV",
         field_delimiter="|",
-        destination_project_dataset_table="hacker_news.full_qa",
+        destination_project_dataset_table="hacker_news.full",
         skip_leading_rows=1,
         ignore_unknown_values=True,
         allow_quoted_newlines=True,

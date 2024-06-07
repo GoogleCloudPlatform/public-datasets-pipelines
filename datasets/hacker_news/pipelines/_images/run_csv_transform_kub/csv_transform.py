@@ -24,7 +24,6 @@ import json_stream
 import pandas as pd
 from google.cloud import storage
 from google.cloud.storage.fileio import BlobReader
-from json_stream.dump import JSONStreamEncoder, default
 
 
 def main(
