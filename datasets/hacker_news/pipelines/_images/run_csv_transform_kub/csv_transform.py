@@ -24,6 +24,7 @@ import json_stream
 import pandas as pd
 from google.cloud import storage
 from google.cloud.storage.fileio import BlobReader
+from json_stream.dump import default
 
 
 def main(
@@ -40,7 +41,6 @@ def main(
         source_bucket=source_bucket,
         source_object=source_object,
         target_bucket=target_bucket,
-        # target_object=target_object,
         target_local_dir=target_local_dir,
         chunk_size=int(chunk_size),
     )
