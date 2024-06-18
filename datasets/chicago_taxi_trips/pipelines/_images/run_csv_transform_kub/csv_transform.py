@@ -109,7 +109,7 @@ def download_file(source_url: str, source_file: str) -> None:
     else:
         logging.info(f"Couldn't download {source_url}: {res.text}")
     logging.info(
-        f"Successfully downloaded data from {source_url} into {source_file} - { os.stat(source_file).st_size / (1024 ** 3)} GB"
+        f"Successfully downloaded data from {source_url} into {source_file} - {os.stat(source_file).st_size / (1024 ** 3)} GB"
     )
 
 
