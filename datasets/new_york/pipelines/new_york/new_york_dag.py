@@ -39,7 +39,6 @@ with DAG(
             "name": "pubds-new-york",
             "initial_node_count": 2,
             "network": "{{ var.value.vpc_network }}",
-            "ip_allocation_policy": {"cluster_ipv4_cidr_block": "/26"},
             "node_config": {
                 "machine_type": "e2-standard-8",
                 "oauth_scopes": [
@@ -104,11 +103,11 @@ with DAG(
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/new_york/citibike_stations/data_output.csv",
             "SCHEMA_PATH": "data/new_york/schema/citibike_stations_schema.json",
-            "DATA_DTYPES": '{\n  "rental_uris": "str",\n  "lat": "float64",\n  "eightd_station_services": "str",\n  "legacy_id_x": "int64",\n  "short_name": "str",\n  "external_id": "str",\n  "station_id": "int64",\n  "rental_methods": "str",\n  "station_type": "str",\n  "short_name": "str",\n  "eightd_has_key_dispenser": "bool",\n  "electric_bike_surcharge_waiver": "bool",\n  "lon": "float64",\n  "has_kiosk": "bool",\n  "capacity": "int64",\n  "region_id": "int64",\n  "is_installed": "bool",\n  "num_docks_available": "int64",\n  "num_docks_disabled": "int64",\n  "num_bikes_disabled": "int64",\n  "num_bikes_available": "int64",\n  "station_status": "str",\n  "last_reported": "int64",\n  "eightd_has_available_keys": "bool",\n  "num_ebikes_available": "int64",\n  "is_returning": "int64",\n  "is_renting": "int64",\n  "legacy_id_y": "int64",\n  "valet": "str",\n  "eightd_active_station_services": "str"\n}',
+            "DATA_DTYPES": '{\n  "rental_uris": "str",\n  "lat": "float64",\n  "eightd_station_services": "str",\n  "legacy_id_x": "str",\n  "short_name": "str",\n  "external_id": "str",\n  "station_id": "str",\n  "rental_methods": "str",\n  "station_type": "str",\n  "short_name": "str",\n  "eightd_has_key_dispenser": "bool",\n  "electric_bike_surcharge_waiver": "bool",\n  "lon": "float64",\n  "has_kiosk": "bool",\n  "capacity": "int64",\n  "region_id": "int64",\n  "is_installed": "bool",\n  "num_docks_available": "int64",\n  "num_docks_disabled": "int64",\n  "num_bikes_disabled": "int64",\n  "num_bikes_available": "int64",\n  "station_status": "str",\n  "last_reported": "int64",\n  "eightd_has_available_keys": "bool",\n  "num_ebikes_available": "int64",\n  "is_returning": "int64",\n  "is_renting": "int64",\n  "legacy_id_y": "str",\n  "valet": "str",\n  "eightd_active_station_services": "str"\n}',
             "RENAME_HEADERS_LIST": '{\n  "lat": "latitude",\n  "lon": "longitude"\n}',
             "BOOLEAN_DATAPOINTS": '[\n  "eightd_has_key_dispenser",\n  "is_installed",\n  "is_renting",\n  "is_returning"\n]',
             "DATETIME_FIELDLIST": '[\n  "last_reported"\n]',
-            "RESOLVE_DATATYPES_LIST": '{\n  "station_id": "Int64",\n  "region_id": "Int64",\n  "rental_methods": "string"\n}',
+            "RESOLVE_DATATYPES_LIST": '{\n  "region_id": "Int64",\n  "rental_methods": "string"\n}',
             "NORMALIZE_DATA_LIST": '[\n  "rental_methods"\n]',
             "INPUT_CSV_HEADERS": '[\n  "rental_uris",\n  "lat",\n  "eightd_station_services",\n  "legacy_id_x",\n  "short_name",\n  "external_id",\n  "station_id",\n  "rental_methods",\n  "station_type",\n  "short_name",\n  "eightd_has_key_dispenser",\n  "electric_bike_surcharge_waiver",\n  "lon",\n  "has_kiosk",\n  "capacity",\n  "region_id",\n  "is_installed",\n  "num_docks_available",\n  "num_docks_disabled",\n  "num_bikes_disabled",\n  "num_bikes_available",\n  "station_status",\n  "last_reported",\n  "eightd_has_available_keys",\n  "num_ebikes_available",\n  "is_returning",\n  "is_renting",\n  "legacy_id_y",\n  "valet",\n  "eightd_active_station_services"\n]',
             "OUTPUT_CSV_HEADERS": '[\n  "station_id",\n  "name",\n  "short_name",\n  "latitude",\n  "longitude",\n  "region_id",\n  "rental_methods",\n  "capacity",\n  "eightd_has_key_dispenser",\n  "num_bikes_available",\n  "num_bikes_disabled",\n  "num_docks_available",\n  "num_docks_disabled",\n  "is_installed",\n  "is_renting",\n  "is_returning",\n  "eightd_has_available_keys",\n  "last_reported"\n]',
