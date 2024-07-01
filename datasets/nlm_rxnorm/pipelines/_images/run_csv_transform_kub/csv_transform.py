@@ -141,7 +141,7 @@ def load_process_filegroup_data(
     if zip_file != "":
         # load the data file
         logging.info(
-            f"zip file { os.path.join(zip_path, zip_file) } exists.  Loading..."
+            f"zip file {os.path.join(zip_path, zip_file)} exists.  Loading..."
         )
         table_id = f"{process_filegroup}_{month}_{year[-2:]}"
         load_source_data(
@@ -209,7 +209,7 @@ def load_source_data(
     if process_filegroup == "rxncuichange":
         member_path = "rrf/RXNCUICHANGES.RRF"
     else:
-        member_path = f"rrf/{ str.upper(process_filegroup) }.RRF"
+        member_path = f"rrf/{str.upper(process_filegroup)}.RRF"
     with ZipFile(target_file, "r") as zip_file:
         zip_file.extract(member=member_path, path=os.path.dirname(target_file))
     extracted_member_path = os.path.join(os.path.dirname(target_file), member_path)
