@@ -140,9 +140,7 @@ def load_process_filegroup_data(
     )
     if zip_file != "":
         # load the data file
-        logging.info(
-            f"zip file {os.path.join(zip_path, zip_file)} exists.  Loading..."
-        )
+        logging.info(f"zip file {os.path.join(zip_path, zip_file)} exists.  Loading...")
         table_id = f"{process_filegroup}_{month}_{year[-2:]}"
         load_source_data(
             project_id=project_id,
