@@ -59,7 +59,7 @@ def pipeline_path(dataset_path, suffix="_pipeline") -> typing.Iterator[pathlib.P
 
 def generate_image_files(dataset_path: pathlib.Path, num_containers: int = 1):
     for i in range(num_containers):
-        target_dir = dataset_path / "pipelines" / "_images" / f"test_image_{i+1}"
+        target_dir = dataset_path / "pipelines" / "_images" / f"test_image_{i + 1}"
         target_dir.mkdir(parents=True, exist_ok=True)
         (target_dir / "Dockerfile").touch()
 

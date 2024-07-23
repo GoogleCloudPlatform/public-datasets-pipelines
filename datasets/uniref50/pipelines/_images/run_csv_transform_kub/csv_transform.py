@@ -234,7 +234,7 @@ def load_df_to_bq(
     truncate_table: bool,
 ) -> None:
     logging.info(
-        f"Loading { df.count()[0] } data rows to {project_id}:{dataset_id}.{table_id} with truncate table {str(truncate_table)}"
+        f"Loading {df.count()[0]} data rows to {project_id}:{dataset_id}.{table_id} with truncate table {str(truncate_table)}"
     )
     client = bigquery.Client(project=project_id)
     table_ref = client.dataset(dataset_id).table(table_id)

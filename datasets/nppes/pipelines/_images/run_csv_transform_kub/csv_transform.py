@@ -103,7 +103,7 @@ def process_source_file(
 ) -> None:
     logging.info(f"Found data file {fileName}, extracting and splitting ...")
     zip_path = os.path.dirname(input_zip)
-    cmd = f"unzip -p {input_zip} {fileName} | tail -n +2 | split -l { str(chunk_size)} --additional-suffix '.csv' -d --filter='gzip -v9 > { zip_path }/$FILE.gz'"
+    cmd = f"unzip -p {input_zip} {fileName} | tail -n +2 | split -l {str(chunk_size)} --additional-suffix '.csv' -d --filter='gzip -v9 > {zip_path}/$FILE.gz'"
     subprocess.run(cmd, shell=True)
     logging.info("Copying zip files to GCS bucket ...")
     for zip_file in sorted(pathlib.Path(zip_path).glob("x*.csv.gz")):
