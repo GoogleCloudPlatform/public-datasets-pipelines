@@ -44,7 +44,6 @@ def main(
     logging.info(f"{pipeline_name} process started")
     pathlib.Path(f"{zip_path}").mkdir(parents=True, exist_ok=True)
     # Grab the list of tables for the respective data group
-    # bq_table_list = list_bq_tables(project_id, dataset_id, r"rxnsat_([0-9]*)_([0-9]*)")
     if process_filegroup == "DOWNLOAD_ONLY":
         bq_table_list = list_bq_tables(
             project_id, dataset_id, r"([A-Za-z]*)_([0-9]*)_([0-9]*)$"
@@ -127,30 +126,32 @@ def load_process_filegroup_data(
     month = month_to_load[-2:]
     year = month_to_load[:4]
     re_file_search = rf"{file_prefix[:-1]}_{month}([0-9][0-9]){year}.zip"
-    zip_file = fetch_gcs_file_names(
+    zip_file_list = fetch_gcs_file_names(
         gcs_bucket=target_gcs_bucket,
         gcs_path=target_gcs_path,
         regex_file_expr=re_file_search,
-    )[0]
-    source_location_gcs = os.path.join("gs://", target_gcs_bucket, zip_file)
-    download_file_gcs(
-        project_id=project_id,
-        source_location=source_location_gcs,
-        destination_folder=zip_path,
     )
+    zip_file = zip_file_list[0] if zip_file_list else ""
     if zip_file != "":
-        # load the data file
-        logging.info(f"zip file {os.path.join(zip_path, zip_file)} exists.  Loading...")
-        table_id = f"{process_filegroup}_{month}_{year[-2:]}"
-        load_source_data(
-            project_id=project_id,
-            dataset_id=dataset_id,
-            table_id=table_id,
-            process_filegroup=process_filegroup,
-            schema_filepath=schema_filepath,
-            target_file=os.path.join(zip_path, os.path.basename(zip_file)),
-            target_gcs_bucket=target_gcs_bucket,
-        )
+        if os.path.isfile(zip_file):
+            source_location_gcs = os.path.join("gs://", target_gcs_bucket, zip_file)
+            download_file_gcs(
+                project_id=project_id,
+                source_location=source_location_gcs,
+                destination_folder=zip_path,
+            )
+            # load the data file
+            logging.info(f"zip file {os.path.join(zip_path, zip_file)} exists.  Loading...")
+            table_id = f"{process_filegroup}_{month}_{year[-2:]}"
+            load_source_data(
+                project_id=project_id,
+                dataset_id=dataset_id,
+                table_id=table_id,
+                process_filegroup=process_filegroup,
+                schema_filepath=schema_filepath,
+                target_file=os.path.join(zip_path, os.path.basename(zip_file)),
+                target_gcs_bucket=target_gcs_bucket,
+            )
     else:
         # zip file does not exist
         logging.info(
@@ -211,27 +212,29 @@ def load_source_data(
     with ZipFile(target_file, "r") as zip_file:
         zip_file.extract(member=member_path, path=os.path.dirname(target_file))
     extracted_member_path = os.path.join(os.path.dirname(target_file), member_path)
-    table_exists = create_dest_table(
-        project_id=project_id,
-        dataset_id=dataset_id,
-        table_id=table_id,
-        schema_filepath=schema_filepath,
-        bucket_name=target_gcs_bucket,
-    )
-    if table_exists:
-        # extract the source data file from the source zip file
-        load_data_to_bq(
+    if os.path.isfile(extracted_member_path):
+        table_exists = create_dest_table(
             project_id=project_id,
             dataset_id=dataset_id,
             table_id=table_id,
-            file_path=extracted_member_path,
-            truncate_table=True,
-            skip_leading_rows=0,
-            field_delimiter="|",
-            ignore_unknown_values=True,
+            schema_filepath=schema_filepath,
+            bucket_name=target_gcs_bucket,
         )
-    os.unlink(extracted_member_path)
-
+        if table_exists:
+            # extract the source data file from the source zip file
+            load_data_to_bq(
+                project_id=project_id,
+                dataset_id=dataset_id,
+                table_id=table_id,
+                file_path=extracted_member_path,
+                truncate_table=True,
+                skip_leading_rows=0,
+                field_delimiter="|",
+                ignore_unknown_values=True,
+            )
+        os.unlink(extracted_member_path)
+    else:
+        logging.info(f"Warning: Source file {extracted_member_path} does not exist.  Skipping.")
 
 def list_bq_tables(
     project_id: str, dataset_id: str, regex_filter: str = ""

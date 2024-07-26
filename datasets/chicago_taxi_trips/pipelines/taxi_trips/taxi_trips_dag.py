@@ -112,11 +112,6 @@ with DAG(
             "DATE_COLS": '["Trip Start Timestamp", "Trip End Timestamp"]',
             "BATCH_COUNT": "1",
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "2",
-            "request_ephemeral_storage": "3G",
-        },
     )
 
     # Run CSV transform within kubernetes pod
@@ -137,11 +132,6 @@ with DAG(
             "DATA_TYPES": '{"Trip Seconds": "Int64", "Pickup Census Tract": "Int64", "Dropoff Census Tract": "Int64","Pickup Community Area": "Int64","Dropoff Community Area": "Int64"}',
             "DATE_COLS": '["Trip Start Timestamp", "Trip End Timestamp"]',
             "BATCH_COUNT": "2",
-        },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "2",
-            "request_ephemeral_storage": "3G",
         },
     )
 
@@ -164,11 +154,6 @@ with DAG(
             "DATE_COLS": '["Trip Start Timestamp", "Trip End Timestamp"]',
             "BATCH_COUNT": "3",
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "2",
-            "request_ephemeral_storage": "3G",
-        },
     )
 
     # Run CSV transform within kubernetes pod
@@ -189,11 +174,6 @@ with DAG(
             "DATA_TYPES": '{"Trip Seconds": "Int64", "Pickup Census Tract": "Int64", "Dropoff Census Tract": "Int64","Pickup Community Area": "Int64","Dropoff Community Area": "Int64"}',
             "DATE_COLS": '["Trip Start Timestamp", "Trip End Timestamp"]',
             "BATCH_COUNT": "4",
-        },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "2",
-            "request_ephemeral_storage": "3G",
         },
     )
 
@@ -216,11 +196,6 @@ with DAG(
             "DATE_COLS": '["Trip Start Timestamp", "Trip End Timestamp"]',
             "BATCH_COUNT": "5",
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "2",
-            "request_ephemeral_storage": "3G",
-        },
     )
 
     # Run CSV transform within kubernetes pod
@@ -241,11 +216,6 @@ with DAG(
             "DATA_TYPES": '{"Trip Seconds": "Int64", "Pickup Census Tract": "Int64", "Dropoff Census Tract": "Int64","Pickup Community Area": "Int64","Dropoff Community Area": "Int64"}',
             "DATE_COLS": '["Trip Start Timestamp", "Trip End Timestamp"]',
             "BATCH_COUNT": "6",
-        },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "2",
-            "request_ephemeral_storage": "3G",
         },
     )
 

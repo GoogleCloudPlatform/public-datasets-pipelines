@@ -72,7 +72,6 @@ with DAG(
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "nlm_rxnorm",
         },
-        resources={"limit_memory": "8G", "limit_cpu": "3"},
     )
 
     # Execute RXN ATOM Archive Load Process
@@ -98,7 +97,6 @@ with DAG(
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "nlm_rxnorm",
         },
-        resources={"limit_memory": "8G", "limit_cpu": "3"},
     )
 
     # Execute RXN CONSO Load Process
@@ -124,7 +122,6 @@ with DAG(
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "nlm_rxnorm",
         },
-        resources={"limit_memory": "8G", "limit_cpu": "3"},
     )
 
     # Execute RXN CUI Load Process
@@ -150,7 +147,6 @@ with DAG(
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "nlm_rxnorm",
         },
-        resources={"limit_memory": "8G", "limit_cpu": "3"},
     )
 
     # Execute RXN CUI CHANGE Load Process
@@ -176,7 +172,6 @@ with DAG(
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "nlm_rxnorm",
         },
-        resources={"limit_memory": "8G", "limit_cpu": "3"},
     )
 
     # Execute RXN DOC Load Process
@@ -202,7 +197,6 @@ with DAG(
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "nlm_rxnorm",
         },
-        resources={"limit_memory": "8G", "limit_cpu": "3"},
     )
 
     # Execute RXN REL Load Process
@@ -228,7 +222,6 @@ with DAG(
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "nlm_rxnorm",
         },
-        resources={"limit_memory": "8G", "limit_cpu": "3"},
     )
 
     # Execute RXN SAB Load Process
@@ -254,7 +247,6 @@ with DAG(
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "nlm_rxnorm",
         },
-        resources={"limit_memory": "8G", "limit_cpu": "3"},
     )
 
     # Execute RXN SAT Load Process
@@ -280,7 +272,6 @@ with DAG(
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "nlm_rxnorm",
         },
-        resources={"limit_memory": "8G", "limit_cpu": "3"},
     )
 
     # Execute RXN STY Load Process
@@ -306,7 +297,6 @@ with DAG(
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "nlm_rxnorm",
         },
-        resources={"limit_memory": "8G", "limit_cpu": "3"},
     )
     delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
         task_id="delete_cluster",

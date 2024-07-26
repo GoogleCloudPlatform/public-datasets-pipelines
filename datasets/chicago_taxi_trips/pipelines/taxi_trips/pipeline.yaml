@@ -114,10 +114,6 @@ dag:
           DATE_COLS: >-
             ["Trip Start Timestamp", "Trip End Timestamp"]
           BATCH_COUNT: "1"
-        resources:
-          request_memory: "4G"
-          request_cpu: "2"
-          request_ephemeral_storage: "3G"
 
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod"
@@ -142,10 +138,6 @@ dag:
           DATE_COLS: >-
             ["Trip Start Timestamp", "Trip End Timestamp"]
           BATCH_COUNT: "2"
-        resources:
-          request_memory: "4G"
-          request_cpu: "2"
-          request_ephemeral_storage: "3G"
 
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod"
@@ -170,10 +162,6 @@ dag:
           DATE_COLS: >-
             ["Trip Start Timestamp", "Trip End Timestamp"]
           BATCH_COUNT: "3"
-        resources:
-          request_memory: "4G"
-          request_cpu: "2"
-          request_ephemeral_storage: "3G"
 
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod"
@@ -198,10 +186,6 @@ dag:
           DATE_COLS: >-
             ["Trip Start Timestamp", "Trip End Timestamp"]
           BATCH_COUNT: "4"
-        resources:
-          request_memory: "4G"
-          request_cpu: "2"
-          request_ephemeral_storage: "3G"
 
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod"
@@ -226,10 +210,6 @@ dag:
           DATE_COLS: >-
             ["Trip Start Timestamp", "Trip End Timestamp"]
           BATCH_COUNT: "5"
-        resources:
-          request_memory: "4G"
-          request_cpu: "2"
-          request_ephemeral_storage: "3G"
 
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod"
@@ -254,10 +234,6 @@ dag:
           DATE_COLS: >-
             ["Trip Start Timestamp", "Trip End Timestamp"]
           BATCH_COUNT: "6"
-        resources:
-          request_memory: "4G"
-          request_cpu: "2"
-          request_ephemeral_storage: "3G"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
