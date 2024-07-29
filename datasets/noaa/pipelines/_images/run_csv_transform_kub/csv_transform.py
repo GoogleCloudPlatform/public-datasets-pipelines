@@ -1966,10 +1966,10 @@ def download_file_http_exec(
         elif e == requests.exceptions.TooManyRedirects:
             err_msg = "Too Many Redirects occurred."
         if not continue_on_error:
-            logging.info(f"{err_msg} Unable to obtain {source_url}")
+            logging.info(f"{str(e.args[0])} Unable to obtain {source_url}")
             raise SystemExit(e)
         else:
-            logging.info(f"{err_msg} Unable to obtain {source_url}.")
+            logging.info(f"{str(e.args[0])} Unable to obtain {source_url}.")
         return False
 
 
