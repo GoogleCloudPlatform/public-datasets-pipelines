@@ -385,7 +385,7 @@ with DAG(
         image="{{ var.json.noaa.container_registry.run_csv_transform_kub }}",
         env_vars={
             "PIPELINE_NAME": "NOAA Storms database by year",
-            "SOURCE_URL": '{\n    "root": "ftp://ftp.ncdc.noaa.gov/pub/data/swdi/stormevents/csvfiles",\n    "storms_details": "StormEvents_details-ftp_v1.0_d",\n    "storms_locations": "StormEvents_locations-ftp_v1.0_d"\n}',
+            "SOURCE_URL": '{\n    "root": "https://www.ncei.noaa.gov/pub/data/swdi/stormevents/csvfiles/",\n    "storms_details": "StormEvents_details-ftp_v1.0_d",\n    "storms_locations": "StormEvents_locations-ftp_v1.0_d"\n}',
             "SOURCE_FILE": "files/data_storms_database.csv",
             "TARGET_FILE": "files/data_output_storms_database.csv",
             "CHUNKSIZE": "500000",
@@ -829,9 +829,10 @@ with DAG(
 
     (
         create_cluster
+        >> storms_database_by_year
+        >> noaa_gsod_by_year
         >> [ghcnd_by_year, lightning_strikes_by_year]
         >> ghcnd_hurricanes
-        >> noaa_ghcn_m
         >> [
             ghcnd_inventory,
             spc_hail,
@@ -842,8 +843,7 @@ with DAG(
             gsod_stations,
             ghcnd_countries,
         ]
-        >> noaa_gsod_by_year
-        >> storms_database_by_year
+        >> noaa_ghcn_m
         >> [noaa_goes16_mcmip, noaa_goes16_cmip, noaa_goes16_glm]
         >> noaa_goes16_radiance
         >> [noaa_goes17_mcmip, noaa_goes17_cmip, noaa_goes17_glm]

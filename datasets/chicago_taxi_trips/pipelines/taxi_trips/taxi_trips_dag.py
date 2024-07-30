@@ -40,11 +40,10 @@ with DAG(
         location="us-central1-c",
         body={
             "name": "chicago-taxi-trips",
-            "initial_node_count": 2,
+            "initial_node_count": 1,
             "network": "{{ var.value.vpc_network }}",
-            "ip_allocation_policy": {"cluster_ipv4_cidr_block": "/26"},
             "node_config": {
-                "machine_type": "e2-standard-16",
+                "machine_type": "e2-standard-8",
                 "oauth_scopes": [
                     "https://www.googleapis.com/auth/devstorage.read_write",
                     "https://www.googleapis.com/auth/cloud-platform",
@@ -371,9 +370,10 @@ with DAG(
         ],
     )
 
-    create_cluster >> prepare_source >> [delete_cluster, split_source_file]
     (
-        split_source_file
+        create_cluster
+        >> prepare_source
+        >> split_source_file
         >> [
             transform_csv_1,
             transform_csv_2,
@@ -383,4 +383,5 @@ with DAG(
             transform_csv_6,
         ]
         >> load_taxi_trips_to_bq
+        >> delete_cluster
     )
