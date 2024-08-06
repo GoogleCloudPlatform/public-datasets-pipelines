@@ -31,312 +31,367 @@ dag:
     catchup: False
     default_view: graph
   tasks:
-    - operator: "GKECreateClusterOperator"
-      args:
-        task_id: "create_cluster"
-        project_id: "{{ var.value.gcp_project }}"
-        location: "us-central1-c"
-        body:
-          name: chicago-taxi-trips
-          initial_node_count: 1
-          network: "{{ var.value.vpc_network }}"
-          node_config:
-            machine_type: e2-standard-8
-            oauth_scopes:
-              - https://www.googleapis.com/auth/devstorage.read_write
-              - https://www.googleapis.com/auth/cloud-platform
+    # - operator: BashOperator
+    #   description: "Split Taxi Trips dataset into multiple files."
+    #   args:
+    #     task_id: "prepare_source"
+    #     bash_command: |
+    #       cwd=`pwd`
+    #       echo Downloading source file $url to /tmp/data/chicago_taxi_trips/taxi_trips.csv log file: /tmp/data/chicago_taxi_trips/taxi_trips.log
+    #       # mkdir -p /tmp/data/chicago_taxi_trips
+    #       # ls -la /tmp/data/chicago_taxi_trips
+    #       # curl -H 'Expect:' -L https://data.cityofchicago.org/api/views/wrvz-psew/rows.csv \
+    #       #   |gcloud storage cp - gs://us-central1-prod-v2-2024-c2bd7828-bucket/data/chicago_taxi_trips/taxi_trips.csv \
+    #       #   2>&1 |gcloud storage cp - gs://us-central1-prod-v2-2024-c2bd7828-bucket/data/chicago_taxi_trips/taxi_trips.log
+    #       # wget -c --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -t 0 -o /home/airflow/gcs/data/chicago_taxi_trips/taxi_trips.log -O /home/airflow/gcs/data/chicago_taxi_trips/taxi_trips.csv $url
+    #       # wget -c --retry-connrefused --waitretry=1 --read-timeout=20 --timeout=15 -t 0 -o /tmp/data/chicago_taxi_trips/taxi_trips.log -O /tmp/data/chicago_taxi_trips/taxi_trips.csv $url
+    #       # echo Copying /tmp/data/chicago_taxi_trips/taxi_trips.log to /home/airflow/gcs/data/chicago_taxi_trips/taxi_trips.log
+    #       # cp /tmp/data/chicago_taxi_trips/taxi_trips.log /home/airflow/gcs/data/chicago_taxi_trips/taxi_trips.log
+    #       # echo Copying /tmp/data/chicago_taxi_trips/taxi_trips.csv to /home/airflow/gcs/data/chicago_taxi_trips/taxi_trips.csv
+    #       # cp /tmp/data/chicago_taxi_trips/taxi_trips.csv /home/airflow/gcs/data/chicago_taxi_trips/taxi_trips.csv
+    #       echo Completed step
+    #     env:
+    #       url: https://data.cityofchicago.org/api/views/wrvz-psew/rows.csv
+    #       local_src_dir: /tmp/data/chicago_taxi_trips
+    #       local_src_file: $local_src_dir/taxi_trips.csv
+    #       gcs_data_dir: /home/airflow/gcs/data/chicago_taxi_trips
+    #       gcs_src_file: $gcs_data_dir/taxi_trips.csv
+    #       local_log_file: $local_src_dir/taxi_trips.log
+    #       gcs_log_file: $gcs_data_dir/taxi_trips.log
 
-    - operator: "GKEStartPodOperator"
+    - operator: "KubernetesPodOperator"
       description: "Download Taxi Trips dataset"
       args:
         task_id: "prepare_source"
         name: "taxi_trips"
-        project_id: "{{ var.value.gcp_project }}"
-        location: "us-central1-c"
-        cluster_name: chicago-taxi-trips
-        namespace: "default"
+        namespace: "composer-user-workloads"
+        service_account_name: "default"
+        # namespace: "composer"
+        # service_account_name: "datasets"
+        config_file: "/home/airflow/composer_kube_config"
         image: "{{ var.json.chicago_taxi_trips.container_registry.run_csv_transform_kub }}"
         image_pull_policy: "Always"
+        # in_cluster: True
         env_vars:
-          SOURCE_URL: "https://data.cityofchicago.org/api/views/wrvz-psew/rows.csv?accessType=DOWNLOAD&bom=true"
-          SOURCE_FILE: "./files/taxi_trips.csv"
+          SOURCE_URL: "https://data.cityofchicago.org/api/views/wrvz-psew/rows.csv"
           GCS_BUCKET: "{{ var.value.composer_bucket }}"
           CSV_GCS_PATH: "data/chicago_taxi_trips/taxi_trips.csv"
-          PIPELINE: "download_source"
-        retries: 3
-        retry_delay: 300
-        retry_exponential_backoff: true
-        startup_timeout_seconds: 600
-
-    - operator: "GKEDeleteClusterOperator"
-      args:
-        task_id: "delete_cluster"
-        project_id: "{{ var.value.gcp_project }}"
-        location: "us-central1-c"
-        name: chicago-taxi-trips
-
-    - operator: BashOperator
-      description: "Split Taxi Trips dataset into multiple files."
-      args:
-        task_id: "split_source_file"
-        bash_command: |
-          rm -rf $split_files
-          mkdir -p $split_files
-          tail -n +2 $source_file | split --verbose -d -l 2700000 - --filter='sh -c "{ head -n1 $source_file; cat; } > $FILE"' $split_files/split_file_
-          rm -rf $output
-        env:
-          source_file: /home/airflow/gcs/data/chicago_taxi_trips/taxi_trips.csv
-          split_files: /home/airflow/gcs/data/chicago_taxi_trips/split_files
-          output: /home/airflow/gcs/data/chicago_taxi_trips/output
-
-    - operator: "KubernetesPodOperator"
-      description: "Run CSV transform within kubernetes pod"
-      args:
-        task_id: "transform_csv_1"
-        startup_timeout_seconds: 600
-        name: "taxi_trips_1"
-        namespace: "composer"
-        service_account_name: "datasets"
-        image_pull_policy: "Always"
-        image: "{{ var.json.chicago_taxi_trips.container_registry.run_csv_transform_kub }}"
-        env_vars:
-          GCS_BUCKET: "{{ var.value.composer_bucket }}"
-          SOURCE_OBJECT_FOLDER: "data/chicago_taxi_trips/split_files"
-          RENAME_MAPPINGS: >-
-            {"Trip ID": "unique_key", "Taxi ID": "taxi_id", "Trip Start Timestamp": "trip_start_timestamp", "Trip End Timestamp": "trip_end_timestamp", "Trip Seconds": "trip_seconds", "Trip Miles": "trip_miles", "Pickup Census Tract": "pickup_census_tract", "Dropoff Census Tract": "dropoff_census_tract", "Pickup Community Area": "pickup_community_area", "Dropoff Community Area": "dropoff_community_area", "Fare": "fare", "Tips": "tips", "Tolls": "tolls", "Extras": "extras", "Trip Total": "trip_total", "Payment Type": "payment_type", "Company": "company", "Pickup Centroid Latitude": "pickup_latitude", "Pickup Centroid Longitude": "pickup_longitude", "Pickup Centroid Location": "pickup_location", "Dropoff Centroid Latitude": "dropoff_latitude", "Dropoff Centroid Longitude": "dropoff_longitude", "Dropoff Centroid  Location": "dropoff_location"}
+          CSV_HEADERS: >-
+            [
+              "unique_key", "taxi_id", "trip_start_timestamp",
+              "trip_end_timestamp", "trip_seconds", "trip_miles",
+              "pickup_census_tract", "dropoff_census_tract",
+              "pickup_community_area", "dropoff_community_area",
+              "fare", "tips", "tolls", "extras",
+              "trip_total", "payment_type", "company",
+              "pickup_latitude", "pickup_longitude",
+              "pickup_location", "dropoff_latitude",
+              "dropoff_longitude", "dropoff_location"
+            ]
+          DATA_DTYPES: >-
+            {
+              "unique_key": "str", "taxi_id": "str", "trip_start_timestamp": "str",
+              "trip_end_timestamp": "str", "trip_seconds": "str", "trip_miles": "str",
+              "pickup_census_tract": "str", "dropoff_census_tract": "str",
+              "pickup_community_area": "str", "dropoff_community_area": "str",
+              "fare": "str", "tips": "str", "tolls": "str", "extras": "str",
+              "trip_total": "str", "payment_type": "str", "company": "str",
+              "pickup_latitude": "str", "pickup_longitude": "str",
+              "pickup_location": "str", "dropoff_latitude": "str",
+              "dropoff_longitude": "str", "dropoff_location": "str"
+            }
           NON_NA_COLUMNS: >-
             ["unique_key","taxi_id"]
-          OUTPUT_OBJECT_FOLDER: "data/chicago_taxi_trips/output"
-          DATA_TYPES: >-
-            {"Trip Seconds": "Int64", "Pickup Census Tract": "Int64", "Dropoff Census Tract": "Int64","Pickup Community Area": "Int64","Dropoff Community Area": "Int64"}
-          DATE_COLS: >-
-            ["Trip Start Timestamp", "Trip End Timestamp"]
-          BATCH_COUNT: "1"
+          CHUNKSIZE: "1000000"
+        container_resources:
+          memory:
+            request: "32Gi"
+          ephemeral-storage:
+            request: "10Gi"
+    # - operator: "GKEStartPodOperator"
+    #   description: "Download Taxi Trips dataset"
+    #   args:
+    #     task_id: "prepare_source"
+    #     name: "taxi_trips"
+    #     project_id: "{{ var.value.gcp_project }}"
+    #     location: "us-central1-c"
+    #     # cluster_name: chicago-taxi-trips
+    #     namespace: "default"
+    #     image: "{{ var.json.chicago_taxi_trips.container_registry.run_csv_transform_kub }}"
+    #     image_pull_policy: "Always"
+    #     env_vars:
+    #       SOURCE_URL: "https://data.cityofchicago.org/api/views/wrvz-psew/rows.csv?accessType=DOWNLOAD&bom=true"
+    #       SOURCE_FILE: "/home/airflow/gcs/data/chicago_taxi_trips/taxi_trips.csv"
+    #       GCS_BUCKET: "{{ var.value.composer_bucket }}"
+    #       CSV_GCS_PATH: "data/chicago_taxi_trips/taxi_trips.csv"
+    #       PIPELINE: "download_source"
 
-    - operator: "KubernetesPodOperator"
-      description: "Run CSV transform within kubernetes pod"
-      args:
-        task_id: "transform_csv_2"
-        startup_timeout_seconds: 600
-        name: "taxi_trips_2"
-        namespace: "composer"
-        service_account_name: "datasets"
-        image_pull_policy: "Always"
-        image: "{{ var.json.chicago_taxi_trips.container_registry.run_csv_transform_kub }}"
-        env_vars:
-          GCS_BUCKET: "{{ var.value.composer_bucket }}"
-          SOURCE_OBJECT_FOLDER: "data/chicago_taxi_trips/split_files"
-          RENAME_MAPPINGS: >-
-            {"Trip ID": "unique_key", "Taxi ID": "taxi_id", "Trip Start Timestamp": "trip_start_timestamp", "Trip End Timestamp": "trip_end_timestamp", "Trip Seconds": "trip_seconds", "Trip Miles": "trip_miles", "Pickup Census Tract": "pickup_census_tract", "Dropoff Census Tract": "dropoff_census_tract", "Pickup Community Area": "pickup_community_area", "Dropoff Community Area": "dropoff_community_area", "Fare": "fare", "Tips": "tips", "Tolls": "tolls", "Extras": "extras", "Trip Total": "trip_total", "Payment Type": "payment_type", "Company": "company", "Pickup Centroid Latitude": "pickup_latitude", "Pickup Centroid Longitude": "pickup_longitude", "Pickup Centroid Location": "pickup_location", "Dropoff Centroid Latitude": "dropoff_latitude", "Dropoff Centroid Longitude": "dropoff_longitude", "Dropoff Centroid  Location": "dropoff_location"}
-          NON_NA_COLUMNS: >-
-            ["unique_key","taxi_id"]
-          OUTPUT_OBJECT_FOLDER: "data/chicago_taxi_trips/output"
-          DATA_TYPES: >-
-            {"Trip Seconds": "Int64", "Pickup Census Tract": "Int64", "Dropoff Census Tract": "Int64","Pickup Community Area": "Int64","Dropoff Community Area": "Int64"}
-          DATE_COLS: >-
-            ["Trip Start Timestamp", "Trip End Timestamp"]
-          BATCH_COUNT: "2"
 
-    - operator: "KubernetesPodOperator"
-      description: "Run CSV transform within kubernetes pod"
-      args:
-        task_id: "transform_csv_3"
-        startup_timeout_seconds: 600
-        name: "taxi_trips_3"
-        namespace: "composer"
-        service_account_name: "datasets"
-        image_pull_policy: "Always"
-        image: "{{ var.json.chicago_taxi_trips.container_registry.run_csv_transform_kub }}"
-        env_vars:
-          GCS_BUCKET: "{{ var.value.composer_bucket }}"
-          SOURCE_OBJECT_FOLDER: "data/chicago_taxi_trips/split_files"
-          RENAME_MAPPINGS: >-
-            {"Trip ID": "unique_key", "Taxi ID": "taxi_id", "Trip Start Timestamp": "trip_start_timestamp", "Trip End Timestamp": "trip_end_timestamp", "Trip Seconds": "trip_seconds", "Trip Miles": "trip_miles", "Pickup Census Tract": "pickup_census_tract", "Dropoff Census Tract": "dropoff_census_tract", "Pickup Community Area": "pickup_community_area", "Dropoff Community Area": "dropoff_community_area", "Fare": "fare", "Tips": "tips", "Tolls": "tolls", "Extras": "extras", "Trip Total": "trip_total", "Payment Type": "payment_type", "Company": "company", "Pickup Centroid Latitude": "pickup_latitude", "Pickup Centroid Longitude": "pickup_longitude", "Pickup Centroid Location": "pickup_location", "Dropoff Centroid Latitude": "dropoff_latitude", "Dropoff Centroid Longitude": "dropoff_longitude", "Dropoff Centroid  Location": "dropoff_location"}
-          NON_NA_COLUMNS: >-
-            ["unique_key","taxi_id"]
-          OUTPUT_OBJECT_FOLDER: "data/chicago_taxi_trips/output"
-          DATA_TYPES: >-
-            {"Trip Seconds": "Int64", "Pickup Census Tract": "Int64", "Dropoff Census Tract": "Int64","Pickup Community Area": "Int64","Dropoff Community Area": "Int64"}
-          DATE_COLS: >-
-            ["Trip Start Timestamp", "Trip End Timestamp"]
-          BATCH_COUNT: "3"
+    # - operator: BashOperator
+    #   description: "Split Taxi Trips dataset into multiple files."
+    #   args:
+    #     task_id: "split_source_file"
+    #     bash_command: |
+    #       rm -rf $split_files
+    #       mkdir -p $split_files
+    #       tail -n +2 $source_file | split --verbose -d -l 2700000 - --filter='sh -c "{ head -n1 $source_file; cat; } > $FILE"' $split_files/split_file_
+    #       rm -rf $output
+    #     env:
+    #       source_file: /home/airflow/gcs/data/chicago_taxi_trips/taxi_trips.csv
+    #       split_files: /home/airflow/gcs/data/chicago_taxi_trips/split_files
+    #       output: /home/airflow/gcs/data/chicago_taxi_trips/output
 
-    - operator: "KubernetesPodOperator"
-      description: "Run CSV transform within kubernetes pod"
-      args:
-        task_id: "transform_csv_4"
-        startup_timeout_seconds: 600
-        name: "taxi_trips_4"
-        namespace: "composer"
-        service_account_name: "datasets"
-        image_pull_policy: "Always"
-        image: "{{ var.json.chicago_taxi_trips.container_registry.run_csv_transform_kub }}"
-        env_vars:
-          GCS_BUCKET: "{{ var.value.composer_bucket }}"
-          SOURCE_OBJECT_FOLDER: "data/chicago_taxi_trips/split_files"
-          RENAME_MAPPINGS: >-
-            {"Trip ID": "unique_key", "Taxi ID": "taxi_id", "Trip Start Timestamp": "trip_start_timestamp", "Trip End Timestamp": "trip_end_timestamp", "Trip Seconds": "trip_seconds", "Trip Miles": "trip_miles", "Pickup Census Tract": "pickup_census_tract", "Dropoff Census Tract": "dropoff_census_tract", "Pickup Community Area": "pickup_community_area", "Dropoff Community Area": "dropoff_community_area", "Fare": "fare", "Tips": "tips", "Tolls": "tolls", "Extras": "extras", "Trip Total": "trip_total", "Payment Type": "payment_type", "Company": "company", "Pickup Centroid Latitude": "pickup_latitude", "Pickup Centroid Longitude": "pickup_longitude", "Pickup Centroid Location": "pickup_location", "Dropoff Centroid Latitude": "dropoff_latitude", "Dropoff Centroid Longitude": "dropoff_longitude", "Dropoff Centroid  Location": "dropoff_location"}
-          NON_NA_COLUMNS: >-
-            ["unique_key","taxi_id"]
-          OUTPUT_OBJECT_FOLDER: "data/chicago_taxi_trips/output"
-          DATA_TYPES: >-
-            {"Trip Seconds": "Int64", "Pickup Census Tract": "Int64", "Dropoff Census Tract": "Int64","Pickup Community Area": "Int64","Dropoff Community Area": "Int64"}
-          DATE_COLS: >-
-            ["Trip Start Timestamp", "Trip End Timestamp"]
-          BATCH_COUNT: "4"
+    # - operator: "KubernetesPodOperator"
+    #   description: "Run CSV transform within kubernetes pod"
+    #   args:
+    #     task_id: "transform_csv_1"
+    #     name: "taxi_trips_1"
+    #     namespace: "composer-user-workloads"
+    #     service_account_name: "default"
+    #     config_file: "/home/airflow/composer_kube_config"
+    #     image_pull_policy: "Always"
+    #     image: "{{ var.json.chicago_taxi_trips.container_registry.run_csv_transform_kub }}"
+    #     env_vars:
+    #       GCS_BUCKET: "{{ var.value.composer_bucket }}"
+    #       SOURCE_OBJECT_FOLDER: "data/chicago_taxi_trips/split_files"
+    #       RENAME_MAPPINGS: >-
+    #         {"Trip ID": "unique_key", "Taxi ID": "taxi_id", "Trip Start Timestamp": "trip_start_timestamp", "Trip End Timestamp": "trip_end_timestamp", "Trip Seconds": "trip_seconds", "Trip Miles": "trip_miles", "Pickup Census Tract": "pickup_census_tract", "Dropoff Census Tract": "dropoff_census_tract", "Pickup Community Area": "pickup_community_area", "Dropoff Community Area": "dropoff_community_area", "Fare": "fare", "Tips": "tips", "Tolls": "tolls", "Extras": "extras", "Trip Total": "trip_total", "Payment Type": "payment_type", "Company": "company", "Pickup Centroid Latitude": "pickup_latitude", "Pickup Centroid Longitude": "pickup_longitude", "Pickup Centroid Location": "pickup_location", "Dropoff Centroid Latitude": "dropoff_latitude", "Dropoff Centroid Longitude": "dropoff_longitude", "Dropoff Centroid  Location": "dropoff_location"}
+    #       NON_NA_COLUMNS: >-
+    #         ["unique_key","taxi_id"]
+    #       OUTPUT_OBJECT_FOLDER: "data/chicago_taxi_trips/output"
+    #       DATA_TYPES: >-
+    #         {"Trip Seconds": "Int64", "Pickup Census Tract": "Int64", "Dropoff Census Tract": "Int64","Pickup Community Area": "Int64","Dropoff Community Area": "Int64"}
+    #       DATE_COLS: >-
+    #         ["Trip Start Timestamp", "Trip End Timestamp"]
+    #       BATCH_COUNT: "1"
 
-    - operator: "KubernetesPodOperator"
-      description: "Run CSV transform within kubernetes pod"
-      args:
-        task_id: "transform_csv_5"
-        startup_timeout_seconds: 600
-        name: "taxi_trips_5"
-        namespace: "composer"
-        service_account_name: "datasets"
-        image_pull_policy: "Always"
-        image: "{{ var.json.chicago_taxi_trips.container_registry.run_csv_transform_kub }}"
-        env_vars:
-          GCS_BUCKET: "{{ var.value.composer_bucket }}"
-          SOURCE_OBJECT_FOLDER: "data/chicago_taxi_trips/split_files"
-          RENAME_MAPPINGS: >-
-            {"Trip ID": "unique_key", "Taxi ID": "taxi_id", "Trip Start Timestamp": "trip_start_timestamp", "Trip End Timestamp": "trip_end_timestamp", "Trip Seconds": "trip_seconds", "Trip Miles": "trip_miles", "Pickup Census Tract": "pickup_census_tract", "Dropoff Census Tract": "dropoff_census_tract", "Pickup Community Area": "pickup_community_area", "Dropoff Community Area": "dropoff_community_area", "Fare": "fare", "Tips": "tips", "Tolls": "tolls", "Extras": "extras", "Trip Total": "trip_total", "Payment Type": "payment_type", "Company": "company", "Pickup Centroid Latitude": "pickup_latitude", "Pickup Centroid Longitude": "pickup_longitude", "Pickup Centroid Location": "pickup_location", "Dropoff Centroid Latitude": "dropoff_latitude", "Dropoff Centroid Longitude": "dropoff_longitude", "Dropoff Centroid  Location": "dropoff_location"}
-          NON_NA_COLUMNS: >-
-            ["unique_key","taxi_id"]
-          OUTPUT_OBJECT_FOLDER: "data/chicago_taxi_trips/output"
-          DATA_TYPES: >-
-            {"Trip Seconds": "Int64", "Pickup Census Tract": "Int64", "Dropoff Census Tract": "Int64","Pickup Community Area": "Int64","Dropoff Community Area": "Int64"}
-          DATE_COLS: >-
-            ["Trip Start Timestamp", "Trip End Timestamp"]
-          BATCH_COUNT: "5"
+    # - operator: "KubernetesPodOperator"
+    #   description: "Run CSV transform within kubernetes pod"
+    #   args:
+    #     task_id: "transform_csv_2"
+    #     name: "taxi_trips_2"
+    #     namespace: "composer-user-workloads"
+    #     service_account_name: "default"
+    #     config_file: "/home/airflow/composer_kube_config"
+    #     image_pull_policy: "Always"
+    #     image: "{{ var.json.chicago_taxi_trips.container_registry.run_csv_transform_kub }}"
+    #     env_vars:
+    #       GCS_BUCKET: "{{ var.value.composer_bucket }}"
+    #       SOURCE_OBJECT_FOLDER: "data/chicago_taxi_trips/split_files"
+    #       RENAME_MAPPINGS: >-
+    #         {"Trip ID": "unique_key", "Taxi ID": "taxi_id", "Trip Start Timestamp": "trip_start_timestamp", "Trip End Timestamp": "trip_end_timestamp", "Trip Seconds": "trip_seconds", "Trip Miles": "trip_miles", "Pickup Census Tract": "pickup_census_tract", "Dropoff Census Tract": "dropoff_census_tract", "Pickup Community Area": "pickup_community_area", "Dropoff Community Area": "dropoff_community_area", "Fare": "fare", "Tips": "tips", "Tolls": "tolls", "Extras": "extras", "Trip Total": "trip_total", "Payment Type": "payment_type", "Company": "company", "Pickup Centroid Latitude": "pickup_latitude", "Pickup Centroid Longitude": "pickup_longitude", "Pickup Centroid Location": "pickup_location", "Dropoff Centroid Latitude": "dropoff_latitude", "Dropoff Centroid Longitude": "dropoff_longitude", "Dropoff Centroid  Location": "dropoff_location"}
+    #       NON_NA_COLUMNS: >-
+    #         ["unique_key","taxi_id"]
+    #       OUTPUT_OBJECT_FOLDER: "data/chicago_taxi_trips/output"
+    #       DATA_TYPES: >-
+    #         {"Trip Seconds": "Int64", "Pickup Census Tract": "Int64", "Dropoff Census Tract": "Int64","Pickup Community Area": "Int64","Dropoff Community Area": "Int64"}
+    #       DATE_COLS: >-
+    #         ["Trip Start Timestamp", "Trip End Timestamp"]
+    #       BATCH_COUNT: "2"
 
-    - operator: "KubernetesPodOperator"
-      description: "Run CSV transform within kubernetes pod"
-      args:
-        task_id: "transform_csv_6"
-        startup_timeout_seconds: 600
-        name: "taxi_trips_6"
-        namespace: "composer"
-        service_account_name: "datasets"
-        image_pull_policy: "Always"
-        image: "{{ var.json.chicago_taxi_trips.container_registry.run_csv_transform_kub }}"
-        env_vars:
-          GCS_BUCKET: "{{ var.value.composer_bucket }}"
-          SOURCE_OBJECT_FOLDER: "data/chicago_taxi_trips/split_files"
-          RENAME_MAPPINGS: >-
-            {"Trip ID": "unique_key", "Taxi ID": "taxi_id", "Trip Start Timestamp": "trip_start_timestamp", "Trip End Timestamp": "trip_end_timestamp", "Trip Seconds": "trip_seconds", "Trip Miles": "trip_miles", "Pickup Census Tract": "pickup_census_tract", "Dropoff Census Tract": "dropoff_census_tract", "Pickup Community Area": "pickup_community_area", "Dropoff Community Area": "dropoff_community_area", "Fare": "fare", "Tips": "tips", "Tolls": "tolls", "Extras": "extras", "Trip Total": "trip_total", "Payment Type": "payment_type", "Company": "company", "Pickup Centroid Latitude": "pickup_latitude", "Pickup Centroid Longitude": "pickup_longitude", "Pickup Centroid Location": "pickup_location", "Dropoff Centroid Latitude": "dropoff_latitude", "Dropoff Centroid Longitude": "dropoff_longitude", "Dropoff Centroid  Location": "dropoff_location"}
-          NON_NA_COLUMNS: >-
-            ["unique_key","taxi_id"]
-          OUTPUT_OBJECT_FOLDER: "data/chicago_taxi_trips/output"
-          DATA_TYPES: >-
-            {"Trip Seconds": "Int64", "Pickup Census Tract": "Int64", "Dropoff Census Tract": "Int64","Pickup Community Area": "Int64","Dropoff Community Area": "Int64"}
-          DATE_COLS: >-
-            ["Trip Start Timestamp", "Trip End Timestamp"]
-          BATCH_COUNT: "6"
+    # - operator: "KubernetesPodOperator"
+    #   description: "Run CSV transform within kubernetes pod"
+    #   args:
+    #     task_id: "transform_csv_3"
+    #     name: "taxi_trips_3"
+    #     namespace: "composer-user-workloads"
+    #     service_account_name: "default"
+    #     config_file: "/home/airflow/composer_kube_config"
+    #     image_pull_policy: "Always"
+    #     image: "{{ var.json.chicago_taxi_trips.container_registry.run_csv_transform_kub }}"
+    #     env_vars:
+    #       GCS_BUCKET: "{{ var.value.composer_bucket }}"
+    #       SOURCE_OBJECT_FOLDER: "data/chicago_taxi_trips/split_files"
+    #       RENAME_MAPPINGS: >-
+    #         {"Trip ID": "unique_key", "Taxi ID": "taxi_id", "Trip Start Timestamp": "trip_start_timestamp", "Trip End Timestamp": "trip_end_timestamp", "Trip Seconds": "trip_seconds", "Trip Miles": "trip_miles", "Pickup Census Tract": "pickup_census_tract", "Dropoff Census Tract": "dropoff_census_tract", "Pickup Community Area": "pickup_community_area", "Dropoff Community Area": "dropoff_community_area", "Fare": "fare", "Tips": "tips", "Tolls": "tolls", "Extras": "extras", "Trip Total": "trip_total", "Payment Type": "payment_type", "Company": "company", "Pickup Centroid Latitude": "pickup_latitude", "Pickup Centroid Longitude": "pickup_longitude", "Pickup Centroid Location": "pickup_location", "Dropoff Centroid Latitude": "dropoff_latitude", "Dropoff Centroid Longitude": "dropoff_longitude", "Dropoff Centroid  Location": "dropoff_location"}
+    #       NON_NA_COLUMNS: >-
+    #         ["unique_key","taxi_id"]
+    #       OUTPUT_OBJECT_FOLDER: "data/chicago_taxi_trips/output"
+    #       DATA_TYPES: >-
+    #         {"Trip Seconds": "Int64", "Pickup Census Tract": "Int64", "Dropoff Census Tract": "Int64","Pickup Community Area": "Int64","Dropoff Community Area": "Int64"}
+    #       DATE_COLS: >-
+    #         ["Trip Start Timestamp", "Trip End Timestamp"]
+    #       BATCH_COUNT: "3"
 
-    - operator: "GoogleCloudStorageToBigQueryOperator"
-      description: "Task to load CSV data to a BigQuery table"
-      args:
-        task_id: "load_taxi_trips_to_bq"
-        bucket: "{{ var.value.composer_bucket }}"
-        source_objects: ["data/chicago_taxi_trips/output/*"]
-        source_format: "CSV"
-        destination_project_dataset_table: "chicago_taxi_trips.taxi_trips"
-        skip_leading_rows: 1
-        allow_quoted_newlines: True
-        write_disposition: "WRITE_TRUNCATE"
-        schema_fields:
-          - name: "unique_key"
-            type: "string"
-            mode: "required"
-            description: "Unique identifier for the trip."
-          - name: "taxi_id"
-            type: "string"
-            mode: "required"
-            description: "A unique identifier for the taxi."
-          - name: "trip_start_timestamp"
-            type: "timestamp"
-            mode: "nullable"
-            description: "When the trip started, rounded to the nearest 15 minutes."
-          - name: "trip_end_timestamp"
-            type: "timestamp"
-            mode: "nullable"
-            description: "When the trip ended, rounded to the nearest 15 minutes."
-          - name: "trip_seconds"
-            type: "integer"
-            mode: "nullable"
-            description: "Time of the trip in seconds."
-          - name: "trip_miles"
-            type: "float"
-            mode: "nullable"
-            description: "Distance of the trip in miles."
-          - name: "pickup_census_tract"
-            type: "integer"
-            mode: "nullable"
-            description: "The Census Tract where the trip began. For privacy, this Census Tract is not shown for some trips."
-          - name: "dropoff_census_tract"
-            type: "integer"
-            mode: "nullable"
-            description: "The Census Tract where the trip ended. For privacy, this Census Tract is not shown for some trips."
-          - name: "pickup_community_area"
-            type: "integer"
-            mode: "nullable"
-            description: "The Community Area where the trip began."
-          - name: "dropoff_community_area"
-            type: "integer"
-            mode: "nullable"
-            description: "The Community Area where the trip ended."
-          - name: "fare"
-            type: "float"
-            mode: "nullable"
-            description: "The fare for the trip."
-          - name: "tips"
-            type: "float"
-            mode: "nullable"
-            description: "The tip for the trip. Cash tips generally will not be recorded."
-          - name: "tolls"
-            type: "float"
-            mode: "nullable"
-            description: "The tolls for the trip."
-          - name: "extras"
-            type: "float"
-            mode: "nullable"
-            description: "Extra charges for the trip."
-          - name: "trip_total"
-            type: "float"
-            mode: "nullable"
-            description: "Total cost of the trip, the total of the fare, tips, tolls, and extras."
-          - name: "payment_type"
-            type: "string"
-            mode: "nullable"
-            description: "Type of payment for the trip."
-          - name: "company"
-            type: "string"
-            mode: "nullable"
-            description: "The taxi company."
-          - name: "pickup_latitude"
-            type: "float"
-            mode: "nullable"
-            description: "The latitude of the center of the pickup census tract or the community area if the census tract has been hidden for privacy."
-          - name: "pickup_longitude"
-            type: "float"
-            mode: "nullable"
-            description: "The longitude of the center of the pickup census tract or the community area if the census tract has been hidden for privacy."
-          - name: "pickup_location"
-            type: "string"
-            mode: "nullable"
-            description: "The location of the center of the pickup census tract or the community area if the census tract has been hidden for privacy."
-          - name: "dropoff_latitude"
-            type: "float"
-            mode: "nullable"
-            description: "The latitude of the center of the dropoff census tract or the community area if the census tract has been hidden for privacy."
-          - name: "dropoff_longitude"
-            type: "float"
-            mode: "nullable"
-            description: "The longitude of the center of the dropoff census tract or the community area if the census tract has been hidden for privacy."
-          - name: "dropoff_location"
-            type: "string"
-            mode: "nullable"
-            description: "The location of the center of the dropoff census tract or the community area if the census tract has been hidden for privacy."
+    # - operator: "KubernetesPodOperator"
+    #   description: "Run CSV transform within kubernetes pod"
+    #   args:
+    #     task_id: "transform_csv_4"
+    #     name: "taxi_trips_4"
+    #     namespace: "composer-user-workloads"
+    #     service_account_name: "default"
+    #     config_file: "/home/airflow/composer_kube_config"
+    #     image_pull_policy: "Always"
+    #     image: "{{ var.json.chicago_taxi_trips.container_registry.run_csv_transform_kub }}"
+    #     env_vars:
+    #       GCS_BUCKET: "{{ var.value.composer_bucket }}"
+    #       SOURCE_OBJECT_FOLDER: "data/chicago_taxi_trips/split_files"
+    #       RENAME_MAPPINGS: >-
+    #         {"Trip ID": "unique_key", "Taxi ID": "taxi_id", "Trip Start Timestamp": "trip_start_timestamp", "Trip End Timestamp": "trip_end_timestamp", "Trip Seconds": "trip_seconds", "Trip Miles": "trip_miles", "Pickup Census Tract": "pickup_census_tract", "Dropoff Census Tract": "dropoff_census_tract", "Pickup Community Area": "pickup_community_area", "Dropoff Community Area": "dropoff_community_area", "Fare": "fare", "Tips": "tips", "Tolls": "tolls", "Extras": "extras", "Trip Total": "trip_total", "Payment Type": "payment_type", "Company": "company", "Pickup Centroid Latitude": "pickup_latitude", "Pickup Centroid Longitude": "pickup_longitude", "Pickup Centroid Location": "pickup_location", "Dropoff Centroid Latitude": "dropoff_latitude", "Dropoff Centroid Longitude": "dropoff_longitude", "Dropoff Centroid  Location": "dropoff_location"}
+    #       NON_NA_COLUMNS: >-
+    #         ["unique_key","taxi_id"]
+    #       OUTPUT_OBJECT_FOLDER: "data/chicago_taxi_trips/output"
+    #       DATA_TYPES: >-
+    #         {"Trip Seconds": "Int64", "Pickup Census Tract": "Int64", "Dropoff Census Tract": "Int64","Pickup Community Area": "Int64","Dropoff Community Area": "Int64"}
+    #       DATE_COLS: >-
+    #         ["Trip Start Timestamp", "Trip End Timestamp"]
+    #       BATCH_COUNT: "4"
+
+    # - operator: "KubernetesPodOperator"
+    #   description: "Run CSV transform within kubernetes pod"
+    #   args:
+    #     task_id: "transform_csv_5"
+    #     name: "taxi_trips_5"
+    #     namespace: "composer-user-workloads"
+    #     service_account_name: "default"
+    #     config_file: "/home/airflow/composer_kube_config"
+    #     image_pull_policy: "Always"
+    #     image: "{{ var.json.chicago_taxi_trips.container_registry.run_csv_transform_kub }}"
+    #     env_vars:
+    #       GCS_BUCKET: "{{ var.value.composer_bucket }}"
+    #       SOURCE_OBJECT_FOLDER: "data/chicago_taxi_trips/split_files"
+    #       RENAME_MAPPINGS: >-
+    #         {"Trip ID": "unique_key", "Taxi ID": "taxi_id", "Trip Start Timestamp": "trip_start_timestamp", "Trip End Timestamp": "trip_end_timestamp", "Trip Seconds": "trip_seconds", "Trip Miles": "trip_miles", "Pickup Census Tract": "pickup_census_tract", "Dropoff Census Tract": "dropoff_census_tract", "Pickup Community Area": "pickup_community_area", "Dropoff Community Area": "dropoff_community_area", "Fare": "fare", "Tips": "tips", "Tolls": "tolls", "Extras": "extras", "Trip Total": "trip_total", "Payment Type": "payment_type", "Company": "company", "Pickup Centroid Latitude": "pickup_latitude", "Pickup Centroid Longitude": "pickup_longitude", "Pickup Centroid Location": "pickup_location", "Dropoff Centroid Latitude": "dropoff_latitude", "Dropoff Centroid Longitude": "dropoff_longitude", "Dropoff Centroid  Location": "dropoff_location"}
+    #       NON_NA_COLUMNS: >-
+    #         ["unique_key","taxi_id"]
+    #       OUTPUT_OBJECT_FOLDER: "data/chicago_taxi_trips/output"
+    #       DATA_TYPES: >-
+    #         {"Trip Seconds": "Int64", "Pickup Census Tract": "Int64", "Dropoff Census Tract": "Int64","Pickup Community Area": "Int64","Dropoff Community Area": "Int64"}
+    #       DATE_COLS: >-
+    #         ["Trip Start Timestamp", "Trip End Timestamp"]
+    #       BATCH_COUNT: "5"
+
+    # - operator: "KubernetesPodOperator"
+    #   description: "Run CSV transform within kubernetes pod"
+    #   args:
+    #     task_id: "transform_csv_6"
+    #     name: "taxi_trips_6"
+    #     namespace: "composer-user-workloads"
+    #     service_account_name: "default"
+    #     config_file: "/home/airflow/composer_kube_config"
+    #     image_pull_policy: "Always"
+    #     image: "{{ var.json.chicago_taxi_trips.container_registry.run_csv_transform_kub }}"
+    #     env_vars:
+    #       GCS_BUCKET: "{{ var.value.composer_bucket }}"
+    #       SOURCE_OBJECT_FOLDER: "data/chicago_taxi_trips/split_files"
+    #       RENAME_MAPPINGS: >-
+    #         {"Trip ID": "unique_key", "Taxi ID": "taxi_id", "Trip Start Timestamp": "trip_start_timestamp", "Trip End Timestamp": "trip_end_timestamp", "Trip Seconds": "trip_seconds", "Trip Miles": "trip_miles", "Pickup Census Tract": "pickup_census_tract", "Dropoff Census Tract": "dropoff_census_tract", "Pickup Community Area": "pickup_community_area", "Dropoff Community Area": "dropoff_community_area", "Fare": "fare", "Tips": "tips", "Tolls": "tolls", "Extras": "extras", "Trip Total": "trip_total", "Payment Type": "payment_type", "Company": "company", "Pickup Centroid Latitude": "pickup_latitude", "Pickup Centroid Longitude": "pickup_longitude", "Pickup Centroid Location": "pickup_location", "Dropoff Centroid Latitude": "dropoff_latitude", "Dropoff Centroid Longitude": "dropoff_longitude", "Dropoff Centroid  Location": "dropoff_location"}
+    #       NON_NA_COLUMNS: >-
+    #         ["unique_key","taxi_id"]
+    #       OUTPUT_OBJECT_FOLDER: "data/chicago_taxi_trips/output"
+    #       DATA_TYPES: >-
+    #         {"Trip Seconds": "Int64", "Pickup Census Tract": "Int64", "Dropoff Census Tract": "Int64","Pickup Community Area": "Int64","Dropoff Community Area": "Int64"}
+    #       DATE_COLS: >-
+    #         ["Trip Start Timestamp", "Trip End Timestamp"]
+    #       BATCH_COUNT: "6"
+
+    # - operator: "GoogleCloudStorageToBigQueryOperator"
+    #   description: "Task to load CSV data to a BigQuery table"
+    #   args:
+    #     task_id: "load_taxi_trips_to_bq"
+    #     bucket: "{{ var.value.composer_bucket }}"
+    #     source_objects: ["data/chicago_taxi_trips/output/*"]
+    #     source_format: "CSV"
+    #     destination_project_dataset_table: "chicago_taxi_trips.taxi_trips"
+    #     skip_leading_rows: 1
+    #     allow_quoted_newlines: True
+    #     write_disposition: "WRITE_TRUNCATE"
+    #     schema_fields:
+    #       - name: "unique_key"
+    #         type: "string"
+    #         mode: "required"
+    #         description: "Unique identifier for the trip."
+    #       - name: "taxi_id"
+    #         type: "string"
+    #         mode: "required"
+    #         description: "A unique identifier for the taxi."
+    #       - name: "trip_start_timestamp"
+    #         type: "timestamp"
+    #         mode: "nullable"
+    #         description: "When the trip started, rounded to the nearest 15 minutes."
+    #       - name: "trip_end_timestamp"
+    #         type: "timestamp"
+    #         mode: "nullable"
+    #         description: "When the trip ended, rounded to the nearest 15 minutes."
+    #       - name: "trip_seconds"
+    #         type: "integer"
+    #         mode: "nullable"
+    #         description: "Time of the trip in seconds."
+    #       - name: "trip_miles"
+    #         type: "float"
+    #         mode: "nullable"
+    #         description: "Distance of the trip in miles."
+    #       - name: "pickup_census_tract"
+    #         type: "integer"
+    #         mode: "nullable"
+    #         description: "The Census Tract where the trip began. For privacy, this Census Tract is not shown for some trips."
+    #       - name: "dropoff_census_tract"
+    #         type: "integer"
+    #         mode: "nullable"
+    #         description: "The Census Tract where the trip ended. For privacy, this Census Tract is not shown for some trips."
+    #       - name: "pickup_community_area"
+    #         type: "integer"
+    #         mode: "nullable"
+    #         description: "The Community Area where the trip began."
+    #       - name: "dropoff_community_area"
+    #         type: "integer"
+    #         mode: "nullable"
+    #         description: "The Community Area where the trip ended."
+    #       - name: "fare"
+    #         type: "float"
+    #         mode: "nullable"
+    #         description: "The fare for the trip."
+    #       - name: "tips"
+    #         type: "float"
+    #         mode: "nullable"
+    #         description: "The tip for the trip. Cash tips generally will not be recorded."
+    #       - name: "tolls"
+    #         type: "float"
+    #         mode: "nullable"
+    #         description: "The tolls for the trip."
+    #       - name: "extras"
+    #         type: "float"
+    #         mode: "nullable"
+    #         description: "Extra charges for the trip."
+    #       - name: "trip_total"
+    #         type: "float"
+    #         mode: "nullable"
+    #         description: "Total cost of the trip, the total of the fare, tips, tolls, and extras."
+    #       - name: "payment_type"
+    #         type: "string"
+    #         mode: "nullable"
+    #         description: "Type of payment for the trip."
+    #       - name: "company"
+    #         type: "string"
+    #         mode: "nullable"
+    #         description: "The taxi company."
+    #       - name: "pickup_latitude"
+    #         type: "float"
+    #         mode: "nullable"
+    #         description: "The latitude of the center of the pickup census tract or the community area if the census tract has been hidden for privacy."
+    #       - name: "pickup_longitude"
+    #         type: "float"
+    #         mode: "nullable"
+    #         description: "The longitude of the center of the pickup census tract or the community area if the census tract has been hidden for privacy."
+    #       - name: "pickup_location"
+    #         type: "string"
+    #         mode: "nullable"
+    #         description: "The location of the center of the pickup census tract or the community area if the census tract has been hidden for privacy."
+    #       - name: "dropoff_latitude"
+    #         type: "float"
+    #         mode: "nullable"
+    #         description: "The latitude of the center of the dropoff census tract or the community area if the census tract has been hidden for privacy."
+    #       - name: "dropoff_longitude"
+    #         type: "float"
+    #         mode: "nullable"
+    #         description: "The longitude of the center of the dropoff census tract or the community area if the census tract has been hidden for privacy."
+    #       - name: "dropoff_location"
+    #         type: "string"
+    #         mode: "nullable"
+    #         description: "The location of the center of the dropoff census tract or the community area if the census tract has been hidden for privacy."
+
+  # graph_paths:
+  #   - "prepare_source >> split_source_file >> transform_csv_1 >> transform_csv_2 >> transform_csv_3 >> transform_csv_4 >> transform_csv_5 >> transform_csv_6 >> load_taxi_trips_to_bq"
 
   graph_paths:
-    - "create_cluster >> prepare_source >> split_source_file >> [transform_csv_1, transform_csv_2, transform_csv_3, transform_csv_4, transform_csv_5, transform_csv_6] >> load_taxi_trips_to_bq >> delete_cluster"
+    - "prepare_source"
