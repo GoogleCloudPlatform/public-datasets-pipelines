@@ -130,7 +130,7 @@ dag:
           PIPELINE_NAME: "GHCND by year"
           SOURCE_URL: >-
             {
-              "ghcnd_by_year": "ftp://ftp.ncei.noaa.gov/pub/data/ghcn/daily/by_year/.csv.gz"
+              "ghcnd_by_year": "http://www.ncei.noaa.gov/pub/data/ghcn/daily/by_year/.csv.gz"
             }
           SOURCE_FILE: "files/data_ghcnd_by_year.csv"
           TARGET_FILE: "files/data_output_ghcnd_by_year.csv"
@@ -2993,4 +2993,4 @@ dag:
         name: noaa
 
   graph_paths:
-    - "create_cluster >> storms_database_by_year >> noaa_gsod_by_year >> [ghcnd_by_year, lightning_strikes_by_year ] >> ghcnd_hurricanes >> [ ghcnd_inventory, spc_hail, spc_wind, spc_tornado, ghcnd_states, ghcnd_stations, gsod_stations, ghcnd_countries] >> noaa_ghcn_m >> [noaa_goes16_mcmip, noaa_goes16_cmip, noaa_goes16_glm] >> noaa_goes16_radiance >> [noaa_goes17_mcmip, noaa_goes17_cmip, noaa_goes17_glm] >> noaa_goes17_radiance >> delete_cluster"
+    - "create_cluster >> [ghcnd_by_year, lightning_strikes_by_year ] >> ghcnd_hurricanes >> [ ghcnd_inventory, spc_hail, spc_wind, spc_tornado, ghcnd_states, ghcnd_stations, gsod_stations, ghcnd_countries] >> noaa_ghcn_m >> [noaa_goes16_mcmip, noaa_goes16_cmip, noaa_goes16_glm] >> noaa_goes16_radiance >> [noaa_goes17_mcmip, noaa_goes17_cmip, noaa_goes17_glm] >> noaa_goes17_radiance >> storms_database_by_year >> noaa_gsod_by_year >> delete_cluster"

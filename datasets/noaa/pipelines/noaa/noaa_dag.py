@@ -829,8 +829,6 @@ with DAG(
 
     (
         create_cluster
-        >> storms_database_by_year
-        >> noaa_gsod_by_year
         >> [ghcnd_by_year, lightning_strikes_by_year]
         >> ghcnd_hurricanes
         >> [
@@ -848,5 +846,7 @@ with DAG(
         >> noaa_goes16_radiance
         >> [noaa_goes17_mcmip, noaa_goes17_cmip, noaa_goes17_glm]
         >> noaa_goes17_radiance
+        >> storms_database_by_year
+        >> noaa_gsod_by_year
         >> delete_cluster
     )
