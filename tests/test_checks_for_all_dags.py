@@ -15,7 +15,7 @@ import tempfile
 import typing
 
 import pytest
-from airflow import models
+# from airflow import models
 from ruamel import yaml
 
 from scripts import generate_dag, generate_terraform
@@ -102,6 +102,7 @@ def test_check_all_dag_ids_must_be_prepended_with_dataset_name():
         generated_dag_id = f"{dataset_path.name}.{pipeline_path.name}"
 
         assert f'dag_id="{generated_dag_id}"' in dag_py.read_text()
+
 
 # Removed due to false-positives when reporting errors in resource limit
 # section of pipeline.yaml.
