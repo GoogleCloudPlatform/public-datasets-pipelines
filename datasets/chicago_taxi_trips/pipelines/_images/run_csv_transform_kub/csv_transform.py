@@ -37,7 +37,9 @@ def main(
     gcs_datafile = f"gs://{gcs_bucket}/{csv_gcs_path}"
     logging.info(f"Downloading source file from {source_url}.")
     cmd = f"wget -q -O - {source_url} |gcloud storage cp - {gcs_datafile}"
-    ps = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+    ps = subprocess.Popen(
+        cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+    )
     ps.communicate()
     logging.info(f"Reading and processing source file from {gcs_datafile}.")
     file_batch_nbr = 1
@@ -57,7 +59,9 @@ def main(
         batch_fullpath = os.path.join(
             batch_path, f"{batch_filename}{batch_num_pad}.csv"
         )
-        logging.info(f"Processing chunk #{batch_num_pad} and writing to {batch_fullpath}")
+        logging.info(
+            f"Processing chunk #{batch_num_pad} and writing to {batch_fullpath}"
+        )
         chunk.dropna(subset=non_na_columns, inplace=True)
         chunk["trip_start_timestamp"] = pd.to_datetime(
             chunk["trip_start_timestamp"], format="%m/%d/%Y %I:%M:%S %p"
