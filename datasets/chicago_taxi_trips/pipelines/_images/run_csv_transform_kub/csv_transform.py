@@ -16,6 +16,7 @@ import datetime
 import json
 import logging
 import os
+import subprocess
 
 import pandas as pd
 
@@ -34,9 +35,10 @@ def main(
     )
     # Stage the datafile
     gcs_datafile = f"gs://{gcs_bucket}/{csv_gcs_path}"
-    # logging.info(f"Downloading source file from {source_url}.")
-    # cmd = f"wget -q -O - {source_url} |gcloud storage cp - {gcs_datafile}"
-    # os.system(cmd)
+    logging.info(f"Downloading source file from {source_url}.")
+    cmd = f"wget -q -O - {source_url} |gcloud storage cp - {gcs_datafile}"
+    ps = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+    ps.communicate()
     logging.info(f"Reading and processing source file from {gcs_datafile}.")
     file_batch_nbr = 1
     batch_filename = f"./output/taxi_trips_{str.zfill(str(file_batch_nbr), 10)}"
