@@ -46,7 +46,9 @@ def main(
         if fldr == "":
             folder_to_process = f"{root_gcs_folder}/{root_pipeline_gs_folder}/access"
         else:
-            folder_to_process = f"{root_gcs_folder}/{root_pipeline_gs_folder}/{fldr}/access"
+            folder_to_process = (
+                f"{root_gcs_folder}/{root_pipeline_gs_folder}/{fldr}/access"
+            )
         file_prefix = distinct_file_prefixes(
             project_id, target_gcs_bucket, folder_to_process, "csv"
         )
@@ -93,14 +95,14 @@ def main(
                 truncate_tables_for_prefix(
                     project_id=project_id,
                     dataset_id=dataset_id,
-                    table_name_prefix=destination_table
+                    table_name_prefix=destination_table,
                 )
                 for filename in prefix_file_list:
-                    print(f' ... {filename}')
+                    print(f" ... {filename}")
                     local_source_folder = os.path.split(local_file_path)[0]
                     local_file_path = f"{local_source_folder}/{filename}"
-                    if fldr_ident != 'access':
-                        fldr_ident += '/access'
+                    if fldr_ident != "access":
+                        fldr_ident += "/access"
                     source_file_gcs_full_path = f"gs://{target_gcs_bucket}/{root_gcs_folder}/{root_pipeline_gs_folder}/{fldr_ident}/{filename}"
                     download_file_gcs(
                         project_id=project_id,
@@ -126,42 +128,26 @@ def main(
 
 
 def truncate_tables_for_prefix(
-    project_id: str,
-    dataset_id: str,
-    table_name_prefix: str
+    project_id: str, dataset_id: str, table_name_prefix: str
 ) -> None:
     client = bigquery.Client(project=project_id)
     tables = client.list_tables(dataset_id)
     for table in tables:
         if table.table_id.startswith(table_name_prefix):
             truncate_table(
-                project_id=project_id,
-                dataset_id=dataset_id,
-                table_id=table.table_id
+                project_id=project_id, dataset_id=dataset_id, table_id=table.table_id
             )
 
 
-def truncate_table_if_exists(
-    project_id: str,
-    dataset_id: str,
-    table_id: str
-) -> None:
+def truncate_table_if_exists(project_id: str, dataset_id: str, table_id: str) -> None:
     pass
     if table_exists(project_id, dataset_id, table_id):
-        truncate_table(
-            project_id=project_id,
-            dataset_id=dataset_id,
-            table_id=table_id
-        )
+        truncate_table(project_id=project_id, dataset_id=dataset_id, table_id=table_id)
     else:
         pass
 
 
-def truncate_table(
-    project_id: str,
-    dataset_id: str,
-    table_id: str
-):
+def truncate_table(project_id: str, dataset_id: str, table_id: str):
     logging.info(f" ... Truncating table {project_id}.{dataset_id}.{table_id}")
     client = bigquery.Client(project=project_id)
     query = f"""
@@ -174,7 +160,9 @@ def truncate_table(
 def list_of_files_prefix(
     project_id: str, gcs_bucket: str, gcs_file_path: str, prefix: str
 ) -> typing.List[str]:
-    p=re.compile(f'^{prefix}([0-9]*)*\.csv') # make sure the file has a numeric digit directly after the prefix e.g. USW0001109.csv where USW is the prefix
+    # p = re.compile(
+    #     f"^{prefix}([0-9]*)*\\.csv"
+    # )  # make sure the file has a numeric digit directly after the prefix e.g. USW0001109.csv where USW is the prefix
     storage_client = storage.Client(project_id)
     bucket_file_list_blob = storage_client.list_blobs(
         gcs_bucket, prefix=f"{gcs_file_path}/", delimiter="/"
@@ -184,21 +172,21 @@ def list_of_files_prefix(
         str(item).split(",")[1].strip() for item in bucket_file_list_iter
     ]
     df = pd.DataFrame(bucket_file_list, columns=["filename"])
-    df["filename"] = df["filename"].apply(lambda x, prefix: filter_to_prefix_list(prefix, os.path.basename(x)), args=[prefix])
+    df["filename"] = df["filename"].apply(
+        lambda x, prefix: filter_to_prefix_list(prefix, os.path.basename(x)),
+        args=[prefix],
+    )
     df = df[df["filename"] != ""]
     df = df[df["filename"].notnull()]
     df = sorted(df["filename"].unique())
     return df
 
 
-def filter_to_prefix_list(
-        prefix: str,
-        filename: str
-) -> str:
-    reg_expr = f"^{prefix}([0-9]*)*\.csv"
-    filenm  = re.match(reg_expr, filename)
+def filter_to_prefix_list(prefix: str, filename: str) -> str:
+    reg_expr = f"^{prefix}([0-9]*)*\\.csv"
+    filenm = re.match(reg_expr, filename)
     if filenm:
-        return(filenm.group(0))
+        return filenm.group(0)
     else:
         return None
 
@@ -242,7 +230,9 @@ def create_schema_and_table(
         f"creating schema and table ... destination_table={destination_table} target_gcs_bucket={target_gcs_bucket} output_schema_file={output_schema_file} file_path={gcs_file_path} schema_filepath_gcs_path={schema_filepath_gcs_path} "
     )
     table_already_exists = table_exists(project_id, dataset_id, destination_table)
-    source_file_exists = gcs_file_exists(bucket=target_gcs_bucket, file_path=output_schema_file)
+    source_file_exists = gcs_file_exists(
+        bucket=target_gcs_bucket, file_path=output_schema_file
+    )
     if not table_already_exists:
         if not source_file_exists:
             generate_schema_file_from_gcs_source_file(
@@ -270,7 +260,7 @@ def gcs_file_exists(bucket: str, file_path: str) -> bool:
 
 
 def prefix_files_exist(gcs_bucket: str, prefix: str, folder_to_process: str) -> bool:
-    command = f"gsutil ls gs://{gcs_bucket}/{folder_to_process}/* |grep '\.csv'"
+    command = f"gsutil ls gs://{gcs_bucket}/{folder_to_process}/* |grep '\\.csv'"
     files = sorted(str(subprocess.check_output(command, shell=True)).split("\\n"))
     return len(files) > 0
 
@@ -416,20 +406,20 @@ def load_data_gcs_to_bq(
                 )
             load_data.execute("load_source_data")
     except google_api_exceptions.BadRequest:
-            load_ext_schema(
-                project_id=project_id,
-                dataset_id=dataset_id,
-                table_id=table_id,
-                ext_surr_val=1,
-                source_bucket=source_bucket,
-                gcs_file_path=gcs_file_path,
-                local_file_path=local_file_path,
-                schema_filepath=schema_filepath,
-                output_schema_file=output_schema_file,
-                dag=dag,
-                write_disposition=write_disposition,
-                field_delimiter=field_delimiter
-            )
+        load_ext_schema(
+            project_id=project_id,
+            dataset_id=dataset_id,
+            table_id=table_id,
+            ext_surr_val=1,
+            source_bucket=source_bucket,
+            gcs_file_path=gcs_file_path,
+            local_file_path=local_file_path,
+            schema_filepath=schema_filepath,
+            output_schema_file=output_schema_file,
+            dag=dag,
+            write_disposition=write_disposition,
+            field_delimiter=field_delimiter,
+        )
     logging.info(
         f"Loading data from {gcs_file_path} into {project_id}.{dataset_id}.{table_id} completed"
     )
@@ -447,7 +437,7 @@ def load_ext_schema(
     output_schema_file: str,
     dag: DAG,
     write_disposition: str,
-    field_delimiter: str = ","
+    field_delimiter: str = ",",
 ) -> None:
     ext = f"ext_{ str(ext_surr_val).zfill(3) }"
     destination_table = f"{table_id}_{ext}"
@@ -482,7 +472,7 @@ def load_ext_schema(
             skip_leading_rows=1,
             schema_object=schema_file_path,
             write_disposition=f"{write_disposition}",
-            autodetect=False
+            autodetect=False,
         )
         load_data.execute(task_id)
     except google_api_exceptions.BadRequest:
@@ -499,11 +489,10 @@ def load_ext_schema(
                 output_schema_file=output_schema_file,
                 dag=dag,
                 write_disposition=write_disposition,
-                field_delimiter=field_delimiter
+                field_delimiter=field_delimiter,
             )
         else:
-            raise("Error: Total number of extension schemas exceeded.")
-
+            raise ("Error: Total number of extension schemas exceeded.")
 
 
 def create_dest_table(
