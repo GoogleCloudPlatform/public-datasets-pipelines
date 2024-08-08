@@ -74,8 +74,8 @@ def main(
                     f"{root_gcs_folder}/schema/{root_pipeline_gs_folder}"
                 )
                 output_schema_file = f"{source_local_schema_folder}/{root_pipeline_gs_folder}/{destination_table}_schema.json"
-                schema_file_path = f"{schema_filepath_gcs_path}/{ os.path.basename(output_schema_file) }"
-                local_file_path = f"{source_local_folder_root}/{root_pipeline_gs_folder}/{fldr}/{ os.path.basename(first_file_path) }"
+                schema_file_path = f"{schema_filepath_gcs_path}/{os.path.basename(output_schema_file)}"
+                local_file_path = f"{source_local_folder_root}/{root_pipeline_gs_folder}/{fldr}/{os.path.basename(first_file_path)}"
                 create_schema_and_table(
                     project_id=project_id,
                     dataset_id=dataset_id,
@@ -439,7 +439,7 @@ def load_ext_schema(
     write_disposition: str,
     field_delimiter: str = ",",
 ) -> None:
-    ext = f"ext_{ str(ext_surr_val).zfill(3) }"
+    ext = f"ext_{str(ext_surr_val).zfill(3)}"
     destination_table = f"{table_id}_{ext}"
     schema_file_path = schema_filepath.replace("_schema.json", f"_{ext}_schema.json")
     output_schema_file_ext = output_schema_file.replace(
