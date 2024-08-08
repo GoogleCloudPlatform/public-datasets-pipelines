@@ -1,3 +1,5 @@
+fsspec
+gcsfs
 google-cloud-storage
 pandas
 requests
