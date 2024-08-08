@@ -18,10 +18,6 @@ FROM python:3.8
 # Allow statements and log messages to appear in Cloud logs
 ENV PYTHONUNBUFFERED True
 
-RUN apt-get -y update && apt-get install -y apt-transport-https ca-certificates gnupg &&\
-    echo "deb https://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list &&\
-    curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - &&\
-    apt-get -y update && apt-get install -y google-cloud-sdk
 
 # Copy the requirements file into the image
 COPY requirements.txt ./

@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,8 @@
 
 
 from airflow import DAG
-from airflow.contrib.operators import gcs_to_bq, kubernetes_pod_operator
+from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
     "owner": "Google",
@@ -33,7 +34,7 @@ with DAG(
 ) as dag:
 
     # Run CSV transform within kubernetes pod
-    iris_transform_csv = kubernetes_pod_operator.KubernetesPodOperator(
+    iris_transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="iris_transform_csv",
         startup_timeout_seconds=600,
         name="iris",
@@ -59,7 +60,7 @@ with DAG(
     )
 
     # Task to load CSV data to a BigQuery table
-    load_iris_to_bq = gcs_to_bq.GoogleCloudStorageToBigQueryOperator(
+    load_iris_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_iris_to_bq",
         bucket="{{ var.value.composer_bucket }}",
         source_objects=["data/ml_datasets/iris/data_output.csv"],

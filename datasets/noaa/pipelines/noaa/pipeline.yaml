@@ -18,6 +18,24 @@ resources:
     table_id: "ghcnd_by_year"
     description: "noaaspc"
   - type: bigquery_table
+    table_id: "ghcnm_tmin"
+    description: "noaaspc"
+  - type: bigquery_table
+    table_id: "ghcnm_tmin_stations"
+    description: "noaaspc"
+  - type: bigquery_table
+    table_id: "ghcnm_tavg"
+    description: "noaaspc"
+  - type: bigquery_table
+    table_id: "ghcnm_tavg_stations"
+    description: "noaaspc"
+  - type: bigquery_table
+    table_id: "ghcnm_tmax"
+    description: "noaaspc"
+  - type: bigquery_table
+    table_id: "ghcnm_tmax_stations"
+    description: "noaaspc"
+  - type: bigquery_table
     table_id: "ghcnd_countries"
     description: "noaaspc"
   - type: bigquery_table
@@ -38,6 +56,36 @@ resources:
   - type: bigquery_table
     table_id: "lightning_strikes_by_year"
     description: "noaaspc"
+  - type: bigquery_table
+    table_id: "storms"
+    description: "noaaspc"
+  - type: bigquery_table
+    table_id: "hail_reports"
+    description: "noaaspc"
+  - type: bigquery_table
+    table_id: "wind_reports"
+    description: "noaaspc"
+  - type: bigquery_table
+    table_id: "tornado_reports"
+    description: "noaaspc"
+  - type: bigquery_table
+    table_id: "abi_l2_mcmip"
+    description: "noaaspc"
+  - type: bigquery_table
+    table_id: "abi_l2_lcfa"
+    description: "noaaspc"
+  - type: bigquery_table
+    table_id: "abi_l2_cmip"
+    description: "noaaspc"
+  - type: bigquery_table
+    table_id: "abi_lib_radiance"
+    description: "noaaspc"
+  - type: bigquery_table
+    table_id: "gsod2020"
+    description: "noaaspc"
+  - type: bigquery_table
+    table_id: "gsod2022"
+    description: "noaaspc"
 
 dag:
   airflow_version: 2
@@ -48,7 +96,7 @@ dag:
       depends_on_past: False
       start_date: '2021-03-01'
     max_active_runs: 1
-    schedule_interval: "* 1 * * 6"
+    schedule_interval: "30 1 * * *"
     catchup: False
     default_view: graph
 
@@ -60,9 +108,10 @@ dag:
         location: "us-central1-c"
         body:
           name: noaa
-          initial_node_count: 2
+          initial_node_count: 1
+          network: "{{ var.value.vpc_network }}"
           node_config:
-            machine_type: e2-standard-16
+            machine_type: e2-highmem-16
             oauth_scopes:
               - https://www.googleapis.com/auth/devstorage.read_write
               - https://www.googleapis.com/auth/cloud-platform
@@ -79,7 +128,10 @@ dag:
         image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
         env_vars:
           PIPELINE_NAME: "GHCND by year"
-          SOURCE_URL: "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/by_year/.csv.gz"
+          SOURCE_URL: >-
+            {
+              "ghcnd_by_year": "http://www.ncei.noaa.gov/pub/data/ghcn/daily/by_year/.csv.gz"
+            }
           SOURCE_FILE: "files/data_ghcnd_by_year.csv"
           TARGET_FILE: "files/data_output_ghcnd_by_year.csv"
           CHUNKSIZE: "750000"
@@ -140,11 +192,148 @@ dag:
             ]
           DATE_FORMAT_LIST: >-
             [
-              "date"
+              ["date", "%Y%m%d", "%Y-%m-%d" ]
             ]
-        resources:
-          request_ephemeral_storage: "16G"
-          limit_cpu: "3"
+
+    - operator: "GKEStartPodOperator"
+      description: "Run NOAA load processes - GHCN-M"
+      args:
+        task_id: "noaa_ghcn_m"
+        name: "noaa.ghcn_m"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: noaa
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "NOAA GHCN-M"
+          SOURCE_URL: >-
+            {
+              "tmin": "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/v3/ghcnm.tmin.latest.qca.tar.gz",
+              "tavg": "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/v3/ghcnm.tavg.latest.qca.tar.gz",
+              "tmax": "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/v3/ghcnm.tmax.latest.qca.tar.gz"
+            }
+          SOURCE_FILE: "files/data_ghcn_m.csv"
+          TARGET_FILE: "files/data_output_ghcn_m.csv"
+          CHUNKSIZE: "100000"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "ghcn_m"
+          TABLE_ID: "ghcnm_"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/noaa/ghcn_m/data_output.csv"
+          SCHEMA_PATH: "data/noaa/schema/noaa_ghcn_m__schema.json"
+          DROP_DEST_TABLE: "N"
+          INPUT_FIELD_DELIMITER: "|"
+          CONVERT_INT_LIST: >-
+            {
+              "data": [
+                        "id",
+                        "year",
+                        "value1",
+                        "value2",
+                        "value3",
+                        "value4",
+                        "value5",
+                        "value6",
+                        "value7",
+                        "value8",
+                        "value9",
+                        "value10",
+                        "value11",
+                        "value12"
+              ],
+              "stations": [
+                            "id",
+                            "grelev",
+                            "popsiz",
+                            "ocndis",
+                            "towndis"
+              ]
+            }
+          NULL_ROWS_LIST: >-
+            [
+              "id"
+            ]
+          FULL_DATA_LOAD: "N"
+          REMOVE_SOURCE_FILE: "N"
+          DELETE_TARGET_FILE: "N"
+          INPUT_CSV_FIELD_POS: >-
+            [
+              {
+                "data": [
+                          ["id", "0", "10"],
+                          ["year", "11", "14"],
+                          ["element", "15", "18"],
+                          ["value1", "19", "23"],
+                          ["dmflag1", "24", "24"],
+                          ["qcflag1", "25", "25"],
+                          ["dsflag1", "26", "26"],
+                          ["value2", "27", "31"],
+                          ["dmflag2", "32", "32"],
+                          ["qcflag2", "33", "33"],
+                          ["dsflag2", "34", "34"],
+                          ["value3", "35", "39"],
+                          ["dmflag3", "40", "40"],
+                          ["qcflag3", "41", "41"],
+                          ["dsflag3", "42", "42"],
+                          ["value4", "43", "47"],
+                          ["dmflag4", "48", "48"],
+                          ["qcflag4", "49", "49"],
+                          ["dsflag4", "50", "50"],
+                          ["value5", "51", "55"],
+                          ["dmflag5", "56", "56"],
+                          ["qcflag5", "57", "57"],
+                          ["dsflag5", "58", "58"],
+                          ["value6", "59", "63"],
+                          ["dmflag6", "64", "64"],
+                          ["qcflag6", "65", "65"],
+                          ["dsflag6", "66", "66"],
+                          ["value7", "67", "71"],
+                          ["dmflag7", "72", "72"],
+                          ["qcflag7", "73", "73"],
+                          ["dsflag7", "74", "74"],
+                          ["value8", "75", "79"],
+                          ["dmflag8", "80", "80"],
+                          ["qcflag8", "81", "81"],
+                          ["dsflag8", "82", "82"],
+                          ["value9", "83", "87"],
+                          ["dmflag9", "88", "88"],
+                          ["qcflag9", "89", "89"],
+                          ["dsflag9", "90", "90"],
+                          ["value10", "91", "95"],
+                          ["dmflag10", "96", "96"],
+                          ["qcflag10", "97", "97"],
+                          ["dsflag10", "98", "98"],
+                          ["value11", "99", "103"],
+                          ["dmflag11", "104", "104"],
+                          ["qcflag11", "105", "105"],
+                          ["dsflag11", "106", "106"],
+                          ["value12", "107", "111"],
+                          ["dmflag12", "112", "112"],
+                          ["qcflag12", "113", "113"],
+                          ["dsflag12", "114", "114"]
+                ],
+                "stations": [
+                          ["id", "0", "10"],
+                          ["latitude", "11", "19"],
+                          ["longitude", "20", "29"],
+                          ["stnelev", "30", "36"],
+                          ["name", "37", "67"],
+                          ["grelev", "68", "72"],
+                          ["popcls", "73", "73"],
+                          ["popsiz", "74", "78"],
+                          ["topo", "79", "80"],
+                          ["stveg", "81", "82"],
+                          ["stloc", "83", "84"],
+                          ["ocndis", "85", "86"],
+                          ["airstn", "87", "87"],
+                          ["towndis", "88", "89"],
+                          ["grveg", "90", "105"],
+                          ["popcss", "106", "106"]
+                ]
+              }
+            ]
     - operator: "GKEStartPodOperator"
       description: "Run NOAA load processes"
       args:
@@ -158,7 +347,10 @@ dag:
         image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
         env_vars:
           PIPELINE_NAME: "GHCND countries"
-          SOURCE_URL: "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/ghcnd-countries.txt"
+          SOURCE_URL: >-
+            {
+              "ghcnd_countries": "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/ghcnd-countries.txt"
+            }
           SOURCE_FILE: "files/data_ghcnd_countries.csv"
           TARGET_FILE: "files/data_output_ghcnd_countries.csv"
           CHUNKSIZE: "750000"
@@ -194,9 +386,7 @@ dag:
               "code": ["textdata", "0", "2"],
               "name": ["textdata", "3", ""]
             }
-        resources:
-          request_ephemeral_storage: "4G"
-          limit_cpu: "3"
+
     - operator: "GKEStartPodOperator"
       description: "Run NOAA load processes"
       args:
@@ -210,7 +400,10 @@ dag:
         image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
         env_vars:
           PIPELINE_NAME: "GHCND inventory"
-          SOURCE_URL: "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/ghcnd-inventory.txt"
+          SOURCE_URL: >-
+            {
+              "ghcnd_inventory": "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/ghcnd-inventory.txt"
+            }
           SOURCE_FILE: "files/data_ghcnd_inventory.csv"
           TARGET_FILE: "files/data_output_ghcnd_inventory.csv"
           CHUNKSIZE: "750000"
@@ -254,9 +447,7 @@ dag:
               "firstyear": ["textdata", "36", "40"],
               "lastyear": ["textdata", "41", "45"]
             }
-        resources:
-          request_ephemeral_storage: "4G"
-          limit_cpu: "3"
+
     - operator: "GKEStartPodOperator"
       description: "Run NOAA load processes"
       args:
@@ -270,7 +461,10 @@ dag:
         image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
         env_vars:
           PIPELINE_NAME: "GHCND states"
-          SOURCE_URL: "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/ghcnd-states.txt"
+          SOURCE_URL: >-
+            {
+              "ghcnd_states": "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/ghcnd-states.txt"
+            }
           SOURCE_FILE: "files/data_ghcnd_states.csv"
           TARGET_FILE: "files/data_output_ghcnd_states.csv"
           CHUNKSIZE: "750000"
@@ -306,9 +500,7 @@ dag:
               "code": ["textdata", "0", "2"],
               "name": ["textdata", "3", ""]
             }
-        resources:
-          request_ephemeral_storage: "4G"
-          limit_cpu: "3"
+
     - operator: "GKEStartPodOperator"
       description: "Run NOAA load processes"
       args:
@@ -322,7 +514,10 @@ dag:
         image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
         env_vars:
           PIPELINE_NAME: "GHCND stations"
-          SOURCE_URL: "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/ghcnd-stations.txt"
+          SOURCE_URL: >-
+            {
+              "ghcnd_stations": "ftp://ftp.ncdc.noaa.gov/pub/data/ghcn/daily/ghcnd-stations.txt"
+            }
           SOURCE_FILE: "files/data_ghcnd_stations.csv"
           TARGET_FILE: "files/data_output_ghcnd_stations.csv"
           CHUNKSIZE: "750000"
@@ -372,9 +567,7 @@ dag:
               "hcn_crn_flag": ["textdata", "76", "79"],
               "wmoid": ["textdata", "80", "85"]
             }
-        resources:
-          request_ephemeral_storage: "4G"
-          limit_cpu: "3"
+
     - operator: "GKEStartPodOperator"
       description: "Run NOAA load processes"
       args:
@@ -388,7 +581,10 @@ dag:
         image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
         env_vars:
           PIPELINE_NAME: "GSOD stations"
-          SOURCE_URL: "ftp://ftp.ncdc.noaa.gov/pub/data/noaa/isd-history.txt"
+          SOURCE_URL: >-
+            {
+              "gsod_stations": "ftp://ftp.ncdc.noaa.gov/pub/data/noaa/isd-history.txt"
+            }
           SOURCE_FILE: "files/data_gsod_stations.csv"
           TARGET_FILE: "files/data_output_gsod_stations.csv"
           CHUNKSIZE: "750000"
@@ -469,9 +665,7 @@ dag:
               "begin": ["textdata", "82", "90"],
               "end": ["textdata", "91", "99"]
             }
-        resources:
-          request_ephemeral_storage: "4G"
-          limit_cpu: "3"
+
     - operator: "GKEStartPodOperator"
       description: "Run NOAA load processes"
       args:
@@ -485,12 +679,15 @@ dag:
         image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
         env_vars:
           PIPELINE_NAME: "GHCND hurricanes"
-          SOURCE_URL: "https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r00/access/csv/ibtracs.ALL.list.v04r00.csv"
+          SOURCE_URL: >-
+            {
+              "ghcnd_hurricanes": "https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r00/access/csv/ibtracs.ALL.list.v04r00.csv"
+            }
           SOURCE_FILE: "files/data_ghcnd_hurricanes.csv"
           TARGET_FILE: "files/data_output_ghcnd_hurricanes.csv"
           CHUNKSIZE: "750000"
           PROJECT_ID: "{{ var.value.gcp_project }}"
-          DATASET_ID: "noaa"
+          DATASET_ID: "noaa_hurricanes"
           TABLE_ID: "hurricanes"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/noaa/ghcnd_hurricanes/data_output_ghcnd_hurricanes.csv"
@@ -872,9 +1069,7 @@ dag:
               "mlc_lon": "mlc_longitude",
               "mlc_pres": "mlc_pressure"
             }
-        resources:
-          request_ephemeral_storage: "16G"
-          limit_cpu: "3"
+
     - operator: "GKEStartPodOperator"
       description: "Run NOAA load processes"
       args:
@@ -888,12 +1083,15 @@ dag:
         image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
         env_vars:
           PIPELINE_NAME: "NOAA lightning strikes by year"
-          SOURCE_URL: "https://www1.ncdc.noaa.gov/pub/data/swdi/database-csv/v2/nldn-tiles-*.csv.gz"
+          SOURCE_URL: >-
+            {
+              "lightning_strikes_by_year": "https://www1.ncdc.noaa.gov/pub/data/swdi/database-csv/v2/nldn-tiles-*.csv.gz"
+            }
           SOURCE_FILE: "files/data_lightning_strikes.csv"
           TARGET_FILE: "files/data_output_lightning_strikes.csv"
           CHUNKSIZE: "1000000"
           PROJECT_ID: "{{ var.value.gcp_project }}"
-          DATASET_ID: "noaa"
+          DATASET_ID: "noaa_lightning"
           TABLE_ID: "lightning_strikes"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/noaa/lightning_strikes/data_output.csv"
@@ -942,9 +1140,1851 @@ dag:
               "zday": "day_int",
               "total_count": "number_of_strikes"
             }
-        resources:
-          request_ephemeral_storage: "16G"
-          limit_cpu: "3"
+
+    - operator: "GKEStartPodOperator"
+      description: "Run NOAA load processes - Storms Database"
+      args:
+        task_id: "storms_database_by_year"
+        name: "noaa.storms_database_by_year"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: noaa
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "NOAA Storms database by year"
+          SOURCE_URL: >-
+            {
+                "root": "https://www.ncei.noaa.gov/pub/data/swdi/stormevents/csvfiles/",
+                "storms_details": "StormEvents_details-ftp_v1.0_d",
+                "storms_locations": "StormEvents_locations-ftp_v1.0_d"
+            }
+          SOURCE_FILE: "files/data_storms_database.csv"
+          TARGET_FILE: "files/data_output_storms_database.csv"
+          CHUNKSIZE: "500000"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "noaa_historic_severe_storms"
+          TABLE_ID: "storms"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/noaa/storms_db/data_output.csv"
+          SCHEMA_PATH: "data/noaa/schema/noaa_historic_severe_storms_schema.json"
+          DROP_DEST_TABLE: "N"
+          INPUT_FIELD_DELIMITER: ","
+          FULL_DATA_LOAD: "N"
+          REMOVE_SOURCE_FILE: "Y"
+          DELETE_TARGET_FILE: "Y"
+          START_YEAR: "1950"
+          RENAME_HEADERS_LIST: >-
+            {
+              "EPISODE_ID_x": "episode_id",
+              "EVENT_ID": "event_id",
+              "STATE": "state",
+              "STATE_FIPS": "state_fips_code",
+              "EVENT_TYPE": "event_type",
+              "CZ_TYPE": "cz_type",
+              "CZ_FIPS": "cz_fips_code",
+              "CZ_NAME": "cz_name",
+              "WFO": "wfo",
+              "BEGIN_DATE_TIME": "event_begin_time",
+              "CZ_TIMEZONE": "event_timezone",
+              "END_DATE_TIME": "event_end_time",
+              "INJURIES_DIRECT": "injuries_direct",
+              "INJURIES_INDIRECT": "injuries_indirect",
+              "DEATHS_DIRECT": "deaths_direct",
+              "DEATHS_INDIRECT": "deaths_indirect",
+              "DAMAGE_PROPERTY": "damage_property",
+              "DAMAGE_CROPS": "damage_crops",
+              "SOURCE": "source",
+              "MAGNITUDE": "magnitude",
+              "MAGNITUDE_TYPE": "magnitude_type",
+              "FLOOD_CAUSE": "flood_cause",
+              "TOR_F_SCALE": "tor_f_scale",
+              "TOR_LENGTH": "tor_length",
+              "TOR_WIDTH": "tor_width",
+              "TOR_OTHER_WFO": "tor_other_wfo",
+              "LOCATION_INDEX": "location_index",
+              "RANGE": "event_range",
+              "AZIMUTH": "event_azimuth",
+              "LOCATION": "reference_location",
+              "LATITUDE": "event_latitude",
+              "LONGITUDE": "event_longitude"
+            }
+          DATE_FORMAT_LIST: >-
+            [
+              ["event_begin_time", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M:%S" ],
+              ["event_end_time", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M:%S" ]
+            ]
+          GEN_LOCATION_LIST: >-
+            {
+              "event_point": ["event_longitude", "event_latitude"]
+            }
+          REORDER_HEADERS_LIST: >-
+            [
+              "episode_id",
+              "event_id",
+              "state",
+              "state_fips_code",
+              "event_type",
+              "cz_type",
+              "cz_fips_code",
+              "cz_name",
+              "wfo",
+              "event_begin_time",
+              "event_timezone",
+              "event_end_time",
+              "injuries_direct",
+              "injuries_indirect",
+              "deaths_direct",
+              "deaths_indirect",
+              "damage_property",
+              "damage_crops",
+              "source",
+              "magnitude",
+              "magnitude_type",
+              "flood_cause",
+              "tor_f_scale",
+              "tor_length",
+              "tor_width",
+              "tor_other_wfo",
+              "location_index",
+              "event_range",
+              "event_azimuth",
+              "reference_location",
+              "event_latitude",
+              "event_longitude",
+              "event_point"
+            ]
+
+    - operator: "GKEStartPodOperator"
+      description: "Run NOAA load processes - Storms Database"
+      args:
+        task_id: "spc_hail"
+        name: "noaa.spc_hail"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: noaa
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "NOAA SPC Hail"
+          SOURCE_URL: >-
+            {
+              "noaa_spc_hail": "https://www.spc.noaa.gov/wcm/newdata/2021-hail-prelim-reports-ytd.csv"
+            }
+          SOURCE_FILE: "files/data_spc_hail.csv"
+          TARGET_FILE: "files/data_output_spc_hail.csv"
+          CHUNKSIZE: "500000"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "noaa_historic_severe_storms"
+          TABLE_ID: "hail_reports"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/noaa/spc_hail/data_output.csv"
+          SCHEMA_PATH: "data/noaa/schema/noaa_spc_hail_schema.json"
+          DROP_DEST_TABLE: "N"
+          INPUT_FIELD_DELIMITER: "|"
+          FULL_DATA_LOAD: "N"
+          REMOVE_SOURCE_FILE: "Y"
+          DELETE_TARGET_FILE: "Y"
+          INPUT_CSV_HEADERS: >-
+            [
+              "year",
+              "month",
+              "day",
+              "time",
+              "size",
+              "location",
+              "county",
+              "state",
+              "lat",
+              "lon",
+              "comments"
+            ]
+          RENAME_HEADERS_LIST: >-
+            {
+              "lat": "latitude",
+              "lon": "longitude"
+            }
+          DATE_FORMAT_LIST: >-
+            [
+              ["timestamp", "%Y-%m-%d %H%M%S", "%Y-%m-%d %H:%M:%S" ]
+            ]
+          GEN_LOCATION_LIST: >-
+            {
+              "report_point": ["longitude", "latitude"]
+            }
+          REORDER_HEADERS_LIST: >-
+            [
+              "timestamp",
+              "time",
+              "size",
+              "location",
+              "county",
+              "state",
+              "latitude",
+              "longitude",
+              "comments",
+              "report_point"
+            ]
+
+    - operator: "GKEStartPodOperator"
+      description: "Run NOAA load processes - Storms Database"
+      args:
+        task_id: "spc_wind"
+        name: "noaa.spc_wind"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: noaa
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "NOAA SPC Wind"
+          SOURCE_URL: >-
+            {
+              "noaa_spc_wind": "https://www.spc.noaa.gov/wcm/newdata/2019-wind-prelim-reports-ytd.csv"
+            }
+          SOURCE_FILE: "files/data_spc_wind.csv"
+          TARGET_FILE: "files/data_output_spc_wind.csv"
+          CHUNKSIZE: "500000"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "noaa_historic_severe_storms"
+          TABLE_ID: "wind_reports"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/noaa/spc_wind/data_output.csv"
+          SCHEMA_PATH: "data/noaa/schema/noaa_spc_wind_schema.json"
+          DROP_DEST_TABLE: "N"
+          INPUT_FIELD_DELIMITER: "|"
+          FULL_DATA_LOAD: "N"
+          REMOVE_SOURCE_FILE: "Y"
+          DELETE_TARGET_FILE: "Y"
+          INPUT_CSV_HEADERS: >-
+            [
+              "year",
+              "month",
+              "day",
+              "time",
+              "speed",
+              "location",
+              "county",
+              "state",
+              "lat",
+              "lon",
+              "comments"
+            ]
+          RENAME_HEADERS_LIST: >-
+            {
+              "lat": "latitude",
+              "lon": "longitude"
+            }
+          DATE_FORMAT_LIST: >-
+            [
+              ["timestamp", "%Y-%m-%d %H%M%S", "%Y-%m-%d %H:%M:%S" ]
+            ]
+          GEN_LOCATION_LIST: >-
+            {
+              "report_point": ["longitude", "latitude"]
+            }
+          REORDER_HEADERS_LIST: >-
+            [
+              "timestamp",
+              "time",
+              "speed",
+              "location",
+              "county",
+              "state",
+              "latitude",
+              "longitude",
+              "comments",
+              "report_point"
+            ]
+
+    - operator: "GKEStartPodOperator"
+      description: "Run NOAA load processes - Tornado"
+      args:
+        task_id: "spc_tornado"
+        name: "noaa.spc_tornado"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: noaa
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "NOAA SPC Tornado"
+          SOURCE_URL: >-
+            {
+              "noaa_spc_tornado": "https://www.spc.noaa.gov/wcm/newdata/2019-torn-prelim-reports-ytd.csv"
+            }
+          SOURCE_FILE: "files/data_spc_tornado.csv"
+          TARGET_FILE: "files/data_output_spc_tornado.csv"
+          CHUNKSIZE: "500000"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "noaa_historic_severe_storms"
+          TABLE_ID: "tornado_reports"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/noaa/spc_tornado/data_output.csv"
+          SCHEMA_PATH: "data/noaa/schema/noaa_spc_tornado_schema.json"
+          DROP_DEST_TABLE: "N"
+          INPUT_FIELD_DELIMITER: "|"
+          FULL_DATA_LOAD: "N"
+          REMOVE_SOURCE_FILE: "Y"
+          DELETE_TARGET_FILE: "Y"
+          INPUT_CSV_HEADERS: >-
+            [
+              "year",
+              "month",
+              "day",
+              "time",
+              "f_scale",
+              "location",
+              "county",
+              "state",
+              "lat",
+              "lon",
+              "comments"
+            ]
+          RENAME_HEADERS_LIST: >-
+            {
+              "lat": "latitude",
+              "lon": "longitude"
+            }
+          DATE_FORMAT_LIST: >-
+            [
+              ["timestamp", "%Y-%m-%d %H%M%S", "%Y-%m-%d %H:%M:%S" ]
+            ]
+          GEN_LOCATION_LIST: >-
+            {
+              "report_point": ["longitude", "latitude"]
+            }
+          REORDER_HEADERS_LIST: >-
+            [
+              "timestamp",
+              "time",
+              "f_scale",
+              "location",
+              "county",
+              "state",
+              "latitude",
+              "longitude",
+              "comments",
+              "report_point"
+            ]
+
+    - operator: "GKEStartPodOperator"
+      description: "Run NOAA load processes - GOES 16 MCMIP"
+      args:
+        task_id: "noaa_goes16_mcmip"
+        name: "noaa.goes16_mcmip"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: noaa
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "NOAA GOES 16 MCMIP"
+          SOURCE_URL: >-
+            {
+              "noaa_goes_16_mcmip": "gs://pdp-feeds-staging/Cloud/goes16/abi_l2_mcmip.csv"
+            }
+          SOURCE_FILE: "files/data_goes16_mcmip.csv"
+          TARGET_FILE: "files/data_output_goes16_mcmip.csv"
+          CHUNKSIZE: "1000000"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "noaa_goes16"
+          TABLE_ID: "abi_l2_mcmip"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/noaa/goes16/mcmip/data_output.csv"
+          SCHEMA_PATH: "data/noaa/schema/noaa_goes_16_mcmip_schema.json"
+          DROP_DEST_TABLE: "N"
+          INPUT_FIELD_DELIMITER: ","
+          FULL_DATA_LOAD: "N"
+          REMOVE_SOURCE_FILE: "Y"
+          DELETE_TARGET_FILE: "Y"
+          NUMBER_OF_HEADER_ROWS: "1"
+          INPUT_CSV_HEADERS: >-
+            [
+              "dataset_name",
+              "platform_ID",
+              "orbital_slot",
+              "timeline_id",
+              "scene_id",
+              "time_coverage_start",
+              "time_coverage_end",
+              "date_created",
+              "geospatial_westbound_longitude",
+              "geospatial_northbound_latitude",
+              "geospatial_eastbound_longitude",
+              "geospatial_southbound_latitude",
+              "nominal_satellite_subpoint_lon",
+              "outlier_pixel_count_C01",
+              "outlier_pixel_count_C02",
+              "outlier_pixel_count_C03",
+              "outlier_pixel_count_C04",
+              "outlier_pixel_count_C05",
+              "outlier_pixel_count_C06",
+              "outlier_pixel_count_C07",
+              "outlier_pixel_count_C08",
+              "outlier_pixel_count_C09",
+              "outlier_pixel_count_C10",
+              "outlier_pixel_count_C11",
+              "outlier_pixel_count_C12",
+              "outlier_pixel_count_C13",
+              "outlier_pixel_count_C14",
+              "outlier_pixel_count_C15",
+              "outlier_pixel_count_C16",
+              "min_reflectance_factor_C01",
+              "max_reflectance_factor_C01",
+              "mean_reflectance_factor_C01",
+              "std_dev_reflectance_factor_C01",
+              "min_reflectance_factor_C02",
+              "max_reflectance_factor_C02",
+              "mean_reflectance_factor_C02",
+              "std_dev_reflectance_factor_C02",
+              "min_reflectance_factor_C03",
+              "max_reflectance_factor_C03",
+              "mean_reflectance_factor_C03",
+              "std_dev_reflectance_factor_C03",
+              "min_reflectance_factor_C04",
+              "max_reflectance_factor_C04",
+              "mean_reflectance_factor_C04",
+              "std_dev_reflectance_factor_C04",
+              "min_reflectance_factor_C05",
+              "max_reflectance_factor_C05",
+              "mean_reflectance_factor_C05",
+              "std_dev_reflectance_factor_C05",
+              "min_reflectance_factor_C06",
+              "max_reflectance_factor_C06",
+              "mean_reflectance_factor_C06",
+              "std_dev_reflectance_factor_C06",
+              "min_brightness_temperature_C06",
+              "max_brightness_temperature_C06",
+              "mean_brightness_temperature_C06",
+              "std_dev_brightness_temperature_C06",
+              "min_brightness_temperature_C07",
+              "max_brightness_temperature_C07",
+              "mean_brightness_temperature_C07",
+              "std_dev_brightness_temperature_C07",
+              "min_brightness_temperature_C08",
+              "max_brightness_temperature_C08",
+              "mean_brightness_temperature_C08",
+              "std_dev_brightness_temperature_C08",
+              "min_brightness_temperature_C09",
+              "max_brightness_temperature_C09",
+              "mean_brightness_temperature_C09",
+              "std_dev_brightness_temperature_C09",
+              "min_brightness_temperature_C10",
+              "max_brightness_temperature_C10",
+              "mean_brightness_temperature_C10",
+              "std_dev_brightness_temperature_C10",
+              "min_brightness_temperature_C11",
+              "max_brightness_temperature_C11",
+              "mean_brightness_temperature_C11",
+              "std_dev_brightness_temperature_C11",
+              "min_brightness_temperature_C12",
+              "max_brightness_temperature_C12",
+              "mean_brightness_temperature_C12",
+              "std_dev_brightness_temperature_C12",
+              "min_brightness_temperature_C13",
+              "max_brightness_temperature_C13",
+              "mean_brightness_temperature_C13",
+              "std_dev_brightness_temperature_C13",
+              "min_brightness_temperature_C14",
+              "max_brightness_temperature_C14",
+              "mean_brightness_temperature_C14",
+              "std_dev_brightness_temperature_C14",
+              "min_brightness_temperature_C15",
+              "max_brightness_temperature_C15",
+              "mean_brightness_temperature_C15",
+              "std_dev_brightness_temperature_C15",
+              "min_brightness_temperature_C16",
+              "max_brightness_temperature_C16",
+              "mean_brightness_temperature_C16",
+              "std_dev_brightness_temperature_C16",
+              "percent_uncorrectable_GRB_errors",
+              "percent_uncorrectable_L0_errors",
+              "total_size",
+              "base_url"
+            ]
+          RENAME_HEADERS_LIST: >-
+            {
+              "dataset_name": "dataset_name",
+              "platform_ID": "platform_id",
+              "orbital_slot": "orbital_slot",
+              "timeline_id": "timeline_id",
+              "scene_id": "scene_id",
+              "time_coverage_start": "time_coverage_start",
+              "time_coverage_end": "time_coverage_end",
+              "date_created": "date_created",
+              "geospatial_westbound_longitude": "geospatial_westbound_longitude",
+              "geospatial_northbound_latitude": "geospatial_northbound_latitude",
+              "geospatial_eastbound_longitude": "geospatial_eastbound_longitude",
+              "geospatial_southbound_latitude": "geospatial_southbound_latitude",
+              "nominal_satellite_subpoint_lon": "nominal_satellite_subpoint_lon",
+              "outlier_pixel_count_C01": "outlier_pixel_count_c01",
+              "outlier_pixel_count_C02": "outlier_pixel_count_c02",
+              "outlier_pixel_count_C03": "outlier_pixel_count_c03",
+              "outlier_pixel_count_C04": "outlier_pixel_count_c04",
+              "outlier_pixel_count_C05": "outlier_pixel_count_c05",
+              "outlier_pixel_count_C06": "outlier_pixel_count_c06",
+              "outlier_pixel_count_C07": "outlier_pixel_count_c07",
+              "outlier_pixel_count_C08": "outlier_pixel_count_c08",
+              "outlier_pixel_count_C09": "outlier_pixel_count_c09",
+              "outlier_pixel_count_C10": "outlier_pixel_count_c10",
+              "outlier_pixel_count_C11": "outlier_pixel_count_c11",
+              "outlier_pixel_count_C12": "outlier_pixel_count_c12",
+              "outlier_pixel_count_C13": "outlier_pixel_count_c13",
+              "outlier_pixel_count_C14": "outlier_pixel_count_c14",
+              "outlier_pixel_count_C15": "outlier_pixel_count_c15",
+              "outlier_pixel_count_C16": "outlier_pixel_count_c16",
+              "min_reflectance_factor_C01": "min_reflectance_factor_c01",
+              "max_reflectance_factor_C01": "max_reflectance_factor_c01",
+              "mean_reflectance_factor_C01": "mean_reflectance_factor_c01",
+              "std_dev_reflectance_factor_C01": "std_dev_reflectance_factor_c01",
+              "min_reflectance_factor_C02": "min_reflectance_factor_c02",
+              "max_reflectance_factor_C02": "max_reflectance_factor_c02",
+              "mean_reflectance_factor_C02": "mean_reflectance_factor_c02",
+              "std_dev_reflectance_factor_C02": "std_dev_reflectance_factor_c02",
+              "min_reflectance_factor_C03": "min_reflectance_factor_c03",
+              "max_reflectance_factor_C03": "max_reflectance_factor_c03",
+              "mean_reflectance_factor_C03": "mean_reflectance_factor_c03",
+              "std_dev_reflectance_factor_C03": "std_dev_reflectance_factor_c03",
+              "min_reflectance_factor_C04": "min_reflectance_factor_c04",
+              "max_reflectance_factor_C04": "max_reflectance_factor_c04",
+              "mean_reflectance_factor_C04": "mean_reflectance_factor_c04",
+              "std_dev_reflectance_factor_C04": "std_dev_reflectance_factor_c04",
+              "min_reflectance_factor_C05": "min_reflectance_factor_c05",
+              "max_reflectance_factor_C05": "max_reflectance_factor_c05",
+              "mean_reflectance_factor_C05": "mean_reflectance_factor_c05",
+              "std_dev_reflectance_factor_C05": "std_dev_reflectance_factor_c05",
+              "min_reflectance_factor_C06": "min_reflectance_factor_c06",
+              "max_reflectance_factor_C06": "max_reflectance_factor_c06",
+              "mean_reflectance_factor_C06": "mean_reflectance_factor_c06",
+              "std_dev_reflectance_factor_C06": "std_dev_reflectance_factor_c06",
+              "min_brightness_temperature_C07": "min_brightness_temperature_c07",
+              "max_brightness_temperature_C07": "max_brightness_temperature_c07",
+              "mean_brightness_temperature_C07": "mean_brightness_temperature_c07",
+              "std_dev_brightness_temperature_C07": "std_dev_brightness_temperature_c07",
+              "min_brightness_temperature_C08": "min_brightness_temperature_c08",
+              "max_brightness_temperature_C08": "max_brightness_temperature_c08",
+              "mean_brightness_temperature_C08": "mean_brightness_temperature_c08",
+              "std_dev_brightness_temperature_C08": "std_dev_brightness_temperature_c08",
+              "min_brightness_temperature_C09": "min_brightness_temperature_c09",
+              "max_brightness_temperature_C09": "max_brightness_temperature_c09",
+              "mean_brightness_temperature_C09": "mean_brightness_temperature_c09",
+              "std_dev_brightness_temperature_C09": "std_dev_brightness_temperature_c09",
+              "min_brightness_temperature_C10": "min_brightness_temperature_c10",
+              "max_brightness_temperature_C10": "max_brightness_temperature_c10",
+              "mean_brightness_temperature_C10": "mean_brightness_temperature_c10",
+              "std_dev_brightness_temperature_C10": "std_dev_brightness_temperature_c10",
+              "min_brightness_temperature_C11": "min_brightness_temperature_c11",
+              "max_brightness_temperature_C11": "max_brightness_temperature_c11",
+              "mean_brightness_temperature_C11": "mean_brightness_temperature_c11",
+              "std_dev_brightness_temperature_C11": "std_dev_brightness_temperature_c11",
+              "min_brightness_temperature_C12": "min_brightness_temperature_c12",
+              "max_brightness_temperature_C12": "max_brightness_temperature_c12",
+              "mean_brightness_temperature_C12": "mean_brightness_temperature_c12",
+              "std_dev_brightness_temperature_C12": "std_dev_brightness_temperature_c12",
+              "min_brightness_temperature_C13": "min_brightness_temperature_c13",
+              "max_brightness_temperature_C13": "max_brightness_temperature_c13",
+              "mean_brightness_temperature_C13": "mean_brightness_temperature_c13",
+              "std_dev_brightness_temperature_C13": "std_dev_brightness_temperature_c13",
+              "min_brightness_temperature_C14": "min_brightness_temperature_c14",
+              "max_brightness_temperature_C14": "max_brightness_temperature_c14",
+              "mean_brightness_temperature_C14": "mean_brightness_temperature_c14",
+              "std_dev_brightness_temperature_C14": "std_dev_brightness_temperature_c14",
+              "min_brightness_temperature_C15": "min_brightness_temperature_c15",
+              "max_brightness_temperature_C15": "max_brightness_temperature_c15",
+              "mean_brightness_temperature_C15": "mean_brightness_temperature_c15",
+              "std_dev_brightness_temperature_C15": "std_dev_brightness_temperature_c15",
+              "min_brightness_temperature_C16": "min_brightness_temperature_c16",
+              "max_brightness_temperature_C16": "max_brightness_temperature_c16",
+              "mean_brightness_temperature_C16": "mean_brightness_temperature_c16",
+              "std_dev_brightness_temperature_C16": "std_dev_brightness_temperature_c16",
+              "percent_uncorrectable_GRB_errors": "percent_uncorrectable_grb_errors",
+              "percent_uncorrectable_L0_errors": "percent_uncorrectable_l0_errors",
+              "min_brightness_temperature_C06": "min_brightness_temperature_c06",
+              "max_brightness_temperature_C06": "max_brightness_temperature_c06",
+              "mean_brightness_temperature_C06": "mean_brightness_temperature_c06",
+              "std_dev_brightness_temperature_C06": "std_dev_brightness_temperature_c06",
+              "total_size": "total_size",
+              "base_url": "base_url"
+            }
+          REORDER_HEADERS_LIST: >-
+            [
+              "dataset_name",
+              "platform_id",
+              "orbital_slot",
+              "timeline_id",
+              "scene_id",
+              "time_coverage_start",
+              "time_coverage_end",
+              "date_created",
+              "geospatial_westbound_longitude",
+              "geospatial_northbound_latitude",
+              "geospatial_eastbound_longitude",
+              "geospatial_southbound_latitude",
+              "nominal_satellite_subpoint_lon",
+              "outlier_pixel_count_c01",
+              "outlier_pixel_count_c02",
+              "outlier_pixel_count_c03",
+              "outlier_pixel_count_c04",
+              "outlier_pixel_count_c05",
+              "outlier_pixel_count_c06",
+              "outlier_pixel_count_c07",
+              "outlier_pixel_count_c08",
+              "outlier_pixel_count_c09",
+              "outlier_pixel_count_c10",
+              "outlier_pixel_count_c11",
+              "outlier_pixel_count_c12",
+              "outlier_pixel_count_c13",
+              "outlier_pixel_count_c14",
+              "outlier_pixel_count_c15",
+              "outlier_pixel_count_c16",
+              "min_reflectance_factor_c01",
+              "max_reflectance_factor_c01",
+              "mean_reflectance_factor_c01",
+              "std_dev_reflectance_factor_c01",
+              "min_reflectance_factor_c02",
+              "max_reflectance_factor_c02",
+              "mean_reflectance_factor_c02",
+              "std_dev_reflectance_factor_c02",
+              "min_reflectance_factor_c03",
+              "max_reflectance_factor_c03",
+              "mean_reflectance_factor_c03",
+              "std_dev_reflectance_factor_c03",
+              "min_reflectance_factor_c04",
+              "max_reflectance_factor_c04",
+              "mean_reflectance_factor_c04",
+              "std_dev_reflectance_factor_c04",
+              "min_reflectance_factor_c05",
+              "max_reflectance_factor_c05",
+              "mean_reflectance_factor_c05",
+              "std_dev_reflectance_factor_c05",
+              "min_reflectance_factor_c06",
+              "max_reflectance_factor_c06",
+              "mean_reflectance_factor_c06",
+              "std_dev_reflectance_factor_c06",
+              "min_brightness_temperature_c07",
+              "max_brightness_temperature_c07",
+              "mean_brightness_temperature_c07",
+              "std_dev_brightness_temperature_c07",
+              "min_brightness_temperature_c08",
+              "max_brightness_temperature_c08",
+              "mean_brightness_temperature_c08",
+              "std_dev_brightness_temperature_c08",
+              "min_brightness_temperature_c09",
+              "max_brightness_temperature_c09",
+              "mean_brightness_temperature_c09",
+              "std_dev_brightness_temperature_c09",
+              "min_brightness_temperature_c10",
+              "max_brightness_temperature_c10",
+              "mean_brightness_temperature_c10",
+              "std_dev_brightness_temperature_c10",
+              "min_brightness_temperature_c11",
+              "max_brightness_temperature_c11",
+              "mean_brightness_temperature_c11",
+              "std_dev_brightness_temperature_c11",
+              "min_brightness_temperature_c12",
+              "max_brightness_temperature_c12",
+              "mean_brightness_temperature_c12",
+              "std_dev_brightness_temperature_c12",
+              "min_brightness_temperature_c13",
+              "max_brightness_temperature_c13",
+              "mean_brightness_temperature_c13",
+              "std_dev_brightness_temperature_c13",
+              "min_brightness_temperature_c14",
+              "max_brightness_temperature_c14",
+              "mean_brightness_temperature_c14",
+              "std_dev_brightness_temperature_c14",
+              "min_brightness_temperature_c15",
+              "max_brightness_temperature_c15",
+              "mean_brightness_temperature_c15",
+              "std_dev_brightness_temperature_c15",
+              "min_brightness_temperature_c16",
+              "max_brightness_temperature_c16",
+              "mean_brightness_temperature_c16",
+              "std_dev_brightness_temperature_c16",
+              "percent_uncorrectable_grb_errors",
+              "percent_uncorrectable_l0_errors",
+              "min_brightness_temperature_c06",
+              "max_brightness_temperature_c06",
+              "mean_brightness_temperature_c06",
+              "std_dev_brightness_temperature_c06",
+              "total_size",
+              "base_url"
+            ]
+
+    - operator: "GKEStartPodOperator"
+      description: "Run NOAA load processes - GOES 16 GLM"
+      args:
+        task_id: "noaa_goes16_glm"
+        name: "noaa.goes16_glm"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: noaa
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "NOAA GOES 16 GLM"
+          SOURCE_URL: >-
+            {
+              "noaa_goes_16_glm": "gs://pdp-feeds-staging/Cloud/goes16/glm_l2_lcfa.csv"
+            }
+          SOURCE_FILE: "files/data_goes16_glm.csv"
+          TARGET_FILE: "files/data_output_goes16_glm.csv"
+          CHUNKSIZE: "1000000"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "noaa_goes16"
+          TABLE_ID: "glm_l2_lcfa"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/noaa/goes16/glm/data_output.csv"
+          SCHEMA_PATH: "data/noaa/schema/noaa_goes_16_glm_schema.json"
+          DROP_DEST_TABLE: "N"
+          INPUT_FIELD_DELIMITER: ","
+          FULL_DATA_LOAD: "N"
+          REMOVE_SOURCE_FILE: "Y"
+          DELETE_TARGET_FILE: "Y"
+          NUMBER_OF_HEADER_ROWS: "1"
+          INPUT_CSV_HEADERS: >-
+            [
+              "dataset_name",
+              "platform_ID",
+              "orbital_slot",
+              "time_coverage_start",
+              "time_coverage_end",
+              "date_created",
+              "group_time_threshold",
+              "flash_time_threshold",
+              "event_count",
+              "group_count",
+              "flash_count",
+              "percent_navigated_L1b_events",
+              "percent_uncorrectable_L0_errors",
+              "total_size",
+              "base_url"
+            ]
+          RENAME_HEADERS_LIST: >-
+            {
+              "dataset_name": "dataset_name",
+              "platform_ID": "platform_ID",
+              "orbital_slot": "orbital_slot",
+              "time_coverage_start": "time_coverage_start",
+              "time_coverage_end": "time_coverage_end",
+              "date_created": "date_created",
+              "flash_time_threshold": "flash_time_threshold",
+              "event_count": "event_count",
+              "group_count": "group_count",
+              "flash_count": "flash_count",
+              "percent_navigated_L1b_events": "percent_navigated_L1b_events",
+              "percent_uncorrectable_L0_errors": "percent_uncorrectable_L0_errors",
+              "total_size": "total_size",
+              "base_url": "base_url",
+              "group_time_threshold": "group_time_threshold"
+            }
+          REORDER_HEADERS_LIST: >-
+            [
+              "dataset_name",
+              "platform_ID",
+              "orbital_slot",
+              "time_coverage_start",
+              "time_coverage_end",
+              "date_created",
+              "group_time_threshold",
+              "flash_time_threshold",
+              "event_count",
+              "group_count",
+              "flash_count",
+              "percent_navigated_L1b_events",
+              "percent_uncorrectable_L0_errors",
+              "total_size",
+              "base_url"
+            ]
+    - operator: "GKEStartPodOperator"
+      description: "Run NOAA load processes - GOES 16 CMIP"
+      args:
+        task_id: "noaa_goes16_cmip"
+        name: "noaa.goes16_cmip"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: noaa
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "NOAA GOES 16 CMIP"
+          SOURCE_URL: >-
+            {
+              "noaa_goes_16_cmip": "gs://pdp-feeds-staging/Cloud/goes16/abi_l2_cmip.csv"
+            }
+          SOURCE_FILE: "files/data_goes16_cmip.csv"
+          TARGET_FILE: "files/data_output_goes16_cmip.csv"
+          CHUNKSIZE: "1000000"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "noaa_goes16"
+          TABLE_ID: "abi_l2_cmip"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/noaa/goes16/cmip/data_output.csv"
+          SCHEMA_PATH: "data/noaa/schema/noaa_goes_16_cmip_schema.json"
+          DROP_DEST_TABLE: "N"
+          INPUT_FIELD_DELIMITER: ","
+          FULL_DATA_LOAD: "N"
+          REMOVE_SOURCE_FILE: "Y"
+          DELETE_TARGET_FILE: "Y"
+          NUMBER_OF_HEADER_ROWS: "1"
+          INPUT_CSV_HEADERS: >-
+            [
+              "dataset_name",
+              "platform_ID",
+              "orbital_slot",
+              "timeline_id",
+              "scene_id",
+              "time_coverage_start",
+              "time_coverage_end",
+              "date_created",
+              "geospatial_westbound_longitude",
+              "geospatial_northbound_latitude",
+              "geospatial_eastbound_longitude",
+              "geospatial_southbound_latitude",
+              "band_id",
+              "nominal_satellite_subpoint_lon",
+              "total_number_of_points",
+              "valid_pixel_count",
+              "outlier_pixel_count",
+              "min_reflectance_factor",
+              "max_reflectance_factor",
+              "mean_reflectance_factor",
+              "std_dev_reflectance_factor",
+              "min_brightness_temperature",
+              "max_brightness_temperature",
+              "mean_brightness_temperature",
+              "std_dev_brightness_temperature",
+              "percent_uncorrectable_GRB_errors",
+              "percent_uncorrectable_L0_errors",
+              "total_size",
+              "base_url"
+            ]
+          RENAME_HEADERS_LIST: >-
+            {
+              "dataset_name": "dataset_name",
+              "platform_ID": "platform_id",
+              "orbital_slot": "orbital_slot",
+              "timeline_id": "timeline_id",
+              "scene_id": "scene_id",
+              "band_id": "band_id",
+              "time_coverage_start": "time_coverage_start",
+              "time_coverage_end": "time_coverage_end",
+              "date_created": "date_created",
+              "geospatial_westbound_longitude": "geospatial_westbound_longitude",
+              "geospatial_northbound_latitude": "geospatial_northbound_latitude",
+              "geospatial_eastbound_longitude": "geospatial_eastbound_longitude",
+              "geospatial_southbound_latitude": "geospatial_southbound_latitude",
+              "nominal_satellite_subpoint_lon": "nominal_satellite_subpoint_lon",
+              "total_number_of_points": "total_number_of_points",
+              "valid_pixel_count": "valid_pixel_count",
+              "outlier_pixel_count": "outlier_pixel_count",
+              "min_reflectance_factor": "min_reflectance_factor",
+              "max_reflectance_factor": "max_reflectance_factor",
+              "mean_reflectance_factor": "mean_reflectance_factor",
+              "std_dev_reflectance_factor": "std_dev_reflectance_factor",
+              "min_brightness_temperature": "min_brightness_temperature",
+              "max_brightness_temperature": "max_brightness_temperature",
+              "mean_brightness_temperature": "mean_brightness_temperature",
+              "std_dev_brightness_temperature": "std_dev_brightness_temperature",
+              "percent_uncorrectable_GRB_errors": "percent_uncorrectable_grb_errors",
+              "percent_uncorrectable_L0_errors": "percent_uncorrectable_l0_errors",
+              "total_size": "total_size",
+              "base_url": "base_url"
+            }
+          REORDER_HEADERS_LIST: >-
+            [
+              "dataset_name",
+              "platform_id",
+              "orbital_slot",
+              "timeline_id",
+              "scene_id",
+              "band_id",
+              "time_coverage_start",
+              "time_coverage_end",
+              "date_created",
+              "geospatial_westbound_longitude",
+              "geospatial_northbound_latitude",
+              "geospatial_eastbound_longitude",
+              "geospatial_southbound_latitude",
+              "nominal_satellite_subpoint_lon",
+              "total_number_of_points",
+              "valid_pixel_count",
+              "outlier_pixel_count",
+              "min_reflectance_factor",
+              "max_reflectance_factor",
+              "mean_reflectance_factor",
+              "std_dev_reflectance_factor",
+              "min_brightness_temperature",
+              "max_brightness_temperature",
+              "mean_brightness_temperature",
+              "std_dev_brightness_temperature",
+              "percent_uncorrectable_grb_errors",
+              "percent_uncorrectable_l0_errors",
+              "total_size",
+              "base_url"
+            ]
+    - operator: "GKEStartPodOperator"
+      description: "Run NOAA load processes - GOES 16 Radiance"
+      args:
+        task_id: "noaa_goes16_radiance"
+        name: "noaa.goes16_radiance"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: noaa
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "NOAA GOES 16 Radiance"
+          SOURCE_URL: >-
+            {
+              "noaa_goes_16_radiance": "gs://pdp-feeds-staging/Cloud/goes16/abi_l1b_radiance.csv"
+            }
+          SOURCE_FILE: "files/data_goes16_radiance.csv"
+          TARGET_FILE: "files/data_output_goes16_radiance.csv"
+          CHUNKSIZE: "1000000"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "noaa_goes16"
+          TABLE_ID: "abi_l1b_radiance"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/noaa/goes16/radiance/data_output.csv"
+          SCHEMA_PATH: "data/noaa/schema/noaa_goes_16_radiance_schema.json"
+          DROP_DEST_TABLE: "N"
+          INPUT_FIELD_DELIMITER: ","
+          FULL_DATA_LOAD: "N"
+          REMOVE_SOURCE_FILE: "Y"
+          DELETE_TARGET_FILE: "Y"
+          NUMBER_OF_HEADER_ROWS: "1"
+          INPUT_CSV_HEADERS: >-
+            [
+              "dataset_name",
+              "platform_ID",
+              "orbital_slot",
+              "timeline_id",
+              "scene_id",
+              "time_coverage_start",
+              "time_coverage_end",
+              "date_created",
+              "geospatial_westbound_longitude",
+              "geospatial_northbound_latitude",
+              "geospatial_eastbound_longitude",
+              "geospatial_southbound_latitude",
+              "band_id",
+              "nominal_satellite_subpoint_lon",
+              "valid_pixel_count",
+              "missing_pixel_count",
+              "saturated_pixel_count",
+              "undersaturated_pixel_count",
+              "min_radiance_value_of_valid_pixels",
+              "max_radiance_value_of_valid_pixels",
+              "mean_radiance_value_of_valid_pixels",
+              "std_dev_radiance_value_of_valid_pixels",
+              "percent_uncorrectable_L0_errors",
+              "total_size",
+              "base_url"
+            ]
+          RENAME_HEADERS_LIST: >-
+            {
+              "dataset_name": "dataset_name",
+              "platform_ID": "platform_id",
+              "orbital_slot": "orbital_slot",
+              "timeline_id": "timeline_id",
+              "scene_id": "scene_id",
+              "band_id": "band_id",
+              "time_coverage_start": "time_coverage_start",
+              "time_coverage_end": "time_coverage_end",
+              "date_created": "date_created",
+              "geospatial_westbound_longitude": "geospatial_westbound_longitude",
+              "geospatial_northbound_latitude": "geospatial_northbound_latitude",
+              "geospatial_eastbound_longitude": "geospatial_eastbound_longitude",
+              "geospatial_southbound_latitude": "geospatial_southbound_latitude",
+              "nominal_satellite_subpoint_lon": "nominal_satellite_subpoint_lon",
+              "valid_pixel_count": "valid_pixel_count",
+              "missing_pixel_count": "missing_pixel_count",
+              "saturated_pixel_count": "saturated_pixel_count",
+              "undersaturated_pixel_count": "undersaturated_pixel_count",
+              "min_radiance_value_of_valid_pixels": "min_radiance_value_of_valid_pixels",
+              "max_radiance_value_of_valid_pixels": "max_radiance_value_of_valid_pixels",
+              "mean_radiance_value_of_valid_pixels": "mean_radiance_value_of_valid_pixels",
+              "std_dev_radiance_value_of_valid_pixels": "std_dev_radiance_value_of_valid_pixels",
+              "percent_uncorrectable_L0_errors": "percent_uncorrectable_l0_errors",
+              "total_size": "total_size",
+              "base_url": "base_url"
+            }
+          REORDER_HEADERS_LIST: >-
+            [
+              "dataset_name",
+              "platform_id",
+              "orbital_slot",
+              "timeline_id",
+              "scene_id",
+              "band_id",
+              "time_coverage_start",
+              "time_coverage_end",
+              "date_created",
+              "geospatial_westbound_longitude",
+              "geospatial_northbound_latitude",
+              "geospatial_eastbound_longitude",
+              "geospatial_southbound_latitude",
+              "nominal_satellite_subpoint_lon",
+              "valid_pixel_count",
+              "missing_pixel_count",
+              "saturated_pixel_count",
+              "undersaturated_pixel_count",
+              "min_radiance_value_of_valid_pixels",
+              "max_radiance_value_of_valid_pixels",
+              "mean_radiance_value_of_valid_pixels",
+              "std_dev_radiance_value_of_valid_pixels",
+              "percent_uncorrectable_l0_errors",
+              "total_size",
+              "base_url"
+            ]
+
+    - operator: "GKEStartPodOperator"
+      description: "Run NOAA load processes - GOES 17 MCMIP"
+      args:
+        task_id: "noaa_goes17_mcmip"
+        name: "noaa.goes17_mcmip"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: noaa
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "NOAA GOES 17 MCMIP"
+          SOURCE_URL: >-
+            {
+              "noaa_goes_17_mcmip": "gs://pdp-feeds-staging/Cloud/goes17/abi_l2_mcmip.csv"
+            }
+          SOURCE_FILE: "files/data_goes17_mcmip.csv"
+          TARGET_FILE: "files/data_output_goes17_mcmip.csv"
+          CHUNKSIZE: "1000000"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "noaa_goes17"
+          TABLE_ID: "abi_l2_mcmip"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/noaa/goes17/mcmip/data_output.csv"
+          SCHEMA_PATH: "data/noaa/schema/noaa_goes_17_mcmip_schema.json"
+          DROP_DEST_TABLE: "N"
+          INPUT_FIELD_DELIMITER: ","
+          FULL_DATA_LOAD: "N"
+          REMOVE_SOURCE_FILE: "Y"
+          DELETE_TARGET_FILE: "Y"
+          NUMBER_OF_HEADER_ROWS: "1"
+          INPUT_CSV_HEADERS: >-
+            [
+              "dataset_name",
+              "platform_ID",
+              "orbital_slot",
+              "timeline_id",
+              "scene_id",
+              "time_coverage_start",
+              "time_coverage_end",
+              "date_created",
+              "geospatial_westbound_longitude",
+              "geospatial_northbound_latitude",
+              "geospatial_eastbound_longitude",
+              "geospatial_southbound_latitude",
+              "nominal_satellite_subpoint_lon",
+              "outlier_pixel_count_C01",
+              "outlier_pixel_count_C02",
+              "outlier_pixel_count_C03",
+              "outlier_pixel_count_C04",
+              "outlier_pixel_count_C05",
+              "outlier_pixel_count_C06",
+              "outlier_pixel_count_C07",
+              "outlier_pixel_count_C08",
+              "outlier_pixel_count_C09",
+              "outlier_pixel_count_C10",
+              "outlier_pixel_count_C11",
+              "outlier_pixel_count_C12",
+              "outlier_pixel_count_C13",
+              "outlier_pixel_count_C14",
+              "outlier_pixel_count_C15",
+              "outlier_pixel_count_C16",
+              "min_reflectance_factor_C01",
+              "max_reflectance_factor_C01",
+              "mean_reflectance_factor_C01",
+              "std_dev_reflectance_factor_C01",
+              "min_reflectance_factor_C02",
+              "max_reflectance_factor_C02",
+              "mean_reflectance_factor_C02",
+              "std_dev_reflectance_factor_C02",
+              "min_reflectance_factor_C03",
+              "max_reflectance_factor_C03",
+              "mean_reflectance_factor_C03",
+              "std_dev_reflectance_factor_C03",
+              "min_reflectance_factor_C04",
+              "max_reflectance_factor_C04",
+              "mean_reflectance_factor_C04",
+              "std_dev_reflectance_factor_C04",
+              "min_reflectance_factor_C05",
+              "max_reflectance_factor_C05",
+              "mean_reflectance_factor_C05",
+              "std_dev_reflectance_factor_C05",
+              "min_reflectance_factor_C06",
+              "max_reflectance_factor_C06",
+              "mean_reflectance_factor_C06",
+              "std_dev_reflectance_factor_C06",
+              "min_brightness_temperature_C06",
+              "max_brightness_temperature_C06",
+              "mean_brightness_temperature_C06",
+              "std_dev_brightness_temperature_C06",
+              "min_brightness_temperature_C07",
+              "max_brightness_temperature_C07",
+              "mean_brightness_temperature_C07",
+              "std_dev_brightness_temperature_C07",
+              "min_brightness_temperature_C08",
+              "max_brightness_temperature_C08",
+              "mean_brightness_temperature_C08",
+              "std_dev_brightness_temperature_C08",
+              "min_brightness_temperature_C09",
+              "max_brightness_temperature_C09",
+              "mean_brightness_temperature_C09",
+              "std_dev_brightness_temperature_C09",
+              "min_brightness_temperature_C10",
+              "max_brightness_temperature_C10",
+              "mean_brightness_temperature_C10",
+              "std_dev_brightness_temperature_C10",
+              "min_brightness_temperature_C11",
+              "max_brightness_temperature_C11",
+              "mean_brightness_temperature_C11",
+              "std_dev_brightness_temperature_C11",
+              "min_brightness_temperature_C12",
+              "max_brightness_temperature_C12",
+              "mean_brightness_temperature_C12",
+              "std_dev_brightness_temperature_C12",
+              "min_brightness_temperature_C13",
+              "max_brightness_temperature_C13",
+              "mean_brightness_temperature_C13",
+              "std_dev_brightness_temperature_C13",
+              "min_brightness_temperature_C14",
+              "max_brightness_temperature_C14",
+              "mean_brightness_temperature_C14",
+              "std_dev_brightness_temperature_C14",
+              "min_brightness_temperature_C15",
+              "max_brightness_temperature_C15",
+              "mean_brightness_temperature_C15",
+              "std_dev_brightness_temperature_C15",
+              "min_brightness_temperature_C16",
+              "max_brightness_temperature_C16",
+              "mean_brightness_temperature_C16",
+              "std_dev_brightness_temperature_C16",
+              "percent_uncorrectable_GRB_errors",
+              "percent_uncorrectable_L0_errors",
+              "total_size",
+              "base_url"
+            ]
+          RENAME_HEADERS_LIST: >-
+            {
+              "dataset_name": "dataset_name",
+              "platform_ID": "platform_id",
+              "orbital_slot": "orbital_slot",
+              "timeline_id": "timeline_id",
+              "scene_id": "scene_id",
+              "time_coverage_start": "time_coverage_start",
+              "time_coverage_end": "time_coverage_end",
+              "date_created": "date_created",
+              "geospatial_westbound_longitude": "geospatial_westbound_longitude",
+              "geospatial_northbound_latitude": "geospatial_northbound_latitude",
+              "geospatial_eastbound_longitude": "geospatial_eastbound_longitude",
+              "geospatial_southbound_latitude": "geospatial_southbound_latitude",
+              "nominal_satellite_subpoint_lon": "nominal_satellite_subpoint_lon",
+              "outlier_pixel_count_C01": "outlier_pixel_count_c01",
+              "outlier_pixel_count_C02": "outlier_pixel_count_c02",
+              "outlier_pixel_count_C03": "outlier_pixel_count_c03",
+              "outlier_pixel_count_C04": "outlier_pixel_count_c04",
+              "outlier_pixel_count_C05": "outlier_pixel_count_c05",
+              "outlier_pixel_count_C06": "outlier_pixel_count_c06",
+              "outlier_pixel_count_C07": "outlier_pixel_count_c07",
+              "outlier_pixel_count_C08": "outlier_pixel_count_c08",
+              "outlier_pixel_count_C09": "outlier_pixel_count_c09",
+              "outlier_pixel_count_C10": "outlier_pixel_count_c10",
+              "outlier_pixel_count_C11": "outlier_pixel_count_c11",
+              "outlier_pixel_count_C12": "outlier_pixel_count_c12",
+              "outlier_pixel_count_C13": "outlier_pixel_count_c13",
+              "outlier_pixel_count_C14": "outlier_pixel_count_c14",
+              "outlier_pixel_count_C15": "outlier_pixel_count_c15",
+              "outlier_pixel_count_C16": "outlier_pixel_count_c16",
+              "min_reflectance_factor_C01": "min_reflectance_factor_c01",
+              "max_reflectance_factor_C01": "max_reflectance_factor_c01",
+              "mean_reflectance_factor_C01": "mean_reflectance_factor_c01",
+              "std_dev_reflectance_factor_C01": "std_dev_reflectance_factor_c01",
+              "min_reflectance_factor_C02": "min_reflectance_factor_c02",
+              "max_reflectance_factor_C02": "max_reflectance_factor_c02",
+              "mean_reflectance_factor_C02": "mean_reflectance_factor_c02",
+              "std_dev_reflectance_factor_C02": "std_dev_reflectance_factor_c02",
+              "min_reflectance_factor_C03": "min_reflectance_factor_c03",
+              "max_reflectance_factor_C03": "max_reflectance_factor_c03",
+              "mean_reflectance_factor_C03": "mean_reflectance_factor_c03",
+              "std_dev_reflectance_factor_C03": "std_dev_reflectance_factor_c03",
+              "min_reflectance_factor_C04": "min_reflectance_factor_c04",
+              "max_reflectance_factor_C04": "max_reflectance_factor_c04",
+              "mean_reflectance_factor_C04": "mean_reflectance_factor_c04",
+              "std_dev_reflectance_factor_C04": "std_dev_reflectance_factor_c04",
+              "min_reflectance_factor_C05": "min_reflectance_factor_c05",
+              "max_reflectance_factor_C05": "max_reflectance_factor_c05",
+              "mean_reflectance_factor_C05": "mean_reflectance_factor_c05",
+              "std_dev_reflectance_factor_C05": "std_dev_reflectance_factor_c05",
+              "min_reflectance_factor_C06": "min_reflectance_factor_c06",
+              "max_reflectance_factor_C06": "max_reflectance_factor_c06",
+              "mean_reflectance_factor_C06": "mean_reflectance_factor_c06",
+              "std_dev_reflectance_factor_C06": "std_dev_reflectance_factor_c06",
+              "min_brightness_temperature_C07": "min_brightness_temperature_c07",
+              "max_brightness_temperature_C07": "max_brightness_temperature_c07",
+              "mean_brightness_temperature_C07": "mean_brightness_temperature_c07",
+              "std_dev_brightness_temperature_C07": "std_dev_brightness_temperature_c07",
+              "min_brightness_temperature_C08": "min_brightness_temperature_c08",
+              "max_brightness_temperature_C08": "max_brightness_temperature_c08",
+              "mean_brightness_temperature_C08": "mean_brightness_temperature_c08",
+              "std_dev_brightness_temperature_C08": "std_dev_brightness_temperature_c08",
+              "min_brightness_temperature_C09": "min_brightness_temperature_c09",
+              "max_brightness_temperature_C09": "max_brightness_temperature_c09",
+              "mean_brightness_temperature_C09": "mean_brightness_temperature_c09",
+              "std_dev_brightness_temperature_C09": "std_dev_brightness_temperature_c09",
+              "min_brightness_temperature_C10": "min_brightness_temperature_c10",
+              "max_brightness_temperature_C10": "max_brightness_temperature_c10",
+              "mean_brightness_temperature_C10": "mean_brightness_temperature_c10",
+              "std_dev_brightness_temperature_C10": "std_dev_brightness_temperature_c10",
+              "min_brightness_temperature_C11": "min_brightness_temperature_c11",
+              "max_brightness_temperature_C11": "max_brightness_temperature_c11",
+              "mean_brightness_temperature_C11": "mean_brightness_temperature_c11",
+              "std_dev_brightness_temperature_C11": "std_dev_brightness_temperature_c11",
+              "min_brightness_temperature_C12": "min_brightness_temperature_c12",
+              "max_brightness_temperature_C12": "max_brightness_temperature_c12",
+              "mean_brightness_temperature_C12": "mean_brightness_temperature_c12",
+              "std_dev_brightness_temperature_C12": "std_dev_brightness_temperature_c12",
+              "min_brightness_temperature_C13": "min_brightness_temperature_c13",
+              "max_brightness_temperature_C13": "max_brightness_temperature_c13",
+              "mean_brightness_temperature_C13": "mean_brightness_temperature_c13",
+              "std_dev_brightness_temperature_C13": "std_dev_brightness_temperature_c13",
+              "min_brightness_temperature_C14": "min_brightness_temperature_c14",
+              "max_brightness_temperature_C14": "max_brightness_temperature_c14",
+              "mean_brightness_temperature_C14": "mean_brightness_temperature_c14",
+              "std_dev_brightness_temperature_C14": "std_dev_brightness_temperature_c14",
+              "min_brightness_temperature_C15": "min_brightness_temperature_c15",
+              "max_brightness_temperature_C15": "max_brightness_temperature_c15",
+              "mean_brightness_temperature_C15": "mean_brightness_temperature_c15",
+              "std_dev_brightness_temperature_C15": "std_dev_brightness_temperature_c15",
+              "min_brightness_temperature_C16": "min_brightness_temperature_c16",
+              "max_brightness_temperature_C16": "max_brightness_temperature_c16",
+              "mean_brightness_temperature_C16": "mean_brightness_temperature_c16",
+              "std_dev_brightness_temperature_C16": "std_dev_brightness_temperature_c16",
+              "percent_uncorrectable_GRB_errors": "percent_uncorrectable_grb_errors",
+              "percent_uncorrectable_L0_errors": "percent_uncorrectable_l0_errors",
+              "min_brightness_temperature_C06": "min_brightness_temperature_c06",
+              "max_brightness_temperature_C06": "max_brightness_temperature_c06",
+              "mean_brightness_temperature_C06": "mean_brightness_temperature_c06",
+              "std_dev_brightness_temperature_C06": "std_dev_brightness_temperature_c06",
+              "total_size": "total_size",
+              "base_url": "base_url"
+            }
+          REORDER_HEADERS_LIST: >-
+            [
+              "dataset_name",
+              "platform_id",
+              "orbital_slot",
+              "timeline_id",
+              "scene_id",
+              "time_coverage_start",
+              "time_coverage_end",
+              "date_created",
+              "geospatial_westbound_longitude",
+              "geospatial_northbound_latitude",
+              "geospatial_eastbound_longitude",
+              "geospatial_southbound_latitude",
+              "nominal_satellite_subpoint_lon",
+              "outlier_pixel_count_c01",
+              "outlier_pixel_count_c02",
+              "outlier_pixel_count_c03",
+              "outlier_pixel_count_c04",
+              "outlier_pixel_count_c05",
+              "outlier_pixel_count_c06",
+              "outlier_pixel_count_c07",
+              "outlier_pixel_count_c08",
+              "outlier_pixel_count_c09",
+              "outlier_pixel_count_c10",
+              "outlier_pixel_count_c11",
+              "outlier_pixel_count_c12",
+              "outlier_pixel_count_c13",
+              "outlier_pixel_count_c14",
+              "outlier_pixel_count_c15",
+              "outlier_pixel_count_c16",
+              "min_reflectance_factor_c01",
+              "max_reflectance_factor_c01",
+              "mean_reflectance_factor_c01",
+              "std_dev_reflectance_factor_c01",
+              "min_reflectance_factor_c02",
+              "max_reflectance_factor_c02",
+              "mean_reflectance_factor_c02",
+              "std_dev_reflectance_factor_c02",
+              "min_reflectance_factor_c03",
+              "max_reflectance_factor_c03",
+              "mean_reflectance_factor_c03",
+              "std_dev_reflectance_factor_c03",
+              "min_reflectance_factor_c04",
+              "max_reflectance_factor_c04",
+              "mean_reflectance_factor_c04",
+              "std_dev_reflectance_factor_c04",
+              "min_reflectance_factor_c05",
+              "max_reflectance_factor_c05",
+              "mean_reflectance_factor_c05",
+              "std_dev_reflectance_factor_c05",
+              "min_reflectance_factor_c06",
+              "max_reflectance_factor_c06",
+              "mean_reflectance_factor_c06",
+              "std_dev_reflectance_factor_c06",
+              "min_brightness_temperature_c07",
+              "max_brightness_temperature_c07",
+              "mean_brightness_temperature_c07",
+              "std_dev_brightness_temperature_c07",
+              "min_brightness_temperature_c08",
+              "max_brightness_temperature_c08",
+              "mean_brightness_temperature_c08",
+              "std_dev_brightness_temperature_c08",
+              "min_brightness_temperature_c09",
+              "max_brightness_temperature_c09",
+              "mean_brightness_temperature_c09",
+              "std_dev_brightness_temperature_c09",
+              "min_brightness_temperature_c10",
+              "max_brightness_temperature_c10",
+              "mean_brightness_temperature_c10",
+              "std_dev_brightness_temperature_c10",
+              "min_brightness_temperature_c11",
+              "max_brightness_temperature_c11",
+              "mean_brightness_temperature_c11",
+              "std_dev_brightness_temperature_c11",
+              "min_brightness_temperature_c12",
+              "max_brightness_temperature_c12",
+              "mean_brightness_temperature_c12",
+              "std_dev_brightness_temperature_c12",
+              "min_brightness_temperature_c13",
+              "max_brightness_temperature_c13",
+              "mean_brightness_temperature_c13",
+              "std_dev_brightness_temperature_c13",
+              "min_brightness_temperature_c14",
+              "max_brightness_temperature_c14",
+              "mean_brightness_temperature_c14",
+              "std_dev_brightness_temperature_c14",
+              "min_brightness_temperature_c15",
+              "max_brightness_temperature_c15",
+              "mean_brightness_temperature_c15",
+              "std_dev_brightness_temperature_c15",
+              "min_brightness_temperature_c16",
+              "max_brightness_temperature_c16",
+              "mean_brightness_temperature_c16",
+              "std_dev_brightness_temperature_c16",
+              "percent_uncorrectable_grb_errors",
+              "percent_uncorrectable_l0_errors",
+              "min_brightness_temperature_c06",
+              "max_brightness_temperature_c06",
+              "mean_brightness_temperature_c06",
+              "std_dev_brightness_temperature_c06",
+              "total_size",
+              "base_url"
+            ]
+
+    - operator: "GKEStartPodOperator"
+      description: "Run NOAA load processes - GOES 17 GLM"
+      args:
+        task_id: "noaa_goes17_glm"
+        name: "noaa.goes17_glm"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: noaa
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "NOAA GOES 17 GLM"
+          SOURCE_URL: >-
+            {
+              "noaa_goes_17_glm": "gs://pdp-feeds-staging/Cloud/goes17/glm_l2_lcfa.csv"
+            }
+          SOURCE_FILE: "files/data_goes17_glm.csv"
+          TARGET_FILE: "files/data_output_goes17_glm.csv"
+          CHUNKSIZE: "1000000"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "noaa_goes17"
+          TABLE_ID: "glm_l2_lcfa"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/noaa/goes17/glm/data_output.csv"
+          SCHEMA_PATH: "data/noaa/schema/noaa_goes_17_glm_schema.json"
+          DROP_DEST_TABLE: "N"
+          INPUT_FIELD_DELIMITER: ","
+          FULL_DATA_LOAD: "N"
+          REMOVE_SOURCE_FILE: "Y"
+          DELETE_TARGET_FILE: "Y"
+          NUMBER_OF_HEADER_ROWS: "1"
+          INPUT_CSV_HEADERS: >-
+            [
+              "dataset_name",
+              "platform_ID",
+              "orbital_slot",
+              "time_coverage_start",
+              "time_coverage_end",
+              "date_created",
+              "group_time_threshold",
+              "flash_time_threshold",
+              "event_count",
+              "group_count",
+              "flash_count",
+              "percent_navigated_L1b_events",
+              "percent_uncorrectable_L0_errors",
+              "total_size",
+              "base_url"
+            ]
+          RENAME_HEADERS_LIST: >-
+            {
+              "dataset_name": "dataset_name",
+              "platform_ID": "platform_ID",
+              "orbital_slot": "orbital_slot",
+              "time_coverage_start": "time_coverage_start",
+              "time_coverage_end": "time_coverage_end",
+              "date_created": "date_created",
+              "flash_time_threshold": "flash_time_threshold",
+              "event_count": "event_count",
+              "group_count": "group_count",
+              "flash_count": "flash_count",
+              "percent_navigated_L1b_events": "percent_navigated_L1b_events",
+              "percent_uncorrectable_L0_errors": "percent_uncorrectable_L0_errors",
+              "total_size": "total_size",
+              "base_url": "base_url",
+              "group_time_threshold": "group_time_threshold"
+            }
+          REORDER_HEADERS_LIST: >-
+            [
+              "dataset_name",
+              "platform_ID",
+              "orbital_slot",
+              "time_coverage_start",
+              "time_coverage_end",
+              "date_created",
+              "group_time_threshold",
+              "flash_time_threshold",
+              "event_count",
+              "group_count",
+              "flash_count",
+              "percent_navigated_L1b_events",
+              "percent_uncorrectable_L0_errors",
+              "total_size",
+              "base_url"
+            ]
+    - operator: "GKEStartPodOperator"
+      description: "Run NOAA load processes - GOES 17 CMIP"
+      args:
+        task_id: "noaa_goes17_cmip"
+        name: "noaa.goes17_cmip"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: noaa
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "NOAA GOES 17 CMIP"
+          SOURCE_URL: >-
+            {
+              "noaa_goes_17_cmip": "gs://pdp-feeds-staging/Cloud/goes17/abi_l2_cmip.csv"
+            }
+          SOURCE_FILE: "files/data_goes17_cmip.csv"
+          TARGET_FILE: "files/data_output_goes17_cmip.csv"
+          CHUNKSIZE: "1000000"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "noaa_goes17"
+          TABLE_ID: "abi_l2_cmip"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/noaa/goes17/cmip/data_output.csv"
+          SCHEMA_PATH: "data/noaa/schema/noaa_goes_17_cmip_schema.json"
+          DROP_DEST_TABLE: "N"
+          INPUT_FIELD_DELIMITER: ","
+          FULL_DATA_LOAD: "N"
+          REMOVE_SOURCE_FILE: "Y"
+          DELETE_TARGET_FILE: "Y"
+          NUMBER_OF_HEADER_ROWS: "1"
+          INPUT_CSV_HEADERS: >-
+            [
+              "dataset_name",
+              "platform_ID",
+              "orbital_slot",
+              "timeline_id",
+              "scene_id",
+              "time_coverage_start",
+              "time_coverage_end",
+              "date_created",
+              "geospatial_westbound_longitude",
+              "geospatial_northbound_latitude",
+              "geospatial_eastbound_longitude",
+              "geospatial_southbound_latitude",
+              "band_id",
+              "nominal_satellite_subpoint_lon",
+              "total_number_of_points",
+              "valid_pixel_count",
+              "outlier_pixel_count",
+              "min_reflectance_factor",
+              "max_reflectance_factor",
+              "mean_reflectance_factor",
+              "std_dev_reflectance_factor",
+              "min_brightness_temperature",
+              "max_brightness_temperature",
+              "mean_brightness_temperature",
+              "std_dev_brightness_temperature",
+              "percent_uncorrectable_GRB_errors",
+              "percent_uncorrectable_L0_errors",
+              "total_size",
+              "base_url"
+            ]
+          RENAME_HEADERS_LIST: >-
+            {
+              "dataset_name": "dataset_name",
+              "platform_ID": "platform_id",
+              "orbital_slot": "orbital_slot",
+              "timeline_id": "timeline_id",
+              "scene_id": "scene_id",
+              "band_id": "band_id",
+              "time_coverage_start": "time_coverage_start",
+              "time_coverage_end": "time_coverage_end",
+              "date_created": "date_created",
+              "geospatial_westbound_longitude": "geospatial_westbound_longitude",
+              "geospatial_northbound_latitude": "geospatial_northbound_latitude",
+              "geospatial_eastbound_longitude": "geospatial_eastbound_longitude",
+              "geospatial_southbound_latitude": "geospatial_southbound_latitude",
+              "nominal_satellite_subpoint_lon": "nominal_satellite_subpoint_lon",
+              "total_number_of_points": "total_number_of_points",
+              "valid_pixel_count": "valid_pixel_count",
+              "outlier_pixel_count": "outlier_pixel_count",
+              "min_reflectance_factor": "min_reflectance_factor",
+              "max_reflectance_factor": "max_reflectance_factor",
+              "mean_reflectance_factor": "mean_reflectance_factor",
+              "std_dev_reflectance_factor": "std_dev_reflectance_factor",
+              "min_brightness_temperature": "min_brightness_temperature",
+              "max_brightness_temperature": "max_brightness_temperature",
+              "mean_brightness_temperature": "mean_brightness_temperature",
+              "std_dev_brightness_temperature": "std_dev_brightness_temperature",
+              "percent_uncorrectable_GRB_errors": "percent_uncorrectable_grb_errors",
+              "percent_uncorrectable_L0_errors": "percent_uncorrectable_l0_errors",
+              "total_size": "total_size",
+              "base_url": "base_url"
+            }
+          REORDER_HEADERS_LIST: >-
+            [
+              "dataset_name",
+              "platform_id",
+              "orbital_slot",
+              "timeline_id",
+              "scene_id",
+              "band_id",
+              "time_coverage_start",
+              "time_coverage_end",
+              "date_created",
+              "geospatial_westbound_longitude",
+              "geospatial_northbound_latitude",
+              "geospatial_eastbound_longitude",
+              "geospatial_southbound_latitude",
+              "nominal_satellite_subpoint_lon",
+              "total_number_of_points",
+              "valid_pixel_count",
+              "outlier_pixel_count",
+              "min_reflectance_factor",
+              "max_reflectance_factor",
+              "mean_reflectance_factor",
+              "std_dev_reflectance_factor",
+              "min_brightness_temperature",
+              "max_brightness_temperature",
+              "mean_brightness_temperature",
+              "std_dev_brightness_temperature",
+              "percent_uncorrectable_grb_errors",
+              "percent_uncorrectable_l0_errors",
+              "total_size",
+              "base_url"
+            ]
+    - operator: "GKEStartPodOperator"
+      description: "Run NOAA load processes - GOES 17 Radiance"
+      args:
+        task_id: "noaa_goes17_radiance"
+        name: "noaa.goes17_radiance"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: noaa
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "NOAA GOES 17 Radiance"
+          SOURCE_URL: >-
+            {
+              "noaa_goes_17_radiance": "gs://pdp-feeds-staging/Cloud/goes17/abi_l1b_radiance.csv"
+            }
+          SOURCE_FILE: "files/data_goes17_radiance.csv"
+          TARGET_FILE: "files/data_output_goes17_radiance.csv"
+          CHUNKSIZE: "1000000"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "noaa_goes17"
+          TABLE_ID: "abi_l1b_radiance"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/noaa/goes17/radiance/data_output.csv"
+          SCHEMA_PATH: "data/noaa/schema/noaa_goes_17_radiance_schema.json"
+          DROP_DEST_TABLE: "N"
+          INPUT_FIELD_DELIMITER: ","
+          FULL_DATA_LOAD: "N"
+          REMOVE_SOURCE_FILE: "Y"
+          DELETE_TARGET_FILE: "Y"
+          NUMBER_OF_HEADER_ROWS: "1"
+          INPUT_CSV_HEADERS: >-
+            [
+              "dataset_name",
+              "platform_ID",
+              "orbital_slot",
+              "timeline_id",
+              "scene_id",
+              "time_coverage_start",
+              "time_coverage_end",
+              "date_created",
+              "geospatial_westbound_longitude",
+              "geospatial_northbound_latitude",
+              "geospatial_eastbound_longitude",
+              "geospatial_southbound_latitude",
+              "band_id",
+              "nominal_satellite_subpoint_lon",
+              "valid_pixel_count",
+              "missing_pixel_count",
+              "saturated_pixel_count",
+              "undersaturated_pixel_count",
+              "min_radiance_value_of_valid_pixels",
+              "max_radiance_value_of_valid_pixels",
+              "mean_radiance_value_of_valid_pixels",
+              "std_dev_radiance_value_of_valid_pixels",
+              "percent_uncorrectable_L0_errors",
+              "total_size",
+              "base_url"
+            ]
+          RENAME_HEADERS_LIST: >-
+            {
+              "dataset_name": "dataset_name",
+              "platform_ID": "platform_id",
+              "orbital_slot": "orbital_slot",
+              "timeline_id": "timeline_id",
+              "scene_id": "scene_id",
+              "band_id": "band_id",
+              "time_coverage_start": "time_coverage_start",
+              "time_coverage_end": "time_coverage_end",
+              "date_created": "date_created",
+              "geospatial_westbound_longitude": "geospatial_westbound_longitude",
+              "geospatial_northbound_latitude": "geospatial_northbound_latitude",
+              "geospatial_eastbound_longitude": "geospatial_eastbound_longitude",
+              "geospatial_southbound_latitude": "geospatial_southbound_latitude",
+              "nominal_satellite_subpoint_lon": "nominal_satellite_subpoint_lon",
+              "valid_pixel_count": "valid_pixel_count",
+              "missing_pixel_count": "missing_pixel_count",
+              "saturated_pixel_count": "saturated_pixel_count",
+              "undersaturated_pixel_count": "undersaturated_pixel_count",
+              "min_radiance_value_of_valid_pixels": "min_radiance_value_of_valid_pixels",
+              "max_radiance_value_of_valid_pixels": "max_radiance_value_of_valid_pixels",
+              "mean_radiance_value_of_valid_pixels": "mean_radiance_value_of_valid_pixels",
+              "std_dev_radiance_value_of_valid_pixels": "std_dev_radiance_value_of_valid_pixels",
+              "percent_uncorrectable_L0_errors": "percent_uncorrectable_l0_errors",
+              "total_size": "total_size",
+              "base_url": "base_url"
+            }
+          REORDER_HEADERS_LIST: >-
+            [
+              "dataset_name",
+              "platform_id",
+              "orbital_slot",
+              "timeline_id",
+              "scene_id",
+              "band_id",
+              "time_coverage_start",
+              "time_coverage_end",
+              "date_created",
+              "geospatial_westbound_longitude",
+              "geospatial_northbound_latitude",
+              "geospatial_eastbound_longitude",
+              "geospatial_southbound_latitude",
+              "nominal_satellite_subpoint_lon",
+              "valid_pixel_count",
+              "missing_pixel_count",
+              "saturated_pixel_count",
+              "undersaturated_pixel_count",
+              "min_radiance_value_of_valid_pixels",
+              "max_radiance_value_of_valid_pixels",
+              "mean_radiance_value_of_valid_pixels",
+              "std_dev_radiance_value_of_valid_pixels",
+              "percent_uncorrectable_l0_errors",
+              "total_size",
+              "base_url"
+            ]
+
+    - operator: "GKEStartPodOperator"
+      description: "Run NOAA load processes - GSOD By Year"
+      args:
+        task_id: "noaa_gsod_by_year"
+        name: "noaa.gsod_by_year"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: noaa
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "NOAA GSOD By Year"
+          START_YEAR: "1929"
+          SOURCE_URL: >-
+            {
+              "noaa_gsod_by_year": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/"
+            }
+          SOURCE_FILE: "files/data_gsod_.csv"
+          TARGET_FILE: "files/data_output_gsod_.csv"
+          CHUNKSIZE: "100000"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "noaa_gsod"
+          TABLE_ID: "gsod"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/noaa/gsod_by_year/data_output.csv"
+          SCHEMA_PATH: "data/noaa/schema/noaa_gsod_by_year_schema.json"
+          DROP_DEST_TABLE: "N"
+          INPUT_FIELD_DELIMITER: ","
+          FULL_DATA_LOAD: "N"
+          REMOVE_SOURCE_FILE: "N"
+          DELETE_TARGET_FILE: "Y"
+          NUMBER_OF_HEADER_ROWS: "1"
+          INPUT_CSV_HEADERS: >-
+            [
+              "STATION",
+              "DATE",
+              "LATITUDE",
+              "LONGITUDE",
+              "ELEVATION",
+              "NAME",
+              "TEMP",
+              "TEMP_ATTRIBUTES",
+              "DEWP",
+              "DEWP_ATTRIBUTES",
+              "SLP",
+              "SLP_ATTRIBUTES",
+              "STP",
+              "STP_ATTRIBUTES",
+              "VISIB",
+              "VISIB_ATTRIBUTES",
+              "WDSP",
+              "WDSP_ATTRIBUTES",
+              "MXSPD",
+              "GUST",
+              "MAX",
+              "MAX_ATTRIBUTES",
+              "MIN",
+              "MIN_ATTRIBUTES",
+              "PRCP",
+              "PRCP_ATTRIBUTES",
+              "SNDP",
+              "FRSHTT"
+            ]
+          RENAME_HEADERS_LIST: >-
+            {
+              "TEMP": "temp",
+              "TEMP_ATTRIBUTES": "count_temp",
+              "DEWP": "dewp",
+              "DEWP_ATTRIBUTES": "count_dewp",
+              "SLP": "slp",
+              "SLP_ATTRIBUTES": "count_slp",
+              "STP": "stp",
+              "STP_ATTRIBUTES": "count_stp",
+              "VISIB": "visib",
+              "VISIB_ATTRIBUTES": "count_visib",
+              "WDSP": "wdsp",
+              "WDSP_ATTRIBUTES": "count_wdsp",
+              "MXSPD": "mxspd",
+              "GUST": "gust",
+              "MAX": "max",
+              "MAX_ATTRIBUTES": "flag_max",
+              "MIN": "min",
+              "MIN_ATTRIBUTES": "flag_min",
+              "PRCP": "prcp",
+              "PRCP_ATTRIBUTES": "flag_prcp",
+              "SNDP": "sndp",
+              "DATE": "date"
+            }
+          TRIM_WHITESPACE_LIST: >-
+            [
+              "stn",
+              "wban",
+              "year",
+              "mo",
+              "da",
+              "date",
+              "temp",
+              "count_temp",
+              "dewp",
+              "count_dewp",
+              "slp",
+              "count_slp",
+              "stp",
+              "count_stp",
+              "visib",
+              "count_visib",
+              "wdsp",
+              "count_wdsp",
+              "mxspd",
+              "gust",
+              "max",
+              "flag_max",
+              "min",
+              "flag_min",
+              "prcp",
+              "flag_prcp",
+              "sndp",
+              "fog",
+              "rain_drizzle",
+              "snow_ice_pellets",
+              "hail",
+              "thunder",
+              "tornado_funnel_cloud"
+            ]
+          REORDER_HEADERS_LIST: >-
+            [
+              "stn",
+              "wban",
+              "date",
+              "year",
+              "mo",
+              "da",
+              "temp",
+              "count_temp",
+              "dewp",
+              "count_dewp",
+              "slp",
+              "count_slp",
+              "stp",
+              "count_stp",
+              "visib",
+              "count_visib",
+              "wdsp",
+              "count_wdsp",
+              "mxspd",
+              "gust",
+              "max",
+              "flag_max",
+              "min",
+              "flag_min",
+              "prcp",
+              "flag_prcp",
+              "sndp",
+              "fog",
+              "rain_drizzle",
+              "snow_ice_pellets",
+              "hail",
+              "thunder",
+              "tornado_funnel_cloud"
+            ]
     - operator: "GKEDeleteClusterOperator"
       args:
         task_id: "delete_cluster"
@@ -953,4 +2993,4 @@ dag:
         name: noaa
 
   graph_paths:
-    - "create_cluster >> [ghcnd_by_year, ghcnd_countries, ghcnd_inventory, ghcnd_states, ghcnd_stations, gsod_stations, ghcnd_hurricanes, lightning_strikes_by_year] >> delete_cluster"
+    - "create_cluster >> [ghcnd_by_year, lightning_strikes_by_year ] >> ghcnd_hurricanes >> [ ghcnd_inventory, spc_hail, spc_wind, spc_tornado, ghcnd_states, ghcnd_stations, gsod_stations, ghcnd_countries] >> noaa_ghcn_m >> [noaa_goes16_mcmip, noaa_goes16_cmip, noaa_goes16_glm] >> noaa_goes16_radiance >> [noaa_goes17_mcmip, noaa_goes17_cmip, noaa_goes17_glm] >> noaa_goes17_radiance >> storms_database_by_year >> noaa_gsod_by_year >> delete_cluster"

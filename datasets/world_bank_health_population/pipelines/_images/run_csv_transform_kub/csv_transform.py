@@ -12,14 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-import datetime
 import json
 import logging
 import math
 import os
 import pathlib
-import subprocess
 import typing
 
 import pandas as pd
@@ -28,48 +25,32 @@ from google.cloud import storage
 
 def main(
     source_url: str,
-    source_file: pathlib.Path,
+    source_file: str,
+    project_id: str,
     column_name: str,
-    target_file: pathlib.Path,
+    target_file: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
     headers: typing.List[str],
     rename_mappings: dict,
     pipeline_name: str,
 ) -> None:
-
-    logging.info(
-        f"World Bank Health Population {pipeline_name} process started at "
-        + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    )
-
+    logging.info(f"World Bank Health Population {pipeline_name} process started")
     logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
-
-    logging.info(f"Downloading file {source_url}")
-    download_file(source_url, source_file)
-
+    download_file_gcs(
+        project_id=project_id,
+        source_location=source_url,
+        destination_folder=os.path.split(source_file)[0],
+    )
     logging.info(f"Opening file {source_file}")
     df = pd.read_csv(source_file, skip_blank_lines=True)
-
-    logging.info(f"Transforming {source_file} ... ")
-
-    logging.info(f"Transform: Dropping column {column_name} ...")
     delete_column(df, column_name)
-
-    logging.info(f"Transform: Renaming columns for {pipeline_name} ...")
     rename_headers(df, rename_mappings)
-
     if pipeline_name == "series_times":
         logging.info(f"Transform: Extracting year for {pipeline_name} ...")
         df["year"] = df["year"].apply(extract_year)
-    else:
-        df = df
-
     if pipeline_name == "country_summary":
-        logging.info("Transform: Creating a new column ...")
-        df["latest_water_withdrawal_data"] = ""
-
         logging.info("Transform: Converting to integer ... ")
         df["latest_industrial_data"] = df["latest_industrial_data"].apply(
             convert_to_integer_string
@@ -77,47 +58,52 @@ def main(
         df["latest_trade_data"] = df["latest_trade_data"].apply(
             convert_to_integer_string
         )
-    else:
-        df = df
-
-    logging.info(f"Transform: Reordering headers for {pipeline_name} ...")
-    df = df[headers]
-
-    logging.info(f"Saving to output file.. {target_file}")
+    reorder_headers(df, headers)
     try:
         save_to_new_file(df, file_path=str(target_file))
     except Exception as e:
-        logging.error(f"Error saving output file: {e}.")
-
-    logging.info(
-        f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
-    )
+        logging.error(f"Error saving the output file: {e}.")
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
+    logging.info(f"World Bank Health Population {pipeline_name} process completed")
 
+
+def download_file_gcs(
+    project_id: str, source_location: str, destination_folder: str
+) -> None:
     logging.info(
-        f"World Bank Health Population {pipeline_name} process completed at "
-        + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        f"Downloading file from {source_location} in project {project_id} to {destination_folder}"
     )
+    object_name = os.path.basename(source_location)
+    dest_object = f"{destination_folder}/{object_name}"
+    storage_client = storage.Client(project_id)
+    bucket_name = str.split(source_location, "gs://")[1].split("/")[0]
+    bucket = storage_client.bucket(bucket_name)
+    source_object_path = str.split(source_location, f"gs://{bucket_name}/")[1]
+    blob = bucket.blob(source_object_path)
+    blob.download_to_filename(dest_object)
 
 
-def download_file(source_url: str, source_file: pathlib.Path) -> None:
-    subprocess.check_call(["gsutil", "cp", f"{source_url}", f"{source_file}"])
+def reorder_headers(df, headers):
+    logging.info("Transform: Reordering headers")
+    df = df[headers]
 
 
 def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
+    logging.info("Transform: Renaming columns")
     df.rename(columns=rename_mappings, inplace=True)
 
 
 def delete_column(df: pd.DataFrame, column_name: str) -> None:
+    logging.info(f"Transform: Dropping column {column_name} ...")
     df = df.drop(column_name, axis=1, inplace=True)
 
 
 def extract_year(string_val: str) -> str:
-    # string_val example: YR2021
     return string_val[2:]
 
 
 def save_to_new_file(df: pd.DataFrame, file_path: str) -> None:
+    logging.info("Saving to output file..")
     df.to_csv(file_path, index=False)
 
 
@@ -130,7 +116,8 @@ def convert_to_integer_string(input: typing.Union[str, float]) -> str:
     return str_val
 
 
-def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:
+def upload_file_to_gcs(file_path: str, gcs_bucket: str, gcs_path: str) -> None:
+    logging.info(f"Uploading output file to.. gs://{gcs_bucket}/{gcs_path}")
     storage_client = storage.Client()
     bucket = storage_client.bucket(gcs_bucket)
     blob = bucket.blob(gcs_path)
@@ -139,15 +126,15 @@ def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) 
 
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
-
     main(
-        source_url=os.environ["SOURCE_URL"],
-        source_file=pathlib.Path(os.environ["SOURCE_FILE"]).expanduser(),
-        column_name=os.environ["COLUMN_TO_REMOVE"],
-        target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
-        target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
-        target_gcs_path=os.environ["TARGET_GCS_PATH"],
-        headers=json.loads(os.environ["CSV_HEADERS"]),
-        rename_mappings=json.loads(os.environ["RENAME_MAPPINGS"]),
-        pipeline_name=os.environ["PIPELINE_NAME"],
+        source_url=os.environ.get("SOURCE_URL", ""),
+        source_file=os.environ.get("SOURCE_FILE", ""),
+        project_id=os.environ.get("PROJECT_ID", ""),
+        column_name=os.environ.get("COLUMN_TO_REMOVE", ""),
+        target_file=os.environ.get("TARGET_FILE", ""),
+        target_gcs_bucket=os.environ.get("TARGET_GCS_BUCKET", ""),
+        target_gcs_path=os.environ.get("TARGET_GCS_PATH", ""),
+        headers=json.loads(os.environ.get("CSV_HEADERS", r"[]")),
+        rename_mappings=json.loads(os.environ.get("RENAME_MAPPINGS", r"{}")),
+        pipeline_name=os.environ.get("PIPELINE_NAME", ""),
     )

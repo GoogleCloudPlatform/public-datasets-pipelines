@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,10 @@
 
 
 resource "google_bigquery_table" "covid19_italy_national_trends" {
-  project    = var.project_id
-  dataset_id = "covid19_italy"
-  table_id   = "national_trends"
-
+  project     = var.project_id
+  dataset_id  = "covid19_italy"
+  table_id    = "national_trends"
   description = "COVID-19 Italy National Trends"
-
-
-
-
   depends_on = [
     google_bigquery_dataset.covid19_italy
   ]
@@ -36,4 +31,22 @@ output "bigquery_table-covid19_italy_national_trends-table_id" {
 
 output "bigquery_table-covid19_italy_national_trends-id" {
   value = google_bigquery_table.covid19_italy_national_trends.id
+}
+
+resource "google_bigquery_table" "covid19_italy_eu_national_trends" {
+  project     = var.project_id
+  dataset_id  = "covid19_italy_eu"
+  table_id    = "national_trends"
+  description = "COVID-19 Italy National Trends"
+  depends_on = [
+    google_bigquery_dataset.covid19_italy_eu
+  ]
+}
+
+output "bigquery_table-covid19_italy_eu_national_trends-table_id" {
+  value = google_bigquery_table.covid19_italy_eu_national_trends.table_id
+}
+
+output "bigquery_table-covid19_italy_eu_national_trends-id" {
+  value = google_bigquery_table.covid19_italy_eu_national_trends.id
 }

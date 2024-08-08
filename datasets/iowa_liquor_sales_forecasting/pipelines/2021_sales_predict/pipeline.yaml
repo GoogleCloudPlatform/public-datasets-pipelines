@@ -36,7 +36,7 @@ dag:
   # The DAG acronym stands for directed acyclic graph. This block represents
   # your data pipeline along with every property and configuration it needs to
   # onboard your data.
-  airflow_version: 1
+  airflow_version: 2
   initialize:
     dag_id: 2021_sales_predict
     default_args:
@@ -65,7 +65,7 @@ dag:
     # Use the YAML list syntax in this block to specify every task for your
     # pipeline.
 
-    - operator: "BigQueryOperator"
+    - operator: "BigQueryExecuteQueryOperator"
       # Initializes a BigQuery operator that executes SQL queries in a specific
       # BigQuery table.
 
@@ -91,7 +91,7 @@ dag:
         # See https://cloud.google.com/bigquery/docs/reference/auditlogs/rest/Shared.Types/WriteDisposition
         write_disposition: "WRITE_TRUNCATE"
 
-    - operator: "BigQueryOperator"
+    - operator: "BigQueryExecuteQueryOperator"
       # Initializes a BigQuery operator that executes SQL queries in a specific
       # BigQuery table.
 

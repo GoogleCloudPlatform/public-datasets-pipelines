@@ -1,0 +1,125 @@
+# Copyright 2022 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+
+resources:
+
+  - type: bigquery_table
+    table_id: uniref50
+    description: "The Uniref Dataset"
+
+dag:
+  airflow_version: 2
+  initialize:
+    dag_id: uniref50
+    default_args:
+      owner: "Google"
+      depends_on_past: False
+      start_date: '2022-06-10'
+    max_active_runs: 1
+    schedule_interval: "5 0 * * 6"
+    catchup: False
+    default_view: graph
+
+  tasks:
+    - operator: "GKECreateClusterOperator"
+      args:
+        task_id: "create_cluster"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        body:
+          name: "pubds-uniref"
+          initial_node_count: 1
+          network: "{{ var.value.vpc_network }}"
+          node_config:
+            machine_type: e2-highmem-8
+            oauth_scopes:
+              - https://www.googleapis.com/auth/devstorage.read_write
+              - https://www.googleapis.com/auth/cloud-platform
+
+    - operator: "BashOperator"
+      description: "Task to copy `uniref50.fasta` to gcs"
+      args:
+        task_id: "download_zip_file"
+        bash_command: |
+            mkdir -p /home/airflow/gcs/data/uniref50/uniref
+            rm /home/airflow/gcs/data/uniref50/uniref/*.gz
+            curl --ipv4 https://ftp.uniprot.org/pub/databases/uniprot/uniref/uniref50/uniref50.fasta.gz -o /home/airflow/gcs/data/uniref50/uniref/uniref50.fasta.gz
+            gunzip -c /home/airflow/gcs/data/uniref50/uniref/uniref50.fasta.gz |sed 's/:>/~@/g' |sed 's/ TaxID=/~@Size=/g' |sed 's/>\(UniRef50_[^[:space:]]*[[:space:]]\)/ClusterID=\1~@TaxID=/;s/ ~@/~@/' |sed 's/ RepID=/~@ClusterName=/g' |sed 's/ Tax=/~@Sequence=/g' |sed 's/ n=/~@RepID=/g' |sed 's/ClusterID=//g' |sed 's/TaxID=//g' |sed 's/RepID=//g' |sed 's/Sequence=//g' |sed 's/Size=//g' |sed 's/ClusterName=//g' |sed '/^UniRef50_/ s/$/~@ENDOFHEADERROW/' |sed '/~@ENDOFHEADERROW/! s/$/-/' |perl -p -e 's/-\n/-/g' |sed 's/\-UniRef/-\nUniRef/g' |perl -p -e 's/ENDOFHEADERROW\n//g' |sed 's/~@$//g' | split -a 3 -d -l 1000000 --numeric-suffixes --filter='gzip -9 > /home/airflow/gcs/data/uniref50/uniref/$FILE.txt.gz; echo "Compressed to file $FILE.txt.gz"'
+    - operator: "GKEStartPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "transform_load_csv"
+        startup_timeout_seconds: 6000
+        name: "uniref"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: "pubds-uniref"
+        namespace: "default"
+        image_pull_policy: "Always"
+        image: "{{ var.json.uniref50.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "uniref50"
+          DESTINATION_FOLDER: "files"
+          SOURCE_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          SOURCE_GCS_PATH: "data/uniref50/uniref"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/uniref50/uniref"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "uniref50"
+          TABLE_ID: "uniref50"
+          CSV_HEADERS: >-
+            [
+              "ClusterID",
+              "ClusterName",
+              "Size",
+              "Organism",
+              "TaxID",
+              "RepID",
+              "Sequence"
+            ]
+          DATA_DTYPES: >-
+            {
+              "ClusterID": "str",
+              "ClusterName": "str",
+              "Size": "str",
+              "Organism": "str",
+              "TaxID": "str",
+              "RepID": "str",
+              "Sequence": "str"
+            }
+          REORDER_HEADERS_LIST: >-
+            [
+              "ClusterID",
+              "RepID",
+              "TaxID",
+              "Sequence",
+              "ClusterName",
+              "Size",
+              "Organism"
+            ]
+          FIELD_SEPARATOR: "~@"
+          SCHEMA_PATH: "data/uniref50/uniref50_schema.json"
+          CHUNKSIZE: "100000"
+
+    - operator: "GKEDeleteClusterOperator"
+      args:
+        task_id: "delete_cluster"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        name: "pubds-uniref"
+
+  graph_paths:
+    - "create_cluster >> download_zip_file >> transform_load_csv >> delete_cluster"

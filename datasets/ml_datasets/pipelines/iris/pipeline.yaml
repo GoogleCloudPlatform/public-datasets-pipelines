@@ -20,7 +20,7 @@ resources:
     description: "iris table"
 
 dag:
-  airflow_version: 1
+  airflow_version: 2
   initialize:
     dag_id: iris
     default_args:

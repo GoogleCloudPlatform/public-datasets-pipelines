@@ -65,7 +65,8 @@ def main(
         data_folder = (
             DATASETS_PATH / dataset_id / "pipelines" / pipeline_path.name / "data"
         )
-        if data_folder.exists() and data_folder.is_dir():
+
+        if data_folder.exists() and data_folder.is_dir() and any(data_folder.iterdir()):
             copy_data_folder_to_composer_bucket(
                 dataset_id,
                 data_folder,
@@ -301,33 +302,15 @@ def copy_data_folder_to_composer_bucket(
     pipeline: str,
     composer_bucket: str,
 ):
-    gcs_uri = f"gs://{composer_bucket}/data/{dataset_id}/pipeline/{pipeline}/data"
-    schema_file_dir_pattern = "*"
-    schema_file_dir = []
+    print(
+        f"Data folder exists: {data_folder}.\nCopying contents into Composer bucket.."
+    )
+    gcs_uri = f"gs://{composer_bucket}/data/{dataset_id}/{pipeline}"
+    run_gsutil_cmd(["-q", "cp", "-r", f"{data_folder}/*", gcs_uri], data_folder)
 
-    schema_file_dir = sorted(data_folder.rglob(schema_file_dir_pattern))
-    """
-    [remote]
-    gsutil cp * gs://{composer_bucket}/data/{dataset_id}/pipeline/{pipeline}
-    cd .{ENV}/datasets/{dataset_id}/data
-    """
-
-    if len(schema_file_dir) > 0:
-        print(
-            "\nCopying files from local data folder into Cloud Composer data folder\n"
-        )
-
-        for file in data_folder.iterdir():
-            print("  Source:\n")
-            print("  " + str(file) + "\n")
-            print("  Destination:\n")
-            print("  " + gcs_uri + "/" + str(file).split("/data/")[1] + "\n")
-
-        run_gsutil_cmd(["cp", schema_file_dir_pattern, gcs_uri], data_folder)
-    else:
-        print(
-            "\n No files in local data folder to copy into Cloud Composer data folder \n"
-        )
+    print("Done. Files uploaded to GCS:")
+    for file in data_folder.iterdir():
+        print(f"  - {gcs_uri}/{file.name}")
 
 
 def run_cloud_composer_vars_import(

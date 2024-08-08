@@ -1,0 +1,29 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+dataset:
+  name: ebi_chembl
+  friendly_name: ebi_chembl
+  description: ChEMBL is a manually curated database of bioactive molecules with drug-like properties. It brings together chemical, bioactivity and genomic data to aid the translation of genomic information into effective new drugs.
+  dataset_sources: ~
+  terms_of_use: ~
+
+resources:
+  - type: bigquery_dataset
+    dataset_id: ebi_chembl
+    description: |
+      ChEMBL Data is a manually curated database of small molecules used in drug discovery, including information about existing patented drugs.
+
+      Documentation: https://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBLdb/latest/schema_documentation.html
+
+      “ChEMBL” by the European Bioinformatics Institute (EMBL-EBI), used under CC BY-SA 3.0. Modifications have been made to add normalized publication numbers.

@@ -59,7 +59,7 @@ def pipeline_path(dataset_path, suffix="_pipeline") -> typing.Iterator[pathlib.P
 
 def generate_image_files(dataset_path: pathlib.Path, num_containers: int = 1):
     for i in range(num_containers):
-        target_dir = dataset_path / "pipelines" / "_images" / f"test_image_{i+1}"
+        target_dir = dataset_path / "pipelines" / "_images" / f"test_image_{i + 1}"
         target_dir.mkdir(parents=True, exist_ok=True)
         (target_dir / "Dockerfile").touch()
 
@@ -272,6 +272,35 @@ def test_checks_for_task_operator_and_id():
             generate_dag.validate_task(non_existing_task_id, airflow_version)
 
 
+def test_check_custom_yaml_loader(
+    dataset_path: pathlib.Path, pipeline_path: pathlib.Path, env: str
+):
+    copy_config_files_and_set_tmp_folder_names_as_ids(dataset_path, pipeline_path)
+    custom_yaml_tag = "image: !IMAGE IMAGE_REPOSITORY"
+
+    pipeline_yaml_str = (
+        (pipeline_path / "pipeline.yaml")
+        .read_text()
+        .replace(
+            'image: "{{ var.json.DATASET_FOLDER_NAME.container_registry.IMAGE_REPOSITORY }}"',
+            custom_yaml_tag,
+        )
+    )
+    assert custom_yaml_tag in pipeline_yaml_str
+
+    generate_dag.write_to_file(pipeline_yaml_str, pipeline_path / "pipeline.yaml")
+    generate_dag.main(dataset_path.name, pipeline_path.name, env, format_code=False)
+
+    for path_prefix in (
+        pipeline_path,
+        ENV_DATASETS_PATH / dataset_path.name / "pipelines" / pipeline_path.name,
+    ):
+        assert (
+            "gcr.io/{{ var.value.gcp_project }}"
+            in (path_prefix / f"{pipeline_path.name}_dag.py").read_text()
+        )
+
+
 def test_generated_dag_file_loads_properly_in_python(
     dataset_path: pathlib.Path, pipeline_path: pathlib.Path, env: str
 ):
@@ -374,11 +403,56 @@ def test_build_images_called_when_dataset_has_images_dir(
     dataset_path: pathlib.Path, pipeline_path: pathlib.Path, env: str, mocker
 ):
     copy_config_files_and_set_tmp_folder_names_as_ids(dataset_path, pipeline_path)
+    num_containers = random.randint(1, 3)
+    generate_image_files(dataset_path, num_containers=num_containers)
+    assert (
+        sum([f.is_dir() for f in (dataset_path / "pipelines" / "_images").iterdir()])
+        == num_containers
+    )
+
+    mocker.patch("scripts.generate_dag.build_images")
+    generate_dag.main(dataset_path.name, pipeline_path.name, env, format_code=False)
+
+    async_builds_default = False
+    generate_dag.build_images.assert_called_once_with(
+        dataset_path.name, env, async_builds_default
+    )
+
+
+def test_build_images_called_with_async_false_by_default(
+    dataset_path: pathlib.Path, pipeline_path: pathlib.Path, env: str, mocker
+):
+    copy_config_files_and_set_tmp_folder_names_as_ids(dataset_path, pipeline_path)
     generate_image_files(dataset_path, num_containers=random.randint(1, 3))
 
     mocker.patch("scripts.generate_dag.build_images")
     generate_dag.main(dataset_path.name, pipeline_path.name, env, format_code=False)
-    generate_dag.build_images.assert_called_once_with(dataset_path.name, env)
+
+    async_builds_default = False
+    generate_dag.build_images.assert_called_once_with(
+        dataset_path.name, env, async_builds_default
+    )
+
+
+def test_build_images_called_with_async_builds(
+    dataset_path: pathlib.Path, pipeline_path: pathlib.Path, env: str, mocker
+):
+    copy_config_files_and_set_tmp_folder_names_as_ids(dataset_path, pipeline_path)
+    generate_image_files(dataset_path, num_containers=random.randint(1, 3))
+
+    mocker.patch("scripts.generate_dag.build_images")
+    async_builds = True
+    generate_dag.main(
+        dataset_path.name,
+        pipeline_path.name,
+        env,
+        async_builds=async_builds,
+        format_code=False,
+    )
+
+    generate_dag.build_images.assert_called_once_with(
+        dataset_path.name, env, async_builds
+    )
 
 
 def test_build_images_not_called_given_skip_builds_argument(

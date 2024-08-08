@@ -1,0 +1,281 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+resources:
+  - type: bigquery_table
+    table_id: 311_service_requests
+    description: "austin 311 service requests"
+  - type: bigquery_table
+    table_id: bikeshare_trips
+    description: "austin bikeshare trips"
+
+dag:
+  airflow_version: 2
+  initialize:
+    dag_id: austin
+    default_args:
+      owner: "Google"
+      depends_on_past: False
+      start_date: '2021-03-01'
+    max_active_runs: 1
+    schedule_interval: "@daily"
+    catchup: False
+    default_view: graph
+
+  tasks:
+    - operator: "KubernetesPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "austin_311_service_requests"
+        name: "austin"
+        namespace: "composer"
+        service_account_name: "datasets"
+        image_pull_policy: "Always"
+        image: "{{ var.json.austin.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "Austin 311 Service Requests By Year"
+          SOURCE_URL: "https://data.austintexas.gov/api/views/xwdj-i9he/rows.csv"
+          CHUNKSIZE: "750000"
+          SOURCE_FILE: "files/data_austin_311_service_requests.csv"
+          TARGET_FILE: "files/data_output_austin_311_service_requests.csv"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/austin_311/311_service_requests/data_output.csv"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "austin_311"
+          DESTINATION_TABLE: "311_service_requests"
+          SCHEMA_PATH: "data/austin_311/schema/austin_311_service_requests_schema.json"
+          DATE_FORMAT_LIST: >-
+            {
+              "status_change_date": "%Y-%m-%d %H:%M:%S",
+              "created_date": "%Y-%m-%d %H:%M:%S",
+              "last_update_date": "%Y-%m-%d %H:%M:%S",
+              "close_date": "%Y-%m-%d %H:%M:%S"
+            }
+          INT_COLS_LIST: >-
+            [
+              "council_district_code"
+            ]
+          REMOVE_NEWLINES_COLS_LIST: >-
+            [
+              "location"
+            ]
+          NULL_ROWS_LIST: >-
+            [
+              "unique_key"
+            ]
+          INPUT_CSV_HEADERS: >-
+            [
+              "Service Request (SR) Number",
+              "SR Description",
+              "Method Received",
+              "SR Status",
+              "Status Change Date",
+              "Created Date",
+              "Last Update Date",
+              "Close Date",
+              "SR Location",
+              "Street Number",
+              "Street Name",
+              "City",
+              "Zip Code",
+              "County",
+              "State Plane X Coordinate",
+              "State Plane Y Coordinate",
+              "Latitude Coordinate",
+              "Longitude Coordinate",
+              "(Latitude.Longitude)",
+              "Council District",
+              "Map Page",
+              "Map Tile"
+            ]
+          DATA_DTYPES: >-
+            {
+              "Service Request (SR) Number": "str",
+              "SR Description": "str",
+              "Method Received": "str",
+              "SR Status": "str",
+              "Status Change Date": "datetime64[ns]",
+              "Created Date": "datetime64[ns]",
+              "Last Update Date": "datetime64[ns]",
+              "Close Date": "datetime64[ns]",
+              "SR Location": "str",
+              "Street Number": "str",
+              "Street Name": "str",
+              "City": "str",
+              "Zip Code": "str",
+              "County": "str",
+              "State Plane X Coordinate": "float",
+              "State Plane Y Coordinate": "float",
+              "Latitude Coordinate": "float",
+              "Longitude Coordinate": "float",
+              "(Latitude.Longitude)": "str",
+              "Council District": "str",
+              "Map Page": "str",
+              "Map Tile": "str"
+            }
+          RENAME_HEADERS_LIST: >-
+            {
+              "Service Request (SR) Number": "unique_key",
+              "SR Description": "complaint_description",
+              "Method Received": "source",
+              "SR Status": "status",
+              "Status Change Date": "status_change_date",
+              "Created Date": "created_date",
+              "Last Update Date": "last_update_date",
+              "Close Date": "close_date",
+              "SR Location": "incident_address",
+              "Street Number": "street_number",
+              "Street Name": "street_name",
+              "City": "city",
+              "Zip Code": "incident_zip",
+              "County": "county",
+              "State Plane X Coordinate": "state_plane_x_coordinate",
+              "State Plane Y Coordinate": "state_plane_y_coordinate",
+              "Latitude Coordinate": "latitude",
+              "Longitude Coordinate": "longitude",
+              "(Latitude.Longitude)": "location",
+              "Council District": "council_district_code",
+              "Map Page": "map_page",
+              "Map Tile": "map_tile"
+            }
+          REORDER_HEADERS_LIST: >-
+            [
+              "unique_key",
+              "complaint_description",
+              "source",
+              "status",
+              "status_change_date",
+              "created_date",
+              "last_update_date",
+              "close_date",
+              "incident_address",
+              "street_number",
+              "street_name",
+              "city",
+              "incident_zip",
+              "county",
+              "state_plane_x_coordinate",
+              "state_plane_y_coordinate",
+              "latitude",
+              "longitude",
+              "location",
+              "council_district_code",
+              "map_page",
+              "map_tile"
+            ]
+        resources:
+          limit_memory: "8G"
+          limit_cpu: "3"
+          request_ephemeral_storage: "10G"
+
+    - operator: "KubernetesPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "austin_bikeshare_trips"
+        name: "austin_bikeshare_trips"
+        namespace: "composer"
+        service_account_name: "datasets"
+        image_pull_policy: "Always"
+        image: "{{ var.json.austin.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "https://data.austintexas.gov/api/views/tyfh-5r8s/rows.csv"
+          SOURCE_FILE: "files/data_austin_bikeshare_trips.csv"
+          TARGET_FILE: "files/data_output_austin_bikeshare_trips.csv"
+          CHUNKSIZE: "750000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/austin_bikeshare/data_output.csv"
+          PIPELINE_NAME: "Austin Bikeshare Trips"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "austin_bikeshare"
+          DESTINATION_TABLE: "bikeshare_trips"
+          SCHEMA_PATH: "data/austin_bikeshare/schema/austin_bikeshare_trips_schema.json"
+          DATE_FORMAT_LIST: >-
+            {
+              "start_time": "%Y-%m-%d %H:%M:%S"
+            }
+          NULL_ROWS_LIST: >-
+            [
+              "trip_id"
+            ]
+          INPUT_CSV_HEADERS: >-
+            [
+              "Trip ID",
+              "Membership Type",
+              "Bicycle ID",
+              "Bike Type",
+              "Checkout Datetime",
+              "Checkout Date",
+              "Checkout Time",
+              "Checkout Kiosk ID",
+              "Checkout Kiosk",
+              "Return Kiosk ID",
+              "Return Kiosk",
+              "Trip Duration Minutes",
+              "Month",
+              "Year"
+            ]
+          DATA_DTYPES: >-
+            {
+              "Trip ID": "str",
+              "Membership Type": "str",
+              "Bicycle ID": "str",
+              "Bike Type": "str",
+              "Checkout Date": "str",
+              "Checkout Time": "str",
+              "Checkout Kiosk ID": "str",
+              "Checkout Kiosk": "str",
+              "Return Kiosk ID": "str",
+              "Return Kiosk": "str",
+              "Trip Duration Minutes": "str",
+              "Month": "str",
+              "Year": "str"
+            }
+          RENAME_HEADERS_LIST: >-
+            {
+              "Trip ID": "trip_id",
+              "Membership Type": "subscriber_type",
+              "Bicycle ID": "bikeid",
+              "Bike Type": "bike_type",
+              "Checkout Date": "time",
+              "Checkout Kiosk ID": "start_station_id",
+              "Checkout Kiosk": "start_station_name",
+              "Return Kiosk ID": "end_station_id",
+              "Return Kiosk": "end_station_name",
+              "Trip Duration Minutes": "duration_minutes",
+              "Checkout Time": "checkout_time",
+              "Month": "month",
+              "Year": "year"
+            }
+          REORDER_HEADERS_LIST: >-
+            [
+              "trip_id",
+              "subscriber_type",
+              "bikeid",
+              "bike_type",
+              "start_time",
+              "start_station_id",
+              "start_station_name",
+              "end_station_id",
+              "end_station_name",
+              "duration_minutes"
+            ]
+        resources:
+          limit_memory: "8G"
+          limit_cpu: "3"
+          request_ephemeral_storage: "10G"
+
+
+  graph_paths:
+    - "[ austin_311_service_requests, austin_bikeshare_trips ]"

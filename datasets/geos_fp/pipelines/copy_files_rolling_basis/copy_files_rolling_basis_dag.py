@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -37,10 +37,11 @@ with DAG(
         location="us-central1-c",
         body={
             "name": "geos-fp--copy-files-rolling-basis",
-            "initial_node_count": 8,
+            "initial_node_count": 2,
             "network": "{{ var.value.vpc_network }}",
+            "ip_allocation_policy": {"cluster_ipv4_cidr_block": "/26"},
             "node_config": {
-                "machine_type": "e2-small",
+                "machine_type": "e2-standard-8",
                 "oauth_scopes": [
                     "https://www.googleapis.com/auth/devstorage.read_write",
                     "https://www.googleapis.com/auth/cloud-platform",
@@ -66,6 +67,7 @@ with DAG(
             "TARGET_BUCKET": "{{ var.json.geos_fp.destination_bucket }}",
             "BATCH_SIZE": "10",
         },
+        resources={"request_memory": "1G", "request_cpu": "1"},
         retries=3,
         retry_delay=300,
         retry_exponential_backoff=True,
@@ -89,6 +91,7 @@ with DAG(
             "TARGET_BUCKET": "{{ var.json.geos_fp.destination_bucket }}",
             "BATCH_SIZE": "10",
         },
+        resources={"request_memory": "1G", "request_cpu": "1"},
         retries=3,
         retry_delay=300,
         retry_exponential_backoff=True,
