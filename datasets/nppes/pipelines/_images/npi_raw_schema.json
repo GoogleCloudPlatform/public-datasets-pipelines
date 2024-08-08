@@ -1,0 +1,1982 @@
+[
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "npi",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "entity_type_code",
+    "type": "INTEGER"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "replacement_npi",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "employer_identification_number_ein",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_organization_name_legal_business_name",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_last_name_legal_name",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_first_name",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_middle_name",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_name_prefix_text",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_name_suffix_text",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_credential_text",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_other_organization_name",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_other_organization_name_type_code",
+    "type": "INTEGER"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_other_last_name",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_other_first_name",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_other_middle_name",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_other_name_prefix_text",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_other_name_suffix_text",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_other_credential_text",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_other_last_name_type_code",
+    "type": "INTEGER"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_first_line_business_mailing_address",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_second_line_business_mailing_address",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_business_mailing_address_city_name",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_business_mailing_address_state_name",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_business_mailing_address_postal_code",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_business_mailing_address_country_code_if_outside_us",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_business_mailing_address_telephone_number",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_business_mailing_address_fax_number",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_first_line_business_practice_location_address",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_second_line_business_practice_location_address",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_business_practice_location_address_city_name",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_business_practice_location_address_state_name",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_business_practice_location_address_postal_code",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_business_practice_location_address_country_code_if_outside_us",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_business_practice_location_address_telephone_number",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_business_practice_location_address_fax_number",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_enumeration_date",
+    "type": "DATE"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "last_update_date",
+    "type": "DATE"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "npi_deactivation_reason_code",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "npi_deactivation_date",
+    "type": "DATE"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "npi_reactivation_date",
+    "type": "DATE"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_gender_code",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "authorized_official_last_name",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "authorized_official_first_name",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "authorized_official_middle_name",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "authorized_official_title_or_position",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "authorized_official_telephone_number",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_taxonomy_code_1",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_license_number_1",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_license_number_state_code_1",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_primary_taxonomy_switch_1",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_taxonomy_code_2",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_license_number_2",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_license_number_state_code_2",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_primary_taxonomy_switch_2",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_taxonomy_code_3",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_license_number_3",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_license_number_state_code_3",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_primary_taxonomy_switch_3",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_taxonomy_code_4",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_license_number_4",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_license_number_state_code_4",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_primary_taxonomy_switch_4",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_taxonomy_code_5",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_license_number_5",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_license_number_state_code_5",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_primary_taxonomy_switch_5",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_taxonomy_code_6",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_license_number_6",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_license_number_state_code_6",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_primary_taxonomy_switch_6",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_taxonomy_code_7",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_license_number_7",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_license_number_state_code_7",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_primary_taxonomy_switch_7",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_taxonomy_code_8",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_license_number_8",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_license_number_state_code_8",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_primary_taxonomy_switch_8",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_taxonomy_code_9",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_license_number_9",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_license_number_state_code_9",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_primary_taxonomy_switch_9",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_taxonomy_code_10",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_license_number_10",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_license_number_state_code_10",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_primary_taxonomy_switch_10",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_taxonomy_code_11",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_license_number_11",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_license_number_state_code_11",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_primary_taxonomy_switch_11",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_taxonomy_code_12",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_license_number_12",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_license_number_state_code_12",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_primary_taxonomy_switch_12",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_taxonomy_code_13",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_license_number_13",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_license_number_state_code_13",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_primary_taxonomy_switch_13",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_taxonomy_code_14",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_license_number_14",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_license_number_state_code_14",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_primary_taxonomy_switch_14",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_taxonomy_code_15",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_license_number_15",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "provider_license_number_state_code_15",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_primary_taxonomy_switch_15",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_1",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_1",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_1",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_1",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_2",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_2",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_2",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_2",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_3",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_3",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_3",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_3",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_4",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_4",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_4",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_4",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_5",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_5",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_5",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_5",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_6",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_6",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_6",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_6",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_7",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_7",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_7",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_7",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_8",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_8",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_8",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_8",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_9",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_9",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_9",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_9",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_10",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_10",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_10",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_10",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_11",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_11",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_11",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_11",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_12",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_12",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_12",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_12",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_13",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_13",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_13",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_13",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_14",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_14",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_14",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_14",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_15",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_15",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_15",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_15",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_16",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_16",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_16",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_16",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_17",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_17",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_17",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_17",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_18",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_18",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_18",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_18",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_19",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_19",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_19",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_19",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_20",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_20",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_20",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_20",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_21",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_21",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_21",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_21",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_22",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_22",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_22",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_22",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_23",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_23",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_23",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_23",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_24",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_24",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_24",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_24",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_25",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_25",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_25",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_25",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_26",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_26",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_26",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_26",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_27",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_27",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_27",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_27",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_28",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_28",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_28",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_28",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_29",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_29",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_29",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_29",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_30",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_30",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_30",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_30",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_31",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_31",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_31",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_31",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_32",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_32",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_32",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_32",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_33",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_33",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_33",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_33",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_34",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_34",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_34",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_34",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_35",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_35",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_35",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_35",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_36",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_36",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_36",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_36",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_37",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_37",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_37",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_37",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_38",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_38",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_38",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_38",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_39",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_39",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_39",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_39",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_40",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_40",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_40",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_40",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_41",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_41",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_41",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_41",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_42",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_42",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_42",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_42",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_43",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_43",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_43",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_43",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_44",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_44",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_44",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_44",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_45",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_45",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_45",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_45",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_46",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_46",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_46",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_46",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_47",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_47",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_47",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_47",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_48",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_48",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_48",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_48",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_49",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_49",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_49",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_49",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_50",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_type_code_50",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_state_50",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "other_provider_identifier_issuer_50",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "is_sole_proprietor",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "is_organization_subpart",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "parent_organization_lbn",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "parent_organization_tin",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "authorized_official_name_prefix_text",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "authorized_official_name_suffix_text",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "authorized_official_credential_text",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_taxonomy_group_1",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_taxonomy_group_2",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_taxonomy_group_3",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_taxonomy_group_4",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_taxonomy_group_5",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_taxonomy_group_6",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_taxonomy_group_7",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_taxonomy_group_8",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_taxonomy_group_9",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_taxonomy_group_10",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_taxonomy_group_11",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_taxonomy_group_12",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_taxonomy_group_13",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_taxonomy_group_14",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "healthcare_provider_taxonomy_group_15",
+    "type": "STRING"
+  },
+  {
+    "description": "",
+    "mode": "NULLABLE",
+    "name": "certification_date",
+    "type": "DATE"
+  }
+]

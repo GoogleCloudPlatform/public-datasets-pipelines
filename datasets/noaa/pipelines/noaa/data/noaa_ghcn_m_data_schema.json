@@ -1,0 +1,308 @@
+[
+  {
+    "name": "id",
+    "type": "INTEGER",
+    "mode": "REQUIRED",
+    "description": "11 digit identifier, digits 1-3=Country Code, digits 4-8 represent the WMO id if the station is a WMO station. It is a WMO station if digits 9-11=\"000\"."
+  },
+  {
+    "name": "year",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "4 digit year of the station record."
+  },
+  {
+    "name": "element",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "element type, monthly mean temperature=\"TAVG\" monthly maximum temperature=\"TMAX\" monthly minimum temperature=\"TMIN\""
+  },
+  {
+    "name": "value1",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "monthly value (MISSING=-9999). Temperature values are in hundredths of a degree Celsius, but are expressed as whole integers (e.g. divide by 100.0 to get whole degrees Celsius)."
+  },
+  {
+    "name": "dmflag1",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "data measurement flag, nine possible values: blank = no measurement information applicable a-i = number of days missing in calculation of monthly mean temperature (currently only applies to the 1218 USHCN V2 stations included within GHCNM)"
+  },
+  {
+    "name": "qcflag1",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "quality control flag, seven possibilities within quality controlled unadjusted (qcu) dataset, and 2 possibilities within the quality controlled adjusted (qca) dataset."
+  },
+  {
+    "name": "dsflag1",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "data source flag for monthly value, 21 possibilities"
+  },
+  {
+    "name": "value2",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "monthly value (MISSING=-9999). Temperature values are in hundredths of a degree Celsius, but are expressed as whole integers (e.g. divide by 100.0 to get whole degrees Celsius)."
+  },
+  {
+    "name": "dmflag2",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "data measurement flag, nine possible values: blank = no measurement information applicable a-i = number of days missing in calculation of monthly mean temperature (currently only applies to the 1218 USHCN V2 stations included within GHCNM)"
+  },
+  {
+    "name": "qcflag2",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "quality control flag, seven possibilities within quality controlled unadjusted (qcu) dataset, and 2 possibilities within the quality controlled adjusted (qca) dataset."
+  },
+  {
+    "name": "dsflag2",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "data source flag for monthly value, 21 possibilities"
+  },
+  {
+    "name": "value3",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "monthly value (MISSING=-9999). Temperature values are in hundredths of a degree Celsius, but are expressed as whole integers (e.g. divide by 100.0 to get whole degrees Celsius)."
+  },
+  {
+    "name": "dmflag3",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "data measurement flag, nine possible values: blank = no measurement information applicable a-i = number of days missing in calculation of monthly mean temperature (currently only applies to the 1218 USHCN V2 stations included within GHCNM)"
+  },
+  {
+    "name": "qcflag3",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "quality control flag, seven possibilities within quality controlled unadjusted (qcu) dataset, and 2 possibilities within the quality controlled adjusted (qca) dataset."
+  },
+  {
+    "name": "dsflag3",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "data source flag for monthly value, 21 possibilities"
+  },
+  {
+    "name": "value4",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "monthly value (MISSING=-9999). Temperature values are in hundredths of a degree Celsius, but are expressed as whole integers (e.g. divide by 100.0 to get whole degrees Celsius)."
+  },
+  {
+    "name": "dmflag4",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "data measurement flag, nine possible values: blank = no measurement information applicable a-i = number of days missing in calculation of monthly mean temperature (currently only applies to the 1218 USHCN V2 stations included within GHCNM)"
+  },
+  {
+    "name": "qcflag4",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "quality control flag, seven possibilities within quality controlled unadjusted (qcu) dataset, and 2 possibilities within the quality controlled adjusted (qca) dataset."
+  },
+  {
+    "name": "dsflag4",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "data source flag for monthly value, 21 possibilities"
+  },
+  {
+    "name": "value5",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "monthly value (MISSING=-9999). Temperature values are in hundredths of a degree Celsius, but are expressed as whole integers (e.g. divide by 100.0 to get whole degrees Celsius)."
+  },
+  {
+    "name": "dmflag5",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "data measurement flag, nine possible values: blank = no measurement information applicable a-i = number of days missing in calculation of monthly mean temperature (currently only applies to the 1218 USHCN V2 stations included within GHCNM)"
+  },
+  {
+    "name": "qcflag5",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "quality control flag, seven possibilities within quality controlled unadjusted (qcu) dataset, and 2 possibilities within the quality controlled adjusted (qca) dataset."
+  },
+  {
+    "name": "dsflag5",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "data source flag for monthly value, 21 possibilities"
+  },
+  {
+    "name": "value6",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "monthly value (MISSING=-9999). Temperature values are in hundredths of a degree Celsius, but are expressed as whole integers (e.g. divide by 100.0 to get whole degrees Celsius)."
+  },
+  {
+    "name": "dmflag6",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "data measurement flag, nine possible values: blank = no measurement information applicable a-i = number of days missing in calculation of monthly mean temperature (currently only applies to the 1218 USHCN V2 stations included within GHCNM)"
+  },
+  {
+    "name": "qcflag6",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "quality control flag, seven possibilities within quality controlled unadjusted (qcu) dataset, and 2 possibilities within the quality controlled adjusted (qca) dataset."
+  },
+  {
+    "name": "dsflag6",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "data source flag for monthly value, 21 possibilities"
+  },
+  {
+    "name": "value7",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "monthly value (MISSING=-9999). Temperature values are in hundredths of a degree Celsius, but are expressed as whole integers (e.g. divide by 100.0 to get whole degrees Celsius)."
+  },
+  {
+    "name": "dmflag7",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "data measurement flag, nine possible values: blank = no measurement information applicable a-i = number of days missing in calculation of monthly mean temperature (currently only applies to the 1218 USHCN V2 stations included within GHCNM)"
+  },
+  {
+    "name": "qcflag7",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "quality control flag, seven possibilities within quality controlled unadjusted (qcu) dataset, and 2 possibilities within the quality controlled adjusted (qca) dataset."
+  },
+  {
+    "name": "dsflag7",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "data source flag for monthly value, 21 possibilities"
+  },
+  {
+    "name": "value8",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "monthly value (MISSING=-9999). Temperature values are in hundredths of a degree Celsius, but are expressed as whole integers (e.g. divide by 100.0 to get whole degrees Celsius)."
+  },
+  {
+    "name": "dmflag8",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "data measurement flag, nine possible values: blank = no measurement information applicable a-i = number of days missing in calculation of monthly mean temperature (currently only applies to the 1218 USHCN V2 stations included within GHCNM)"
+  },
+  {
+    "name": "qcflag8",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "quality control flag, seven possibilities within quality controlled unadjusted (qcu) dataset, and 2 possibilities within the quality controlled adjusted (qca) dataset."
+  },
+  {
+    "name": "dsflag8",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "data source flag for monthly value, 21 possibilities"
+  },
+  {
+    "name": "value9",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "monthly value (MISSING=-9999). Temperature values are in hundredths of a degree Celsius, but are expressed as whole integers (e.g. divide by 100.0 to get whole degrees Celsius)."
+  },
+  {
+    "name": "dmflag9",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "data measurement flag, nine possible values: blank = no measurement information applicable a-i = number of days missing in calculation of monthly mean temperature (currently only applies to the 1218 USHCN V2 stations included within GHCNM)"
+  },
+  {
+    "name": "qcflag9",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "quality control flag, seven possibilities within quality controlled unadjusted (qcu) dataset, and 2 possibilities within the quality controlled adjusted (qca) dataset."
+  },
+  {
+    "name": "dsflag9",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "data source flag for monthly value, 21 possibilities"
+  },
+  {
+    "name": "value10",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "monthly value (MISSING=-9999). Temperature values are in hundredths of a degree Celsius, but are expressed as whole integers (e.g. divide by 100.0 to get whole degrees Celsius)."
+  },
+  {
+    "name": "dmflag10",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "data measurement flag, nine possible values: blank = no measurement information applicable a-i = number of days missing in calculation of monthly mean temperature (currently only applies to the 1218 USHCN V2 stations included within GHCNM)"
+  },
+  {
+    "name": "qcflag10",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "quality control flag, seven possibilities within quality controlled unadjusted (qcu) dataset, and 2 possibilities within the quality controlled adjusted (qca) dataset."
+  },
+  {
+    "name": "dsflag10",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "data source flag for monthly value, 21 possibilities"
+  },
+  {
+    "name": "value11",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "monthly value (MISSING=-9999). Temperature values are in hundredths of a degree Celsius, but are expressed as whole integers (e.g. divide by 100.0 to get whole degrees Celsius)."
+  },
+  {
+    "name": "dmflag11",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "data measurement flag, nine possible values: blank = no measurement information applicable a-i = number of days missing in calculation of monthly mean temperature (currently only applies to the 1218 USHCN V2 stations included within GHCNM)"
+  },
+  {
+    "name": "qcflag11",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "quality control flag, seven possibilities within quality controlled unadjusted (qcu) dataset, and 2 possibilities within the quality controlled adjusted (qca) dataset."
+  },
+  {
+    "name": "dsflag11",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "data source flag for monthly value, 21 possibilities"
+  },
+  {
+    "name": "value12",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "monthly value (MISSING=-9999). Temperature values are in hundredths of a degree Celsius, but are expressed as whole integers (e.g. divide by 100.0 to get whole degrees Celsius)."
+  },
+  {
+    "name": "dmflag12",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "data measurement flag, nine possible values: blank = no measurement information applicable a-i = number of days missing in calculation of monthly mean temperature (currently only applies to the 1218 USHCN V2 stations included within GHCNM)"
+  },
+  {
+    "name": "qcflag12",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "quality control flag, seven possibilities within quality controlled unadjusted (qcu) dataset, and 2 possibilities within the quality controlled adjusted (qca) dataset."
+  },
+  {
+    "name": "dsflag12",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "data source flag for monthly value, 21 possibilities"
+  }
+]

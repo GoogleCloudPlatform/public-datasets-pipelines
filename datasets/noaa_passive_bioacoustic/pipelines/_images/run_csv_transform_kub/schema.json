@@ -1,0 +1,321 @@
+{
+	"ncei_afsc_pad_metadata":
+	[
+		{
+			"name": "cloud_path",
+			"type": "STRING",
+			"mode": "NULLABLE"
+		},
+		{
+			"name": "file_name",
+			"type": "STRING",
+			"mode": "NULLABLE"
+		},
+		{
+			"name": "start_date",
+			"type": "STRING",
+			"mode": "NULLABLE"
+		},
+		{
+			"name": "start_time",
+			"type": "STRING",
+			"mode": "NULLABLE"
+		},
+		{
+			"name": "data_collection_name",
+			"type": "STRING",
+			"mode": "NULLABLE"
+		},
+		{
+			"name": "source_organization",
+			"type": "STRING",
+			"mode": "NULLABLE"
+		},
+		{
+			"name": "funding_organization",
+			"type": "STRING",
+			"mode": "NULLABLE"
+		},
+		{
+			"name": "project_name",
+			"type": "STRING",
+			"mode": "NULLABLE"
+		},
+		{
+			"name": "sensor_depth",
+			"type": "STRING",
+			"mode": "NULLABLE"
+		},
+		{
+			"name": "sample_rate",
+			"type": "STRING",
+			"mode": "NULLABLE"
+		},
+		{
+			"name": "duration",
+			"type": "STRING",
+			"mode": "NULLABLE"
+		},
+		{
+			"name": "platform_name",
+			"type": "STRING",
+			"mode": "NULLABLE"
+		},
+		{
+			"name": "shape",
+			"type": "STRING",
+			"mode": "NULLABLE"
+		}
+	],
+	"ncei_nefsc_pad_metadata":
+		[
+		{
+			"name": "cloud_path",
+			"type": "STRING",
+			"mode": "NULLABLE"
+		},
+		{
+			"name": "file_name",
+			"type": "STRING",
+			"mode": "NULLABLE"
+		},
+		{
+			"name": "start_date",
+			"type": "STRING",
+			"mode": "NULLABLE"
+		},
+		{
+			"name": "start_time",
+			"type": "STRING",
+			"mode": "NULLABLE"
+		},
+		{
+			"name": "data_collection_name",
+			"type": "STRING",
+			"mode": "NULLABLE"
+		},
+		{
+			"name": "source_organization",
+			"type": "STRING",
+			"mode": "NULLABLE"
+		},
+		{
+			"name": "funding_organization",
+			"type": "STRING",
+			"mode": "NULLABLE"
+		},
+		{
+			"name": "project_name",
+			"type": "STRING",
+			"mode": "NULLABLE"
+		},
+		{
+			"name": "sensor_depth",
+			"type": "STRING",
+			"mode": "NULLABLE"
+		},
+		{
+			"name": "sample_rate",
+			"type": "STRING",
+			"mode": "NULLABLE"
+		},
+		{
+			"name": "duration",
+			"type": "STRING",
+			"mode": "NULLABLE"
+		},
+		{
+			"name": "platform_name",
+			"type": "STRING",
+			"mode": "NULLABLE"
+		},
+		{
+			"name": "shape1",
+			"type": "STRING",
+			"mode": "NULLABLE"
+		},
+		{
+			"name": "shape2",
+			"type": "STRING",
+			"mode": "NULLABLE"
+		},
+		{
+			"name": "shape3",
+			"type": "STRING",
+			"mode": "NULLABLE"
+		},
+		{
+			"name": "shape4",
+			"type": "STRING",
+			"mode": "NULLABLE"
+		},
+		{
+			"name": "shape5",
+			"type": "STRING",
+			"mode": "NULLABLE"
+		},
+		{
+			"name": "shape6",
+			"type": "STRING",
+			"mode": "NULLABLE"
+		},
+		{
+			"name": "shape7",
+			"type": "STRING",
+			"mode": "NULLABLE"
+		},
+		{
+			"name": "shape8",
+			"type": "STRING",
+			"mode": "NULLABLE"
+		},
+		{
+			"name": "shape9",
+			"type": "STRING",
+			"mode": "NULLABLE"
+		},
+		{
+			"name": "shape10",
+			"type": "STRING",
+			"mode": "NULLABLE"
+		}
+		],
+	"ncei_sanctsound_pad_metadata":
+		[
+			{
+				"name": "file_name",
+				"type": "STRING",
+				"mode": "NULLABLE"
+			},
+			{
+				"name": "data_collection_name",
+				"type": "STRING",
+				"mode": "NULLABLE"
+			},
+			{
+				"name": "start_date",
+				"type": "STRING",
+				"mode": "NULLABLE"
+			},
+			{
+				"name": "start_time",
+				"type": "STRING",
+				"mode": "NULLABLE"
+			},
+			{
+				"name": "source_organization",
+				"type": "STRING",
+				"mode": "NULLABLE"
+			},
+			{
+				"name": "funding_organization",
+				"type": "STRING",
+				"mode": "NULLABLE"
+			},
+			{
+				"name": "project_name",
+				"type": "STRING",
+				"mode": "NULLABLE"
+			},
+			{
+				"name": "sensor_depth",
+				"type": "STRING",
+				"mode": "NULLABLE"
+			},
+			{
+				"name": "sample_rate_hz",
+				"type": "STRING",
+				"mode": "NULLABLE"
+			},
+			{
+				"name": "recording",
+				"type": "STRING",
+				"mode": "NULLABLE"
+			},
+			{
+				"name": "platform_name",
+				"type": "STRING",
+				"mode": "NULLABLE"
+			},
+			{
+				"name": "lon",
+				"type": "STRING",
+				"mode": "NULLABLE"
+			},
+			{
+				"name": "lat",
+				"type": "STRING",
+				"mode": "NULLABLE"
+			}
+
+		],
+		"ncei_nrs_pad_metadata":
+		[
+			{
+				"name": "file_name",
+				"type": "STRING",
+				"mode": "NULLABLE"
+			},
+			{
+				"name": "deployment_name",
+				"type": "STRING",
+				"mode": "NULLABLE"
+			},
+			{
+				"name": "start_date",
+				"type": "STRING",
+				"mode": "NULLABLE"
+			},
+			{
+				"name": "start_time",
+				"type": "STRING",
+				"mode": "NULLABLE"
+			},
+			{
+				"name": "source_organization",
+				"type": "STRING",
+				"mode": "NULLABLE"
+			},
+			{
+				"name": "funding_organization",
+				"type": "STRING",
+				"mode": "NULLABLE"
+			},
+			{
+				"name": "project_name",
+				"type": "STRING",
+				"mode": "NULLABLE"
+			},
+			{
+				"name": "sensor_depth",
+				"type": "STRING",
+				"mode": "NULLABLE"
+			},
+			{
+				"name": "sample_rate_hz",
+				"type": "STRING",
+				"mode": "NULLABLE"
+			},
+			{
+				"name": "recording",
+				"type": "STRING",
+				"mode": "NULLABLE"
+			},
+			{
+				"name": "platform_name",
+				"type": "STRING",
+				"mode": "NULLABLE"
+			},
+			{
+				"name": "lon",
+				"type": "STRING",
+				"mode": "NULLABLE"
+			},
+			{
+				"name": "lat",
+				"type": "STRING",
+				"mode": "NULLABLE"
+			}
+		]
+}
+

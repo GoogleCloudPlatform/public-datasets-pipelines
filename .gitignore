@@ -10,6 +10,8 @@ pyvenv.cfg
 
 # terraform caches
 .terraform*
+*.tfstate
+*.tfstate.backup
 terraform.tfstate
 .terragrunt-cache
 

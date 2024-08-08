@@ -1,34 +1,4 @@
 {
-    "1": {
-        "BashOperator": {
-            "import": "from airflow.operators import bash_operator",
-            "class": "bash_operator.BashOperator"
-        },
-        "GoogleCloudStorageToBigQueryOperator": {
-            "import": "from airflow.contrib.operators import gcs_to_bq",
-            "class": "gcs_to_bq.GoogleCloudStorageToBigQueryOperator"
-        },
-        "GoogleCloudStorageToGoogleCloudStorageOperator": {
-            "import": "from airflow.contrib.operators import gcs_to_gcs",
-            "class": "gcs_to_gcs.GoogleCloudStorageToGoogleCloudStorageOperator"
-        },
-        "BigQueryOperator": {
-            "import": "from airflow.contrib.operators import bigquery_operator",
-            "class": "bigquery_operator.BigQueryOperator"
-        },
-        "BigQueryToBigQueryOperator": {
-            "import": "from airflow.contrib.operators import bigquery_to_bigquery",
-            "class": "bigquery_to_bigquery.BigQueryToBigQueryOperator"
-        },
-        "KubernetesPodOperator": {
-            "import": "from airflow.contrib.operators import kubernetes_pod_operator",
-            "class": "kubernetes_pod_operator.KubernetesPodOperator"
-        },
-        "GoogleCloudStorageDeleteOperator": {
-            "import": "from airflow.contrib.operators import gcs_delete_operator",
-            "class": "gcs_delete_operator.GoogleCloudStorageDeleteOperator"
-        }
-    },
     "2": {
       "BashOperator": {
         "import": "from airflow.operators import bash",
@@ -77,6 +47,38 @@
       "DataflowCreatePythonJobOperator": {
           "import": "from airflow.providers.google.cloud.operators import dataflow",
           "class": "dataflow.DataflowCreatePythonJobOperator"
+      },
+      "CloudSQLCreateInstanceDatabaseOperator": {
+          "import": "airflow.providers.google.cloud.operators import cloud_sql",
+          "class": "cloud_sql.CloudSQLCreateInstanceDatabaseOperator"
+      },
+      "CloudSQLDeleteInstanceDatabaseOperator": {
+          "import": "airflow.providers.google.cloud.operators import cloud_sql",
+          "class": "cloud_sql.CloudSQLDeleteInstanceDatabaseOperator"
+      },
+      "CloudSQLExportInstanceOperator": {
+          "import": "airflow.providers.google.cloud.operators import cloud_sql",
+          "class": "cloud_sql.CloudSQLExportInstanceOperator"
+      },
+      "CloudSQLExecuteQueryOperator": {
+          "import": "airflow.providers.google.cloud.operators import cloud_sql",
+          "class": "cloud_sql.CloudSQLExecuteQueryOperator"
+      },
+      "CloudFunctionDeployFunctionOperator": {
+          "import": "airflow.providers.google.cloud.operators import functions",
+          "class": "functions.CloudFunctionDeployFunctionOperator"
+      },
+      "CloudFunctionDeleteFunctionOperator": {
+          "import": "airflow.providers.google.cloud.operators import functions",
+          "class": "functions.CloudFunctionDeleteFunctionOperator"
+      },
+      "ComputeEngineStartInstanceOperator": {
+          "import": "airflow.providers.google.cloud.operators import compute",
+          "class": "compute.ComputeEngineStartInstanceOperator"
+      },
+      "ComputeEngineStopInstanceOperator": {
+          "import": "airflow.providers.google.cloud.operators import compute",
+          "class": "compute.ComputeEngineStopInstanceOperator"
       }
    }
 }

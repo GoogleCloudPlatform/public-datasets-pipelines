@@ -1,5 +1,7 @@
 bs4
+geopandas
 google-cloud-bigquery
 google-cloud-storage
 numpy
 pandas
+sh
