@@ -25,7 +25,7 @@ default_args = {
 
 
 with DAG(
-    dag_id="us_climate_normals.normals_daily",
+    dag_id="us_climate_normals.us_climate_normals",
     default_args=default_args,
     max_active_runs=1,
     schedule_interval="0 2 * * *",
