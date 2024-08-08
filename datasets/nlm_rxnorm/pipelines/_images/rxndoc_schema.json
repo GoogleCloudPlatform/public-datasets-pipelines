@@ -1,0 +1,26 @@
+[
+    {
+      "name": "key",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Data element or attribute"
+    },
+    {
+      "name": "value",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Abbreviation that is one of its values"
+    },
+    {
+      "name": "type",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Type of information in EXPL column"
+    },
+    {
+      "name": "expl",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Explanation of VALUE"
+    }
+  ]

@@ -82,7 +82,7 @@ def create_transfer_job(
     # Create a client
     client = storage_transfer.StorageTransferServiceClient()
 
-    job_name = f"transferJobs/deepmind-afdb-{manifest.name.split('/')[-1].replace('.csv','')}-{time.time_ns() // 1_000_000}"
+    job_name = f"transferJobs/deepmind-afdb-{manifest.name.split('/')[-1].replace('.csv', '')}-{time.time_ns() // 1_000_000}"
     logging.info(f"Creating transfer job {job_name}")
 
     # Initialize request argument(s)
