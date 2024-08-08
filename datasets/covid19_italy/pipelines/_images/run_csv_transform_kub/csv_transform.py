@@ -34,27 +34,19 @@ def main(
     rename_mappings: dict,
     pipeline_name: str,
 ) -> None:
-
     logging.info(
         "Covid-19 Italy process started at "
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
-
     logging.info("creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
-
     logging.info(f"Downloading file {source_url}")
     download_file(source_url, source_file)
-
     logging.info(f"Opening file {source_file}")
-
     df = pd.read_csv(str(source_file))
-
     logging.info(f"Transformation Process Starting.. {source_file}")
-
     logging.info(f"Transform: Renaming Headers.. {source_file}")
     rename_headers(df, rename_mappings)
-
     logging.info(f"Transform: Creating Geometry Column.. {pipeline_name}")
     if pipeline_name == "data_by_province" or pipeline_name == "data_by_region":
         df["location_geom"] = (
@@ -65,24 +57,18 @@ def main(
             + ")"
         )
         df.location_geom = df.location_geom.replace("POINT( )", "")
-
     logging.info("Transform: Reordering headers..")
     df = df[headers]
-
     logging.info(f"Transformation Process complete .. {source_file}")
-
     logging.info(f"Saving to output file.. {target_file}")
-
     try:
         save_to_new_file(df, file_path=str(target_file))
     except Exception as e:
         logging.error(f"Error saving output file: {e}.")
-
     logging.info(
         f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
     )
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
-
     logging.info(
         "Covid-19 Italy process completed at "
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))

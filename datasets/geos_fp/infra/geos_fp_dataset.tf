@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 resource "google_storage_bucket" "geos-fp" {
   name                        = "${var.bucket_name_prefix}-geos-fp"
   force_destroy               = true
+  location                    = "US"
   uniform_bucket_level_access = true
   lifecycle {
     ignore_changes = [

@@ -1,0 +1,44 @@
+[
+    {
+      "name": "rxaui",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "RxNorm Unique identifier for concept (concept ID)"
+    },
+    {
+      "name": "code",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Most useful source asserted identifier (if the source vocabulary has more than one identifier), or a Metathesaurus-generated source entry identifier (if the source vocabulary has none.)"
+    },
+    {
+      "name": "sab",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Source abbreviation"
+    },
+    {
+      "name": "tty",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Term type in source"
+    },
+    {
+      "name": "str",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "String"
+    },
+    {
+      "name": "old_rxcui",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Old RxNorm Unique identifier for concept (concept ID)"
+    },
+    {
+      "name": "new_rxcui",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "New RxNorm Unique identifier for concept (concept ID)"
+    }
+]

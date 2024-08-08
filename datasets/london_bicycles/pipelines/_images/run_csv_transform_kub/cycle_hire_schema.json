@@ -1,0 +1,86 @@
+[
+    {
+      "name": "rental_id",
+      "type": "INTEGER",
+      "description": "",
+      "mode": "REQUIRED"
+    },
+    {
+      "name": "duration",
+      "type": "INTEGER",
+      "description": "Duration of the bike trip in seconds.",
+      "mode": "NULLABLE"
+    },
+    {
+      "name": "duration_ms",
+      "type": "INTEGER",
+      "description": "Duration of the bike trip in milliseconds.",
+      "mode": "NULLABLE"
+    },
+    {
+      "name": "bike_id",
+      "type": "INTEGER",
+      "description": "",
+      "mode": "NULLABLE"
+    },
+    {
+      "name": "bike_model",
+      "type": "STRING",
+      "description": "",
+      "mode": "NULLABLE"
+    },
+    {
+      "name": "end_date",
+      "type": "TIMESTAMP",
+      "description": "",
+      "mode": "NULLABLE"
+    },
+    {
+      "name": "end_station_id",
+      "type": "INTEGER",
+      "description": "",
+      "mode": "NULLABLE"
+    },
+    {
+      "name": "end_station_name",
+      "type": "STRING",
+      "description": "",
+      "mode": "NULLABLE"
+    },
+    {
+      "name": "start_date",
+      "type": "TIMESTAMP",
+      "description": "",
+      "mode": "NULLABLE"
+    },
+    {
+      "name": "start_station_id",
+      "type": "INTEGER",
+      "description": "",
+      "mode": "NULLABLE"
+    },
+    {
+      "name": "start_station_name",
+      "type": "STRING",
+      "description": "",
+      "mode": "NULLABLE"
+    },
+    {
+      "name": "end_station_logical_terminal",
+      "type": "INTEGER",
+      "description": "",
+      "mode": "NULLABLE"
+    },
+    {
+      "name": "start_station_logical_terminal",
+      "type": "INTEGER",
+      "description": "",
+      "mode": "NULLABLE"
+    },
+    {
+      "name": "end_station_priority_id",
+      "type": "INTEGER",
+      "description": "",
+      "mode": "NULLABLE"
+    }
+]

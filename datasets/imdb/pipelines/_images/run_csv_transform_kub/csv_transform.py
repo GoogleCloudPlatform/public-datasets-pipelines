@@ -373,7 +373,7 @@ def coldata_replace(df: pd.DataFrame, col: str, replace_dict: dict) -> None:
 
 def convert_int(df: pd.DataFrame, col: str, dtype: str) -> None:
     logging.info(f"Converting data type to {dtype}")
-    df[col] = df[col].astype(dtype)
+    df[col] = df[col].astype(dtype, errors="ignore")
 
 
 def convert_digit(df: pd.DataFrame, col: str) -> None:

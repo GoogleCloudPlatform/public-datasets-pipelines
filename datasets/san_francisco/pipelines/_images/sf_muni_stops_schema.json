@@ -1,0 +1,32 @@
+[
+  {
+    "name": "stop_id",
+    "type": "STRING",
+    "description": "Uniquely identifies each stop",
+    "mode": "nullable"
+  },
+  {
+    "name": "stop_name",
+    "type": "STRING",
+    "description": "Full text name of the transit stop",
+    "mode": "nullable"
+  },
+  {
+    "name": "stop_lat",
+    "type": "FLOAT",
+    "description": "Latitude of the stop",
+    "mode": "nullable"
+  },
+  {
+    "name": "stop_lon",
+    "type": "FLOAT",
+    "description": "Longitude of the stop",
+    "mode": "nullable"
+  },
+  {
+    "name": "stop_geom",
+    "type": "GEOGRAPHY",
+    "description": "Geographic representation of the stop's position",
+    "mode": "nullable"
+  }
+]

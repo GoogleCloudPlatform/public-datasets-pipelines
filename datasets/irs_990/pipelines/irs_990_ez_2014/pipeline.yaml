@@ -38,22 +38,7 @@ dag:
     default_view: graph
 
   tasks:
-    - operator: "GKECreateClusterOperator"
-      args:
-        task_id: "create_cluster"
-        project_id: "{{ var.value.gcp_project }}"
-        location: "us-central1-c"
-        body:
-          name: irs-990--irs-990-ez-2014
-          initial_node_count: 1
-          network: "{{ var.value.vpc_network }}"
-          node_config:
-            machine_type: e2-small
-            oauth_scopes:
-              - https://www.googleapis.com/auth/devstorage.read_write
-              - https://www.googleapis.com/auth/cloud-platform
-
-    - operator: "GKEStartPodOperator"
+    - operator: "KubernetesPodOperator"
 
       # Task description
       description: "Run CSV transform within kubernetes pod"
@@ -68,10 +53,8 @@ dag:
         name: "irs_990_ez_2014"
 
         # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
-        project_id: "{{ var.value.gcp_project }}"
-        location: "us-central1-c"
-        cluster_name: irs-990--irs-990-ez-2014
-        namespace: "default"
+        service_account_name: "datasets"
+        namespace: "composer"
 
         image_pull_policy: "Always"
 
@@ -92,7 +75,7 @@ dag:
             {"EIN": "ein","a_tax_prd": "tax_pd","taxpd": "tax_pd","taxprd": "tax_pd","subseccd": "subseccd","prgmservrev": "prgmservrev","duesassesmnts": "duesassesmnts","othrinvstinc": "othrinvstinc","grsamtsalesastothr": "grsamtsalesastothr","basisalesexpnsothr": "basisalesexpnsothr","gnsaleofastothr": "gnsaleofastothr","grsincgaming": "grsincgaming","grsrevnuefndrsng": "grsrevnuefndrsng","direxpns": "direxpns","netincfndrsng": "netincfndrsng","grsalesminusret": "grsalesminusret","costgoodsold": "costgoodsold","grsprft": "grsprft","othrevnue": "othrevnue","totrevnue": "totrevnue","totexpns": "totexpns","totexcessyr": "totexcessyr","othrchgsnetassetfnd": "othrchgsnetassetfnd","networthend": "networthend","totassetsend": "totassetsend","totliabend": "totliabend","totnetassetsend": "totnetassetsend","actvtynotprevrptcd": "actvtynotprevrptcd","chngsinorgcd": "chngsinorgcd","unrelbusincd": "unrelbusincd","filedf990tcd": "filedf990tcd","contractioncd": "contractioncd","politicalexpend": "politicalexpend","filedfYYN0polcd": "filedf1120polcd","loanstoofficerscd": "loanstoofficerscd","loanstoofficers": "loanstoofficers","initiationfee": "initiationfee","grspublicrcpts": "grspublicrcpts","s4958excessbenefcd": "s4958excessbenefcd","prohibtdtxshltrcd": "prohibtdtxshltrcd","nonpfrea": "nonpfrea","totnoforgscnt": "totnooforgscnt","totsupport": "totsupport","gftgrntrcvd170": "gftgrntsrcvd170","txrevnuelevied170": "txrevnuelevied170","srvcsval170": "srvcsval170","pubsuppsubtot170": "pubsuppsubtot170","excds2pct170": "exceeds2pct170","pubsupplesspct170": "pubsupplesspct170","samepubsuppsubtot170": "samepubsuppsubtot170","grsinc170": "grsinc170","netincunrelatd170": "netincunreltd170","othrinc170": "othrinc170","totsupport170": "totsupp170","grsrcptsrelatd170": "grsrcptsrelated170","totgftgrntrcvd509": "totgftgrntrcvd509","grsrcptsadmiss509": "grsrcptsadmissn509","grsrcptsactvts509": "grsrcptsactivities509","txrevnuelevied509": "txrevnuelevied509","srvcsval509": "srvcsval509","pubsuppsubtot509": "pubsuppsubtot509","rcvdfrmdisqualsub509": "rcvdfrmdisqualsub509","excds1pct509": "exceeds1pct509","subtotpub509": "subtotpub509","pubsupplesssub509": "pubsupplesub509","samepubsuppsubtot509": "samepubsuppsubtot509","grsinc509": "grsinc509","unreltxincls511tx509": "unreltxincls511tx509","subtotsuppinc509": "subtotsuppinc509","netincunreltd509": "netincunrelatd509","othrinc509": "othrinc509","totsupp509": "totsupp509","elf": "elf","totcntrbs": "totcntrbs"}
         # Set resource limits for the pod here. For resource units in Kubernetes, see https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#resource-units-in-kubernetes
         resources:
-          request_memory: "4G"
+          request_memory: "2G"
           request_cpu: "1"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
@@ -407,12 +390,6 @@ dag:
             type: "integer"
             description: "Total support (509)"
             mode: "nullable"
-    - operator: "GKEDeleteClusterOperator"
-      args:
-        task_id: "delete_cluster"
-        project_id: "{{ var.value.gcp_project }}"
-        location: "us-central1-c"
-        name: irs-990--irs-990-ez-2014
 
   graph_paths:
-    - "create_cluster >> irs_990_ez_2014_transform_csv >> load_irs_990_ez_2014_to_bq >> delete_cluster"
+    - "irs_990_ez_2014_transform_csv >> load_irs_990_ez_2014_to_bq"
