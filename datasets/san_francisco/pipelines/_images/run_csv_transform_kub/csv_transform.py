@@ -257,9 +257,25 @@ def execute_pipeline(
             source_url=source_url_dict["sfpd_incidents"], source_file=source_file
         )
     elif destination_table == "bikeshare_station_info":
-        source_url_json = f"{source_url}.json"
-        source_file_json = str(source_file).replace(".csv", "") + "_stations.json"
-        download_file_json(source_url_json, source_file_json, source_file, "stations")
+        download_file_http(source_url, source_file)
+        process_source_file(
+            source_file=source_file,
+            target_file=target_file,
+            chunksize=int(chunksize),
+            input_headers=input_headers,
+            data_dtypes=data_dtypes,
+            destination_table=destination_table,
+            rename_headers_list=rename_headers_list,
+            empty_key_list=empty_key_list,
+            gen_location_list=gen_location_list,
+            resolve_datatypes_list=resolve_datatypes_list,
+            remove_paren_list=remove_paren_list,
+            strip_newlines_list=strip_newlines_list,
+            strip_whitespace_list=strip_whitespace_list,
+            date_format_list=date_format_list,
+            reorder_headers_list=reorder_headers_list,
+            header_row_ordinal=0,
+        )
     elif destination_table == "bikeshare_station_status":
         source_url_json = f"{source_url}.json"
         source_file_json = str(source_file).replace(".csv", "") + "_status.json"
@@ -337,17 +353,13 @@ def execute_pipeline(
             target_gcs_bucket=target_gcs_bucket,
             target_gcs_path=target_gcs_path,
         )
-        if drop_dest_table == "Y":
-            drop_table = True
-        else:
-            drop_table = False
         table_exists = create_dest_table(
             project_id=project_id,
             dataset_id=dataset_id,
             table_id=destination_table,
             schema_filepath=schema_path,
             bucket_name=target_gcs_bucket,
-            drop_table=drop_table,
+            drop_table=(drop_dest_table == "Y"),
         )
         if table_exists:
             load_data_to_bq(
@@ -925,7 +937,7 @@ def handle_tripdata(
         subset=["key_val"], keep="last", inplace=True, ignore_index=False
     )
     df_trip_data.set_index("key", inplace=True)
-    df = df_trip_data.append(df_tripdata, sort=True)
+    df = pd.concat([df_trip_data, df_tripdata], ignore_index=True, sort=True)
     df["subscriber_type_new"] = df.apply(
         lambda x: str(x.subscription_type)
         if not str(x.subscriber_type)
@@ -973,7 +985,6 @@ def download_file_http(source_url: str, source_file: pathlib.Path) -> None:
 
 def unpack_file(infile: str, dest_path: str, compression_type: str = "zip") -> None:
     if compression_type == "zip":
-        logging.info(f"Unpacking {infile} to {dest_path}")
         zip_decompress(infile=infile, dest_path=dest_path)
     else:
         logging.info(
@@ -1201,11 +1212,10 @@ def process_chunk(
     elif destination_table == "sfpd_incidents":
         df = rename_headers(df=df, rename_headers_list=rename_headers_list)
         df = remove_empty_key_rows(df, empty_key_list)
-        df = resolve_date_format(df, date_format_list)
         df["timestamp"] = df.apply(
             lambda x: datetime.strftime(
                 datetime.strptime(
-                    (x["Date"][:10] + " " + x["Time"] + ":00"), "%Y-%m-%d %H:%M:%S"
+                    (x["Date"][:10] + " " + x["Time"] + ":00"), "%m/%d/%Y %H:%M:%S"
                 ),
                 "%Y-%m-%d %H:%M:%S",
             ),
@@ -1215,8 +1225,9 @@ def process_chunk(
     elif destination_table == "bikeshare_station_info":
         df = rename_headers(df, rename_headers_list)
         df = remove_empty_key_rows(df, empty_key_list)
-        df = generate_location(df, gen_location_list)
-        df = resolve_datatypes(df, resolve_datatypes_list)
+        df["eightd_has_key_dispenser"] = ""
+        df["external_id"] = ""
+        df["rental_methods"] = ""
         df = reorder_headers(df, reorder_headers_list)
     elif destination_table == "bikeshare_station_status":
         df = rename_headers(df, rename_headers_list)
@@ -1224,9 +1235,19 @@ def process_chunk(
         df = reorder_headers(df, reorder_headers_list)
     elif destination_table == "bikeshare_trips":
         if str(target_file).find("_trip_data.csv") > -1:
-            df = resolve_date_format(df, date_format_list)
+            list_trip_data = {
+                k.replace("_trip_data", ""): v
+                for (k, v) in date_format_list.items()
+                if k[-10:] == "_trip_data"
+            }
+            df = resolve_date_format(df, list_trip_data)
         if str(target_file).find("_tripdata.csv") > -1:
-            df = resolve_date_format(df, date_format_list)
+            list_tripdata = {
+                k.replace("_tripdata", ""): v
+                for (k, v) in date_format_list.items()
+                if k[-9:] == "_tripdata"
+            }
+            df = resolve_date_format(df, list_tripdata)
             df = generate_location(df, gen_location_list)
         df = add_key(df)
     elif destination_table == "film_locations":
@@ -1267,7 +1288,7 @@ def download_file_json(
     source_file_csv: pathlib.Path,
     subnode_name: str,
 ) -> None:
-    logging.info(f"Downloading file {source_url}.json.")
+    logging.info(f"Downloading file {source_url}.")
     r = requests.get(source_url, stream=True)
     with open(f"{source_file_json}.json", "wb") as f:
         for chunk in r:
@@ -1292,6 +1313,7 @@ def load_data_to_bq(
     table_ref = client.dataset(dataset_id).table(table_id)
     job_config = bigquery.LoadJobConfig()
     job_config.source_format = bigquery.SourceFormat.CSV
+    job_config.allow_quoted_newlines = True
     job_config.field_delimiter = field_delimiter
     if truncate_table:
         job_config.write_disposition = "WRITE_TRUNCATE"
@@ -1485,27 +1507,37 @@ def resolve_date_format(
     logging.info("Resolving date formats")
     for dt_fld in date_format_list.items():
         logging.info(f"Resolving date formats in field {dt_fld}")
-        df[dt_fld[0]] = df[dt_fld[0]].apply(convert_dt_format, to_format=dt_fld[1])
+        df[dt_fld[0]] = df[dt_fld[0]].apply(convert_dt_format, from_format=dt_fld[1])
     return df
 
 
-def convert_dt_format(dt_str: str, to_format: str = '"%Y-%m-%d %H:%M:%S"') -> str:
+def convert_dt_format(dt_str: str, from_format: str = '"%Y-%m-%d %H:%M:%S"') -> str:
     if not dt_str or str(dt_str).lower() == "nan" or str(dt_str).lower() == "nat":
         return ""
     else:
-        if to_format.find(" ") > 0:
+        if from_format.find(" ") > 0:
             # Date and Time
             return str(
-                pd.to_datetime(
-                    dt_str, format=f"{to_format}", infer_datetime_format=True
+                datetime.strftime(
+                    pd.to_datetime(
+                        (dt_str if from_format[-2:] == "%p" else dt_str[:19]),
+                        format=f"{from_format}",
+                        errors="ignore",
+                    ),
+                    "%Y-%m-%d %H:%M:%S",
                 )
             )
         else:
             # Date Only
             return str(
-                pd.to_datetime(
-                    dt_str, format=f"{to_format}", infer_datetime_format=True
-                ).date()
+                datetime.strftime(
+                    pd.to_datetime(
+                        dt_str[:10],
+                        format=f"{from_format}",
+                        errors="ignore",
+                    ),
+                    "%Y-%m-%d",
+                )
             )
 
 

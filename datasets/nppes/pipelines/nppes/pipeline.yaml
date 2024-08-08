@@ -756,10 +756,6 @@ dag:
               "certification_date": "str"
             }
           PIPELINE_NAME: "NPPES"
-        resources:
-          request_ephemeral_storage: "10G"
-          limit_memory: "16G"
-          limit_cpu: "1"
 
     - operator: "GKEDeleteClusterOperator"
       args:

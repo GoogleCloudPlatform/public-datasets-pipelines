@@ -42,8 +42,6 @@ dag:
           name: pubds-new-york
           initial_node_count: 2
           network: "{{ var.value.vpc_network }}"
-          ip_allocation_policy:
-            cluster_ipv4_cidr_block: "/26"
           node_config:
             machine_type: e2-standard-8
             oauth_scopes:
@@ -216,9 +214,6 @@ dag:
               "longitude",
               "location"
             ]
-        resources:
-          request_ephemeral_storage: "10G"
-          limit_cpu: "2"
 
     - operator: "GKEStartPodOperator"
       description: "Run New York Citibike Stations Pipeline"
@@ -356,9 +351,6 @@ dag:
               "eightd_has_available_keys",
               "last_reported"
             ]
-        resources:
-          request_ephemeral_storage: "10G"
-          limit_cpu: "2"
 
     - operator: "GKEStartPodOperator"
       description: "Run New York NYPD MV Collisions Pipeline"
@@ -501,9 +493,6 @@ dag:
               "vehicle_type_code_5",
               "zip_code"
             ]
-        resources:
-          request_ephemeral_storage: "10G"
-          limit_cpu: "2"
 
     - operator: "GKEStartPodOperator"
       description: "Run New York Tree Census 1995 Pipeline"
@@ -592,9 +581,6 @@ dag:
               "spc_latin",
               "location"
             ]
-        resources:
-          request_ephemeral_storage: "10G"
-          limit_cpu: "2"
 
     - operator: "GKEDeleteClusterOperator"
       args:

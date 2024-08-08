@@ -130,7 +130,7 @@ dag:
           PIPELINE_NAME: "GHCND by year"
           SOURCE_URL: >-
             {
-              "ghcnd_by_year": "ftp://ftp.ncei.noaa.gov/pub/data/ghcn/daily/by_year/.csv.gz"
+              "ghcnd_by_year": "http://www.ncei.noaa.gov/pub/data/ghcn/daily/by_year/.csv.gz"
             }
           SOURCE_FILE: "files/data_ghcnd_by_year.csv"
           TARGET_FILE: "files/data_output_ghcnd_by_year.csv"
@@ -194,9 +194,7 @@ dag:
             [
               ["date", "%Y%m%d", "%Y-%m-%d" ]
             ]
-        resources:
-          request_ephemeral_storage: "16G"
-          limit_cpu: "3"
+
     - operator: "GKEStartPodOperator"
       description: "Run NOAA load processes - GHCN-M"
       args:
@@ -388,9 +386,7 @@ dag:
               "code": ["textdata", "0", "2"],
               "name": ["textdata", "3", ""]
             }
-        resources:
-          request_ephemeral_storage: "4G"
-          limit_cpu: "3"
+
     - operator: "GKEStartPodOperator"
       description: "Run NOAA load processes"
       args:
@@ -451,9 +447,7 @@ dag:
               "firstyear": ["textdata", "36", "40"],
               "lastyear": ["textdata", "41", "45"]
             }
-        resources:
-          request_ephemeral_storage: "4G"
-          limit_cpu: "3"
+
     - operator: "GKEStartPodOperator"
       description: "Run NOAA load processes"
       args:
@@ -506,9 +500,7 @@ dag:
               "code": ["textdata", "0", "2"],
               "name": ["textdata", "3", ""]
             }
-        resources:
-          request_ephemeral_storage: "4G"
-          limit_cpu: "3"
+
     - operator: "GKEStartPodOperator"
       description: "Run NOAA load processes"
       args:
@@ -575,9 +567,7 @@ dag:
               "hcn_crn_flag": ["textdata", "76", "79"],
               "wmoid": ["textdata", "80", "85"]
             }
-        resources:
-          request_ephemeral_storage: "4G"
-          limit_cpu: "3"
+
     - operator: "GKEStartPodOperator"
       description: "Run NOAA load processes"
       args:
@@ -675,9 +665,7 @@ dag:
               "begin": ["textdata", "82", "90"],
               "end": ["textdata", "91", "99"]
             }
-        resources:
-          request_ephemeral_storage: "4G"
-          limit_cpu: "3"
+
     - operator: "GKEStartPodOperator"
       description: "Run NOAA load processes"
       args:
@@ -1081,9 +1069,7 @@ dag:
               "mlc_lon": "mlc_longitude",
               "mlc_pres": "mlc_pressure"
             }
-        resources:
-          request_ephemeral_storage: "16G"
-          limit_cpu: "3"
+
     - operator: "GKEStartPodOperator"
       description: "Run NOAA load processes"
       args:
@@ -1154,9 +1140,7 @@ dag:
               "zday": "day_int",
               "total_count": "number_of_strikes"
             }
-        resources:
-          request_ephemeral_storage: "16G"
-          limit_cpu: "3"
+
     - operator: "GKEStartPodOperator"
       description: "Run NOAA load processes - Storms Database"
       args:
@@ -1172,7 +1156,7 @@ dag:
           PIPELINE_NAME: "NOAA Storms database by year"
           SOURCE_URL: >-
             {
-                "root": "ftp://ftp.ncdc.noaa.gov/pub/data/swdi/stormevents/csvfiles",
+                "root": "https://www.ncei.noaa.gov/pub/data/swdi/stormevents/csvfiles/",
                 "storms_details": "StormEvents_details-ftp_v1.0_d",
                 "storms_locations": "StormEvents_locations-ftp_v1.0_d"
             }
@@ -1271,9 +1255,7 @@ dag:
               "event_longitude",
               "event_point"
             ]
-        resources:
-          request_ephemeral_storage: "16G"
-          limit_cpu: "3"
+
     - operator: "GKEStartPodOperator"
       description: "Run NOAA load processes - Storms Database"
       args:
@@ -1345,9 +1327,7 @@ dag:
               "comments",
               "report_point"
             ]
-        resources:
-          request_ephemeral_storage: "16G"
-          limit_cpu: "3"
+
     - operator: "GKEStartPodOperator"
       description: "Run NOAA load processes - Storms Database"
       args:
@@ -1419,9 +1399,7 @@ dag:
               "comments",
               "report_point"
             ]
-        resources:
-          request_ephemeral_storage: "16G"
-          limit_cpu: "3"
+
     - operator: "GKEStartPodOperator"
       description: "Run NOAA load processes - Tornado"
       args:
@@ -1493,9 +1471,7 @@ dag:
               "comments",
               "report_point"
             ]
-        resources:
-          request_ephemeral_storage: "16G"
-          limit_cpu: "3"
+
     - operator: "GKEStartPodOperator"
       description: "Run NOAA load processes - GOES 16 MCMIP"
       args:
@@ -1840,9 +1816,7 @@ dag:
               "total_size",
               "base_url"
             ]
-        resources:
-          request_ephemeral_storage: "16G"
-          limit_cpu: "3"
+
     - operator: "GKEStartPodOperator"
       description: "Run NOAA load processes - GOES 16 GLM"
       args:
@@ -2173,9 +2147,7 @@ dag:
               "total_size",
               "base_url"
             ]
-        resources:
-          request_ephemeral_storage: "16G"
-          limit_cpu: "3"
+
     - operator: "GKEStartPodOperator"
       description: "Run NOAA load processes - GOES 17 MCMIP"
       args:
@@ -2520,9 +2492,7 @@ dag:
               "total_size",
               "base_url"
             ]
-        resources:
-          request_ephemeral_storage: "16G"
-          limit_cpu: "3"
+
     - operator: "GKEStartPodOperator"
       description: "Run NOAA load processes - GOES 17 GLM"
       args:
@@ -2853,9 +2823,7 @@ dag:
               "total_size",
               "base_url"
             ]
-        resources:
-          request_ephemeral_storage: "16G"
-          limit_cpu: "3"
+
     - operator: "GKEStartPodOperator"
       description: "Run NOAA load processes - GSOD By Year"
       args:
@@ -3025,4 +2993,4 @@ dag:
         name: noaa
 
   graph_paths:
-    - "create_cluster >> [ghcnd_by_year, lightning_strikes_by_year ] >> ghcnd_hurricanes >> noaa_ghcn_m >> [ ghcnd_inventory, spc_hail, spc_wind, spc_tornado, ghcnd_states, ghcnd_stations, gsod_stations, ghcnd_countries] >> noaa_gsod_by_year >> storms_database_by_year >> [noaa_goes16_mcmip, noaa_goes16_cmip, noaa_goes16_glm] >> noaa_goes16_radiance >> [noaa_goes17_mcmip, noaa_goes17_cmip, noaa_goes17_glm] >> noaa_goes17_radiance >> delete_cluster"
+    - "create_cluster >> [ghcnd_by_year, lightning_strikes_by_year ] >> ghcnd_hurricanes >> [ ghcnd_inventory, spc_hail, spc_wind, spc_tornado, ghcnd_states, ghcnd_stations, gsod_stations, ghcnd_countries] >> noaa_ghcn_m >> [noaa_goes16_mcmip, noaa_goes16_cmip, noaa_goes16_glm] >> noaa_goes16_radiance >> [noaa_goes17_mcmip, noaa_goes17_cmip, noaa_goes17_glm] >> noaa_goes17_radiance >> storms_database_by_year >> noaa_gsod_by_year >> delete_cluster"

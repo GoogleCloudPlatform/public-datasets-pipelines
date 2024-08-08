@@ -48,7 +48,7 @@ def main(
     upload_file_to_gcs(
         file_path=archive_name,
         target_gcs_bucket=target_gcs_bucket,
-        target_gcs_path=f"{destination_gcs_path}/{ os.path.basename(archive_name) }",
+        target_gcs_path=f"{destination_gcs_path}/{os.path.basename(archive_name)}",
     )
     generate_load_batch_data_file(
         input_zip=archive_name,
@@ -79,7 +79,7 @@ def compress_source_files(
             logging.info(
                 f"Compressing {file_ordinal} files so far, working on it :) ..."
             )
-        staged_file = f"{download_path}/{table_id}_{ str(file_ordinal).zfill(15) }.csv"
+        staged_file = f"{download_path}/{table_id}_{str(file_ordinal).zfill(15)}.csv"
         download_file_gcs(
             project_id=project_id,
             source_location=f"gs://{target_gcs_bucket}/{filepath}",
@@ -171,7 +171,7 @@ def append_file_to_batchfile(
     number_lines_batch_file = count_lines_file(batch_file)
     number_lines_data_file = count_lines_file(file_to_append)
     logging.info(
-        f" ... Appended file { os.path.basename(file_to_append) } ( {number_lines_data_file} rows ) to batch file { os.path.basename(batch_file) } ( {number_lines_batch_file} rows )"
+        f" ... Appended file {os.path.basename(file_to_append)} ( {number_lines_data_file} rows ) to batch file {os.path.basename(batch_file)} ( {number_lines_batch_file} rows )"
     )
     if remove_file:
         os.remove(file_to_append)
@@ -190,7 +190,7 @@ def load_source_file_to_bq(
     if os.path.exists(target_file):
         number_lines_batch_file = count_lines_file(target_file)
         logging.info(
-            f"Loading batch file {target_file} into table {table_id} with {number_lines_batch_file} rows. truncate table: { str(truncate_table) }"
+            f"Loading batch file {target_file} into table {table_id} with {number_lines_batch_file} rows. truncate table: {str(truncate_table)}"
         )
         table_exists = create_dest_table(
             project_id=project_id,

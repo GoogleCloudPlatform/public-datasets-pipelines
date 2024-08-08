@@ -747,13 +747,11 @@ def process_storms_database_by_year(
     rename_headers_list: dict,
     gen_location_list: dict,
 ) -> None:
-    host = source_url["root"].split("ftp://")[1].split("/")[0]
-    cwd = source_url["root"].split("ftp://")[1][len(host) :]
     list_of_details_files = sorted(
-        ftp_list_of_files(host=host, cwd=cwd, filter_expr="StormEvents_details")
+        http_list_of_files(url=source_url["root"], filter_expr="StormEvents_details")
     )
     list_of_locations_files = sorted(
-        ftp_list_of_files(host=host, cwd=cwd, filter_expr="StormEvents_locations")
+        http_list_of_files(url=source_url["root"], filter_expr="StormEvents_locations")
     )
     for year_to_process in range(int(start_year), date.today().year + 1):
         locations_file = list(
@@ -774,42 +772,36 @@ def process_storms_database_by_year(
         )
         if details_file:
             if locations_file:
-                ftp_filename = locations_file[0]
+                http_filename = locations_file[0]
                 local_file = str(source_file).replace(
                     ".csv", f"_{str(year_to_process)}_locations.csv"
                 )
-                local_zipfile = f"{os.path.dirname(local_file)}/{ftp_filename}"
-                ftp_zipfile_path = f'{source_url["root"]}/{ftp_filename}'
+                local_zipfile = f"{os.path.dirname(local_file)}/{http_filename}"
+                http_zipfile_path = f'{source_url["root"]}/{http_filename}'
                 logging.info("Processing Storms Locations File  ...")
                 logging.info(
-                    f"     host={host} cwd={cwd} ftp_filename={ftp_filename} local_file={local_file} local_zipfile={local_zipfile} source_url={ftp_zipfile_path} "
+                    f"     http_filename={http_filename} local_file={local_file} local_zipfile={local_zipfile} source_url={http_zipfile_path} "
                 )
-                df_locations = FTP_to_DF(
-                    host=host,
-                    cwd=cwd,
-                    ftp_filename=ftp_filename,
+                df_locations = HTTP_to_DF(
                     local_file=local_zipfile,
-                    source_url=ftp_zipfile_path,
+                    source_url=http_zipfile_path,
                 )
             else:
                 logging.info("Storms Locations File does not exist!")
                 df_locations = create_storms_locations_df()
-            ftp_filename = details_file[0]
+            http_filename = details_file[0]
             local_file = str(source_file).replace(
                 ".csv", f"_{str(year_to_process)}_detail.csv"
             )
-            local_zipfile = f"{os.path.dirname(local_file)}/{ftp_filename}"
-            ftp_zipfile_path = f'{source_url["root"]}/{ftp_filename}'
+            local_zipfile = f"{os.path.dirname(local_file)}/{http_filename}"
+            http_zipfile_path = f'{source_url["root"]}/{http_filename}'
             logging.info("Processing Storms Detail File ...")
             logging.info(
-                f"     host={host} cwd={cwd} ftp_filename={ftp_filename} local_file={local_file} local_zipfile={local_zipfile} source_url={ftp_zipfile_path} "
+                f"     http_filename={http_filename} local_file={local_file} local_zipfile={local_zipfile} source_url={http_zipfile_path} "
             )
-            df_details = FTP_to_DF(
-                host=host,
-                cwd=cwd,
-                ftp_filename=ftp_filename,
+            df_details = HTTP_to_DF(
+                source_url=http_zipfile_path,
                 local_file=local_zipfile,
-                source_url=ftp_zipfile_path,
             )
             logging.info("Merging Details and Locations files")
             df = pd.merge(
@@ -943,6 +935,53 @@ def generate_location(df: pd.DataFrame, gen_location_list: dict) -> pd.DataFrame
     return df
 
 
+def HTTP_to_DF(
+    source_url: str, local_file: str, sep: str = ",", delete_zipfile: bool = True
+) -> pd.DataFrame:
+    download_file_http(
+        source_file=local_file,
+        source_url=source_url,
+    )
+    logging.info(f"Loading file {local_file} into DataFrame")
+    decompressed_source_file = local_file.replace(".gz", "")
+    gz_decompress(
+        infile=local_file,
+        tofile=decompressed_source_file,
+        delete_zipfile=delete_zipfile,
+    )
+    if "locations" in decompressed_source_file:
+        df = pd.read_csv(
+            decompressed_source_file,
+            engine="python",
+            encoding="utf-8",
+            quotechar='"',
+            sep=sep,
+            quoting=csv.QUOTE_ALL,
+            header=0,
+            keep_default_na=True,
+            na_values=[" "],
+        )
+    else:
+        clean_source_file(decompressed_source_file)
+        df = pd.read_csv(
+            decompressed_source_file,
+            engine="python",
+            encoding="utf-8",
+            quotechar='"',
+            sep=sep,
+            header=0,
+            keep_default_na=True,
+            na_values=[" "],
+        )
+        for col in df:
+            if str(df[col].dtype) == "object":
+                logging.info(f"Replacing values in column {col}")
+                df[col] = df[col].apply(lambda x: str(x).replace("|'", '"'))
+            else:
+                pass
+    return df
+
+
 def FTP_to_DF(
     host: str,
     cwd: str,
@@ -1015,6 +1054,22 @@ def create_storms_locations_df() -> pd.DataFrame:
         ]
     )
     return df_loc
+
+
+def http_list_of_files(
+    url: str, file_ext: str = "", filter_expr: str = ""
+) -> typing.List[str]:
+    page = requests.get(url).text if url else []
+    soup = BeautifulSoup(page, "html.parser")
+    return [
+        val
+        for val in [
+            node.get("href")
+            for node in soup.find_all("a")
+            if node.get("href").endswith(".csv.gz")
+        ]
+        if val.find(filter_expr) >= 0
+    ]
 
 
 def ftp_list_of_files(host: str, cwd: str, filter_expr: str = "") -> typing.List[str]:
@@ -1960,16 +2015,16 @@ def download_file_http_exec(
             return True
     except requests.exceptions.RequestException as e:
         if e == requests.exceptions.HTTPError:
-            err_msg = "A HTTP error occurred."
+            logging.info("A HTTP error occurred.")
         elif e == requests.exceptions.Timeout:
-            err_msg = "A HTTP timeout error occurred."
+            logging.info("A HTTP timeout error occurred.")
         elif e == requests.exceptions.TooManyRedirects:
-            err_msg = "Too Many Redirects occurred."
+            logging.info("Too Many Redirects occurred.")
         if not continue_on_error:
-            logging.info(f"{err_msg} Unable to obtain {source_url}")
+            logging.info(f"{str(e.args[0])} Unable to obtain {source_url}")
             raise SystemExit(e)
         else:
-            logging.info(f"{err_msg} Unable to obtain {source_url}.")
+            logging.info(f"{str(e.args[0])} Unable to obtain {source_url}.")
         return False
 
 
