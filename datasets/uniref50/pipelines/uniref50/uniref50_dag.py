@@ -84,11 +84,6 @@ with DAG(
             "SCHEMA_PATH": "data/uniref50/uniref50_schema.json",
             "CHUNKSIZE": "100000",
         },
-        resources={
-            "request_ephemeral_storage": "10G",
-            "limit_memory": "32G",
-            "limit_cpu": "4",
-        },
     )
     delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
         task_id="delete_cluster",
