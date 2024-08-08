@@ -285,12 +285,146 @@ output "bigquery_dataset-idc_v10-dataset_id" {
   value = google_bigquery_dataset.idc_v10.dataset_id
 }
 
+resource "google_bigquery_dataset" "idc_v11" {
+  dataset_id  = "idc_v11"
+  project     = var.project_id
+  description = "Imaging Data Commons (IDC) - The Cancer Imaging Archive (TCIA) v11 data"
+}
+
+data "google_iam_policy" "bq_ds__idc_v11" {
+  dynamic "binding" {
+    for_each = var.iam_policies["bigquery_datasets"]["idc_v11"]
+    content {
+      role    = binding.value["role"]
+      members = binding.value["members"]
+    }
+  }
+}
+
+resource "google_bigquery_dataset_iam_policy" "idc_v11" {
+  dataset_id  = google_bigquery_dataset.idc_v11.dataset_id
+  policy_data = data.google_iam_policy.bq_ds__idc_v11.policy_data
+}
+output "bigquery_dataset-idc_v11-dataset_id" {
+  value = google_bigquery_dataset.idc_v11.dataset_id
+}
+
+resource "google_bigquery_dataset" "idc_v11_clinical" {
+  dataset_id  = "idc_v11_clinical"
+  project     = var.project_id
+  description = "Imaging Data Commons (IDC) - The Cancer Imaging Archive (TCIA) v11 clinical data"
+}
+
+data "google_iam_policy" "bq_ds__idc_v11_clinical" {
+  dynamic "binding" {
+    for_each = var.iam_policies["bigquery_datasets"]["idc_v11_clinical"]
+    content {
+      role    = binding.value["role"]
+      members = binding.value["members"]
+    }
+  }
+}
+
+resource "google_bigquery_dataset_iam_policy" "idc_v11_clinical" {
+  dataset_id  = google_bigquery_dataset.idc_v11_clinical.dataset_id
+  policy_data = data.google_iam_policy.bq_ds__idc_v11_clinical.policy_data
+}
+output "bigquery_dataset-idc_v11_clinical-dataset_id" {
+  value = google_bigquery_dataset.idc_v11_clinical.dataset_id
+}
+
+resource "google_bigquery_dataset" "idc_v12" {
+  dataset_id  = "idc_v12"
+  project     = var.project_id
+  description = "Imaging Data Commons (IDC) - The Cancer Imaging Archive (TCIA) v12 data"
+}
+
+data "google_iam_policy" "bq_ds__idc_v12" {
+  dynamic "binding" {
+    for_each = var.iam_policies["bigquery_datasets"]["idc_v12"]
+    content {
+      role    = binding.value["role"]
+      members = binding.value["members"]
+    }
+  }
+}
+
+resource "google_bigquery_dataset_iam_policy" "idc_v12" {
+  dataset_id  = google_bigquery_dataset.idc_v12.dataset_id
+  policy_data = data.google_iam_policy.bq_ds__idc_v12.policy_data
+}
+output "bigquery_dataset-idc_v12-dataset_id" {
+  value = google_bigquery_dataset.idc_v12.dataset_id
+}
+
+resource "google_bigquery_dataset" "idc_v12_clinical" {
+  dataset_id  = "idc_v12_clinical"
+  project     = var.project_id
+  description = "Imaging Data Commons (IDC) - The Cancer Imaging Archive (TCIA) v12 clinical data"
+}
+
+data "google_iam_policy" "bq_ds__idc_v12_clinical" {
+  dynamic "binding" {
+    for_each = var.iam_policies["bigquery_datasets"]["idc_v12_clinical"]
+    content {
+      role    = binding.value["role"]
+      members = binding.value["members"]
+    }
+  }
+}
+
+resource "google_bigquery_dataset_iam_policy" "idc_v12_clinical" {
+  dataset_id  = google_bigquery_dataset.idc_v12_clinical.dataset_id
+  policy_data = data.google_iam_policy.bq_ds__idc_v12_clinical.policy_data
+}
+output "bigquery_dataset-idc_v12_clinical-dataset_id" {
+  value = google_bigquery_dataset.idc_v12_clinical.dataset_id
+}
+
 resource "google_bigquery_dataset" "idc_current" {
   dataset_id  = "idc_current"
   project     = var.project_id
   description = "Imaging Data Commons (IDC) - The Cancer Imaging Archive (TCIA) current data"
 }
 
+data "google_iam_policy" "bq_ds__idc_current" {
+  dynamic "binding" {
+    for_each = var.iam_policies["bigquery_datasets"]["idc_current"]
+    content {
+      role    = binding.value["role"]
+      members = binding.value["members"]
+    }
+  }
+}
+
+resource "google_bigquery_dataset_iam_policy" "idc_current" {
+  dataset_id  = google_bigquery_dataset.idc_current.dataset_id
+  policy_data = data.google_iam_policy.bq_ds__idc_current.policy_data
+}
 output "bigquery_dataset-idc_current-dataset_id" {
   value = google_bigquery_dataset.idc_current.dataset_id
+}
+
+resource "google_bigquery_dataset" "idc_current_clinical" {
+  dataset_id  = "idc_current_clinical"
+  project     = var.project_id
+  description = "Imaging Data Commons (IDC) - The Cancer Imaging Archive (TCIA) current clinical data"
+}
+
+data "google_iam_policy" "bq_ds__idc_current_clinical" {
+  dynamic "binding" {
+    for_each = var.iam_policies["bigquery_datasets"]["idc_current_clinical"]
+    content {
+      role    = binding.value["role"]
+      members = binding.value["members"]
+    }
+  }
+}
+
+resource "google_bigquery_dataset_iam_policy" "idc_current_clinical" {
+  dataset_id  = google_bigquery_dataset.idc_current_clinical.dataset_id
+  policy_data = data.google_iam_policy.bq_ds__idc_current_clinical.policy_data
+}
+output "bigquery_dataset-idc_current_clinical-dataset_id" {
+  value = google_bigquery_dataset.idc_current_clinical.dataset_id
 }

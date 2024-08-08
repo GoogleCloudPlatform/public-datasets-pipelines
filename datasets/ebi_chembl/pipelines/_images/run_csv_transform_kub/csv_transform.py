@@ -73,7 +73,7 @@ def write_table_to_csv(
     length = len(tables)
     for idx, table in enumerate(tables):
         output_file = f"{output_folder}/{table}_data_output.csv"
-        logging.info(f"\t\t\t{idx+1} out of {length} tables.")
+        logging.info(f"\t\t\t{idx + 1} out of {length} tables.")
         logging.info(f"Writing {table} - table to {output_file} file")
         with open(output_file, "w") as fb:
             writer = csv.writer(

@@ -1,0 +1,62 @@
+[
+  {
+    "name": "trip_id",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Numeric ID of bike trip"
+  },
+  {
+    "name": "subscriber_type",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Type of the Subscriber"
+  },
+  {
+    "name": "bike_id",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "ID of bike used"
+  },
+  {
+    "name": "bike_type",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Type of bike used"
+  },
+  {
+    "name": "start_time",
+    "type": "TIMESTAMP",
+    "mode": "NULLABLE",
+    "description": "Start timestamp of trip"
+  },
+  {
+    "name": "start_station_id",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Numeric reference for start station"
+  },
+  {
+    "name": "start_station_name",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Station name for start station"
+  },
+  {
+    "name": "end_station_id",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Numeric reference for end station"
+  },
+  {
+    "name": "end_station_name",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Station name for end station"
+  },
+  {
+    "name": "duration_minutes",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Time of trip in minutes"
+  }
+]

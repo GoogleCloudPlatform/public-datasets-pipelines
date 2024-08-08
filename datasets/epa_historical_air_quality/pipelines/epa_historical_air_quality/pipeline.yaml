@@ -200,9 +200,6 @@ dag:
               "seventy_five_percentile", "fifty_percentile", "ten_percentile", "local_site_name", "address",
               "state_name", "county_name", "city_name", "cbsa_name", "date_of_last_change"]
           DROP_DEST_TABLE: "N"
-        resources:
-          limit_memory: "16G"
-          limit_cpu: "2"
 
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
@@ -252,9 +249,6 @@ dag:
               "method_code", "method_name", "local_site_name", "address", "state_name",
               "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
           DROP_DEST_TABLE: "N"
-        resources:
-          limit_memory: "16G"
-          limit_cpu: "2"
 
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
@@ -301,9 +295,6 @@ dag:
               "mdl", "uncertainty", "qualifier", "method_type", "method_code",
               "method_name", "state_name", "county_name", "date_of_last_change" ]
           DROP_DEST_TABLE: "N"
-        resources:
-          limit_memory: "16G"
-          limit_cpu: "2"
 
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
@@ -353,9 +344,6 @@ dag:
               "method_code", "method_name", "local_site_name", "address", "state_name",
               "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
           DROP_DEST_TABLE: "N"
-        resources:
-          limit_memory: "16G"
-          limit_cpu: "2"
 
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
@@ -402,9 +390,6 @@ dag:
               "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",
               "state_name", "county_name", "date_of_last_change" ]
           DROP_DEST_TABLE: "N"
-        resources:
-          limit_memory: "16G"
-          limit_cpu: "2"
 
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
@@ -454,9 +439,6 @@ dag:
               "method_code", "method_name", "local_site_name", "address", "state_name",
               "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
           DROP_DEST_TABLE: "N"
-        resources:
-          limit_memory: "16G"
-          limit_cpu: "2"
 
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
@@ -506,9 +488,6 @@ dag:
               "method_code", "method_name", "local_site_name", "address", "state_name",
               "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
           DROP_DEST_TABLE: "N"
-        resources:
-          limit_memory: "16G"
-          limit_cpu: "2"
 
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
@@ -555,9 +534,6 @@ dag:
               "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",
               "state_name", "county_name", "date_of_last_change" ]
           DROP_DEST_TABLE: "N"
-        resources:
-          limit_memory: "16G"
-          limit_cpu: "2"
 
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
@@ -607,9 +583,6 @@ dag:
               "method_code", "method_name", "local_site_name", "address", "state_name",
               "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
           DROP_DEST_TABLE: "N"
-        resources:
-          limit_memory: "16G"
-          limit_cpu: "2"
 
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
@@ -656,9 +629,6 @@ dag:
               "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",
               "state_name", "county_name", "date_of_last_change" ]
           DROP_DEST_TABLE: "N"
-        resources:
-          limit_memory: "16G"
-          limit_cpu: "2"
 
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
@@ -708,9 +678,6 @@ dag:
               "method_code", "method_name", "local_site_name", "address", "state_name",
               "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
           DROP_DEST_TABLE: "N"
-        resources:
-          limit_memory: "16G"
-          limit_cpu: "2"
 
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
@@ -757,9 +724,6 @@ dag:
               "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",
               "state_name", "county_name", "date_of_last_change" ]
           DROP_DEST_TABLE: "N"
-        resources:
-          limit_memory: "16G"
-          limit_cpu: "2"
 
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
@@ -809,9 +773,6 @@ dag:
               "method_code", "method_name", "local_site_name", "address", "state_name",
               "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
           DROP_DEST_TABLE: "N"
-        resources:
-          limit_memory: "16G"
-          limit_cpu: "2"
 
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
@@ -858,9 +819,6 @@ dag:
               "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",
               "state_name", "county_name", "date_of_last_change" ]
           DROP_DEST_TABLE: "N"
-        resources:
-          limit_memory: "16G"
-          limit_cpu: "2"
 
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
@@ -907,9 +865,6 @@ dag:
               "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",
               "state_name", "county_name", "date_of_last_change" ]
           DROP_DEST_TABLE: "N"
-        resources:
-          limit_memory: "16G"
-          limit_cpu: "2"
 
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
@@ -1019,9 +974,6 @@ dag:
               "date_of_last_change"
             ]
           DROP_DEST_TABLE: "N"
-        resources:
-          limit_memory: "16G"
-          limit_cpu: "2"
 
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
@@ -1071,9 +1023,6 @@ dag:
               "method_code", "method_name", "local_site_name", "address", "state_name",
               "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
           DROP_DEST_TABLE: "N"
-        resources:
-          limit_memory: "16G"
-          limit_cpu: "2"
 
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
@@ -1120,9 +1069,6 @@ dag:
               "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",
               "state_name", "county_name", "date_of_last_change" ]
           DROP_DEST_TABLE: "N"
-        resources:
-          limit_memory: "16G"
-          limit_cpu: "2"
 
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
@@ -1172,9 +1118,6 @@ dag:
               "method_code", "method_name", "local_site_name", "address", "state_name",
               "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
           DROP_DEST_TABLE: "N"
-        resources:
-          limit_memory: "16G"
-          limit_cpu: "2"
 
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
@@ -1221,9 +1164,6 @@ dag:
               "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",
               "state_name", "county_name", "date_of_last_change" ]
           DROP_DEST_TABLE: "N"
-        resources:
-          limit_memory: "16G"
-          limit_cpu: "2"
 
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
@@ -1273,9 +1213,6 @@ dag:
               "method_code", "method_name", "local_site_name", "address", "state_name",
               "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
           DROP_DEST_TABLE: "N"
-        resources:
-          limit_memory: "16G"
-          limit_cpu: "2"
 
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
@@ -1322,9 +1259,6 @@ dag:
               "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",
               "state_name", "county_name", "date_of_last_change" ]
           DROP_DEST_TABLE: "N"
-        resources:
-          limit_memory: "16G"
-          limit_cpu: "2"
 
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
@@ -1374,9 +1308,6 @@ dag:
               "method_code", "method_name", "local_site_name", "address", "state_name",
               "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
           DROP_DEST_TABLE: "N"
-        resources:
-          limit_memory: "16G"
-          limit_cpu: "2"
 
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
@@ -1423,9 +1354,6 @@ dag:
               "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",
               "state_name", "county_name", "date_of_last_change" ]
           DROP_DEST_TABLE: "N"
-        resources:
-          limit_memory: "16G"
-          limit_cpu: "2"
 
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
@@ -1475,9 +1403,6 @@ dag:
               "method_code", "method_name", "local_site_name", "address", "state_name",
               "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
           DROP_DEST_TABLE: "N"
-        resources:
-          limit_memory: "16G"
-          limit_cpu: "2"
 
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
@@ -1524,9 +1449,6 @@ dag:
               "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",
               "state_name", "county_name", "date_of_last_change" ]
           DROP_DEST_TABLE: "N"
-        resources:
-          limit_memory: "16G"
-          limit_cpu: "2"
 
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
@@ -1576,9 +1498,6 @@ dag:
               "method_code", "method_name", "local_site_name", "address", "state_name",
               "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
           DROP_DEST_TABLE: "N"
-        resources:
-          limit_memory: "16G"
-          limit_cpu: "2"
 
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
@@ -1625,9 +1544,6 @@ dag:
               "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",
               "state_name", "county_name", "date_of_last_change" ]
           DROP_DEST_TABLE: "N"
-        resources:
-          limit_memory: "16G"
-          limit_cpu: "2"
 
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
@@ -1677,9 +1593,6 @@ dag:
               "method_code", "method_name", "local_site_name", "address", "state_name",
               "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
           DROP_DEST_TABLE: "N"
-        resources:
-          limit_memory: "16G"
-          limit_cpu: "2"
 
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
@@ -1726,9 +1639,6 @@ dag:
               "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",
               "state_name", "county_name", "date_of_last_change" ]
           DROP_DEST_TABLE: "N"
-        resources:
-          limit_memory: "16G"
-          limit_cpu: "2"
 
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
@@ -1778,9 +1688,6 @@ dag:
               "method_code", "method_name", "local_site_name", "address", "state_name",
               "county_name", "city_name", "cbsa_name", "date_of_last_change" ]
           DROP_DEST_TABLE: "N"
-        resources:
-          limit_memory: "16G"
-          limit_cpu: "2"
 
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
@@ -1827,9 +1734,6 @@ dag:
               "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",
               "state_name", "county_name", "date_of_last_change" ]
           DROP_DEST_TABLE: "N"
-        resources:
-          limit_memory: "16G"
-          limit_cpu: "2"
 
     - operator: "GKEDeleteClusterOperator"
       args:

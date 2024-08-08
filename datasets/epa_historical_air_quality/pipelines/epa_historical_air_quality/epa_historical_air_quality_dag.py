@@ -79,7 +79,6 @@ with DAG(
             "OUTPUT_CSV_HEADERS": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "sample_duration",\n  "pollutant_standard", "metric_used", "method_name", "year", "units_of_measure",\n  "event_type", "observation_count", "observation_percent", "completeness_indicator", "valid_day_count",\n  "required_day_count", "exceptional_data_count", "null_data_count", "primary_exceedance_count", "secondary_exceedance_count",\n  "certification_indicator", "num_obs_below_mdl", "arithmetic_mean", "arithmetic_standard_dev", "first_max_value",\n  "first_max_datetime", "second_max_value", "second_max_datetime", "third_max_value", "third_max_datetime",\n  "fourth_max_value", "fourth_max_datetime", "first_max_non_overlapping_value", "first_no_max_datetime", "second_max_non_overlapping_value",\n  "second_no_max_datetime", "ninety_nine_percentile", "ninety_eight_percentile", "ninety_five_percentile", "ninety_percentile",\n  "seventy_five_percentile", "fifty_percentile", "ten_percentile", "local_site_name", "address",\n  "state_name", "county_name", "city_name", "cbsa_name", "date_of_last_change"]',
             "DROP_DEST_TABLE": "N",
         },
-        resources={"limit_memory": "16G", "limit_cpu": "2"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -112,7 +111,6 @@ with DAG(
             "OUTPUT_CSV_HEADERS": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "sample_duration",\n  "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",\n  "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",\n  "method_code", "method_name", "local_site_name", "address", "state_name",\n  "county_name", "city_name", "cbsa_name", "date_of_last_change" ]',
             "DROP_DEST_TABLE": "N",
         },
-        resources={"limit_memory": "16G", "limit_cpu": "2"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -145,7 +143,6 @@ with DAG(
             "OUTPUT_CSV_HEADERS": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "date_local",\n  "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",\n  "mdl", "uncertainty", "qualifier", "method_type", "method_code",\n  "method_name", "state_name", "county_name", "date_of_last_change" ]',
             "DROP_DEST_TABLE": "N",
         },
-        resources={"limit_memory": "16G", "limit_cpu": "2"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -178,7 +175,6 @@ with DAG(
             "OUTPUT_CSV_HEADERS": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "sample_duration",\n  "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",\n  "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",\n  "method_code", "method_name", "local_site_name", "address", "state_name",\n  "county_name", "city_name", "cbsa_name", "date_of_last_change" ]',
             "DROP_DEST_TABLE": "N",
         },
-        resources={"limit_memory": "16G", "limit_cpu": "2"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -211,7 +207,6 @@ with DAG(
             "OUTPUT_CSV_HEADERS": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "date_local",\n  "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",\n  "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",\n  "state_name", "county_name", "date_of_last_change" ]',
             "DROP_DEST_TABLE": "N",
         },
-        resources={"limit_memory": "16G", "limit_cpu": "2"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -244,7 +239,6 @@ with DAG(
             "OUTPUT_CSV_HEADERS": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "sample_duration",\n  "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",\n  "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",\n  "method_code", "method_name", "local_site_name", "address", "state_name",\n  "county_name", "city_name", "cbsa_name", "date_of_last_change" ]',
             "DROP_DEST_TABLE": "N",
         },
-        resources={"limit_memory": "16G", "limit_cpu": "2"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -277,7 +271,6 @@ with DAG(
             "OUTPUT_CSV_HEADERS": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "sample_duration",\n  "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",\n  "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",\n  "method_code", "method_name", "local_site_name", "address", "state_name",\n  "county_name", "city_name", "cbsa_name", "date_of_last_change" ]',
             "DROP_DEST_TABLE": "N",
         },
-        resources={"limit_memory": "16G", "limit_cpu": "2"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -310,7 +303,6 @@ with DAG(
             "OUTPUT_CSV_HEADERS": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "date_local",\n  "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",\n  "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",\n  "state_name", "county_name", "date_of_last_change" ]',
             "DROP_DEST_TABLE": "N",
         },
-        resources={"limit_memory": "16G", "limit_cpu": "2"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -343,7 +335,6 @@ with DAG(
             "OUTPUT_CSV_HEADERS": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "sample_duration",\n  "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",\n  "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",\n  "method_code", "method_name", "local_site_name", "address", "state_name",\n  "county_name", "city_name", "cbsa_name", "date_of_last_change" ]',
             "DROP_DEST_TABLE": "N",
         },
-        resources={"limit_memory": "16G", "limit_cpu": "2"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -376,7 +367,6 @@ with DAG(
             "OUTPUT_CSV_HEADERS": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "date_local",\n  "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",\n  "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",\n  "state_name", "county_name", "date_of_last_change" ]',
             "DROP_DEST_TABLE": "N",
         },
-        resources={"limit_memory": "16G", "limit_cpu": "2"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -409,7 +399,6 @@ with DAG(
             "OUTPUT_CSV_HEADERS": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "sample_duration",\n  "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",\n  "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",\n  "method_code", "method_name", "local_site_name", "address", "state_name",\n  "county_name", "city_name", "cbsa_name", "date_of_last_change" ]',
             "DROP_DEST_TABLE": "N",
         },
-        resources={"limit_memory": "16G", "limit_cpu": "2"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -442,7 +431,6 @@ with DAG(
             "OUTPUT_CSV_HEADERS": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "date_local",\n  "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",\n  "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",\n  "state_name", "county_name", "date_of_last_change" ]',
             "DROP_DEST_TABLE": "N",
         },
-        resources={"limit_memory": "16G", "limit_cpu": "2"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -475,7 +463,6 @@ with DAG(
             "OUTPUT_CSV_HEADERS": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "sample_duration",\n  "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",\n  "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",\n  "method_code", "method_name", "local_site_name", "address", "state_name",\n  "county_name", "city_name", "cbsa_name", "date_of_last_change" ]',
             "DROP_DEST_TABLE": "N",
         },
-        resources={"limit_memory": "16G", "limit_cpu": "2"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -508,7 +495,6 @@ with DAG(
             "OUTPUT_CSV_HEADERS": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "date_local",\n  "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",\n  "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",\n  "state_name", "county_name", "date_of_last_change" ]',
             "DROP_DEST_TABLE": "N",
         },
-        resources={"limit_memory": "16G", "limit_cpu": "2"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -541,7 +527,6 @@ with DAG(
             "OUTPUT_CSV_HEADERS": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "date_local",\n  "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",\n  "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",\n  "state_name", "county_name", "date_of_last_change" ]',
             "DROP_DEST_TABLE": "N",
         },
-        resources={"limit_memory": "16G", "limit_cpu": "2"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -575,7 +560,6 @@ with DAG(
             "OUTPUT_CSV_HEADERS": '[\n  "state_code",\n  "county_code",\n  "site_num",\n  "parameter_code",\n  "poc",\n  "latitude",\n  "longitude",\n  "datum",\n  "parameter_name",\n  "sample_duration",\n  "pollutant_standard",\n  "date_local",\n  "units_of_measure",\n  "event_type",\n  "observation_count",\n  "observation_percent",\n  "arithmetic_mean",\n  "first_max_value",\n  "first_max_hour",\n  "aqi",\n  "method_code",\n  "method_name",\n  "local_site_name",\n  "address",\n  "state_name",\n  "county_name",\n  "city_name",\n  "cbsa_name",\n  "date_of_last_change"\n]',
             "DROP_DEST_TABLE": "N",
         },
-        resources={"limit_memory": "16G", "limit_cpu": "2"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -608,7 +592,6 @@ with DAG(
             "OUTPUT_CSV_HEADERS": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "sample_duration",\n  "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",\n  "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",\n  "method_code", "method_name", "local_site_name", "address", "state_name",\n  "county_name", "city_name", "cbsa_name", "date_of_last_change" ]',
             "DROP_DEST_TABLE": "N",
         },
-        resources={"limit_memory": "16G", "limit_cpu": "2"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -641,7 +624,6 @@ with DAG(
             "OUTPUT_CSV_HEADERS": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "date_local",\n  "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",\n  "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",\n  "state_name", "county_name", "date_of_last_change" ]',
             "DROP_DEST_TABLE": "N",
         },
-        resources={"limit_memory": "16G", "limit_cpu": "2"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -674,7 +656,6 @@ with DAG(
             "OUTPUT_CSV_HEADERS": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "sample_duration",\n  "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",\n  "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",\n  "method_code", "method_name", "local_site_name", "address", "state_name",\n  "county_name", "city_name", "cbsa_name", "date_of_last_change" ]',
             "DROP_DEST_TABLE": "N",
         },
-        resources={"limit_memory": "16G", "limit_cpu": "2"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -707,7 +688,6 @@ with DAG(
             "OUTPUT_CSV_HEADERS": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "date_local",\n  "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",\n  "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",\n  "state_name", "county_name", "date_of_last_change" ]',
             "DROP_DEST_TABLE": "N",
         },
-        resources={"limit_memory": "16G", "limit_cpu": "2"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -740,7 +720,6 @@ with DAG(
             "OUTPUT_CSV_HEADERS": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "sample_duration",\n  "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",\n  "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",\n  "method_code", "method_name", "local_site_name", "address", "state_name",\n  "county_name", "city_name", "cbsa_name", "date_of_last_change" ]',
             "DROP_DEST_TABLE": "N",
         },
-        resources={"limit_memory": "16G", "limit_cpu": "2"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -773,7 +752,6 @@ with DAG(
             "OUTPUT_CSV_HEADERS": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "date_local",\n  "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",\n  "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",\n  "state_name", "county_name", "date_of_last_change" ]',
             "DROP_DEST_TABLE": "N",
         },
-        resources={"limit_memory": "16G", "limit_cpu": "2"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -806,7 +784,6 @@ with DAG(
             "OUTPUT_CSV_HEADERS": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "sample_duration",\n  "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",\n  "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",\n  "method_code", "method_name", "local_site_name", "address", "state_name",\n  "county_name", "city_name", "cbsa_name", "date_of_last_change" ]',
             "DROP_DEST_TABLE": "N",
         },
-        resources={"limit_memory": "16G", "limit_cpu": "2"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -839,7 +816,6 @@ with DAG(
             "OUTPUT_CSV_HEADERS": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "date_local",\n  "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",\n  "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",\n  "state_name", "county_name", "date_of_last_change" ]',
             "DROP_DEST_TABLE": "N",
         },
-        resources={"limit_memory": "16G", "limit_cpu": "2"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -872,7 +848,6 @@ with DAG(
             "OUTPUT_CSV_HEADERS": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "sample_duration",\n  "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",\n  "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",\n  "method_code", "method_name", "local_site_name", "address", "state_name",\n  "county_name", "city_name", "cbsa_name", "date_of_last_change" ]',
             "DROP_DEST_TABLE": "N",
         },
-        resources={"limit_memory": "16G", "limit_cpu": "2"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -905,7 +880,6 @@ with DAG(
             "OUTPUT_CSV_HEADERS": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "date_local",\n  "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",\n  "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",\n  "state_name", "county_name", "date_of_last_change" ]',
             "DROP_DEST_TABLE": "N",
         },
-        resources={"limit_memory": "16G", "limit_cpu": "2"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -938,7 +912,6 @@ with DAG(
             "OUTPUT_CSV_HEADERS": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "sample_duration",\n  "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",\n  "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",\n  "method_code", "method_name", "local_site_name", "address", "state_name",\n  "county_name", "city_name", "cbsa_name", "date_of_last_change" ]',
             "DROP_DEST_TABLE": "N",
         },
-        resources={"limit_memory": "16G", "limit_cpu": "2"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -971,7 +944,6 @@ with DAG(
             "OUTPUT_CSV_HEADERS": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "date_local",\n  "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",\n  "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",\n  "state_name", "county_name", "date_of_last_change" ]',
             "DROP_DEST_TABLE": "N",
         },
-        resources={"limit_memory": "16G", "limit_cpu": "2"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -1004,7 +976,6 @@ with DAG(
             "OUTPUT_CSV_HEADERS": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "sample_duration",\n  "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",\n  "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",\n  "method_code", "method_name", "local_site_name", "address", "state_name",\n  "county_name", "city_name", "cbsa_name", "date_of_last_change" ]',
             "DROP_DEST_TABLE": "N",
         },
-        resources={"limit_memory": "16G", "limit_cpu": "2"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -1037,7 +1008,6 @@ with DAG(
             "OUTPUT_CSV_HEADERS": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "date_local",\n  "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",\n  "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",\n  "state_name", "county_name", "date_of_last_change" ]',
             "DROP_DEST_TABLE": "N",
         },
-        resources={"limit_memory": "16G", "limit_cpu": "2"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -1070,7 +1040,6 @@ with DAG(
             "OUTPUT_CSV_HEADERS": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "sample_duration",\n  "pollutant_standard", "date_local", "units_of_measure", "event_type", "observation_count",\n  "observation_percent", "arithmetic_mean", "first_max_value", "first_max_hour", "aqi",\n  "method_code", "method_name", "local_site_name", "address", "state_name",\n  "county_name", "city_name", "cbsa_name", "date_of_last_change" ]',
             "DROP_DEST_TABLE": "N",
         },
-        resources={"limit_memory": "16G", "limit_cpu": "2"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -1103,7 +1072,6 @@ with DAG(
             "OUTPUT_CSV_HEADERS": '[ "state_code", "county_code", "site_num", "parameter_code", "poc",\n  "latitude", "longitude", "datum", "parameter_name", "date_local",\n  "time_local", "date_gmt", "time_gmt", "sample_measurement", "units_of_measure",\n  "mdl", "uncertainty", "qualifier", "method_type", "method_code", "method_name",\n  "state_name", "county_name", "date_of_last_change" ]',
             "DROP_DEST_TABLE": "N",
         },
-        resources={"limit_memory": "16G", "limit_cpu": "2"},
     )
     delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
         task_id="delete_cluster",

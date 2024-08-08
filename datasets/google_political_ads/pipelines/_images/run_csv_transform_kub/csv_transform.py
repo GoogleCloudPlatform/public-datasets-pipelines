@@ -46,16 +46,22 @@ NUMERIC_COLUMNS = [
     "spend_eur",
     "spend_inr",
     "spend_bgn",
-    "spend_hrk",
     "spend_czk",
+    "spend_hrk",
     "spend_dkk",
     "spend_huf",
     "spend_pln",
     "spend_ron",
-    "spend_gbp",
     "spend_sek",
+    "spend_gbp",
     "spend_nzd",
+    "spend_ils",
+    "spend_aud",
+    "spend_twd",
     "spend_brl",
+    "spend_ars",
+    "spend_zar",
+    "spend_clp",
 ]
 
 
@@ -87,6 +93,12 @@ def main(
     df = read_csv_file(zip_file, csv_file)
 
     logging.info(f"Transforming.. {csv_file}")
+    if "Spend_HRK" not in df.columns:
+        df["Spend_HRK"] = 0
+    if "Spend_Range_Max_HRK" not in df.columns:
+        df["Spend_Range_Max_HRK"] = 0
+    if "Spend_Range_Min_HRK" not in df.columns:
+        df["Spend_Range_Min_HRK"] = 0
 
     logging.info(f"Transform: Rename columns for {table_name}..")
     rename_headers(df, rename_mappings)
