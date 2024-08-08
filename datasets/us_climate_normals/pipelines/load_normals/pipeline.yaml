@@ -21,7 +21,7 @@ resources:
 dag:
   airflow_version: 2
   initialize:
-    dag_id: normals_daily
+    dag_id: us_climate_normals
     default_args:
       owner: "Google"
       depends_on_past: False
