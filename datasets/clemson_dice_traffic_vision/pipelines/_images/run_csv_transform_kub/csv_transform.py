@@ -313,7 +313,7 @@ def download_file_gcs(
 def add_id_column(source_json_file: str, destination_json_file: str, guid: str):
     shutil.copyfile(source_json_file, destination_json_file)
     cmd = (
-        f'sed -i -e \'s/{{\\"frame\\"/{{"id": \\"{guid}\\"\, \\"frame\\"/g\'{destination_json_file}'
+        f'sed -i -e \'s/{{\\"frame\\"/{{"id": \\"{guid}\\", \\"frame\\"/g\'{destination_json_file}'
         # 'sed -i -e \'s/{\\"frame\\"/{"id": "'
         # + guid
         # + '"\, "frame"/g\' '
