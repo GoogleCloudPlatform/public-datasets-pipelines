@@ -1,0 +1,80 @@
+[
+  {
+    "name": "task_type",
+    "type": "STRING",
+    "description": "type of annotations in the JSON file (OpenEnded).",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "data_type",
+    "type": "STRING",
+    "description": "source of the images (mscoco or abstract_v002)",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "data_subtype",
+    "type": "STRING",
+    "description": "type of data subtype (e.g. train2014/val2014/test2015 for mscoco, train2015/val2015 for abstract_v002).",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "info_description",
+    "type": "STRING",
+    "description": "",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "info_url",
+    "type": "STRING",
+    "description": "",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "info_version",
+    "type": "STRING",
+    "description": "",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "info_year",
+    "type": "INTEGER",
+    "description": "",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "info_contributor",
+    "type": "STRING",
+    "description": "",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "info_date_created",
+    "type": "TIMESTAMP",
+    "description": "",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "license_url",
+    "type": "STRING",
+    "description": "",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "license_name",
+    "type": "STRING",
+    "description": "",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "source_url",
+    "type": "STRING",
+    "description": "Original URL location of source file",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "etl_timestamp",
+    "type": "TIMESTAMP",
+    "description": "Date and time this data was loaded to BQ",
+    "mode": "NULLABLE"
+  }
+]
