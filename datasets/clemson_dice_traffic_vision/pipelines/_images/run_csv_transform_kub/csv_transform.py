@@ -165,7 +165,7 @@ def process_batch(
         destination_folder=f"{target_root_path}/{target_batch_folder}",
     )
     batch_filename = (
-        f"{target_root_path}/{target_batch_folder}/{ os.path.basename(batch_filename) }"
+        f"{target_root_path}/{target_batch_folder}/{os.path.basename(batch_filename)}"
     )
     df_filelist = pd.read_csv(batch_filename, sep="|")
     for gcs_source_file in df_filelist["pathname"]:
@@ -313,7 +313,7 @@ def download_file_gcs(
 def add_id_column(source_json_file: str, destination_json_file: str, guid: str):
     shutil.copyfile(source_json_file, destination_json_file)
     cmd = (
-        f'sed -i -e \'s/{{\\"frame\\"/{{"id": \\"{guid}\\"\, \\"frame\\"/g\' {destination_json_file}'
+        f'sed -i -e \'s/{{\\"frame\\"/{{"id": \\"{guid}\\"\, \\"frame\\"/g\'{destination_json_file}'
         # 'sed -i -e \'s/{\\"frame\\"/{"id": "'
         # + guid
         # + '"\, "frame"/g\' '
@@ -332,10 +332,10 @@ def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) 
 
 def remove_gcs_path(gcs_bucket: str, gcs_path: str) -> None:
     drop_path = os.path.split(gcs_path)[0]
-    logging.info(f"Removing files from GCS path { drop_path }")
+    logging.info(f"Removing files from GCS path {drop_path}")
     storage_client = storage.Client()
     bucket = storage_client.bucket(gcs_bucket)
-    bucket.delete_blobs(blobs=list(bucket.list_blobs(prefix=f"{ drop_path }/")))
+    bucket.delete_blobs(blobs=list(bucket.list_blobs(prefix=f"{drop_path}/")))
 
 
 if __name__ == "__main__":
