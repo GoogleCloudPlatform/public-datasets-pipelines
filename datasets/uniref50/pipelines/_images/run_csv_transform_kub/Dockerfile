@@ -15,6 +15,7 @@
 FROM python:3.10.6
 ENV PYTHONUNBUFFERED True
 COPY requirements.txt ./
+RUN apt-get update && apt install pigz
 RUN python3 -m pip install --no-cache-dir -r requirements.txt
 WORKDIR /custom
 COPY ./csv_transform.py .

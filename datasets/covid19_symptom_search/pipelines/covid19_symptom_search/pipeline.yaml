@@ -23,9 +23,9 @@ dag:
     default_args:
       owner: "Google"
       depends_on_past: False
-      start_date: "2022-11-16"
+      start_date: "2022-11-30"
     max_active_runs: 1
-    schedule_interval: "@monthly"
+    schedule_interval: "@daily"
     catchup: False
     default_view: graph
 
@@ -61,15 +61,16 @@ dag:
         image_pull_policy: "Always"
         image: "{{ var.json.covid19_symptom_search.container_registry.run_csv_transform_kub }}"
         env_vars:
-          DOWNLOAD_PATH: ""
+          DOWNLOAD_PATH: "/symptom_search_country_daily"
           SOURCE_GCS_KEY: '["country", "daily"]'
           SOURCE_GCS_PATH: "data/covid19_symptom_search/ssd_i18n_expansion/"
           DESTINATION_GCS_PATH: "data/covid19_symptom_search/symptom_search_country_daily/"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "covid19_symptom_search"
           GCS_BUCKET: "{{ var.value.composer_bucket }}"
-          SCHEMA_FILEPATH: "schema.json"
+          SCHEMA_FILEPATH: "data/covid19_symptom_search/schema/data_covid19_symptom_search_symptom_search_country_daily_schema.json"
           TABLE_ID: "symptom_search_country_daily"
+          CHUNK_SIZE: "500000"
         resources:
           request_memory: "4G"
           request_cpu: "1"
@@ -86,15 +87,16 @@ dag:
         image_pull_policy: "Always"
         image: "{{ var.json.covid19_symptom_search.container_registry.run_csv_transform_kub }}"
         env_vars:
-          DOWNLOAD_PATH: ""
+          DOWNLOAD_PATH: "/symptom_search_country_weekly"
           SOURCE_GCS_KEY: '["country", "weekly"]'
           SOURCE_GCS_PATH: "data/covid19_symptom_search/ssd_i18n_expansion/"
           DESTINATION_GCS_PATH: "data/covid19_symptom_search/symptom_search_country_weekly/"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "covid19_symptom_search"
           GCS_BUCKET: "{{ var.value.composer_bucket }}"
-          SCHEMA_FILEPATH: "schema.json"
+          SCHEMA_FILEPATH: "data/covid19_symptom_search/schema/data_covid19_symptom_search_symptom_search_country_weekly_schema.json"
           TABLE_ID: "symptom_search_country_weekly"
+          CHUNK_SIZE: "500000"
         resources:
           request_memory: "4G"
           request_cpu: "1"
@@ -111,15 +113,16 @@ dag:
         image_pull_policy: "Always"
         image: "{{ var.json.covid19_symptom_search.container_registry.run_csv_transform_kub }}"
         env_vars:
-          DOWNLOAD_PATH: ""
+          DOWNLOAD_PATH: "/symptom_search_sub_region_1_daily"
           SOURCE_GCS_KEY: '["sub_region_1", "daily"]'
           SOURCE_GCS_PATH: "data/covid19_symptom_search/ssd_i18n_expansion/"
           DESTINATION_GCS_PATH: "data/covid19_symptom_search/symptom_search_sub_region_1_daily/"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "covid19_symptom_search"
           GCS_BUCKET: "{{ var.value.composer_bucket }}"
-          SCHEMA_FILEPATH: "schema.json"
+          SCHEMA_FILEPATH: "data/covid19_symptom_search/schema/data_covid19_symptom_search_symptom_search_sub_region_1_daily_schema.json"
           TABLE_ID: "symptom_search_sub_region_1_daily"
+          CHUNK_SIZE: "500000"
         resources:
           request_memory: "4G"
           request_cpu: "1"
@@ -136,17 +139,45 @@ dag:
         image_pull_policy: "Always"
         image: "{{ var.json.covid19_symptom_search.container_registry.run_csv_transform_kub }}"
         env_vars:
-          DOWNLOAD_PATH: ""
+          DOWNLOAD_PATH: "/symptom_search_sub_region_1_weekly"
           SOURCE_GCS_KEY: '["sub_region_1", "weekly"]'
           SOURCE_GCS_PATH: "data/covid19_symptom_search/ssd_i18n_expansion/"
           DESTINATION_GCS_PATH: "data/covid19_symptom_search/symptom_search_sub_region_1_weekly/"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "covid19_symptom_search"
           GCS_BUCKET: "{{ var.value.composer_bucket }}"
-          SCHEMA_FILEPATH: "schema.json"
+          SCHEMA_FILEPATH: "data/covid19_symptom_search/schema/data_covid19_symptom_search_symptom_search_sub_region_1_weekly_schema.json"
           TABLE_ID: "symptom_search_sub_region_1_weekly"
+          CHUNK_SIZE: "500000"
         resources:
           request_memory: "4G"
+          request_cpu: "1"
+          request_ephemeral_storage: "10G"
+
+
+    - operator: "KubernetesPodOperator"
+      description: "ETL within the kubernetes pod"
+      args:
+        task_id: "symptom_search_sub_region_2_daily"
+        startup_timeout_seconds: 1000
+        name: "load_data"
+        namespace: "composer"
+        service_account_name: "datasets"
+        image_pull_policy: "Always"
+        image: "{{ var.json.covid19_symptom_search.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          DOWNLOAD_PATH: "/symptom_search_sub_region_2_daily"
+          SOURCE_GCS_KEY: '["sub_region_2", "daily"]'
+          SOURCE_GCS_PATH: "data/covid19_symptom_search/ssd_i18n_expansion/"
+          DESTINATION_GCS_PATH: "data/covid19_symptom_search/symptom_search_sub_region_2_daily/"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "covid19_symptom_search"
+          GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          SCHEMA_FILEPATH: "data/covid19_symptom_search/schema/data_covid19_symptom_search_symptom_search_sub_region_2_daily_schema.json"
+          TABLE_ID: "symptom_search_sub_region_2_daily"
+          CHUNK_SIZE: "500000"
+        resources:
+          request_memory: "16G"
           request_cpu: "1"
           request_ephemeral_storage: "10G"
 
@@ -162,15 +193,16 @@ dag:
         image_pull_policy: "Always"
         image: "{{ var.json.covid19_symptom_search.container_registry.run_csv_transform_kub }}"
         env_vars:
-          DOWNLOAD_PATH: ""
+          DOWNLOAD_PATH: "/symptom_search_sub_region_2_weekly"
           SOURCE_GCS_KEY: '["sub_region_2", "weekly"]'
           SOURCE_GCS_PATH: "data/covid19_symptom_search/ssd_i18n_expansion/"
           DESTINATION_GCS_PATH: "data/covid19_symptom_search/symptom_search_sub_region_2_weekly/"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "covid19_symptom_search"
           GCS_BUCKET: "{{ var.value.composer_bucket }}"
-          SCHEMA_FILEPATH: "schema.json"
+          SCHEMA_FILEPATH: "data/covid19_symptom_search/schema/data_covid19_symptom_search_symptom_search_sub_region_2_daily_schema.json"
           TABLE_ID: "symptom_search_sub_region_2_weekly"
+          CHUNK_SIZE: "500000"
         resources:
           request_memory: "8G"
           request_cpu: "2"
@@ -178,4 +210,4 @@ dag:
 
 
   graph_paths:
-    - "sts >> [symptom_search_country_daily , symptom_search_country_weekly , symptom_search_sub_region_1_daily , symptom_search_sub_region_1_weekly , symptom_search_sub_region_2_weekly]"
+    - "sts >> [symptom_search_country_daily , symptom_search_country_weekly , symptom_search_sub_region_1_daily , symptom_search_sub_region_1_weekly , symptom_search_sub_region_2_weekly, symptom_search_sub_region_2_daily ]"

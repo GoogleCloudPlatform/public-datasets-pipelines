@@ -1,0 +1,98 @@
+[
+    {
+       "name": "rxaui",
+       "type": "STRING",
+       "mode": "NULLABLE",
+       "description": "RxNorm Unique identifier for atom (RxNorm Atom ID)"
+    },
+    {
+       "name": "aui",
+       "type": "STRING",
+       "mode": "NULLABLE",
+       "description": "Metathesaurus Unique identifier for atom"
+    },
+    {
+       "name": "str",
+       "type": "STRING",
+       "mode": "NULLABLE",
+       "description": "String"
+    },
+    {
+       "name": "archive_timestamp",
+       "type": "STRING",
+       "mode": "NULLABLE",
+       "description": "Date/Time Archived"
+    },
+    {
+       "name": "created_timestamp",
+       "type": "STRING",
+       "mode": "NULLABLE",
+       "description": "Date/Time Created in this version of RxNorm"
+    },
+    {
+       "name": "updated_timestamp",
+       "type": "STRING",
+       "mode": "NULLABLE",
+       "description": "Date/Time Updated in this version of RxNorm"
+    },
+    {
+       "name": "code",
+       "type": "STRING",
+       "mode": "NULLABLE",
+       "description": "Most useful source asserted identifier (if the source vocabulary has more than one identifier), or a Metathesaurus-generated source entry identifier (if the source vocabulary has none.)"
+    },
+    {
+       "name": "is_brand",
+       "type": "STRING",
+       "mode": "NULLABLE",
+       "description": "Branded data flag (not used)"
+    },
+    {
+       "name": "lat",
+       "type": "STRING",
+       "mode": "NULLABLE",
+       "description": "Language of Term"
+    },
+    {
+       "name": "last_released",
+       "type": "STRING",
+       "mode": "NULLABLE",
+       "description": "Date this name (atom) was last released from RxNorm"
+    },
+    {
+       "name": "saui",
+       "type": "STRING",
+       "mode": "NULLABLE",
+       "description": "Source asserted atom identifier [optional]"
+    },
+    {
+       "name": "vsab",
+       "type": "STRING",
+       "mode": "NULLABLE",
+       "description": "Versioned Source Abbreviation"
+    },
+    {
+       "name": "rxcui",
+       "type": "STRING",
+       "mode": "NULLABLE",
+       "description": "RxNorm Unique identifier for concept (concept ID)"
+    },
+    {
+       "name": "sab",
+       "type": "STRING",
+       "mode": "NULLABLE",
+       "description": "Source abbreviation"
+    },
+    {
+       "name": "tty",
+       "type": "STRING",
+       "mode": "NULLABLE",
+       "description": "Term type in source"
+    },
+    {
+       "name": "merged_to_rxcui",
+       "type": "STRING",
+       "mode": "NULLABLE",
+       "description": "RxNorm Unique identifier for concept (concept ID) which name (atom) was merged into"
+    }
+  ]

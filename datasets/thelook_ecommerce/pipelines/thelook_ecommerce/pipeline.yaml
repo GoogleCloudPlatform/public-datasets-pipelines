@@ -53,7 +53,8 @@ dag:
       depends_on_past: False
       start_date: "2021-02-09"
     max_active_runs: 1
-    schedule_interval: "@daily"  # runs everyday at 6am EST
+    # runs everyday at 6am EST
+    schedule_interval: "@daily"
     catchup: False
     default_view: graph
 
@@ -73,8 +74,8 @@ dag:
         image_pull_policy: "Always"
 
         # Docker images will be built and pushed to GCR by default whenever the `scripts/generate_dag.py` is run. To skip building and pushing images, use the optional `--skip-builds` flag.
-        # image: "{{ var.json.thelook_ecommerce.docker_image }}"
-        image: !IMAGE run_thelook_kub
+        image: "{{ var.json.thelook_ecommerce.docker_image }}"
+        # image: !IMAGE run_thelook_kub
 
         # Set the environment variables you need initialized in the container. Use these as input variables for the script your container is expected to perform.
         env_vars:
@@ -505,11 +506,14 @@ dag:
         task_id: "create_user_geom_column"
 
         # Query that creates the column as a GEOGRAPHY type, then populates it with a geographic point based on the longitude and latitude values
-        query: |-
-          ALTER TABLE `bigquery-public-data.thelook_ecommerce.users` ADD COLUMN IF NOT EXISTS user_geom GEOGRAPHY;
-          UPDATE `bigquery-public-data.thelook_ecommerce.users` SET user_geom = SAFE.ST_GeogFromText(CONCAT('POINT(',CAST(longitude AS STRING), ' ', CAST(latitude as STRING), ')')) WHERE longitude IS NOT NULL AND latitude IS NOT NULL;
-          # Use Legacy SQL should be false for any query that uses a DML statement
-        useLegacySql: False
+        configuration:
+          query:
+            query: |-
+              ALTER TABLE `bigquery-public-data.thelook_ecommerce.users` ADD COLUMN IF NOT EXISTS user_geom GEOGRAPHY;
+              UPDATE `bigquery-public-data.thelook_ecommerce.users`
+                 SET user_geom = SAFE.ST_GeogFromText(CONCAT('POINT(',CAST(longitude AS STRING), ' ', CAST(latitude as STRING), ')'))
+               WHERE longitude IS NOT NULL AND latitude IS NOT NULL;
+            useLegacySql: False
 
     - operator: "BigQueryInsertJobOperator"
       description: "Task to create the distribution center geom column from the latitude and longitude columns"
@@ -518,11 +522,16 @@ dag:
         task_id: "create_distribution_center_geom_column"
 
         # Query that creates the column as a GEOGRAPHY type, then populates it with a geographic point based on the longitude and latitude values
-        query: |-
-          ALTER TABLE `bigquery-public-data.thelook_ecommerce.distribution_centers` ADD COLUMN IF NOT EXISTS distribution_center_geom GEOGRAPHY;
-          UPDATE `bigquery-public-data.thelook_ecommerce.distribution_centers` SET distribution_center_geom = SAFE.ST_GeogFromText(CONCAT('POINT(',CAST(longitude AS STRING), ' ', CAST(latitude as STRING), ')')) WHERE longitude IS NOT NULL AND latitude IS NOT NULL;
-          # Use Legacy SQL should be false for any query that uses a DML statement
-        useLegacySql: False
+        configuration:
+          query: |-
+            ALTER TABLE `bigquery-public-data.thelook_ecommerce.distribution_centers`
+              ADD COLUMN IF NOT EXISTS distribution_center_geom GEOGRAPHY;
+            UPDATE `bigquery-public-data.thelook_ecommerce.distribution_centers`
+               SET distribution_center_geom = SAFE.ST_GeogFromText(CONCAT('POINT(',CAST(longitude AS STRING), ' ', CAST(latitude as STRING), ')'))
+             WHERE longitude IS NOT NULL
+               AND latitude IS NOT NULL;
+            # Use Legacy SQL should be false for any query that uses a DML statement
+          useLegacySql: False
 
   graph_paths:
-    - "generate_thelook >> [load_products_to_bq, load_events_to_bq, load_inventory_items_to_bq, load_order_items_to_bq, load_orders_to_bq, load_users_to_bq, load_distribution_centers_to_bq] >> [create_user_geom_column, create_distribution_center_geom_column]"
+    - "generate_thelook >> [load_products_to_bq, load_events_to_bq, load_inventory_items_to_bq, load_order_items_to_bq, load_orders_to_bq, load_users_to_bq, load_distribution_centers_to_bq] >> create_user_geom_column >> create_distribution_center_geom_column"

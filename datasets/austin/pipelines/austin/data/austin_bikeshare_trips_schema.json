@@ -1,7 +1,7 @@
 [
   {
     "name": "trip_id",
-    "type": "INTEGER",
+    "type": "STRING",
     "mode": "NULLABLE",
     "description": "Numeric ID of bike trip"
   },
@@ -16,6 +16,12 @@
     "type": "STRING",
     "mode": "NULLABLE",
     "description": "ID of bike used"
+  },
+  {
+    "name": "bike_type",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Type of bike used"
   },
   {
     "name": "start_time",

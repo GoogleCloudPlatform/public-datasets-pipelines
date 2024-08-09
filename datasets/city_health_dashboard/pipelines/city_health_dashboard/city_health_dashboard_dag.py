@@ -63,7 +63,7 @@ with DAG(
             "RENAME_HEADERS_LIST": '{\n  "state_abbr": "state_abbr",\n  "state_fips": "state_fips",\n  "city_fips": "city_fips",\n  "stpl_fips": "stpl_fips",\n  "stcosub_fips": "stcosub_fips",\n  "city_name": "city_name",\n  "metric_name": "metric_name",\n  "metric_number": "metric_number",\n  "group_name": "group_name",\n  "group_number": "group_number",\n  "num": "num",\n  "denom": "denom",\n  "est": "est",\n  "lci": "lci",\n  "uci": "uci",\n  "county_indicator": "county_indicator",\n  "multiplier_indicator": "multiplier_indicator",\n  "data_yr_type": "data_yr_type",\n  "data_yr": "data_yr",\n  "geo_level": "geo_level",\n  "date_export": "date_export",\n  "census_year": "census_year",\n  "version": "version",\n  "NCHS_disclaimer": "NCHS_disclaimer",\n  "suggested_citation": "suggested_citation"\n}',
             "TABLE_DESCRIPTION": "City Health Dashboard Data Tract",
             "PIPELINE_NAME": "chdb_data_city_all",
-            "FILE_NAME_PREFIX": "CHDB_data_city_all_v15.1",
+            "FILE_NAME_PREFIX": "CHDB_data_city_all_*.*",
         },
         resources={
             "request_memory": "4G",
@@ -103,7 +103,7 @@ with DAG(
             "RENAME_HEADERS_LIST": '{\n  "state_abbr": "state_abbr",\n  "state_fips": "state_fips",\n  "county_name": "county_name",\n  "city_fips": "city_fips",\n  "stpl_fips": "stpl_fips",\n  "stcosub_fips": "stcosub_fips",\n  "stcotr_fips": "stcotr_fips",\n  "city_name": "city_name",\n  "metric_name": "metric_name",\n  "metric_number": "metric_number",\n  "group_name": "group_name",\n  "group_number": "group_number",\n  "num": "num",\n  "denom": "denom",\n  "est": "est",\n  "lci": "lci",\n  "uci": "uci",\n  "data_yr_type": "data_yr_type",\n  "data_yr": "data_yr",\n  "geo_level": "geo_level",\n  "date_export": "date_export",\n  "census_year": "census_year",\n  "version": "version",\n  "suggested_citation": "suggested_citation"\n}',
             "TABLE_DESCRIPTION": "City Health Dashboard Data Tract",
             "PIPELINE_NAME": "chdb_data_tract_all",
-            "FILE_NAME_PREFIX": "CHDB_data_tract_all_v15.1",
+            "FILE_NAME_PREFIX": "CHDB_data_tract_all_*.*",
         },
         resources={
             "request_memory": "4G",

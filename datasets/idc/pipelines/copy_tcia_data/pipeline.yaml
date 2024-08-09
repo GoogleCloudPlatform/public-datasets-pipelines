@@ -58,7 +58,7 @@ dag:
           SERVICE_ACCOUNT: "{{ var.json.idc.service_account }}"
           DATASET_NAME: "idc"
           DATASET_VERSIONS: >-
-            ["v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v11_clinical", "v12", "v12_clinical"]
+            ["v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v11_clinical", "v12", "v12_clinical", "v13", "v13_clinical"]
           TIMEOUT: "36000"
         resources:
           request_memory: "128M"
@@ -77,7 +77,7 @@ dag:
           SOURCE_PROJECT_ID: "{{ var.json.idc.source_project_id }}"
           TARGET_PROJECT_ID: "{{ var.json.idc.target_project_id }}"
           BQ_DATASETS: >-
-            ["idc_v1", "idc_v2", "idc_v3", "idc_v4", "idc_v5", "idc_v6", "idc_v7", "idc_v8", "idc_v9", "idc_v10", "idc_v11", "idc_v11_clinical", "idc_v12", "idc_v12_clinical", "idc_current", "idc_current_clinical"]
+            ["idc_v1", "idc_v2", "idc_v3", "idc_v4", "idc_v5", "idc_v6", "idc_v7", "idc_v8", "idc_v9", "idc_v10", "idc_v11", "idc_v11_clinical", "idc_v12", "idc_v12_clinical", "idc_v13", "idc_v13_clinical", "idc_current", "idc_current_clinical"]
           SERVICE_ACCOUNT: "{{ var.json.idc.service_account }}"
         resources:
           request_memory: "128M"

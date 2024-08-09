@@ -42,8 +42,6 @@ dag:
           name: pubds-new-york
           initial_node_count: 2
           network: "{{ var.value.vpc_network }}"
-          ip_allocation_policy:
-            cluster_ipv4_cidr_block: "/26"
           node_config:
             machine_type: e2-standard-8
             oauth_scopes:
@@ -216,9 +214,6 @@ dag:
               "longitude",
               "location"
             ]
-        resources:
-          request_ephemeral_storage: "10G"
-          limit_cpu: "2"
 
     - operator: "GKEStartPodOperator"
       description: "Run New York Citibike Stations Pipeline"
@@ -249,10 +244,10 @@ dag:
               "rental_uris": "str",
               "lat": "float64",
               "eightd_station_services": "str",
-              "legacy_id_x": "int64",
+              "legacy_id_x": "str",
               "short_name": "str",
               "external_id": "str",
-              "station_id": "int64",
+              "station_id": "str",
               "rental_methods": "str",
               "station_type": "str",
               "short_name": "str",
@@ -273,7 +268,7 @@ dag:
               "num_ebikes_available": "int64",
               "is_returning": "int64",
               "is_renting": "int64",
-              "legacy_id_y": "int64",
+              "legacy_id_y": "str",
               "valet": "str",
               "eightd_active_station_services": "str"
             }
@@ -295,7 +290,6 @@ dag:
             ]
           RESOLVE_DATATYPES_LIST: >-
             {
-              "station_id": "Int64",
               "region_id": "Int64",
               "rental_methods": "string"
             }
@@ -357,9 +351,6 @@ dag:
               "eightd_has_available_keys",
               "last_reported"
             ]
-        resources:
-          request_ephemeral_storage: "10G"
-          limit_cpu: "2"
 
     - operator: "GKEStartPodOperator"
       description: "Run New York NYPD MV Collisions Pipeline"
@@ -502,9 +493,6 @@ dag:
               "vehicle_type_code_5",
               "zip_code"
             ]
-        resources:
-          request_ephemeral_storage: "10G"
-          limit_cpu: "2"
 
     - operator: "GKEStartPodOperator"
       description: "Run New York Tree Census 1995 Pipeline"
@@ -593,9 +581,6 @@ dag:
               "spc_latin",
               "location"
             ]
-        resources:
-          request_ephemeral_storage: "10G"
-          limit_cpu: "2"
 
     - operator: "GKEDeleteClusterOperator"
       args:
