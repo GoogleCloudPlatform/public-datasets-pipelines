@@ -63,9 +63,59 @@ dag:
           SOURCE_GCS_PATH: "data/iowa_liquor_sales/raw_files/"
           TARGET_GCS_PATH: "data/iowa_liquor_sales/transformed_files/data_output_"
           HEADERS: >-
-            ["invoice_and_item_number","date","store_number","store_name","address","city","zip_code","store_location","county_number","county","category","category_name","vendor_number","vendor_name","item_number","item_description","pack","bottle_volume_ml","state_bottle_cost","state_bottle_retail","bottles_sold","sale_dollars","volume_sold_liters","volume_sold_gallons"]
+            [
+              "invoice_and_item_number",
+              "date",
+              "store_number",
+              "store_name",
+              "address",
+              "city",
+              "zip_code",
+              "store_location",
+              "county_number",
+              "county",
+              "category",
+              "category_name",
+              "vendor_number",
+              "vendor_name",
+              "item_number",
+              "item_description",
+              "pack",
+              "bottle_volume_ml",
+              "state_bottle_cost",
+              "state_bottle_retail",
+              "bottles_sold",
+              "sale_dollars",
+              "volume_sold_liters",
+              "volume_sold_gallons"
+            ]
           RENAME_MAPPINGS: >-
-            {"Invoice/Item Number":"invoice_and_item_number","Date":"date","Store Number":"store_number","Store Name":"store_name","Address":"address","City":"city","Zip Code":"zip_code","Store Location":"store_location","County Number":"county_number","County":"county","Category":"category","Category Name":"category_name","Vendor Number":"vendor_number","Vendor Name":"vendor_name","Item Number":"item_number","Item Description":"item_description","Pack":"pack","Bottle Volume (ml)":"bottle_volume_ml","State Bottle Cost":"state_bottle_cost","State Bottle Retail":"state_bottle_retail","Bottles Sold":"bottles_sold","Sale (Dollars)":"sale_dollars","Volume Sold (Liters)":"volume_sold_liters","Volume Sold (Gallons)":"volume_sold_gallons"}
+            {
+              "Invoice/Item Number":"invoice_and_item_number",
+              "Date":"date",
+              "Store Number":"store_number",
+              "Store Name":"store_name",
+              "Address":"address",
+              "City":"city",
+              "Zip Code":"zip_code",
+              "Store Location":"store_location",
+              "County Number":"county_number",
+              "County":"county",
+              "Category":"category",
+              "Category Name":"category_name",
+              "Vendor Number":"vendor_number",
+              "Vendor Name":"vendor_name",
+              "Item Number":"item_number",
+              "Item Description":"item_description",
+              "Pack":"pack",
+              "Bottle Volume (ml)":"bottle_volume_ml",
+              "State Bottle Cost":"state_bottle_cost",
+              "State Bottle Retail":"state_bottle_retail",
+              "Bottles Sold":"bottles_sold",
+              "Sale (Dollars)":"sale_dollars",
+              "Volume Sold (Liters)":"volume_sold_liters",
+              "Volume Sold (Gallons)":"volume_sold_gallons"
+            }
         resources:
           request_memory: "4G"
           request_cpu: "1"
