@@ -12,13 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-dataset:
-  name: cfe_calculator
-  friendly_name: ~
-  description: ~
-  dataset_sources: ~
-  terms_of_use: ~
-resources:
-  - type: bigquery_dataset
-    dataset_id: oedi_commercial_and_residential_hourly_load_profiles
-    description: OEDI commercial and residential hourly load
+FROM python:3.8
+ENV PYTHONUNBUFFERED True
+COPY requirements.txt ./
+RUN python3 -m pip install --no-cache-dir -r requirements.txt
+WORKDIR /custom
+COPY ./csv_transform.py .
+CMD ["python3", "csv_transform.py"]

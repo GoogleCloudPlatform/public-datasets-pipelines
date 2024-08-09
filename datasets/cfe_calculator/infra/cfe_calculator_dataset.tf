@@ -15,21 +15,15 @@
  */
 
 
-resource "google_storage_bucket" "cfe_calculator" {
-  name                        = "${var.bucket_name_prefix}-cfe_calculator"
-  force_destroy               = true
-  location                    = "US"
-  uniform_bucket_level_access = true
-  lifecycle {
-    ignore_changes = [
-      logging,
-    ]
-  }
+resource "google_bigquery_dataset" "oedi_commercial_and_residential_hourly_load_profiles" {
+  dataset_id  = "oedi_commercial_and_residential_hourly_load_profiles"
+  project     = var.project_id
+  description = "OEDI commercial and residential hourly load"
 }
 
-data "google_iam_policy" "storage_bucket__cfe_calculator" {
+data "google_iam_policy" "bq_ds__oedi_commercial_and_residential_hourly_load_profiles" {
   dynamic "binding" {
-    for_each = var.iam_policies["storage_buckets"]["cfe_calculator"]
+    for_each = var.iam_policies["bigquery_datasets"]["oedi_commercial_and_residential_hourly_load_profiles"]
     content {
       role    = binding.value["role"]
       members = binding.value["members"]
@@ -37,20 +31,10 @@ data "google_iam_policy" "storage_bucket__cfe_calculator" {
   }
 }
 
-resource "google_storage_bucket_iam_policy" "cfe_calculator" {
-  bucket      = google_storage_bucket.cfe_calculator.name
-  policy_data = data.google_iam_policy.storage_bucket__cfe_calculator.policy_data
+resource "google_bigquery_dataset_iam_policy" "oedi_commercial_and_residential_hourly_load_profiles" {
+  dataset_id  = google_bigquery_dataset.oedi_commercial_and_residential_hourly_load_profiles.dataset_id
+  policy_data = data.google_iam_policy.bq_ds__oedi_commercial_and_residential_hourly_load_profiles.policy_data
 }
-output "storage_bucket-cfe_calculator-name" {
-  value = google_storage_bucket.cfe_calculator.name
-}
-
-resource "google_bigquery_dataset" "cfe_calculator" {
-  dataset_id  = "cfe_calculator"
-  project     = var.project_id
-  description = "OEDI commercial and residential hourly load"
-}
-
-output "bigquery_dataset-cfe_calculator-dataset_id" {
-  value = google_bigquery_dataset.cfe_calculator.dataset_id
+output "bigquery_dataset-oedi_commercial_and_residential_hourly_load_profiles-dataset_id" {
+  value = google_bigquery_dataset.oedi_commercial_and_residential_hourly_load_profiles.dataset_id
 }
