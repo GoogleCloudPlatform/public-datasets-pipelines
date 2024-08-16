@@ -13,12 +13,13 @@
 # limitations under the License.
 
 dataset:
-  name: cfe_calculator
-  friendly_name: ~
-  description: ~
+  name: vqa
+  friendly_name: Visual Question Answering
+  description: Datasets from https://visualqa.org/download.html
   dataset_sources: ~
   terms_of_use: ~
 resources:
   - type: bigquery_dataset
-    dataset_id: oedi_commercial_and_residential_hourly_load_profiles
-    description: OEDI commercial and residential hourly load
+    dataset_id: vqa
+    description: Datasets from https://visualqa.org/download.html
+    location: US

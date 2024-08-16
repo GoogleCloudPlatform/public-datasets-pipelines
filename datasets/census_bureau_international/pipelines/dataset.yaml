@@ -13,12 +13,12 @@
 # limitations under the License.
 
 dataset:
-  name: cfe_calculator
-  friendly_name: ~
+  name: census_bureau_international
+  friendly_name: census_bureau_international
   description: ~
   dataset_sources: ~
   terms_of_use: ~
 resources:
   - type: bigquery_dataset
-    dataset_id: oedi_commercial_and_residential_hourly_load_profiles
-    description: OEDI commercial and residential hourly load
+    dataset_id: census_bureau_international
+    description: census_bureau_international
