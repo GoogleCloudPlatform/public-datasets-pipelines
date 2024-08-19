@@ -10,6 +10,7 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
+# limitations under the License.
 FROM python:3.8
 
 # Allow statements and log messages to appear in Cloud logs
@@ -20,6 +21,12 @@ COPY requirements.txt ./
 
 # Install the packages specified in the requirements file
 RUN python3 -m pip install --no-cache-dir -r requirements.txt
+
+# Install google storage gcloud to communicate with GCS buckets
+RUN python3 -m pip install fsspec
+RUN python3 -m pip install gcsfs
+RUN curl -sSL https://sdk.cloud.google.com | bash
+ENV PATH $PATH:/root/google-cloud-sdk/bin
 
 # The WORKDIR instruction sets the working directory for any RUN, CMD,
 # ENTRYPOINT, COPY and ADD instructions that follow it in the Dockerfile.
