@@ -31,8 +31,6 @@ def main(
     logging.info("Hacker News process started at ")
     gcs_datafile = f"gs://{source_bucket}/{source_object}"
     logging.info(f"Reading and processing source file from {gcs_datafile}.")
-    # file_batch_nbr = 1
-    # batch_filename = f"./output/taxi_trips_{str.zfill(str(file_batch_nbr), 10)}"
     for i, chunk in enumerate(
         pd.read_csv(
             gcs_datafile,

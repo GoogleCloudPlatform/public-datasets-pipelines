@@ -14,6 +14,7 @@
 
 
 from airflow import DAG
+from airflow.operators import bash
 from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
 from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
@@ -32,6 +33,12 @@ with DAG(
     catchup=False,
     default_view="graph",
 ) as dag:
+
+    # Fetch data gcs - gcs
+    bash_gcs_to_gcs = bash.BashOperator(
+        task_id="bash_gcs_to_gcs",
+        bash_command="gsutil cp -R gs://pdp-feeds-staging/Hacker_News/output/output.csv gs://{{ var.value.composer_bucket }}/data/hacker_news/\n",
+    )
 
     # Run CSV transform within kubernetes pod
     hacker_news_transform_csv = kubernetes_pod.KubernetesPodOperator(
@@ -153,4 +160,4 @@ with DAG(
         ],
     )
 
-    hacker_news_transform_csv >> load_full_to_bq
+    bash_gcs_to_gcs >> hacker_news_transform_csv >> load_full_to_bq
