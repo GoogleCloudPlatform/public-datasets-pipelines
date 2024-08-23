@@ -114,7 +114,7 @@ def execute_pipeline(
             source_url,
             destination_table,
             force_pause_batch_size,
-            force_pause_wait_time
+            force_pause_wait_time,
         )
     elif report_level == "state_level":
         df = extract_data_and_convert_to_df_state_level(
@@ -125,7 +125,7 @@ def execute_pipeline(
             source_url,
             destination_table,
             force_pause_batch_size,
-            force_pause_wait_time
+            force_pause_wait_time,
         )
     save_to_new_file(df, source_file, sep=",")
     process_source_file(
@@ -470,8 +470,14 @@ def extract_data_and_convert_to_df_national_level(
         str2 = str1.replace("~group_id~", key[0:-3])
         str3 = str2.replace("~row_position~", key[-3:])
         source_url_new = str3.replace("~api_naming_convention~", api_naming_convention)
-        if force_pause_wait_time != 0 and batch_size > 0 and (batch_size % force_pause_batch_size == 0):
-            logging.info(f" ... Pausing for batch sleep time {force_pause_wait_time} seconds.")
+        if (
+            force_pause_wait_time != 0
+            and batch_size > 0
+            and (batch_size % force_pause_batch_size == 0)
+        ):
+            logging.info(
+                f" ... Pausing for batch sleep time {force_pause_wait_time} seconds."
+            )
             time.sleep(force_pause_wait_time)
         logging.info(f"Source url : {source_url_new}")
         batch_size = batch_size + 1
@@ -529,8 +535,14 @@ def extract_data_and_convert_to_df_state_level(
             str3 = str2.replace("~row_position~", key[-3:])
             str4 = str3.replace("~api_naming_convention~", api_naming_convention)
             source_url_new = str4.replace("~state_code~", sc)
-            if force_pause_wait_time != 0 and batch_size > 0 and (batch_size % force_pause_batch_size == 0):
-                logging.info(f" ... Pausing for batch sleep time {force_pause_wait_time} seconds.")
+            if (
+                force_pause_wait_time != 0
+                and batch_size > 0
+                and (batch_size % force_pause_batch_size == 0)
+            ):
+                logging.info(
+                    f" ... Pausing for batch sleep time {force_pause_wait_time} seconds."
+                )
                 time.sleep(force_pause_wait_time)
             logging.info(f"Source url : {source_url_new}")
             batch_size = batch_size + 1
