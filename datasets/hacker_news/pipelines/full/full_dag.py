@@ -29,7 +29,7 @@ with DAG(
     dag_id="hacker_news.full",
     default_args=default_args,
     max_active_runs=1,
-    schedule_interval="@yearly",
+    schedule_interval="0 10 * * *",
     catchup=False,
     default_view="graph",
 ) as dag:
@@ -37,27 +37,29 @@ with DAG(
     # Fetch data gcs - gcs
     bash_gcs_to_gcs = bash.BashOperator(
         task_id="bash_gcs_to_gcs",
-        bash_command="gsutil cp -R gs://pdp-feeds-staging/Hacker_News/output/output.csv gs://{{ var.value.composer_bucket }}/data/hacker_news/\n",
+        bash_command="gsutil -m rm -a gs://{{ var.value.composer_bucket }}/data/hacker_news/batch/**\ngsutil cp `gsutil ls gs://hacker-news-backups/*_data.json |sort |tail -n 2 |head -n 1` gs://{{ var.value.composer_bucket }}/data/hacker_news/source_file.json\n",
     )
 
     # Run CSV transform within kubernetes pod
-    hacker_news_transform_csv = kubernetes_pod.KubernetesPodOperator(
-        task_id="hacker_news_transform_csv",
-        name="full",
+    transform_csv = kubernetes_pod.KubernetesPodOperator(
+        task_id="transform_csv",
+        name="generate_output_files",
         namespace="composer-user-workloads",
         service_account_name="default",
         config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.hacker_news.container_registry.run_csv_transform_kub }}",
         env_vars={
-            "SOURCE_GCS_BUCKET": "{{ var.value.composer_bucket }}",
-            "SOURCE_GCS_OBJECT": "data/hacker_news/output.csv",
-            "CHUNKSIZE": "500000",
-            "CSV_HEADERS": '["title", "url", "text", "dead", "by", "score", "time", "timestamp", "type", "id","parent", "descendants", "ranking", "deleted"]',
-            "DATA_DTYPES": '{\n  "title": "str",\n  "url": "str",\n  "text": "str",\n  "dead": "str",\n  "by": "str",\n  "score": "str",\n  "time": "str",\n  "timestamp": "str",\n  "type": "str",\n  "id": "str",\n  "parent": "str",\n  "descendants": "str",\n  "ranking": "str",\n  "deleted": "str"\n}',
+            "SOURCE_BUCKET": "{{ var.value.composer_bucket }}",
+            "SOURCE_OBJECT": "data/hacker_news/source_file.json",
+            "CHUNK_SIZE": "10000",
+            "TARGET_BUCKET": "{{ var.value.composer_bucket }}",
+            "TARGET_LOCAL_DIR": "data/hacker_news/",
+            "OUTPUT_CSV_HEADERS": '[ "title", "url", "text", "dead", "by",\n  "score", "time", "timestamp", "type", "id",\n  "parent", "descendants", "ranking", "deleted" ]',
         },
         container_resources={
-            "memory": {"request": "32Gi"},
+            "memory": {"request": "80Gi"},
+            "cpu": {"request": "2"},
             "ephemeral-storage": {"request": "10Gi"},
         },
     )
@@ -66,10 +68,12 @@ with DAG(
     load_full_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_full_to_bq",
         bucket="{{ var.value.composer_bucket }}",
-        source_objects=["data/hacker_news/batch/hacker_news_*.csv"],
+        source_objects=["data/hacker_news/batch/hn_processed_*.csv"],
         source_format="CSV",
+        field_delimiter="|",
         destination_project_dataset_table="hacker_news.full",
         skip_leading_rows=1,
+        ignore_unknown_values=True,
         allow_quoted_newlines=True,
         write_disposition="WRITE_TRUNCATE",
         schema_fields=[
@@ -160,4 +164,4 @@ with DAG(
         ],
     )
 
-    bash_gcs_to_gcs >> hacker_news_transform_csv >> load_full_to_bq
+    bash_gcs_to_gcs >> transform_csv >> load_full_to_bq
