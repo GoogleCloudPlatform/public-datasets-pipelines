@@ -38,22 +38,7 @@ dag:
     default_view: graph
 
   tasks:
-    - operator: "GKECreateClusterOperator"
-      args:
-        task_id: "create_cluster"
-        project_id: "{{ var.value.gcp_project }}"
-        location: "us-central1-c"
-        body:
-          name: irs-990--irs-990-2017
-          initial_node_count: 1
-          network: "{{ var.value.vpc_network }}"
-          node_config:
-            machine_type: e2-small
-            oauth_scopes:
-              - https://www.googleapis.com/auth/devstorage.read_write
-              - https://www.googleapis.com/auth/cloud-platform
-
-    - operator: "GKEStartPodOperator"
+    - operator: "KubernetesPodOperator"
 
       # Task description
       description: "Run CSV transform within kubernetes pod"
@@ -68,10 +53,8 @@ dag:
         name: "irs_990_2017"
 
         # The namespace to run within Kubernetes. Always set its value to "default" because we follow the guideline that KubernetesPodOperator will only be used for very light workloads, i.e. use the Cloud Composer environment's resources without starving other pipelines.
-        project_id: "{{ var.value.gcp_project }}"
-        location: "us-central1-c"
-        cluster_name: irs-990--irs-990-2017
-        namespace: "default"
+        service_account_name: "datasets"
+        namespace: "composer"
 
         image_pull_policy: "Always"
 
@@ -861,12 +844,5 @@ dag:
             type: "integer"
             mode: "nullable"
 
-    - operator: "GKEDeleteClusterOperator"
-      args:
-        task_id: "delete_cluster"
-        project_id: "{{ var.value.gcp_project }}"
-        location: "us-central1-c"
-        name: irs-990--irs-990-2017
-
   graph_paths:
-    - "create_cluster >> irs_990_2017_transform_csv >> load_irs_990_2017_to_bq >> delete_cluster"
+    - "irs_990_2017_transform_csv >> load_irs_990_2017_to_bq"

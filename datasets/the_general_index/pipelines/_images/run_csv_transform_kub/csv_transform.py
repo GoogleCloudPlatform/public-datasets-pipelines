@@ -310,7 +310,7 @@ def convert_dt_format(dt_str: str) -> str:
     else:
         return str(
             pd.to_datetime(
-                dt_str, format='"%Y-%m-%d %H:%M:%S"', infer_datetime_format=True
+                dt_str, format="%Y-%m-%d %H:%M:%S", infer_datetime_format=True
             )
         )
 

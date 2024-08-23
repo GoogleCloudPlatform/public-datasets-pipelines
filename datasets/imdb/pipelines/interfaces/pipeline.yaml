@@ -84,7 +84,8 @@ dag:
             {"nconst": "nconst", "primaryName": "primary_name", "birthYear": "birth_year", "deathYear": "death_year",
              "primaryProfession": "primary_profession", "knownForTitles": "known_for_titles"}
         resources:
-          request_memory: "4G"
+          request_ephemeral_storage: "10G"
+          request_memory: "12G"
           request_cpu: "1"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
@@ -150,9 +151,9 @@ dag:
             {"titleId": "title_id", "ordering": "ordering", "title": "title", "region": "region",
             "language": "language", "types": "types", "attributes": "attributes", "isOriginalTitle": "is_original_title"}
         resources:
-          request_memory: "8G"
-          request_cpu: "3"
           request_ephemeral_storage: "10G"
+          request_memory: "12G"
+          request_cpu: "3"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
@@ -224,7 +225,8 @@ dag:
             {"tconst": "tconst", "titleType": "title_type", "primaryTitle": "primary_title", "originalTitle": "original_title",
              "isAdult": "is_adult", "startYear": "start_year", "endYear": "end_year", "runtimeMinutes": "runtime_minutes", "genres": "genres"}
         resources:
-          request_memory: "4G"
+          request_ephemeral_storage: "10G"
+          request_memory: "12G"
           request_cpu: "1"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
@@ -300,7 +302,8 @@ dag:
           RENAME_MAPPINGS: >-
             {"tconst": "tconst", "directors": "directors", "writers": "writers"}
         resources:
-          request_memory: "4G"
+          request_ephemeral_storage: "10G"
+          request_memory: "12G"
           request_cpu: "1"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
@@ -352,7 +355,8 @@ dag:
           RENAME_MAPPINGS: >-
             {"tconst": "tconst", "parentTconst": "parent_tconst", "seasonNumber": "season_number", "episodeNumber": "episode_number"}
         resources:
-          request_memory: "4G"
+          request_ephemeral_storage: "10G"
+          request_memory: "12G"
           request_cpu: "1"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
@@ -410,9 +414,9 @@ dag:
             {"tconst": "tconst", "ordering": "ordering", "nconst": "nconst", "category": "category",
              "job": "job", "characters": "characters"}
         resources:
-          request_memory: "8G"
-          request_cpu: "3"
           request_ephemeral_storage: "10G"
+          request_memory: "12G"
+          request_cpu: "3"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
@@ -475,7 +479,8 @@ dag:
           RENAME_MAPPINGS: >-
             {"tconst": "tconst", "averageRating": "average_rating", "numVotes": "num_votes"}
         resources:
-          request_memory: "4G"
+          request_ephemeral_storage: "10G"
+          request_memory: "12G"
           request_cpu: "1"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"

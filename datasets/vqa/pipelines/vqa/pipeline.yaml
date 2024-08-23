@@ -1,0 +1,250 @@
+# Copyright 2021 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+---
+resources: ~
+  # - type: bigquery_table
+  #   table_id: "ghcnd_by_year"
+  #   description: "noaaspc"
+  # - type: bigquery_table
+  #   table_id: "ghcnd_countries"
+  #   description: "noaaspc"
+  # - type: bigquery_table
+  #   table_id: "ghcnd_inventory"
+  #   description: "noaaspc"
+  # - type: bigquery_table
+  #   table_id: "ghcnd_states"
+  #   description: "noaaspc"
+  # - type: bigquery_table
+  #   table_id: "ghcnd_stations"
+  #   description: "noaaspc"
+  # - type: bigquery_table
+  #   table_id: "gsod_stations"
+  #   description: "noaaspc"
+  # - type: bigquery_table
+  #   table_id: "hurricanes"
+  #   description: "noaaspc"
+  # - type: bigquery_table
+  #   table_id: "lightning_strikes_by_year"
+  #   description: "noaaspc"
+
+dag:
+  airflow_version: 2
+  initialize:
+    dag_id: vqa
+    default_args:
+      owner: "Google"
+      depends_on_past: False
+      start_date: '2021-03-01'
+    max_active_runs: 1
+    schedule_interval: "@once"
+    catchup: False
+    default_view: graph
+
+  tasks:
+    - operator: "KubernetesPodOperator"
+      description: "Run VQA annotations load processes"
+      args:
+        task_id: "extract_annotations"
+        name: "vqa.extract_annotations"
+        namespace: "composer"
+        service_account_name: "datasets"
+        image_pull_policy: "Always"
+        image: "{{ var.json.vqa.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "Extract Annotations"
+          SOURCE_URL: >- # [ [subtask name, url, dest table name, src file name ], [ ... ], ... ]
+            [
+              [
+                "Training annotations 2017 v2.0",
+                "https://s3.amazonaws.com/cvmlp/vqa/mscoco/vqa/v2_Annotations_Train_mscoco.zip",
+                "training_ann_2017",
+                "data/vqa/schema/vqa_annotations_schema.json",
+                "data/vqa/schema/vqa_annotations_detail_schema.json",
+                [ "v2_mscoco_train2014_annotations.json" ]
+              ],
+              [
+                "Validation annotations 2017 v2.0",
+                "https://s3.amazonaws.com/cvmlp/vqa/mscoco/vqa/v2_Annotations_Val_mscoco.zip",
+                "validation_ann_2017",
+                "data/vqa/schema/vqa_annotations_schema.json",
+                "data/vqa/schema/vqa_annotations_detail_schema.json",
+                [ "v2_mscoco_val2014_annotations.json" ]
+              ]
+            ]
+          SOURCE_FILE: "files/data.csv"
+          TARGET_FILE: "files/data_output.csv"
+          CHUNKSIZE: "1000000"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "vqa"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/vqa/data_output.csv"
+          DROP_DEST_TABLE: "N"
+          REMOVE_SOURCE_FILE: "Y"
+          DELETE_TARGET_FILE: "Y"
+          REORDER_HEADERS_LIST: >-
+            [
+              "data_subtype",
+              "data_type",
+              "info_description",
+              "info_url",
+              "info_version",
+              "info_year",
+              "info_contributor",
+              "info_date_created",
+              "license_url",
+              "license_name"
+            ]
+          DETAIL_DATA_HEADERS_LIST: >-
+            [
+              "question_type",
+              "multiple_choice_answer",
+              "answer_type",
+              "question_id"
+            ]
+        resources:
+          limit_memory: "16G"
+          limit_cpu: "3"
+    - operator: "KubernetesPodOperator"
+      description: "Run VQA questions load processes"
+      args:
+        task_id: "extract_questions"
+        name: "vqa.extract_questions"
+        namespace: "composer"
+        service_account_name: "datasets"
+        image_pull_policy: "Always"
+        image: "{{ var.json.vqa.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "Extract Questions"
+          SOURCE_URL: >- # [ [subtask name, url, dest table name, src file name ], [ ... ], ... ]
+            [
+              [
+                "Testing questions 2017 v2.0",
+                "https://s3.amazonaws.com/cvmlp/vqa/mscoco/vqa/v2_Questions_Test_mscoco.zip",
+                "testing_questions_2017",
+                "data/vqa/schema/vqa_questions_schema.json",
+                "data/vqa/schema/vqa_questions_detail_schema.json",
+                [
+                  "v2_OpenEnded_mscoco_test2015_questions.json",
+                  "v2_OpenEnded_mscoco_test-dev2015_questions.json"
+                ]
+              ],
+              [
+                "Training questions 2017 v2.0",
+                "https://s3.amazonaws.com/cvmlp/vqa/mscoco/vqa/v2_Questions_Train_mscoco.zip",
+                "training_questions_2017",
+                "data/vqa/schema/vqa_questions_schema.json",
+                "data/vqa/schema/vqa_questions_detail_schema.json",
+                [
+                  "v2_OpenEnded_mscoco_train2014_questions.json"
+                ]
+              ],
+              [
+                "Validation questions 2017 v2.0",
+                "https://s3.amazonaws.com/cvmlp/vqa/mscoco/vqa/v2_Questions_Val_mscoco.zip",
+                "validation_questions_2017",
+                "data/vqa/schema/vqa_questions_schema.json",
+                "data/vqa/schema/vqa_questions_detail_schema.json",
+                [ "v2_OpenEnded_mscoco_val2014_questions.json" ]
+              ]
+            ]
+          SOURCE_FILE: "files/data.csv"
+          TARGET_FILE: "files/data_output.csv"
+          CHUNKSIZE: "1000000"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "vqa"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/vqa/data_output.csv"
+          DROP_DEST_TABLE: "N"
+          REMOVE_SOURCE_FILE: "Y"
+          DELETE_TARGET_FILE: "Y"
+          REORDER_HEADERS_LIST: >-
+            [
+              "task_type",
+              "data_type",
+              "data_subtype",
+              "info_description",
+              "info_url",
+              "info_version",
+              "info_year",
+              "info_contributor",
+              "info_date_created",
+              "license_url",
+              "license_name"
+            ]
+          DETAIL_DATA_HEADERS_LIST: >-
+            [
+              "image_id",
+              "question",
+              "question_id"
+            ]
+        resources:
+          limit_memory: "16G"
+          limit_cpu: "3"
+    - operator: "KubernetesPodOperator"
+      description: "Run VQA complimentary pairs load processes"
+      args:
+        task_id: "extract_complementary_pairs"
+        name: "vqa.extract_complementary_pairs"
+        namespace: "composer"
+        service_account_name: "datasets"
+        image_pull_policy: "Always"
+        image: "{{ var.json.vqa.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "Extract Complimentary Pairs"
+          SOURCE_URL: >- # [ [subtask name, url, dest table name, src file name ], [ ... ], ... ]
+            [
+              [
+                "Training complementary pairs",
+                "https://s3.amazonaws.com/cvmlp/vqa/mscoco/vqa/v2_Complementary_Pairs_Train_mscoco.zip",
+                "training_complimentary_pairs",
+                "data/vqa/schema/vqa_complementary_pairs_schema.json",
+                "",
+                [
+                  "v2_mscoco_train2014_complementary_pairs.json"
+                ]
+              ],
+              [
+                "Validation complementary pairs",
+                "https://s3.amazonaws.com/cvmlp/vqa/mscoco/vqa/v2_Complementary_Pairs_Val_mscoco.zip",
+                "validation_complimentary_pairs",
+                "data/vqa/schema/vqa_complementary_pairs_schema.json",
+                "",
+                [
+                  "v2_mscoco_val2014_complementary_pairs.json"
+                ]
+              ]
+            ]
+          SOURCE_FILE: "files/data.csv"
+          TARGET_FILE: "files/data_output.csv"
+          CHUNKSIZE: "1000000"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATASET_ID: "vqa"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/vqa/data_output.csv"
+          SCHEMA_PATH: "data/vqa/schema/complementary_pairs_schema.json"
+          DROP_DEST_TABLE: "N"
+          REMOVE_SOURCE_FILE: "Y"
+          DELETE_TARGET_FILE: "Y"
+          REORDER_HEADERS_LIST: >-
+            [
+              "question_id_1",
+              "question_id_2"
+            ]
+        resources:
+          limit_memory: "16G"
+          limit_cpu: "3"
+
+  graph_paths:
+    - "extract_annotations >> extract_questions >> extract_complementary_pairs"

@@ -126,6 +126,7 @@ def create_transfer_config(
         data_source_id="cross_region_copy",
         dataset_region="US",
         params={
+            "overwrite_destination_table": True,
             "source_project_id": source_project_id,
             "source_dataset_id": source_dataset_name,
         },

@@ -19,12 +19,6 @@ dataset:
   dataset_sources: ~
   terms_of_use: ~
 resources:
-
-  - type: storage_bucket
-    name: "cfe_calculator"
-    uniform_bucket_level_access: True
-    location: US
-
   - type: bigquery_dataset
-    dataset_id: cfe_calculator
+    dataset_id: oedi_commercial_and_residential_hourly_load_profiles
     description: OEDI commercial and residential hourly load

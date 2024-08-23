@@ -34,40 +34,32 @@ def main(
     chunksize: str,
     target_gcs_bucket: str,
     target_gcs_path: str,
-    data_names: typing.List[str],
     data_dtypes: dict,
     rename_mappings: dict,
     reorder_headers_list: typing.List[str],
     record_path: str,
     meta: typing.List[str],
 ) -> None:
-
     logging.info("Food and Drug Administration (FDA) - Food Events process started")
-
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
     dest_path = os.path.split(source_file)[0]
     source_zip_file = dest_path + "/" + os.path.split(source_url)[1]
     source_json_file = source_zip_file.replace(".zip", "")
-
     download_file_http(source_url, source_zip_file, False)
     unpack_file(source_zip_file, dest_path, "zip")
     convert_json_to_csv(
         source_json_file, source_file, record_path=record_path, meta=meta, separator="|"
     )
-
     process_source_file(
         pipeline,
         source_file,
         target_file,
-        data_names,
         data_dtypes,
         int(chunksize),
         rename_mappings,
         reorder_headers_list,
     )
-
     upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
-
     logging.info("Food and Drug Administration (FDA) - Food Events process completed")
 
 
@@ -75,7 +67,6 @@ def process_source_file(
     pipeline: str,
     source_file: str,
     target_file: str,
-    names: list,
     dtypes: dict,
     chunksize: int,
     rename_mappings: dict,
@@ -89,9 +80,6 @@ def process_source_file(
         quotechar='"',  # string separator, typically double-quotes
         chunksize=chunksize,  # size of batch data, in no. of records
         sep="|",  # data column separator, typically ","
-        header=None,  # use when the data file does not contain a header
-        names=names,
-        skiprows=1,
         dtype=dtypes,
         keep_default_na=True,
         na_values=[" "],
@@ -150,7 +138,6 @@ def process_food_events(
     df = replace_nulls(df, col_list)
     date_col_list = ["date_started", "date_created"]
     df = resolve_date_format(df, date_col_list, "%Y%m%d", "%Y-%m-%d", True)
-
     return df
 
 
@@ -164,14 +151,12 @@ def process_food_enforcement(df: pd.DataFrame, reorder_headers_list: list) -> No
     ]
     df = resolve_date_format(df, date_col_list, "%Y%m%d", "%Y-%m-%d", True)
     df = reorder_headers(df, reorder_headers_list)
-
     return df
 
 
 def replace_nan_data(df: pd.DataFrame) -> pd.DataFrame:
     logging.info("Replacing NaN data")
     df = df.replace(np.nan, "", regex=True)
-
     return df
 
 
@@ -181,7 +166,6 @@ def format_list_data(df: pd.DataFrame, list_data: list) -> pd.DataFrame:
         df[col] = df[col].apply(
             lambda x: str(x).replace("[", "").replace("]", "").replace("'", "")
         )
-
     return df
 
 
@@ -189,7 +173,6 @@ def replace_nulls(df: pd.DataFrame, col_list: list) -> pd.DataFrame:
     logging.info("Resolving null text in source data")
     for col in col_list:
         df[col] = df[col].apply(lambda x: "" if str(x).lower() == "null" else x)
-
     return df
 
 
@@ -206,7 +189,6 @@ def resolve_date_format(
         df[col] = df[col].apply(
             lambda x: convert_dt_format(str(x), from_format, to_format, is_date)
         )
-
     return df
 
 
@@ -215,6 +197,8 @@ def convert_dt_format(
 ) -> str:
     rtnval = "<initial_value>"
     if not dt_str or str(dt_str).lower() == "nan" or str(dt_str).lower() == "nat":
+        rtnval = ""
+    elif len(dt_str) > 20:
         rtnval = ""
     elif len(dt_str.strip()) == 10:
         # if there is no time format
@@ -239,7 +223,6 @@ def convert_dt_format(
         from_format = "%Y-%m-%d " + from_format.strip().split(" ")[1]
     else:
         dt_str = "<blank>"
-
     return rtnval
 
 
@@ -250,7 +233,6 @@ def trim_whitespace(df: pd.DataFrame) -> pd.DataFrame:
         if col_dtype == "object":
             logging.info(f"Trimming whitespace on {col}")
             df[col] = df[col].apply(lambda x: str(x).strip())
-
     return df
 
 
@@ -306,14 +288,12 @@ def download_file_http(
 
 def rename_headers(df: pd.DataFrame, rename_mappings: dict) -> None:
     df = df.rename(columns=rename_mappings)
-
     return df
 
 
 def reorder_headers(df: pd.DataFrame, reorder_headers_list: list) -> pd.DataFrame:
     logging.info("Re-ordering Headers")
     df = df.reindex(columns=reorder_headers_list)
-
     return df
 
 
@@ -378,7 +358,6 @@ if __name__ == "__main__":
         chunksize=os.environ["CHUNKSIZE"],
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
-        data_names=json.loads(os.environ["DATA_NAMES"]),
         data_dtypes=json.loads(os.environ["DATA_DTYPES"]),
         rename_mappings=json.loads(os.environ["RENAME_MAPPINGS"]),
         reorder_headers_list=json.loads(os.environ["REORDER_HEADERS"]),

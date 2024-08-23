@@ -66,5 +66,33 @@ resources:
     description: Imaging Data Commons (IDC) - The Cancer Imaging Archive (TCIA) v10 data
 
   - type: bigquery_dataset
+    dataset_id: idc_v11
+    description: Imaging Data Commons (IDC) - The Cancer Imaging Archive (TCIA) v11 data
+
+  - type: bigquery_dataset
+    dataset_id: idc_v11_clinical
+    description: Imaging Data Commons (IDC) - The Cancer Imaging Archive (TCIA) v11 clinical data
+
+  - type: bigquery_dataset
+    dataset_id: idc_v12
+    description: Imaging Data Commons (IDC) - The Cancer Imaging Archive (TCIA) v12 data
+
+  - type: bigquery_dataset
+    dataset_id: idc_v12_clinical
+    description: Imaging Data Commons (IDC) - The Cancer Imaging Archive (TCIA) v12 clinical data
+
+  - type: bigquery_dataset
+    dataset_id: idc_v13
+    description: Imaging Data Commons (IDC) - The Cancer Imaging Archive (TCIA) v13 data
+
+  - type: bigquery_dataset
+    dataset_id: idc_v13_clinical
+    description: Imaging Data Commons (IDC) - The Cancer Imaging Archive (TCIA) v13 clinical data
+
+  - type: bigquery_dataset
     dataset_id: idc_current
     description: Imaging Data Commons (IDC) - The Cancer Imaging Archive (TCIA) current data
+
+  - type: bigquery_dataset
+    dataset_id: idc_current_clinical
+    description: Imaging Data Commons (IDC) - The Cancer Imaging Archive (TCIA) current clinical data

@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Google LLC
+ * Copyright 2022 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,10 @@
 
 
 resource "google_bigquery_table" "iowa_liquor_sales_sales" {
-  project    = var.project_id
-  dataset_id = "iowa_liquor_sales"
-  table_id   = "sales"
-
+  project     = var.project_id
+  dataset_id  = "iowa_liquor_sales"
+  table_id    = "sales"
   description = "Sales Dataset"
-
-
-
-
   depends_on = [
     google_bigquery_dataset.iowa_liquor_sales
   ]

@@ -1,0 +1,110 @@
+[
+    {
+      "name": "rxcui",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "RxNorm Unique identifier for concept (concept ID)"
+    },
+    {
+      "name": "lat",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Language of Term"
+    },
+    {
+      "name": "ts",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Term status (no value provided)"
+    },
+    {
+      "name": "lui",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Unique identifier for term (no value provided)"
+    },
+    {
+      "name": "stt",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "String type (no value provided)"
+    },
+    {
+      "name": "sui",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Unique identifier for string (no value provided)"
+    },
+    {
+      "name": "ispref",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Atom status - preferred (Y) or not (N) for this string within this concept (no value provided)"
+    },
+    {
+      "name": "rxaui",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Unique identifier for atom (RxNorm Atom ID)"
+    },
+    {
+      "name": "saui",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Source asserted atom identifier [optional]"
+    },
+    {
+      "name": "scui",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Source asserted concept identifier [optional]"
+    },
+    {
+      "name": "sdui",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Source asserted descriptor identifier [optional]"
+    },
+    {
+      "name": "sab",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Source abbreviation"
+    },
+    {
+      "name": "tty",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Term type in source"
+    },
+    {
+      "name": "code",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "'Most useful' source asserted identifier (if the source vocabulary has more than one identifier), or a RxNorm-generated source entry identifier (if the source vocabulary has none.)"
+    },
+    {
+      "name": "str",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "String"
+    },
+    {
+      "name": "sri",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Source Restriction Level (no value provided)"
+    },
+    {
+      "name": "suppress",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Suppressible flag. Values = N, O, Y, or E. N - not suppressible. O - Specific individual names (atoms) set as Obsolete because the name is no longer provided by the original source. Y - Suppressed by RxNorm editor. E - unquantified, non-prescribable drug with related quantified, prescribable drugs. NLM strongly recommends that users not alter editor-assigned suppressibility."
+    },
+    {
+      "name": "cvf",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Content view flag. RxNorm includes one value, '4096', to denote inclusion in the Current Prescribable Content subset. All rows with CVF='4096' can be found in the subset."
+    }
+  ]

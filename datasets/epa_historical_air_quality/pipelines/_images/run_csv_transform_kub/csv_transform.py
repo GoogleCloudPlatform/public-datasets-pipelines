@@ -42,6 +42,7 @@ def main(
     pipeline_name: str,
     input_csv_headers: typing.List[str],
     data_dtypes: dict,
+    rename_headers_list: dict,
     output_headers: typing.List[str],
     drop_dest_table: str,
 ) -> None:
@@ -63,6 +64,7 @@ def main(
         input_headers=input_csv_headers,
         output_headers=output_headers,
         data_dtypes=data_dtypes,
+        rename_headers_list=rename_headers_list,
         chunksize=chunksize,
         field_delimiter="|",
         drop_dest_table=drop_dest_table,
@@ -85,6 +87,7 @@ def execute_pipeline(
     input_headers: typing.List[str],
     output_headers: typing.List[str],
     data_dtypes: dict,
+    rename_headers_list: dict,
     chunksize: str,
     field_delimiter: str,
     drop_dest_table: str = "N",
@@ -112,6 +115,7 @@ def execute_pipeline(
             input_headers=input_headers,
             output_headers=output_headers,
             data_dtypes=data_dtypes,
+            rename_headers_list=rename_headers_list,
             chunksize=chunksize,
             field_delimiter=field_delimiter,
             target_gcs_bucket=target_gcs_bucket,
@@ -133,6 +137,7 @@ def execute_pipeline(
             input_headers=input_headers,
             output_headers=output_headers,
             data_dtypes=data_dtypes,
+            rename_headers_list=rename_headers_list,
             chunksize=chunksize,
             field_delimiter=field_delimiter,
             target_gcs_bucket=target_gcs_bucket,
@@ -153,6 +158,7 @@ def process_year_data(
     input_headers: typing.List[str],
     output_headers: typing.List[str],
     data_dtypes: dict,
+    rename_headers_list: dict,
     chunksize: str,
     field_delimiter: str,
     target_gcs_bucket: str,
@@ -169,14 +175,14 @@ def process_year_data(
         )
     else:
         src_url = source_url.replace("YEAR_ITERATOR", str(year))
-        url_file = os.path.split(src_url)[1]
-        url_file_csv = url_file.replace(".zip", ".csv")
+        url_file = os.path.split(src_url)[1].lower()
+        url_file_csv = url_file.replace(".zip", ".csv").lower()
         source_file = f"{dest_path}/source_{url_file}"
-        source_file = source_file.lower()
+        # source_file = source_file.lower()
         source_csv_file = f"{dest_path}/{url_file_csv}"
-        source_csv_file = source_csv_file.lower()
+        # source_csv_file = source_csv_file.lower()
         target_file = f"{dest_path}/target_{url_file_csv}"
-        target_file = target_file.lower()
+        # target_file = target_file.lower()
         file_exists = download_file_http(
             source_url=src_url,
             source_file=source_file,
@@ -193,6 +199,7 @@ def process_year_data(
                 dtypes=data_dtypes,
                 chunksize=chunksize,
                 field_delimiter=field_delimiter,
+                rename_headers_list=rename_headers_list,
             )
             load_data_to_bq(
                 project_id=project_id,
@@ -310,6 +317,7 @@ def process_source_file(
     dtypes: dict,
     chunksize: str,
     field_delimiter: str,
+    rename_headers_list: dict,
 ) -> None:
     logging.info(f"Opening batch file {source_file}")
     with pd.read_csv(
@@ -339,6 +347,7 @@ def process_source_file(
                 truncate_file=(chunk_number == 0),
                 field_delimiter=field_delimiter,
                 output_headers=output_headers,
+                rename_headers_list=rename_headers_list,
             )
 
 
@@ -524,7 +533,10 @@ def process_chunk(
     truncate_file: bool,
     field_delimiter: str,
     output_headers: typing.List[str],
+    rename_headers_list: dict,
 ) -> None:
+    if rename_headers_list:
+        df = df.rename(columns=rename_headers_list)
     date_fields = ["date_local", "date_of_last_change"]
     df = resolve_date_format(df, date_fields, "%Y-%m-%d %H:%M:%S")
     df = truncate_date_field(df, date_fields, "%Y-%m-%d %H:%M:%S")
@@ -687,6 +699,7 @@ if __name__ == "__main__":
         pipeline_name=os.environ.get("PIPELINE_NAME", ""),
         input_csv_headers=json.loads(os.environ.get("INPUT_CSV_HEADERS", r"[]")),
         data_dtypes=json.loads(os.environ.get("DATA_DTYPES", r"{}")),
+        rename_headers_list=json.loads(os.environ.get("RENAME_HEADERS_LIST", r"{}")),
         output_headers=json.loads(os.environ.get("OUTPUT_CSV_HEADERS", r"[]")),
         drop_dest_table=os.environ.get("DROP_DEST_TABLE", "N"),
     )

@@ -1,0 +1,38 @@
+[
+    {
+      "name": "rxcui",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Unique identifier of concept (concept id)"
+    },
+    {
+      "name": "tui",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Unique identifier of Semantic Type"
+    },
+    {
+      "name": "stn",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Semantic Type tree number"
+    },
+    {
+      "name": "sty",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Semantic Type. The valid values are defined in the Semantic Network."
+    },
+    {
+      "name": "atui",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Unique identifier for attribute"
+    },
+    {
+      "name": "cvf",
+      "type": "STRING",
+      "mode": "NULLABLE",
+      "description": "Content view flag (no value provided)"
+    }
+  ]

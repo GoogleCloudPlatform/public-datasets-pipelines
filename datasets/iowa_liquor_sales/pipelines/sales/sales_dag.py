@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,13 +14,14 @@
 
 
 from airflow import DAG
+from airflow.operators import bash
 from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
 from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
     "owner": "Google",
     "depends_on_past": False,
-    "start_date": "2021-03-01",
+    "start_date": "2022-10-27",
 }
 
 
@@ -33,38 +34,58 @@ with DAG(
     default_view="graph",
 ) as dag:
 
+    # Download data
+    bash_download = bash.BashOperator(
+        task_id="bash_download",
+        bash_command="wget -O /home/airflow/gcs/data/iowa_liquor_sales/raw_files/data.csv https://data.iowa.gov/api/views/m3tr-qhgy/rows.csv",
+    )
+
+    # Split data file into smaller chunks
+    bash_split = bash.BashOperator(
+        task_id="bash_split",
+        bash_command='tail -n +2 /home/airflow/gcs/data/iowa_liquor_sales/raw_files/data.csv | split -d -l 4000000 - --filter=\u0027sh -c "{ head -n1 /home/airflow/gcs/data/iowa_liquor_sales/raw_files/data.csv; cat; } \u003e $FILE"\u0027 /home/airflow/gcs/data/iowa_liquor_sales/raw_files/split_data_ ;',
+    )
+
     # Run CSV transform within kubernetes pod
-    transform_csv = kubernetes_pod.KubernetesPodOperator(
-        task_id="transform_csv",
-        startup_timeout_seconds=600,
+    kub_transform_csv = kubernetes_pod.KubernetesPodOperator(
+        task_id="kub_transform_csv",
+        startup_timeout_seconds=1000,
         name="Sales",
         namespace="composer",
         service_account_name="datasets",
         image_pull_policy="Always",
         image="{{ var.json.iowa_liquor_sales.container_registry.run_csv_transform_kub }}",
         env_vars={
-            "SOURCE_URL": "https://data.iowa.gov/api/views/m3tr-qhgy/rows.csv",
-            "SOURCE_FILE": "files/data.csv",
-            "TARGET_FILE": "files/data_output.csv",
+            "SOURCE_URL": "data/iowa_liquor_sales/raw_files/",
+            "DOWNLOAD_LOCATION": "",
+            "TARGET_FILE": "data_output",
             "CHUNKSIZE": "1000000",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
-            "TARGET_GCS_PATH": "data/iowa_liquor_sales/sales/data_output.csv",
+            "SOURCE_GCS_PATH": "data/iowa_liquor_sales/raw_files/",
+            "TARGET_GCS_PATH": "data/iowa_liquor_sales/transformed_files/data_output_",
+            "HEADERS": '[\n  "invoice_and_item_number",\n  "date",\n  "store_number",\n  "store_name",\n  "address",\n  "city",\n  "zip_code",\n  "store_location",\n  "county_number",\n  "county",\n  "category",\n  "category_name",\n  "vendor_number",\n  "vendor_name",\n  "item_number",\n  "item_description",\n  "pack",\n  "bottle_volume_ml",\n  "state_bottle_cost",\n  "state_bottle_retail",\n  "bottles_sold",\n  "sale_dollars",\n  "volume_sold_liters",\n  "volume_sold_gallons"\n]',
+            "RENAME_MAPPINGS": '{\n  "Invoice/Item Number":"invoice_and_item_number",\n  "Date":"date",\n  "Store Number":"store_number",\n  "Store Name":"store_name",\n  "Address":"address",\n  "City":"city",\n  "Zip Code":"zip_code",\n  "Store Location":"store_location",\n  "County Number":"county_number",\n  "County":"county",\n  "Category":"category",\n  "Category Name":"category_name",\n  "Vendor Number":"vendor_number",\n  "Vendor Name":"vendor_name",\n  "Item Number":"item_number",\n  "Item Description":"item_description",\n  "Pack":"pack",\n  "Bottle Volume (ml)":"bottle_volume_ml",\n  "State Bottle Cost":"state_bottle_cost",\n  "State Bottle Retail":"state_bottle_retail",\n  "Bottles Sold":"bottles_sold",\n  "Sale (Dollars)":"sale_dollars",\n  "Volume Sold (Liters)":"volume_sold_liters",\n  "Volume Sold (Gallons)":"volume_sold_gallons"\n}',
         },
         resources={
-            "request_memory": "8G",
-            "request_cpu": "4",
-            "request_ephemeral_storage": "32G",
+            "request_memory": "4G",
+            "request_cpu": "1",
+            "request_ephemeral_storage": "10G",
         },
+    )
+
+    # Combine the split files into one
+    bash_concatenate = bash.BashOperator(
+        task_id="bash_concatenate",
+        bash_command="touch /home/airflow/gcs/data/iowa_liquor_sales/transformed_files/final_output.csv; awk \u0027FNR\u003e1\u0027 /home/airflow/gcs/data/iowa_liquor_sales/transformed_files/data_output_*.csv  \u003e /home/airflow/gcs/data/iowa_liquor_sales/transformed_files/final_output.csv ;",
     )
 
     # Task to load CSV data to a BigQuery table
     load_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_to_bq",
         bucket="{{ var.value.composer_bucket }}",
-        source_objects=["data/iowa_liquor_sales/sales/data_output.csv"],
+        source_objects=["data/iowa_liquor_sales/transformed_files/final_output.csv"],
         source_format="CSV",
         destination_project_dataset_table="iowa_liquor_sales.sales",
-        skip_leading_rows=1,
         allow_quoted_newlines=True,
         write_disposition="WRITE_TRUNCATE",
         schema_fields=[
@@ -112,7 +133,7 @@ with DAG(
             },
             {
                 "name": "store_location",
-                "type": "STRING",
+                "type": "GEOGRAPHY",
                 "description": "Location of store who ordered the liquor. The Address, City, State and Zip Code are geocoded to provide geographic coordinates. Accuracy of geocoding is dependent on how well the address is interpreted and the completeness of the reference data used.",
                 "mode": "NULLABLE",
             },
@@ -215,4 +236,4 @@ with DAG(
         ],
     )
 
-    transform_csv >> load_to_bq
+    bash_download >> bash_split >> kub_transform_csv >> bash_concatenate >> load_to_bq
