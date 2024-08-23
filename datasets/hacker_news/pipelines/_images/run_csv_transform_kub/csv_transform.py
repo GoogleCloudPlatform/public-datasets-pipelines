@@ -35,7 +35,7 @@ def main(
     chunk_size: str,
 ) -> None:
     logging.info(
-        f"HACKER NEWS process started at { str(datetime.now().strftime('%Y-%m-%d %H:%M:%S')) }"
+        f"HACKER NEWS process started at {str(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))}"
     )
     success = stream_split_source_file(
         source_bucket=source_bucket,
@@ -46,11 +46,11 @@ def main(
     )
     if success:
         logging.info(
-            f"HACKER NEWS process completed at { str(datetime.now().strftime('%Y-%m-%d %H:%M:%S')) }"
+            f"HACKER NEWS process completed at {str(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))}"
         )
     else:
         logging.info(
-            f"HACKER NEWS process failed at { str(datetime.now().strftime('%Y-%m-%d %H:%M:%S')) }"
+            f"HACKER NEWS process failed at {str(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))}"
         )
 
 
