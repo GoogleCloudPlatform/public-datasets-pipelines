@@ -162,7 +162,7 @@ def count_source_file_records(
     source_bucket: str, source_object: str, chunk_size: int = 100000
 ) -> int:
     logging.info(
-        f"Counting number of records in gs://{ os.path.join(source_bucket, source_object)} ..."
+        f"Counting number of records in gs://{os.path.join(source_bucket, source_object)} ..."
     )
     # Create Cloud Storage client
     storage_client = storage.Client()
