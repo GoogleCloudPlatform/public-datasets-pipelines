@@ -44,8 +44,9 @@ with DAG(
     transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="transform_csv",
         name="generate_output_files",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.hacker_news.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -56,10 +57,10 @@ with DAG(
             "TARGET_LOCAL_DIR": "data/hacker_news/",
             "OUTPUT_CSV_HEADERS": '[ "title", "url", "text", "dead", "by",\n  "score", "time", "timestamp", "type", "id",\n  "parent", "descendants", "ranking", "deleted" ]',
         },
-        resources={
-            "request_memory": "80G",
-            "request_cpu": "2",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "80Gi"},
+            "cpu": {"request": "2"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
