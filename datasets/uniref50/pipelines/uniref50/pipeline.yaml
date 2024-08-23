@@ -48,6 +48,7 @@ dag:
             oauth_scopes:
               - https://www.googleapis.com/auth/devstorage.read_write
               - https://www.googleapis.com/auth/cloud-platform
+
     - operator: "BashOperator"
       description: "Task to copy `uniref50.fasta` to gcs"
       args:
@@ -112,10 +113,7 @@ dag:
           FIELD_SEPARATOR: "~@"
           SCHEMA_PATH: "data/uniref50/uniref50_schema.json"
           CHUNKSIZE: "100000"
-        resources:
-          request_ephemeral_storage: "10G"
-          limit_memory: "32G"
-          limit_cpu: "4"
+
     - operator: "GKEDeleteClusterOperator"
       args:
         task_id: "delete_cluster"

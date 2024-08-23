@@ -43,6 +43,7 @@ dag:
             oauth_scopes:
               - https://www.googleapis.com/auth/devstorage.read_write
               - https://www.googleapis.com/auth/cloud-platform
+
     - operator: "GKEStartPodOperator"
       description: "Download all NLM RXNorm files"
       args:
@@ -66,9 +67,7 @@ dag:
           SCHEMA_FILEPATH: "data/nlm_rxnorm/schema"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "nlm_rxnorm"
-        resources:
-          limit_memory: "8G"
-          limit_cpu: "3"
+
     - operator: "GKEStartPodOperator"
       description: "Execute RXN ATOM Archive Load Process"
       args:
@@ -92,9 +91,7 @@ dag:
           SCHEMA_FILEPATH: "data/nlm_rxnorm/schema/rxnatomarchive_schema.json"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "nlm_rxnorm"
-        resources:
-          limit_memory: "8G"
-          limit_cpu: "3"
+
     - operator: "GKEStartPodOperator"
       description: "Execute RXN CONSO Load Process"
       args:
@@ -118,9 +115,7 @@ dag:
           SCHEMA_FILEPATH: "data/nlm_rxnorm/schema/rxnconso_schema.json"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "nlm_rxnorm"
-        resources:
-          limit_memory: "8G"
-          limit_cpu: "3"
+
     - operator: "GKEStartPodOperator"
       description: "Execute RXN CUI Load Process"
       args:
@@ -144,9 +139,7 @@ dag:
           SCHEMA_FILEPATH: "data/nlm_rxnorm/schema/rxncui_schema.json"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "nlm_rxnorm"
-        resources:
-          limit_memory: "8G"
-          limit_cpu: "3"
+
     - operator: "GKEStartPodOperator"
       description: "Execute RXN CUI CHANGE Load Process"
       args:
@@ -170,9 +163,7 @@ dag:
           SCHEMA_FILEPATH: "data/nlm_rxnorm/schema/rxncuichange_schema.json"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "nlm_rxnorm"
-        resources:
-          limit_memory: "8G"
-          limit_cpu: "3"
+
     - operator: "GKEStartPodOperator"
       description: "Execute RXN DOC Load Process"
       args:
@@ -196,9 +187,7 @@ dag:
           SCHEMA_FILEPATH: "data/nlm_rxnorm/schema/rxndoc_schema.json"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "nlm_rxnorm"
-        resources:
-          limit_memory: "8G"
-          limit_cpu: "3"
+
     - operator: "GKEStartPodOperator"
       description: "Execute RXN REL Load Process"
       args:
@@ -222,9 +211,7 @@ dag:
           SCHEMA_FILEPATH: "data/nlm_rxnorm/schema/rxnrel_schema.json"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "nlm_rxnorm"
-        resources:
-          limit_memory: "8G"
-          limit_cpu: "3"
+
     - operator: "GKEStartPodOperator"
       description: "Execute RXN SAB Load Process"
       args:
@@ -248,9 +235,7 @@ dag:
           SCHEMA_FILEPATH: "data/nlm_rxnorm/schema/rxnsab_schema.json"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "nlm_rxnorm"
-        resources:
-          limit_memory: "8G"
-          limit_cpu: "3"
+
     - operator: "GKEStartPodOperator"
       description: "Execute RXN SAT Load Process"
       args:
@@ -274,9 +259,7 @@ dag:
           SCHEMA_FILEPATH: "data/nlm_rxnorm/schema"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "nlm_rxnorm"
-        resources:
-          limit_memory: "8G"
-          limit_cpu: "3"
+
     - operator: "GKEStartPodOperator"
       description: "Execute RXN STY Load Process"
       args:
@@ -300,9 +283,7 @@ dag:
           SCHEMA_FILEPATH: "data/nlm_rxnorm/schema/rxnsty_schema.json"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "nlm_rxnorm"
-        resources:
-          limit_memory: "8G"
-          limit_cpu: "3"
+
     - operator: "GKEDeleteClusterOperator"
       args:
         task_id: "delete_cluster"
