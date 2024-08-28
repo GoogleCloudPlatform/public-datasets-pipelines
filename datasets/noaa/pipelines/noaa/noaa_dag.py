@@ -61,7 +61,7 @@ with DAG(
         image="{{ var.json.noaa.container_registry.run_csv_transform_kub }}",
         env_vars={
             "PIPELINE_NAME": "GHCND by year",
-            "SOURCE_URL": '{\n  "ghcnd_by_year": "ftp://ftp.ncei.noaa.gov/pub/data/ghcn/daily/by_year/.csv.gz"\n}',
+            "SOURCE_URL": '{\n  "ghcnd_by_year": "http://www.ncei.noaa.gov/pub/data/ghcn/daily/by_year/.csv.gz"\n}',
             "SOURCE_FILE": "files/data_ghcnd_by_year.csv",
             "TARGET_FILE": "files/data_output_ghcnd_by_year.csv",
             "CHUNKSIZE": "750000",
@@ -829,8 +829,10 @@ with DAG(
 
     (
         create_cluster
-        >> [ghcnd_by_year, lightning_strikes_by_year]
         >> ghcnd_hurricanes
+        >> ghcnd_by_year
+        >> lightning_strikes_by_year
+        >> noaa_ghcn_m
         >> [
             ghcnd_inventory,
             spc_hail,
@@ -840,12 +842,15 @@ with DAG(
             ghcnd_stations,
             gsod_stations,
             ghcnd_countries,
+            noaa_goes16_mcmip,
+            noaa_goes16_cmip,
+            noaa_goes16_glm,
+            noaa_goes16_radiance,
+            noaa_goes17_mcmip,
+            noaa_goes17_cmip,
+            noaa_goes17_glm,
+            noaa_goes17_radiance,
         ]
-        >> noaa_ghcn_m
-        >> [noaa_goes16_mcmip, noaa_goes16_cmip, noaa_goes16_glm]
-        >> noaa_goes16_radiance
-        >> [noaa_goes17_mcmip, noaa_goes17_cmip, noaa_goes17_glm]
-        >> noaa_goes17_radiance
         >> storms_database_by_year
         >> noaa_gsod_by_year
         >> delete_cluster
