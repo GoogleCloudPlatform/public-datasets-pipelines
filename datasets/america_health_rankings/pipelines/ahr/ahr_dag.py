@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ with DAG(
     dag_id="america_health_rankings.ahr",
     default_args=default_args,
     max_active_runs=1,
-    schedule_interval="@daily",
+    schedule_interval="3 10 * * *",
     catchup=False,
     default_view="graph",
 ) as dag:
@@ -36,10 +36,10 @@ with DAG(
     # Run CSV transform within kubernetes pod
     ahr_transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="ahr_transform_csv",
-        startup_timeout_seconds=600,
         name="america_health_rankings_ahr",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.america_health_rankings.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -51,10 +51,10 @@ with DAG(
             "CSV_HEADERS": '["edition","report_type","measure_name","state_name","subpopulation","value","lower_ci","upper_ci","source","source_date"]',
             "RENAME_MAPPINGS": '{"Edition": "edition","Report Type": "report_type","Measure Name": "measure_name","State Name": "state_name","Subpopulation": "subpopulation","Value": "value","Lower CI": "lower_ci","Upper CI": "upper_ci","Source": "source","Source Date": "source_date"}',
         },
-        resources={
-            "request_memory": "2G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "16Gi"},
+            "cpu": {"request": "1"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
