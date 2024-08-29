@@ -641,6 +641,8 @@ def run_gsod_by_year(
         if ((file_ptr % 100) == 0) or (file_ptr == file_cnt):
             logging.info(f"Appended {file_ptr} files of total {file_cnt} files")
         file_ptr += 1
+    #  Remove bad file data
+    os.system(f"sed -ni '/^\"/p' {source_file}")
     if number_of_header_rows > 0:
         remove_header_rows(source_file, number_of_header_rows=number_of_header_rows)
     else:
