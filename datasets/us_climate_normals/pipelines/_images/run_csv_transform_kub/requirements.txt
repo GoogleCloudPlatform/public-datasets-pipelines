@@ -38,7 +38,7 @@ google-cloud-texttospeech==1.0.3
 google-cloud-translate==1.7.2
 google-cloud-videointelligence==1.16.3
 google-cloud-vision==1.0.2
-google-cloud-workflows==1.6.2
+google-cloud-workflows==1.14.5
 google-crc32c
 googleapis-common-protos==1.56.2
 protobuf==3.17.3
