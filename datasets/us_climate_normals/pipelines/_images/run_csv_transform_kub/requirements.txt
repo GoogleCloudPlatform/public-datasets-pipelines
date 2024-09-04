@@ -11,7 +11,7 @@ google-cloud-aiplatform==1.13.1
 google-cloud-appengine-logging==1.1.1
 google-cloud-audit-log==0.2.3
 google-cloud-automl==2.7.2
-google-cloud-bigtable==1.7.2
+google-cloud-bigtable==2.26.0
 google-cloud-build==3.8.2
 google-cloud-container==2.10.7
 google-cloud-core==2.3.2
