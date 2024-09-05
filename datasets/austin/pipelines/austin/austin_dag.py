@@ -14,7 +14,9 @@
 
 
 from airflow import DAG
+from airflow.operators import bash
 from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
     "owner": "Google",
@@ -32,10 +34,16 @@ with DAG(
     default_view="graph",
 ) as dag:
 
+    # Fetch data gcs - 311
+    austin_311_source_data_to_gcs = bash.BashOperator(
+        task_id="austin_311_source_data_to_gcs",
+        bash_command="curl https://data.austintexas.gov/api/views/xwdj-i9he/rows.csv | gsutil cp - gs://{{ var.value.composer_bucket }}/data/austin/austin_311_service_requests_source.csv\n",
+    )
+
     # Run CSV transform within kubernetes pod
-    austin_311_process_load = kubernetes_pod.KubernetesPodOperator(
-        task_id="austin_311_process_load",
-        name="austin",
+    austin_311_process = kubernetes_pod.KubernetesPodOperator(
+        task_id="austin_311_process",
+        name="austin_311_process",
         namespace="composer-user-workloads",
         service_account_name="default",
         config_file="/home/airflow/composer_kube_config",
@@ -44,15 +52,11 @@ with DAG(
         env_vars={
             "PIPELINE_NAME": "Austin 311 Service Requests By Year",
             "SOURCE_URL": "gs://{{ var.value.composer_bucket }}/data/austin/austin_311_service_requests_source.csv",
-            "CHUNKSIZE": "2500",
+            "CHUNKSIZE": "50000",
             "SOURCE_FILE": "files/austin_311_service_requests_source.csv",
-            "TARGET_FILE": "files/austin_311_service_requests_output.csv",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
-            "TARGET_GCS_PATH": "data/austin/austin_311_service_requests_output.csv",
+            "TARGET_GCS_PATH": "data/austin/311_batch",
             "PROJECT_ID": "{{ var.value.gcp_project }}",
-            "DATASET_ID": "austin_311",
-            "DESTINATION_TABLE": "311_service_requests",
-            "SCHEMA_PATH": "data/austin/schema/austin_311_service_requests_schema.json",
             "DATE_FORMAT_LIST": '[\n  ["status_change_date", "%m/%d/%Y %I:%M:%S %p","%Y-%m-%d %H:%M:%S"],\n  ["created_date", "%m/%d/%Y %I:%M:%S %p", "%Y-%m-%d %H:%M:%S"],\n  ["last_update_date", "%m/%d/%Y %I:%M:%S %p", "%Y-%m-%d %H:%M:%S"],\n  ["close_date", "%m/%d/%Y %I:%M:%S %p", "%Y-%m-%d %H:%M:%S"]\n]',
             "INT_COLS_LIST": '[\n  "council_district_code"\n]',
             "REMOVE_NEWLINES_COLS_LIST": '[\n  "location"\n]',
@@ -62,17 +66,35 @@ with DAG(
             "RENAME_HEADERS_LIST": '{\n  "Service Request (SR) Number": "unique_key",\n  "SR Description": "complaint_description",\n  "Method Received": "source",\n  "SR Status": "status",\n  "Status Change Date": "status_change_date",\n  "Created Date": "created_date",\n  "Last Update Date": "last_update_date",\n  "Close Date": "close_date",\n  "SR Location": "incident_address",\n  "Street Number": "street_number",\n  "Street Name": "street_name",\n  "City": "city",\n  "Zip Code": "incident_zip",\n  "County": "county",\n  "State Plane X Coordinate": "state_plane_x_coordinate",\n  "State Plane Y Coordinate": "state_plane_y_coordinate",\n  "Latitude Coordinate": "latitude",\n  "Longitude Coordinate": "longitude",\n  "(Latitude.Longitude)": "location",\n  "Council District": "council_district_code",\n  "Map Page": "map_page",\n  "Map Tile": "map_tile"\n}',
             "REORDER_HEADERS_LIST": '[\n  "unique_key",\n  "complaint_description",\n  "source",\n  "status",\n  "status_change_date",\n  "created_date",\n  "last_update_date",\n  "close_date",\n  "incident_address",\n  "street_number",\n  "street_name",\n  "city",\n  "incident_zip",\n  "county",\n  "state_plane_x_coordinate",\n  "state_plane_y_coordinate",\n  "latitude",\n  "longitude",\n  "location",\n  "council_district_code",\n  "map_page",\n  "map_tile"\n]',
         },
-        container_resources={
-            "memory": {"limits": "96gi", "requests": "64Gi"},
-            "cpu": {"limits": "2", "requests": "2"},
-            "ephemeral-storage": {"limits": "10Gi", "requests": "10Gi"},
-        },
+    )
+
+    # Task to load CSV data to a BigQuery table
+    load_full_to_bq_austin_311 = gcs_to_bigquery.GCSToBigQueryOperator(
+        task_id="load_full_to_bq_austin_311",
+        bucket="{{ var.value.composer_bucket }}",
+        source_objects=[
+            "data/austin/311_batch/austin_311_service_requests_output-*.csv"
+        ],
+        source_format="CSV",
+        field_delimiter="|",
+        destination_project_dataset_table="austin_311.311_service_requests",
+        skip_leading_rows=1,
+        ignore_unknown_values=True,
+        allow_quoted_newlines=True,
+        write_disposition="WRITE_TRUNCATE",
+        schema_object="data/austin/schema/austin_311_service_requests_schema.json",
+    )
+
+    # Fetch data gcs - gcs
+    austin_bs_trips_source_data_to_gcs = bash.BashOperator(
+        task_id="austin_bs_trips_source_data_to_gcs",
+        bash_command="curl https://data.austintexas.gov/api/views/tyfh-5r8s/rows.csv | gsutil cp - gs://{{ var.value.composer_bucket }}/data/austin/austin_bs_trips_source.csv\n",
     )
 
     # Run CSV transform within kubernetes pod
-    austin_bs_trips_process_load = kubernetes_pod.KubernetesPodOperator(
-        task_id="austin_bs_trips_process_load",
-        name="austin_bs_trips_process_load",
+    austin_bs_trips_process = kubernetes_pod.KubernetesPodOperator(
+        task_id="austin_bs_trips_process",
+        name="austin_bs_trips_process",
         namespace="composer-user-workloads",
         service_account_name="default",
         config_file="/home/airflow/composer_kube_config",
@@ -81,15 +103,11 @@ with DAG(
         env_vars={
             "SOURCE_URL": "gs://{{ var.value.composer_bucket }}/data/austin/austin_bs_trips_source.csv",
             "SOURCE_FILE": "files/austin_bs_trips_source.csv",
-            "TARGET_FILE": "files/austin_bs_trips_output.csv",
             "CHUNKSIZE": "50000",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
-            "TARGET_GCS_PATH": "data/austin/austin_bs_trips_output.csv",
+            "TARGET_GCS_PATH": "data/austin/bikeshare_trips_batch",
             "PIPELINE_NAME": "Austin Bikeshare Trips",
             "PROJECT_ID": "{{ var.value.gcp_project }}",
-            "DATASET_ID": "austin_bikeshare",
-            "DESTINATION_TABLE": "bikeshare_trips",
-            "SCHEMA_PATH": "data/austin/schema/austin_bikeshare_trips_schema.json",
             "DATE_FORMAT_LIST": '[\n  ["start_time", "%m/%d/%Y %H:%M:%S", "%Y-%m-%d %H:%M:%S"]\n]',
             "NULL_ROWS_LIST": '[\n  "trip_id"\n]',
             "INPUT_CSV_HEADERS": '[\n  "Trip ID",\n  "Membership Type",\n  "Bicycle ID",\n  "Bike Type",\n  "Checkout Datetime",\n  "Checkout Date",\n  "Checkout Time",\n  "Checkout Kiosk ID",\n  "Checkout Kiosk",\n  "Return Kiosk ID",\n  "Return Kiosk",\n  "Trip Duration Minutes",\n  "Month",\n  "Year"\n]',
@@ -97,11 +115,31 @@ with DAG(
             "RENAME_HEADERS_LIST": '{\n  "Trip ID": "trip_id",\n  "Membership Type": "subscriber_type",\n  "Bicycle ID": "bikeid",\n  "Bike Type": "bike_type",\n  "Checkout Date": "time",\n  "Checkout Kiosk ID": "start_station_id",\n  "Checkout Kiosk": "start_station_name",\n  "Return Kiosk ID": "end_station_id",\n  "Return Kiosk": "end_station_name",\n  "Trip Duration Minutes": "duration_minutes",\n  "Checkout Time": "checkout_time",\n  "Month": "month",\n  "Year": "year"\n}',
             "REORDER_HEADERS_LIST": '[\n  "trip_id",\n  "subscriber_type",\n  "bikeid",\n  "bike_type",\n  "start_time",\n  "start_station_id",\n  "start_station_name",\n  "end_station_id",\n  "end_station_name",\n  "duration_minutes"\n]',
         },
-        container_resources={
-            "memory": {"limits": "64gi", "requests": "32Gi"},
-            "cpu": {"limits": "2", "requests": "2"},
-            "ephemeral-storage": {"limits": "10Gi", "requests": "10Gi"},
-        },
     )
 
-    austin_311_process_load >> austin_bs_trips_process_load
+    # Task to load CSV data to a BigQuery table
+    load_full_to_bq_bs_trips = gcs_to_bigquery.GCSToBigQueryOperator(
+        task_id="load_full_to_bq_bs_trips",
+        bucket="{{ var.value.composer_bucket }}",
+        source_objects=[
+            "data/austin/bikeshare_trips_batch/austin_bs_trips_output-*.csv"
+        ],
+        source_format="CSV",
+        field_delimiter="|",
+        destination_project_dataset_table="austin_bikeshare.bikeshare_trips",
+        skip_leading_rows=1,
+        ignore_unknown_values=True,
+        allow_quoted_newlines=True,
+        write_disposition="WRITE_TRUNCATE",
+        schema_object="data/austin/schema/austin_bikeshare_trips_schema.json",
+    )
+
+    [
+        austin_311_source_data_to_gcs
+        >> austin_311_process
+        >> load_full_to_bq_austin_311
+    ], [
+        austin_bs_trips_source_data_to_gcs
+        >> austin_bs_trips_process
+        >> load_full_to_bq_bs_trips
+    ]
