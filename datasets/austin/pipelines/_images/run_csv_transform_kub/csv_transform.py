@@ -91,7 +91,11 @@ def execute_pipeline(
     rename_headers_list: dict,
     reorder_headers_list: typing.List[str],
 ) -> None:
-    download_file_http(source_url, source_file)
+    download_file_gcs(
+        project_id=project_id,
+        source_location=source_url,
+        destination_folder=os.path.dirname(source_file),
+    )
     process_source_file(
         source_file=source_file,
         chunksize=chunksize,
@@ -137,6 +141,19 @@ def execute_pipeline(
         )
 
 
+def download_file_gcs(
+    project_id: str, source_location: str, destination_folder: str
+) -> None:
+    object_name = os.path.basename(source_location)
+    dest_object = f"{destination_folder}/{object_name}"
+    storage_client = storage.Client(project_id)
+    bucket_name = str.split(source_location, "gs://")[1].split("/")[0]
+    bucket = storage_client.bucket(bucket_name)
+    source_object_path = str.split(source_location, f"gs://{bucket_name}/")[1]
+    blob = bucket.blob(source_object_path)
+    blob.download_to_filename(dest_object)
+
+
 def process_source_file(
     source_file: str,
     target_file: str,
@@ -159,7 +176,7 @@ def process_source_file(
         quotechar='"',  # string separator, typically double-quotes
         chunksize=int(chunksize),  # size of batch data, in no. of records
         sep=",",  # data column separator, typically ","
-        header=0,  # use when the data file does not contain a header
+        header=1,  # use when the data file does not contain a header
         names=input_headers,
         dtype=dtypes,
         keep_default_na=True,
@@ -167,7 +184,7 @@ def process_source_file(
     ) as reader:
         for chunk_number, chunk in enumerate(reader):
             target_file_batch = str(target_file).replace(
-                ".csv", "-" + str(chunk_number) + ".csv"
+                ".csv", f"-{str(chunk_number)}.csv"
             )
             df = pd.DataFrame()
             df = pd.concat([df, chunk])
@@ -214,24 +231,21 @@ def process_chunk(
         df = filter_null_rows(df, null_rows_list)
         for int_col in int_cols_list:
             df[int_col] = df[int_col].fillna(0).astype("int32")
+        df = format_date_time(df=df, date_format_list=date_format_list)
         df = reorder_headers(df=df, reorder_headers_list=reorder_headers_list)
     elif destination_table == "bikeshare_trips":
         df = rename_headers(df=df, rename_headers_list=rename_headers_list)
         df = filter_null_rows(df, null_rows_list)
         logging.info("Merging date/time into start_time")
         df["start_time"] = df["time"] + " " + df["checkout_time"]
-        for dt_col in date_format_list:
-            logging.info(f"Converting Date Format {dt_col}")
-            df[dt_col] = df[dt_col].apply(
-                lambda x: datetime.datetime.strptime(
-                    str(x), "%m/%d/%Y %H:%M:%S"
-                ).strftime("%Y-%m-%d %H:%M:%S")
-            )
+        df = format_date_time(df=df, date_format_list=date_format_list)
         df = reorder_headers(df=df, reorder_headers_list=reorder_headers_list)
     else:
         logging.info("Pipeline Not Recognized.")
         return None
     save_to_new_file(df=df, file_path=str(target_file_batch), sep="|")
+    # Free up memory from the dataframe
+    del df
     append_batch_file(
         batch_file_path=target_file_batch,
         target_file_path=target_file,
@@ -239,6 +253,22 @@ def process_chunk(
         truncate_target_file=truncate_file,
     )
     logging.info(f"Processing Batch {target_file_batch} completed")
+
+
+def format_date_time(
+    df: pd.DataFrame, date_format_list: typing.List[typing.List]
+) -> pd.DataFrame:
+    logging.info("Formatting Date/time values")
+    for dt_list_item in date_format_list:
+        col_nm = dt_list_item[0]
+        in_fmt = dt_list_item[1]
+        out_fmt = dt_list_item[2]
+        logging.info(f"Converting Date Format {col_nm}")
+        df[col_nm] = df[col_nm].apply(
+            lambda x: ""
+            if (not str(x) or str(x) == "nan")
+            else datetime.datetime.strptime(str(x), in_fmt).strftime(out_fmt))
+    return df
 
 
 def rename_headers(df: pd.DataFrame, rename_headers_list: dict) -> pd.DataFrame:
