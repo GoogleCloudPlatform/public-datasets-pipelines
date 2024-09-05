@@ -39,30 +39,30 @@ def main(
     rename_headers_list: dict,
     reorder_headers_list: typing.List[str],
 ) -> None:
-    '''
-        Description:
-            Main process function
-        Args:
-            pipeline_name: Name of the pipeline being executed.
-            source_url: GCS bucket used to acquire the source file.
-            chunksize: Number of rows in the source file to chunk when processing.
-            source_file: Local path to download the source file to for prrocessing.
-            target_gcs_bucket: GCS Bucket used to manage source and output files.
-            target_gcs_path: GCS Bucket Path to write the target batch files to for later loading.
-            project_id: GCP Project ID used to access the bucket containing the staged source file.
-            date_format_list: List of tuples pertaining to the following metadata:
-                field/column: Column containing the date field to transform the date value formats within.
-                in_format: Format of the dates in the source file.
-                out_format: Format of the dates to write to.  Typically "%Y-%m-%d %H:%M:%S"
-            int_cols_list: List of columns to convert values to integers when transforming to output data.
-            remove_newlines_cols_list: List of columns to replace all newlines in with spaces.
-            null_rows_list: List of columns that are filtered out if the rows contain nulls in those columns.
-                Typically to prevent null index violation on required fields such as a unique key.
-            input_headers: Defines the names of the columns in the source file in ordinal position.
-            data_dtypes: Defines the datatypes of each source file column in its ordinal position.
-            rename_headers_list: Dictionary list specifying columns to convert headers to during the column renaming process.
-            reorder_headers_list: List of columns in the new ordinal position to use in order to write the output file.
-    '''
+    """
+    Description:
+        Main process function
+    Args:
+        pipeline_name: Name of the pipeline being executed.
+        source_url: GCS bucket used to acquire the source file.
+        chunksize: Number of rows in the source file to chunk when processing.
+        source_file: Local path to download the source file to for prrocessing.
+        target_gcs_bucket: GCS Bucket used to manage source and output files.
+        target_gcs_path: GCS Bucket Path to write the target batch files to for later loading.
+        project_id: GCP Project ID used to access the bucket containing the staged source file.
+        date_format_list: List of tuples pertaining to the following metadata:
+            field/column: Column containing the date field to transform the date value formats within.
+            in_format: Format of the dates in the source file.
+            out_format: Format of the dates to write to.  Typically "%Y-%m-%d %H:%M:%S"
+        int_cols_list: List of columns to convert values to integers when transforming to output data.
+        remove_newlines_cols_list: List of columns to replace all newlines in with spaces.
+        null_rows_list: List of columns that are filtered out if the rows contain nulls in those columns.
+            Typically to prevent null index violation on required fields such as a unique key.
+        input_headers: Defines the names of the columns in the source file in ordinal position.
+        data_dtypes: Defines the datatypes of each source file column in its ordinal position.
+        rename_headers_list: Dictionary list specifying columns to convert headers to during the column renaming process.
+        reorder_headers_list: List of columns in the new ordinal position to use in order to write the output file.
+    """
     logging.info(f"{pipeline_name} process started")
     logging.info("creating 'files' folder")
     pathlib.Path(f"./{os.path.dirname(source_file)}").mkdir(parents=True, exist_ok=True)
@@ -103,10 +103,10 @@ def execute_pipeline(
     rename_headers_list: dict,
     reorder_headers_list: typing.List[str],
 ) -> None:
-    '''
-        Description:
-            Stage the source file locally and execute the transform process.
-    '''
+    """
+    Description:
+        Stage the source file locally and execute the transform process.
+    """
     download_file_gcs(
         project_id=project_id,
         source_location=source_url,
@@ -132,10 +132,10 @@ def execute_pipeline(
 def download_file_gcs(
     project_id: str, source_location: str, destination_folder: str
 ) -> None:
-    '''
-        Description:
-            Download a file from GCS to local storage.
-    '''
+    """
+    Description:
+        Download a file from GCS to local storage.
+    """
     object_name = os.path.basename(source_location)
     dest_object = f"{destination_folder}/{object_name}"
     storage_client = storage.Client(project_id)
@@ -161,10 +161,10 @@ def process_source_file(
     reorder_headers_list: typing.List[str],
     rename_headers_list: dict,
 ) -> None:
-    '''
-        Description:
-            Process the source file.
-    '''
+    """
+    Description:
+        Process the source file.
+    """
     logging.info(f"Opening batch file {source_file}")
     with pd.read_csv(
         source_file,  # path to main source file to load in batches
@@ -180,7 +180,7 @@ def process_source_file(
         na_values=[" "],
     ) as reader:
         for chunk_number, chunk in enumerate(reader):
-            target_file=source_file.replace("source.csv", "output.csv")
+            target_file = str(source_file).replace("source.csv", "output.csv")
             target_file_batch = str(target_file).replace(
                 ".csv", f"-{str(chunk_number).zfill(10)}.csv"
             )
@@ -214,11 +214,11 @@ def process_chunk(
     reorder_headers_list: typing.List[str],
     rename_headers_list: dict,
 ) -> None:
-    '''
-        Description:
-            For each chunk of source data, process and transform.
-            The data chunks are then written to transformed output files and posted to the GCS batch folder for loading
-    '''
+    """
+    Description:
+        For each chunk of source data, process and transform.
+        The data chunks are then written to transformed output files and posted to the GCS batch folder for loading
+    """
     logging.info(f"Processing Batch {target_file_batch} started")
     if pipeline_name == "Austin 311 Service Requests By Year":
         df = rename_headers(df=df, rename_headers_list=rename_headers_list)
@@ -251,8 +251,10 @@ def process_chunk(
     upload_file_to_gcs(
         file_path=str(target_file_batch),
         target_gcs_bucket=target_gcs_bucket,
-        target_gcs_path=os.path.join(target_gcs_path, os.path.basename(str(target_file_batch))),
-        remove_file=True
+        target_gcs_path=os.path.join(
+            target_gcs_path, os.path.basename(str(target_file_batch))
+        ),
+        remove_file=True,
     )
     logging.info(f"Processing Batch {target_file_batch} completed")
 
@@ -260,10 +262,10 @@ def process_chunk(
 def format_date_time(
     df: pd.DataFrame, date_format_list: typing.List[typing.List]
 ) -> pd.DataFrame:
-    '''
-        Description:
-            Format date/time values in a column within a DataFrame.
-    '''
+    """
+    Description:
+        Format date/time values in a column within a DataFrame.
+    """
     logging.info("Formatting Date/time values")
     for dt_list_item in date_format_list:
         col_nm = dt_list_item[0]
@@ -273,15 +275,16 @@ def format_date_time(
         df[col_nm] = df[col_nm].apply(
             lambda x: ""
             if (not str(x) or str(x) == "nan")
-            else datetime.datetime.strptime(str(x), in_fmt).strftime(out_fmt))
+            else datetime.datetime.strptime(str(x), in_fmt).strftime(out_fmt)
+        )
     return df
 
 
 def rename_headers(df: pd.DataFrame, rename_headers_list: dict) -> pd.DataFrame:
-    '''
-        Description:
-            Rename the headers of columns within a dataframe.
-    '''
+    """
+    Description:
+        Rename the headers of columns within a dataframe.
+    """
     logging.info("Renaming Headers")
     return df.rename(columns=rename_headers_list)
 
@@ -289,10 +292,10 @@ def rename_headers(df: pd.DataFrame, rename_headers_list: dict) -> pd.DataFrame:
 def reorder_headers(
     df: pd.DataFrame, reorder_headers_list: typing.List[str]
 ) -> pd.DataFrame:
-    '''
-        Description:
-            Reorder the DataFrame columns/headers.
-    '''
+    """
+    Description:
+        Reorder the DataFrame columns/headers.
+    """
     logging.info("Reordering headers..")
     return df[reorder_headers_list]
 
@@ -300,31 +303,34 @@ def reorder_headers(
 def filter_null_rows(
     df: pd.DataFrame, null_rows_list: typing.List[str]
 ) -> pd.DataFrame:
-    '''
-        Description:
-            Filter out rows in the DataFrame where the value of the specified column is null.
-    '''
+    """
+    Description:
+        Filter out rows in the DataFrame where the value of the specified column is null.
+    """
     for col in null_rows_list:
         df = df[df[col] != ""]
     return df
 
 
 def save_to_new_file(df: pd.DataFrame, file_path: str, sep: str = "|") -> None:
-    '''
-        Description:
-            Write the DataFrame to a pipe-delimited file.
-    '''
+    """
+    Description:
+        Write the DataFrame to a pipe-delimited file.
+    """
     logging.info(f"Saving data to target file.. {file_path} ...")
     df.to_csv(file_path, index=False, sep=sep)
 
 
 def upload_file_to_gcs(
-    file_path: pathlib.Path, target_gcs_bucket: str, target_gcs_path: str, remove_file: bool = False
+    file_path: pathlib.Path,
+    target_gcs_bucket: str,
+    target_gcs_path: str,
+    remove_file: bool = False,
 ) -> None:
-    '''
-        Description:
-            Upload the file to GCS.
-    '''
+    """
+    Description:
+        Upload the file to GCS.
+    """
     if os.path.exists(file_path):
         storage_client = storage.Client()
         bucket = storage_client.bucket(target_gcs_bucket)
