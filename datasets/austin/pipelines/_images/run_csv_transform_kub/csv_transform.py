@@ -14,6 +14,7 @@
 import datetime
 import json
 import logging
+import math
 import os
 import pathlib
 import typing
@@ -234,6 +235,21 @@ def process_chunk(
             df[int_col] = df[int_col].fillna(0).astype("int32")
         df = format_date_time(df=df, date_format_list=date_format_list)
         df = reorder_headers(df=df, reorder_headers_list=reorder_headers_list)
+    elif pipeline_name == "Austin Bikeshare Stations":
+        df = rename_headers(df=df, rename_headers_list=rename_headers_list)
+        df = format_date_time(df=df, date_format_list=date_format_list)
+        df = filter_null_rows(df, null_rows_list)
+        df["city_asset_number"] = df["city_asset_number"].apply(
+            convert_to_integer_string
+        )
+        df["number_of_docks"] = df["number_of_docks"].apply(convert_to_integer_string)
+        df["footprint_length"] = df["footprint_length"].apply(convert_to_integer_string)
+        df["council_district"] = df["council_district"].apply(convert_to_integer_string)
+        df["footprint_width"] = df["footprint_width"].apply(resolve_nan)
+        df["location"] = df["location"].apply(
+            lambda x: "" if not str(x) else f"POINT{x.replace(',', '')}"
+        )
+        df = reorder_headers(df=df, reorder_headers_list=reorder_headers_list)
     elif pipeline_name == "Austin Bikeshare Trips":
         df = rename_headers(df=df, rename_headers_list=rename_headers_list)
         df = filter_null_rows(df, null_rows_list)
@@ -257,6 +273,24 @@ def process_chunk(
         remove_file=True,
     )
     logging.info(f"Processing Batch {target_file_batch} completed")
+
+
+def resolve_nan(input: typing.Union[str, float]) -> str:
+    str_val = ""
+    if not input or (math.isnan(input)):
+        str_val = ""
+    else:
+        str_val = str(input)
+    return str_val.replace("None", "")
+
+
+def convert_to_integer_string(input: typing.Union[str, float]) -> str:
+    str_val = ""
+    if not input or (str(input) == "nan"):
+        str_val = ""
+    else:
+        str_val = str(int(float(input)))
+    return str_val
 
 
 def format_date_time(
