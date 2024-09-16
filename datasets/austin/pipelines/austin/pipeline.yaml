@@ -35,272 +35,272 @@ dag:
     default_view: graph
 
   tasks:
-    # - operator: "BashOperator"
-    #   description: "Fetch data gcs - 311"
-    #   args:
-    #     task_id: "austin_311_source_data_to_gcs"
-    #     bash_command: |
-    #       curl https://data.austintexas.gov/api/views/xwdj-i9he/rows.csv | gsutil cp - gs://{{ var.value.composer_bucket }}/data/austin/austin_311_service_requests_source.csv
-    # - operator: "KubernetesPodOperator"
-    #   description: "Run CSV transform within kubernetes pod"
-    #   args:
-    #     task_id: "austin_311_process"
-    #     name: "austin_311_process"
-    #     namespace: "composer-user-workloads"
-    #     service_account_name: "default"
-    #     config_file: "/home/airflow/composer_kube_config"
-    #     image_pull_policy: "Always"
-    #     image: "{{ var.json.austin.container_registry.run_csv_transform_kub }}"
-    #     env_vars:
-    #       PIPELINE_NAME: "Austin 311 Service Requests By Year"
-    #       SOURCE_URL: "gs://{{ var.value.composer_bucket }}/data/austin/austin_311_service_requests_source.csv"
-    #       CHUNKSIZE: "50000"
-    #       SOURCE_FILE: "files/austin_311_service_requests_source.csv"
-    #       TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
-    #       TARGET_GCS_PATH: "data/austin/311_batch"
-    #       PROJECT_ID: "{{ var.value.gcp_project }}"
-    #       DATE_FORMAT_LIST: >-
-    #         [
-    #           ["status_change_date", "%m/%d/%Y %I:%M:%S %p","%Y-%m-%d %H:%M:%S"],
-    #           ["created_date", "%m/%d/%Y %I:%M:%S %p", "%Y-%m-%d %H:%M:%S"],
-    #           ["last_update_date", "%m/%d/%Y %I:%M:%S %p", "%Y-%m-%d %H:%M:%S"],
-    #           ["close_date", "%m/%d/%Y %I:%M:%S %p", "%Y-%m-%d %H:%M:%S"]
-    #         ]
-    #       INT_COLS_LIST: >-
-    #         [
-    #           "council_district_code"
-    #         ]
-    #       REMOVE_NEWLINES_COLS_LIST: >-
-    #         [
-    #           "location"
-    #         ]
-    #       NULL_ROWS_LIST: >-
-    #         [
-    #           "unique_key"
-    #         ]
-    #       INPUT_CSV_HEADERS: >-
-    #         [
-    #           "Service Request (SR) Number",
-    #           "SR Description",
-    #           "Method Received",
-    #           "SR Status",
-    #           "Status Change Date",
-    #           "Created Date",
-    #           "Last Update Date",
-    #           "Close Date",
-    #           "SR Location",
-    #           "Street Number",
-    #           "Street Name",
-    #           "City",
-    #           "Zip Code",
-    #           "County",
-    #           "State Plane X Coordinate",
-    #           "State Plane Y Coordinate",
-    #           "Latitude Coordinate",
-    #           "Longitude Coordinate",
-    #           "(Latitude.Longitude)",
-    #           "Council District",
-    #           "Map Page",
-    #           "Map Tile"
-    #         ]
-    #       DATA_DTYPES: >-
-    #         {
-    #           "Service Request (SR) Number": "str",
-    #           "SR Description": "str",
-    #           "Method Received": "str",
-    #           "SR Status": "str",
-    #           "Status Change Date": "str",
-    #           "Created Date": "str",
-    #           "Last Update Date": "str",
-    #           "Close Date": "str",
-    #           "SR Location": "str",
-    #           "Street Number": "str",
-    #           "Street Name": "str",
-    #           "City": "str",
-    #           "Zip Code": "str",
-    #           "County": "str",
-    #           "State Plane X Coordinate": "str",
-    #           "State Plane Y Coordinate": "str",
-    #           "Latitude Coordinate": "str",
-    #           "Longitude Coordinate": "str",
-    #           "(Latitude.Longitude)": "str",
-    #           "Council District": "str",
-    #           "Map Page": "str",
-    #           "Map Tile": "str"
-    #         }
-    #       RENAME_HEADERS_LIST: >-
-    #         {
-    #           "Service Request (SR) Number": "unique_key",
-    #           "SR Description": "complaint_description",
-    #           "Method Received": "source",
-    #           "SR Status": "status",
-    #           "Status Change Date": "status_change_date",
-    #           "Created Date": "created_date",
-    #           "Last Update Date": "last_update_date",
-    #           "Close Date": "close_date",
-    #           "SR Location": "incident_address",
-    #           "Street Number": "street_number",
-    #           "Street Name": "street_name",
-    #           "City": "city",
-    #           "Zip Code": "incident_zip",
-    #           "County": "county",
-    #           "State Plane X Coordinate": "state_plane_x_coordinate",
-    #           "State Plane Y Coordinate": "state_plane_y_coordinate",
-    #           "Latitude Coordinate": "latitude",
-    #           "Longitude Coordinate": "longitude",
-    #           "(Latitude.Longitude)": "location",
-    #           "Council District": "council_district_code",
-    #           "Map Page": "map_page",
-    #           "Map Tile": "map_tile"
-    #         }
-    #       REORDER_HEADERS_LIST: >-
-    #         [
-    #           "unique_key",
-    #           "complaint_description",
-    #           "source",
-    #           "status",
-    #           "status_change_date",
-    #           "created_date",
-    #           "last_update_date",
-    #           "close_date",
-    #           "incident_address",
-    #           "street_number",
-    #           "street_name",
-    #           "city",
-    #           "incident_zip",
-    #           "county",
-    #           "state_plane_x_coordinate",
-    #           "state_plane_y_coordinate",
-    #           "latitude",
-    #           "longitude",
-    #           "location",
-    #           "council_district_code",
-    #           "map_page",
-    #           "map_tile"
-    #         ]
-    # - operator: "GoogleCloudStorageToBigQueryOperator"
-    #   description: "Task to load CSV data to a BigQuery table"
-    #   args:
-    #     task_id: "load_full_to_bq_austin_311"
-    #     bucket: "{{ var.value.composer_bucket }}"
-    #     source_objects: ["data/austin/311_batch/austin_311_service_requests_output-*.csv"]
-    #     source_format: "CSV"
-    #     field_delimiter: "|"
-    #     destination_project_dataset_table: "austin_311.311_service_requests"
-    #     skip_leading_rows: 1
-    #     ignore_unknown_values: True
-    #     allow_quoted_newlines: True
-    #     write_disposition: "WRITE_TRUNCATE"
-    #     schema_object: "data/austin/schema/austin_311_service_requests_schema.json"
+    - operator: "BashOperator"
+      description: "Fetch data gcs - 311"
+      args:
+        task_id: "austin_311_source_data_to_gcs"
+        bash_command: |
+          curl https://data.austintexas.gov/api/views/xwdj-i9he/rows.csv | gsutil cp - gs://{{ var.value.composer_bucket }}/data/austin/austin_311_service_requests_source.csv
+    - operator: "KubernetesPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "austin_311_process"
+        name: "austin_311_process"
+        namespace: "composer-user-workloads"
+        service_account_name: "default"
+        config_file: "/home/airflow/composer_kube_config"
+        image_pull_policy: "Always"
+        image: "{{ var.json.austin.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          PIPELINE_NAME: "Austin 311 Service Requests By Year"
+          SOURCE_URL: "gs://{{ var.value.composer_bucket }}/data/austin/austin_311_service_requests_source.csv"
+          CHUNKSIZE: "50000"
+          SOURCE_FILE: "files/austin_311_service_requests_source.csv"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/austin/311_batch"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATE_FORMAT_LIST: >-
+            [
+              ["status_change_date", "%m/%d/%Y %I:%M:%S %p","%Y-%m-%d %H:%M:%S"],
+              ["created_date", "%m/%d/%Y %I:%M:%S %p", "%Y-%m-%d %H:%M:%S"],
+              ["last_update_date", "%m/%d/%Y %I:%M:%S %p", "%Y-%m-%d %H:%M:%S"],
+              ["close_date", "%m/%d/%Y %I:%M:%S %p", "%Y-%m-%d %H:%M:%S"]
+            ]
+          INT_COLS_LIST: >-
+            [
+              "council_district_code"
+            ]
+          REMOVE_NEWLINES_COLS_LIST: >-
+            [
+              "location"
+            ]
+          NULL_ROWS_LIST: >-
+            [
+              "unique_key"
+            ]
+          INPUT_CSV_HEADERS: >-
+            [
+              "Service Request (SR) Number",
+              "SR Description",
+              "Method Received",
+              "SR Status",
+              "Status Change Date",
+              "Created Date",
+              "Last Update Date",
+              "Close Date",
+              "SR Location",
+              "Street Number",
+              "Street Name",
+              "City",
+              "Zip Code",
+              "County",
+              "State Plane X Coordinate",
+              "State Plane Y Coordinate",
+              "Latitude Coordinate",
+              "Longitude Coordinate",
+              "(Latitude.Longitude)",
+              "Council District",
+              "Map Page",
+              "Map Tile"
+            ]
+          DATA_DTYPES: >-
+            {
+              "Service Request (SR) Number": "str",
+              "SR Description": "str",
+              "Method Received": "str",
+              "SR Status": "str",
+              "Status Change Date": "str",
+              "Created Date": "str",
+              "Last Update Date": "str",
+              "Close Date": "str",
+              "SR Location": "str",
+              "Street Number": "str",
+              "Street Name": "str",
+              "City": "str",
+              "Zip Code": "str",
+              "County": "str",
+              "State Plane X Coordinate": "str",
+              "State Plane Y Coordinate": "str",
+              "Latitude Coordinate": "str",
+              "Longitude Coordinate": "str",
+              "(Latitude.Longitude)": "str",
+              "Council District": "str",
+              "Map Page": "str",
+              "Map Tile": "str"
+            }
+          RENAME_HEADERS_LIST: >-
+            {
+              "Service Request (SR) Number": "unique_key",
+              "SR Description": "complaint_description",
+              "Method Received": "source",
+              "SR Status": "status",
+              "Status Change Date": "status_change_date",
+              "Created Date": "created_date",
+              "Last Update Date": "last_update_date",
+              "Close Date": "close_date",
+              "SR Location": "incident_address",
+              "Street Number": "street_number",
+              "Street Name": "street_name",
+              "City": "city",
+              "Zip Code": "incident_zip",
+              "County": "county",
+              "State Plane X Coordinate": "state_plane_x_coordinate",
+              "State Plane Y Coordinate": "state_plane_y_coordinate",
+              "Latitude Coordinate": "latitude",
+              "Longitude Coordinate": "longitude",
+              "(Latitude.Longitude)": "location",
+              "Council District": "council_district_code",
+              "Map Page": "map_page",
+              "Map Tile": "map_tile"
+            }
+          REORDER_HEADERS_LIST: >-
+            [
+              "unique_key",
+              "complaint_description",
+              "source",
+              "status",
+              "status_change_date",
+              "created_date",
+              "last_update_date",
+              "close_date",
+              "incident_address",
+              "street_number",
+              "street_name",
+              "city",
+              "incident_zip",
+              "county",
+              "state_plane_x_coordinate",
+              "state_plane_y_coordinate",
+              "latitude",
+              "longitude",
+              "location",
+              "council_district_code",
+              "map_page",
+              "map_tile"
+            ]
+    - operator: "GoogleCloudStorageToBigQueryOperator"
+      description: "Task to load CSV data to a BigQuery table"
+      args:
+        task_id: "load_full_to_bq_austin_311"
+        bucket: "{{ var.value.composer_bucket }}"
+        source_objects: ["data/austin/311_batch/austin_311_service_requests_output-*.csv"]
+        source_format: "CSV"
+        field_delimiter: "|"
+        destination_project_dataset_table: "austin_311.311_service_requests"
+        skip_leading_rows: 1
+        ignore_unknown_values: True
+        allow_quoted_newlines: True
+        write_disposition: "WRITE_TRUNCATE"
+        schema_object: "data/austin/schema/austin_311_service_requests_schema.json"
 
-    # - operator: "BashOperator"
-    #   description: "Fetch data gcs - gcs"
-    #   args:
-    #     task_id: "austin_bs_trips_source_data_to_gcs"
-    #     bash_command: |
-    #       curl https://data.austintexas.gov/api/views/tyfh-5r8s/rows.csv | gsutil cp - gs://{{ var.value.composer_bucket }}/data/austin/austin_bs_trips_source.csv
-    # - operator: "KubernetesPodOperator"
-    #   description: "Run CSV transform within kubernetes pod"
-    #   args:
-    #     task_id: "austin_bs_trips_process"
-    #     name: "austin_bs_trips_process"
-    #     namespace: "composer-user-workloads"
-    #     service_account_name: "default"
-    #     config_file: "/home/airflow/composer_kube_config"
-    #     image_pull_policy: "Always"
-    #     image: "{{ var.json.austin.container_registry.run_csv_transform_kub }}"
-    #     env_vars:
-    #       SOURCE_URL: "gs://{{ var.value.composer_bucket }}/data/austin/austin_bs_trips_source.csv"
-    #       SOURCE_FILE: "files/austin_bs_trips_source.csv"
-    #       CHUNKSIZE: "50000"
-    #       TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
-    #       TARGET_GCS_PATH: "data/austin/bikeshare_trips_batch"
-    #       PIPELINE_NAME: "Austin Bikeshare Trips"
-    #       PROJECT_ID: "{{ var.value.gcp_project }}"
-    #       DATE_FORMAT_LIST: >-
-    #         [
-    #           ["start_time", "%m/%d/%Y %H:%M:%S", "%Y-%m-%d %H:%M:%S"]
-    #         ]
-    #       NULL_ROWS_LIST: >-
-    #         [
-    #           "trip_id"
-    #         ]
-    #       INPUT_CSV_HEADERS: >-
-    #         [
-    #           "Trip ID",
-    #           "Membership Type",
-    #           "Bicycle ID",
-    #           "Bike Type",
-    #           "Checkout Datetime",
-    #           "Checkout Date",
-    #           "Checkout Time",
-    #           "Checkout Kiosk ID",
-    #           "Checkout Kiosk",
-    #           "Return Kiosk ID",
-    #           "Return Kiosk",
-    #           "Trip Duration Minutes",
-    #           "Month",
-    #           "Year"
-    #         ]
-    #       DATA_DTYPES: >-
-    #         {
-    #           "Trip ID": "str",
-    #           "Membership Type": "str",
-    #           "Bicycle ID": "str",
-    #           "Bike Type": "str",
-    #           "Checkout Date": "str",
-    #           "Checkout Time": "str",
-    #           "Checkout Kiosk ID": "str",
-    #           "Checkout Kiosk": "str",
-    #           "Return Kiosk ID": "str",
-    #           "Return Kiosk": "str",
-    #           "Trip Duration Minutes": "str",
-    #           "Month": "str",
-    #           "Year": "str"
-    #         }
-    #       RENAME_HEADERS_LIST: >-
-    #         {
-    #           "Trip ID": "trip_id",
-    #           "Membership Type": "subscriber_type",
-    #           "Bicycle ID": "bikeid",
-    #           "Bike Type": "bike_type",
-    #           "Checkout Date": "time",
-    #           "Checkout Kiosk ID": "start_station_id",
-    #           "Checkout Kiosk": "start_station_name",
-    #           "Return Kiosk ID": "end_station_id",
-    #           "Return Kiosk": "end_station_name",
-    #           "Trip Duration Minutes": "duration_minutes",
-    #           "Checkout Time": "checkout_time",
-    #           "Month": "month",
-    #           "Year": "year"
-    #         }
-    #       REORDER_HEADERS_LIST: >-
-    #         [
-    #           "trip_id",
-    #           "subscriber_type",
-    #           "bikeid",
-    #           "bike_type",
-    #           "start_time",
-    #           "start_station_id",
-    #           "start_station_name",
-    #           "end_station_id",
-    #           "end_station_name",
-    #           "duration_minutes"
-    #         ]
-    # - operator: "GoogleCloudStorageToBigQueryOperator"
-    #   description: "Task to load CSV data to a BigQuery table"
-    #   args:
-    #     task_id: "load_full_to_bq_bs_trips"
-    #     bucket: "{{ var.value.composer_bucket }}"
-    #     source_objects: ["data/austin/bikeshare_trips_batch/austin_bs_trips_output-*.csv"]
-    #     source_format: "CSV"
-    #     field_delimiter: "|"
-    #     destination_project_dataset_table: "austin_bikeshare.bikeshare_trips"
-    #     skip_leading_rows: 1
-    #     ignore_unknown_values: True
-    #     allow_quoted_newlines: True
-    #     write_disposition: "WRITE_TRUNCATE"
-    #     schema_object: "data/austin/schema/austin_bikeshare_trips_schema.json"
+    - operator: "BashOperator"
+      description: "Fetch data gcs - gcs"
+      args:
+        task_id: "austin_bs_trips_source_data_to_gcs"
+        bash_command: |
+          curl https://data.austintexas.gov/api/views/tyfh-5r8s/rows.csv | gsutil cp - gs://{{ var.value.composer_bucket }}/data/austin/austin_bs_trips_source.csv
+    - operator: "KubernetesPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "austin_bs_trips_process"
+        name: "austin_bs_trips_process"
+        namespace: "composer-user-workloads"
+        service_account_name: "default"
+        config_file: "/home/airflow/composer_kube_config"
+        image_pull_policy: "Always"
+        image: "{{ var.json.austin.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "gs://{{ var.value.composer_bucket }}/data/austin/austin_bs_trips_source.csv"
+          SOURCE_FILE: "files/austin_bs_trips_source.csv"
+          CHUNKSIZE: "50000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/austin/bikeshare_trips_batch"
+          PIPELINE_NAME: "Austin Bikeshare Trips"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          DATE_FORMAT_LIST: >-
+            [
+              ["start_time", "%m/%d/%Y %H:%M:%S", "%Y-%m-%d %H:%M:%S"]
+            ]
+          NULL_ROWS_LIST: >-
+            [
+              "trip_id"
+            ]
+          INPUT_CSV_HEADERS: >-
+            [
+              "Trip ID",
+              "Membership Type",
+              "Bicycle ID",
+              "Bike Type",
+              "Checkout Datetime",
+              "Checkout Date",
+              "Checkout Time",
+              "Checkout Kiosk ID",
+              "Checkout Kiosk",
+              "Return Kiosk ID",
+              "Return Kiosk",
+              "Trip Duration Minutes",
+              "Month",
+              "Year"
+            ]
+          DATA_DTYPES: >-
+            {
+              "Trip ID": "str",
+              "Membership Type": "str",
+              "Bicycle ID": "str",
+              "Bike Type": "str",
+              "Checkout Date": "str",
+              "Checkout Time": "str",
+              "Checkout Kiosk ID": "str",
+              "Checkout Kiosk": "str",
+              "Return Kiosk ID": "str",
+              "Return Kiosk": "str",
+              "Trip Duration Minutes": "str",
+              "Month": "str",
+              "Year": "str"
+            }
+          RENAME_HEADERS_LIST: >-
+            {
+              "Trip ID": "trip_id",
+              "Membership Type": "subscriber_type",
+              "Bicycle ID": "bikeid",
+              "Bike Type": "bike_type",
+              "Checkout Date": "time",
+              "Checkout Kiosk ID": "start_station_id",
+              "Checkout Kiosk": "start_station_name",
+              "Return Kiosk ID": "end_station_id",
+              "Return Kiosk": "end_station_name",
+              "Trip Duration Minutes": "duration_minutes",
+              "Checkout Time": "checkout_time",
+              "Month": "month",
+              "Year": "year"
+            }
+          REORDER_HEADERS_LIST: >-
+            [
+              "trip_id",
+              "subscriber_type",
+              "bikeid",
+              "bike_type",
+              "start_time",
+              "start_station_id",
+              "start_station_name",
+              "end_station_id",
+              "end_station_name",
+              "duration_minutes"
+            ]
+    - operator: "GoogleCloudStorageToBigQueryOperator"
+      description: "Task to load CSV data to a BigQuery table"
+      args:
+        task_id: "load_full_to_bq_bs_trips"
+        bucket: "{{ var.value.composer_bucket }}"
+        source_objects: ["data/austin/bikeshare_trips_batch/austin_bs_trips_output-*.csv"]
+        source_format: "CSV"
+        field_delimiter: "|"
+        destination_project_dataset_table: "austin_bikeshare.bikeshare_trips"
+        skip_leading_rows: 1
+        ignore_unknown_values: True
+        allow_quoted_newlines: True
+        write_disposition: "WRITE_TRUNCATE"
+        schema_object: "data/austin/schema/austin_bikeshare_trips_schema.json"
 
     - operator: "BashOperator"
       description: "Fetch data gcs - gcs"
@@ -328,7 +328,7 @@ dag:
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATE_FORMAT_LIST: >-
             [
-              ["modified_date", "%m/%d/%Y %H:%M:%S %p", "%Y-%m-%d %H:%M:%S"]
+              ["modified_date", "%m/%d/%Y %I:%M:%S %p", "%Y-%m-%d %H:%M:%S"]
             ]
           NULL_ROWS_LIST: >-
             [
@@ -425,7 +425,271 @@ dag:
         write_disposition: "WRITE_TRUNCATE"
         schema_object: "data/austin/schema/austin_bikeshare_stations_schema.json"
 
+    - operator: "BashOperator"
+      description: "Fetch data gcs - crime"
+      args:
+        task_id: "austin_crime_source_data_to_gcs"
+        bash_command: "gsutil cp gs://pdp-feeds-staging/Austin_Crime/Annual_Crime_2014.csv gs://{{ var.value.composer_bucket }}/data/austin/austin_crime/austin_crime_2014_source.csv ;
+          gsutil cp gs://pdp-feeds-staging/Austin_Crime/Annual_Crime_Dataset_2015.csv gs://{{ var.value.composer_bucket }}/data/austin/austin_crime/austin_crime_2015_source.csv ;
+          gsutil cp gs://pdp-feeds-staging/Austin_Crime/2016_Annual_Crime_Data.csv gs://{{ var.value.composer_bucket }}/data/austin/austin_crime/austin_crime_2016_source.csv ;"
+
+    - operator: "KubernetesPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "austin_crime_2014_process"
+        name: "austin_crime_2014_process"
+        namespace: "composer-user-workloads"
+        service_account_name: "default"
+        config_file: "/home/airflow/composer_kube_config"
+        image_pull_policy: "Always"
+        image: "{{ var.json.austin.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "gs://{{ var.value.composer_bucket }}/data/austin/austin_crime/austin_crime_2014_source.csv"
+          SOURCE_FILE: "files/austin_crime_2014_source.csv"
+          CHUNKSIZE: "50000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/austin/crime_batch"
+          PIPELINE_NAME: "Austin Crime 2014"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          INPUT_CSV_HEADERS: >-
+            [
+              "GO Primary Key",
+              "Council District",
+              "GO Highest Offense Desc",
+              "Highest NIBRS/UCR Offense Description",
+              "GO Report Date",
+              "GO Location",
+              "Clearance Status",
+              "Clearance Date",
+              "GO District",
+              "GO Location Zip",
+              "GO Census Tract",
+              "GO X Coordinate",
+              "GO Y Coordinate",
+              "Location_1"
+            ]
+          REORDER_HEADERS_LIST: >-
+            [
+              "unique_key",
+              "address",
+              "census_tract",
+              "clearance_date",
+              "clearance_status",
+              "council_district_code",
+              "description",
+              "district",
+              "latitude",
+              "longitude",
+              "location",
+              "location_description",
+              "primary_type",
+              "timestamp",
+              "x_coordinate",
+              "y_coordinate",
+              "year",
+              "zipcode"
+            ]
+          RENAME_HEADERS_LIST: >-
+            {
+              "GO Primary Key": "unique_key",
+              "Council District": "council_district_code",
+              "GO Highest Offense Desc": "description",
+              "Highest NIBRS/UCR Offense Description": "primary_type",
+              "GO Report Date": "timestamp",
+              "GO Location": "location_description",
+              "Clearance Status": "clearance_status",
+              "Clearance Date": "clearance_date",
+              "GO District": "district",
+              "GO Location Zip": "zipcode",
+              "GO Census Tract": "census_tract",
+              "GO X Coordinate": "x_coordinate",
+              "GO Y Coordinate": "y_coordinate",
+              "Location_1": "temp_address"
+            }
+          DATE_FORMAT_LIST: >-
+            [
+              ["timestamp", "%m/%d/%Y %I:%M:%S %p", "%Y-%m-%d %H:%M:%S"],
+              ["clearance_date", "%m/%d/%Y %I:%M:%S %p", "%Y-%m-%d %H:%M:%S"]
+            ]
+
+    - operator: "KubernetesPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "austin_crime_2015_process"
+        name: "austin_crime_2015_process"
+        namespace: "composer-user-workloads"
+        service_account_name: "default"
+        config_file: "/home/airflow/composer_kube_config"
+        image_pull_policy: "Always"
+        image: "{{ var.json.austin.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "gs://{{ var.value.composer_bucket }}/data/austin/austin_crime/austin_crime_2015_source.csv"
+          SOURCE_FILE: "files/austin_crime_2015_source.csv"
+          CHUNKSIZE: "50000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/austin/crime_batch"
+          PIPELINE_NAME: "Austin Crime 2015"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          INPUT_CSV_HEADERS: >-
+            [
+              "GO Primary Key",
+              "Council District",
+              "GO Highest Offense Desc",
+              "Highest NIBRS/UCR Offense Description",
+              "GO Report Date",
+              "GO Location",
+              "Clearance Status",
+              "Clearance Date",
+              "GO District",
+              "GO Location Zip",
+              "GO Census Tract",
+              "GO X Coordinate",
+              "GO Y Coordinate"
+            ]
+          REORDER_HEADERS_LIST: >-
+            [
+              "unique_key",
+              "address",
+              "census_tract",
+              "clearance_date",
+              "clearance_status",
+              "council_district_code",
+              "description",
+              "district",
+              "latitude",
+              "longitude",
+              "location",
+              "location_description",
+              "primary_type",
+              "timestamp",
+              "x_coordinate",
+              "y_coordinate",
+              "year",
+              "zipcode"
+            ]
+          RENAME_HEADERS_LIST: >-
+            {
+              "GO Primary Key": "unique_key",
+              "Council District": "council_district_code",
+              "GO Highest Offense Desc": "description",
+              "Highest NIBRS/UCR Offense Description": "primary_type",
+              "GO Report Date": "timestamp",
+              "GO Location": "location_description",
+              "Clearance Status": "clearance_status",
+              "Clearance Date": "clearance_date",
+              "GO District": "district",
+              "GO Location Zip": "zipcode",
+              "GO Census Tract": "census_tract",
+              "GO X Coordinate": "x_coordinate",
+              "GO Y Coordinate": "y_coordinate",
+              "Location_1": "temp_address"
+            }
+          DATE_FORMAT_LIST: >-
+            [
+              ["timestamp", "%m/%d/%Y %I:%M:%S %p", "%Y-%m-%d %H:%M:%S"],
+              ["clearance_date", "%m/%d/%Y %I:%M:%S %p", "%Y-%m-%d %H:%M:%S"]
+            ]
+
+
+    - operator: "KubernetesPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "austin_crime_2016_process"
+        name: "austin_crime_2016_process"
+        namespace: "composer-user-workloads"
+        service_account_name: "default"
+        config_file: "/home/airflow/composer_kube_config"
+        image_pull_policy: "Always"
+        image: "{{ var.json.austin.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "gs://{{ var.value.composer_bucket }}/data/austin/austin_crime/austin_crime_2016_source.csv"
+          SOURCE_FILE: "files/austin_crime_2016_source.csv"
+          CHUNKSIZE: "50000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/austin/crime_batch"
+          PIPELINE_NAME: "Austin Crime 2016"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          INPUT_CSV_HEADERS: >-
+            [
+              "GO Primary Key",
+              "Council District",
+              "GO Highest Offense Desc",
+              "Highest NIBRS/UCR Offense Description",
+              "GO Report Date",
+              "GO Location",
+              "Clearance Status",
+              "Clearance Date",
+              "GO District",
+              "GO Location Zip",
+              "GO Census Tract",
+              "GO X Coordinate",
+              "GO Y Coordinate"
+            ]
+          RENAME_HEADERS_LIST: >-
+            {
+              "GO Primary Key": "unique_key",
+              "Council District": "council_district_code",
+              "GO Highest Offense Desc": "description",
+              "Highest NIBRS/UCR Offense Description": "primary_type",
+              "GO Report Date": "timestamp",
+              "GO Location": "location_description",
+              "Clearance Status": "clearance_status",
+              "Clearance Date": "clearance_date",
+              "GO District": "district",
+              "GO Location Zip": "zipcode",
+              "GO Census Tract": "census_tract",
+              "GO X Coordinate": "x_coordinate",
+              "GO Y Coordinate": "y_coordinate",
+              "Location_1": "address"
+            }
+          REORDER_HEADERS_LIST: >-
+            [
+              "unique_key",
+              "address",
+              "census_tract",
+              "clearance_date",
+              "clearance_status",
+              "council_district_code",
+              "description",
+              "district",
+              "latitude",
+              "longitude",
+              "location",
+              "location_description",
+              "primary_type",
+              "timestamp",
+              "x_coordinate",
+              "y_coordinate",
+              "year",
+              "zipcode"
+            ]
+          DATE_FORMAT_LIST: >-
+            [
+              ["timestamp", "%m/%d/%Y %I:%M:%S %p", "%Y-%m-%d %H:%M:%S"],
+              ["clearance_date", "%m/%d/%Y %I:%M:%S %p", "%Y-%m-%d %H:%M:%S"]
+            ]
+
+
+    - operator: "GoogleCloudStorageToBigQueryOperator"
+      description: "Task to load CSV data to a BigQuery table"
+      args:
+        task_id: "load_full_to_bq_austin_crime"
+        bucket: "{{ var.value.composer_bucket }}"
+        source_objects: [
+          "data/austin/crime_batch/austin_crime_2014_output-*.csv",
+          "data/austin/crime_batch/austin_crime_2015_output-*.csv",
+          "data/austin/crime_batch/austin_crime_2016_output-*.csv"
+        ]
+        source_format: "CSV"
+        field_delimiter: "|"
+        destination_project_dataset_table: "austin_crime.crime"
+        skip_leading_rows: 1
+        ignore_unknown_values: True
+        allow_quoted_newlines: True
+        write_disposition: "WRITE_TRUNCATE"
+        schema_object: "data/austin/schema/austin_crime_schema.json"
 
   graph_paths:
-    - "austin_bs_stations_source_data_to_gcs >> austin_bs_stations_process >> load_full_to_bq_bs_stations"
-    # - "[austin_311_source_data_to_gcs >> austin_311_process >> load_full_to_bq_austin_311], [austin_bs_trips_source_data_to_gcs >> austin_bs_trips_process >> load_full_to_bq_bs_trips]"
+    # - "[austin_crime_source_data_to_gcs >> [austin_crime_2014_process, austin_crime_2015_process, austin_crime_2016_process] >> load_full_to_bq_austin_crime]"
+    - "[austin_311_source_data_to_gcs >> austin_311_process >> load_full_to_bq_austin_311], [austin_crime_source_data_to_gcs >> [austin_crime_2014_process, austin_crime_2015_process, austin_crime_2016_process] >> load_full_to_bq_austin_crime], [austin_bs_trips_source_data_to_gcs >> austin_bs_trips_process >> load_full_to_bq_bs_trips], [austin_bs_stations_source_data_to_gcs >> austin_bs_stations_process >> load_full_to_bq_bs_stations]"
+    # - "[austin_311_source_data_to_gcs >> austin_311_process >> load_full_to_bq_austin_311], [austin_bs_trips_source_data_to_gcs >> austin_bs_trips_process >> load_full_to_bq_bs_trips], [austin_bs_stations_source_data_to_gcs >> austin_bs_stations_process >> load_full_to_bq_bs_stations]"

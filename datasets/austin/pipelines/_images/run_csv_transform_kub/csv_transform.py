@@ -17,6 +17,7 @@ import logging
 import math
 import os
 import pathlib
+import re
 import typing
 
 import pandas as pd
@@ -222,7 +223,7 @@ def process_chunk(
     """
     logging.info(f"Processing Batch {target_file_batch} started")
     if pipeline_name == "Austin 311 Service Requests By Year":
-        df = rename_headers(df=df, rename_headers_list=rename_headers_list)
+        df = df.rename(columns=rename_headers_list)
         for col in remove_newlines_cols_list:
             logging.info(f"Removing newlines from {col}")
             df[col] = (
@@ -234,9 +235,9 @@ def process_chunk(
         for int_col in int_cols_list:
             df[int_col] = df[int_col].fillna(0).astype("int32")
         df = format_date_time(df=df, date_format_list=date_format_list)
-        df = reorder_headers(df=df, reorder_headers_list=reorder_headers_list)
+        df = df[reorder_headers_list]
     elif pipeline_name == "Austin Bikeshare Stations":
-        df = rename_headers(df=df, rename_headers_list=rename_headers_list)
+        df = df.rename(columns=rename_headers_list)
         df = format_date_time(df=df, date_format_list=date_format_list)
         df = filter_null_rows(df, null_rows_list)
         df["city_asset_number"] = df["city_asset_number"].apply(
@@ -246,17 +247,94 @@ def process_chunk(
         df["footprint_length"] = df["footprint_length"].apply(convert_to_integer_string)
         df["council_district"] = df["council_district"].apply(convert_to_integer_string)
         df["footprint_width"] = df["footprint_width"].apply(resolve_nan)
-        df["location"] = df["location"].apply(
-            lambda x: "" if not str(x) else f"POINT{x.replace(',', '')}"
-        )
-        df = reorder_headers(df=df, reorder_headers_list=reorder_headers_list)
+        df = df[reorder_headers_list]
     elif pipeline_name == "Austin Bikeshare Trips":
-        df = rename_headers(df=df, rename_headers_list=rename_headers_list)
+        logging.info("Renaming Headers...")
+        df = df.rename(columns=rename_headers_list)
         df = filter_null_rows(df, null_rows_list)
         logging.info("Merging date/time into start_time")
         df["start_time"] = df["time"] + " " + df["checkout_time"]
         df = format_date_time(df=df, date_format_list=date_format_list)
-        df = reorder_headers(df=df, reorder_headers_list=reorder_headers_list)
+        df = df[reorder_headers_list]
+    elif pipeline_name[0:12] == "Austin Crime":
+        logging.info("Renaming Headers...")
+        df = df.rename(columns=rename_headers_list)
+        logging.info("Formatting Date/Time...")
+        df = format_date_time(df=df, date_format_list=date_format_list)
+        logging.info("Stripping Location...")
+        df["location_description"] = (
+            df["location_description"]
+            .astype("|S")
+            .str.decode("utf-8")
+            .apply(reg_exp_tranformation, args=(r"\s{2,}", ""))
+        )
+        logging.info("Converting To Integer...")
+        df["zipcode"] = df["zipcode"].apply(convert_to_integer_string)
+        df["council_district_code"] = df["council_district_code"].apply(
+            convert_to_integer_string
+        )
+        df["x_coordinate"] = df["x_coordinate"].apply(convert_to_integer_string)
+        df["y_coordinate"] = df["y_coordinate"].apply(convert_to_integer_string)
+        if "temp_address" in df.columns:
+            logging.info("Extracting Column - Address...")
+            df["address"] = df["temp_address"]
+        else:
+            df["address"] = ""
+        df["address"] = (
+            df["address"]
+            .fillna(
+                df["location_description"].replace("nan", "")
+                + " Austin, TX "
+                + df["zipcode"]
+            )
+            .str.strip()
+        )
+        df["address"] = df["address"].apply(reg_exp_tranformation, args=(r"\n", " "))
+        logging.info("Extracting column - Year...")
+        df["year"] = df["timestamp"].apply(extract_year)
+        logging.info("Replacing values...")
+        df = df.replace(
+            to_replace={
+                "clearance_status": {
+                    "C": "Cleared by Arrest",
+                    "O": "Cleared by Exception",
+                    "N": "Not cleared",
+                },
+                "address": {"sAustin": "Austin"},
+            }
+        )
+        logging.info("Converting Exponential Values To Integer...")
+        df["unique_key"] = (
+            df["unique_key"]
+            .apply(convert_exp_to_float)
+            .astype(float)
+            .apply(convert_to_integer_string)
+        )
+        logging.info("Extracting Column - Latitude...")
+        # If address is 'Austin, TX (30.264979, -97.746598)' below code will extract
+        # value 30.264979 from the address and assign it to latitude column
+        df["latitude"] = (
+            df["address"]
+            .apply(search_string)
+            .apply(extract_lat_long, args=[r".*\((\d+\.\d+),.*"])
+        )
+        logging.info("Extracting Column - Longitude...")
+        # If address is 'Austin, TX (30.264979, -97.746598)' below code will extract
+        # value -97.746598 from the address and assign it to longitude column
+        df["longitude"] = (
+            df["address"]
+            .apply(search_string)
+            .apply(extract_lat_long, args=[r".*(\-\d+\.\d+)\)"])
+        )
+        logging.info("Extracting Column - Location...")
+        df["location"] = f"({df['latitude']},{df['longitude']})".replace("(,)", "")
+        if "temp_address" in df.columns:
+            logging.info("Dropping Column - Temp_Address...")
+            df.drop(["temp_address"], axis=1, inplace=True)
+        logging.info("Reordering Headers...")
+        df = df[reorder_headers_list]
+        if "Location_1" not in df.columns:
+            df["Location_1"] = ""
     else:
         logging.info("Pipeline Not Recognized.")
         return None
@@ -275,6 +353,45 @@ def process_chunk(
     logging.info(f"Processing Batch {target_file_batch} completed")
 
 
+def reg_exp_tranformation(str_value: str, search_pattern: str, replace_val: str) -> str:
+    str_value = re.sub(search_pattern, replace_val, str_value)
+    return str_value
+
+
+def convert_to_integer_string(input: typing.Union[str, float]) -> str:
+    str_val = ""
+    if not input or (math.isnan(input)):
+        str_val = ""
+    else:
+        str_val = str(int(round(input, 0)))
+    return str_val
+
+
+def extract_year(string_val: str) -> str:
+    string_val = string_val[0:4]
+    return string_val
+
+
+def convert_exp_to_float(exp_val: str) -> str:
+    float_val = "{:f}".format(float(exp_val))
+    return float_val
+
+
+def search_string(str_value: str) -> str:
+    if re.search(r".*\(.*\)", str_value):
+        return str(str_value)
+    else:
+        return str("")
+
+
+def extract_lat_long(str_val: str, patter: str) -> str:
+    m = re.match(patter, str_val)
+    if m:
+        return m.group(1)
+    else:
+        return ""
+
+
 def resolve_nan(input: typing.Union[str, float]) -> str:
     str_val = ""
     if not input or (math.isnan(input)):
@@ -282,15 +399,6 @@ def resolve_nan(input: typing.Union[str, float]) -> str:
     else:
         str_val = str(input)
     return str_val.replace("None", "")
-
-
-def convert_to_integer_string(input: typing.Union[str, float]) -> str:
-    str_val = ""
-    if not input or (str(input) == "nan"):
-        str_val = ""
-    else:
-        str_val = str(int(float(input)))
-    return str_val
 
 
 def format_date_time(
@@ -312,26 +420,6 @@ def format_date_time(
             else datetime.datetime.strptime(str(x), in_fmt).strftime(out_fmt)
         )
     return df
-
-
-def rename_headers(df: pd.DataFrame, rename_headers_list: dict) -> pd.DataFrame:
-    """
-    Description:
-        Rename the headers of columns within a dataframe.
-    """
-    logging.info("Renaming Headers")
-    return df.rename(columns=rename_headers_list)
-
-
-def reorder_headers(
-    df: pd.DataFrame, reorder_headers_list: typing.List[str]
-) -> pd.DataFrame:
-    """
-    Description:
-        Reorder the DataFrame columns/headers.
-    """
-    logging.info("Reordering headers..")
-    return df[reorder_headers_list]
 
 
 def filter_null_rows(

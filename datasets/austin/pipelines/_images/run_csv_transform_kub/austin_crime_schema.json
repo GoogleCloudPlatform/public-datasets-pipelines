@@ -1,0 +1,110 @@
+[
+  {
+    "name": "unique_key",
+    "type": "integer",
+    "description": "Unique identifier for the record.",
+    "mode": "nullable"
+  },
+  {
+    "name": "address",
+    "type": "string",
+    "description": "Full address where the incident occurred.",
+    "mode": "nullable"
+  },
+  {
+    "name": "census_tract",
+    "type": "float",
+    "description": "",
+    "mode": "nullable"
+  },
+  {
+    "name": "clearance_date",
+    "type": "timestamp",
+    "description": "",
+    "mode": "nullable"
+  },
+  {
+    "name": "clearance_status",
+    "type": "string",
+    "description": "",
+    "mode": "nullable"
+  },
+  {
+    "name": "council_district_code",
+    "type": "integer",
+    "description": "Indicates the council district code where the incident occurred.",
+    "mode": "nullable"
+  },
+  {
+    "name": "description",
+    "type": "string",
+    "description": "The subcategory of the primary description.",
+    "mode": "nullable"
+  },
+  {
+    "name": "district",
+    "type": "string",
+    "description": "Indicates the police district where the incident occurred.",
+    "mode": "nullable"
+  },
+  {
+    "name": "latitude",
+    "type": "float",
+    "description": "",
+    "mode": "nullable"
+  },
+  {
+    "name": "longitude",
+    "type": "float",
+    "description": "",
+    "mode": "nullable"
+  },
+  {
+    "name": "location",
+    "type": "string",
+    "description": "",
+    "mode": "nullable"
+  },
+  {
+    "name": "location_description",
+    "type": "string",
+    "description": "Description of the location where the incident occurred.",
+    "mode": "nullable"
+  },
+  {
+    "name": "primary_type",
+    "type": "string",
+    "description": "The primary description of the NIBRS/UCR code.",
+    "mode": "nullable"
+  },
+  {
+    "name": "timestamp",
+    "type": "timestamp",
+    "description": "Time when the incident occurred. This is sometimes a best estimate.",
+    "mode": "nullable"
+  },
+  {
+    "name": "x_coordinate",
+    "type": "integer",
+    "description": "The x coordinate of the location where the incident occurred",
+    "mode": "nullable"
+  },
+  {
+    "name": "y_coordinate",
+    "type": "integer",
+    "description": "The y coordinate of the location where the incident occurred",
+    "mode": "nullable"
+  },
+  {
+    "name": "year",
+    "type": "integer",
+    "description": "Indicates the year in which the incident occurred.",
+    "mode": "nullable"
+  },
+  {
+    "name": "zipcode",
+    "type": "string",
+    "description": "Indicates the zipcode where the incident occurred.",
+    "mode": "nullable"
+  }
+]
