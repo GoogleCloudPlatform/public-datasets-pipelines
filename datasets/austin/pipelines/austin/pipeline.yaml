@@ -432,7 +432,6 @@ dag:
         bash_command: "gsutil cp gs://pdp-feeds-staging/Austin_Crime/Annual_Crime_2014.csv gs://{{ var.value.composer_bucket }}/data/austin/austin_crime/austin_crime_2014_source.csv ;
           gsutil cp gs://pdp-feeds-staging/Austin_Crime/Annual_Crime_Dataset_2015.csv gs://{{ var.value.composer_bucket }}/data/austin/austin_crime/austin_crime_2015_source.csv ;
           gsutil cp gs://pdp-feeds-staging/Austin_Crime/2016_Annual_Crime_Data.csv gs://{{ var.value.composer_bucket }}/data/austin/austin_crime/austin_crime_2016_source.csv ;"
-
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
@@ -511,7 +510,6 @@ dag:
               ["timestamp", "%m/%d/%Y %I:%M:%S %p", "%Y-%m-%d %H:%M:%S"],
               ["clearance_date", "%m/%d/%Y %I:%M:%S %p", "%Y-%m-%d %H:%M:%S"]
             ]
-
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
@@ -589,8 +587,6 @@ dag:
               ["timestamp", "%m/%d/%Y %I:%M:%S %p", "%Y-%m-%d %H:%M:%S"],
               ["clearance_date", "%m/%d/%Y %I:%M:%S %p", "%Y-%m-%d %H:%M:%S"]
             ]
-
-
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
@@ -668,8 +664,6 @@ dag:
               ["timestamp", "%m/%d/%Y %I:%M:%S %p", "%Y-%m-%d %H:%M:%S"],
               ["clearance_date", "%m/%d/%Y %I:%M:%S %p", "%Y-%m-%d %H:%M:%S"]
             ]
-
-
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
       args:
@@ -689,7 +683,85 @@ dag:
         write_disposition: "WRITE_TRUNCATE"
         schema_object: "data/austin/schema/austin_crime_schema.json"
 
+    - operator: "BashOperator"
+      description: "Fetch data austin waste"
+      args:
+        task_id: "austin_waste_source_data_to_gcs"
+        bash_command: |
+          curl https://data.austintexas.gov/api/views/mbnu-4wq9/rows.csv | gsutil cp - gs://{{ var.value.composer_bucket }}/data/austin/austin_waste/austin_waste_source.csv
+    - operator: "KubernetesPodOperator"
+      description: "Run CSV transform within kubernetes pod"
+      args:
+        task_id: "austin_waste_process"
+        name: "austin_waste_process"
+        namespace: "composer-user-workloads"
+        service_account_name: "default"
+        config_file: "/home/airflow/composer_kube_config"
+        image_pull_policy: "Always"
+        image: "{{ var.json.austin.container_registry.run_csv_transform_kub }}"
+        env_vars:
+          SOURCE_URL: "gs://{{ var.value.composer_bucket }}/data/austin/austin_waste/austin_waste_source.csv"
+          SOURCE_FILE: "files/austin_waste_source.csv"
+          CHUNKSIZE: "50000"
+          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+          TARGET_GCS_PATH: "data/austin/waste_batch"
+          PIPELINE_NAME: "Austin Waste"
+          PROJECT_ID: "{{ var.value.gcp_project }}"
+          INPUT_CSV_HEADERS: >-
+            [
+              "Report Date",
+              "Load Type",
+              "Load Time",
+              "Load Weight",
+              "Dropoff Site",
+              "Route Type",
+              "Route Number",
+              "Load ID"
+            ]
+          RENAME_HEADERS_LIST: >-
+            {
+              "Load ID": "load_id",
+              "Report Date": "report_date",
+              "Load Type": "load_type",
+              "Load Time": "load_time",
+              "Load Weight": "load_weight",
+              "Dropoff Site": "dropoff_site",
+              "Route Type": "route_type",
+              "Route Number": "route_number"
+            }
+          REORDER_HEADERS_LIST: >-
+            [
+              "load_id",
+              "report_date",
+              "load_type",
+              "load_time",
+              "load_weight",
+              "dropoff_site",
+              "route_type",
+              "route_number"
+            ]
+          DATE_FORMAT_LIST: >-
+            [
+              ["report_date", "%m/%d/%Y", "%Y-%m-%d"],
+              ["load_time", "%m/%d/%Y %I:%M:%S %p", "%Y-%m-%d %H:%M:%S"]
+            ]
+    - operator: "GoogleCloudStorageToBigQueryOperator"
+      description: "Task to load CSV data to a BigQuery table"
+      args:
+        task_id: "load_full_to_bq_austin_waste"
+        bucket: "{{ var.value.composer_bucket }}"
+        source_objects: [
+          "data/austin/waste_batch/*.csv"
+        ]
+        source_format: "CSV"
+        field_delimiter: "|"
+        destination_project_dataset_table: "austin_waste.waste_and_diversion"
+        skip_leading_rows: 1
+        ignore_unknown_values: True
+        allow_quoted_newlines: True
+        write_disposition: "WRITE_TRUNCATE"
+        schema_object: "data/austin/schema/austin_waste_and_diversion_schema.json"
+
+
   graph_paths:
-    # - "[austin_crime_source_data_to_gcs >> [austin_crime_2014_process, austin_crime_2015_process, austin_crime_2016_process] >> load_full_to_bq_austin_crime]"
-    - "[austin_311_source_data_to_gcs >> austin_311_process >> load_full_to_bq_austin_311], [austin_crime_source_data_to_gcs >> [austin_crime_2014_process, austin_crime_2015_process, austin_crime_2016_process] >> load_full_to_bq_austin_crime], [austin_bs_trips_source_data_to_gcs >> austin_bs_trips_process >> load_full_to_bq_bs_trips], [austin_bs_stations_source_data_to_gcs >> austin_bs_stations_process >> load_full_to_bq_bs_stations]"
-    # - "[austin_311_source_data_to_gcs >> austin_311_process >> load_full_to_bq_austin_311], [austin_bs_trips_source_data_to_gcs >> austin_bs_trips_process >> load_full_to_bq_bs_trips], [austin_bs_stations_source_data_to_gcs >> austin_bs_stations_process >> load_full_to_bq_bs_stations]"
+    - "[austin_waste_source_data_to_gcs >> austin_waste_process >> load_full_to_bq_austin_waste], [austin_311_source_data_to_gcs >> austin_311_process >> load_full_to_bq_austin_311], [austin_crime_source_data_to_gcs >> [austin_crime_2014_process, austin_crime_2015_process, austin_crime_2016_process] >> load_full_to_bq_austin_crime], [austin_bs_trips_source_data_to_gcs >> austin_bs_trips_process >> load_full_to_bq_bs_trips], [austin_bs_stations_source_data_to_gcs >> austin_bs_stations_process >> load_full_to_bq_bs_stations]"

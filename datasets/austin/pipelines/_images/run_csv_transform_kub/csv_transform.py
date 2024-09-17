@@ -335,6 +335,11 @@ def process_chunk(
         df = df[reorder_headers_list]
         if "Location_1" not in df.columns:
             df["Location_1"] = ""
+    elif pipeline_name == "Austin Waste":
+        logging.info("Renaming Headers...")
+        df = df.rename(columns=rename_headers_list)
+        df = format_date_time(df=df, date_format_list=date_format_list)
+        df = df[reorder_headers_list]
     else:
         logging.info("Pipeline Not Recognized.")
         return None
@@ -354,11 +359,19 @@ def process_chunk(
 
 
 def reg_exp_tranformation(str_value: str, search_pattern: str, replace_val: str) -> str:
+    """
+    Description:
+        Apply the regular expression against the string and return the result.
+    """
     str_value = re.sub(search_pattern, replace_val, str_value)
     return str_value
 
 
 def convert_to_integer_string(input: typing.Union[str, float]) -> str:
+    """
+    Description:
+        Convert a numeric value to an integer as a string.
+    """
     str_val = ""
     if not input or (math.isnan(input)):
         str_val = ""
@@ -368,16 +381,28 @@ def convert_to_integer_string(input: typing.Union[str, float]) -> str:
 
 
 def extract_year(string_val: str) -> str:
+    """
+    Description:
+        Return the year portion of the date in the string.
+    """
     string_val = string_val[0:4]
     return string_val
 
 
 def convert_exp_to_float(exp_val: str) -> str:
+    """
+    Description:
+        Return a float representing the actual value as expressed in an exponential.
+    """
     float_val = "{:f}".format(float(exp_val))
     return float_val
 
 
 def search_string(str_value: str) -> str:
+    """
+    Description:
+        Search a string for a specific substring.
+    """
     if re.search(r".*\(.*\)", str_value):
         return str(str_value)
     else:
@@ -385,6 +410,12 @@ def search_string(str_value: str) -> str:
 
 
 def extract_lat_long(str_val: str, patter: str) -> str:
+    """
+    Description:
+        Search a string representation of a geographical point
+        and return either longitude or latitude value
+        depending on the pattern being passed to the function.
+    """
     m = re.match(patter, str_val)
     if m:
         return m.group(1)
@@ -393,6 +424,10 @@ def extract_lat_long(str_val: str, patter: str) -> str:
 
 
 def resolve_nan(input: typing.Union[str, float]) -> str:
+    """
+    Description:
+        Remove NaN's.
+    """
     str_val = ""
     if not input or (math.isnan(input)):
         str_val = ""

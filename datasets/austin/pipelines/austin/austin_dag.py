@@ -280,7 +280,56 @@ with DAG(
         schema_object="data/austin/schema/austin_crime_schema.json",
     )
 
+    # Fetch data austin waste
+    austin_waste_source_data_to_gcs = bash.BashOperator(
+        task_id="austin_waste_source_data_to_gcs",
+        bash_command="curl https://data.austintexas.gov/api/views/mbnu-4wq9/rows.csv | gsutil cp - gs://{{ var.value.composer_bucket }}/data/austin/austin_waste/austin_waste_source.csv\n",
+    )
+
+    # Run CSV transform within kubernetes pod
+    austin_waste_process = kubernetes_pod.KubernetesPodOperator(
+        task_id="austin_waste_process",
+        name="austin_waste_process",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
+        image_pull_policy="Always",
+        image="{{ var.json.austin.container_registry.run_csv_transform_kub }}",
+        env_vars={
+            "SOURCE_URL": "gs://{{ var.value.composer_bucket }}/data/austin/austin_waste/austin_waste_source.csv",
+            "SOURCE_FILE": "files/austin_waste_source.csv",
+            "CHUNKSIZE": "50000",
+            "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
+            "TARGET_GCS_PATH": "data/austin/waste_batch",
+            "PIPELINE_NAME": "Austin Waste",
+            "PROJECT_ID": "{{ var.value.gcp_project }}",
+            "INPUT_CSV_HEADERS": '[\n  "Report Date",\n  "Load Type",\n  "Load Time",\n  "Load Weight",\n  "Dropoff Site",\n  "Route Type",\n  "Route Number",\n  "Load ID"\n]',
+            "RENAME_HEADERS_LIST": '{\n  "Load ID": "load_id",\n  "Report Date": "report_date",\n  "Load Type": "load_type",\n  "Load Time": "load_time",\n  "Load Weight": "load_weight",\n  "Dropoff Site": "dropoff_site",\n  "Route Type": "route_type",\n  "Route Number": "route_number"\n}',
+            "REORDER_HEADERS_LIST": '[\n  "load_id",\n  "report_date",\n  "load_type",\n  "load_time",\n  "load_weight",\n  "dropoff_site",\n  "route_type",\n  "route_number"\n]',
+            "DATE_FORMAT_LIST": '[\n  ["report_date", "%m/%d/%Y", "%Y-%m-%d"],\n  ["load_time", "%m/%d/%Y %I:%M:%S %p", "%Y-%m-%d %H:%M:%S"]\n]',
+        },
+    )
+
+    # Task to load CSV data to a BigQuery table
+    load_full_to_bq_austin_waste = gcs_to_bigquery.GCSToBigQueryOperator(
+        task_id="load_full_to_bq_austin_waste",
+        bucket="{{ var.value.composer_bucket }}",
+        source_objects=["data/austin/waste_batch/*.csv"],
+        source_format="CSV",
+        field_delimiter="|",
+        destination_project_dataset_table="austin_waste.waste_and_diversion",
+        skip_leading_rows=1,
+        ignore_unknown_values=True,
+        allow_quoted_newlines=True,
+        write_disposition="WRITE_TRUNCATE",
+        schema_object="data/austin/schema/austin_waste_and_diversion_schema.json",
+    )
+
     [
+        austin_waste_source_data_to_gcs
+        >> austin_waste_process
+        >> load_full_to_bq_austin_waste
+    ], [
         austin_311_source_data_to_gcs
         >> austin_311_process
         >> load_full_to_bq_austin_311
