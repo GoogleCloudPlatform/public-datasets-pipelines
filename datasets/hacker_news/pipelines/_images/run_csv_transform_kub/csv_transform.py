@@ -239,7 +239,9 @@ def convert_json_file_to_csv(source_json_file: str) -> str:
                 "deleted",
             ]
         ]
-        df["deleted"] = df["deleted"].apply(lambda x:"" if not(x == "True" or x == "False") else x)
+        df["deleted"] = df["deleted"].apply(
+            lambda x: "" if not (x == "True" or x == "False") else x
+        )
         save_to_new_file(df, file_path=str(target_file_batch_csv), sep="|")
         # Release the dataframe memory
         del df
