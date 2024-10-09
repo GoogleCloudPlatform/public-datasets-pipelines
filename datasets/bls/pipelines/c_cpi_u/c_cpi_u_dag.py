@@ -67,7 +67,7 @@ with DAG(
     load_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_to_bq",
         bucket="{{ var.value.composer_bucket }}",
-        source_objects=["data/bls/c_cpi_u/data_output_*.csv"],
+        source_objects=["data/bls/c_cpi_u/data_output-*.csv"],
         source_format="CSV",
         destination_project_dataset_table="bls.c_cpi_u",
         skip_leading_rows=1,

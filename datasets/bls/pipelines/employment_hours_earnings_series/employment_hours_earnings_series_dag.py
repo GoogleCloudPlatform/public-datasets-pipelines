@@ -38,8 +38,9 @@ with DAG(
         task_id="transform_csv",
         startup_timeout_seconds=600,
         name="employment_hours_earnings_series",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.bls.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -65,7 +66,7 @@ with DAG(
     load_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_to_bq",
         bucket="{{ var.value.composer_bucket }}",
-        source_objects=["data/bls/employment_hours_earnings_series/data_output_*.csv"],
+        source_objects=["data/bls/employment_hours_earnings_series/data_output-*.csv"],
         source_format="CSV",
         destination_project_dataset_table="bls.employment_hours_earnings_series",
         skip_leading_rows=1,

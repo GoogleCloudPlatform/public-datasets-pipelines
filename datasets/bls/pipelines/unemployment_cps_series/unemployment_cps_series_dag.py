@@ -47,7 +47,7 @@ with DAG(
             "SOURCE_URLS": '["gs://pdp-feeds-staging/Bureau/ln.series.tsv"]',
             "SOURCE_FILES": '["files/data1.tsv"]',
             "CHUNKSIZE": "50000",
-            "TARGET_FILE": "files/data_output.tsv",
+            "TARGET_FILE": "files/data_output.csv",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/bls/unemployment_cps_series/data_output.csv",
             "PIPELINE_NAME": "unemployment_cps_series",
@@ -66,7 +66,7 @@ with DAG(
     load_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_to_bq",
         bucket="{{ var.value.composer_bucket }}",
-        source_objects=["data/bls/unemployment_cps_series/data_output_*.csv"],
+        source_objects=["data/bls/unemployment_cps_series/data_output-*.csv"],
         source_format="CSV",
         destination_project_dataset_table="bls.unemployment_cps_series",
         skip_leading_rows=1,
