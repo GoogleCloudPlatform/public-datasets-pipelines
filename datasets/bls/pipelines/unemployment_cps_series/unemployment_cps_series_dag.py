@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,13 +38,15 @@ with DAG(
         task_id="transform_csv",
         startup_timeout_seconds=600,
         name="unemployment_cps_series",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.bls.container_registry.run_csv_transform_kub }}",
         env_vars={
             "SOURCE_URLS": '["gs://pdp-feeds-staging/Bureau/ln.series.tsv"]',
             "SOURCE_FILES": '["files/data1.tsv"]',
+            "CHUNKSIZE": "50000",
             "TARGET_FILE": "files/data_output.tsv",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/bls/unemployment_cps_series/data_output.csv",
@@ -53,10 +55,10 @@ with DAG(
             "TRIM_SPACE": '["series_id","footnote_codes","series_title"]',
             "CSV_HEADERS": '["series_id","lfst_code","periodicity_code","series_title","absn_code","activity_code","ages_code","class_code","duration_code","education_code","entr_code","expr_code","hheader_code","hour_code","indy_code","jdes_code","look_code","mari_code","mjhs_code","occupation_code","orig_code","pcts_code","race_code","rjnw_code","rnlf_code","rwns_code","seek_code","sexs_code","tdat_code","vets_code","wkst_code","born_code","chld_code","disa_code","seasonal","footnote_codes","begin_year","begin_period","end_year","end_period","cert_code"]',
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "80Gi"},
+            "cpu": {"request": "2"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
@@ -64,7 +66,7 @@ with DAG(
     load_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_to_bq",
         bucket="{{ var.value.composer_bucket }}",
-        source_objects=["data/bls/unemployment_cps_series/data_output.csv"],
+        source_objects=["data/bls/unemployment_cps_series/data_output_*.csv"],
         source_format="CSV",
         destination_project_dataset_table="bls.unemployment_cps_series",
         skip_leading_rows=1,

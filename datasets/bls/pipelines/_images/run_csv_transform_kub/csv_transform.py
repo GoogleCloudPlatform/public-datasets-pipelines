@@ -28,62 +28,39 @@ from google.cloud import storage
 def main(
     source_urls: typing.List[str],
     source_files: typing.List[pathlib.Path],
+    chunksize: str,
     target_file: pathlib.Path,
     target_gcs_bucket: str,
     target_gcs_path: str,
-    headers: typing.List[str],
+    reorder_headers_list: typing.List[str],
     pipeline_name: str,
     joining_key: str,
-    columns: typing.List[str],
+    trim_space_columns: typing.List[str],
 ) -> None:
-
     logging.info(
         f"BLS {pipeline_name} process started at "
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
-
     logging.info("Creating 'files' folder")
     pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
-
     logging.info("Downloading file...")
     download_file(source_urls, source_files)
-
-    logging.info("Reading the file(s)....")
-    df = read_files(source_files, joining_key)
-
-    logging.info("Transform: Removing whitespace from headers names...")
-    df.columns = df.columns.str.strip()
-
-    logging.info("Transform: Trim Whitespaces...")
-    trim_white_spaces(df, columns)
-
-    if pipeline_name == "unemployment_cps":
-        logging.info("Transform: Replacing values...")
-        df["value"] = df["value"].apply(reg_exp_tranformation, args=(r"^(\-)$", ""))
-
-    logging.info("Transform: Reordering headers..")
-    df = df[headers]
-
-    logging.info(f"Saving to output file.. {target_file}")
-    try:
-        save_to_new_file(df, file_path=str(target_file))
-    except Exception as e:
-        logging.error(f"Error saving output file: {e}.")
-    logging.info("..Done!")
-
-    logging.info(
-        f"Uploading output file to.. gs://{target_gcs_bucket}/{target_gcs_path}"
+    logging.info("Processing file(s)....")
+    process_source_file(
+        source_file_list=source_files,
+        target_file=target_file,
+        joining_key=joining_key,
+        pipeline_name=pipeline_name,
+        chunksize=chunksize,
+        target_gcs_bucket=target_gcs_bucket,
+        target_gcs_path=target_gcs_path,
+        reorder_headers_list=reorder_headers_list,
+        trim_space_columns=trim_space_columns,
     )
-    upload_file_to_gcs(target_file, target_gcs_bucket, target_gcs_path)
-
     logging.info(
         f"BLS {pipeline_name} process completed at "
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
-
-
-def save_to_new_file(df: pd.DataFrame, file_path: pathlib.Path) -> None:
-    df.to_csv(file_path, index=False)
 
 
 def download_file(
@@ -94,19 +71,101 @@ def download_file(
         subprocess.check_call(["gsutil", "cp", f"{url}", f"{file}"])
 
 
-def read_files(source_files, joining_key):
-    df = pd.DataFrame()
-    for source_file in source_files:
-        if os.path.splitext(source_file)[1] == ".csv":
-            _df = pd.read_csv(source_file)
-        else:
-            _df = pd.read_csv(source_file, sep="\t")
-
-        if df.empty:
-            df = _df
-        else:
-            df = pd.merge(df, _df, how="left", on=joining_key)
+def load_helper_dataframe(source_file: str) -> pd.DataFrame:
+    if os.path.splitext(source_file)[1] == ".csv":
+        df = pd.read_csv(source_file)
+    else:
+        df = pd.read_csv(source_file, sep="\t")
     return df
+
+
+def process_source_file(
+    source_file_list: typing.List[str],
+    target_file: str,
+    joining_key: str,
+    pipeline_name: str,
+    chunksize: str,
+    target_gcs_bucket: str,
+    target_gcs_path: str,
+    reorder_headers_list: typing.List[str],
+    trim_space_columns: typing.List[str],
+) -> None:
+    main_file = source_file_list[0]
+    if len(source_file_list) == 2:
+        logging.info(f"Loading helper file {source_file_list[1]}")
+        df_helper = load_helper_dataframe(source_file_list[1])
+        logging.info(f"Merging file {main_file} with {source_file_list[1]}")
+    else:
+        df_helper = pd.DataFrame()
+        logging.info(f"Loading file {main_file}")
+    with pd.read_csv(
+        main_file,
+        engine="python",
+        encoding="utf-8",
+        quotechar='"',
+        chunksize=int(chunksize),
+        sep=("," if os.path.splitext(main_file)[1] == ".csv" else "\t"),
+        header=0,
+        keep_default_na=True,
+        na_values=[" "],
+    ) as reader:
+        for chunk_number, chunk in enumerate(reader):
+            target_file_batch = str(target_file).replace(
+                ".csv", "-" + str(chunk_number).zfill(10) + ".csv"
+            )
+            df = pd.DataFrame()
+            df = pd.concat([df, chunk])
+            process_chunk(
+                df=df,
+                df_helper=df_helper,
+                joining_key=joining_key,
+                pipeline_name=pipeline_name,
+                target_file_batch=target_file_batch,
+                target_gcs_bucket=target_gcs_bucket,
+                target_gcs_path=target_gcs_path,
+                reorder_headers_list=reorder_headers_list,
+                trim_space_columns=trim_space_columns,
+            )
+
+
+def process_chunk(
+    df: pd.DataFrame,
+    df_helper: pd.DataFrame,
+    joining_key: str,
+    pipeline_name: str,
+    target_file_batch: str,
+    target_gcs_bucket: str,
+    target_gcs_path: str,
+    reorder_headers_list: typing.List[str],
+    trim_space_columns: typing.List[str],
+) -> None:
+    df.columns = df.columns.str.strip()
+    if not (df_helper.empty):
+        logging.info("Merging data for chunk.")
+        df_helper.columns = df_helper.columns.str.strip()
+        df = pd.merge(df, df_helper, how="left", on=joining_key)
+    else:
+        logging.info("Skipping merge data for chunk.")
+    logging.info("Transform: Trim Column Header Whitespaces...")
+    trim_white_spaces(df, trim_space_columns)
+    if pipeline_name == "unemployment_cps":
+        logging.info("Transform: Replacing values...")
+        df["value"] = df["value"].apply(reg_exp_tranformation, args=(r"^(\-)$", ""))
+    logging.info("Transform: Reordering headers..")
+    df = df[reorder_headers_list]
+    logging.info(f"Saving to output file.. {target_file_batch}")
+    try:
+        df.to_csv(str(target_file_batch), index=False)
+    except Exception as e:
+        logging.error(f"Error saving output file: {e}.")
+    target_gcs_batch_path = os.path.join(
+        os.path.dirname(target_gcs_path), os.path.basename(target_file_batch)
+    )
+    logging.info(
+        f"Uploading output batch file {target_file_batch} to gs://{target_gcs_bucket}/{target_gcs_batch_path}"
+    )
+    upload_file_to_gcs(target_file_batch, target_gcs_bucket, target_gcs_batch_path)
+    os.unlink(target_file_batch)
 
 
 def trim_white_spaces(df: pd.DataFrame, columns: typing.List[str]) -> None:
@@ -127,15 +186,15 @@ def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) 
 
 if __name__ == "__main__":
     logging.getLogger().setLevel(logging.INFO)
-
     main(
         source_urls=json.loads(os.environ["SOURCE_URLS"]),
         source_files=json.loads(os.environ["SOURCE_FILES"]),
+        chunksize=os.environ["CHUNKSIZE"],
         target_file=pathlib.Path(os.environ["TARGET_FILE"]).expanduser(),
         target_gcs_bucket=os.environ["TARGET_GCS_BUCKET"],
         target_gcs_path=os.environ["TARGET_GCS_PATH"],
-        headers=json.loads(os.environ["CSV_HEADERS"]),
+        reorder_headers_list=json.loads(os.environ["CSV_HEADERS"]),
         pipeline_name=os.environ["PIPELINE_NAME"],
         joining_key=os.environ["JOINING_KEY"],
-        columns=json.loads(os.environ["TRIM_SPACE"]),
+        trim_space_columns=json.loads(os.environ["TRIM_SPACE"]),
     )

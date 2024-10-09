@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ with DAG(
         env_vars={
             "SOURCE_URLS": '["gs://pdp-feeds-staging/Bureau/ce.series.tsv"]',
             "SOURCE_FILES": '["files/data1.tsv"]',
+            "CHUNKSIZE": "50000",
             "TARGET_FILE": "files/data_output.csv",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/bls/employment_hours_earnings_series/data_output.csv",
@@ -53,10 +54,10 @@ with DAG(
             "TRIM_SPACE": '["series_id","footnote_codes"]',
             "CSV_HEADERS": '["series_id","supersector_code","industry_code","data_type_code","seasonal","series_title","footnote_codes","begin_year","begin_period","end_year","end_period"]',
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "8Gi"},
+            "cpu": {"request": "1"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
@@ -64,7 +65,7 @@ with DAG(
     load_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_to_bq",
         bucket="{{ var.value.composer_bucket }}",
-        source_objects=["data/bls/employment_hours_earnings_series/data_output.csv"],
+        source_objects=["data/bls/employment_hours_earnings_series/data_output_*.csv"],
         source_format="CSV",
         destination_project_dataset_table="bls.employment_hours_earnings_series",
         skip_leading_rows=1,
