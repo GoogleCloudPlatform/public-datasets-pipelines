@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,13 +38,15 @@ with DAG(
         task_id="transform_csv",
         startup_timeout_seconds=600,
         name="wm_series",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.bls.container_registry.run_csv_transform_kub }}",
         env_vars={
             "SOURCE_URLS": '["gs://pdp-feeds-staging/Bureau/wm.series.tsv"]',
             "SOURCE_FILES": '["files/data1.tsv"]',
+            "CHUNKSIZE": "50000",
             "TARGET_FILE": "files/data_output.csv",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/bls/wm_series/data_output.csv",
@@ -53,14 +55,18 @@ with DAG(
             "TRIM_SPACE": '["series_id","footnote_codes","series_title"]',
             "CSV_HEADERS": '["series_id","seasonal","area_code","ownership_code","estimate_code","industry_code","occupation_code","subcell_code","datatype_code","level_code","series_title","footnote_codes","begin_year","begin_period","end_year","end_period"]',
         },
-        resources={"request_memory": "4G", "request_cpu": "1"},
+        container_resources={
+            "memory": {"request": "80Gi"},
+            "cpu": {"request": "2"},
+            "ephemeral-storage": {"request": "10Gi"},
+        },
     )
 
     # Task to load CSV data to a BigQuery table
     load_to_bq = gcs_to_bigquery.GCSToBigQueryOperator(
         task_id="load_to_bq",
         bucket="{{ var.value.composer_bucket }}",
-        source_objects=["data/bls/wm_series/data_output.csv"],
+        source_objects=["data/bls/wm_series/data_output_*.csv"],
         source_format="CSV",
         destination_project_dataset_table="bls.wm_series",
         skip_leading_rows=1,
