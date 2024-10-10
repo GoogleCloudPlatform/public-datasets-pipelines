@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,8 +38,9 @@ with DAG(
         task_id="inpatient_2011_transform_csv",
         startup_timeout_seconds=600,
         name="cms_medicare_inpatient_charges_2011",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.cms_medicare.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -52,7 +53,6 @@ with DAG(
             "RENAME_MAPPINGS": '{"Provider Id": "provider_id","Provider Name": "provider_name","Provider Street Address": "provider_street_address","Provider City": "provider_city","Provider State": "provider_state","Provider Zip Code": "provider_zipcode","DRG Definition": "drg_definition","Hospital Referral Region (HRR) Description": "hospital_referral_region_description","Total Discharges": "total_discharges","Average Covered Charges": "average_covered_charges","Average Total Payments": "average_total_payments","Average Medicare Payments": "average_medicare_payments"}',
             "PIPELINE_NAME": "inpatient_charges_2011",
         },
-        resources={"limit_memory": "2G", "limit_cpu": "1"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -74,7 +74,6 @@ with DAG(
             "RENAME_MAPPINGS": '{"Provider Id": "provider_id","Provider Name": "provider_name","Provider Street Address": "provider_street_address","Provider City": "provider_city","Provider State": "provider_state","Provider Zip Code": "provider_zipcode","DRG Definition": "drg_definition","Hospital Referral Region (HRR) Description": "hospital_referral_region_description","Total Discharges": "total_discharges","Average Covered Charges": "average_covered_charges","Average Total Payments": "average_total_payments","Average Medicare Payments": "average_medicare_payments"}',
             "PIPELINE_NAME": "inpatient_charges_2012",
         },
-        resources={"limit_memory": "2G", "limit_cpu": "1"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -96,7 +95,6 @@ with DAG(
             "RENAME_MAPPINGS": '{"Provider Id": "provider_id","Provider Name": "provider_name","Provider Street Address": "provider_street_address","Provider City": "provider_city","Provider State": "provider_state","Provider Zip Code": "provider_zipcode","DRG Definition": "drg_definition","Hospital Referral Region (HRR) Description": "hospital_referral_region_description","Total Discharges": "total_discharges","Average Covered Charges": "average_covered_charges","Average Total Payments": "average_total_payments","Average Medicare Payments": "average_medicare_payments"}',
             "PIPELINE_NAME": "inpatient_charges_2013",
         },
-        resources={"limit_memory": "2G", "limit_cpu": "1"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -118,7 +116,6 @@ with DAG(
             "RENAME_MAPPINGS": '{"Provider Id": "provider_id","Provider Name": "provider_name","Provider Street Address": "provider_street_address","Provider City": "provider_city","Provider State": "provider_state","Provider Zip Code": "provider_zipcode","DRG Definition": "drg_definition","Hospital Referral Region (HRR) Description": "hospital_referral_region_description","Total Discharges": "total_discharges","Average Covered Charges": "average_covered_charges","Average Total Payments": "average_total_payments","Average Medicare Payments": "average_medicare_payments"}',
             "PIPELINE_NAME": "inpatient_charges_2014",
         },
-        resources={"limit_memory": "2G", "limit_cpu": "1"},
     )
 
     # Run CSV transform within kubernetes pod
@@ -140,7 +137,6 @@ with DAG(
             "RENAME_MAPPINGS": '{"Provider Id": "provider_id","Provider Name": "provider_name","Provider Street Address": "provider_street_address","Provider City": "provider_city","Provider State": "provider_state","Provider Zip Code": "provider_zipcode","DRG Definition": "drg_definition","Hospital Referral Region (HRR) Description": "hospital_referral_region_description","Total Discharges": "total_discharges","Average Covered Charges": "average_covered_charges","Average Total Payments": "average_total_payments","Average Medicare Payments": "average_medicare_payments"}',
             "PIPELINE_NAME": "inpatient_charges_2015",
         },
-        resources={"limit_memory": "2G", "limit_cpu": "1"},
     )
 
     # Task to load CSV data to a BigQuery table
