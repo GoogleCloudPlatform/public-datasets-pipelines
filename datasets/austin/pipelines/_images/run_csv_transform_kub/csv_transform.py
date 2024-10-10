@@ -14,14 +14,14 @@
 import datetime
 import json
 import logging
+import math
 import os
 import pathlib
+import re
 import typing
 
 import pandas as pd
-import requests
-from google.api_core.exceptions import NotFound
-from google.cloud import bigquery, storage
+from google.cloud import storage
 
 
 def main(
@@ -29,13 +29,9 @@ def main(
     source_url: str,
     chunksize: str,
     source_file: pathlib.Path,
-    target_file: pathlib.Path,
     target_gcs_bucket: str,
     target_gcs_path: str,
     project_id: str,
-    dataset_id: str,
-    destination_table: str,
-    schema_path: str,
     date_format_list: typing.List[str],
     int_cols_list: typing.List[str],
     remove_newlines_cols_list: typing.List[str],
@@ -45,20 +41,41 @@ def main(
     rename_headers_list: dict,
     reorder_headers_list: typing.List[str],
 ) -> None:
+    """
+    Description:
+        Main process function
+    Args:
+        pipeline_name: Name of the pipeline being executed.
+        source_url: GCS bucket used to acquire the source file.
+        chunksize: Number of rows in the source file to chunk when processing.
+        source_file: Local path to download the source file to for prrocessing.
+        target_gcs_bucket: GCS Bucket used to manage source and output files.
+        target_gcs_path: GCS Bucket Path to write the target batch files to for later loading.
+        project_id: GCP Project ID used to access the bucket containing the staged source file.
+        date_format_list: List of tuples pertaining to the following metadata:
+            field/column: Column containing the date field to transform the date value formats within.
+            in_format: Format of the dates in the source file.
+            out_format: Format of the dates to write to.  Typically "%Y-%m-%d %H:%M:%S"
+        int_cols_list: List of columns to convert values to integers when transforming to output data.
+        remove_newlines_cols_list: List of columns to replace all newlines in with spaces.
+        null_rows_list: List of columns that are filtered out if the rows contain nulls in those columns.
+            Typically to prevent null index violation on required fields such as a unique key.
+        input_headers: Defines the names of the columns in the source file in ordinal position.
+        data_dtypes: Defines the datatypes of each source file column in its ordinal position.
+        rename_headers_list: Dictionary list specifying columns to convert headers to during the column renaming process.
+        reorder_headers_list: List of columns in the new ordinal position to use in order to write the output file.
+    """
     logging.info(f"{pipeline_name} process started")
     logging.info("creating 'files' folder")
-    pathlib.Path("./files").mkdir(parents=True, exist_ok=True)
+    pathlib.Path(f"./{os.path.dirname(source_file)}").mkdir(parents=True, exist_ok=True)
     execute_pipeline(
+        pipeline_name=pipeline_name,
         source_url=source_url,
         chunksize=chunksize,
         source_file=source_file,
-        target_file=target_file,
         target_gcs_bucket=target_gcs_bucket,
         target_gcs_path=target_gcs_path,
         project_id=project_id,
-        dataset_id=dataset_id,
-        destination_table=destination_table,
-        schema_path=schema_path,
         date_format_list=date_format_list,
         int_cols_list=int_cols_list,
         remove_newlines_cols_list=remove_newlines_cols_list,
@@ -72,16 +89,13 @@ def main(
 
 
 def execute_pipeline(
+    pipeline_name: str,
     source_url: str,
     chunksize: str,
     source_file: pathlib.Path,
-    target_file: pathlib.Path,
     target_gcs_bucket: str,
     target_gcs_path: str,
     project_id: str,
-    dataset_id: str,
-    destination_table: str,
-    schema_path: str,
     date_format_list: typing.List[str],
     int_cols_list: typing.List[str],
     remove_newlines_cols_list: typing.List[str],
@@ -91,12 +105,21 @@ def execute_pipeline(
     rename_headers_list: dict,
     reorder_headers_list: typing.List[str],
 ) -> None:
-    download_file_http(source_url, source_file)
+    """
+    Description:
+        Stage the source file locally and execute the transform process.
+    """
+    download_file_gcs(
+        project_id=project_id,
+        source_location=source_url,
+        destination_folder=os.path.dirname(source_file),
+    )
     process_source_file(
+        pipeline_name=pipeline_name,
         source_file=source_file,
         chunksize=chunksize,
-        target_file=target_file,
-        destination_table=destination_table,
+        target_gcs_bucket=target_gcs_bucket,
+        target_gcs_path=target_gcs_path,
         input_headers=input_headers,
         dtypes=data_dtypes,
         date_format_list=date_format_list,
@@ -106,41 +129,30 @@ def execute_pipeline(
         reorder_headers_list=reorder_headers_list,
         rename_headers_list=rename_headers_list,
     )
-    if os.path.exists(target_file):
-        upload_file_to_gcs(
-            file_path=target_file,
-            target_gcs_bucket=target_gcs_bucket,
-            target_gcs_path=target_gcs_path,
-        )
-        table_exists = create_dest_table(
-            project_id=project_id,
-            dataset_id=dataset_id,
-            table_id=destination_table,
-            schema_filepath=schema_path,
-            bucket_name=target_gcs_bucket,
-        )
-        if table_exists:
-            load_data_to_bq(
-                project_id=project_id,
-                dataset_id=dataset_id,
-                table_id=destination_table,
-                file_path=target_file,
-                truncate_table=True,
-                field_delimiter="|",
-            )
-        else:
-            error_msg = f"Error: Data was not loaded because the destination table {project_id}.{dataset_id}.{destination_table} does not exist and/or could not be created."
-            raise ValueError(error_msg)
-    else:
-        logging.info(
-            f"Informational: The data file {target_file} was not generated because no data file was available.  Continuing."
-        )
+
+
+def download_file_gcs(
+    project_id: str, source_location: str, destination_folder: str
+) -> None:
+    """
+    Description:
+        Download a file from GCS to local storage.
+    """
+    object_name = os.path.basename(source_location)
+    dest_object = f"{destination_folder}/{object_name}"
+    storage_client = storage.Client(project_id)
+    bucket_name = str.split(source_location, "gs://")[1].split("/")[0]
+    bucket = storage_client.bucket(bucket_name)
+    source_object_path = str.split(source_location, f"gs://{bucket_name}/")[1]
+    blob = bucket.blob(source_object_path)
+    blob.download_to_filename(dest_object)
 
 
 def process_source_file(
+    pipeline_name: str,
     source_file: str,
-    target_file: str,
-    destination_table: str,
+    target_gcs_bucket: str,
+    target_gcs_path: str,
     input_headers: typing.List[str],
     dtypes: dict,
     chunksize: str,
@@ -151,6 +163,10 @@ def process_source_file(
     reorder_headers_list: typing.List[str],
     rename_headers_list: dict,
 ) -> None:
+    """
+    Description:
+        Process the source file.
+    """
     logging.info(f"Opening batch file {source_file}")
     with pd.read_csv(
         source_file,  # path to main source file to load in batches
@@ -159,25 +175,25 @@ def process_source_file(
         quotechar='"',  # string separator, typically double-quotes
         chunksize=int(chunksize),  # size of batch data, in no. of records
         sep=",",  # data column separator, typically ","
-        header=0,  # use when the data file does not contain a header
+        header=1,  # use when the data file does not contain a header
         names=input_headers,
         dtype=dtypes,
         keep_default_na=True,
         na_values=[" "],
     ) as reader:
         for chunk_number, chunk in enumerate(reader):
+            target_file = str(source_file).replace("source.csv", "output.csv")
             target_file_batch = str(target_file).replace(
-                ".csv", "-" + str(chunk_number) + ".csv"
+                ".csv", f"-{str(chunk_number).zfill(10)}.csv"
             )
             df = pd.DataFrame()
             df = pd.concat([df, chunk])
             process_chunk(
                 df=df,
+                pipeline_name=pipeline_name,
                 target_file_batch=target_file_batch,
-                target_file=target_file,
-                destination_table=destination_table,
-                include_header=(chunk_number == 0),
-                truncate_file=(chunk_number == 0),
+                target_gcs_bucket=target_gcs_bucket,
+                target_gcs_path=target_gcs_path,
                 date_format_list=date_format_list,
                 int_cols_list=int_cols_list,
                 remove_newlines_cols_list=remove_newlines_cols_list,
@@ -189,11 +205,10 @@ def process_source_file(
 
 def process_chunk(
     df: pd.DataFrame,
+    pipeline_name: str,
     target_file_batch: str,
-    target_file: str,
-    destination_table: str,
-    include_header: bool,
-    truncate_file: bool,
+    target_gcs_bucket: str,
+    target_gcs_path: str,
     date_format_list: typing.List[str],
     int_cols_list: typing.List[str],
     remove_newlines_cols_list: typing.List[str],
@@ -201,9 +216,14 @@ def process_chunk(
     reorder_headers_list: typing.List[str],
     rename_headers_list: dict,
 ) -> None:
+    """
+    Description:
+        For each chunk of source data, process and transform.
+        The data chunks are then written to transformed output files and posted to the GCS batch folder for loading
+    """
     logging.info(f"Processing Batch {target_file_batch} started")
-    if destination_table == "311_service_requests":
-        df = rename_headers(df=df, rename_headers_list=rename_headers_list)
+    if pipeline_name == "Austin 311 Service Requests By Year":
+        df = df.rename(columns=rename_headers_list)
         for col in remove_newlines_cols_list:
             logging.info(f"Removing newlines from {col}")
             df[col] = (
@@ -214,242 +234,267 @@ def process_chunk(
         df = filter_null_rows(df, null_rows_list)
         for int_col in int_cols_list:
             df[int_col] = df[int_col].fillna(0).astype("int32")
-        df = reorder_headers(df=df, reorder_headers_list=reorder_headers_list)
-    elif destination_table == "bikeshare_trips":
-        df = rename_headers(df=df, rename_headers_list=rename_headers_list)
+        df = format_date_time(df=df, date_format_list=date_format_list)
+        df = df[reorder_headers_list]
+    elif pipeline_name == "Austin Bikeshare Stations":
+        df = df.rename(columns=rename_headers_list)
+        df = format_date_time(df=df, date_format_list=date_format_list)
+        df = filter_null_rows(df, null_rows_list)
+        df["city_asset_number"] = df["city_asset_number"].apply(
+            convert_to_integer_string
+        )
+        df["number_of_docks"] = df["number_of_docks"].apply(convert_to_integer_string)
+        df["footprint_length"] = df["footprint_length"].apply(convert_to_integer_string)
+        df["council_district"] = df["council_district"].apply(convert_to_integer_string)
+        df["footprint_width"] = df["footprint_width"].apply(resolve_nan)
+        df = df[reorder_headers_list]
+    elif pipeline_name == "Austin Bikeshare Trips":
+        logging.info("Renaming Headers...")
+        df = df.rename(columns=rename_headers_list)
         df = filter_null_rows(df, null_rows_list)
         logging.info("Merging date/time into start_time")
         df["start_time"] = df["time"] + " " + df["checkout_time"]
-        for dt_col in date_format_list:
-            logging.info(f"Converting Date Format {dt_col}")
-            df[dt_col] = df[dt_col].apply(
-                lambda x: datetime.datetime.strptime(
-                    str(x), "%m/%d/%Y %H:%M:%S"
-                ).strftime("%Y-%m-%d %H:%M:%S")
+        df = format_date_time(df=df, date_format_list=date_format_list)
+        df = df[reorder_headers_list]
+    elif pipeline_name[0:12] == "Austin Crime":
+        logging.info("Renaming Headers...")
+        df = df.rename(columns=rename_headers_list)
+        logging.info("Formatting Date/Time...")
+        df = format_date_time(df=df, date_format_list=date_format_list)
+        logging.info("Stripping Location...")
+        df["location_description"] = (
+            df["location_description"]
+            .astype("|S")
+            .str.decode("utf-8")
+            .apply(reg_exp_tranformation, args=(r"\s{2,}", ""))
+        )
+        logging.info("Converting To Integer...")
+        df["zipcode"] = df["zipcode"].apply(convert_to_integer_string)
+        df["council_district_code"] = df["council_district_code"].apply(
+            convert_to_integer_string
+        )
+        df["x_coordinate"] = df["x_coordinate"].apply(convert_to_integer_string)
+        df["y_coordinate"] = df["y_coordinate"].apply(convert_to_integer_string)
+        if "temp_address" in df.columns:
+            logging.info("Extracting Column - Address...")
+            df["address"] = df["temp_address"]
+        else:
+            df["address"] = ""
+        df["address"] = (
+            df["address"]
+            .fillna(
+                df["location_description"].replace("nan", "")
+                + " Austin, TX "
+                + df["zipcode"]
             )
-        df = reorder_headers(df=df, reorder_headers_list=reorder_headers_list)
+            .str.strip()
+        )
+        df["address"] = df["address"].apply(reg_exp_tranformation, args=(r"\n", " "))
+        logging.info("Extracting column - Year...")
+        df["year"] = df["timestamp"].apply(extract_year)
+        logging.info("Replacing values...")
+        df = df.replace(
+            to_replace={
+                "clearance_status": {
+                    "C": "Cleared by Arrest",
+                    "O": "Cleared by Exception",
+                    "N": "Not cleared",
+                },
+                "address": {"sAustin": "Austin"},
+            }
+        )
+        logging.info("Converting Exponential Values To Integer...")
+        df["unique_key"] = (
+            df["unique_key"]
+            .apply(convert_exp_to_float)
+            .astype(float)
+            .apply(convert_to_integer_string)
+        )
+        logging.info("Extracting Column - Latitude...")
+        # If address is 'Austin, TX (30.264979, -97.746598)' below code will extract
+        # value 30.264979 from the address and assign it to latitude column
+        df["latitude"] = (
+            df["address"]
+            .apply(search_string)
+            .apply(extract_lat_long, args=[r".*\((\d+\.\d+),.*"])
+        )
+        logging.info("Extracting Column - Longitude...")
+        # If address is 'Austin, TX (30.264979, -97.746598)' below code will extract
+        # value -97.746598 from the address and assign it to longitude column
+        df["longitude"] = (
+            df["address"]
+            .apply(search_string)
+            .apply(extract_lat_long, args=[r".*(\-\d+\.\d+)\)"])
+        )
+        logging.info("Extracting Column - Location...")
+        df["location"] = f"({df['latitude']},{df['longitude']})".replace("(,)", "")
+        if "temp_address" in df.columns:
+            logging.info("Dropping Column - Temp_Address...")
+            df.drop(["temp_address"], axis=1, inplace=True)
+        logging.info("Reordering Headers...")
+        df = df[reorder_headers_list]
+        if "Location_1" not in df.columns:
+            df["Location_1"] = ""
+    elif pipeline_name == "Austin Waste":
+        logging.info("Renaming Headers...")
+        df = df.rename(columns=rename_headers_list)
+        df = format_date_time(df=df, date_format_list=date_format_list)
+        df = df[reorder_headers_list]
     else:
         logging.info("Pipeline Not Recognized.")
         return None
     save_to_new_file(df=df, file_path=str(target_file_batch), sep="|")
-    append_batch_file(
-        batch_file_path=target_file_batch,
-        target_file_path=target_file,
-        include_header=include_header,
-        truncate_target_file=truncate_file,
+    # Free up memory from the pandas dataframe
+    del df
+    # write batch file to GCS bucket for loading, removing the local batch file copy as clean-up.
+    upload_file_to_gcs(
+        file_path=str(target_file_batch),
+        target_gcs_bucket=target_gcs_bucket,
+        target_gcs_path=os.path.join(
+            target_gcs_path, os.path.basename(str(target_file_batch))
+        ),
+        remove_file=True,
     )
     logging.info(f"Processing Batch {target_file_batch} completed")
 
 
-def rename_headers(df: pd.DataFrame, rename_headers_list: dict) -> pd.DataFrame:
-    logging.info("Renaming Headers")
-    return df.rename(columns=rename_headers_list)
+def reg_exp_tranformation(str_value: str, search_pattern: str, replace_val: str) -> str:
+    """
+    Description:
+        Apply the regular expression against the string and return the result.
+    """
+    str_value = re.sub(search_pattern, replace_val, str_value)
+    return str_value
 
 
-def reorder_headers(
-    df: pd.DataFrame, reorder_headers_list: typing.List[str]
+def convert_to_integer_string(input: typing.Union[str, float]) -> str:
+    """
+    Description:
+        Convert a numeric value to an integer as a string.
+    """
+    str_val = ""
+    if not input or (math.isnan(input)):
+        str_val = ""
+    else:
+        str_val = str(int(round(input, 0)))
+    return str_val
+
+
+def extract_year(string_val: str) -> str:
+    """
+    Description:
+        Return the year portion of the date in the string.
+    """
+    string_val = string_val[0:4]
+    return string_val
+
+
+def convert_exp_to_float(exp_val: str) -> str:
+    """
+    Description:
+        Return a float representing the actual value as expressed in an exponential.
+    """
+    float_val = "{:f}".format(float(exp_val))
+    return float_val
+
+
+def search_string(str_value: str) -> str:
+    """
+    Description:
+        Search a string for a specific substring.
+    """
+    if re.search(r".*\(.*\)", str_value):
+        return str(str_value)
+    else:
+        return str("")
+
+
+def extract_lat_long(str_val: str, patter: str) -> str:
+    """
+    Description:
+        Search a string representation of a geographical point
+        and return either longitude or latitude value
+        depending on the pattern being passed to the function.
+    """
+    m = re.match(patter, str_val)
+    if m:
+        return m.group(1)
+    else:
+        return ""
+
+
+def resolve_nan(input: typing.Union[str, float]) -> str:
+    """
+    Description:
+        Remove NaN's.
+    """
+    str_val = ""
+    if not input or (math.isnan(input)):
+        str_val = ""
+    else:
+        str_val = str(input)
+    return str_val.replace("None", "")
+
+
+def format_date_time(
+    df: pd.DataFrame, date_format_list: typing.List[typing.List]
 ) -> pd.DataFrame:
-    logging.info("Reordering headers..")
-    return df[reorder_headers_list]
+    """
+    Description:
+        Format date/time values in a column within a DataFrame.
+    """
+    logging.info("Formatting Date/time values")
+    for dt_list_item in date_format_list:
+        col_nm = dt_list_item[0]
+        in_fmt = dt_list_item[1]
+        out_fmt = dt_list_item[2]
+        logging.info(f"Converting Date Format {col_nm}")
+        df[col_nm] = df[col_nm].apply(
+            lambda x: ""
+            if (not str(x) or str(x) == "nan")
+            else datetime.datetime.strptime(str(x), in_fmt).strftime(out_fmt)
+        )
+    return df
 
 
 def filter_null_rows(
     df: pd.DataFrame, null_rows_list: typing.List[str]
 ) -> pd.DataFrame:
+    """
+    Description:
+        Filter out rows in the DataFrame where the value of the specified column is null.
+    """
     for col in null_rows_list:
         df = df[df[col] != ""]
     return df
 
 
 def save_to_new_file(df: pd.DataFrame, file_path: str, sep: str = "|") -> None:
+    """
+    Description:
+        Write the DataFrame to a pipe-delimited file.
+    """
     logging.info(f"Saving data to target file.. {file_path} ...")
     df.to_csv(file_path, index=False, sep=sep)
 
 
-def download_file_http(
-    source_url: str, source_file: pathlib.Path, continue_on_error: bool = False
-) -> bool:
-    logging.info(f"Downloading {source_url} to {source_file}")
-    try:
-        src_file = requests.get(source_url, stream=True)
-        rtn_status_code = src_file.status_code
-        if 400 <= rtn_status_code <= 499:
-            logging.info(
-                f"Unable to download file {source_url} (error code was {rtn_status_code})"
-            )
-            return False
-        else:
-            with open(source_file, "wb") as f:
-                for chunk in src_file:
-                    f.write(chunk)
-            return True
-    except requests.exceptions.RequestException as e:
-        if e == requests.exceptions.HTTPError:
-            err_msg = "A HTTP error occurred."
-        elif e == requests.exceptions.Timeout:
-            err_msg = "A HTTP timeout error occurred."
-        elif e == requests.exceptions.TooManyRedirects:
-            err_msg = "Too Many Redirects occurred."
-        if not continue_on_error:
-            logging.info(f"{err_msg} Unable to obtain {source_url}")
-            raise SystemExit(e)
-        else:
-            logging.info(f"{err_msg} Unable to obtain {source_url}.")
-        return False
-
-
-def load_data_to_bq(
-    project_id: str,
-    dataset_id: str,
-    table_id: str,
-    file_path: str,
-    truncate_table: bool,
-    field_delimiter: str = "|",
-) -> None:
-    logging.info(
-        f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} started"
-    )
-    client = bigquery.Client(project=project_id)
-    table_ref = client.dataset(dataset_id).table(table_id)
-    job_config = bigquery.LoadJobConfig()
-    job_config.source_format = bigquery.SourceFormat.CSV
-    job_config.field_delimiter = field_delimiter
-    if truncate_table:
-        job_config.write_disposition = "WRITE_TRUNCATE"
-    else:
-        job_config.write_disposition = "WRITE_APPEND"
-    job_config.create_disposition = "CREATE_IF_NEEDED"
-    job_config.skip_leading_rows = 1  # ignore the header
-    job_config.autodetect = False
-    with open(file_path, "rb") as source_file:
-        job = client.load_table_from_file(source_file, table_ref, job_config=job_config)
-    job.result()
-    logging.info(
-        f"Loading data from {file_path} into {project_id}.{dataset_id}.{table_id} completed"
-    )
-
-
-def create_dest_table(
-    project_id: str,
-    dataset_id: str,
-    table_id: str,
-    schema_filepath: list,
-    bucket_name: str,
-    drop_table: bool = False,
-) -> bool:
-    table_ref = f"{project_id}.{dataset_id}.{table_id}"
-    logging.info(f"Attempting to create table {table_ref} if it doesn't already exist")
-    client = bigquery.Client()
-    table_exists = False
-    try:
-        table = client.get_table(table_ref)
-        table_exists_id = table.table_id
-        logging.info(f"Table {table_exists_id} currently exists.")
-        if drop_table:
-            logging.info("Dropping existing table")
-            client.delete_table(table)
-            table = None
-    except NotFound:
-        table = None
-    if not table:
-        logging.info(
-            (
-                f"Table {table_ref} currently does not exist.  Attempting to create table."
-            )
-        )
-        if check_gcs_file_exists(schema_filepath, bucket_name):
-            schema = create_table_schema([], bucket_name, schema_filepath)
-            table = bigquery.Table(table_ref, schema=schema)
-            client.create_table(table)
-            print(f"Table {table_ref} was created".format(table_id))
-            table_exists = True
-        else:
-            file_name = os.path.split(schema_filepath)[1]
-            file_path = os.path.split(schema_filepath)[0]
-            logging.info(
-                f"Error: Unable to create table {table_ref} because schema file {file_name} does not exist in location {file_path} in bucket {bucket_name}"
-            )
-            table_exists = False
-    else:
-        table_exists = True
-    return table_exists
-
-
-def check_gcs_file_exists(file_path: str, bucket_name: str) -> bool:
-    storage_client = storage.Client()
-    bucket = storage_client.bucket(bucket_name)
-    exists = storage.Blob(bucket=bucket, name=file_path).exists(storage_client)
-    return exists
-
-
-def create_table_schema(
-    schema_structure: list, bucket_name: str = "", schema_filepath: str = ""
-) -> list:
-    logging.info(f"Defining table schema... {bucket_name} ... {schema_filepath}")
-    schema = []
-    if not (schema_filepath):
-        schema_struct = schema_structure
-    else:
-        storage_client = storage.Client()
-        bucket = storage_client.get_bucket(bucket_name)
-        blob = bucket.blob(schema_filepath)
-        schema_struct = json.loads(blob.download_as_string(client=None))
-    for schema_field in schema_struct:
-        fld_name = schema_field["name"]
-        fld_type = schema_field["type"]
-        try:
-            fld_descr = schema_field["description"]
-        except KeyError:
-            fld_descr = ""
-        fld_mode = schema_field["mode"]
-        schema.append(
-            bigquery.SchemaField(
-                name=fld_name, field_type=fld_type, mode=fld_mode, description=fld_descr
-            )
-        )
-    return schema
-
-
-def append_batch_file(
-    batch_file_path: str,
-    target_file_path: str,
-    include_header: bool,
-    truncate_target_file: bool,
-) -> None:
-    logging.info(
-        f"Appending file {batch_file_path} to file {target_file_path} with include_header={include_header} and truncate_target_file={truncate_target_file}"
-    )
-    with open(batch_file_path, "r") as data_file:
-        if truncate_target_file:
-            target_file = open(target_file_path, "w+").close()
-        with open(target_file_path, "a+") as target_file:
-            if not include_header:
-                logging.info(
-                    f"Appending batch file {batch_file_path} to {target_file_path} without header"
-                )
-                next(data_file)
-            else:
-                logging.info(
-                    f"Appending batch file {batch_file_path} to {target_file_path} with header"
-                )
-            target_file.write(data_file.read())
-            data_file.close()
-            target_file.close()
-            if os.path.exists(batch_file_path):
-                os.remove(batch_file_path)
-
-
 def upload_file_to_gcs(
-    file_path: pathlib.Path, target_gcs_bucket: str, target_gcs_path: str
+    file_path: pathlib.Path,
+    target_gcs_bucket: str,
+    target_gcs_path: str,
+    remove_file: bool = False,
 ) -> None:
+    """
+    Description:
+        Upload the file to GCS.
+    """
     if os.path.exists(file_path):
-        logging.info(
-            f"Uploading output file to gs://{target_gcs_bucket}/{target_gcs_path}"
-        )
         storage_client = storage.Client()
         bucket = storage_client.bucket(target_gcs_bucket)
         blob = bucket.blob(target_gcs_path)
         blob.upload_from_filename(file_path)
+        if remove_file:
+            os.unlink(file_path)
     else:
         logging.info(
             f"Cannot upload file to gs://{target_gcs_bucket}/{target_gcs_path} as it does not exist."
@@ -462,14 +507,10 @@ if __name__ == "__main__":
         pipeline_name=os.environ.get("PIPELINE_NAME", ""),
         source_url=os.environ.get("SOURCE_URL", ""),
         source_file=pathlib.Path(os.environ.get("SOURCE_FILE", "")).expanduser(),
-        target_file=pathlib.Path(os.environ.get("TARGET_FILE", "")).expanduser(),
         chunksize=os.environ.get("CHUNKSIZE", ""),
         target_gcs_bucket=os.environ.get("TARGET_GCS_BUCKET", ""),
         target_gcs_path=os.environ.get("TARGET_GCS_PATH", ""),
         project_id=os.environ.get("PROJECT_ID", ""),
-        dataset_id=os.environ.get("DATASET_ID", ""),
-        destination_table=os.environ.get("DESTINATION_TABLE", ""),
-        schema_path=os.environ.get("SCHEMA_PATH", ""),
         rename_headers_list=json.loads(os.environ.get("RENAME_HEADERS_LIST", r"{}")),
         int_cols_list=json.loads(os.environ.get("INT_COLS_LIST", r"[]")),
         date_format_list=json.loads(os.environ.get("DATE_FORMAT_LIST", r"{}")),

@@ -1,0 +1,42 @@
+[
+    {
+        "name": "load_id",
+        "type": "INTEGER",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "report_date",
+        "type": "DATE",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "load_type",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "load_time",
+        "type": "TIMESTAMP",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "load_weight",
+        "type": "FLOAT",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "dropoff_site",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "route_type",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    },
+    {
+        "name": "route_number",
+        "type": "STRING",
+        "mode": "NULLABLE"
+    }
+]
