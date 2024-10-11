@@ -37,8 +37,9 @@ with DAG(
         task_id="sts",
         startup_timeout_seconds=1000,
         name="load_data",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.covid19_symptom_search.container_registry.run_transfer_service_kub }}",
         env_vars={
@@ -47,10 +48,10 @@ with DAG(
             "SINK_BUCKET": "{{ var.value.composer_bucket }}",
             "GCS_PATH": "data/covid19_symptom_search/",
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "32Gi"},
+            "cpu": {"request": "2"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
@@ -59,8 +60,9 @@ with DAG(
         task_id="symptom_search_country_daily",
         startup_timeout_seconds=1000,
         name="load_data",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.covid19_symptom_search.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -75,10 +77,10 @@ with DAG(
             "TABLE_ID": "symptom_search_country_daily",
             "CHUNK_SIZE": "500000",
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "32Gi"},
+            "cpu": {"request": "2"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
@@ -87,8 +89,9 @@ with DAG(
         task_id="symptom_search_country_weekly",
         startup_timeout_seconds=1000,
         name="load_data",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.covid19_symptom_search.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -103,10 +106,10 @@ with DAG(
             "TABLE_ID": "symptom_search_country_weekly",
             "CHUNK_SIZE": "500000",
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "32Gi"},
+            "cpu": {"request": "2"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
@@ -115,8 +118,9 @@ with DAG(
         task_id="symptom_search_sub_region_1_daily",
         startup_timeout_seconds=1000,
         name="load_data",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.covid19_symptom_search.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -131,10 +135,10 @@ with DAG(
             "TABLE_ID": "symptom_search_sub_region_1_daily",
             "CHUNK_SIZE": "500000",
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "32Gi"},
+            "cpu": {"request": "2"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
@@ -143,8 +147,9 @@ with DAG(
         task_id="symptom_search_sub_region_1_weekly",
         startup_timeout_seconds=1000,
         name="load_data",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.covid19_symptom_search.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -159,10 +164,10 @@ with DAG(
             "TABLE_ID": "symptom_search_sub_region_1_weekly",
             "CHUNK_SIZE": "500000",
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "32Gi"},
+            "cpu": {"request": "2"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
@@ -171,8 +176,9 @@ with DAG(
         task_id="symptom_search_sub_region_2_daily",
         startup_timeout_seconds=1000,
         name="load_data",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.covid19_symptom_search.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -187,10 +193,10 @@ with DAG(
             "TABLE_ID": "symptom_search_sub_region_2_daily",
             "CHUNK_SIZE": "500000",
         },
-        resources={
-            "request_memory": "16G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "32Gi"},
+            "cpu": {"request": "2"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
@@ -199,8 +205,9 @@ with DAG(
         task_id="symptom_search_sub_region_2_weekly",
         startup_timeout_seconds=1000,
         name="load_data",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.covid19_symptom_search.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -215,10 +222,10 @@ with DAG(
             "TABLE_ID": "symptom_search_sub_region_2_weekly",
             "CHUNK_SIZE": "500000",
         },
-        resources={
-            "request_memory": "8G",
-            "request_cpu": "2",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "32Gi"},
+            "cpu": {"request": "2"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
