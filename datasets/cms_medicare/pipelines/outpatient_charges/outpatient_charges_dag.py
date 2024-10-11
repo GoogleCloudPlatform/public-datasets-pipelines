@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,8 +38,9 @@ with DAG(
         task_id="outpatient_2011_transform_csv",
         startup_timeout_seconds=600,
         name="cms_medicare_outpatient_charges_2011",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.cms_medicare.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -59,8 +60,9 @@ with DAG(
         task_id="outpatient_2012_transform_csv",
         startup_timeout_seconds=600,
         name="cms_medicare_outpatient_charges_2012",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.cms_medicare.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -80,8 +82,9 @@ with DAG(
         task_id="outpatient_2013_transform_csv",
         startup_timeout_seconds=600,
         name="cms_medicare_outpatient_charges_2013",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.cms_medicare.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -101,8 +104,9 @@ with DAG(
         task_id="outpatient_2014_transform_csv",
         startup_timeout_seconds=600,
         name="cms_medicare_outpatient_charges_2014",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.cms_medicare.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -115,7 +119,6 @@ with DAG(
             "RENAME_MAPPINGS": '{"provider_id": "provider_id","provider_name": "provider_name","Provider_Street_Address": "provider_street_address","Provider_City": "provider_city","Provider_State": "provider_state","Provider_Zip_Code": "provider_zipcode","apc": "apc","Hospital_Referral_Region": "hospital_referral_region","Outpatient_Services": "outpatient_services","Average_Estimated_Submitted_Charges": "average_estimated_submitted_charges","Average_Total_Payments": "average_total_payments"}',
             "PIPELINE_NAME": "outpatient_charges_2014",
         },
-        resources={"limit_memory": "4G", "limit_cpu": "1"},
     )
 
     # Task to load CSV data to a BigQuery table

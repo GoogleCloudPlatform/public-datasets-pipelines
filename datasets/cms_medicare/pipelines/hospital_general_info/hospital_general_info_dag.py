@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,8 +38,9 @@ with DAG(
         task_id="hospital_info_transform_csv",
         startup_timeout_seconds=600,
         name="cms_medicare_hospital_general_info",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.cms_medicare.container_registry.run_csv_transform_kub }}",
         env_vars={
