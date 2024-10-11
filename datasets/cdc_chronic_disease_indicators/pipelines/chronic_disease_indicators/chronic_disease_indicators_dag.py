@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,8 +38,9 @@ with DAG(
         task_id="chronic_disease_transform_csv",
         startup_timeout_seconds=600,
         name="cdc_chronic_disease_indicators_chronic_disease_indicators",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.cdc_chronic_disease_indicators.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -52,10 +53,10 @@ with DAG(
             "RENAME_MAPPINGS": '{"yearstart": "yearstart","yearend": "yearend","locationabbr": "locationabbr","locationdesc": "locationdesc","datasource": "datasource","topic": "topic","question": "question","response": "response","datavalueunit": "datavalueunit","datavaluetype": "datavaluetype","datavalue": "datavalue","datavaluealt": "datavaluealt","datavaluefootnotesymbol": "datavaluefootnotesymbol","datavaluefootnote": "datavaluefootnote","lowconfidencelimit": "lowconfidencelimit","highconfidencelimit": "highconfidencelimit","stratificationcategory1": "stratificationcategory1","stratification1": "stratification1","stratificationcategory2": "stratificationcategory2","stratification2": "stratification2","stratificationcategory3": "stratificationcategory3","stratification3": "stratification3","geolocation": "geolocation","responseid": "responseid","locationid": "locationid","topicid": "topicid","questionid": "questionid","datavaluetypeid": "datavaluetypeid","stratificationcategoryid1": "stratificationcategoryid1","stratificationid1": "stratificationid1","stratificationcategoryid2": "stratificationcategoryid2","stratificationid2": "stratificationid2","stratificationcategoryid3": "stratificationcategoryid3","stratificationid3": "stratificationid3"}',
             "PIPELINE_NAME": "chronic_disease_indicators",
         },
-        resources={
-            "request_memory": "2G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "32Gi"},
+            "cpu": {"request": "2"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
