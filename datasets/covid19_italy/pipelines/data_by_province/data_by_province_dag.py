@@ -39,8 +39,9 @@ with DAG(
         task_id="data_by_province_transform_csv",
         startup_timeout_seconds=600,
         name="covid19_italy_data_by_province",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.covid19_italy.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -53,7 +54,11 @@ with DAG(
             "RENAME_MAPPINGS": '{"data": "date","stato": "country","codice_regione": "region_code","denominazione_regione": "region_name","lat": "latitude","long": "longitude","codice_provincia": "province_code","denominazione_provincia": "province_name","sigla_provincia": "province_abbreviation","totale_casi": "confirmed_cases","note": "note"}',
             "PIPELINE_NAME": "data_by_province",
         },
-        resources={"request_memory": "4G", "request_cpu": "1"},
+        container_resources={
+            "memory": {"request": "80Gi"},
+            "cpu": {"request": "2"},
+            "ephemeral-storage": {"request": "10Gi"},
+        },
     )
 
     # Task to load CSV data to a BigQuery table

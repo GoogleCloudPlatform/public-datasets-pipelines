@@ -44,8 +44,9 @@ dag:
         task_id: "national_trends_transform_csv"
         startup_timeout_seconds: 600
         name: "covid19_italy_national_trends"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "composer-user-workloads"
+        service_account_name: "default"
+        config_file: "/home/airflow/composer_kube_config"
         image_pull_policy: "Always"
         image: "{{ var.json.covid19_italy.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -59,9 +60,13 @@ dag:
           RENAME_MAPPINGS: >-
            {"data": "date","stato": "country","ricoverati_con_sintomi": "hospitalized_patients_symptoms","terapia_intensiva": "hospitalized_patients_intensive_care","totale_ospedalizzati": "total_hospitalized_patients","isolamento_domiciliare": "home_confinement_cases","totale_positivi": "total_current_confirmed_cases","variazione_totale_positivi": "new_current_confirmed_cases","nuovi_positivi": "new_total_confirmed_cases","dimessi_guariti": "recovered","deceduti": "deaths","totale_casi": "total_confirmed_cases","tamponi": "tests_performed","note": "note"}
           PIPELINE_NAME: "national_trends"
-        resources:
-          request_memory: "4G"
-          request_cpu: "1"
+        container_resources:
+          memory:
+            request: "32Gi"
+          cpu:
+            request: "2"
+          ephemeral-storage:
+            request: "10Gi"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
