@@ -14,7 +14,7 @@
 
 
 from airflow import DAG
-from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.operators import kubernetes_engine
 
 default_args = {
     "owner": "Google",
@@ -31,15 +31,33 @@ with DAG(
     catchup=False,
     default_view="graph",
 ) as dag:
+    create_cluster = kubernetes_engine.GKECreateClusterOperator(
+        task_id="create_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        body={
+            "name": "pdp-covid19-symptom-search-dev",
+            "initial_node_count": 2,
+            "network": "{{ var.value.vpc_network }}",
+            "node_config": {
+                "machine_type": "e2-standard-16",
+                "oauth_scopes": [
+                    "https://www.googleapis.com/auth/devstorage.read_write",
+                    "https://www.googleapis.com/auth/cloud-platform",
+                ],
+            },
+        },
+    )
 
-    # Storage transfer service
-    sts = kubernetes_pod.KubernetesPodOperator(
+    # Run CSV transform within kubernetes pod
+    sts = kubernetes_engine.GKEStartPodOperator(
         task_id="sts",
         startup_timeout_seconds=1000,
         name="load_data",
-        namespace="composer-user-workloads",
-        service_account_name="default",
-        config_file="/home/airflow/composer_kube_config",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-covid19-symptom-search-dev",
         image_pull_policy="Always",
         image="{{ var.json.covid19_symptom_search.container_registry.run_transfer_service_kub }}",
         env_vars={
@@ -55,14 +73,15 @@ with DAG(
         },
     )
 
-    # ETL within the kubernetes pod
-    symptom_search_country_daily = kubernetes_pod.KubernetesPodOperator(
+    # Run CSV transform within kubernetes pod
+    symptom_search_country_daily = kubernetes_engine.GKEStartPodOperator(
         task_id="symptom_search_country_daily",
         startup_timeout_seconds=1000,
         name="load_data",
-        namespace="composer-user-workloads",
-        service_account_name="default",
-        config_file="/home/airflow/composer_kube_config",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-covid19-symptom-search-dev",
         image_pull_policy="Always",
         image="{{ var.json.covid19_symptom_search.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -75,7 +94,7 @@ with DAG(
             "GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "SCHEMA_FILEPATH": "data/covid19_symptom_search/schema/data_covid19_symptom_search_symptom_search_country_daily_schema.json",
             "TABLE_ID": "symptom_search_country_daily",
-            "CHUNK_SIZE": "500000",
+            "CHUNK_SIZE": "50000",
         },
         container_resources={
             "memory": {"request": "32Gi"},
@@ -84,14 +103,15 @@ with DAG(
         },
     )
 
-    # ETL within the kubernetes pod
-    symptom_search_country_weekly = kubernetes_pod.KubernetesPodOperator(
+    # Run CSV transform within kubernetes pod
+    symptom_search_country_weekly = kubernetes_engine.GKEStartPodOperator(
         task_id="symptom_search_country_weekly",
         startup_timeout_seconds=1000,
         name="load_data",
-        namespace="composer-user-workloads",
-        service_account_name="default",
-        config_file="/home/airflow/composer_kube_config",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-covid19-symptom-search-dev",
         image_pull_policy="Always",
         image="{{ var.json.covid19_symptom_search.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -104,7 +124,7 @@ with DAG(
             "GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "SCHEMA_FILEPATH": "data/covid19_symptom_search/schema/data_covid19_symptom_search_symptom_search_country_weekly_schema.json",
             "TABLE_ID": "symptom_search_country_weekly",
-            "CHUNK_SIZE": "500000",
+            "CHUNK_SIZE": "50000",
         },
         container_resources={
             "memory": {"request": "32Gi"},
@@ -113,14 +133,15 @@ with DAG(
         },
     )
 
-    # ETL within the kubernetes pod
-    symptom_search_sub_region_1_daily = kubernetes_pod.KubernetesPodOperator(
+    # Run CSV transform within kubernetes pod
+    symptom_search_sub_region_1_daily = kubernetes_engine.GKEStartPodOperator(
         task_id="symptom_search_sub_region_1_daily",
         startup_timeout_seconds=1000,
         name="load_data",
-        namespace="composer-user-workloads",
-        service_account_name="default",
-        config_file="/home/airflow/composer_kube_config",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-covid19-symptom-search-dev",
         image_pull_policy="Always",
         image="{{ var.json.covid19_symptom_search.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -133,7 +154,7 @@ with DAG(
             "GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "SCHEMA_FILEPATH": "data/covid19_symptom_search/schema/data_covid19_symptom_search_symptom_search_sub_region_1_daily_schema.json",
             "TABLE_ID": "symptom_search_sub_region_1_daily",
-            "CHUNK_SIZE": "500000",
+            "CHUNK_SIZE": "50000",
         },
         container_resources={
             "memory": {"request": "32Gi"},
@@ -142,14 +163,15 @@ with DAG(
         },
     )
 
-    # ETL within the kubernetes pod
-    symptom_search_sub_region_1_weekly = kubernetes_pod.KubernetesPodOperator(
+    # Run CSV transform within kubernetes pod
+    symptom_search_sub_region_1_weekly = kubernetes_engine.GKEStartPodOperator(
         task_id="symptom_search_sub_region_1_weekly",
         startup_timeout_seconds=1000,
         name="load_data",
-        namespace="composer-user-workloads",
-        service_account_name="default",
-        config_file="/home/airflow/composer_kube_config",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-covid19-symptom-search-dev",
         image_pull_policy="Always",
         image="{{ var.json.covid19_symptom_search.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -162,7 +184,7 @@ with DAG(
             "GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "SCHEMA_FILEPATH": "data/covid19_symptom_search/schema/data_covid19_symptom_search_symptom_search_sub_region_1_weekly_schema.json",
             "TABLE_ID": "symptom_search_sub_region_1_weekly",
-            "CHUNK_SIZE": "500000",
+            "CHUNK_SIZE": "50000",
         },
         container_resources={
             "memory": {"request": "32Gi"},
@@ -171,14 +193,15 @@ with DAG(
         },
     )
 
-    # ETL within the kubernetes pod
-    symptom_search_sub_region_2_daily = kubernetes_pod.KubernetesPodOperator(
+    # Run CSV transform within kubernetes pod
+    symptom_search_sub_region_2_daily = kubernetes_engine.GKEStartPodOperator(
         task_id="symptom_search_sub_region_2_daily",
         startup_timeout_seconds=1000,
         name="load_data",
-        namespace="composer-user-workloads",
-        service_account_name="default",
-        config_file="/home/airflow/composer_kube_config",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-covid19-symptom-search-dev",
         image_pull_policy="Always",
         image="{{ var.json.covid19_symptom_search.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -191,7 +214,7 @@ with DAG(
             "GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "SCHEMA_FILEPATH": "data/covid19_symptom_search/schema/data_covid19_symptom_search_symptom_search_sub_region_2_daily_schema.json",
             "TABLE_ID": "symptom_search_sub_region_2_daily",
-            "CHUNK_SIZE": "500000",
+            "CHUNK_SIZE": "5000",
         },
         container_resources={
             "memory": {"request": "32Gi"},
@@ -200,14 +223,15 @@ with DAG(
         },
     )
 
-    # ETL within the kubernetes pod
-    symptom_search_sub_region_2_weekly = kubernetes_pod.KubernetesPodOperator(
+    # Run CSV transform within kubernetes pod
+    symptom_search_sub_region_2_weekly = kubernetes_engine.GKEStartPodOperator(
         task_id="symptom_search_sub_region_2_weekly",
         startup_timeout_seconds=1000,
         name="load_data",
-        namespace="composer-user-workloads",
-        service_account_name="default",
-        config_file="/home/airflow/composer_kube_config",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-covid19-symptom-search-dev",
         image_pull_policy="Always",
         image="{{ var.json.covid19_symptom_search.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -220,7 +244,7 @@ with DAG(
             "GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "SCHEMA_FILEPATH": "data/covid19_symptom_search/schema/data_covid19_symptom_search_symptom_search_sub_region_2_daily_schema.json",
             "TABLE_ID": "symptom_search_sub_region_2_weekly",
-            "CHUNK_SIZE": "500000",
+            "CHUNK_SIZE": "50000",
         },
         container_resources={
             "memory": {"request": "32Gi"},
@@ -228,12 +252,20 @@ with DAG(
             "ephemeral-storage": {"request": "10Gi"},
         },
     )
+    delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
+        task_id="delete_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        name="pdp-covid19-symptom-search-dev",
+    )
 
-    sts >> [
-        symptom_search_country_daily,
-        symptom_search_country_weekly,
-        symptom_search_sub_region_1_daily,
-        symptom_search_sub_region_1_weekly,
-        symptom_search_sub_region_2_weekly,
-        symptom_search_sub_region_2_daily,
-    ]
+    (
+        create_cluster
+        >> sts
+        >> symptom_search_country_daily
+        >> [symptom_search_sub_region_1_daily, symptom_search_sub_region_1_weekly]
+        >> symptom_search_country_weekly
+        >> symptom_search_sub_region_2_daily
+        >> symptom_search_sub_region_2_weekly
+        >> delete_cluster
+    )
