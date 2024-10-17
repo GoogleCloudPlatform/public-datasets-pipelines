@@ -38,8 +38,9 @@ dag:
         task_id: "mobility_report"
         startup_timeout_seconds: 600
         name: "mobility_report"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "composer-user-workloads"
+        service_account_name: "default"
+        config_file: "/home/airflow/composer_kube_config"
         image_pull_policy: "Always"
         image: "{{ var.json.covid19_google_mobility.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -113,9 +114,13 @@ dag:
               "residential_percent_change_from_baseline":"residential_percent_change_from_baseline"
             }
           TABLE_DESCRIPTION: " Terms of use By downloading or using the data, you agree to Google's Terms of Service: https://policies.google.com/terms Description This dataset aims to provide insights into what has changed in response to policies aimed at combating COVID-19. It reports movement trends over time by geography, across different categories of places such as retail and recreation, groceries and pharmacies, parks, transit stations, workplaces, and residential. This dataset is intended to help remediate the impact of COVID-19. It shouldn’t be used for medical diagnostic, prognostic, or treatment purposes. It also isn’t intended to be used for guidance on personal travel plans. To learn more about the dataset, the place categories and how we calculate these trends and preserve privacy, read the data documentation: https://www.google.com/covid19/mobility/data_documentation.html "
-        resources:
-          request_memory: "32G"
-          request_cpu: "2"
-          request_ephemeral_storage: "28G"
+        container_resources:
+          memory:
+            request: "32Gi"
+          cpu:
+            request: "2"
+          ephemeral-storage:
+            request: "10Gi"
+
   graph_paths:
     - "mobility_report"

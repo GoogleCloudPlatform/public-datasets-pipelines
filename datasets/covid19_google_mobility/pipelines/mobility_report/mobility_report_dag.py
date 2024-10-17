@@ -37,8 +37,9 @@ with DAG(
         task_id="mobility_report",
         startup_timeout_seconds=600,
         name="mobility_report",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.covid19_google_mobility.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -62,10 +63,10 @@ with DAG(
             "RENAME_HEADERS_LIST": '{\n  "country_region_code": "country_region_code",\n  "country_region": "country_region",\n  "sub_region_1": "sub_region_1",\n  "sub_region_2": "sub_region_2",\n  "metro_area": "metro_area",\n  "iso_3166_2_code": "iso_3166_2_code",\n  "census_fips_code": "census_fips_code",\n  "place_id": "place_id",\n  "date":"date",\n  "retail_and_recreation_percent_change_from_baseline": "retail_and_recreation_percent_change_from_baseline",\n  "grocery_and_pharmacy_percent_change_from_baseline": "grocery_and_pharmacy_percent_change_from_baseline",\n  "parks_percent_change_from_baseline": "parks_percent_change_from_baseline",\n  "transit_stations_percent_change_from_baseline": "transit_stations_percent_change_from_baseline",\n  "workplaces_percent_change_from_baseline": "workplaces_percent_change_from_baseline",\n  "residential_percent_change_from_baseline":"residential_percent_change_from_baseline"\n}',
             "TABLE_DESCRIPTION": " Terms of use By downloading or using the data, you agree to Google's Terms of Service: https://policies.google.com/terms Description This dataset aims to provide insights into what has changed in response to policies aimed at combating COVID-19. It reports movement trends over time by geography, across different categories of places such as retail and recreation, groceries and pharmacies, parks, transit stations, workplaces, and residential. This dataset is intended to help remediate the impact of COVID-19. It shouldn’t be used for medical diagnostic, prognostic, or treatment purposes. It also isn’t intended to be used for guidance on personal travel plans. To learn more about the dataset, the place categories and how we calculate these trends and preserve privacy, read the data documentation: https://www.google.com/covid19/mobility/data_documentation.html ",
         },
-        resources={
-            "request_memory": "32G",
-            "request_cpu": "2",
-            "request_ephemeral_storage": "28G",
+        container_resources={
+            "memory": {"request": "32Gi"},
+            "cpu": {"request": "2"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 

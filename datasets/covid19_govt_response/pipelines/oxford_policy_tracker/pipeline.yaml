@@ -38,8 +38,9 @@ dag:
         task_id: "oxford_policy_tracker_transform_csv"
         startup_timeout_seconds: 600
         name: "oxford_policy_tracker"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "composer-user-workloads"
+        service_account_name: "default"
+        config_file: "/home/airflow/composer_kube_config"
         image_pull_policy: "Always"
         image: "{{ var.json.covid19_govt_response.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -53,9 +54,13 @@ dag:
             ["country_name","alpha_3_code","region_name","region_code","date","school_closing","school_closing_flag","school_closing_notes","workplace_closing","workplace_closing_flag","workplace_closing_notes","cancel_public_events","cancel_public_events_flag","cancel_public_events_notes","restrictions_on_gatherings","restrictions_on_gatherings_flag","restrictions_on_gatherings_notes","close_public_transit","close_public_transit_flag","close_public_transit_notes","stay_at_home_requirements","stay_at_home_requirements_flag","stay_at_home_requirements_notes","restrictions_on_internal_movement","restrictions_on_internal_movement_flag","restrictions_on_internal_movement_notes","international_travel_controls","international_travel_controls_notes","income_support","income_support_flag","income_support_notes","debt_contract_relief","debt_contract_relief_notes","fiscal_measures","fiscal_measures_notes","international_support","international_support_notes","public_information_campaigns","public_information_campaigns_flag","public_information_campaigns_notes","testing_policy","testing_policy_notes","contact_tracing","contact_tracing_notes","emergency_healthcare_investment","emergency_healthcare_investment_notes","vaccine_investment","vaccine_investment_notes","misc_wildcard","misc_wildcard_notes","confirmed_cases","deaths","strintgency_index"]
           RENAME_MAPPINGS: >-
             {"CountryName":"country_name","CountryCode":"alpha_3_code","RegionName":"region_name","RegionCode":"region_code","Date":"date","C1_School closing":"school_closing","C1_Flag":"school_closing_flag","C1_Notes":"school_closing_notes","C2_Workplace closing":"workplace_closing","C2_Flag":"workplace_closing_flag","C2_Notes":"workplace_closing_notes","C3_Cancel public events":"cancel_public_events","C3_Flag":"cancel_public_events_flag","C3_Notes":"cancel_public_events_notes","C4_Restrictions on gatherings":"restrictions_on_gatherings","C4_Flag":"restrictions_on_gatherings_flag","C4_Notes":"restrictions_on_gatherings_notes","C5_Close public transport":"close_public_transit","C5_Flag":"close_public_transit_flag","C5_Notes":"close_public_transit_notes","C6_Stay at home requirements":"stay_at_home_requirements","C6_Flag":"stay_at_home_requirements_flag","C6_Notes":"stay_at_home_requirements_notes","C7_Restrictions on internal movement":"restrictions_on_internal_movement","C7_Flag":"restrictions_on_internal_movement_flag","C7_Notes":"restrictions_on_internal_movement_notes","C8_International travel controls":"international_travel_controls","C8_Notes":"international_travel_controls_notes","E1_Income support":"income_support","E1_Flag":"income_support_flag","E1_Notes":"income_support_notes","E2_Debt/contract relief":"debt_contract_relief","E2_Notes":"debt_contract_relief_notes","E3_Fiscal measures":"fiscal_measures","E3_Notes":"fiscal_measures_notes","E4_International support":"international_support","E4_Notes":"international_support_notes","H1_Public information campaigns":"public_information_campaigns","H1_Flag":"public_information_campaigns_flag","H1_Notes":"public_information_campaigns_notes","H2_Testing policy":"testing_policy","H2_Notes":"testing_policy_notes","H3_Contact tracing":"contact_tracing","H3_Notes":"contact_tracing_notes","H4_Emergency investment in healthcare":"emergency_healthcare_investment","H4_Notes":"emergency_healthcare_investment_notes","H5_Investment in vaccines":"vaccine_investment","H5_Notes":"vaccine_investment_notes","M1_Wildcard":"misc_wildcard","M1_Notes":"misc_wildcard_notes","ConfirmedCases":"confirmed_cases","ConfirmedDeaths":"deaths","StringencyIndexForDisplay":"strintgency_index"}
-        resources:
-          request_memory: "2G"
-          request_cpu: "1"
+        container_resources:
+          memory:
+            request: "32Gi"
+          cpu:
+            request: "2"
+          ephemeral-storage:
+            request: "10Gi"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"

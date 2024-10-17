@@ -78,8 +78,9 @@ dag:
         task_id: "inpatient_2012_transform_csv"
         startup_timeout_seconds: 600
         name: "cms_medicare_inpatient_charges_2012"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "composer-user-workloads"
+        service_account_name: "default"
+        config_file: "/home/airflow/composer_kube_config"
         image_pull_policy: "Always"
         image: "{{ var.json.cms_medicare.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -100,8 +101,9 @@ dag:
         task_id: "inpatient_2013_transform_csv"
         startup_timeout_seconds: 600
         name: "cms_medicare_inpatient_charges_2013"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "composer-user-workloads"
+        service_account_name: "default"
+        config_file: "/home/airflow/composer_kube_config"
         image_pull_policy: "Always"
         image: "{{ var.json.cms_medicare.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -122,8 +124,9 @@ dag:
         task_id: "inpatient_2014_transform_csv"
         startup_timeout_seconds: 600
         name: "cms_medicare_inpatient_charges_2014"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "composer-user-workloads"
+        service_account_name: "default"
+        config_file: "/home/airflow/composer_kube_config"
         image_pull_policy: "Always"
         image: "{{ var.json.cms_medicare.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -144,8 +147,9 @@ dag:
         task_id: "inpatient_2015_transform_csv"
         startup_timeout_seconds: 600
         name: "cms_medicare_inpatient_charges_2015"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "composer-user-workloads"
+        service_account_name: "default"
+        config_file: "/home/airflow/composer_kube_config"
         image_pull_policy: "Always"
         image: "{{ var.json.cms_medicare.container_registry.run_csv_transform_kub }}"
         env_vars:

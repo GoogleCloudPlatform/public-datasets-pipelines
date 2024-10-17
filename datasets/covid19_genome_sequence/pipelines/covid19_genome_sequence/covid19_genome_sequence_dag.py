@@ -36,8 +36,9 @@ with DAG(
     copy_bq_datasets = kubernetes_pod.KubernetesPodOperator(
         task_id="copy_bq_datasets",
         name="copy_bq_datasets",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.covid19_genome_sequence.container_registry.bq_data_transfer }}",
         env_vars={
@@ -46,7 +47,11 @@ with DAG(
             "TARGET_PROJECT_ID": "{{ var.value.gcp_project }}",
             "TARGET_BQ_DATASET": "{{ var.json.covid19_genome_sequence.target_bq_dataset }}",
         },
-        resources={"request_memory": "128M", "request_cpu": "200m"},
+        container_resources={
+            "memory": {"request": "32Gi"},
+            "cpu": {"request": "2"},
+            "ephemeral-storage": {"request": "10Gi"},
+        },
     )
 
     copy_bq_datasets

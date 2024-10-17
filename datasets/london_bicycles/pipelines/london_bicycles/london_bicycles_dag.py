@@ -38,8 +38,9 @@ with DAG(
         task_id="stations_csv_transform",
         startup_timeout_seconds=600,
         name="london_bicycle_stations",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.london_bicycles.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -56,10 +57,10 @@ with DAG(
             "TARGET_GCS_PATH": "data/london_bicycles/cycle_stations_data_output.csv",
             "PIPELINE": "London Cycle Stations Dataset",
         },
-        resources={
-            "limit_memory": "8G",
-            "limit_cpu": "1",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "32Gi"},
+            "cpu": {"request": "2"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
@@ -95,8 +96,9 @@ with DAG(
         task_id="trips_csv_transform",
         startup_timeout_seconds=600,
         name="london_bicycle_trips",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.london_bicycles.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -114,10 +116,10 @@ with DAG(
             "OUTPUT_CSV_HEADERS": '[\n  "rental_id",\n  "duration",\n  "duration_ms",\n  "bike_id",\n  "bike_model",\n  "end_date",\n  "end_station_id",\n  "end_station_name",\n  "start_date",\n  "start_station_id",\n  "start_station_name",\n  "end_station_logical_terminal",\n  "start_station_logical_terminal",\n  "end_station_priority_id"\n]',
             "PIPELINE": "London Cycle Trips Dataset",
         },
-        resources={
-            "limit_memory": "8G",
-            "limit_cpu": "1",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "32Gi"},
+            "cpu": {"request": "2"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 

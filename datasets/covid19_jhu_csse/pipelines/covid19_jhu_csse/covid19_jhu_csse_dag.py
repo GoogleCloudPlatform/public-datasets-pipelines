@@ -36,7 +36,7 @@ with DAG(
     # Download data
     bash_download = bash.BashOperator(
         task_id="bash_download",
-        bash_command="wget -O /home/airflow/gcs/data/covid19_jhu_csse/raw_files/confirmed_cases.csv https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv ; wget -O /home/airflow/gcs/data/covid19_jhu_csse/raw_files/deaths.csv https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv ; wget -O /home/airflow/gcs/data/covid19_jhu_csse/raw_files/recovered_cases.csv https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_recovered_global.csv ;",
+        bash_command="wget -q -O - https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv |gcloud storage cp - gs://{{ var.value.composer_bucket }}/data/covid19_jhu_csse/raw_files/confirmed_cases.csv ; wget -q -O - https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv |gcloud storage cp - gs://{{ var.value.composer_bucket }}/data/covid19_jhu_csse/raw_files/deaths.csv ; wget -q -O - https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_recovered_global.csv |gcloud storage cp - gs://{{ var.value.composer_bucket }}/data/covid19_jhu_csse/raw_files/recovered_cases.csv ;",
     )
 
     # ETL within the kubernetes pod
@@ -44,8 +44,9 @@ with DAG(
         task_id="kub_csv_transform",
         startup_timeout_seconds=1000,
         name="load_data",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.covid19_jhu_csse.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -54,38 +55,16 @@ with DAG(
             "PROJECT_ID": "{{ var.value.gcp_project }}",
             "DATASET_ID": "covid19_jhu_csse",
             "GCS_BUCKET": "{{ var.value.composer_bucket }}",
-            "SCHEMA_FILEPATH": "schema.json",
+            "SCHEMA_FILEPATH": "covid19_jhu_csse_schema.json",
             "RENAME_MAPPINGS": '{"Province/State":"province_or_state","Country/Region":"country_or_region","Lat":"latitude","Long":"longitude"}',
             "ADD_HEADER": "location_geom",
             "DOWNLOAD_PATH": "",
         },
-        resources={
-            "request_memory": "2G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "32Gi"},
+            "cpu": {"request": "2"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
-    # Copies source bq dataset
-    bq_transfer_eu = kubernetes_pod.KubernetesPodOperator(
-        task_id="bq_transfer_eu",
-        startup_timeout_seconds=1000,
-        name="load_data",
-        namespace="composer",
-        service_account_name="datasets",
-        image_pull_policy="Always",
-        image="{{ var.json.covid19_jhu_csse.container_registry.run_load_bq_eu_kub }}",
-        env_vars={
-            "SOURCE_PROJECT_ID": "{{ var.value.gcp_project }}",
-            "SOURCE_BQ_DATASET": "covid19_jhu_csse",
-            "TARGET_PROJECT_ID": "{{ var.value.gcp_project }}",
-            "TARGET_BQ_DATASET": "covid19_jhu_csse_eu",
-        },
-        resources={
-            "request_memory": "2G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
-        },
-    )
-
-    bash_download >> kub_csv_transform >> bq_transfer_eu
+    bash_download >> kub_csv_transform
