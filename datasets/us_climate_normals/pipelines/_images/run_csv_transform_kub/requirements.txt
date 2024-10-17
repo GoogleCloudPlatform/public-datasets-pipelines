@@ -16,7 +16,7 @@ google-cloud-build==3.8.2
 google-cloud-container==2.10.7
 google-cloud-core==2.3.2
 google-cloud-datacatalog==3.8.0
-google-cloud-dataplex==1.0.0
+google-cloud-dataplex==2.2.2
 google-cloud-dataproc==4.0.2
 google-cloud-dataproc-metastore==1.5.0
 google-cloud-dlp==1.0.2
