@@ -17,18 +17,15 @@ resources:
 
   - type: bigquery_table
     table_id: local_data_for_better_health_county_data
-
     description: "Local Data for Better Health, County Data"
 
 dag:
 
   airflow_version: 2
-
   initialize:
     dag_id: local_data_for_better_health_county_data
     default_args:
       owner: "Google"
-
       depends_on_past: False
       start_date: '2021-03-01'
     max_active_runs: 1
@@ -39,23 +36,16 @@ dag:
   tasks:
 
     - operator: "KubernetesPodOperator"
-
       description: "Run CSV transform within kubernetes pod"
-
       args:
-
         task_id: "local_data_transform_csv"
         startup_timeout_seconds: 600
-
         name: "cdc_places_local_data_for_better_health_county_data"
-
-        namespace: "composer"
-        service_account_name: "datasets"
-
+        namespace: "composer-user-workloads"
+        service_account_name: "default"
+        config_file: "/home/airflow/composer_kube_config"
         image_pull_policy: "Always"
-
         image: "{{ var.json.cdc_places.container_registry.run_csv_transform_kub }}"
-
         env_vars:
           SOURCE_URL: "https://chronicdata.cdc.gov/resource/swc5-untb.csv"
           SOURCE_FILE: "files/data.csv"
@@ -67,28 +57,25 @@ dag:
           RENAME_MAPPINGS: >-
            {"year": "year","stateabbr": "stateabbr","statedesc": "statedesc","locationname": "locationname","datasource": "datasource","category": "category","measure": "measure","data_value_unit": "data_value_unit","data_value_type": "data_value_type","data_value": "data_value","data_value_footnote_symbol": "data_value_footnote_symbol","data_value_footnote": "data_value_footnote","low_confidence_limit": "low_confidence_limit","high_confidence_limit": "high_confidence_limit","totalpopulation": "totalpopulation","locationid": "locationid","categoryid": "categoryid","measureid": "measureid","datavaluetypeid": "datavaluetypeid","short_question_text": "short_question_text","geolocation": "geolocation"}
           PIPELINE_NAME: "local_data_for_better_health_county_data"
-
-        resources:
-          request_memory: "4G"
-          request_cpu: "2"
-          request_ephemeral_storage: "10G"
+        container_resources:
+          memory:
+            request: "32Gi"
+          cpu:
+            request: "2"
+          ephemeral-storage:
+            request: "10Gi"
 
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
-
       args:
         task_id: "load_local_data_to_bq"
-
         bucket: "{{ var.value.composer_bucket }}"
-
         source_objects: ["data/cdc_places/local_data_for_better_health_county_data/data_output.csv"]
         source_format: "CSV"
         destination_project_dataset_table: "cdc_places.local_data_for_better_health_county_data"
-
         skip_leading_rows: 1
         write_disposition: "WRITE_TRUNCATE"
-
         schema_fields:
           - name: "year"
             type: "INTEGER"
