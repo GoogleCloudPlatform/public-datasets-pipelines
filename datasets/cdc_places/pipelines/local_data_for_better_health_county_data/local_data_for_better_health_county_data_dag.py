@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,8 +38,9 @@ with DAG(
         task_id="local_data_transform_csv",
         startup_timeout_seconds=600,
         name="cdc_places_local_data_for_better_health_county_data",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.cdc_places.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -52,10 +53,10 @@ with DAG(
             "RENAME_MAPPINGS": '{"year": "year","stateabbr": "stateabbr","statedesc": "statedesc","locationname": "locationname","datasource": "datasource","category": "category","measure": "measure","data_value_unit": "data_value_unit","data_value_type": "data_value_type","data_value": "data_value","data_value_footnote_symbol": "data_value_footnote_symbol","data_value_footnote": "data_value_footnote","low_confidence_limit": "low_confidence_limit","high_confidence_limit": "high_confidence_limit","totalpopulation": "totalpopulation","locationid": "locationid","categoryid": "categoryid","measureid": "measureid","datavaluetypeid": "datavaluetypeid","short_question_text": "short_question_text","geolocation": "geolocation"}',
             "PIPELINE_NAME": "local_data_for_better_health_county_data",
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "2",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "32Gi"},
+            "cpu": {"request": "2"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
