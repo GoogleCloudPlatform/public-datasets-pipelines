@@ -73,6 +73,11 @@ with DAG(
         retry_delay=300,
         retry_exponential_backoff=True,
         startup_timeout_seconds=600,
+        container_resources={
+            "memory": {"request": "32Gi"},
+            "cpu": {"request": "2"},
+            "ephemeral-storage": {"request": "10Gi"},
+        },
     )
     delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
         task_id="delete_cluster",
