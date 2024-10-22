@@ -94,7 +94,7 @@ with DAG(
             "GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "SCHEMA_FILEPATH": "data/covid19_symptom_search/schema/data_covid19_symptom_search_symptom_search_country_daily_schema.json",
             "TABLE_ID": "symptom_search_country_daily",
-            "CHUNK_SIZE": "50000",
+            "CHUNK_SIZE": "500000",
         },
         container_resources={
             "memory": {"request": "32Gi"},
@@ -124,7 +124,7 @@ with DAG(
             "GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "SCHEMA_FILEPATH": "data/covid19_symptom_search/schema/data_covid19_symptom_search_symptom_search_country_weekly_schema.json",
             "TABLE_ID": "symptom_search_country_weekly",
-            "CHUNK_SIZE": "50000",
+            "CHUNK_SIZE": "500000",
         },
         container_resources={
             "memory": {"request": "32Gi"},
@@ -154,7 +154,7 @@ with DAG(
             "GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "SCHEMA_FILEPATH": "data/covid19_symptom_search/schema/data_covid19_symptom_search_symptom_search_sub_region_1_daily_schema.json",
             "TABLE_ID": "symptom_search_sub_region_1_daily",
-            "CHUNK_SIZE": "50000",
+            "CHUNK_SIZE": "500000",
         },
         container_resources={
             "memory": {"request": "32Gi"},
@@ -184,7 +184,7 @@ with DAG(
             "GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "SCHEMA_FILEPATH": "data/covid19_symptom_search/schema/data_covid19_symptom_search_symptom_search_sub_region_1_weekly_schema.json",
             "TABLE_ID": "symptom_search_sub_region_1_weekly",
-            "CHUNK_SIZE": "50000",
+            "CHUNK_SIZE": "500000",
         },
         container_resources={
             "memory": {"request": "32Gi"},
@@ -214,7 +214,7 @@ with DAG(
             "GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "SCHEMA_FILEPATH": "data/covid19_symptom_search/schema/data_covid19_symptom_search_symptom_search_sub_region_2_daily_schema.json",
             "TABLE_ID": "symptom_search_sub_region_2_daily",
-            "CHUNK_SIZE": "5000",
+            "CHUNK_SIZE": "500000",
         },
         container_resources={
             "memory": {"request": "32Gi"},
@@ -244,7 +244,7 @@ with DAG(
             "GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "SCHEMA_FILEPATH": "data/covid19_symptom_search/schema/data_covid19_symptom_search_symptom_search_sub_region_2_daily_schema.json",
             "TABLE_ID": "symptom_search_sub_region_2_weekly",
-            "CHUNK_SIZE": "50000",
+            "CHUNK_SIZE": "500000",
         },
         container_resources={
             "memory": {"request": "32Gi"},
