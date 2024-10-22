@@ -33,14 +33,31 @@ dag:
     catchup: False
     default_view: graph
   tasks:
-    - operator: "KubernetesPodOperator"
+    - operator: "GKECreateClusterOperator"
+      args:
+        task_id: "create_cluster"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        body:
+          name: pdp-census-opportunity-atlas
+          initial_node_count: 2
+          network: "{{ var.value.vpc_network }}"
+          node_config:
+            machine_type: e2-standard-16
+            oauth_scopes:
+              - https://www.googleapis.com/auth/devstorage.read_write
+              - https://www.googleapis.com/auth/cloud-platform
+
+    - operator: "GKEStartPodOperator"
       description: "Run CSV transform within the kubernetes pod"
       args:
         task_id: "tract_covariates"
         startup_timeout_seconds: 600
         name: "tract_covariates"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: pdp-census-opportunity-atlas
         image_pull_policy: "Always"
         image: "{{ var.json.census_opportunity_atlas.container_registry.tract_covariates.run_csv_transform_kub }}"
         env_vars:
@@ -179,16 +196,23 @@ dag:
               "ann_avg_job_growth_2004_2013": "ann_avg_job_growth_2004_2013",
               "job_density_2013": "job_density_2013"
             }
-        resources:
-          request_ephemeral_storage: "8G"
-          request_cpu: "1"
-    - operator: "KubernetesPodOperator"
+        container_resources:
+          memory:
+            request: "32Gi"
+          cpu:
+            request: "2"
+          ephemeral-storage:
+            request: "10Gi"
+
+    - operator: "GKEStartPodOperator"
       description: "Run CSV transform within the kubernetes pod"
       args:
         task_id: "tract_outcomes"
         name: "tract_outcomes"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: pdp-census-opportunity-atlas
         image_pull_policy: "Always"
         image: "{{ var.json.census_opportunity_atlas.container_registry.tract_outcomes.run_csv_transform_kub }}"
         env_vars:
@@ -210,9 +234,20 @@ dag:
             { "none": "int" }
           RENAME_MAPPINGS: >-
             { "none": "none" }
-        resources:
-          request_ephemeral_storage: "8G"
-          limit_cpu: "1"
+        container_resources:
+          memory:
+            request: "32Gi"
+          cpu:
+            request: "2"
+          ephemeral-storage:
+            request: "10Gi"
+
+    - operator: "GKEDeleteClusterOperator"
+      args:
+        task_id: "delete_cluster"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        name: pdp-census-opportunity-atlas
 
   graph_paths:
-    - "tract_covariates, tract_outcomes"
+    - "create_cluster >> [tract_covariates, tract_outcomes] >> delete_cluster"
