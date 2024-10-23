@@ -38,8 +38,9 @@ with DAG(
         task_id="transform_locations_to_csv",
         startup_timeout_seconds=600,
         name="locations",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.fdic.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -56,10 +57,10 @@ with DAG(
             "FORMAT_DATE_LIST": '["date_established", "last_updated"]',
             "ZERO_TO_NULL": "cbsa_metro_fips_code",
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "32Gi"},
+            "cpu": {"request": "2"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
