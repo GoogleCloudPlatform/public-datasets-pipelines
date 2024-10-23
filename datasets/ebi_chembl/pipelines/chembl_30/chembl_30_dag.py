@@ -14,6 +14,7 @@
 
 
 from airflow import DAG
+from airflow.operators import bash
 from airflow.providers.google.cloud.operators import kubernetes_engine
 from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
@@ -50,6 +51,12 @@ with DAG(
         },
     )
 
+    # Fetch data gcs - gcs
+    download_chembl_source_data = bash.BashOperator(
+        task_id="download_chembl_source_data",
+        bash_command="mkdir ./files ;\ncurl -o ./files/chembl_30_postgresql.tar.gz https://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBLdb/releases/chembl_30/chembl_30_postgresql.tar.gz ;\ncd files ;\ntar --strip-components=2 -xzvf chembl_30_postgresql.tar.gz chembl_30/chembl_30_postgresql/chembl_30_postgresql.dmp ;\ngsutil cp chembl_30_postgresql.dmp gs://{{ var.value.composer_bucket }}/data/ebi_chembl/chembl/chembl_30/chembl_30_postgresql.dmp ;\ncd .. ;\n",
+    )
+
     # Copy files to GCS on the specified date
     csv_transform = kubernetes_engine.GKEStartPodOperator(
         task_id="csv_transform",
@@ -63,7 +70,7 @@ with DAG(
         env_vars={
             "OUTPUT_FOLDER": "./files/output",
             "SOURCE_GCS_BUCKET": "{{ var.value.composer_bucket }}",
-            "SOURCE_GCS_OBJECT": "data/ebi_chembl/chembl_30/chembl_30_postgresql.dmp",
+            "SOURCE_GCS_OBJECT": "data/ebi_chembl/chembl/chembl_30/chembl_30_postgresql.dmp",
             "SOURCE_FILE": "./files/chembl_30_postgresql.dmp",
             "TABLES": '["action_type", "activities", "activity_properties", "activity_smid", "activity_stds_lookup", "activity_supp", "activity_supp_map", "assay_class_map", "assay_classification", "assay_parameters", "assay_type", "assays", "atc_classification", "binding_sites", "bio_component_sequences", "bioassay_ontology", "biotherapeutic_components", "biotherapeutics", "cell_dictionary", "chembl_id_lookup", "component_class", "component_domains", "component_go", "component_sequences", "component_synonyms", "compound_properties", "compound_records", "compound_structural_alerts", "compound_structures", "confidence_score_lookup", "curation_lookup", "data_validity_lookup", "defined_daily_dose", "docs", "domains", "drug_indication", "drug_mechanism", "drug_warning", "formulations", "frac_classification", "go_classification", "hrac_classification", "indication_refs", "irac_classification", "ligand_eff", "mechanism_refs", "metabolism", "metabolism_refs", "molecule_atc_classification", "molecule_dictionary", "molecule_frac_classification", "molecule_hierarchy", "molecule_hrac_classification", "molecule_irac_classification", "molecule_synonyms", "organism_class", "patent_use_codes", "predicted_binding_domains", "product_patents", "products", "protein_class_synonyms", "protein_classification", "protein_family_classification", "relationship_type", "research_companies", "research_stem", "site_components", "source", "structural_alert_sets", "structural_alerts", "target_components", "target_dictionary", "target_relations", "target_type", "tissue_dictionary", "usan_stems", "variant_sequences", "version", "warning_refs"]',
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
@@ -73,6 +80,11 @@ with DAG(
         retry_delay=300,
         retry_exponential_backoff=True,
         startup_timeout_seconds=600,
+        container_resources={
+            "memory": {"request": "32Gi"},
+            "cpu": {"request": "2"},
+            "ephemeral-storage": {"request": "10Gi"},
+        },
     )
     delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
         task_id="delete_cluster",
@@ -4494,6 +4506,7 @@ with DAG(
 
     (
         create_cluster
+        >> download_chembl_source_data
         >> csv_transform
         >> delete_cluster
         >> [
