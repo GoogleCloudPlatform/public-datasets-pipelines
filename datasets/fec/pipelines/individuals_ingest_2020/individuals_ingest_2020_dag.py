@@ -15,7 +15,7 @@
 
 from airflow import DAG
 from airflow.operators import bash
-from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.operators import kubernetes_engine
 from airflow.providers.google.cloud.transfers import gcs_to_bigquery, gcs_to_gcs
 
 default_args = {
@@ -50,15 +50,33 @@ with DAG(
         bash_command='split -l 23000000 --additional-suffix=.txt "$data_dir/individuals/indiv20.txt" "$data_dir/individuals/indiv20_"\n',
         env={"data_dir": "/home/airflow/gcs/data/fec"},
     )
+    create_cluster = kubernetes_engine.GKECreateClusterOperator(
+        task_id="create_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        body={
+            "name": "pdp-fec-individuals-ingest-2020",
+            "initial_node_count": 1,
+            "network": "{{ var.value.vpc_network }}",
+            "node_config": {
+                "machine_type": "e2-standard-16",
+                "oauth_scopes": [
+                    "https://www.googleapis.com/auth/devstorage.read_write",
+                    "https://www.googleapis.com/auth/cloud-platform",
+                ],
+            },
+        },
+    )
 
     # Run CSV transform within kubernetes pod
-    individuals_ingest_2020_transform_csv_1 = kubernetes_pod.KubernetesPodOperator(
+    individuals_ingest_2020_transform_csv_1 = kubernetes_engine.GKEStartPodOperator(
         task_id="individuals_ingest_2020_transform_csv_1",
         startup_timeout_seconds=600,
         name="individuals_ingest_2020",
-        namespace="composer-user-workloads",
-        service_account_name="default",
-        config_file="/home/airflow/composer_kube_config",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-fec-individuals-ingest-2020",
         image_pull_policy="Always",
         image="{{ var.json.fec.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -72,6 +90,11 @@ with DAG(
             "PIPELINE_NAME": "individuals_ingest_2020",
             "CSV_HEADERS": '["cmte_id","amndt_ind","rpt_tp","transaction_pgi","image_num","transaction_tp","entity_tp","name","city","state", "zip_code","employer","occupation","transaction_dt","transaction_amt","other_id","tran_id","file_num", "memo_cd","memo_text","sub_id"]',
             "RENAME_MAPPINGS": '{"0":"cmte_id","1":"amndt_ind","2":"rpt_tp","3":"transaction_pgi","4":"image_num","5":"transaction_tp", "6":"entity_tp","7":"name","8":"city","9":"state","10":"zip_code","11":"employer", "12":"occupation","13":"transaction_dt","14":"transaction_amt","15":"other_id","16":"tran_id", "17":"file_num","18":"memo_cd","19":"memo_text","20":"sub_id"}',
+        },
+        container_resources={
+            "memory": {"request": "32Gi"},
+            "cpu": {"request": "2"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
@@ -216,13 +239,14 @@ with DAG(
     )
 
     # Run CSV transform within kubernetes pod
-    individuals_ingest_2020_transform_csv_2 = kubernetes_pod.KubernetesPodOperator(
+    individuals_ingest_2020_transform_csv_2 = kubernetes_engine.GKEStartPodOperator(
         task_id="individuals_ingest_2020_transform_csv_2",
         startup_timeout_seconds=600,
         name="individuals_ingest_2020",
-        namespace="composer-user-workloads",
-        service_account_name="default",
-        config_file="/home/airflow/composer_kube_config",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-fec-individuals-ingest-2020",
         image_pull_policy="Always",
         image="{{ var.json.fec.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -236,6 +260,11 @@ with DAG(
             "PIPELINE_NAME": "individuals_ingest_2020",
             "CSV_HEADERS": '["cmte_id","amndt_ind","rpt_tp","transaction_pgi","image_num","transaction_tp","entity_tp","name","city","state", "zip_code","employer","occupation","transaction_dt","transaction_amt","other_id","tran_id","file_num", "memo_cd","memo_text","sub_id"]',
             "RENAME_MAPPINGS": '{"0":"cmte_id","1":"amndt_ind","2":"rpt_tp","3":"transaction_pgi","4":"image_num","5":"transaction_tp", "6":"entity_tp","7":"name","8":"city","9":"state","10":"zip_code","11":"employer", "12":"occupation","13":"transaction_dt","14":"transaction_amt","15":"other_id","16":"tran_id", "17":"file_num","18":"memo_cd","19":"memo_text","20":"sub_id"}',
+        },
+        container_resources={
+            "memory": {"request": "32Gi"},
+            "cpu": {"request": "2"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
@@ -380,13 +409,14 @@ with DAG(
     )
 
     # Run CSV transform within kubernetes pod
-    individuals_ingest_2020_transform_csv_3 = kubernetes_pod.KubernetesPodOperator(
+    individuals_ingest_2020_transform_csv_3 = kubernetes_engine.GKEStartPodOperator(
         task_id="individuals_ingest_2020_transform_csv_3",
         startup_timeout_seconds=600,
         name="individuals_ingest_2020",
-        namespace="composer-user-workloads",
-        service_account_name="default",
-        config_file="/home/airflow/composer_kube_config",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-fec-individuals-ingest-2020",
         image_pull_policy="Always",
         image="{{ var.json.fec.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -400,6 +430,11 @@ with DAG(
             "PIPELINE_NAME": "individuals_ingest_2020",
             "CSV_HEADERS": '["cmte_id","amndt_ind","rpt_tp","transaction_pgi","image_num","transaction_tp","entity_tp","name","city","state", "zip_code","employer","occupation","transaction_dt","transaction_amt","other_id","tran_id","file_num", "memo_cd","memo_text","sub_id"]',
             "RENAME_MAPPINGS": '{"0":"cmte_id","1":"amndt_ind","2":"rpt_tp","3":"transaction_pgi","4":"image_num","5":"transaction_tp", "6":"entity_tp","7":"name","8":"city","9":"state","10":"zip_code","11":"employer", "12":"occupation","13":"transaction_dt","14":"transaction_amt","15":"other_id","16":"tran_id", "17":"file_num","18":"memo_cd","19":"memo_text","20":"sub_id"}',
+        },
+        container_resources={
+            "memory": {"request": "32Gi"},
+            "cpu": {"request": "2"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
@@ -544,13 +579,14 @@ with DAG(
     )
 
     # Run CSV transform within kubernetes pod
-    individuals_ingest_2020_transform_csv_4 = kubernetes_pod.KubernetesPodOperator(
+    individuals_ingest_2020_transform_csv_4 = kubernetes_engine.GKEStartPodOperator(
         task_id="individuals_ingest_2020_transform_csv_4",
         startup_timeout_seconds=600,
         name="individuals_ingest_2020",
-        namespace="composer-user-workloads",
-        service_account_name="default",
-        config_file="/home/airflow/composer_kube_config",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-fec-individuals-ingest-2020",
         image_pull_policy="Always",
         image="{{ var.json.fec.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -564,6 +600,11 @@ with DAG(
             "PIPELINE_NAME": "individuals_ingest_2020",
             "CSV_HEADERS": '["cmte_id","amndt_ind","rpt_tp","transaction_pgi","image_num","transaction_tp","entity_tp","name","city","state", "zip_code","employer","occupation","transaction_dt","transaction_amt","other_id","tran_id","file_num", "memo_cd","memo_text","sub_id"]',
             "RENAME_MAPPINGS": '{"0":"cmte_id","1":"amndt_ind","2":"rpt_tp","3":"transaction_pgi","4":"image_num","5":"transaction_tp", "6":"entity_tp","7":"name","8":"city","9":"state","10":"zip_code","11":"employer", "12":"occupation","13":"transaction_dt","14":"transaction_amt","15":"other_id","16":"tran_id", "17":"file_num","18":"memo_cd","19":"memo_text","20":"sub_id"}',
+        },
+        container_resources={
+            "memory": {"request": "32Gi"},
+            "cpu": {"request": "2"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
@@ -708,13 +749,14 @@ with DAG(
     )
 
     # Run CSV transform within kubernetes pod
-    individuals_ingest_2020_transform_csv_5 = kubernetes_pod.KubernetesPodOperator(
+    individuals_ingest_2020_transform_csv_5 = kubernetes_engine.GKEStartPodOperator(
         task_id="individuals_ingest_2020_transform_csv_5",
         startup_timeout_seconds=600,
         name="individuals_ingest_2020",
-        namespace="composer-user-workloads",
-        service_account_name="default",
-        config_file="/home/airflow/composer_kube_config",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-fec-individuals-ingest-2020",
         image_pull_policy="Always",
         image="{{ var.json.fec.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -728,6 +770,11 @@ with DAG(
             "PIPELINE_NAME": "individuals_ingest_2020",
             "CSV_HEADERS": '["cmte_id","amndt_ind","rpt_tp","transaction_pgi","image_num","transaction_tp","entity_tp","name","city","state", "zip_code","employer","occupation","transaction_dt","transaction_amt","other_id","tran_id","file_num", "memo_cd","memo_text","sub_id"]',
             "RENAME_MAPPINGS": '{"0":"cmte_id","1":"amndt_ind","2":"rpt_tp","3":"transaction_pgi","4":"image_num","5":"transaction_tp", "6":"entity_tp","7":"name","8":"city","9":"state","10":"zip_code","11":"employer", "12":"occupation","13":"transaction_dt","14":"transaction_amt","15":"other_id","16":"tran_id", "17":"file_num","18":"memo_cd","19":"memo_text","20":"sub_id"}',
+        },
+        container_resources={
+            "memory": {"request": "32Gi"},
+            "cpu": {"request": "2"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
@@ -872,13 +919,14 @@ with DAG(
     )
 
     # Run CSV transform within kubernetes pod
-    individuals_ingest_2020_transform_csv_6 = kubernetes_pod.KubernetesPodOperator(
+    individuals_ingest_2020_transform_csv_6 = kubernetes_engine.GKEStartPodOperator(
         task_id="individuals_ingest_2020_transform_csv_6",
         startup_timeout_seconds=600,
         name="individuals_ingest_2020",
-        namespace="composer-user-workloads",
-        service_account_name="default",
-        config_file="/home/airflow/composer_kube_config",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-fec-individuals-ingest-2020",
         image_pull_policy="Always",
         image="{{ var.json.fec.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -892,6 +940,11 @@ with DAG(
             "PIPELINE_NAME": "individuals_ingest_2020",
             "CSV_HEADERS": '["cmte_id","amndt_ind","rpt_tp","transaction_pgi","image_num","transaction_tp","entity_tp","name","city","state", "zip_code","employer","occupation","transaction_dt","transaction_amt","other_id","tran_id","file_num", "memo_cd","memo_text","sub_id"]',
             "RENAME_MAPPINGS": '{"0":"cmte_id","1":"amndt_ind","2":"rpt_tp","3":"transaction_pgi","4":"image_num","5":"transaction_tp", "6":"entity_tp","7":"name","8":"city","9":"state","10":"zip_code","11":"employer", "12":"occupation","13":"transaction_dt","14":"transaction_amt","15":"other_id","16":"tran_id", "17":"file_num","18":"memo_cd","19":"memo_text","20":"sub_id"}',
+        },
+        container_resources={
+            "memory": {"request": "32Gi"},
+            "cpu": {"request": "2"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
@@ -1036,13 +1089,14 @@ with DAG(
     )
 
     # Run CSV transform within kubernetes pod
-    individuals_ingest_2020_transform_csv_7 = kubernetes_pod.KubernetesPodOperator(
+    individuals_ingest_2020_transform_csv_7 = kubernetes_engine.GKEStartPodOperator(
         task_id="individuals_ingest_2020_transform_csv_7",
         startup_timeout_seconds=600,
         name="individuals_ingest_2020",
-        namespace="composer-user-workloads",
-        service_account_name="default",
-        config_file="/home/airflow/composer_kube_config",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-fec-individuals-ingest-2020",
         image_pull_policy="Always",
         image="{{ var.json.fec.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -1056,6 +1110,11 @@ with DAG(
             "PIPELINE_NAME": "individuals_ingest_2020",
             "CSV_HEADERS": '["cmte_id","amndt_ind","rpt_tp","transaction_pgi","image_num","transaction_tp","entity_tp","name","city","state", "zip_code","employer","occupation","transaction_dt","transaction_amt","other_id","tran_id","file_num", "memo_cd","memo_text","sub_id"]',
             "RENAME_MAPPINGS": '{"0":"cmte_id","1":"amndt_ind","2":"rpt_tp","3":"transaction_pgi","4":"image_num","5":"transaction_tp", "6":"entity_tp","7":"name","8":"city","9":"state","10":"zip_code","11":"employer", "12":"occupation","13":"transaction_dt","14":"transaction_amt","15":"other_id","16":"tran_id", "17":"file_num","18":"memo_cd","19":"memo_text","20":"sub_id"}',
+        },
+        container_resources={
+            "memory": {"request": "32Gi"},
+            "cpu": {"request": "2"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
@@ -1200,13 +1259,14 @@ with DAG(
     )
 
     # Run CSV transform within kubernetes pod
-    individuals_ingest_2020_transform_csv_8 = kubernetes_pod.KubernetesPodOperator(
+    individuals_ingest_2020_transform_csv_8 = kubernetes_engine.GKEStartPodOperator(
         task_id="individuals_ingest_2020_transform_csv_8",
         startup_timeout_seconds=600,
         name="individuals_ingest_2020",
-        namespace="composer-user-workloads",
-        service_account_name="default",
-        config_file="/home/airflow/composer_kube_config",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-fec-individuals-ingest-2020",
         image_pull_policy="Always",
         image="{{ var.json.fec.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -1220,6 +1280,11 @@ with DAG(
             "PIPELINE_NAME": "individuals_ingest_2020",
             "CSV_HEADERS": '["cmte_id","amndt_ind","rpt_tp","transaction_pgi","image_num","transaction_tp","entity_tp","name","city","state", "zip_code","employer","occupation","transaction_dt","transaction_amt","other_id","tran_id","file_num", "memo_cd","memo_text","sub_id"]',
             "RENAME_MAPPINGS": '{"0":"cmte_id","1":"amndt_ind","2":"rpt_tp","3":"transaction_pgi","4":"image_num","5":"transaction_tp", "6":"entity_tp","7":"name","8":"city","9":"state","10":"zip_code","11":"employer", "12":"occupation","13":"transaction_dt","14":"transaction_amt","15":"other_id","16":"tran_id", "17":"file_num","18":"memo_cd","19":"memo_text","20":"sub_id"}',
+        },
+        container_resources={
+            "memory": {"request": "32Gi"},
+            "cpu": {"request": "2"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
@@ -1364,13 +1429,14 @@ with DAG(
     )
 
     # Run CSV transform within kubernetes pod
-    individuals_ingest_2020_transform_csv_9 = kubernetes_pod.KubernetesPodOperator(
+    individuals_ingest_2020_transform_csv_9 = kubernetes_engine.GKEStartPodOperator(
         task_id="individuals_ingest_2020_transform_csv_9",
         startup_timeout_seconds=600,
         name="individuals_ingest_2020",
-        namespace="composer-user-workloads",
-        service_account_name="default",
-        config_file="/home/airflow/composer_kube_config",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-fec-individuals-ingest-2020",
         image_pull_policy="Always",
         image="{{ var.json.fec.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -1383,6 +1449,11 @@ with DAG(
             "CHUNKSIZE": "100000",
             "PIPELINE_NAME": "individuals_ingest_2020",
             "CSV_HEADERS": '["cmte_id","amndt_ind","rpt_tp","transaction_pgi","image_num","transaction_tp","entity_tp","name","city","state", "zip_code","employer","occupation","transaction_dt","transaction_amt","other_id","tran_id","file_num", "memo_cd","memo_text","sub_id"]',
+        },
+        container_resources={
+            "memory": {"request": "32Gi"},
+            "cpu": {"request": "2"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
@@ -1525,9 +1596,16 @@ with DAG(
             },
         ],
     )
+    delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
+        task_id="delete_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        name="pdp-fec-individuals-ingest-2020",
+    )
 
     (
         download_zip_file_to_composer_bucket
+        >> create_cluster
         >> split_file
         >> [
             individuals_ingest_2020_transform_csv_1,
@@ -1540,13 +1618,16 @@ with DAG(
             individuals_ingest_2020_transform_csv_8,
             individuals_ingest_2020_transform_csv_9,
         ]
-        >> load_individuals_ingest_2020_to_bq_1
-        >> load_individuals_ingest_2020_to_bq_2
-        >> load_individuals_ingest_2020_to_bq_3
-        >> load_individuals_ingest_2020_to_bq_4
-        >> load_individuals_ingest_2020_to_bq_5
-        >> load_individuals_ingest_2020_to_bq_6
-        >> load_individuals_ingest_2020_to_bq_7
-        >> load_individuals_ingest_2020_to_bq_8
-        >> load_individuals_ingest_2020_to_bq_9
+        >> delete_cluster
+        >> [
+            load_individuals_ingest_2020_to_bq_1,
+            load_individuals_ingest_2020_to_bq_2,
+            load_individuals_ingest_2020_to_bq_3,
+            load_individuals_ingest_2020_to_bq_4,
+            load_individuals_ingest_2020_to_bq_5,
+            load_individuals_ingest_2020_to_bq_6,
+            load_individuals_ingest_2020_to_bq_7,
+            load_individuals_ingest_2020_to_bq_8,
+            load_individuals_ingest_2020_to_bq_9,
+        ]
     )
