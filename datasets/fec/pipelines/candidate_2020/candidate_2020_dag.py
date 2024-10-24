@@ -38,8 +38,9 @@ with DAG(
         task_id="candidate_2020_transform_csv",
         startup_timeout_seconds=600,
         name="candidate_2020",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.fec.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -52,11 +53,6 @@ with DAG(
             "TARGET_GCS_PATH": "data/fec/candidate_2020/data_output.csv",
             "PIPELINE_NAME": "candidate_2020",
             "CSV_HEADERS": '["cand_id","cand_name","cand_pty_affiliation","cand_election_yr","cand_office_st","cand_office", "cand_office_district","cand_ici","cand_status","cand_pcc","cand_st1","cand_st2","cand_city", "cand_st","cand_zip"]',
-        },
-        resources={
-            "request_memory": "3G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "5G",
         },
     )
 

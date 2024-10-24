@@ -41,20 +41,35 @@ dag:
           curl -o $data_dir/individuals/indiv16.zip -L $fec
           unzip $data_dir/individuals/indiv16.zip -d $data_dir/individuals/
           rm -f $data_dir/individuals/indiv16.zip
-
         env:
           data_dir: /home/airflow/gcs/data/fec
           fec: https://cg-519a459a-0ea3-42c2-b7bc-fa1143481f74.s3-us-gov-west-1.amazonaws.com/bulk-downloads/2016/indiv16.zip
 
+    - operator: "GKECreateClusterOperator"
+      args:
+        task_id: "create_cluster"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        body:
+          name: pdp-fec-individuals-2016
+          initial_node_count: 1
+          network: "{{ var.value.vpc_network }}"
+          node_config:
+            machine_type: e2-standard-16
+            oauth_scopes:
+              - https://www.googleapis.com/auth/devstorage.read_write
+              - https://www.googleapis.com/auth/cloud-platform
 
-    - operator: "KubernetesPodOperator"
+    - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
         task_id: "individuals_2016_transform_csv"
         startup_timeout_seconds: 600
         name: "individuals_2016"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: pdp-fec-individuals-2016
         image_pull_policy: "Always"
         image: "{{ var.json.fec.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -70,10 +85,21 @@ dag:
             ["cmte_id","amndt_ind","rpt_tp","transaction_pgi","image_num","transaction_tp","entity_tp","name","city","state",
             "zip_code","employer","occupation","transaction_dt","transaction_amt","other_id","tran_id","file_num",
             "memo_cd","memo_text","sub_id"]
-        resources:
-          request_memory: "5G"
-          request_cpu: "1"
-          request_ephemeral_storage: "10G"
+        container_resources:
+          memory:
+            request: "32Gi"
+          cpu:
+            request: "2"
+          ephemeral-storage:
+            request: "10Gi"
+
+
+    - operator: "GKEDeleteClusterOperator"
+      args:
+        task_id: "delete_cluster"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        name: pdp-fec-individuals-2016
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
@@ -86,7 +112,6 @@ dag:
         skip_leading_rows: 1
         allow_quoted_newlines: True
         write_disposition: "WRITE_TRUNCATE"
-
         schema_fields:
           - name: "cmte_id"
             type: "string"
@@ -174,4 +199,4 @@ dag:
             mode: "required"
 
   graph_paths:
-    - "download_zip_file >> individuals_2016_transform_csv >> load_individuals_2016_to_bq"
+    - "download_zip_file >> create_cluster >> individuals_2016_transform_csv >> delete_cluster >> load_individuals_2016_to_bq"

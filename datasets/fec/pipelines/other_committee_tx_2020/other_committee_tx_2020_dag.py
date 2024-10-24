@@ -15,7 +15,7 @@
 
 from airflow import DAG
 from airflow.operators import bash
-from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.operators import kubernetes_engine
 from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
@@ -43,14 +43,33 @@ with DAG(
             "fec": "https://www.fec.gov/files/bulk-downloads/2020/oth20.zip",
         },
     )
+    create_cluster = kubernetes_engine.GKECreateClusterOperator(
+        task_id="create_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        body={
+            "name": "pdp-fec-other-committee-tx-2020",
+            "initial_node_count": 1,
+            "network": "{{ var.value.vpc_network }}",
+            "node_config": {
+                "machine_type": "e2-standard-16",
+                "oauth_scopes": [
+                    "https://www.googleapis.com/auth/devstorage.read_write",
+                    "https://www.googleapis.com/auth/cloud-platform",
+                ],
+            },
+        },
+    )
 
     # Run CSV transform within kubernetes pod
-    other_committee_tx_2020_transform_csv = kubernetes_pod.KubernetesPodOperator(
+    other_committee_tx_2020_transform_csv = kubernetes_engine.GKEStartPodOperator(
         task_id="other_committee_tx_2020_transform_csv",
         startup_timeout_seconds=600,
         name="other_committee_tx_2020",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-fec-other-committee-tx-2020",
         image_pull_policy="Always",
         image="{{ var.json.fec.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -64,11 +83,12 @@ with DAG(
             "PIPELINE_NAME": "other_committee_tx_2020",
             "CSV_HEADERS": '["cmte_id","amndt_ind","rpt_tp","transaction_pgi","image_num","transaction_tp","entity_tp","name","city","state", "zip_code","employer","occupation","transaction_dt","transaction_amt","other_id","tran_id" ,"file_num", "memo_cd","memo_text","sub_id"]',
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
-        },
+    )
+    delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
+        task_id="delete_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        name="pdp-fec-other-committee-tx-2020",
     )
 
     # Task to load CSV data to a BigQuery table
@@ -213,6 +233,8 @@ with DAG(
 
     (
         download_zip_file
+        >> create_cluster
         >> other_committee_tx_2020_transform_csv
+        >> delete_cluster
         >> load_other_committee_tx_2020_to_bq
     )
