@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -37,8 +37,9 @@ with DAG(
     transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="transform_csv",
         name="drug_enforcement",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.fda_drug.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -56,10 +57,10 @@ with DAG(
             "RENAME_HEADERS_LIST": '{\n  "classification": "classification",\n  "center_classification_date": "center_classification_date",\n  "report_date": "report_date",\n  "postal_code": "postal_code",\n  "termination_date": "termination_date",\n  "recall_initiation_date": "recall_initiation_date",\n  "recall_number": "recall_number",\n  "city": "city",\n  "more_code_info": "more_code_info",\n  "event_id": "event_id",\n  "distribution_pattern": "distribution_pattern",\n  "openfda_application_number": "openfda_application_number",\n  "openfda_brand_name": "openfda_brand_name",\n  "openfda_generic_name": "openfda_generic_name",\n  "openfda_manufacturer_name": "openfda_manufacturer_name",\n  "openfda_product_ndc": "openfda_product_ndc",\n  "openfda_product_type": "openfda_product_type",\n  "openfda_route": "openfda_route",\n  "openfda_substance_name": "openfda_substance_name",\n  "openfda_spl_id": "openfda_spl_id",\n  "openfda_spl_set_id": "openfda_spl_set_id",\n  "openfda_pharm_class_moa": "openfda_pharm_class_moa",\n  "openfda_pharm_class_cs": "openfda_pharm_class_cs",\n  "openfda_pharm_class_pe": "openfda_pharm_class_pe",\n  "openfda_pharm_class_epc": "openfda_pharm_class_epc",\n  "openfda_upc": "openfda_upc",\n  "openfda_unii": "openfda_unii",\n  "openfda_rxcui": "openfda_rxcui",\n  "recalling_firm": "recalling_firm",\n  "voluntary_mandated": "voluntary_mandated",\n  "state": "state",\n  "reason_for_recall": "reason_for_recall",\n  "initial_firm_notification": "initial_firm_notification",\n  "status": "status",\n  "product_type": "product_type",\n  "country": "country",\n  "product_description": "product_description",\n  "code_info": "code_info",\n  "address_1": "address_1",\n  "address_2": "address_2",\n  "product_quantity": "product_quantity",\n  "openfda_dosage_form": "openfda_dosage_form"\n}',
             "DATE_FORMAT_LIST": '[\n  ["center_classification_date", "%Y%m%d", "%Y-%m-%d"],\n  ["report_date", "%Y%m%d", "%Y-%m-%d"],\n  ["termination_date", "%Y%m%d", "%Y-%m-%d"],\n  ["recall_initiation_date", "%Y%m%d", "%Y-%m-%d"]\n]',
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "5G",
+        container_resources={
+            "memory": {"request": "32Gi"},
+            "cpu": {"request": "2"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
