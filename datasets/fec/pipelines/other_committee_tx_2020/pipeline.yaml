@@ -191,6 +191,5 @@ dag:
             mode: "nullable"
 
 
-
   graph_paths:
     - "download_zip_file >> create_cluster >> other_committee_tx_2020_transform_csv >> delete_cluster >> load_other_committee_tx_2020_to_bq"
