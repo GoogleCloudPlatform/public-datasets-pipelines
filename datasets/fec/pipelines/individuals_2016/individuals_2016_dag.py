@@ -49,8 +49,9 @@ with DAG(
         task_id="individuals_2016_transform_csv",
         startup_timeout_seconds=600,
         name="individuals_2016",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.fec.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -63,11 +64,6 @@ with DAG(
             "CHUNKSIZE": "1000000",
             "PIPELINE_NAME": "individuals_2016",
             "CSV_HEADERS": '["cmte_id","amndt_ind","rpt_tp","transaction_pgi","image_num","transaction_tp","entity_tp","name","city","state", "zip_code","employer","occupation","transaction_dt","transaction_amt","other_id","tran_id","file_num", "memo_cd","memo_text","sub_id"]',
-        },
-        resources={
-            "request_memory": "5G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
         },
     )
 

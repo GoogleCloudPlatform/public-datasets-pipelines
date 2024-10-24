@@ -38,8 +38,9 @@ dag:
         task_id: "opex_2020_transform_csv"
         startup_timeout_seconds: 600
         name: "opex_2020"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "composer-user-workloads"
+        service_account_name: "default"
+        config_file: "/home/airflow/composer_kube_config"
         image_pull_policy: "Always"
         image: "{{ var.json.fec.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -56,10 +57,6 @@ dag:
             "sched_tp_cd","name","city","state","zip_code","transaction_dt","transaction_amt","transaction_pgi",
             "purpose","category","category_desc","memo_cd","memo_text","entity_tp","sub_id","file_num",
             "tran_id","back_ref_tran_id"]
-        resources:
-          request_memory: "3G"
-          request_cpu: "1"
-          request_ephemeral_storage: "5G"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
@@ -72,7 +69,6 @@ dag:
         skip_leading_rows: 1
         allow_quoted_newlines: True
         write_disposition: "WRITE_TRUNCATE"
-
         schema_fields:
           - name: "cmte_id"
             type: "string"
