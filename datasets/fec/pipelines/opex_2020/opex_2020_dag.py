@@ -38,8 +38,9 @@ with DAG(
         task_id="opex_2020_transform_csv",
         startup_timeout_seconds=600,
         name="opex_2020",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.fec.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -52,11 +53,6 @@ with DAG(
             "TARGET_GCS_PATH": "data/fec/opex_2020/data_output.csv",
             "PIPELINE_NAME": "opex_2020",
             "CSV_HEADERS": '["cmte_id","amndt_ind","rpt_yr","rpt_tp","image_num","line_num","form_tp_cd", "sched_tp_cd","name","city","state","zip_code","transaction_dt","transaction_amt","transaction_pgi", "purpose","category","category_desc","memo_cd","memo_text","entity_tp","sub_id","file_num", "tran_id","back_ref_tran_id"]',
-        },
-        resources={
-            "request_memory": "3G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "5G",
         },
     )
 
