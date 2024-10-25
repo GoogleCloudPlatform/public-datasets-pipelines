@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,19 +36,19 @@ with DAG(
     copy_bq_datasets = kubernetes_pod.KubernetesPodOperator(
         task_id="copy_bq_datasets",
         name="copy_bq_datasets",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.google_trends.container_registry.copy_bq_datasets }}",
         env_vars={
             "SOURCE_PROJECT_ID": "{{ var.json.google_trends.source_project_id }}",
             "SOURCE_BQ_DATASET": "{{ var.json.google_trends.source_bq_dataset }}",
-            "TARGET_PROJECT_ID": "{{ var.json.google_trends.target_project_id }}",
+            "TARGET_PROJECT_ID": "{{ var.value.gcp_project }}",
             "TARGET_BQ_DATASET": "{{ var.json.google_trends.target_bq_dataset }}",
             "EXPECTED_TABLES": '["top_terms", "top_rising_terms", "international_top_terms", "international_top_rising_terms"]',
             "SERVICE_ACCOUNT": "{{ var.json.google_trends.service_account }}",
         },
-        resources={"request_memory": "128M", "request_cpu": "200m"},
     )
 
     copy_bq_datasets
