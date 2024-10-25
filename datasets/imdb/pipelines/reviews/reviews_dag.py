@@ -14,7 +14,7 @@
 
 
 from airflow import DAG
-from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.operators import kubernetes_engine
 from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
@@ -32,14 +32,33 @@ with DAG(
     catchup=False,
     default_view="graph",
 ) as dag:
+    create_cluster = kubernetes_engine.GKECreateClusterOperator(
+        task_id="create_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        body={
+            "name": "pdp-imdb-reviews",
+            "initial_node_count": 1,
+            "network": "{{ var.value.vpc_network }}",
+            "node_config": {
+                "machine_type": "e2-standard-16",
+                "oauth_scopes": [
+                    "https://www.googleapis.com/auth/devstorage.read_write",
+                    "https://www.googleapis.com/auth/cloud-platform",
+                ],
+            },
+        },
+    )
 
     # Run CSV transform within kubernetes pod
-    reviews_transform_csv = kubernetes_pod.KubernetesPodOperator(
+    reviews_transform_csv = kubernetes_engine.GKEStartPodOperator(
         task_id="reviews_transform_csv",
         startup_timeout_seconds=600,
         name="reviews",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-imdb-reviews",
         image_pull_policy="Always",
         image="{{ var.json.imdb.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -55,7 +74,12 @@ with DAG(
             "CSV_HEADERS": '["review", "split", "label", "movie_id", "reviewer_rating", "movie_url", "title"]',
             "RENAME_MAPPINGS": '{"review": "review", "split": "split", "label": "label", "movie_id": "movie_id", "reviewer_rating": "reviewer_rating", "movie_url": "movie_url", "title": "title"}',
         },
-        resources={"request_memory": "4G", "request_cpu": "1"},
+    )
+    delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
+        task_id="delete_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        name="pdp-imdb-reviews",
     )
 
     # Task to load CSV data to a BigQuery table
@@ -114,4 +138,4 @@ with DAG(
         ],
     )
 
-    reviews_transform_csv >> load_reviews_to_bq
+    create_cluster >> reviews_transform_csv >> delete_cluster >> load_reviews_to_bq
