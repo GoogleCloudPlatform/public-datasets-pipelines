@@ -14,6 +14,7 @@
 
 
 from airflow import DAG
+from airflow.operators import bash
 from airflow.providers.google.cloud.operators import kubernetes_engine
 from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
@@ -47,6 +48,16 @@ with DAG(
                     "https://www.googleapis.com/auth/cloud-platform",
                 ],
             },
+        },
+    )
+
+    # Task to copy `reviews` to gcs
+    download_zip_file = bash.BashOperator(
+        task_id="download_zip_file",
+        bash_command="mkdir -p $data_dir/imdb/reviews\ncurl -o $data_dir/imdb/reviews/aclImdb_v1.tar.gz -L $reviews\n",
+        env={
+            "data_dir": "/home/airflow/gcs/data",
+            "reviews": "https://ai.stanford.edu/~amaas/data/sentiment/aclImdb_v1.tar.gz",
         },
     )
 
@@ -138,4 +149,10 @@ with DAG(
         ],
     )
 
-    create_cluster >> reviews_transform_csv >> delete_cluster >> load_reviews_to_bq
+    (
+        create_cluster
+        >> download_zip_file
+        >> reviews_transform_csv
+        >> delete_cluster
+        >> load_reviews_to_bq
+    )

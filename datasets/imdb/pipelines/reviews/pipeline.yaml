@@ -80,6 +80,17 @@ dag:
               - https://www.googleapis.com/auth/devstorage.read_write
               - https://www.googleapis.com/auth/cloud-platform
 
+    - operator: "BashOperator"
+      description: "Task to copy `reviews` to gcs"
+      args:
+        task_id: "download_zip_file"
+        bash_command: |
+          mkdir -p $data_dir/imdb/reviews
+          curl -o $data_dir/imdb/reviews/aclImdb_v1.tar.gz -L $reviews
+        env:
+          data_dir: /home/airflow/gcs/data
+          reviews: https://ai.stanford.edu/~amaas/data/sentiment/aclImdb_v1.tar.gz
+
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
@@ -160,4 +171,4 @@ dag:
             mode: "NULLABLE"
 
   graph_paths:
-    - "create_cluster >> reviews_transform_csv >> delete_cluster >> load_reviews_to_bq"
+    - "create_cluster >> download_zip_file >> reviews_transform_csv >> delete_cluster >> load_reviews_to_bq"
