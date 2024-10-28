@@ -38,8 +38,9 @@ dag:
         task_id: "transform_institutions_to_csv"
         startup_timeout_seconds: 600
         name: "institutions"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "composer-user-workloads"
+        service_account_name: "default"
+        config_file: "/home/airflow/composer_kube_config"
         image_pull_policy: "Always"
         image: "{{ var.json.fdic.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -121,10 +122,13 @@ dag:
           NULL_LIST: >-
             ["total_assets","total_deposits","equity_capital","offices_count","total_domestic_deposits","net_income","quarterly_net_income",
              "office_count_domestic","office_count_foreign","office_count_us_territories"]
-        resources:
-          request_memory: "4G"
-          request_cpu: "1"
-          request_ephemeral_storage: "10G"
+        container_resources:
+          memory:
+            request: "80Gi"
+          cpu:
+            request: "2"
+          ephemeral-storage:
+            request: "10Gi"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
