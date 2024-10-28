@@ -14,7 +14,7 @@
 
 
 from airflow import DAG
-from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.operators import kubernetes_engine
 from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
@@ -32,14 +32,33 @@ with DAG(
     catchup=False,
     default_view="graph",
 ) as dag:
+    create_cluster = kubernetes_engine.GKECreateClusterOperator(
+        task_id="create_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        body={
+            "name": "pdp-imdb-interfaces",
+            "initial_node_count": 1,
+            "network": "{{ var.value.vpc_network }}",
+            "node_config": {
+                "machine_type": "e2-standard-16",
+                "oauth_scopes": [
+                    "https://www.googleapis.com/auth/devstorage.read_write",
+                    "https://www.googleapis.com/auth/cloud-platform",
+                ],
+            },
+        },
+    )
 
     # Run CSV transform within kubernetes pod
-    name_basics_transform_csv = kubernetes_pod.KubernetesPodOperator(
+    name_basics_transform_csv = kubernetes_engine.GKEStartPodOperator(
         task_id="name_basics_transform_csv",
         startup_timeout_seconds=600,
         name="name_basics",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-imdb-interfaces",
         image_pull_policy="Always",
         image="{{ var.json.imdb.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -52,11 +71,6 @@ with DAG(
             "PIPELINE_NAME": "interfaces",
             "CSV_HEADERS": '["nconst", "primary_name", "birth_year", "death_year", "primary_profession", "known_for_titles"]',
             "RENAME_MAPPINGS": '{"nconst": "nconst", "primaryName": "primary_name", "birthYear": "birth_year", "deathYear": "death_year",\n "primaryProfession": "primary_profession", "knownForTitles": "known_for_titles"}',
-        },
-        resources={
-            "request_ephemeral_storage": "10G",
-            "request_memory": "12G",
-            "request_cpu": "1",
         },
     )
 
@@ -110,12 +124,14 @@ with DAG(
     )
 
     # Run CSV transform within kubernetes pod
-    title_akas_transform_csv = kubernetes_pod.KubernetesPodOperator(
+    title_akas_transform_csv = kubernetes_engine.GKEStartPodOperator(
         task_id="title_akas_transform_csv",
         startup_timeout_seconds=900,
         name="title_akas",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-imdb-interfaces",
         image_pull_policy="Always",
         image="{{ var.json.imdb.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -129,11 +145,6 @@ with DAG(
             "PIPELINE_NAME": "interfaces",
             "CSV_HEADERS": '["title_id", "ordering", "title", "region", "language", "types", "attributes", "is_original_title"]',
             "RENAME_MAPPINGS": '{"titleId": "title_id", "ordering": "ordering", "title": "title", "region": "region", "language": "language", "types": "types", "attributes": "attributes", "isOriginalTitle": "is_original_title"}',
-        },
-        resources={
-            "request_ephemeral_storage": "10G",
-            "request_memory": "12G",
-            "request_cpu": "3",
         },
     )
 
@@ -199,12 +210,14 @@ with DAG(
     )
 
     # Run CSV transform within kubernetes pod
-    title_basics_transform_csv = kubernetes_pod.KubernetesPodOperator(
+    title_basics_transform_csv = kubernetes_engine.GKEStartPodOperator(
         task_id="title_basics_transform_csv",
         startup_timeout_seconds=600,
         name="title_basics",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-imdb-interfaces",
         image_pull_policy="Always",
         image="{{ var.json.imdb.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -217,11 +230,6 @@ with DAG(
             "PIPELINE_NAME": "interfaces",
             "CSV_HEADERS": '["tconst", "title_type", "primary_title", "original_title", "is_adult", "start_year", "end_year", "runtime_minutes", "genres"]',
             "RENAME_MAPPINGS": '{"tconst": "tconst", "titleType": "title_type", "primaryTitle": "primary_title", "originalTitle": "original_title",\n "isAdult": "is_adult", "startYear": "start_year", "endYear": "end_year", "runtimeMinutes": "runtime_minutes", "genres": "genres"}',
-        },
-        resources={
-            "request_ephemeral_storage": "10G",
-            "request_memory": "12G",
-            "request_cpu": "1",
         },
     )
 
@@ -293,12 +301,14 @@ with DAG(
     )
 
     # Run CSV transform within kubernetes pod
-    title_crew_transform_csv = kubernetes_pod.KubernetesPodOperator(
+    title_crew_transform_csv = kubernetes_engine.GKEStartPodOperator(
         task_id="title_crew_transform_csv",
         startup_timeout_seconds=600,
         name="title_crew",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-imdb-interfaces",
         image_pull_policy="Always",
         image="{{ var.json.imdb.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -311,11 +321,6 @@ with DAG(
             "PIPELINE_NAME": "interfaces",
             "CSV_HEADERS": '["tconst", "directors", "writers"]',
             "RENAME_MAPPINGS": '{"tconst": "tconst", "directors": "directors", "writers": "writers"}',
-        },
-        resources={
-            "request_ephemeral_storage": "10G",
-            "request_memory": "12G",
-            "request_cpu": "1",
         },
     )
 
@@ -351,12 +356,14 @@ with DAG(
     )
 
     # Run CSV transform within kubernetes pod
-    title_episode_transform_csv = kubernetes_pod.KubernetesPodOperator(
+    title_episode_transform_csv = kubernetes_engine.GKEStartPodOperator(
         task_id="title_episode_transform_csv",
         startup_timeout_seconds=600,
         name="title_episode",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-imdb-interfaces",
         image_pull_policy="Always",
         image="{{ var.json.imdb.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -369,11 +376,6 @@ with DAG(
             "PIPELINE_NAME": "interfaces",
             "CSV_HEADERS": '["tconst", "parent_tconst", "season_number", "episode_number"]',
             "RENAME_MAPPINGS": '{"tconst": "tconst", "parentTconst": "parent_tconst", "seasonNumber": "season_number", "episodeNumber": "episode_number"}',
-        },
-        resources={
-            "request_ephemeral_storage": "10G",
-            "request_memory": "12G",
-            "request_cpu": "1",
         },
     )
 
@@ -415,12 +417,14 @@ with DAG(
     )
 
     # Run CSV transform within kubernetes pod
-    title_principals_transform_csv = kubernetes_pod.KubernetesPodOperator(
+    title_principals_transform_csv = kubernetes_engine.GKEStartPodOperator(
         task_id="title_principals_transform_csv",
         startup_timeout_seconds=900,
         name="title_principals",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-imdb-interfaces",
         image_pull_policy="Always",
         image="{{ var.json.imdb.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -434,11 +438,6 @@ with DAG(
             "PIPELINE_NAME": "interfaces",
             "CSV_HEADERS": '["tconst", "ordering", "nconst", "category", "job", "characters"]',
             "RENAME_MAPPINGS": '{"tconst": "tconst", "ordering": "ordering", "nconst": "nconst", "category": "category",\n "job": "job", "characters": "characters"}',
-        },
-        resources={
-            "request_ephemeral_storage": "10G",
-            "request_memory": "12G",
-            "request_cpu": "3",
         },
     )
 
@@ -492,12 +491,14 @@ with DAG(
     )
 
     # Run CSV transform within kubernetes pod
-    title_ratings_transform_csv = kubernetes_pod.KubernetesPodOperator(
+    title_ratings_transform_csv = kubernetes_engine.GKEStartPodOperator(
         task_id="title_ratings_transform_csv",
         startup_timeout_seconds=600,
         name="title_ratings",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-imdb-interfaces",
         image_pull_policy="Always",
         image="{{ var.json.imdb.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -510,11 +511,6 @@ with DAG(
             "PIPELINE_NAME": "interfaces",
             "CSV_HEADERS": '["tconst", "average_rating", "num_votes"]',
             "RENAME_MAPPINGS": '{"tconst": "tconst", "averageRating": "average_rating", "numVotes": "num_votes"}',
-        },
-        resources={
-            "request_ephemeral_storage": "10G",
-            "request_memory": "12G",
-            "request_cpu": "1",
         },
     )
 
@@ -548,11 +544,32 @@ with DAG(
             },
         ],
     )
+    delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
+        task_id="delete_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        name="pdp-imdb-interfaces",
+    )
 
-    name_basics_transform_csv >> load_name_basics_to_bq
-    title_akas_transform_csv >> load_title_akas_to_bq
-    title_basics_transform_csv >> load_title_basics_to_bq
-    title_crew_transform_csv >> load_title_crew_to_bq
-    title_episode_transform_csv >> load_title_episode_to_bq
-    title_principals_transform_csv >> load_title_principals_to_bq
-    title_ratings_transform_csv >> load_title_ratings_to_bq
+    (
+        create_cluster
+        >> [
+            name_basics_transform_csv,
+            title_akas_transform_csv,
+            title_basics_transform_csv,
+            title_crew_transform_csv,
+            title_episode_transform_csv,
+            title_principals_transform_csv,
+            title_ratings_transform_csv,
+        ]
+        >> delete_cluster
+        >> [
+            load_name_basics_to_bq,
+            load_title_akas_to_bq,
+            load_title_basics_to_bq,
+            load_title_crew_to_bq,
+            load_title_episode_to_bq,
+            load_title_principals_to_bq,
+            load_title_ratings_to_bq,
+        ]
+    )

@@ -58,14 +58,31 @@ dag:
     default_view: graph
 
   tasks:
-    - operator: "KubernetesPodOperator"
+    - operator: "GKECreateClusterOperator"
+      args:
+        task_id: "create_cluster"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        body:
+          name: pdp-imdb-interfaces
+          initial_node_count: 1
+          network: "{{ var.value.vpc_network }}"
+          node_config:
+            machine_type: e2-standard-16
+            oauth_scopes:
+              - https://www.googleapis.com/auth/devstorage.read_write
+              - https://www.googleapis.com/auth/cloud-platform
+
+    - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
         task_id: "name_basics_transform_csv"
         startup_timeout_seconds: 600
         name: "name_basics"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: pdp-imdb-interfaces
         image_pull_policy: "Always"
         image: "{{ var.json.imdb.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -83,10 +100,6 @@ dag:
           RENAME_MAPPINGS: >-
             {"nconst": "nconst", "primaryName": "primary_name", "birthYear": "birth_year", "deathYear": "death_year",
              "primaryProfession": "primary_profession", "knownForTitles": "known_for_titles"}
-        resources:
-          request_ephemeral_storage: "10G"
-          request_memory: "12G"
-          request_cpu: "1"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
@@ -124,14 +137,16 @@ dag:
             description: "Titles the person is known for."
             mode: "nullable"
 
-    - operator: "KubernetesPodOperator"
+    - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
         task_id: "title_akas_transform_csv"
         startup_timeout_seconds: 900
         name: "title_akas"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: pdp-imdb-interfaces
         image_pull_policy: "Always"
         image: "{{ var.json.imdb.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -150,10 +165,6 @@ dag:
           RENAME_MAPPINGS: >-
             {"titleId": "title_id", "ordering": "ordering", "title": "title", "region": "region",
             "language": "language", "types": "types", "attributes": "attributes", "isOriginalTitle": "is_original_title"}
-        resources:
-          request_ephemeral_storage: "10G"
-          request_memory: "12G"
-          request_cpu: "3"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
@@ -199,14 +210,16 @@ dag:
             description: "False: not original title; True: original title."
             mode: "nullable"
 
-    - operator: "KubernetesPodOperator"
+    - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
         task_id: "title_basics_transform_csv"
         startup_timeout_seconds: 600
         name: "title_basics"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: pdp-imdb-interfaces
         image_pull_policy: "Always"
         image: "{{ var.json.imdb.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -224,10 +237,6 @@ dag:
           RENAME_MAPPINGS: >-
             {"tconst": "tconst", "titleType": "title_type", "primaryTitle": "primary_title", "originalTitle": "original_title",
              "isAdult": "is_adult", "startYear": "start_year", "endYear": "end_year", "runtimeMinutes": "runtime_minutes", "genres": "genres"}
-        resources:
-          request_ephemeral_storage: "10G"
-          request_memory: "12G"
-          request_cpu: "1"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
@@ -277,14 +286,16 @@ dag:
             description: "Includes up to three genres associated with the title."
             mode: "nullable"
 
-    - operator: "KubernetesPodOperator"
+    - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
         task_id: "title_crew_transform_csv"
         startup_timeout_seconds: 600
         name: "title_crew"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: pdp-imdb-interfaces
         image_pull_policy: "Always"
         image: "{{ var.json.imdb.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -301,10 +312,6 @@ dag:
             ["tconst", "directors", "writers"]
           RENAME_MAPPINGS: >-
             {"tconst": "tconst", "directors": "directors", "writers": "writers"}
-        resources:
-          request_ephemeral_storage: "10G"
-          request_memory: "12G"
-          request_cpu: "1"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
@@ -330,14 +337,16 @@ dag:
             description: "String of nconsts - writer(s) of the given title."
             mode: "nullable"
 
-    - operator: "KubernetesPodOperator"
+    - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
         task_id: "title_episode_transform_csv"
         startup_timeout_seconds: 600
         name: "title_episode"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: pdp-imdb-interfaces
         image_pull_policy: "Always"
         image: "{{ var.json.imdb.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -354,10 +363,6 @@ dag:
             ["tconst", "parent_tconst", "season_number", "episode_number"]
           RENAME_MAPPINGS: >-
             {"tconst": "tconst", "parentTconst": "parent_tconst", "seasonNumber": "season_number", "episodeNumber": "episode_number"}
-        resources:
-          request_ephemeral_storage: "10G"
-          request_memory: "12G"
-          request_cpu: "1"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
@@ -387,14 +392,16 @@ dag:
             description: "Episode number of the tconst in the TV series."
             mode: "nullable"
 
-    - operator: "KubernetesPodOperator"
+    - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
         task_id: "title_principals_transform_csv"
         startup_timeout_seconds: 900
         name: "title_principals"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: pdp-imdb-interfaces
         image_pull_policy: "Always"
         image: "{{ var.json.imdb.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -413,10 +420,6 @@ dag:
           RENAME_MAPPINGS: >-
             {"tconst": "tconst", "ordering": "ordering", "nconst": "nconst", "category": "category",
              "job": "job", "characters": "characters"}
-        resources:
-          request_ephemeral_storage: "10G"
-          request_memory: "12G"
-          request_cpu: "3"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
@@ -454,14 +457,16 @@ dag:
             description: "The name of the character played if applicable."
             mode: "nullable"
 
-    - operator: "KubernetesPodOperator"
+    - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
         task_id: "title_ratings_transform_csv"
         startup_timeout_seconds: 600
         name: "title_ratings"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: pdp-imdb-interfaces
         image_pull_policy: "Always"
         image: "{{ var.json.imdb.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -478,10 +483,6 @@ dag:
             ["tconst", "average_rating", "num_votes"]
           RENAME_MAPPINGS: >-
             {"tconst": "tconst", "averageRating": "average_rating", "numVotes": "num_votes"}
-        resources:
-          request_ephemeral_storage: "10G"
-          request_memory: "12G"
-          request_cpu: "1"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
@@ -507,11 +508,12 @@ dag:
             description: "Number of votes the title has received."
             mode: "nullable"
 
+    - operator: "GKEDeleteClusterOperator"
+      args:
+        task_id: "delete_cluster"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        name: pdp-imdb-interfaces
+
   graph_paths:
-    - "name_basics_transform_csv >> load_name_basics_to_bq"
-    - "title_akas_transform_csv >> load_title_akas_to_bq"
-    - "title_basics_transform_csv >> load_title_basics_to_bq"
-    - "title_crew_transform_csv >> load_title_crew_to_bq"
-    - "title_episode_transform_csv >> load_title_episode_to_bq"
-    - "title_principals_transform_csv >> load_title_principals_to_bq"
-    - "title_ratings_transform_csv >> load_title_ratings_to_bq"
+    - "create_cluster >> [name_basics_transform_csv, title_akas_transform_csv, title_basics_transform_csv, title_crew_transform_csv, title_episode_transform_csv, title_principals_transform_csv, title_ratings_transform_csv] >> delete_cluster >> [load_name_basics_to_bq, load_title_akas_to_bq, load_title_basics_to_bq, load_title_crew_to_bq, load_title_episode_to_bq, load_title_principals_to_bq, load_title_ratings_to_bq]"
