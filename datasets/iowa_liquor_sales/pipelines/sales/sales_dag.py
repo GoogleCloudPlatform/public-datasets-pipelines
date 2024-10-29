@@ -15,7 +15,7 @@
 
 from airflow import DAG
 from airflow.operators import bash
-from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.operators import kubernetes_engine
 from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
@@ -37,7 +37,7 @@ with DAG(
     # Download data
     bash_download = bash.BashOperator(
         task_id="bash_download",
-        bash_command="wget -O /home/airflow/gcs/data/iowa_liquor_sales/raw_files/data.csv https://data.iowa.gov/api/views/m3tr-qhgy/rows.csv",
+        bash_command="curl https://data.iowa.gov/api/views/m3tr-qhgy/rows.csv | gsutil cp - gs://{{ var.value.composer_bucket }}/data/iowa_liquor_sales/raw_files/data.csv\n",
     )
 
     # Split data file into smaller chunks
@@ -45,14 +45,33 @@ with DAG(
         task_id="bash_split",
         bash_command='tail -n +2 /home/airflow/gcs/data/iowa_liquor_sales/raw_files/data.csv | split -d -l 4000000 - --filter=\u0027sh -c "{ head -n1 /home/airflow/gcs/data/iowa_liquor_sales/raw_files/data.csv; cat; } \u003e $FILE"\u0027 /home/airflow/gcs/data/iowa_liquor_sales/raw_files/split_data_ ;',
     )
+    create_cluster = kubernetes_engine.GKECreateClusterOperator(
+        task_id="create_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        body={
+            "name": "pdp-iowa-liquor-sales",
+            "initial_node_count": 1,
+            "network": "{{ var.value.vpc_network }}",
+            "node_config": {
+                "machine_type": "e2-standard-16",
+                "oauth_scopes": [
+                    "https://www.googleapis.com/auth/devstorage.read_write",
+                    "https://www.googleapis.com/auth/cloud-platform",
+                ],
+            },
+        },
+    )
 
     # Run CSV transform within kubernetes pod
-    kub_transform_csv = kubernetes_pod.KubernetesPodOperator(
+    kub_transform_csv = kubernetes_engine.GKEStartPodOperator(
         task_id="kub_transform_csv",
         startup_timeout_seconds=1000,
         name="Sales",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-iowa-liquor-sales",
         image_pull_policy="Always",
         image="{{ var.json.iowa_liquor_sales.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -66,11 +85,17 @@ with DAG(
             "HEADERS": '[\n  "invoice_and_item_number",\n  "date",\n  "store_number",\n  "store_name",\n  "address",\n  "city",\n  "zip_code",\n  "store_location",\n  "county_number",\n  "county",\n  "category",\n  "category_name",\n  "vendor_number",\n  "vendor_name",\n  "item_number",\n  "item_description",\n  "pack",\n  "bottle_volume_ml",\n  "state_bottle_cost",\n  "state_bottle_retail",\n  "bottles_sold",\n  "sale_dollars",\n  "volume_sold_liters",\n  "volume_sold_gallons"\n]',
             "RENAME_MAPPINGS": '{\n  "Invoice/Item Number":"invoice_and_item_number",\n  "Date":"date",\n  "Store Number":"store_number",\n  "Store Name":"store_name",\n  "Address":"address",\n  "City":"city",\n  "Zip Code":"zip_code",\n  "Store Location":"store_location",\n  "County Number":"county_number",\n  "County":"county",\n  "Category":"category",\n  "Category Name":"category_name",\n  "Vendor Number":"vendor_number",\n  "Vendor Name":"vendor_name",\n  "Item Number":"item_number",\n  "Item Description":"item_description",\n  "Pack":"pack",\n  "Bottle Volume (ml)":"bottle_volume_ml",\n  "State Bottle Cost":"state_bottle_cost",\n  "State Bottle Retail":"state_bottle_retail",\n  "Bottles Sold":"bottles_sold",\n  "Sale (Dollars)":"sale_dollars",\n  "Volume Sold (Liters)":"volume_sold_liters",\n  "Volume Sold (Gallons)":"volume_sold_gallons"\n}',
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "16Gi"},
+            "cpu": {"request": "1"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
+    )
+    delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
+        task_id="delete_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        name="pdp-imdb-reviews",
     )
 
     # Combine the split files into one
@@ -236,4 +261,12 @@ with DAG(
         ],
     )
 
-    bash_download >> bash_split >> kub_transform_csv >> bash_concatenate >> load_to_bq
+    (
+        bash_download
+        >> bash_split
+        >> create_cluster
+        >> kub_transform_csv
+        >> delete_cluster
+        >> bash_concatenate
+        >> load_to_bq
+    )
