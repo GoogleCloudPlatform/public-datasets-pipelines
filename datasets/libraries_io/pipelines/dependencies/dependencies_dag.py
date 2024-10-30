@@ -15,7 +15,7 @@
 
 from airflow import DAG
 from airflow.operators import bash
-from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.operators import kubernetes_engine
 from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
@@ -33,6 +33,23 @@ with DAG(
     catchup=False,
     default_view="graph",
 ) as dag:
+    create_cluster = kubernetes_engine.GKECreateClusterOperator(
+        task_id="create_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        body={
+            "name": "pdp-libraries-io-dependencies",
+            "initial_node_count": 1,
+            "network": "{{ var.value.vpc_network }}",
+            "node_config": {
+                "machine_type": "e2-standard-16",
+                "oauth_scopes": [
+                    "https://www.googleapis.com/auth/devstorage.read_write",
+                    "https://www.googleapis.com/auth/cloud-platform",
+                ],
+            },
+        },
+    )
 
     # Fetch data gcs - gcs
     bash_gcs_to_gcs = bash.BashOperator(
@@ -41,12 +58,14 @@ with DAG(
     )
 
     # Run CSV transform within kubernetes pod
-    transform_dependencies = kubernetes_pod.KubernetesPodOperator(
+    transform_dependencies = kubernetes_engine.GKEStartPodOperator(
         task_id="transform_dependencies",
         startup_timeout_seconds=600,
         name="dependencies",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-libraries-io-dependencies",
         image_pull_policy="Always",
         image="{{ var.json.libraries_io.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -61,10 +80,10 @@ with DAG(
             "RENAME_MAPPINGS": '{"ID":"id","Platform":"platform","Project Name":"project_name","Project ID":"project_id","Version Number":"version_number", "Version ID":"version_id","Dependency Name":"dependency_name","Dependency Platform":"dependency_platform", "Dependency Kind":"dependency_kind","Optional Dependency":"optional_dependency", "Dependency Requirements":"dependency_requirements","Dependency Project ID":"dependency_project_id"}',
             "CSV_HEADERS": '["id","platform","project_name","project_id","version_number","version_id","dependency_name","dependency_platform", "dependency_kind","optional_dependency","dependency_requirements","dependency_project_id"]',
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "16Gi"},
+            "cpu": {"request": "1"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
@@ -155,12 +174,14 @@ with DAG(
     )
 
     # Run CSV transform within kubernetes pod
-    transform_dependencies_2 = kubernetes_pod.KubernetesPodOperator(
+    transform_dependencies_2 = kubernetes_engine.GKEStartPodOperator(
         task_id="transform_dependencies_2",
         startup_timeout_seconds=600,
         name="dependencies",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-libraries-io-dependencies",
         image_pull_policy="Always",
         image="{{ var.json.libraries_io.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -175,10 +196,10 @@ with DAG(
             "RENAME_MAPPINGS": '{"ID":"id","Platform":"platform","Project Name":"project_name","Project ID":"project_id","Version Number":"version_number", "Version ID":"version_id","Dependency Name":"dependency_name","Dependency Platform":"dependency_platform", "Dependency Kind":"dependency_kind","Optional Dependency":"optional_dependency", "Dependency Requirements":"dependency_requirements","Dependency Project ID":"dependency_project_id"}',
             "CSV_HEADERS": '["id","platform","project_name","project_id","version_number","version_id","dependency_name","dependency_platform", "dependency_kind","optional_dependency","dependency_requirements","dependency_project_id"]',
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "16Gi"},
+            "cpu": {"request": "1"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
@@ -269,12 +290,14 @@ with DAG(
     )
 
     # Run CSV transform within kubernetes pod
-    transform_dependencies_3 = kubernetes_pod.KubernetesPodOperator(
+    transform_dependencies_3 = kubernetes_engine.GKEStartPodOperator(
         task_id="transform_dependencies_3",
         startup_timeout_seconds=600,
         name="dependencies",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-libraries-io-dependencies",
         image_pull_policy="Always",
         image="{{ var.json.libraries_io.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -289,11 +312,17 @@ with DAG(
             "RENAME_MAPPINGS": '{"ID":"id","Platform":"platform","Project Name":"project_name","Project ID":"project_id","Version Number":"version_number", "Version ID":"version_id","Dependency Name":"dependency_name","Dependency Platform":"dependency_platform", "Dependency Kind":"dependency_kind","Optional Dependency":"optional_dependency", "Dependency Requirements":"dependency_requirements","Dependency Project ID":"dependency_project_id"}',
             "CSV_HEADERS": '["id","platform","project_name","project_id","version_number","version_id","dependency_name","dependency_platform", "dependency_kind","optional_dependency","dependency_requirements","dependency_project_id"]',
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "16Gi"},
+            "cpu": {"request": "1"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
+    )
+    delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
+        task_id="delete_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        name="pdp-libraries-io-dependencies",
     )
 
     # Task to load CSV data to a BigQuery table
@@ -384,7 +413,9 @@ with DAG(
 
     (
         bash_gcs_to_gcs
+        >> create_cluster
         >> [transform_dependencies, transform_dependencies_2, transform_dependencies_3]
+        >> delete_cluster
         >> load_dependencies_to_bq
         >> load_dependencies_to_bq_2
         >> load_dependencies_to_bq_3

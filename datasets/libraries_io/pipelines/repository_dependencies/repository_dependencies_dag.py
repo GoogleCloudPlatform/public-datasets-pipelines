@@ -15,7 +15,7 @@
 
 from airflow import DAG
 from airflow.operators import bash
-from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.operators import kubernetes_engine
 from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
@@ -39,14 +39,33 @@ with DAG(
         task_id="bash_gcs_to_gcs",
         bash_command="if test -f /home/airflow/gcs/data/libraries_io/lib-1.6.0.tar.gz;\nthen\n    mkdir /home/airflow/gcs/data/libraries_io/repository_dependencies/\n    cp /home/airflow/gcs/data/libraries_io/libraries-1.4.0-2018-12-22/repository_dependencies-1.4.0-2018-12-22.csv /home/airflow/gcs/data/libraries_io/repository_dependencies/repository_dependencies.csv\n    split -l 37000000 --additional-suffix=.csv /home/airflow/gcs/data/libraries_io/repository_dependencies/repository_dependencies.csv /home/airflow/gcs/data/libraries_io/repository_dependencies/\n    rm /home/airflow/gcs/data/libraries_io/repository_dependencies/repository_dependencies.csv\nelse\n    mkdir /home/airflow/gcs/data/libraries_io/\n    curl -o /home/airflow/gcs/data/libraries_io/lib-1.6.0.tar.gz -L https://zenodo.org/record/2536573/files/Libraries.io-open-data-1.4.0.tar.gz\n    tar -xf /home/airflow/gcs/data/libraries_io/lib-1.6.0.tar.gz -C /home/airflow/gcs/data/libraries_io/\n    mkdir /home/airflow/gcs/data/libraries_io/repository_dependencies/\n    cp /home/airflow/gcs/data/libraries_io/libraries-1.4.0-2018-12-22/repository_dependencies-1.4.0-2018-12-22.csv /home/airflow/gcs/data/libraries_io/repository_dependencies/repository_dependencies.csv\n    split -l 37000000 --additional-suffix=.csv /home/airflow/gcs/data/libraries_io/repository_dependencies/repository_dependencies.csv /home/airflow/gcs/data/libraries_io/repository_dependencies/\n    rm /home/airflow/gcs/data/libraries_io/repository_dependencies/repository_dependencies.csv\nfi\n",
     )
+    create_cluster = kubernetes_engine.GKECreateClusterOperator(
+        task_id="create_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        body={
+            "name": "pdp-libraries-io-repository-dependencies",
+            "initial_node_count": 1,
+            "network": "{{ var.value.vpc_network }}",
+            "node_config": {
+                "machine_type": "e2-standard-16",
+                "oauth_scopes": [
+                    "https://www.googleapis.com/auth/devstorage.read_write",
+                    "https://www.googleapis.com/auth/cloud-platform",
+                ],
+            },
+        },
+    )
 
     # Run CSV transform within kubernetes pod
-    transform_repository_dependencies = kubernetes_pod.KubernetesPodOperator(
+    transform_repository_dependencies = kubernetes_engine.GKEStartPodOperator(
         task_id="transform_repository_dependencies",
         startup_timeout_seconds=600,
         name="repository_dependencies",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-libraries-io-repository-dependencies",
         image_pull_policy="Always",
         image="{{ var.json.libraries_io.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -61,10 +80,10 @@ with DAG(
             "RENAME_MAPPINGS": '{"ID":"id","Host Type":"host_type","Repository Name with Owner":"repository_name_with_owner","Repository ID":"repository_id", "Manifest Platform":"manifest_platform","Manifest Filepath":"manifest_filepath","Git branch":"git_branch", "Manifest kind":"manifest_kind","Optional":"optional","Dependency Project Name":"dependency_project_name", "Dependency Requirements":"dependency_requirements","Dependency Kind":"dependency_kind","Dependency Project ID":"dependency_project_id"}',
             "CSV_HEADERS": '["id","host_type","repository_name_with_owner","repository_id","manifest_platform","manifest_filepath","git_branch", "manifest_kind","optional","dependency_project_name","dependency_requirements","dependency_kind","dependency_project_id"]',
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "16Gi"},
+            "cpu": {"request": "1"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
@@ -163,12 +182,14 @@ with DAG(
     )
 
     # Run CSV transform within kubernetes pod
-    transform_repository_dependencies_2 = kubernetes_pod.KubernetesPodOperator(
+    transform_repository_dependencies_2 = kubernetes_engine.GKEStartPodOperator(
         task_id="transform_repository_dependencies_2",
         startup_timeout_seconds=600,
         name="repository_dependencies",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-libraries-io-repository-dependencies",
         image_pull_policy="Always",
         image="{{ var.json.libraries_io.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -183,10 +204,10 @@ with DAG(
             "RENAME_MAPPINGS": '{"ID":"id","Host Type":"host_type","Repository Name with Owner":"repository_name_with_owner","Repository ID":"repository_id", "Manifest Platform":"manifest_platform","Manifest Filepath":"manifest_filepath","Git branch":"git_branch", "Manifest kind":"manifest_kind","Optional":"optional","Dependency Project Name":"dependency_project_name", "Dependency Requirements":"dependency_requirements","Dependency Kind":"dependency_kind","Dependency Project ID":"dependency_project_id"}',
             "CSV_HEADERS": '["id","host_type","repository_name_with_owner","repository_id","manifest_platform","manifest_filepath","git_branch", "manifest_kind","optional","dependency_project_name","dependency_requirements","dependency_kind","dependency_project_id"]',
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "16Gi"},
+            "cpu": {"request": "1"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
@@ -285,12 +306,14 @@ with DAG(
     )
 
     # Run CSV transform within kubernetes pod
-    transform_repository_dependencies_3 = kubernetes_pod.KubernetesPodOperator(
+    transform_repository_dependencies_3 = kubernetes_engine.GKEStartPodOperator(
         task_id="transform_repository_dependencies_3",
         startup_timeout_seconds=600,
         name="repository_dependencies",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-libraries-io-repository-dependencies",
         image_pull_policy="Always",
         image="{{ var.json.libraries_io.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -305,10 +328,10 @@ with DAG(
             "RENAME_MAPPINGS": '{"ID":"id","Host Type":"host_type","Repository Name with Owner":"repository_name_with_owner","Repository ID":"repository_id", "Manifest Platform":"manifest_platform","Manifest Filepath":"manifest_filepath","Git branch":"git_branch", "Manifest kind":"manifest_kind","Optional":"optional","Dependency Project Name":"dependency_project_name", "Dependency Requirements":"dependency_requirements","Dependency Kind":"dependency_kind","Dependency Project ID":"dependency_project_id"}',
             "CSV_HEADERS": '["id","host_type","repository_name_with_owner","repository_id","manifest_platform","manifest_filepath","git_branch", "manifest_kind","optional","dependency_project_name","dependency_requirements","dependency_kind","dependency_project_id"]',
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "16Gi"},
+            "cpu": {"request": "1"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
@@ -407,12 +430,14 @@ with DAG(
     )
 
     # Run CSV transform within kubernetes pod
-    transform_repository_dependencies_4 = kubernetes_pod.KubernetesPodOperator(
+    transform_repository_dependencies_4 = kubernetes_engine.GKEStartPodOperator(
         task_id="transform_repository_dependencies_4",
         startup_timeout_seconds=600,
         name="repository_dependencies",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-irs-990-2014",
         image_pull_policy="Always",
         image="{{ var.json.libraries_io.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -426,10 +451,10 @@ with DAG(
             "RENAME_MAPPINGS": '{"ID":"id","Host Type":"host_type","Repository Name with Owner":"repository_name_with_owner","Repository ID":"repository_id", "Manifest Platform":"manifest_platform","Manifest Filepath":"manifest_filepath","Git branch":"git_branch", "Manifest kind":"manifest_kind","Optional":"optional","Dependency Project Name":"dependency_project_name", "Dependency Requirements":"dependency_requirements","Dependency Kind":"dependency_kind","Dependency Project ID":"dependency_project_id"}',
             "CSV_HEADERS": '["id","host_type","repository_name_with_owner","repository_id","manifest_platform","manifest_filepath","git_branch", "manifest_kind","optional","dependency_project_name","dependency_requirements","dependency_kind","dependency_project_id"]',
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "16Gi"},
+            "cpu": {"request": "1"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
@@ -528,12 +553,14 @@ with DAG(
     )
 
     # Run CSV transform within kubernetes pod
-    transform_repository_dependencies_5 = kubernetes_pod.KubernetesPodOperator(
+    transform_repository_dependencies_5 = kubernetes_engine.GKEStartPodOperator(
         task_id="transform_repository_dependencies_5",
         startup_timeout_seconds=600,
         name="repository_dependencies",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-libraries-io-repository-dependencies",
         image_pull_policy="Always",
         image="{{ var.json.libraries_io.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -548,10 +575,10 @@ with DAG(
             "RENAME_MAPPINGS": '{"ID":"id","Host Type":"host_type","Repository Name with Owner":"repository_name_with_owner","Repository ID":"repository_id", "Manifest Platform":"manifest_platform","Manifest Filepath":"manifest_filepath","Git branch":"git_branch", "Manifest kind":"manifest_kind","Optional":"optional","Dependency Project Name":"dependency_project_name", "Dependency Requirements":"dependency_requirements","Dependency Kind":"dependency_kind","Dependency Project ID":"dependency_project_id"}',
             "CSV_HEADERS": '["id","host_type","repository_name_with_owner","repository_id","manifest_platform","manifest_filepath","git_branch", "manifest_kind","optional","dependency_project_name","dependency_requirements","dependency_kind","dependency_project_id"]',
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "16Gi"},
+            "cpu": {"request": "1"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
@@ -650,12 +677,14 @@ with DAG(
     )
 
     # Run CSV transform within kubernetes pod
-    transform_repository_dependencies_6 = kubernetes_pod.KubernetesPodOperator(
+    transform_repository_dependencies_6 = kubernetes_engine.GKEStartPodOperator(
         task_id="transform_repository_dependencies_6",
         startup_timeout_seconds=600,
         name="repository_dependencies",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-libraries-io-repository-dependencies",
         image_pull_policy="Always",
         image="{{ var.json.libraries_io.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -670,10 +699,10 @@ with DAG(
             "RENAME_MAPPINGS": '{"ID":"id","Host Type":"host_type","Repository Name with Owner":"repository_name_with_owner","Repository ID":"repository_id", "Manifest Platform":"manifest_platform","Manifest Filepath":"manifest_filepath","Git branch":"git_branch", "Manifest kind":"manifest_kind","Optional":"optional","Dependency Project Name":"dependency_project_name", "Dependency Requirements":"dependency_requirements","Dependency Kind":"dependency_kind","Dependency Project ID":"dependency_project_id"}',
             "CSV_HEADERS": '["id","host_type","repository_name_with_owner","repository_id","manifest_platform","manifest_filepath","git_branch", "manifest_kind","optional","dependency_project_name","dependency_requirements","dependency_kind","dependency_project_id"]',
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "16Gi"},
+            "cpu": {"request": "1"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
@@ -772,12 +801,14 @@ with DAG(
     )
 
     # Run CSV transform within kubernetes pod
-    transform_repository_dependencies_7 = kubernetes_pod.KubernetesPodOperator(
+    transform_repository_dependencies_7 = kubernetes_engine.GKEStartPodOperator(
         task_id="transform_repository_dependencies_7",
         startup_timeout_seconds=600,
         name="repository_dependencies",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-libraries-io-repository-dependencies",
         image_pull_policy="Always",
         image="{{ var.json.libraries_io.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -792,10 +823,10 @@ with DAG(
             "RENAME_MAPPINGS": '{"ID":"id","Host Type":"host_type","Repository Name with Owner":"repository_name_with_owner","Repository ID":"repository_id", "Manifest Platform":"manifest_platform","Manifest Filepath":"manifest_filepath","Git branch":"git_branch", "Manifest kind":"manifest_kind","Optional":"optional","Dependency Project Name":"dependency_project_name", "Dependency Requirements":"dependency_requirements","Dependency Kind":"dependency_kind","Dependency Project ID":"dependency_project_id"}',
             "CSV_HEADERS": '["id","host_type","repository_name_with_owner","repository_id","manifest_platform","manifest_filepath","git_branch", "manifest_kind","optional","dependency_project_name","dependency_requirements","dependency_kind","dependency_project_id"]',
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "16Gi"},
+            "cpu": {"request": "1"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
@@ -894,12 +925,14 @@ with DAG(
     )
 
     # Run CSV transform within kubernetes pod
-    transform_repository_dependencies_8 = kubernetes_pod.KubernetesPodOperator(
+    transform_repository_dependencies_8 = kubernetes_engine.GKEStartPodOperator(
         task_id="transform_repository_dependencies_8",
         startup_timeout_seconds=600,
         name="repository_dependencies",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-libraries-io-repository-dependencies",
         image_pull_policy="Always",
         image="{{ var.json.libraries_io.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -914,10 +947,10 @@ with DAG(
             "RENAME_MAPPINGS": '{"ID":"id","Host Type":"host_type","Repository Name with Owner":"repository_name_with_owner","Repository ID":"repository_id", "Manifest Platform":"manifest_platform","Manifest Filepath":"manifest_filepath","Git branch":"git_branch", "Manifest kind":"manifest_kind","Optional":"optional","Dependency Project Name":"dependency_project_name", "Dependency Requirements":"dependency_requirements","Dependency Kind":"dependency_kind","Dependency Project ID":"dependency_project_id"}',
             "CSV_HEADERS": '["id","host_type","repository_name_with_owner","repository_id","manifest_platform","manifest_filepath","git_branch", "manifest_kind","optional","dependency_project_name","dependency_requirements","dependency_kind","dependency_project_id"]',
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "16Gi"},
+            "cpu": {"request": "1"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
@@ -1016,12 +1049,14 @@ with DAG(
     )
 
     # Run CSV transform within kubernetes pod
-    transform_repository_dependencies_9 = kubernetes_pod.KubernetesPodOperator(
+    transform_repository_dependencies_9 = kubernetes_engine.GKEStartPodOperator(
         task_id="transform_repository_dependencies_9",
         startup_timeout_seconds=600,
         name="repository_dependencies",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-libraries-io-repository-dependencies",
         image_pull_policy="Always",
         image="{{ var.json.libraries_io.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -1036,10 +1071,10 @@ with DAG(
             "RENAME_MAPPINGS": '{"ID":"id","Host Type":"host_type","Repository Name with Owner":"repository_name_with_owner","Repository ID":"repository_id", "Manifest Platform":"manifest_platform","Manifest Filepath":"manifest_filepath","Git branch":"git_branch", "Manifest kind":"manifest_kind","Optional":"optional","Dependency Project Name":"dependency_project_name", "Dependency Requirements":"dependency_requirements","Dependency Kind":"dependency_kind","Dependency Project ID":"dependency_project_id"}',
             "CSV_HEADERS": '["id","host_type","repository_name_with_owner","repository_id","manifest_platform","manifest_filepath","git_branch", "manifest_kind","optional","dependency_project_name","dependency_requirements","dependency_kind","dependency_project_id"]',
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "16Gi"},
+            "cpu": {"request": "1"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
@@ -1138,12 +1173,14 @@ with DAG(
     )
 
     # Run CSV transform within kubernetes pod
-    transform_repository_dependencies_11 = kubernetes_pod.KubernetesPodOperator(
+    transform_repository_dependencies_11 = kubernetes_engine.GKEStartPodOperator(
         task_id="transform_repository_dependencies_11",
         startup_timeout_seconds=600,
         name="repository_dependencies",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-libraries-io-repository-dependencies",
         image_pull_policy="Always",
         image="{{ var.json.libraries_io.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -1158,10 +1195,10 @@ with DAG(
             "RENAME_MAPPINGS": '{"ID":"id","Host Type":"host_type","Repository Name with Owner":"repository_name_with_owner","Repository ID":"repository_id", "Manifest Platform":"manifest_platform","Manifest Filepath":"manifest_filepath","Git branch":"git_branch", "Manifest kind":"manifest_kind","Optional":"optional","Dependency Project Name":"dependency_project_name", "Dependency Requirements":"dependency_requirements","Dependency Kind":"dependency_kind","Dependency Project ID":"dependency_project_id"}',
             "CSV_HEADERS": '["id","host_type","repository_name_with_owner","repository_id","manifest_platform","manifest_filepath","git_branch", "manifest_kind","optional","dependency_project_name","dependency_requirements","dependency_kind","dependency_project_id"]',
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "16Gi"},
+            "cpu": {"request": "1"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
@@ -1260,12 +1297,14 @@ with DAG(
     )
 
     # Run CSV transform within kubernetes pod
-    transform_repository_dependencies_10 = kubernetes_pod.KubernetesPodOperator(
+    transform_repository_dependencies_10 = kubernetes_engine.GKEStartPodOperator(
         task_id="transform_repository_dependencies_10",
         startup_timeout_seconds=600,
         name="repository_dependencies",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-libraries-io-repository-dependencies",
         image_pull_policy="Always",
         image="{{ var.json.libraries_io.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -1280,10 +1319,10 @@ with DAG(
             "RENAME_MAPPINGS": '{"ID":"id","Host Type":"host_type","Repository Name with Owner":"repository_name_with_owner","Repository ID":"repository_id", "Manifest Platform":"manifest_platform","Manifest Filepath":"manifest_filepath","Git branch":"git_branch", "Manifest kind":"manifest_kind","Optional":"optional","Dependency Project Name":"dependency_project_name", "Dependency Requirements":"dependency_requirements","Dependency Kind":"dependency_kind","Dependency Project ID":"dependency_project_id"}',
             "CSV_HEADERS": '["id","host_type","repository_name_with_owner","repository_id","manifest_platform","manifest_filepath","git_branch", "manifest_kind","optional","dependency_project_name","dependency_requirements","dependency_kind","dependency_project_id"]',
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "16Gi"},
+            "cpu": {"request": "1"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
@@ -1380,9 +1419,16 @@ with DAG(
             },
         ],
     )
+    delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
+        task_id="delete_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        name="pdp-libraries-io-repository-dependencies",
+    )
 
     (
         bash_gcs_to_gcs
+        >> create_cluster
         >> [
             transform_repository_dependencies,
             transform_repository_dependencies_2,
@@ -1396,15 +1442,18 @@ with DAG(
             transform_repository_dependencies_10,
             transform_repository_dependencies_11,
         ]
-        >> load_repository_dependencies_to_bq
-        >> load_repository_dependencies_to_bq_2
-        >> load_repository_dependencies_to_bq_3
-        >> load_repository_dependencies_to_bq_4
-        >> load_repository_dependencies_to_bq_5
-        >> load_repository_dependencies_to_bq_6
-        >> load_repository_dependencies_to_bq_7
-        >> load_repository_dependencies_to_bq_8
-        >> load_repository_dependencies_to_bq_9
-        >> load_repository_dependencies_to_bq_10
-        >> load_repository_dependencies_to_bq_11
+        >> delete_cluster
+        >> [
+            load_repository_dependencies_to_bq,
+            load_repository_dependencies_to_bq_2,
+            load_repository_dependencies_to_bq_3,
+            load_repository_dependencies_to_bq_4,
+            load_repository_dependencies_to_bq_5,
+            load_repository_dependencies_to_bq_6,
+            load_repository_dependencies_to_bq_7,
+            load_repository_dependencies_to_bq_8,
+            load_repository_dependencies_to_bq_9,
+            load_repository_dependencies_to_bq_10,
+            load_repository_dependencies_to_bq_11,
+        ]
     )
