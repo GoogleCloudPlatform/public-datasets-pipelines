@@ -37,8 +37,9 @@ with DAG(
     transform_csv = kubernetes_pod.KubernetesPodOperator(
         task_id="transform_csv",
         name="food_enforcement",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.fda_food.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -56,10 +57,10 @@ with DAG(
             "RECORD_PATH": "",
             "META": '[ "status", "city", "state", "country", "classification",\n  "openfda", "product_type", "event_id", "recalling_firm", "address_1",\n  "address_2", "postal_code", "voluntary_mandated", "initial_firm_notification", "distribution_pattern",\n  "recall_number", "product_description", "product_quantity", "reason_for_recall", "recall_initiation_date",\n  "center_classification_date", "report_date", "code_info", "more_code_info", "termination_date" ]',
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "5G",
+        container_resources={
+            "memory": {"request": "32Gi"},
+            "cpu": {"request": "2"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
