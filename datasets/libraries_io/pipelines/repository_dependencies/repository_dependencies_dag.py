@@ -437,7 +437,7 @@ with DAG(
         namespace="default",
         project_id="{{ var.value.gcp_project }}",
         location="us-central1-c",
-        cluster_name="pdp-irs-990-2014",
+        cluster_name="pdp-libraries-io-repository-dependencies",
         image_pull_policy="Always",
         image="{{ var.json.libraries_io.container_registry.run_csv_transform_kub }}",
         env_vars={
