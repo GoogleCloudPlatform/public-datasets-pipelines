@@ -95,7 +95,7 @@ with DAG(
         task_id="delete_cluster",
         project_id="{{ var.value.gcp_project }}",
         location="us-central1-c",
-        name="pdp-imdb-reviews",
+        name="pdp-iowa-liquor-sales",
     )
 
     # Combine the split files into one
