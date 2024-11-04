@@ -53,14 +53,31 @@ dag:
               rm /home/airflow/gcs/data/libraries_io/tags/tags.csv
           fi
 
-    - operator: "KubernetesPodOperator"
+    - operator: "GKECreateClusterOperator"
+      args:
+        task_id: "create_cluster"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        body:
+          name: pdp-libraries-io-tags
+          initial_node_count: 1
+          network: "{{ var.value.vpc_network }}"
+          node_config:
+            machine_type: e2-standard-16
+            oauth_scopes:
+              - https://www.googleapis.com/auth/devstorage.read_write
+              - https://www.googleapis.com/auth/cloud-platform
+
+    - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
         task_id: "transform_tags"
         startup_timeout_seconds: 600
         name: "tags"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: pdp-libraries-io-tags
         image_pull_policy: "Always"
         image: "{{ var.json.libraries_io.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -78,10 +95,13 @@ dag:
             "Tag Created Timestamp":"tag_created_timestamp","Tag Updated Timestamp":"tag_updated_timestamp"}
           CSV_HEADERS: >-
             ["id","host_type","repository_name_with_owner","repository_id","tag_name","tag_git_sha","tag_published_timestamp","tag_created_timestamp","tag_updated_timestamp"]
-        resources:
-          request_memory: "4G"
-          request_cpu: "1"
-          request_ephemeral_storage: "10G"
+        container_resources:
+          memory:
+            request: "16Gi"
+          cpu:
+            request: "1"
+          ephemeral-storage:
+            request: "10Gi"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
@@ -132,14 +152,16 @@ dag:
             description: "The timestamp of when the tag was last saved by Libraries.io."
             mode: "nullable"
 
-    - operator: "KubernetesPodOperator"
+    - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
         task_id: "transform_tags_2"
         startup_timeout_seconds: 600
         name: "tags"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: pdp-libraries-io-tags
         image_pull_policy: "Always"
         image: "{{ var.json.libraries_io.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -157,10 +179,13 @@ dag:
             "Tag Created Timestamp":"tag_created_timestamp","Tag Updated Timestamp":"tag_updated_timestamp"}
           CSV_HEADERS: >-
             ["id","host_type","repository_name_with_owner","repository_id","tag_name","tag_git_sha","tag_published_timestamp","tag_created_timestamp","tag_updated_timestamp"]
-        resources:
-          request_memory: "4G"
-          request_cpu: "1"
-          request_ephemeral_storage: "10G"
+        container_resources:
+          memory:
+            request: "16Gi"
+          cpu:
+            request: "1"
+          ephemeral-storage:
+            request: "10Gi"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
@@ -211,14 +236,16 @@ dag:
             description: "The timestamp of when the tag was last saved by Libraries.io."
             mode: "nullable"
 
-    - operator: "KubernetesPodOperator"
+    - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
         task_id: "transform_tags_3"
         startup_timeout_seconds: 600
         name: "tags"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: pdp-libraries-io-tags
         image_pull_policy: "Always"
         image: "{{ var.json.libraries_io.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -236,10 +263,13 @@ dag:
             "Tag Created Timestamp":"tag_created_timestamp","Tag Updated Timestamp":"tag_updated_timestamp"}
           CSV_HEADERS: >-
             ["id","host_type","repository_name_with_owner","repository_id","tag_name","tag_git_sha","tag_published_timestamp","tag_created_timestamp","tag_updated_timestamp"]
-        resources:
-          request_memory: "4G"
-          request_cpu: "1"
-          request_ephemeral_storage: "10G"
+        container_resources:
+          memory:
+            request: "16Gi"
+          cpu:
+            request: "1"
+          ephemeral-storage:
+            request: "10Gi"
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
@@ -290,5 +320,12 @@ dag:
             description: "The timestamp of when the tag was last saved by Libraries.io."
             mode: "nullable"
 
+    - operator: "GKEDeleteClusterOperator"
+      args:
+        task_id: "delete_cluster"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        name: pdp-libraries-io-tags
+
   graph_paths:
-    - "bash_gcs_to_gcs >> [transform_tags,transform_tags_2,transform_tags_3] >> load_tags_to_bq >> load_tags_to_bq_2 >> load_tags_to_bq_3"
+    - "bash_gcs_to_gcs >> create_cluster >> [transform_tags,transform_tags_2,transform_tags_3] >> delete_cluster >> [load_tags_to_bq, load_tags_to_bq_2, load_tags_to_bq_3]"
