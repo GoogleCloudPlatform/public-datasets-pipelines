@@ -15,7 +15,7 @@
 
 from airflow import DAG
 from airflow.operators import bash
-from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.operators import kubernetes_engine
 from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
@@ -39,14 +39,33 @@ with DAG(
         task_id="bash_gcs_to_gcs",
         bash_command="if test -f /home/airflow/gcs/data/libraries_io/lib-1.6.0.tar.gz;\nthen\n    mkdir /home/airflow/gcs/data/libraries_io/tags/\n    cp /home/airflow/gcs/data/libraries_io/libraries-1.4.0-2018-12-22/tags-1.4.0-2018-12-22.csv /home/airflow/gcs/data/libraries_io/tags/tags.csv\n    split -l 20000000 --additional-suffix=.csv /home/airflow/gcs/data/libraries_io/tags/tags.csv /home/airflow/gcs/data/libraries_io/tags/\n    rm /home/airflow/gcs/data/libraries_io/tags/tags.csv\nelse\n    mkdir /home/airflow/gcs/data/libraries_io/\n    curl -o /home/airflow/gcs/data/libraries_io/lib-1.6.0.tar.gz -L https://zenodo.org/record/2536573/files/Libraries.io-open-data-1.4.0.tar.gz\n    tar -xf /home/airflow/gcs/data/libraries_io/lib-1.6.0.tar.gz -C /home/airflow/gcs/data/libraries_io/\n    mkdir /home/airflow/gcs/data/libraries_io/tags/\n    cp /home/airflow/gcs/data/libraries_io/libraries-1.4.0-2018-12-22/tags-1.4.0-2018-12-22.csv /home/airflow/gcs/data/libraries_io/tags/tags.csv\n    split -l 20000000 --additional-suffix=.csv /home/airflow/gcs/data/libraries_io/tags/tags.csv /home/airflow/gcs/data/libraries_io/tags/\n    rm /home/airflow/gcs/data/libraries_io/tags/tags.csv\nfi\n",
     )
+    create_cluster = kubernetes_engine.GKECreateClusterOperator(
+        task_id="create_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        body={
+            "name": "pdp-libraries-io-tags",
+            "initial_node_count": 1,
+            "network": "{{ var.value.vpc_network }}",
+            "node_config": {
+                "machine_type": "e2-standard-16",
+                "oauth_scopes": [
+                    "https://www.googleapis.com/auth/devstorage.read_write",
+                    "https://www.googleapis.com/auth/cloud-platform",
+                ],
+            },
+        },
+    )
 
     # Run CSV transform within kubernetes pod
-    transform_tags = kubernetes_pod.KubernetesPodOperator(
+    transform_tags = kubernetes_engine.GKEStartPodOperator(
         task_id="transform_tags",
         startup_timeout_seconds=600,
         name="tags",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-libraries-io-tags",
         image_pull_policy="Always",
         image="{{ var.json.libraries_io.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -61,10 +80,10 @@ with DAG(
             "RENAME_MAPPINGS": '{"ID":"id","Host Type":"host_type","Repository Name with Owner":"repository_name_with_owner","Repository ID":"repository_id", "Tag Name":"tag_name","Tag git sha":"tag_git_sha","Tag Published Timestamp":"tag_published_timestamp", "Tag Created Timestamp":"tag_created_timestamp","Tag Updated Timestamp":"tag_updated_timestamp"}',
             "CSV_HEADERS": '["id","host_type","repository_name_with_owner","repository_id","tag_name","tag_git_sha","tag_published_timestamp","tag_created_timestamp","tag_updated_timestamp"]',
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "16Gi"},
+            "cpu": {"request": "1"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
@@ -137,12 +156,14 @@ with DAG(
     )
 
     # Run CSV transform within kubernetes pod
-    transform_tags_2 = kubernetes_pod.KubernetesPodOperator(
+    transform_tags_2 = kubernetes_engine.GKEStartPodOperator(
         task_id="transform_tags_2",
         startup_timeout_seconds=600,
         name="tags",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-libraries-io-tags",
         image_pull_policy="Always",
         image="{{ var.json.libraries_io.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -157,10 +178,10 @@ with DAG(
             "RENAME_MAPPINGS": '{"ID":"id","Host Type":"host_type","Repository Name with Owner":"repository_name_with_owner","Repository ID":"repository_id", "Tag Name":"tag_name","Tag git sha":"tag_git_sha","Tag Published Timestamp":"tag_published_timestamp", "Tag Created Timestamp":"tag_created_timestamp","Tag Updated Timestamp":"tag_updated_timestamp"}',
             "CSV_HEADERS": '["id","host_type","repository_name_with_owner","repository_id","tag_name","tag_git_sha","tag_published_timestamp","tag_created_timestamp","tag_updated_timestamp"]',
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "16Gi"},
+            "cpu": {"request": "1"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
@@ -233,12 +254,14 @@ with DAG(
     )
 
     # Run CSV transform within kubernetes pod
-    transform_tags_3 = kubernetes_pod.KubernetesPodOperator(
+    transform_tags_3 = kubernetes_engine.GKEStartPodOperator(
         task_id="transform_tags_3",
         startup_timeout_seconds=600,
         name="tags",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-libraries-io-tags",
         image_pull_policy="Always",
         image="{{ var.json.libraries_io.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -253,10 +276,10 @@ with DAG(
             "RENAME_MAPPINGS": '{"ID":"id","Host Type":"host_type","Repository Name with Owner":"repository_name_with_owner","Repository ID":"repository_id", "Tag Name":"tag_name","Tag git sha":"tag_git_sha","Tag Published Timestamp":"tag_published_timestamp", "Tag Created Timestamp":"tag_created_timestamp","Tag Updated Timestamp":"tag_updated_timestamp"}',
             "CSV_HEADERS": '["id","host_type","repository_name_with_owner","repository_id","tag_name","tag_git_sha","tag_published_timestamp","tag_created_timestamp","tag_updated_timestamp"]',
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "16Gi"},
+            "cpu": {"request": "1"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
@@ -327,11 +350,17 @@ with DAG(
             },
         ],
     )
+    delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
+        task_id="delete_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        name="pdp-libraries-io-tags",
+    )
 
     (
         bash_gcs_to_gcs
+        >> create_cluster
         >> [transform_tags, transform_tags_2, transform_tags_3]
-        >> load_tags_to_bq
-        >> load_tags_to_bq_2
-        >> load_tags_to_bq_3
+        >> delete_cluster
+        >> [load_tags_to_bq, load_tags_to_bq_2, load_tags_to_bq_3]
     )

@@ -15,7 +15,7 @@
 
 from airflow import DAG
 from airflow.operators import bash
-from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.operators import kubernetes_engine
 from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
@@ -39,14 +39,33 @@ with DAG(
         task_id="bash_gcs_to_gcs",
         bash_command="if test -f /home/airflow/gcs/data/libraries_io/lib-1.6.0.tar.gz;\nthen\n    mkdir /home/airflow/gcs/data/libraries_io/versions/\n    cp /home/airflow/gcs/data/libraries_io/libraries-1.4.0-2018-12-22/versions-1.4.0-2018-12-22.csv /home/airflow/gcs/data/libraries_io/versions/versions.csv\nelse\n    mkdir /home/airflow/gcs/data/libraries_io/\n    curl -o /home/airflow/gcs/data/libraries_io/lib-1.6.0.tar.gz -L https://zenodo.org/record/2536573/files/Libraries.io-open-data-1.4.0.tar.gz\n    tar -xf /home/airflow/gcs/data/libraries_io/lib-1.6.0.tar.gz -C /home/airflow/gcs/data/libraries_io/\n    mkdir /home/airflow/gcs/data/libraries_io/versions/\n    cp /home/airflow/gcs/data/libraries_io/libraries-1.4.0-2018-12-22/versions-1.4.0-2018-12-22.csv /home/airflow/gcs/data/libraries_io/versions/versions.csv\nfi\n",
     )
+    create_cluster = kubernetes_engine.GKECreateClusterOperator(
+        task_id="create_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        body={
+            "name": "pdp-libraries-io-versions",
+            "initial_node_count": 1,
+            "network": "{{ var.value.vpc_network }}",
+            "node_config": {
+                "machine_type": "e2-standard-16",
+                "oauth_scopes": [
+                    "https://www.googleapis.com/auth/devstorage.read_write",
+                    "https://www.googleapis.com/auth/cloud-platform",
+                ],
+            },
+        },
+    )
 
     # Run CSV transform within kubernetes pod
-    transform_versions = kubernetes_pod.KubernetesPodOperator(
+    transform_versions = kubernetes_engine.GKEStartPodOperator(
         task_id="transform_versions",
         startup_timeout_seconds=600,
         name="versions",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-libraries-io-versions",
         image_pull_policy="Always",
         image="{{ var.json.libraries_io.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -61,10 +80,10 @@ with DAG(
             "RENAME_MAPPINGS": '{"ID":"id","Platform":"platform","Project Name":"project_name","Project ID":"project_id","Number":"number", "Published Timestamp":"published_timestamp","Created Timestamp":"created_timestamp","Updated Timestamp":"updated_timestamp"}',
             "CSV_HEADERS": '["id","platform","project_name","project_id","number","published_timestamp","created_timestamp","updated_timestamp"]',
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "16Gi"},
+            "cpu": {"request": "1"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
@@ -129,5 +148,17 @@ with DAG(
             },
         ],
     )
+    delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
+        task_id="delete_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        name="pdp-libraries-io-versions",
+    )
 
-    bash_gcs_to_gcs >> transform_versions >> load_versions_to_bq
+    (
+        bash_gcs_to_gcs
+        >> create_cluster
+        >> transform_versions
+        >> delete_cluster
+        >> load_versions_to_bq
+    )
