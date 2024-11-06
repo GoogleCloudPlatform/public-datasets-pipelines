@@ -155,7 +155,9 @@ def load_process_filegroup_data(
                 target_gcs_bucket=target_gcs_bucket,
             )
         else:
-            raise(f"File gs://{target_gcs_bucket}/{zip_file} does not exist.  Cannot continue.")
+            raise (
+                f"File gs://{target_gcs_bucket}/{zip_file} does not exist.  Cannot continue."
+            )
     else:
         # zip file does not exist
         logging.info(
