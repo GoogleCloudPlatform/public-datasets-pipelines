@@ -133,7 +133,7 @@ def load_process_filegroup_data(
     )
     zip_file = zip_file_list[0] if zip_file_list else ""
     if zip_file != "":
-        if os.path.isfile(zip_file):
+        if fetch_gcs_file_names(target_gcs_bucket, zip_file):
             source_location_gcs = os.path.join("gs://", target_gcs_bucket, zip_file)
             download_file_gcs(
                 project_id=project_id,
@@ -153,6 +153,10 @@ def load_process_filegroup_data(
                 schema_filepath=schema_filepath,
                 target_file=os.path.join(zip_path, os.path.basename(zip_file)),
                 target_gcs_bucket=target_gcs_bucket,
+            )
+        else:
+            raise (
+                f"File gs://{target_gcs_bucket}/{zip_file} does not exist.  Cannot continue."
             )
     else:
         # zip file does not exist
@@ -219,7 +223,7 @@ def load_source_data(
             project_id=project_id,
             dataset_id=dataset_id,
             table_id=table_id,
-            schema_filepath=schema_filepath,
+            schema_filepath=f"{schema_filepath}/{str.lower(process_filegroup)}_schema.json",
             bucket_name=target_gcs_bucket,
         )
         if table_exists:
@@ -261,7 +265,7 @@ def create_dest_table(
     project_id: str,
     dataset_id: str,
     table_id: str,
-    schema_filepath: list,
+    schema_filepath: str,
     bucket_name: str,
 ) -> bool:
     table_ref = f"{project_id}.{dataset_id}.{table_id}"
@@ -277,9 +281,11 @@ def create_dest_table(
     if not table:
         logging.info(
             (
-                f"Table {table_ref} currently does not exist.  Attempting to create table."
+                f"Table {table_ref} currently does not exist.  Attempting to create table from filepath {schema_filepath}."
             )
         )
+        file_name = os.path.split(schema_filepath)[1]
+        file_path = os.path.split(schema_filepath)[0]
         if check_gcs_file_exists(schema_filepath, bucket_name):
             schema = create_table_schema([], bucket_name, schema_filepath)
             table = bigquery.Table(table_ref, schema=schema)
@@ -287,8 +293,6 @@ def create_dest_table(
             logging.info(f"Table {table_ref} was created".format(table_id))
             table_exists = True
         else:
-            file_name = os.path.split(schema_filepath)[1]
-            file_path = os.path.split(schema_filepath)[0]
             logging.info(
                 f"Error: Unable to create table {table_ref} because schema file {file_name} does not exist in location {file_path} in bucket {bucket_name}"
             )
