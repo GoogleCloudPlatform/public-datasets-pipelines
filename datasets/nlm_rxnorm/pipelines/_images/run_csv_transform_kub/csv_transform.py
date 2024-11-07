@@ -265,7 +265,7 @@ def create_dest_table(
     project_id: str,
     dataset_id: str,
     table_id: str,
-    schema_filepath: list,
+    schema_filepath: str,
     bucket_name: str,
 ) -> bool:
     table_ref = f"{project_id}.{dataset_id}.{table_id}"
@@ -281,9 +281,11 @@ def create_dest_table(
     if not table:
         logging.info(
             (
-                f"Table {table_ref} currently does not exist.  Attempting to create table."
+                f"Table {table_ref} currently does not exist.  Attempting to create table from filepath {schema_filepath}."
             )
         )
+        file_name = os.path.split(schema_filepath)[1]
+        file_path = os.path.split(schema_filepath)[0]
         if check_gcs_file_exists(schema_filepath, bucket_name):
             schema = create_table_schema([], bucket_name, schema_filepath)
             table = bigquery.Table(table_ref, schema=schema)
@@ -291,8 +293,6 @@ def create_dest_table(
             logging.info(f"Table {table_ref} was created".format(table_id))
             table_exists = True
         else:
-            file_name = os.path.split(schema_filepath)[1]
-            file_path = os.path.split(schema_filepath)[0]
             logging.info(
                 f"Error: Unable to create table {table_ref} because schema file {file_name} does not exist in location {file_path} in bucket {bucket_name}"
             )

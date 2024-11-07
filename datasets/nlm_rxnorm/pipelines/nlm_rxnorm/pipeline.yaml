@@ -88,7 +88,7 @@ dag:
           CHUNKSIZE: "750000"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/nlm_rxnorm"
-          SCHEMA_FILEPATH: "data/nlm_rxnorm/schema/rxnatomarchive_schema.json"
+          SCHEMA_FILEPATH: "data/nlm_rxnorm/schema"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "nlm_rxnorm"
 
@@ -112,7 +112,7 @@ dag:
           CHUNKSIZE: "750000"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/nlm_rxnorm"
-          SCHEMA_FILEPATH: "data/nlm_rxnorm/schema/rxnconso_schema.json"
+          SCHEMA_FILEPATH: "data/nlm_rxnorm/schema"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "nlm_rxnorm"
 
@@ -136,7 +136,7 @@ dag:
           CHUNKSIZE: "750000"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/nlm_rxnorm"
-          SCHEMA_FILEPATH: "data/nlm_rxnorm/schema/rxncui_schema.json"
+          SCHEMA_FILEPATH: "data/nlm_rxnorm/schema"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "nlm_rxnorm"
 
@@ -160,7 +160,7 @@ dag:
           CHUNKSIZE: "750000"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/nlm_rxnorm"
-          SCHEMA_FILEPATH: "data/nlm_rxnorm/schema/rxncuichange_schema.json"
+          SCHEMA_FILEPATH: "data/nlm_rxnorm/schema"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "nlm_rxnorm"
 
@@ -184,7 +184,7 @@ dag:
           CHUNKSIZE: "750000"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/nlm_rxnorm"
-          SCHEMA_FILEPATH: "data/nlm_rxnorm/schema/rxndoc_schema.json"
+          SCHEMA_FILEPATH: "data/nlm_rxnorm/schema"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "nlm_rxnorm"
 
@@ -208,7 +208,7 @@ dag:
           CHUNKSIZE: "750000"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/nlm_rxnorm"
-          SCHEMA_FILEPATH: "data/nlm_rxnorm/schema/rxnrel_schema.json"
+          SCHEMA_FILEPATH: "data/nlm_rxnorm/schema"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "nlm_rxnorm"
 
@@ -232,7 +232,7 @@ dag:
           CHUNKSIZE: "750000"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/nlm_rxnorm"
-          SCHEMA_FILEPATH: "data/nlm_rxnorm/schema/rxnsab_schema.json"
+          SCHEMA_FILEPATH: "data/nlm_rxnorm/schema"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "nlm_rxnorm"
 
@@ -280,7 +280,7 @@ dag:
           CHUNKSIZE: "750000"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/nlm_rxnorm"
-          SCHEMA_FILEPATH: "data/nlm_rxnorm/schema/rxnsty_schema.json"
+          SCHEMA_FILEPATH: "data/nlm_rxnorm/schema"
           PROJECT_ID: "{{ var.value.gcp_project }}"
           DATASET_ID: "nlm_rxnorm"
 
