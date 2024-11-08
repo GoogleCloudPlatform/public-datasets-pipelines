@@ -14,8 +14,7 @@
 
 
 from airflow import DAG
-from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
-from airflow.providers.google.cloud.operators import bigquery
+from airflow.providers.google.cloud.operators import bigquery, kubernetes_engine
 from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
@@ -33,15 +32,33 @@ with DAG(
     catchup=False,
     default_view="graph",
 ) as dag:
+    create_cluster = kubernetes_engine.GKECreateClusterOperator(
+        task_id="create_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        body={
+            "name": "pdp-thelook-ecommerce",
+            "initial_node_count": 1,
+            "network": "{{ var.value.vpc_network }}",
+            "node_config": {
+                "machine_type": "e2-highmem-16",
+                "oauth_scopes": [
+                    "https://www.googleapis.com/auth/devstorage.read_write",
+                    "https://www.googleapis.com/auth/cloud-platform",
+                ],
+            },
+        },
+    )
 
     # Run CSV transform within kubernetes pod
-    generate_thelook = kubernetes_pod.KubernetesPodOperator(
+    generate_thelook = kubernetes_engine.GKEStartPodOperator(
         task_id="generate_thelook",
         is_delete_operator_pod=False,
         name="generate_thelook",
-        namespace="composer-user-workloads",
-        service_account_name="default",
-        config_file="/home/airflow/composer_kube_config",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-thelook-ecommerce",
+        namespace="default",
         image_pull_policy="Always",
         image="{{ var.json.thelook_ecommerce.docker_image }}",
         env_vars={
@@ -52,6 +69,12 @@ with DAG(
             "SOURCE_DIR": "data",
             "EXTRANEOUS_HEADERS": '["event_type", "ip_address", "browser", "traffic_source", "session_id", "sequence_number", "uri", "is_sold"]',
         },
+    )
+    delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
+        task_id="delete_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        name="pdp-thelook-ecommerce",
     )
 
     # Task to load Products data to a BigQuery table
@@ -243,7 +266,9 @@ with DAG(
     )
 
     (
-        generate_thelook
+        create_cluster
+        >> generate_thelook
+        >> delete_cluster
         >> [
             load_products_to_bq,
             load_events_to_bq,
