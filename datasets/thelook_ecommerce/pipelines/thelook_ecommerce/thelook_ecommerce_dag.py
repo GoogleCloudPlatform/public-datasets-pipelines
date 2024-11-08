@@ -39,8 +39,9 @@ with DAG(
         task_id="generate_thelook",
         is_delete_operator_pod=False,
         name="generate_thelook",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.thelook_ecommerce.docker_image }}",
         env_vars={
@@ -50,11 +51,6 @@ with DAG(
             "TARGET_GCS_PREFIX": "data/thelook_ecommerce",
             "SOURCE_DIR": "data",
             "EXTRANEOUS_HEADERS": '["event_type", "ip_address", "browser", "traffic_source", "session_id", "sequence_number", "uri", "is_sold"]',
-        },
-        resources={
-            "request_memory": "8G",
-            "request_cpu": "2",
-            "request_ephemeral_storage": "10G",
         },
     )
 
@@ -231,7 +227,7 @@ with DAG(
         task_id="create_user_geom_column",
         configuration={
             "query": {
-                "query": "ALTER TABLE `bigquery-public-data.thelook_ecommerce.users` ADD COLUMN IF NOT EXISTS user_geom GEOGRAPHY;\nUPDATE `bigquery-public-data.thelook_ecommerce.users`\n   SET user_geom = SAFE.ST_GeogFromText(CONCAT('POINT(',CAST(longitude AS STRING), ' ', CAST(latitude as STRING), ')'))\n WHERE longitude IS NOT NULL AND latitude IS NOT NULL;",
+                "query": "ALTER TABLE `{{ var.value.gcp_project }}.thelook_ecommerce.users` ADD COLUMN IF NOT EXISTS user_geom GEOGRAPHY;\nUPDATE `{{ var.value.gcp_project }}.thelook_ecommerce.users`\n   SET user_geom = SAFE.ST_GeogFromText(CONCAT('POINT(',CAST(longitude AS STRING), ' ', CAST(latitude as STRING), ')'))\n WHERE longitude IS NOT NULL AND latitude IS NOT NULL;",
                 "useLegacySql": False,
             }
         },
@@ -241,7 +237,7 @@ with DAG(
     create_distribution_center_geom_column = bigquery.BigQueryInsertJobOperator(
         task_id="create_distribution_center_geom_column",
         configuration={
-            "query": "ALTER TABLE `bigquery-public-data.thelook_ecommerce.distribution_centers`\n  ADD COLUMN IF NOT EXISTS distribution_center_geom GEOGRAPHY;\nUPDATE `bigquery-public-data.thelook_ecommerce.distribution_centers`\n   SET distribution_center_geom = SAFE.ST_GeogFromText(CONCAT('POINT(',CAST(longitude AS STRING), ' ', CAST(latitude as STRING), ')'))\n WHERE longitude IS NOT NULL\n   AND latitude IS NOT NULL;\n# Use Legacy SQL should be false for any query that uses a DML statement",
+            "query": "ALTER TABLE `{{ var.value.gcp_project }}.thelook_ecommerce.distribution_centers`\n  ADD COLUMN IF NOT EXISTS distribution_center_geom GEOGRAPHY;\nUPDATE `{{ var.value.gcp_project }}.thelook_ecommerce.distribution_centers`\n   SET distribution_center_geom = SAFE.ST_GeogFromText(CONCAT('POINT(',CAST(longitude AS STRING), ' ', CAST(latitude as STRING), ')'))\n WHERE longitude IS NOT NULL\n   AND latitude IS NOT NULL;\n# Use Legacy SQL should be false for any query that uses a DML statement",
             "useLegacySql": False,
         },
     )
