@@ -14,7 +14,7 @@
 
 
 from airflow import DAG
-from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.operators import kubernetes_engine
 from airflow.providers.google.cloud.transfers import gcs_to_bigquery, gcs_to_gcs
 
 default_args = {
@@ -43,14 +43,35 @@ with DAG(
         impersonation_chain="{{ var.json.google_political_ads.service_account }}",
         move_object=False,
     )
+    create_cluster_transform_advertiser_declared_stats = (
+        kubernetes_engine.GKECreateClusterOperator(
+            task_id="create_cluster_transform_advertiser_declared_stats",
+            project_id="{{ var.value.gcp_project }}",
+            location="us-central1-c",
+            body={
+                "name": "pdp-google-political-ads-declared-stats",
+                "initial_node_count": 2,
+                "network": "{{ var.value.vpc_network }}",
+                "node_config": {
+                    "machine_type": "e2-standard-16",
+                    "oauth_scopes": [
+                        "https://www.googleapis.com/auth/devstorage.read_write",
+                        "https://www.googleapis.com/auth/cloud-platform",
+                    ],
+                },
+            },
+        )
+    )
 
     # Run CSV transform within kubernetes pod
-    transform_advertiser_declared_stats_csv = kubernetes_pod.KubernetesPodOperator(
+    transform_advertiser_declared_stats_csv = kubernetes_engine.GKEStartPodOperator(
         task_id="transform_advertiser_declared_stats_csv",
         startup_timeout_seconds=600,
         name="advertiser_declared_stats",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-google-political-ads-declared-stats",
         image_pull_policy="Always",
         image="{{ var.json.google_political_ads.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -65,7 +86,15 @@ with DAG(
             "CSV_HEADERS": '[\n  "advertiser_id",\n  "advertiser_declared_name",\n  "region",\n  "advertiser_declared_regulatory_id",\n  "advertiser_declared_scope",\n  "advertiser_declared_promoter_name",\n  "advertiser_declared_promoter_address"\n]',
             "RENAME_MAPPINGS": '{\n  "Advertiser_ID": "advertiser_id",\n  "Region": "region",\n  "Advertiser_Declared_Name": "advertiser_declared_name",\n  "Advertiser_Declared_Regulatory_ID": "advertiser_declared_regulatory_id",\n  "Advertiser_Declared_Scope": "advertiser_declared_scope",\n  "Advertiser_Declared_Promoter_Name": "advertiser_declared_promoter_name",\n  "Advertiser_Declared_Promoter_Address": "advertiser_declared_promoter_address"\n}',
         },
-        resources={"request_memory": "1G", "request_cpu": "200m"},
+        container_resources={"memory": {"request": "1G"}, "cpu": {"request": "200m"}},
+    )
+    delete_cluster_transform_advertiser_declared_stats = (
+        kubernetes_engine.GKEDeleteClusterOperator(
+            task_id="delete_cluster_transform_advertiser_declared_stats",
+            project_id="{{ var.value.gcp_project }}",
+            location="us-central1-c",
+            name="pdp-google-political-ads-declared-stats",
+        )
     )
 
     # Task to load CSV data to a BigQuery table
@@ -124,14 +153,35 @@ with DAG(
             },
         ],
     )
+    create_cluster_transform_advertiser_geo_spend = (
+        kubernetes_engine.GKECreateClusterOperator(
+            task_id="create_cluster_transform_advertiser_geo_spend",
+            project_id="{{ var.value.gcp_project }}",
+            location="us-central1-c",
+            body={
+                "name": "pdp-google-political-ads-advertiser-geo",
+                "initial_node_count": 2,
+                "network": "{{ var.value.vpc_network }}",
+                "node_config": {
+                    "machine_type": "e2-standard-16",
+                    "oauth_scopes": [
+                        "https://www.googleapis.com/auth/devstorage.read_write",
+                        "https://www.googleapis.com/auth/cloud-platform",
+                    ],
+                },
+            },
+        )
+    )
 
     # Run CSV transform within kubernetes pod
-    transform_advertiser_geo_spend_csv = kubernetes_pod.KubernetesPodOperator(
+    transform_advertiser_geo_spend_csv = kubernetes_engine.GKEStartPodOperator(
         task_id="transform_advertiser_geo_spend_csv",
         startup_timeout_seconds=600,
         name="advertiser_geo_spend",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-google-political-ads-advertiser-geo",
         image_pull_policy="Always",
         image="{{ var.json.google_political_ads.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -146,7 +196,15 @@ with DAG(
             "CSV_HEADERS": '[\n  "advertiser_id",\n  "advertiser_name",\n  "country",\n  "country_subdivision_primary",\n  "spend_usd",\n  "spend_eur",\n  "spend_inr",\n  "spend_bgn",\n  "spend_hrk",\n  "spend_czk",\n  "spend_dkk",\n  "spend_huf",\n  "spend_pln",\n  "spend_ron",\n  "spend_sek",\n  "spend_gbp",\n  "spend_nzd",\n  "spend_ils",\n  "spend_aud",\n  "spend_twd",\n  "spend_brl",\n  "spend_ars",\n  "spend_zar",\n  "spend_clp"\n]',
             "RENAME_MAPPINGS": '{\n  "Advertiser_ID": "advertiser_id",\n  "Advertiser_Name": "advertiser_name",\n  "Country": "country",\n  "Country_Subdivision_Primary": "country_subdivision_primary",\n  "Spend_USD": "spend_usd",\n  "Spend_EUR": "spend_eur",\n  "Spend_INR": "spend_inr",\n  "Spend_BGN": "spend_bgn",\n  "Spend_HRK": "spend_hrk",\n  "Spend_CZK": "spend_czk",\n  "Spend_DKK": "spend_dkk",\n  "Spend_HUF": "spend_huf",\n  "Spend_PLN": "spend_pln",\n  "Spend_RON": "spend_ron",\n  "Spend_SEK": "spend_sek",\n  "Spend_GBP": "spend_gbp",\n  "Spend_NZD": "spend_nzd",\n  "Spend_ILS": "spend_ils",\n  "Spend_AUD": "spend_aud",\n  "Spend_TWD": "spend_twd",\n  "Spend_BRL": "spend_brl",\n  "Spend_ARS": "spend_ars",\n  "Spend_ZAR": "spend_zar",\n  "Spend_CLP": "spend_clp"\n}',
         },
-        resources={"request_memory": "1G", "request_cpu": "200m"},
+        container_resources={"memory": {"request": "1G"}, "cpu": {"request": "200m"}},
+    )
+    delete_cluster_transform_advertiser_geo_spend = (
+        kubernetes_engine.GKEDeleteClusterOperator(
+            task_id="delete_cluster_transform_advertiser_geo_spend",
+            project_id="{{ var.value.gcp_project }}",
+            location="us-central1-c",
+            name="pdp-google-political-ads-advertiser-geo",
+        )
     )
 
     # Task to load CSV data to a BigQuery table
@@ -307,14 +365,35 @@ with DAG(
             },
         ],
     )
+    create_cluster_transform_advertiser_stats = (
+        kubernetes_engine.GKECreateClusterOperator(
+            task_id="create_cluster_transform_advertiser_stats",
+            project_id="{{ var.value.gcp_project }}",
+            location="us-central1-c",
+            body={
+                "name": "pdp-google-political-ads-advertiser-stat",
+                "initial_node_count": 2,
+                "network": "{{ var.value.vpc_network }}",
+                "node_config": {
+                    "machine_type": "e2-standard-16",
+                    "oauth_scopes": [
+                        "https://www.googleapis.com/auth/devstorage.read_write",
+                        "https://www.googleapis.com/auth/cloud-platform",
+                    ],
+                },
+            },
+        )
+    )
 
     # Run CSV transform within kubernetes pod
-    transform_advertiser_stats_csv = kubernetes_pod.KubernetesPodOperator(
+    transform_advertiser_stats_csv = kubernetes_engine.GKEStartPodOperator(
         task_id="transform_advertiser_stats_csv",
         startup_timeout_seconds=600,
         name="advertiser_stats",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-google-political-ads-advertiser-stat",
         image_pull_policy="Always",
         image="{{ var.json.google_political_ads.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -329,7 +408,15 @@ with DAG(
             "CSV_HEADERS": '[\n  "advertiser_id",\n  "advertiser_name",\n  "public_ids_list",\n  "regions",\n  "elections",\n  "total_creatives",\n  "spend_usd",\n  "spend_eur",\n  "spend_inr",\n  "spend_bgn",\n  "spend_hrk",\n  "spend_czk",\n  "spend_dkk",\n  "spend_huf",\n  "spend_pln",\n  "spend_ron",\n  "spend_sek",\n  "spend_gbp",\n  "spend_nzd",\n  "spend_ils",\n  "spend_aud",\n  "spend_twd",\n  "spend_brl",\n  "spend_ars",\n  "spend_zar",\n  "spend_clp"\n]',
             "RENAME_MAPPINGS": '{\n  "Advertiser_ID": "advertiser_id",\n  "Advertiser_Name": "advertiser_name",\n  "Public_IDs_List": "public_ids_list",\n  "Regions": "regions",\n  "Elections": "elections",\n  "Total_Creatives": "total_creatives",\n  "Spend_USD": "spend_usd",\n  "Spend_EUR": "spend_eur",\n  "Spend_INR": "spend_inr",\n  "Spend_BGN": "spend_bgn",\n  "Spend_HRK": "spend_hrk",\n  "Spend_CZK": "spend_czk",\n  "Spend_DKK": "spend_dkk",\n  "Spend_HUF": "spend_huf",\n  "Spend_PLN": "spend_pln",\n  "Spend_RON": "spend_ron",\n  "Spend_SEK": "spend_sek",\n  "Spend_GBP": "spend_gbp",\n  "Spend_NZD": "spend_nzd",\n  "Spend_ILS": "spend_ils",\n  "Spend_AUD": "spend_aud",\n  "Spend_TWD": "spend_twd",\n  "Spend_BRL": "spend_brl",\n  "Spend_ARS": "spend_ars",\n  "Spend_ZAR": "spend_zar",\n  "Spend_CLP": "spend_clp"\n}',
         },
-        resources={"request_memory": "1G", "request_cpu": "200m"},
+        container_resources={"memory": {"request": "1G"}, "cpu": {"request": "200m"}},
+    )
+    delete_cluster_transform_advertiser_stats = (
+        kubernetes_engine.GKEDeleteClusterOperator(
+            task_id="delete_cluster_transform_advertiser_stats",
+            project_id="{{ var.value.gcp_project }}",
+            location="us-central1-c",
+            name="pdp-google-political-ads-advertiser-stat",
+        )
     )
 
     # Task to load CSV data to a BigQuery table
@@ -500,14 +587,35 @@ with DAG(
             },
         ],
     )
+    create_cluster_transform_advertiser_weekly_spend = (
+        kubernetes_engine.GKECreateClusterOperator(
+            task_id="create_cluster_transform_advertiser_weekly_spend",
+            project_id="{{ var.value.gcp_project }}",
+            location="us-central1-c",
+            body={
+                "name": "pdp-google-political-ads-weekly-spend",
+                "initial_node_count": 2,
+                "network": "{{ var.value.vpc_network }}",
+                "node_config": {
+                    "machine_type": "e2-standard-16",
+                    "oauth_scopes": [
+                        "https://www.googleapis.com/auth/devstorage.read_write",
+                        "https://www.googleapis.com/auth/cloud-platform",
+                    ],
+                },
+            },
+        )
+    )
 
     # Run CSV transform within kubernetes pod
-    transform_advertiser_weekly_spend_csv = kubernetes_pod.KubernetesPodOperator(
+    transform_advertiser_weekly_spend_csv = kubernetes_engine.GKEStartPodOperator(
         task_id="transform_advertiser_weekly_spend_csv",
         startup_timeout_seconds=600,
         name="advertiser_weekly_spend",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-google-political-ads-weekly-spend",
         image_pull_policy="Always",
         image="{{ var.json.google_political_ads.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -522,7 +630,15 @@ with DAG(
             "CSV_HEADERS": '[\n  "advertiser_id",\n  "advertiser_name",\n  "election_cycle",\n  "week_start_date",\n  "spend_usd",\n  "spend_eur",\n  "spend_inr",\n  "spend_bgn",\n  "spend_hrk",\n  "spend_czk",\n  "spend_dkk",\n  "spend_huf",\n  "spend_pln",\n  "spend_ron",\n  "spend_sek",\n  "spend_gbp",\n  "spend_nzd",\n  "spend_ils",\n  "spend_aud",\n  "spend_twd",\n  "spend_brl",\n  "spend_ars",\n  "spend_zar",\n  "spend_clp"\n]',
             "RENAME_MAPPINGS": '{\n  "Advertiser_ID": "advertiser_id",\n  "Advertiser_Name": "advertiser_name",\n  "Election_Cycle": "election_cycle",\n  "Week_Start_Date": "week_start_date",\n  "Spend_USD": "spend_usd",\n  "Spend_EUR": "spend_eur",\n  "Spend_INR": "spend_inr",\n  "Spend_BGN": "spend_bgn",\n  "Spend_HRK": "spend_hrk",\n  "Spend_CZK": "spend_czk",\n  "Spend_DKK": "spend_dkk",\n  "Spend_HUF": "spend_huf",\n  "Spend_PLN": "spend_pln",\n  "Spend_RON": "spend_ron",\n  "Spend_SEK": "spend_sek",\n  "Spend_GBP": "spend_gbp",\n  "Spend_NZD": "spend_nzd",\n  "Spend_ILS": "spend_ils",\n  "Spend_AUD": "spend_aud",\n  "Spend_TWD": "spend_twd",\n  "Spend_BRL": "spend_brl",\n  "Spend_ARS": "spend_ars",\n  "Spend_ZAR": "spend_zar",\n  "Spend_CLP": "spend_clp"\n}',
         },
-        resources={"request_memory": "1G", "request_cpu": "200m"},
+        container_resources={"memory": {"request": "1G"}, "cpu": {"request": "200m"}},
+    )
+    delete_cluster_transform_advertiser_weekly_spend = (
+        kubernetes_engine.GKEDeleteClusterOperator(
+            task_id="delete_cluster_transform_advertiser_weekly_spend",
+            project_id="{{ var.value.gcp_project }}",
+            location="us-central1-c",
+            name="pdp-google-political-ads-weekly-spend",
+        )
     )
 
     # Task to load CSV data to a BigQuery table
@@ -683,14 +799,35 @@ with DAG(
             },
         ],
     )
+    create_cluster_transform_campaign_targeting = (
+        kubernetes_engine.GKECreateClusterOperator(
+            task_id="create_cluster_transform_campaign_targeting",
+            project_id="{{ var.value.gcp_project }}",
+            location="us-central1-c",
+            body={
+                "name": "pdp-google-political-ads-campaign-target",
+                "initial_node_count": 2,
+                "network": "{{ var.value.vpc_network }}",
+                "node_config": {
+                    "machine_type": "e2-standard-16",
+                    "oauth_scopes": [
+                        "https://www.googleapis.com/auth/devstorage.read_write",
+                        "https://www.googleapis.com/auth/cloud-platform",
+                    ],
+                },
+            },
+        )
+    )
 
     # Run CSV transform within kubernetes pod
-    transform_campaign_targeting_csv = kubernetes_pod.KubernetesPodOperator(
+    transform_campaign_targeting_csv = kubernetes_engine.GKEStartPodOperator(
         task_id="transform_campaign_targeting_csv",
         startup_timeout_seconds=600,
         name="campaign_targeting",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-google-political-ads-campaign-target",
         image_pull_policy="Always",
         image="{{ var.json.google_political_ads.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -705,7 +842,15 @@ with DAG(
             "CSV_HEADERS": '[\n  "campaign_id",\n  "age_targeting",\n  "gender_targeting",\n  "geo_targeting_included",\n  "geo_targeting_excluded",\n  "start_date",\n  "end_date",\n  "ads_list",\n  "advertiser_id",\n  "advertiser_name"\n]',
             "RENAME_MAPPINGS": '{\n  "Campaign_ID": "campaign_id",\n  "Age_Targeting": "age_targeting",\n  "Gender_Targeting": "gender_targeting",\n  "Geo_Targeting_Included": "geo_targeting_included",\n  "Geo_Targeting_Excluded": "geo_targeting_excluded",\n  "Start_Date": "start_date",\n  "End_Date": "end_date",\n  "Ads_List": "ads_list",\n  "Advertiser_ID": "advertiser_id",\n  "Advertiser_Name": "advertiser_name"\n}',
         },
-        resources={"request_memory": "1G", "request_cpu": "200m"},
+        container_resources={"memory": {"request": "1G"}, "cpu": {"request": "200m"}},
+    )
+    delete_cluster_transform_campaign_targeting = (
+        kubernetes_engine.GKEDeleteClusterOperator(
+            task_id="delete_cluster_transform_campaign_targeting",
+            project_id="{{ var.value.gcp_project }}",
+            location="us-central1-c",
+            name="pdp-google-political-ads-campaign-target",
+        )
     )
 
     # Task to load CSV data to a BigQuery table
@@ -780,14 +925,35 @@ with DAG(
             },
         ],
     )
+    create_cluster_transform_creative_stats = (
+        kubernetes_engine.GKECreateClusterOperator(
+            task_id="create_cluster_transform_creative_stats",
+            project_id="{{ var.value.gcp_project }}",
+            location="us-central1-c",
+            body={
+                "name": "pdp-google-political-ads-creative-stats",
+                "initial_node_count": 2,
+                "network": "{{ var.value.vpc_network }}",
+                "node_config": {
+                    "machine_type": "e2-standard-16",
+                    "oauth_scopes": [
+                        "https://www.googleapis.com/auth/devstorage.read_write",
+                        "https://www.googleapis.com/auth/cloud-platform",
+                    ],
+                },
+            },
+        )
+    )
 
     # Run CSV transform within kubernetes pod
-    transform_creative_stats_csv = kubernetes_pod.KubernetesPodOperator(
+    transform_creative_stats_csv = kubernetes_engine.GKEStartPodOperator(
         task_id="transform_creative_stats_csv",
         startup_timeout_seconds=600,
         name="creative_stats",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-google-political-ads-creative-stats",
         image_pull_policy="Always",
         image="{{ var.json.google_political_ads.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -802,11 +968,19 @@ with DAG(
             "CSV_HEADERS": '[\n  "ad_id",\n  "ad_url",\n  "ad_type",\n  "regions",\n  "advertiser_id",\n  "advertiser_name",\n  "ad_campaigns_list",\n  "date_range_start",\n  "date_range_end",\n  "num_of_days",\n  "impressions",\n  "spend_usd",\n  "first_served_timestamp",\n  "last_served_timestamp",\n  "age_targeting",\n  "gender_targeting",\n  "geo_targeting_included",\n  "geo_targeting_excluded",\n  "spend_range_min_usd",\n  "spend_range_max_usd",\n  "spend_range_min_eur",\n  "spend_range_max_eur",\n  "spend_range_min_inr",\n  "spend_range_max_inr",\n  "spend_range_min_bgn",\n  "spend_range_max_bgn",\n  "spend_range_min_hrk",\n  "spend_range_max_hrk",\n  "spend_range_min_czk",\n  "spend_range_max_czk",\n  "spend_range_min_dkk",\n  "spend_range_max_dkk",\n  "spend_range_min_huf",\n  "spend_range_max_huf",\n  "spend_range_min_pln",\n  "spend_range_max_pln",\n  "spend_range_min_ron",\n  "spend_range_max_ron",\n  "spend_range_min_sek",\n  "spend_range_max_sek",\n  "spend_range_min_gbp",\n  "spend_range_max_gbp",\n  "spend_range_min_nzd",\n  "spend_range_max_nzd",\n  "spend_range_min_ils",\n  "spend_range_max_ils",\n  "spend_range_min_aud",\n  "spend_range_max_aud",\n  "spend_range_min_twd",\n  "spend_range_max_twd",\n  "spend_range_min_brl",\n  "spend_range_max_brl",\n  "spend_range_min_ars",\n  "spend_range_max_ars",\n  "spend_range_min_zar",\n  "spend_range_max_zar",\n  "spend_range_min_clp",\n  "spend_range_max_clp"\n]',
             "RENAME_MAPPINGS": '{\n  "Ad_ID": "ad_id",\n  "Ad_URL": "ad_url",\n  "Ad_Type": "ad_type",\n  "Regions": "regions",\n  "Advertiser_ID": "advertiser_id",\n  "Advertiser_Name": "advertiser_name",\n  "Ad_Campaigns_List": "ad_campaigns_list",\n  "Date_Range_Start": "date_range_start",\n  "Date_Range_End": "date_range_end",\n  "Num_of_Days": "num_of_days",\n  "Impressions": "impressions",\n  "Spend_USD": "spend_usd",\n  "Spend_Range_Min_USD": "spend_range_min_usd",\n  "Spend_Range_Max_USD": "spend_range_max_usd",\n  "Spend_Range_Min_EUR": "spend_range_min_eur",\n  "Spend_Range_Max_EUR": "spend_range_max_eur",\n  "Spend_Range_Min_INR": "spend_range_min_inr",\n  "Spend_Range_Max_INR": "spend_range_max_inr",\n  "Spend_Range_Min_BGN": "spend_range_min_bgn",\n  "Spend_Range_Max_BGN": "spend_range_max_bgn",\n  "Spend_Range_Min_HRK": "spend_range_min_hrk",\n  "Spend_Range_Max_HRK": "spend_range_max_hrk",\n  "Spend_Range_Min_CZK": "spend_range_min_czk",\n  "Spend_Range_Max_CZK": "spend_range_max_czk",\n  "Spend_Range_Min_DKK": "spend_range_min_dkk",\n  "Spend_Range_Max_DKK": "spend_range_max_dkk",\n  "Spend_Range_Min_HUF": "spend_range_min_huf",\n  "Spend_Range_Max_HUF": "spend_range_max_huf",\n  "Spend_Range_Min_PLN": "spend_range_min_pln",\n  "Spend_Range_Max_PLN": "spend_range_max_pln",\n  "Spend_Range_Min_RON": "spend_range_min_ron",\n  "Spend_Range_Max_RON": "spend_range_max_ron",\n  "Spend_Range_Min_SEK": "spend_range_min_sek",\n  "Spend_Range_Max_SEK": "spend_range_max_sek",\n  "Spend_Range_Min_GBP": "spend_range_min_gbp",\n  "Spend_Range_Max_GBP": "spend_range_max_gbp",\n  "Spend_Range_Min_NZD": "spend_range_min_nzd",\n  "Spend_Range_Max_NZD": "spend_range_max_nzd",\n  "Spend_Range_Min_ILS": "spend_range_min_ils",\n  "Spend_Range_Max_ILS": "spend_range_max_ils",\n  "Spend_Range_Min_AUD": "spend_range_min_aud",\n  "Spend_Range_Max_AUD": "spend_range_max_aud",\n  "Spend_Range_Min_TWD": "spend_range_min_twd",\n  "Spend_Range_Max_TWD": "spend_range_max_twd",\n  "Spend_Range_Min_BRL": "spend_range_min_brl",\n  "Spend_Range_Max_BRL": "spend_range_max_brl",\n  "Spend_Range_Min_ARS": "spend_range_min_ars",\n  "Spend_Range_Max_ARS": "spend_range_max_ars",\n  "Spend_Range_Min_ZAR": "spend_range_min_zar",\n  "Spend_Range_Max_ZAR": "spend_range_max_zar",\n  "Spend_Range_Min_CLP": "spend_range_min_clp",\n  "Spend_Range_Max_CLP": "spend_range_max_clp",\n  "Age_Targeting": "age_targeting",\n  "Gender_Targeting": "gender_targeting",\n  "Geo_Targeting_Included": "geo_targeting_included",\n  "Geo_Targeting_Excluded": "geo_targeting_excluded",\n  "First_Served_Timestamp": "first_served_timestamp",\n  "Last_Served_Timestamp": "last_served_timestamp"\n}',
         },
-        resources={
-            "request_memory": "16G",
-            "request_cpu": "2",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "16G"},
+            "cpu": {"request": "2"},
+            "ephemeral-storage": {"request": "10G"},
         },
+    )
+    delete_cluster_transform_creative_stats = (
+        kubernetes_engine.GKEDeleteClusterOperator(
+            task_id="delete_cluster_transform_creative_stats",
+            project_id="{{ var.value.gcp_project }}",
+            location="us-central1-c",
+            name="pdp-google-political-ads-creative-stats",
+        )
     )
 
     # Task to load CSV data to a BigQuery table
@@ -1157,14 +1331,33 @@ with DAG(
             },
         ],
     )
+    create_cluster_transform_geo_spend = kubernetes_engine.GKECreateClusterOperator(
+        task_id="create_cluster_transform_geo_spend",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        body={
+            "name": "pdp-google-political-ads-geo-spend",
+            "initial_node_count": 2,
+            "network": "{{ var.value.vpc_network }}",
+            "node_config": {
+                "machine_type": "e2-standard-16",
+                "oauth_scopes": [
+                    "https://www.googleapis.com/auth/devstorage.read_write",
+                    "https://www.googleapis.com/auth/cloud-platform",
+                ],
+            },
+        },
+    )
 
     # Run CSV transform within kubernetes pod
-    transform_geo_spend_csv = kubernetes_pod.KubernetesPodOperator(
+    transform_geo_spend_csv = kubernetes_engine.GKEStartPodOperator(
         task_id="transform_geo_spend_csv",
         startup_timeout_seconds=600,
         name="geo_spend",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-google-political-ads-geo-spend",
         image_pull_policy="Always",
         image="{{ var.json.google_political_ads.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -1179,7 +1372,13 @@ with DAG(
             "CSV_HEADERS": '[\n  "country",\n  "country_subdivision_primary",\n  "country_subdivision_secondary",\n  "spend_usd",\n  "spend_eur",\n  "spend_inr",\n  "spend_bgn",\n  "spend_hrk",\n  "spend_czk",\n  "spend_dkk",\n  "spend_huf",\n  "spend_pln",\n  "spend_ron",\n  "spend_sek",\n  "spend_gbp",\n  "spend_nzd",\n  "spend_ils",\n  "spend_aud",\n  "spend_twd",\n  "spend_brl",\n  "spend_ars",\n  "spend_zar",\n  "spend_clp"\n]',
             "RENAME_MAPPINGS": '{\n  "Country": "country",\n  "Country_Subdivision_Primary": "country_subdivision_primary",\n  "Country_Subdivision_Secondary": "country_subdivision_secondary",\n  "Spend_USD": "spend_usd",\n  "Spend_EUR": "spend_eur",\n  "Spend_INR": "spend_inr",\n  "Spend_BGN": "spend_bgn",\n  "Spend_HRK": "spend_hrk",\n  "Spend_CZK": "spend_czk",\n  "Spend_DKK": "spend_dkk",\n  "Spend_HUF": "spend_huf",\n  "Spend_PLN": "spend_pln",\n  "Spend_RON": "spend_ron",\n  "Spend_SEK": "spend_sek",\n  "Spend_GBP": "spend_gbp",\n  "Spend_NZD": "spend_nzd",\n  "Spend_ILS": "spend_ils",\n  "Spend_AUD": "spend_aud",\n  "Spend_TWD": "spend_twd",\n  "Spend_BRL": "spend_brl",\n  "Spend_ARS": "spend_ars",\n  "Spend_ZAR": "spend_zar",\n  "Spend_CLP": "spend_clp"\n}',
         },
-        resources={"request_memory": "1G", "request_cpu": "200m"},
+        container_resources={"memory": {"request": "1G"}, "cpu": {"request": "200m"}},
+    )
+    delete_cluster_transform_geo_spend = kubernetes_engine.GKEDeleteClusterOperator(
+        task_id="delete_cluster_transform_geo_spend",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        name="pdp-google-political-ads-geo-spend",
     )
 
     # Task to load CSV data to a BigQuery table
@@ -1332,14 +1531,33 @@ with DAG(
             },
         ],
     )
+    create_cluster_transform_last_updated = kubernetes_engine.GKECreateClusterOperator(
+        task_id="create_cluster_transform_last_updated",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        body={
+            "name": "pdp-google-political-ads-last-updated",
+            "initial_node_count": 2,
+            "network": "{{ var.value.vpc_network }}",
+            "node_config": {
+                "machine_type": "e2-standard-16",
+                "oauth_scopes": [
+                    "https://www.googleapis.com/auth/devstorage.read_write",
+                    "https://www.googleapis.com/auth/cloud-platform",
+                ],
+            },
+        },
+    )
 
     # Run CSV transform within kubernetes pod
-    transform_last_updated_csv = kubernetes_pod.KubernetesPodOperator(
+    transform_last_updated_csv = kubernetes_engine.GKEStartPodOperator(
         task_id="transform_last_updated_csv",
         startup_timeout_seconds=600,
         name="last_updated",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-google-political-ads-last-updated",
         image_pull_policy="Always",
         image="{{ var.json.google_political_ads.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -1354,7 +1572,13 @@ with DAG(
             "CSV_HEADERS": '["report_data_updated_time"]',
             "RENAME_MAPPINGS": '{"Report_Data_Updated_Time (PT)": "report_data_updated_time"}',
         },
-        resources={"request_memory": "128M", "request_cpu": "200m"},
+        container_resources={"memory": {"request": "128M"}, "cpu": {"request": "200m"}},
+    )
+    delete_cluster_transform_last_updated = kubernetes_engine.GKEDeleteClusterOperator(
+        task_id="delete_cluster_transform_last_updated",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        name="pdp-google-political-ads-last-updated",
     )
 
     # Task to load CSV data to a BigQuery table
@@ -1375,14 +1599,35 @@ with DAG(
             }
         ],
     )
+    create_cluster_transform_top_keywords_history = (
+        kubernetes_engine.GKECreateClusterOperator(
+            task_id="create_cluster_transform_top_keywords_history",
+            project_id="{{ var.value.gcp_project }}",
+            location="us-central1-c",
+            body={
+                "name": "pdp-google-political-ads-top-keywords",
+                "initial_node_count": 2,
+                "network": "{{ var.value.vpc_network }}",
+                "node_config": {
+                    "machine_type": "e2-standard-16",
+                    "oauth_scopes": [
+                        "https://www.googleapis.com/auth/devstorage.read_write",
+                        "https://www.googleapis.com/auth/cloud-platform",
+                    ],
+                },
+            },
+        )
+    )
 
     # Run CSV transform within kubernetes pod
-    transform_top_keywords_history_csv = kubernetes_pod.KubernetesPodOperator(
+    transform_top_keywords_history_csv = kubernetes_engine.GKEStartPodOperator(
         task_id="transform_top_keywords_history_csv",
         startup_timeout_seconds=600,
         name="top_keywords_history",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-google-political-ads-top-keywords",
         image_pull_policy="Always",
         image="{{ var.json.google_political_ads.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -1397,7 +1642,15 @@ with DAG(
             "CSV_HEADERS": '[\n  "election_cycle",\n  "report_date",\n  "keyword_1",\n  "spend_usd_1",\n  "keyword_2",\n  "spend_usd_2",\n  "keyword_3",\n  "spend_usd_3",\n  "keyword_4",\n  "spend_usd_4",\n  "keyword_5",\n  "spend_usd_5",\n  "keyword_6",\n  "spend_usd_6",\n  "region",\n  "elections"\n]',
             "RENAME_MAPPINGS": '{\n  "Election_Cycle": "election_cycle",\n  "Report_Date": "report_date",\n  "Keyword_1": "keyword_1",\n  "Spend_USD_1": "spend_usd_1",\n  "Keyword_2": "keyword_2",\n  "Spend_USD_2": "spend_usd_2",\n  "Keyword_3": "keyword_3",\n  "Spend_USD_3": "spend_usd_3",\n  "Keyword_4": "keyword_4",\n  "Spend_USD_4": "spend_usd_4",\n  "Keyword_5": "keyword_5",\n  "Spend_USD_5": "spend_usd_5",\n  "Keyword_6": "keyword_6",\n  "Spend_USD_6": "spend_usd_6",\n  "Region": "region",\n  "Elections": "elections"\n}',
         },
-        resources={"request_memory": "1G", "request_cpu": "200m"},
+        container_resources={"memory": {"request": "1G"}, "cpu": {"request": "200m"}},
+    )
+    delete_cluster_transform_top_keywords_history = (
+        kubernetes_engine.GKEDeleteClusterOperator(
+            task_id="delete_cluster_transform_top_keywords_history",
+            project_id="{{ var.value.gcp_project }}",
+            location="us-central1-c",
+            name="pdp-google-political-ads-top-keywords",
+        )
     )
 
     # Task to load CSV data to a BigQuery table
@@ -1512,22 +1765,67 @@ with DAG(
     )
 
     download_zip_file_to_composer_bucket >> [
-        transform_advertiser_declared_stats_csv,
-        transform_advertiser_geo_spend_csv,
-        transform_advertiser_stats_csv,
-        transform_advertiser_weekly_spend_csv,
-        transform_campaign_targeting_csv,
-        transform_creative_stats_csv,
-        transform_geo_spend_csv,
-        transform_last_updated_csv,
-        transform_top_keywords_history_csv,
+        create_cluster_transform_advertiser_declared_stats,
+        create_cluster_transform_advertiser_geo_spend,
+        create_cluster_transform_advertiser_stats,
+        create_cluster_transform_advertiser_weekly_spend,
+        create_cluster_transform_campaign_targeting,
+        create_cluster_transform_creative_stats,
+        create_cluster_transform_geo_spend,
+        create_cluster_transform_last_updated,
+        create_cluster_transform_top_keywords_history,
     ]
-    transform_advertiser_declared_stats_csv >> load_advertiser_declared_stats_to_bq
-    transform_advertiser_geo_spend_csv >> load_advertiser_geo_spend_to_bq
-    transform_advertiser_stats_csv >> load_advertiser_stats_to_bq
-    transform_advertiser_weekly_spend_csv >> load_advertiser_weekly_spend_to_bq
-    transform_campaign_targeting_csv >> load_campaign_targeting_to_bq
-    transform_creative_stats_csv >> load_creative_stats_to_bq
-    transform_geo_spend_csv >> load_geo_spend_to_bq
-    transform_last_updated_csv >> load_last_updated_to_bq
-    transform_top_keywords_history_csv >> load_top_keywords_history_to_bq
+    (
+        create_cluster_transform_advertiser_declared_stats
+        >> transform_advertiser_declared_stats_csv
+        >> delete_cluster_transform_advertiser_declared_stats
+        >> load_advertiser_declared_stats_to_bq
+    )
+    (
+        create_cluster_transform_advertiser_geo_spend
+        >> transform_advertiser_geo_spend_csv
+        >> delete_cluster_transform_advertiser_geo_spend
+        >> load_advertiser_geo_spend_to_bq
+    )
+    (
+        create_cluster_transform_advertiser_stats
+        >> transform_advertiser_stats_csv
+        >> delete_cluster_transform_advertiser_stats
+        >> load_advertiser_stats_to_bq
+    )
+    (
+        create_cluster_transform_advertiser_weekly_spend
+        >> transform_advertiser_weekly_spend_csv
+        >> delete_cluster_transform_advertiser_weekly_spend
+        >> load_advertiser_weekly_spend_to_bq
+    )
+    (
+        create_cluster_transform_campaign_targeting
+        >> transform_campaign_targeting_csv
+        >> delete_cluster_transform_campaign_targeting
+        >> load_campaign_targeting_to_bq
+    )
+    (
+        create_cluster_transform_creative_stats
+        >> transform_creative_stats_csv
+        >> delete_cluster_transform_creative_stats
+        >> load_creative_stats_to_bq
+    )
+    (
+        create_cluster_transform_geo_spend
+        >> transform_geo_spend_csv
+        >> delete_cluster_transform_geo_spend
+        >> load_geo_spend_to_bq
+    )
+    (
+        create_cluster_transform_last_updated
+        >> transform_last_updated_csv
+        >> delete_cluster_transform_last_updated
+        >> load_last_updated_to_bq
+    )
+    (
+        create_cluster_transform_top_keywords_history
+        >> transform_top_keywords_history_csv
+        >> delete_cluster_transform_top_keywords_history
+        >> load_top_keywords_history_to_bq
+    )
