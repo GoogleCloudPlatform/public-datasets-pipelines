@@ -75,15 +75,32 @@ dag:
         impersonation_chain: "{{ var.json.google_political_ads.service_account }}"
         move_object: False
 
+    - operator: "GKECreateClusterOperator"
+      args:
+        task_id: "create_cluster_transform_advertiser_declared_stats"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        body:
+          name: pdp-google-political-ads-declared-stats
+          initial_node_count: 2
+          network: "{{ var.value.vpc_network }}"
+          node_config:
+            machine_type: e2-standard-16
+            oauth_scopes:
+              - https://www.googleapis.com/auth/devstorage.read_write
+              - https://www.googleapis.com/auth/cloud-platform
+
     # advertiser_declared_stats
-    - operator: "KubernetesPodOperator"
+    - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
         task_id: "transform_advertiser_declared_stats_csv"
         startup_timeout_seconds: 600
         name: "advertiser_declared_stats"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: pdp-google-political-ads-declared-stats
         image_pull_policy: "Always"
         image: "{{ var.json.google_political_ads.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -115,9 +132,18 @@ dag:
               "Advertiser_Declared_Promoter_Name": "advertiser_declared_promoter_name",
               "Advertiser_Declared_Promoter_Address": "advertiser_declared_promoter_address"
             }
-        resources:
-          request_memory: "1G"
-          request_cpu: "200m"
+        container_resources:
+          memory:
+            request: "1G"
+          cpu:
+            request: "200m"
+
+    - operator: "GKEDeleteClusterOperator"
+      args:
+        task_id: "delete_cluster_transform_advertiser_declared_stats"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        name: pdp-google-political-ads-declared-stats
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
@@ -162,15 +188,32 @@ dag:
             description: "The New Zealand advertiser's declared Promoter Statement address."
             mode: "nullable"
 
+    - operator: "GKECreateClusterOperator"
+      args:
+        task_id: "create_cluster_transform_advertiser_geo_spend"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        body:
+          name: pdp-google-political-ads-advertiser-geo
+          initial_node_count: 2
+          network: "{{ var.value.vpc_network }}"
+          node_config:
+            machine_type: e2-standard-16
+            oauth_scopes:
+              - https://www.googleapis.com/auth/devstorage.read_write
+              - https://www.googleapis.com/auth/cloud-platform
+
     # advertiser_geo_spend
-    - operator: "KubernetesPodOperator"
+    - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
         task_id: "transform_advertiser_geo_spend_csv"
         startup_timeout_seconds: 600
         name: "advertiser_geo_spend"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: pdp-google-political-ads-advertiser-geo
         image_pull_policy: "Always"
         image: "{{ var.json.google_political_ads.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -236,9 +279,18 @@ dag:
               "Spend_ZAR": "spend_zar",
               "Spend_CLP": "spend_clp"
             }
-        resources:
-          request_memory: "1G"
-          request_cpu: "200m"
+        container_resources:
+          memory:
+            request: "1G"
+          cpu:
+            request: "200m"
+
+    - operator: "GKEDeleteClusterOperator"
+      args:
+        task_id: "delete_cluster_transform_advertiser_geo_spend"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        name: pdp-google-political-ads-advertiser-geo
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
@@ -349,15 +401,32 @@ dag:
             description: "Total amount in CLP spent on election ads in this region."
             mode: "nullable"
 
+    - operator: "GKECreateClusterOperator"
+      args:
+        task_id: "create_cluster_transform_advertiser_stats"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        body:
+          name: pdp-google-political-ads-advertiser-stat
+          initial_node_count: 2
+          network: "{{ var.value.vpc_network }}"
+          node_config:
+            machine_type: e2-standard-16
+            oauth_scopes:
+              - https://www.googleapis.com/auth/devstorage.read_write
+              - https://www.googleapis.com/auth/cloud-platform
+
     # advertiser_stats
-    - operator: "KubernetesPodOperator"
+    - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
         task_id: "transform_advertiser_stats_csv"
         startup_timeout_seconds: 600
         name: "advertiser_stats"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: pdp-google-political-ads-advertiser-stat
         image_pull_policy: "Always"
         image: "{{ var.json.google_political_ads.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -427,9 +496,18 @@ dag:
               "Spend_ZAR": "spend_zar",
               "Spend_CLP": "spend_clp"
             }
-        resources:
-          request_memory: "1G"
-          request_cpu: "200m"
+        container_resources:
+          memory:
+            request: "1G"
+          cpu:
+            request: "200m"
+
+    - operator: "GKEDeleteClusterOperator"
+      args:
+        task_id: "delete_cluster_transform_advertiser_stats"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        name: pdp-google-political-ads-advertiser-stat
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
@@ -548,15 +626,32 @@ dag:
             description: "Total amount in CLP spent on election ads by the advertiser."
             mode: "nullable"
 
+    - operator: "GKECreateClusterOperator"
+      args:
+        task_id: "create_cluster_transform_advertiser_weekly_spend"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        body:
+          name: pdp-google-political-ads-weekly-spend
+          initial_node_count: 2
+          network: "{{ var.value.vpc_network }}"
+          node_config:
+            machine_type: e2-standard-16
+            oauth_scopes:
+              - https://www.googleapis.com/auth/devstorage.read_write
+              - https://www.googleapis.com/auth/cloud-platform
+
     # advertiser_weekly_spend
-    - operator: "KubernetesPodOperator"
+    - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
         task_id: "transform_advertiser_weekly_spend_csv"
         startup_timeout_seconds: 600
         name: "advertiser_weekly_spend"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: pdp-google-political-ads-weekly-spend
         image_pull_policy: "Always"
         image: "{{ var.json.google_political_ads.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -622,9 +717,18 @@ dag:
               "Spend_ZAR": "spend_zar",
               "Spend_CLP": "spend_clp"
             }
-        resources:
-          request_memory: "1G"
-          request_cpu: "200m"
+        container_resources:
+          memory:
+            request: "1G"
+          cpu:
+            request: "200m"
+
+    - operator: "GKEDeleteClusterOperator"
+      args:
+        task_id: "delete_cluster_transform_advertiser_weekly_spend"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        name: pdp-google-political-ads-weekly-spend
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
@@ -735,14 +839,31 @@ dag:
             description: "The amount in CLP spent on election ads during the given week by the advertiser."
             mode: "nullable"
 
-    - operator: "KubernetesPodOperator"
+    - operator: "GKECreateClusterOperator"
+      args:
+        task_id: "create_cluster_transform_campaign_targeting"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        body:
+          name: pdp-google-political-ads-campaign-target
+          initial_node_count: 2
+          network: "{{ var.value.vpc_network }}"
+          node_config:
+            machine_type: e2-standard-16
+            oauth_scopes:
+              - https://www.googleapis.com/auth/devstorage.read_write
+              - https://www.googleapis.com/auth/cloud-platform
+
+    - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
         task_id: "transform_campaign_targeting_csv"
         startup_timeout_seconds: 600
         name: "campaign_targeting"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: pdp-google-political-ads-campaign-target
         image_pull_policy: "Always"
         image: "{{ var.json.google_political_ads.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -780,9 +901,18 @@ dag:
               "Advertiser_ID": "advertiser_id",
               "Advertiser_Name": "advertiser_name"
             }
-        resources:
-          request_memory: "1G"
-          request_cpu: "200m"
+        container_resources:
+          memory:
+            request: "1G"
+          cpu:
+            request: "200m"
+
+    - operator: "GKEDeleteClusterOperator"
+      args:
+        task_id: "delete_cluster_transform_campaign_targeting"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        name: pdp-google-political-ads-campaign-target
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
@@ -837,14 +967,31 @@ dag:
             description: "[DEPRECATED] Name of advertiser."
             mode: "nullable"
 
-    - operator: "KubernetesPodOperator"
+    - operator: "GKECreateClusterOperator"
+      args:
+        task_id: "create_cluster_transform_creative_stats"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        body:
+          name: pdp-google-political-ads-creative-stats
+          initial_node_count: 2
+          network: "{{ var.value.vpc_network }}"
+          node_config:
+            machine_type: e2-standard-16
+            oauth_scopes:
+              - https://www.googleapis.com/auth/devstorage.read_write
+              - https://www.googleapis.com/auth/cloud-platform
+
+    - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
         task_id: "transform_creative_stats_csv"
         startup_timeout_seconds: 600
         name: "creative_stats"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: pdp-google-political-ads-creative-stats
         image_pull_policy: "Always"
         image: "{{ var.json.google_political_ads.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -978,10 +1125,20 @@ dag:
               "First_Served_Timestamp": "first_served_timestamp",
               "Last_Served_Timestamp": "last_served_timestamp"
             }
-        resources:
-          request_memory: "16G"
-          request_cpu: "2"
-          request_ephemeral_storage: "10G"
+        container_resources:
+          memory:
+            request: "16G"
+          cpu:
+            request: "2"
+          ephemeral-storage:
+            request: "10G"
+
+    - operator: "GKEDeleteClusterOperator"
+      args:
+        task_id: "delete_cluster_transform_creative_stats"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        name: pdp-google-political-ads-creative-stats
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
@@ -1220,14 +1377,31 @@ dag:
             description: "Upper bound of the amount in CLP spent by the advertiser on the election ad."
             mode: "nullable"
 
-    - operator: "KubernetesPodOperator"
+    - operator: "GKECreateClusterOperator"
+      args:
+        task_id: "create_cluster_transform_geo_spend"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        body:
+          name: pdp-google-political-ads-geo-spend
+          initial_node_count: 2
+          network: "{{ var.value.vpc_network }}"
+          node_config:
+            machine_type: e2-standard-16
+            oauth_scopes:
+              - https://www.googleapis.com/auth/devstorage.read_write
+              - https://www.googleapis.com/auth/cloud-platform
+
+    - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
         task_id: "transform_geo_spend_csv"
         startup_timeout_seconds: 600
         name: "geo_spend"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: pdp-google-political-ads-geo-spend
         image_pull_policy: "Always"
         image: "{{ var.json.google_political_ads.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -1291,9 +1465,18 @@ dag:
               "Spend_ZAR": "spend_zar",
               "Spend_CLP": "spend_clp"
             }
-        resources:
-          request_memory: "1G"
-          request_cpu: "200m"
+        container_resources:
+          memory:
+            request: "1G"
+          cpu:
+            request: "200m"
+
+    - operator: "GKEDeleteClusterOperator"
+      args:
+        task_id: "delete_cluster_transform_geo_spend"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        name: pdp-google-political-ads-geo-spend
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
@@ -1399,14 +1582,31 @@ dag:
             description: "Total amount in CLP spent on election ads in this region."
             mode: "nullable"
 
-    - operator: "KubernetesPodOperator"
+    - operator: "GKECreateClusterOperator"
+      args:
+        task_id: "create_cluster_transform_last_updated"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        body:
+          name: pdp-google-political-ads-last-updated
+          initial_node_count: 2
+          network: "{{ var.value.vpc_network }}"
+          node_config:
+            machine_type: e2-standard-16
+            oauth_scopes:
+              - https://www.googleapis.com/auth/devstorage.read_write
+              - https://www.googleapis.com/auth/cloud-platform
+
+    - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
         task_id: "transform_last_updated_csv"
         startup_timeout_seconds: 600
         name: "last_updated"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: pdp-google-political-ads-last-updated
         image_pull_policy: "Always"
         image: "{{ var.json.google_political_ads.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -1422,9 +1622,18 @@ dag:
             ["report_data_updated_time"]
           RENAME_MAPPINGS: >-
             {"Report_Data_Updated_Time (PT)": "report_data_updated_time"}
-        resources:
-          request_memory: "128M"
-          request_cpu: "200m"
+        container_resources:
+          memory:
+            request: "128M"
+          cpu:
+            request: "200m"
+
+    - operator: "GKEDeleteClusterOperator"
+      args:
+        task_id: "delete_cluster_transform_last_updated"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        name: pdp-google-political-ads-last-updated
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
@@ -1443,14 +1652,31 @@ dag:
             description: "The time the report data was most recently updated"
             mode: "nullable"
 
-    - operator: "KubernetesPodOperator"
+    - operator: "GKECreateClusterOperator"
+      args:
+        task_id: "create_cluster_transform_top_keywords_history"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        body:
+          name: pdp-google-political-ads-top-keywords
+          initial_node_count: 2
+          network: "{{ var.value.vpc_network }}"
+          node_config:
+            machine_type: e2-standard-16
+            oauth_scopes:
+              - https://www.googleapis.com/auth/devstorage.read_write
+              - https://www.googleapis.com/auth/cloud-platform
+
+    - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
         task_id: "transform_top_keywords_history_csv"
         startup_timeout_seconds: 600
         name: "top_keywords_history"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: pdp-google-political-ads-top-keywords
         image_pull_policy: "Always"
         image: "{{ var.json.google_political_ads.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -1500,9 +1726,18 @@ dag:
               "Region": "region",
               "Elections": "elections"
             }
-        resources:
-          request_memory: "1G"
-          request_cpu: "200m"
+        container_resources:
+          memory:
+            request: "1G"
+          cpu:
+            request: "200m"
+
+    - operator: "GKEDeleteClusterOperator"
+      args:
+        task_id: "delete_cluster_transform_top_keywords_history"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        name: pdp-google-political-ads-top-keywords
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
@@ -1582,13 +1817,13 @@ dag:
             mode: "nullable"
 
   graph_paths:
-    - "download_zip_file_to_composer_bucket >> [transform_advertiser_declared_stats_csv, transform_advertiser_geo_spend_csv, transform_advertiser_stats_csv, transform_advertiser_weekly_spend_csv, transform_campaign_targeting_csv, transform_creative_stats_csv, transform_geo_spend_csv, transform_last_updated_csv, transform_top_keywords_history_csv]"
-    - "transform_advertiser_declared_stats_csv >> load_advertiser_declared_stats_to_bq"
-    - "transform_advertiser_geo_spend_csv >> load_advertiser_geo_spend_to_bq"
-    - "transform_advertiser_stats_csv >> load_advertiser_stats_to_bq"
-    - "transform_advertiser_weekly_spend_csv >> load_advertiser_weekly_spend_to_bq"
-    - "transform_campaign_targeting_csv >> load_campaign_targeting_to_bq"
-    - "transform_creative_stats_csv >> load_creative_stats_to_bq"
-    - "transform_geo_spend_csv >> load_geo_spend_to_bq"
-    - "transform_last_updated_csv >> load_last_updated_to_bq"
-    - "transform_top_keywords_history_csv >> load_top_keywords_history_to_bq"
+    - "download_zip_file_to_composer_bucket >> [create_cluster_transform_advertiser_declared_stats, create_cluster_transform_advertiser_geo_spend, create_cluster_transform_advertiser_stats, create_cluster_transform_advertiser_weekly_spend, create_cluster_transform_campaign_targeting, create_cluster_transform_creative_stats, create_cluster_transform_geo_spend, create_cluster_transform_last_updated, create_cluster_transform_top_keywords_history]"
+    - "create_cluster_transform_advertiser_declared_stats >> transform_advertiser_declared_stats_csv >> delete_cluster_transform_advertiser_declared_stats >> load_advertiser_declared_stats_to_bq"
+    - "create_cluster_transform_advertiser_geo_spend >> transform_advertiser_geo_spend_csv >> delete_cluster_transform_advertiser_geo_spend >> load_advertiser_geo_spend_to_bq"
+    - "create_cluster_transform_advertiser_stats >> transform_advertiser_stats_csv >> delete_cluster_transform_advertiser_stats >> load_advertiser_stats_to_bq"
+    - "create_cluster_transform_advertiser_weekly_spend >> transform_advertiser_weekly_spend_csv >> delete_cluster_transform_advertiser_weekly_spend >> load_advertiser_weekly_spend_to_bq"
+    - "create_cluster_transform_campaign_targeting >> transform_campaign_targeting_csv >> delete_cluster_transform_campaign_targeting >> load_campaign_targeting_to_bq"
+    - "create_cluster_transform_creative_stats >> transform_creative_stats_csv >> delete_cluster_transform_creative_stats >> load_creative_stats_to_bq"
+    - "create_cluster_transform_geo_spend >> transform_geo_spend_csv >> delete_cluster_transform_geo_spend >> load_geo_spend_to_bq"
+    - "create_cluster_transform_last_updated >> transform_last_updated_csv >> delete_cluster_transform_last_updated >> load_last_updated_to_bq"
+    - "create_cluster_transform_top_keywords_history >> transform_top_keywords_history_csv >> delete_cluster_transform_top_keywords_history >> load_top_keywords_history_to_bq"
