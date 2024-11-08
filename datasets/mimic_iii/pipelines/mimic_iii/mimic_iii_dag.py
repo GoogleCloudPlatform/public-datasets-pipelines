@@ -36,8 +36,9 @@ with DAG(
     copy_bq_dataset = kubernetes_pod.KubernetesPodOperator(
         task_id="copy_bq_dataset",
         name="copy_bq_dataset",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.mimic_iii.container_registry.run_script_kub }}",
         env_vars={
@@ -46,7 +47,6 @@ with DAG(
             "TARGET_PROJECT_ID": "{{ var.json.mimic_iii.target_project_id }}",
             "TARGET_BQ_DATASET": "{{ var.json.mimic_iii.target_bq_dataset }}",
         },
-        resources={"request_memory": "128M", "request_cpu": "200m"},
     )
 
     copy_bq_dataset
