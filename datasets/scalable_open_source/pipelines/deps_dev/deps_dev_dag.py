@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,8 +36,9 @@ with DAG(
     copy_bq_datasets = kubernetes_pod.KubernetesPodOperator(
         task_id="copy_bq_datasets",
         name="copy_bq_datasets",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.scalable_open_source.container_registry.copy_bq_datasets }}",
         env_vars={
@@ -47,15 +48,15 @@ with DAG(
             "TARGET_BQ_DATASET": "deps_dev_v1",
             "SERVICE_ACCOUNT": "{{ var.json.scalable_open_source.service_account }}",
         },
-        resources={"request_memory": "128M", "request_cpu": "200m"},
     )
 
     # Generate BQ views
     generate_bq_views = kubernetes_pod.KubernetesPodOperator(
         task_id="generate_bq_views",
         name="generate_bq_views",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.scalable_open_source.container_registry.generate_bq_views }}",
         env_vars={
@@ -65,7 +66,6 @@ with DAG(
             "TARGET_DATASET": "deps_dev_v1",
             "SERVICE_ACCOUNT": "{{ var.json.scalable_open_source.service_account }}",
         },
-        resources={"request_memory": "128M", "request_cpu": "200m"},
     )
 
     copy_bq_datasets >> generate_bq_views

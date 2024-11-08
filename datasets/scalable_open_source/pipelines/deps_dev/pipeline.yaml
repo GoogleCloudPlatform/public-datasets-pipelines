@@ -34,8 +34,9 @@ dag:
       args:
         task_id: "copy_bq_datasets"
         name: "copy_bq_datasets"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "composer-user-workloads"
+        service_account_name: "default"
+        config_file: "/home/airflow/composer_kube_config"
         image_pull_policy: "Always"
         image: "{{ var.json.scalable_open_source.container_registry.copy_bq_datasets }}"
         env_vars:
@@ -44,17 +45,15 @@ dag:
           TARGET_PROJECT_ID: "{{ var.json.scalable_open_source.target_project_id }}"
           TARGET_BQ_DATASET: deps_dev_v1
           SERVICE_ACCOUNT: "{{ var.json.scalable_open_source.service_account }}"
-        resources:
-          request_memory: "128M"
-          request_cpu: "200m"
 
     - operator: "KubernetesPodOperator"
       description: "Generate BQ views"
       args:
         task_id: "generate_bq_views"
         name: "generate_bq_views"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "composer-user-workloads"
+        service_account_name: "default"
+        config_file: "/home/airflow/composer_kube_config"
         image_pull_policy: "Always"
         image: "{{ var.json.scalable_open_source.container_registry.generate_bq_views }}"
         env_vars:
@@ -63,9 +62,6 @@ dag:
           SOURCE_DATASET: "{{ var.json.scalable_open_source.source_bq_dataset }}"
           TARGET_DATASET: deps_dev_v1
           SERVICE_ACCOUNT: "{{ var.json.scalable_open_source.service_account }}"
-        resources:
-          request_memory: "128M"
-          request_cpu: "200m"
 
   graph_paths:
     - "copy_bq_datasets >> generate_bq_views"
