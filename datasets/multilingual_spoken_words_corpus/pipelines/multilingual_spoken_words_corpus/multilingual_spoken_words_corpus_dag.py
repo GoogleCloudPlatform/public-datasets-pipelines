@@ -15,7 +15,7 @@
 
 from airflow import DAG
 from airflow.operators import bash
-from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.operators import kubernetes_engine
 from airflow.providers.google.cloud.transfers import gcs_to_bigquery, gcs_to_gcs
 
 default_args = {
@@ -53,14 +53,33 @@ with DAG(
             "source_file": "metadata.json.gz",
         },
     )
+    create_cluster = kubernetes_engine.GKECreateClusterOperator(
+        task_id="create_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        body={
+            "name": "pdp-multilingual-spoken-words-corpus",
+            "initial_node_count": 1,
+            "network": "{{ var.value.vpc_network }}",
+            "node_config": {
+                "machine_type": "e2-standard-16",
+                "oauth_scopes": [
+                    "https://www.googleapis.com/auth/devstorage.read_write",
+                    "https://www.googleapis.com/auth/cloud-platform",
+                ],
+            },
+        },
+    )
 
     # Run CSV transform within kubernetes pod
-    metadata_csv_transform = kubernetes_pod.KubernetesPodOperator(
+    metadata_csv_transform = kubernetes_engine.GKEStartPodOperator(
         task_id="metadata_csv_transform",
         startup_timeout_seconds=600,
         name="metadata_csv_transform",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-multilingual-spoken-words-corpus",
         image_pull_policy="Always",
         image="{{ var.json.multilingual_spoken_words_corpus.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -72,11 +91,17 @@ with DAG(
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_GCS_PATH": "data/multilingual_spoken_words_corpus/metadata_data_output.csv",
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "4G",
+        container_resources={
+            "memory": {"request": "16Gi"},
+            "cpu": {"request": "1"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
+    )
+    delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
+        task_id="delete_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        name="pdp-multilingual-spoken-words-corpus",
     )
 
     # Task to load CSV data to a BigQuery table
@@ -133,6 +158,8 @@ with DAG(
     (
         copy_metadata_file_to_gcs
         >> unzip_metadata_gz
+        >> create_cluster
         >> metadata_csv_transform
+        >> delete_cluster
         >> load_metadata_to_bq
     )
