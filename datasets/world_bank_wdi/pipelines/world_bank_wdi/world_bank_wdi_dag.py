@@ -15,7 +15,7 @@
 
 from airflow import DAG
 from airflow.operators import bash
-from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.operators import kubernetes_engine
 
 default_args = {
     "owner": "Google",
@@ -36,16 +36,35 @@ with DAG(
     # Copy data gcs to gcs
     bash_gcs_to_gcs = bash.BashOperator(
         task_id="bash_gcs_to_gcs",
-        bash_command=" gsutil cp gs://pdp-feeds-staging/RelayWorldBank/WDI_csv/WDICountry-Series.csv gs://{{ var.value.composer_bucket }}/data/world_bank_wdi/raw_files/ ; gsutil cp gs://pdp-feeds-staging/RelayWorldBank/WDI_csv/WDICountry.csv gs://{{ var.value.composer_bucket }}/data/world_bank_wdi/raw_files/ ; gsutil cp gs://pdp-feeds-staging/RelayWorldBank/WDI_csv/WDIFootNote.csv gs://{{ var.value.composer_bucket }}/data/world_bank_wdi/raw_files/ ; gsutil cp gs://pdp-feeds-staging/RelayWorldBank/WDI_csv/WDISeries.csv gs://{{ var.value.composer_bucket }}/data/world_bank_wdi/raw_files/ ; gsutil cp gs://pdp-feeds-staging/RelayWorldBank/WDI_csv/WDISeries-Time.csv gs://{{ var.value.composer_bucket }}/data/world_bank_wdi/raw_files/ ; ",
+        bash_command="gsutil cp gs://pdp-feeds-staging/RelayWorldBank/WDI_csv/WDICountry-Series.csv gs://{{ var.value.composer_bucket }}/data/world_bank_wdi/raw_files/ ;\ngsutil cp gs://pdp-feeds-staging/RelayWorldBank/WDI_csv/WDICountry.csv gs://{{ var.value.composer_bucket }}/data/world_bank_wdi/raw_files/ ;\ngsutil cp gs://pdp-feeds-staging/RelayWorldBank/WDI_csv/WDIFootNote.csv gs://{{ var.value.composer_bucket }}/data/world_bank_wdi/raw_files/ ;\ngsutil cp gs://pdp-feeds-staging/RelayWorldBank/WDI_csv/WDISeries.csv gs://{{ var.value.composer_bucket }}/data/world_bank_wdi/raw_files/ ;\ngsutil cp gs://pdp-feeds-staging/RelayWorldBank/WDI_csv/WDISeries-Time.csv gs://{{ var.value.composer_bucket }}/data/world_bank_wdi/raw_files/ ;\n",
+    )
+    create_cluster = kubernetes_engine.GKECreateClusterOperator(
+        task_id="create_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        body={
+            "name": "pdp-world-bank-wdi",
+            "initial_node_count": 1,
+            "network": "{{ var.value.vpc_network }}",
+            "node_config": {
+                "machine_type": "e2-standard-16",
+                "oauth_scopes": [
+                    "https://www.googleapis.com/auth/devstorage.read_write",
+                    "https://www.googleapis.com/auth/cloud-platform",
+                ],
+            },
+        },
     )
 
     # ETL within the kubernetes pod
-    kub_country_series_definitions = kubernetes_pod.KubernetesPodOperator(
+    kub_country_series_definitions = kubernetes_engine.GKEStartPodOperator(
         task_id="kub_country_series_definitions",
         startup_timeout_seconds=1000,
         name="load_data",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-world-bank-wdi",
         image_pull_policy="Always",
         image="{{ var.json.world_bank_wdi.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -63,20 +82,22 @@ with DAG(
             "HEADERS": '["country_code","series_code","description"]',
             "RENAME_MAPPINGS": '{"CountryCode":"country_code","SeriesCode":"series_code","DESCRIPTION":"description"}',
         },
-        resources={
-            "request_memory": "2G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "16Gi"},
+            "cpu": {"request": "1"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
     # ETL within the kubernetes pod
-    kub_country_summary = kubernetes_pod.KubernetesPodOperator(
+    kub_country_summary = kubernetes_engine.GKEStartPodOperator(
         task_id="kub_country_summary",
         startup_timeout_seconds=1000,
         name="load_data",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-world-bank-wdi",
         image_pull_policy="Always",
         image="{{ var.json.world_bank_wdi.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -94,20 +115,22 @@ with DAG(
             "HEADERS": '["country_code","short_name","table_name","long_name","two_alpha_code","currency_unit","special_notes","region","income_group","wb_2_code","national_accounts_base_year","national_accounts_reference_year","sna_price_valuation","lending_category","other_groups","system_of_national_accounts","alternative_conversion_factor","ppp_survey_year","balance_of_payments_manual_in_use","external_debt_reporting_status","system_of_trade","government_accounting_concept","imf_data_dissemination_standard","latest_population_census","latest_household_survey","source_of_most_recent_income_and_expenditure_data","vital_registration_complete","latest_agricultural_census","latest_industrial_data","latest_trade_data"]',
             "RENAME_MAPPINGS": '{"Country Code":"country_code","Short Name":"short_name","Table Name":"table_name","Long Name":"long_name","2-alpha code":"two_alpha_code","Currency Unit":"currency_unit","Special Notes":"special_notes","Region":"region","Income Group":"income_group","WB-2 code":"wb_2_code","National accounts base year":"national_accounts_base_year","National accounts reference year":"national_accounts_reference_year","SNA price valuation":"sna_price_valuation","Lending category":"lending_category","Other groups":"other_groups","System of National Accounts":"system_of_national_accounts","Alternative conversion factor":"alternative_conversion_factor","PPP survey year":"ppp_survey_year","Balance of Payments Manual in use":"balance_of_payments_manual_in_use","External debt Reporting status":"external_debt_reporting_status","System of trade":"system_of_trade","Government Accounting concept":"government_accounting_concept","IMF data dissemination standard":"imf_data_dissemination_standard","Latest population census":"latest_population_census","Latest household survey":"latest_household_survey","Source of most recent Income and expenditure data":"source_of_most_recent_income_and_expenditure_data","Vital registration complete":"vital_registration_complete","Latest agricultural census":"latest_agricultural_census","Latest industrial data":"latest_industrial_data","Latest trade data":"latest_trade_data"}',
         },
-        resources={
-            "request_memory": "2G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "16Gi"},
+            "cpu": {"request": "1"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
     # ETL within the kubernetes pod
-    kub_footnotes = kubernetes_pod.KubernetesPodOperator(
+    kub_footnotes = kubernetes_engine.GKEStartPodOperator(
         task_id="kub_footnotes",
         startup_timeout_seconds=1000,
         name="load_data",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-world-bank-wdi",
         image_pull_policy="Always",
         image="{{ var.json.world_bank_wdi.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -125,20 +148,22 @@ with DAG(
             "HEADERS": '["country_code","series_code","year","description"]',
             "RENAME_MAPPINGS": '{"CountryCode":"country_code","SeriesCode":"series_code","Year":"year","DESCRIPTION":"description"}',
         },
-        resources={
-            "request_memory": "2G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "16Gi"},
+            "cpu": {"request": "1"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
     # ETL within the kubernetes pod
-    kub_series_summary = kubernetes_pod.KubernetesPodOperator(
+    kub_series_summary = kubernetes_engine.GKEStartPodOperator(
         task_id="kub_series_summary",
         startup_timeout_seconds=1000,
         name="load_data",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-world-bank-wdi",
         image_pull_policy="Always",
         image="{{ var.json.world_bank_wdi.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -156,20 +181,22 @@ with DAG(
             "HEADERS": '["series_code","topic","indicator_name","short_definition","long_definition","unit_of_measure","periodicity","base_period","other_notes","aggregation_method","limitations_and_exceptions","notes_from_original_source","general_comments","source","statistical_concept_and_methodology","development_relevance","related_source_links","other_web_links","related_indicators","license_type"]',
             "RENAME_MAPPINGS": '{"Series Code":"series_code","Topic":"topic","Indicator Name":"indicator_name","Short definition":"short_definition","Long definition":"long_definition","Unit of measure":"unit_of_measure","Periodicity":"periodicity","Base Period":"base_period","Other notes":"other_notes","Aggregation method":"aggregation_method","Limitations and exceptions":"limitations_and_exceptions","Notes from original source":"notes_from_original_source","General comments":"general_comments","Source":"source","Statistical concept and methodology":"statistical_concept_and_methodology","Development relevance":"development_relevance","Related source links":"related_source_links","Other web links":"other_web_links","Related indicators":"related_indicators","License Type":"license_type"}',
         },
-        resources={
-            "request_memory": "2G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "16Gi"},
+            "cpu": {"request": "1"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
     # ETL within the kubernetes pod
-    kub_series_time = kubernetes_pod.KubernetesPodOperator(
+    kub_series_time = kubernetes_engine.GKEStartPodOperator(
         task_id="kub_series_time",
         startup_timeout_seconds=1000,
         name="load_data",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-world-bank-wdi",
         image_pull_policy="Always",
         image="{{ var.json.world_bank_wdi.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -187,17 +214,28 @@ with DAG(
             "HEADERS": '["series_code","year","description"]',
             "RENAME_MAPPINGS": '{"SeriesCode" : "series_code","Year" : "year","DESCRIPTION" : "description"}',
         },
-        resources={
-            "request_memory": "2G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "16Gi"},
+            "cpu": {"request": "1"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
+    delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
+        task_id="delete_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        name="pdp-world-bank-wdi",
+    )
 
-    bash_gcs_to_gcs >> [
-        kub_country_series_definitions,
-        kub_country_summary,
-        kub_footnotes,
-        kub_series_summary,
-        kub_series_time,
-    ]
+    (
+        bash_gcs_to_gcs
+        >> create_cluster
+        >> [
+            kub_country_series_definitions,
+            kub_country_summary,
+            kub_footnotes,
+            kub_series_summary,
+            kub_series_time,
+        ]
+        >> delete_cluster
+    )
