@@ -116,8 +116,9 @@ with DAG(
     create_and_run_sts_jobs_using_manifests = kubernetes_pod.KubernetesPodOperator(
         task_id="create_and_run_sts_jobs_using_manifests",
         name="create_and_run_sts_jobs_using_manifests",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.deepmind.alphafold.sts_jobs_generator }}",
         env_vars={
@@ -127,7 +128,6 @@ with DAG(
             "DESTINATION_BUCKET": "{{ var.json.deepmind.alphafold.destination_bucket_v4 }}",
             "GCP_PROJECT": "{{ var.value.gcp_project }}",
         },
-        resources={"request_memory": "128M", "request_cpu": "200m"},
     )
 
     # Copy manifests to public bucket
