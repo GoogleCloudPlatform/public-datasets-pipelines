@@ -74,8 +74,9 @@ with DAG(
         task_id="py_gcs_to_bq",
         startup_timeout_seconds=1000,
         name="load_data",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.open_buildings.container_registry.run_script_kub }}",
         env_vars={
@@ -84,11 +85,6 @@ with DAG(
             "DATASET_ID": "{{ var.json.open_buildings.dataset_id }}",
             "GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "SCHEMA_FILEPATH": "schema.json",
-        },
-        resources={
-            "request_memory": "2G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
         },
     )
 
