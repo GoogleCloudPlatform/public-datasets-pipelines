@@ -15,7 +15,7 @@
 
 from airflow import DAG
 from airflow.operators import bash
-from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.operators import kubernetes_engine
 from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
@@ -39,14 +39,33 @@ with DAG(
         task_id="bash_gcs_to_gcs",
         bash_command="if test -f /home/airflow/gcs/data/libraries_io/lib-1.6.0.tar.gz;\nthen\n    mkdir -p /home/airflow/gcs/data/libraries_io/repositories/\n    cp  /home/airflow/gcs/data/libraries_io/libraries-1.4.0-2018-12-22/repositories-1.4.0-2018-12-22.csv /home/airflow/gcs/data/libraries_io/repositories/repositories.csv\n    split -l 13000000 --additional-suffix=.csv /home/airflow/gcs/data/libraries_io/repositories/repositories.csv /home/airflow/gcs/data/libraries_io/repositories/\n    rm /home/airflow/gcs/data/libraries_io/repositories/repositories.csv\nelse\n    mkdir -p /home/airflow/gcs/data/libraries_io/\n    curl -o /home/airflow/gcs/data/libraries_io/lib-1.6.0.tar.gz -L https://zenodo.org/record/2536573/files/Libraries.io-open-data-1.4.0.tar.gz\n    tar -xf /home/airflow/gcs/data/libraries_io/lib-1.6.0.tar.gz -C /home/airflow/gcs/data/libraries_io/\n    mkdir -p /home/airflow/gcs/data/libraries_io/repositories/\n    cp  /home/airflow/gcs/data/libraries_io/libraries-1.4.0-2018-12-22/repositories-1.4.0-2018-12-22.csv /home/airflow/gcs/data/libraries_io/repositories/repositories.csv\n    split -l 13000000 --additional-suffix=.csv /home/airflow/gcs/data/libraries_io/repositories/repositories.csv /home/airflow/gcs/data/libraries_io/repositories/\n    rm /home/airflow/gcs/data/libraries_io/repositories/repositories.csv\nfi\n",
     )
+    create_cluster = kubernetes_engine.GKECreateClusterOperator(
+        task_id="create_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        body={
+            "name": "pdp-libraries-io-repositories",
+            "initial_node_count": 1,
+            "network": "{{ var.value.vpc_network }}",
+            "node_config": {
+                "machine_type": "e2-standard-16",
+                "oauth_scopes": [
+                    "https://www.googleapis.com/auth/devstorage.read_write",
+                    "https://www.googleapis.com/auth/cloud-platform",
+                ],
+            },
+        },
+    )
 
     # Run CSV transform within kubernetes pod
-    transform_repositories = kubernetes_pod.KubernetesPodOperator(
+    transform_repositories = kubernetes_engine.GKEStartPodOperator(
         task_id="transform_repositories",
         startup_timeout_seconds=600,
         name="repositories",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-libraries-io-repositories",
         image_pull_policy="Always",
         image="{{ var.json.libraries_io.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -61,10 +80,10 @@ with DAG(
             "RENAME_MAPPINGS": '{"ID":"id","Host Type":"host_type","Name with Owner":"name_with_owner","Description":"description","Fork":"fork", "Created Timestamp":"created_timestamp","Updated Timestamp":"updated_timestamp","Last pushed Timestamp":"last_pushed_timestamp", "Homepage URL":"homepage_url","Size":"size","Stars Count":"stars_count","Language":"language","Issues enable":"issues_enabled", "Wiki enabled":"wiki_enabled","Pages enabled":"pages_enabled","Forks Count":"forks_count","Mirror URL":"mirror_url", "Open Issues Count":"open_issues_count","Default branch":"default_branch","Watchers Count":"watchers_count","UUID":"uuid", "Fork Source Name with Owner":"fork_source_name_with_owner","License":"license","Contributors Count":"contributors_count", "Readme filename":"readme_filename","Changelog filename":"changelog_filename","Contributing guidelines filename":"contributing_guidelines_filename", "License filename":"license_filename","Code of Conduct filename":"code_of_conduct_filename", "Security Threat Model filename":"security_threat_model_filename","Security Audit filename":"security_audit_filename", "Status":"status","Last Synced Timestamp":"last_synced_timestamp","SourceRank":"sourcerank","Display Name":"display_name", "SCM typ":"scm_type","Pull requests enabled":"pull_requests_enabled","Logo URL":"logo_url","Keywords":"keywords","39":"an"}',
             "CSV_HEADERS": '["id","host_type","name_with_owner","description","fork","created_timestamp","updated_timestamp","last_pushed_timestamp", "homepage_url","size","stars_count","language","issues_enabled","wiki_enabled","pages_enabled","forks_count","mirror_url", "open_issues_count","default_branch","watchers_count","uuid","fork_source_name_with_owner","license","contributors_count", "readme_filename","changelog_filename","contributing_guidelines_filename","license_filename","code_of_conduct_filename", "security_threat_model_filename","security_audit_filename","status","last_synced_timestamp","sourcerank","display_name", "scm_type","pull_requests_enabled","logo_url","keywords","an"]',
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "16Gi"},
+            "cpu": {"request": "1"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
@@ -318,12 +337,14 @@ with DAG(
     )
 
     # Run CSV transform within kubernetes pod
-    transform_repositories_2 = kubernetes_pod.KubernetesPodOperator(
+    transform_repositories_2 = kubernetes_engine.GKEStartPodOperator(
         task_id="transform_repositories_2",
         startup_timeout_seconds=600,
         name="repositories",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-libraries-io-repositories",
         image_pull_policy="Always",
         image="{{ var.json.libraries_io.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -338,10 +359,10 @@ with DAG(
             "RENAME_MAPPINGS": '{"ID":"id","Host Type":"host_type","Name with Owner":"name_with_owner","Description":"description","Fork":"fork", "Created Timestamp":"created_timestamp","Updated Timestamp":"updated_timestamp","Last pushed Timestamp":"last_pushed_timestamp", "Homepage URL":"homepage_url","Size":"size","Stars Count":"stars_count","Language":"language","Issues enable":"issues_enabled", "Wiki enabled":"wiki_enabled","Pages enabled":"pages_enabled","Forks Count":"forks_count","Mirror URL":"mirror_url", "Open Issues Count":"open_issues_count","Default branch":"default_branch","Watchers Count":"watchers_count","UUID":"uuid", "Fork Source Name with Owner":"fork_source_name_with_owner","License":"license","Contributors Count":"contributors_count", "Readme filename":"readme_filename","Changelog filename":"changelog_filename","Contributing guidelines filename":"contributing_guidelines_filename", "License filename":"license_filename","Code of Conduct filename":"code_of_conduct_filename", "Security Threat Model filename":"security_threat_model_filename","Security Audit filename":"security_audit_filename", "Status":"status","Last Synced Timestamp":"last_synced_timestamp","SourceRank":"sourcerank","Display Name":"display_name", "SCM typ":"scm_type","Pull requests enabled":"pull_requests_enabled","Logo URL":"logo_url","Keywords":"keywords","39":"an"}',
             "CSV_HEADERS": '["id","host_type","name_with_owner","description","fork","created_timestamp","updated_timestamp","last_pushed_timestamp", "homepage_url","size","stars_count","language","issues_enabled","wiki_enabled","pages_enabled","forks_count","mirror_url", "open_issues_count","default_branch","watchers_count","uuid","fork_source_name_with_owner","license","contributors_count", "readme_filename","changelog_filename","contributing_guidelines_filename","license_filename","code_of_conduct_filename", "security_threat_model_filename","security_audit_filename","status","last_synced_timestamp","sourcerank","display_name", "scm_type","pull_requests_enabled","logo_url","keywords","an"]',
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "16Gi"},
+            "cpu": {"request": "1"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
@@ -595,12 +616,14 @@ with DAG(
     )
 
     # Run CSV transform within kubernetes pod
-    transform_repositories_3 = kubernetes_pod.KubernetesPodOperator(
+    transform_repositories_3 = kubernetes_engine.GKEStartPodOperator(
         task_id="transform_repositories_3",
         startup_timeout_seconds=600,
         name="repositories",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-libraries-io-repositories",
         image_pull_policy="Always",
         image="{{ var.json.libraries_io.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -615,10 +638,10 @@ with DAG(
             "RENAME_MAPPINGS": '{"ID":"id","Host Type":"host_type","Name with Owner":"name_with_owner","Description":"description","Fork":"fork", "Created Timestamp":"created_timestamp","Updated Timestamp":"updated_timestamp","Last pushed Timestamp":"last_pushed_timestamp", "Homepage URL":"homepage_url","Size":"size","Stars Count":"stars_count","Language":"language","Issues enable":"issues_enabled", "Wiki enabled":"wiki_enabled","Pages enabled":"pages_enabled","Forks Count":"forks_count","Mirror URL":"mirror_url", "Open Issues Count":"open_issues_count","Default branch":"default_branch","Watchers Count":"watchers_count","UUID":"uuid", "Fork Source Name with Owner":"fork_source_name_with_owner","License":"license","Contributors Count":"contributors_count", "Readme filename":"readme_filename","Changelog filename":"changelog_filename","Contributing guidelines filename":"contributing_guidelines_filename", "License filename":"license_filename","Code of Conduct filename":"code_of_conduct_filename", "Security Threat Model filename":"security_threat_model_filename","Security Audit filename":"security_audit_filename", "Status":"status","Last Synced Timestamp":"last_synced_timestamp","SourceRank":"sourcerank","Display Name":"display_name", "SCM typ":"scm_type","Pull requests enabled":"pull_requests_enabled","Logo URL":"logo_url","Keywords":"keywords","39":"an"}',
             "CSV_HEADERS": '["id","host_type","name_with_owner","description","fork","created_timestamp","updated_timestamp","last_pushed_timestamp", "homepage_url","size","stars_count","language","issues_enabled","wiki_enabled","pages_enabled","forks_count","mirror_url", "open_issues_count","default_branch","watchers_count","uuid","fork_source_name_with_owner","license","contributors_count", "readme_filename","changelog_filename","contributing_guidelines_filename","license_filename","code_of_conduct_filename", "security_threat_model_filename","security_audit_filename","status","last_synced_timestamp","sourcerank","display_name", "scm_type","pull_requests_enabled","logo_url","keywords","an"]',
         },
-        resources={
-            "request_memory": "4G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
+        container_resources={
+            "memory": {"request": "16Gi"},
+            "cpu": {"request": "1"},
+            "ephemeral-storage": {"request": "10Gi"},
         },
     )
 
@@ -870,11 +893,21 @@ with DAG(
             {"name": "an", "type": "string", "description": "", "mode": "nullable"},
         ],
     )
+    delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
+        task_id="delete_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        name="pdp-libraries-io-repositories",
+    )
 
     (
         bash_gcs_to_gcs
+        >> create_cluster
         >> [transform_repositories, transform_repositories_2, transform_repositories_3]
-        >> load_repositories_to_bq
-        >> load_repositories_to_bq_2
-        >> load_repositories_to_bq_3
+        >> delete_cluster
+        >> [
+            load_repositories_to_bq,
+            load_repositories_to_bq_2,
+            load_repositories_to_bq_3,
+        ]
     )

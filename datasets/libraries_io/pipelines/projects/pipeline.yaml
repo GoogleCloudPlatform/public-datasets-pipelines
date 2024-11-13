@@ -49,14 +49,31 @@ dag:
               cp /home/airflow/gcs/data/libraries_io/libraries-1.4.0-2018-12-22/projects-1.4.0-2018-12-22.csv /home/airflow/gcs/data/libraries_io/projects/projects.csv
           fi
 
-    - operator: "KubernetesPodOperator"
+    - operator: "GKECreateClusterOperator"
+      args:
+        task_id: "create_cluster"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        body:
+          name: pdp-libraries-io-projects
+          initial_node_count: 1
+          network: "{{ var.value.vpc_network }}"
+          node_config:
+            machine_type: e2-standard-16
+            oauth_scopes:
+              - https://www.googleapis.com/auth/devstorage.read_write
+              - https://www.googleapis.com/auth/cloud-platform
+
+    - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
         task_id: "transform_projects"
         startup_timeout_seconds: 600
         name: "projects"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: pdp-libraries-io-projects
         image_pull_policy: "Always"
         image: "{{ var.json.libraries_io.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -80,10 +97,20 @@ dag:
             "Latest Release Number":"latest_release_number","Package Manager ID":"package_manager_id","Dependent Projects Count":"dependent_projects_count",
             "Language":"language","Status":"status","Last synced Timestamp":"last_synced_timestamp","Dependent Repositories Count":"dependent_repositories_count",
             "Repository ID":"repository_id"}
-        resources:
-          request_memory: "4G"
-          request_cpu: "1"
-          request_ephemeral_storage: "10G"
+        container_resources:
+          memory:
+            request: "16Gi"
+          cpu:
+            request: "1"
+          ephemeral-storage:
+            request: "10Gi"
+
+    - operator: "GKEDeleteClusterOperator"
+      args:
+        task_id: "delete_cluster"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        name: pdp-libraries-io-projects
 
     - operator: "GoogleCloudStorageToBigQueryOperator"
       description: "Task to load CSV data to a BigQuery table"
@@ -183,4 +210,4 @@ dag:
             mode: "nullable"
 
   graph_paths:
-    - "bash_gcs_to_gcs >> transform_projects >> load_projects_to_bq"
+    - "create_cluster >> bash_gcs_to_gcs >> transform_projects >> delete_cluster >> load_projects_to_bq"

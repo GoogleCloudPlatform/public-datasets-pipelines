@@ -14,8 +14,7 @@
 
 
 from airflow import DAG
-from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
-from airflow.providers.google.cloud.operators import bigquery
+from airflow.providers.google.cloud.operators import bigquery, kubernetes_engine
 from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
@@ -33,14 +32,33 @@ with DAG(
     catchup=False,
     default_view="graph",
 ) as dag:
+    create_cluster = kubernetes_engine.GKECreateClusterOperator(
+        task_id="create_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        body={
+            "name": "pdp-thelook-ecommerce",
+            "initial_node_count": 1,
+            "network": "{{ var.value.vpc_network }}",
+            "node_config": {
+                "machine_type": "e2-highmem-16",
+                "oauth_scopes": [
+                    "https://www.googleapis.com/auth/devstorage.read_write",
+                    "https://www.googleapis.com/auth/cloud-platform",
+                ],
+            },
+        },
+    )
 
     # Run CSV transform within kubernetes pod
-    generate_thelook = kubernetes_pod.KubernetesPodOperator(
+    generate_thelook = kubernetes_engine.GKEStartPodOperator(
         task_id="generate_thelook",
         is_delete_operator_pod=False,
         name="generate_thelook",
-        namespace="composer",
-        service_account_name="datasets",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-thelook-ecommerce",
+        namespace="default",
         image_pull_policy="Always",
         image="{{ var.json.thelook_ecommerce.docker_image }}",
         env_vars={
@@ -51,11 +69,12 @@ with DAG(
             "SOURCE_DIR": "data",
             "EXTRANEOUS_HEADERS": '["event_type", "ip_address", "browser", "traffic_source", "session_id", "sequence_number", "uri", "is_sold"]',
         },
-        resources={
-            "request_memory": "8G",
-            "request_cpu": "2",
-            "request_ephemeral_storage": "10G",
-        },
+    )
+    delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
+        task_id="delete_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        name="pdp-thelook-ecommerce",
     )
 
     # Task to load Products data to a BigQuery table
@@ -231,7 +250,7 @@ with DAG(
         task_id="create_user_geom_column",
         configuration={
             "query": {
-                "query": "ALTER TABLE `bigquery-public-data.thelook_ecommerce.users` ADD COLUMN IF NOT EXISTS user_geom GEOGRAPHY;\nUPDATE `bigquery-public-data.thelook_ecommerce.users`\n   SET user_geom = SAFE.ST_GeogFromText(CONCAT('POINT(',CAST(longitude AS STRING), ' ', CAST(latitude as STRING), ')'))\n WHERE longitude IS NOT NULL AND latitude IS NOT NULL;",
+                "query": "ALTER TABLE `{{ var.value.gcp_project }}.thelook_ecommerce.users` ADD COLUMN IF NOT EXISTS user_geom GEOGRAPHY;\nUPDATE `{{ var.value.gcp_project }}.thelook_ecommerce.users`\n   SET user_geom = SAFE.ST_GeogFromText(CONCAT('POINT(',CAST(longitude AS STRING), ' ', CAST(latitude as STRING), ')'))\n WHERE longitude IS NOT NULL AND latitude IS NOT NULL;",
                 "useLegacySql": False,
             }
         },
@@ -241,13 +260,17 @@ with DAG(
     create_distribution_center_geom_column = bigquery.BigQueryInsertJobOperator(
         task_id="create_distribution_center_geom_column",
         configuration={
-            "query": "ALTER TABLE `bigquery-public-data.thelook_ecommerce.distribution_centers`\n  ADD COLUMN IF NOT EXISTS distribution_center_geom GEOGRAPHY;\nUPDATE `bigquery-public-data.thelook_ecommerce.distribution_centers`\n   SET distribution_center_geom = SAFE.ST_GeogFromText(CONCAT('POINT(',CAST(longitude AS STRING), ' ', CAST(latitude as STRING), ')'))\n WHERE longitude IS NOT NULL\n   AND latitude IS NOT NULL;\n# Use Legacy SQL should be false for any query that uses a DML statement",
-            "useLegacySql": False,
+            "query": {
+                "query": "ALTER TABLE `{{ var.value.gcp_project }}.thelook_ecommerce.distribution_centers`\n  ADD COLUMN IF NOT EXISTS distribution_center_geom GEOGRAPHY;\nUPDATE `{{ var.value.gcp_project }}.thelook_ecommerce.distribution_centers`\n  SET distribution_center_geom = SAFE.ST_GeogFromText(CONCAT('POINT(',CAST(longitude AS STRING), ' ', CAST(latitude as STRING), ')'))\nWHERE longitude IS NOT NULL\n  AND latitude IS NOT NULL;\n# Use Legacy SQL should be false for any query that uses a DML statement",
+                "useLegacySql": False,
+            }
         },
     )
 
     (
-        generate_thelook
+        create_cluster
+        >> generate_thelook
+        >> delete_cluster
         >> [
             load_products_to_bq,
             load_events_to_bq,
