@@ -15,7 +15,7 @@
 
 from airflow import DAG
 from airflow.operators import bash
-from airflow.providers.cncf.kubernetes.operators import kubernetes_pod
+from airflow.providers.google.cloud.operators import kubernetes_engine
 from airflow.providers.google.cloud.transfers import gcs_to_bigquery
 
 default_args = {
@@ -39,14 +39,32 @@ with DAG(
         task_id="bash_gcs_to_gcs",
         bash_command="gsutil -m rm -a gs://{{ var.value.composer_bucket }}/data/hacker_news/batch/**\ngsutil cp `gsutil ls gs://hacker-news-backups/*_data.json |sort |tail -n 2 |head -n 1` gs://{{ var.value.composer_bucket }}/data/hacker_news/source_file.json\n",
     )
+    create_cluster = kubernetes_engine.GKECreateClusterOperator(
+        task_id="create_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        body={
+            "name": "pdp-hacker-news",
+            "initial_node_count": 1,
+            "network": "{{ var.value.vpc_network }}",
+            "node_config": {
+                "machine_type": "e2-standard-16",
+                "oauth_scopes": [
+                    "https://www.googleapis.com/auth/devstorage.read_write",
+                    "https://www.googleapis.com/auth/cloud-platform",
+                ],
+            },
+        },
+    )
 
     # Run CSV transform within kubernetes pod
-    transform_csv = kubernetes_pod.KubernetesPodOperator(
+    transform_csv = kubernetes_engine.GKEStartPodOperator(
         task_id="transform_csv",
         name="generate_output_files",
-        namespace="composer-user-workloads",
-        service_account_name="default",
-        config_file="/home/airflow/composer_kube_config",
+        namespace="default",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        cluster_name="pdp-hacker-news",
         image_pull_policy="Always",
         image="{{ var.json.hacker_news.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -58,10 +76,16 @@ with DAG(
             "OUTPUT_CSV_HEADERS": '[ "title", "url", "text", "dead", "by",\n  "score", "time", "timestamp", "type", "id",\n  "parent", "descendants", "ranking", "deleted" ]',
         },
         container_resources={
-            "memory": {"request": "80Gi"},
+            "memory": {"request": "32Gi"},
             "cpu": {"request": "2"},
             "ephemeral-storage": {"request": "10Gi"},
         },
+    )
+    delete_cluster = kubernetes_engine.GKEDeleteClusterOperator(
+        task_id="delete_cluster",
+        project_id="{{ var.value.gcp_project }}",
+        location="us-central1-c",
+        name="pdp-hacker-news",
     )
 
     # Task to load CSV data to a BigQuery table
@@ -164,4 +188,10 @@ with DAG(
         ],
     )
 
-    bash_gcs_to_gcs >> transform_csv >> load_full_to_bq
+    (
+        bash_gcs_to_gcs
+        >> create_cluster
+        >> transform_csv
+        >> delete_cluster
+        >> load_full_to_bq
+    )
