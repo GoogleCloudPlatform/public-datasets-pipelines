@@ -45,7 +45,7 @@ with DAG(
         location="us-central1-c",
         body={
             "name": "pdp-hacker-news",
-            "initial_node_count": 1,
+            "initial_node_count": 2,
             "network": "{{ var.value.vpc_network }}",
             "node_config": {
                 "machine_type": "e2-standard-16",
@@ -70,13 +70,13 @@ with DAG(
         env_vars={
             "SOURCE_BUCKET": "{{ var.value.composer_bucket }}",
             "SOURCE_OBJECT": "data/hacker_news/source_file.json",
-            "CHUNK_SIZE": "10000",
+            "CHUNK_SIZE": "50000",
             "TARGET_BUCKET": "{{ var.value.composer_bucket }}",
             "TARGET_LOCAL_DIR": "data/hacker_news/",
             "OUTPUT_CSV_HEADERS": '[ "title", "url", "text", "dead", "by",\n  "score", "time", "timestamp", "type", "id",\n  "parent", "descendants", "ranking", "deleted" ]',
         },
         container_resources={
-            "memory": {"request": "32Gi"},
+            "memory": {"request": "48Gi"},
             "cpu": {"request": "2"},
             "ephemeral-storage": {"request": "10Gi"},
         },
