@@ -18,6 +18,7 @@ import logging
 import os
 import pathlib
 import shutil
+import typing
 from datetime import datetime
 
 import json_stream
@@ -88,8 +89,7 @@ def stream_split_source_file(
     row_count = 0
     # File number counter
     file_num = 1
-
-    for id, item in items.items():
+    for _, item in items.items():
         local_batch_file_name = os.path.join(
             batch_file_target_dir, f"hn_processed_{str(file_num).zfill(10)}.json"
         )
@@ -100,20 +100,27 @@ def stream_split_source_file(
             if os.path.isfile(local_batch_file_name):
                 # Remove the [local] batch JSON file if it exists
                 os.remove(local_batch_file_name)
-            with open(local_batch_file_name, "w") as outfile:
-                outfile.write('{"data": [\n')
+            if not create_batch_file(local_batch_file_name=local_batch_file_name):
+                raise
         if (count + 1) == total_records:
             # if we are processing the last record
-            with open(local_batch_file_name, "a") as outfile:
-                outfile.write(json.dumps(item, default=default) + "\n] }")
+            if not batch_append_row(
+                local_batch_file_name=local_batch_file_name,
+                rowcount=count,
+                chunk_size=chunk_size,
+                item=item,
+            ):
+                raise
         else:
             if count % chunk_size != 0:
                 # if we are appending a row from within a batch
-                with open(local_batch_file_name, "a") as outfile:
-                    if (count + 1) % chunk_size == 0:
-                        outfile.write(json.dumps(item, default=default) + "\n")
-                    else:
-                        outfile.write(json.dumps(item, default=default) + ",\n")
+                if not batch_append_row(
+                    local_batch_file_name=local_batch_file_name,
+                    rowcount=count,
+                    chunk_size=chunk_size,
+                    item=item,
+                ):
+                    raise
             else:
                 # if we are processing the last item in a batch
                 if os.path.isfile(local_batch_file_name):
@@ -128,6 +135,52 @@ def stream_split_source_file(
         count = count + 1
         row_count = row_count + 1
     logging.info(f" ... processed {count} rows")
+
+
+def create_batch_file(
+    local_batch_file_name: str, max_retries: int = 3, retry_delay: int = 10
+) -> bool:
+    for attempt in range(max_retries):
+        with open(local_batch_file_name, "w") as outfile:
+            try:
+                outfile.write('{"data": [\n')
+                break
+            except Exception as e:
+                print(f"Write failed: {e}")
+                if attempt < max_retries - 1:
+                    print(f"Retrying in {retry_delay} seconds...")
+                    datetime.time.sleep(retry_delay)
+                else:
+                    return False
+    return True
+
+
+def batch_append_row(
+    local_batch_file_name: str,
+    rowcount: int,
+    chunk_size: int,
+    item: typing.Any,
+    max_retries: int = 3,
+    retry_delay: int = 10,
+) -> bool:
+    for attempt in range(max_retries):
+        # if we are appending a row from within a batch
+        with open(local_batch_file_name, "a") as outfile:
+            try:
+                if (rowcount + 1) % chunk_size == 0:
+                    outfile.write(json.dumps(item, default=default) + "\n")
+                    break
+                else:
+                    outfile.write(json.dumps(item, default=default) + ",\n")
+                    break
+            except Exception as e:
+                print(f"Append row failed: {e}")
+                if attempt < max_retries - 1:
+                    print(f"Retrying in {retry_delay} seconds...")
+                    datetime.time.sleep(retry_delay)
+                else:
+                    return False
+    return True
 
 
 def close_batch_file_write(
