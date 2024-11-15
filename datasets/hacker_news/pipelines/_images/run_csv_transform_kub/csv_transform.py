@@ -100,9 +100,7 @@ def stream_split_source_file(
             if os.path.isfile(local_batch_file_name):
                 # Remove the [local] batch JSON file if it exists
                 os.remove(local_batch_file_name)
-            if not create_batch_file(
-                local_batch_file_name=local_batch_file_name
-            ):
+            if not create_batch_file(local_batch_file_name=local_batch_file_name):
                 raise
         if (count + 1) == total_records:
             # if we are processing the last record
