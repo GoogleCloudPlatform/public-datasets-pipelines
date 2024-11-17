@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,8 +36,9 @@ with DAG(
     copy_bq_dataset = kubernetes_pod.KubernetesPodOperator(
         task_id="copy_bq_dataset",
         name="copy_bq_dataset",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.cfe_calculator.container_registry.copy_bq_datasets }}",
         env_vars={
@@ -47,7 +48,6 @@ with DAG(
             "DATASET_VERSIONS": "{{ var.json.cfe_calculator.dataset_versions }}",
             "SERVICE_ACCOUNT": "{{ var.json.cfe_calculator.service_account }}",
         },
-        resources={"request_memory": "128M", "request_cpu": "200m"},
     )
 
     copy_bq_dataset
