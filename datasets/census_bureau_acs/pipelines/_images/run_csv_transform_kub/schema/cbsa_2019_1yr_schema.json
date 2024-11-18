@@ -1,0 +1,1227 @@
+[
+  {
+    "name": "geo_id",
+    "type": "STRING",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "aggregate_travel_time_to_work",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "amerindian_including_hispanic",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "amerindian_pop",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "armed_forces",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "asian_including_hispanic",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "asian_male_45_54",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "asian_male_55_64",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "asian_pop",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "associates_degree",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "bachelors_degree",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "bachelors_degree_2",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "bachelors_degree_or_higher_25_64",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "black_including_hispanic",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "black_male_45_54",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "black_male_55_64",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "black_pop",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "children",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "children_in_single_female_hh",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "civilian_labor_force",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "commute_10_14_mins",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "commute_15_19_mins",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "commute_20_24_mins",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "commute_25_29_mins",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "commute_30_34_mins",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "commute_35_39_mins",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "commute_35_44_mins",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "commute_40_44_mins",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "commute_45_59_mins",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "commute_5_9_mins",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "commute_60_89_mins",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "commute_60_more_mins",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "commute_90_more_mins",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "commute_less_10_mins",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "commuters_16_over",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "commuters_by_bus",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "commuters_by_car_truck_van",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "commuters_by_carpool",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "commuters_by_public_transportation",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "commuters_by_subway_or_elevated",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "commuters_drove_alone",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "different_house_year_ago_different_city",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "different_house_year_ago_same_city",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "dwellings_10_to_19_units",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "dwellings_1_units_attached",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "dwellings_1_units_detached",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "dwellings_20_to_49_units",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "dwellings_2_units",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "dwellings_3_to_4_units",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "dwellings_50_or_more_units",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "dwellings_5_to_9_units",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "employed_agriculture_forestry_fishing_hunting_mining",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "employed_arts_entertainment_recreation_accommodation_food",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "employed_construction",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "employed_education_health_social",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "employed_finance_insurance_real_estate",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "employed_information",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "employed_manufacturing",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "employed_other_services_not_public_admin",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "employed_pop",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "employed_public_administration",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "employed_retail_trade",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "employed_science_management_admin_waste",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "employed_transportation_warehousing_utilities",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "employed_wholesale_trade",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "families_with_young_children",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "family_households",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "father_in_labor_force_one_parent_families_with_young_children",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "father_one_parent_families_with_young_children",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "female_10_to_14",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "female_15_to_17",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "female_18_to_19",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "female_20",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "female_21",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "female_22_to_24",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "female_25_to_29",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "female_30_to_34",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "female_35_to_39",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "female_40_to_44",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "female_45_to_49",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "female_50_to_54",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "female_55_to_59",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "female_5_to_9",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "female_60_to_61",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "female_62_to_64",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "female_65_to_66",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "female_67_to_69",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "female_70_to_74",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "female_75_to_79",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "female_80_to_84",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "female_85_and_over",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "female_female_households",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "female_pop",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "female_under_5",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "four_more_cars",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "gini_index",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "graduate_professional_degree",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "group_quarters",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "high_school_diploma",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "high_school_including_ged",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "hispanic_any_race",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "hispanic_male_45_54",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "hispanic_male_55_64",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "hispanic_pop",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "households",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "households_public_asst_or_food_stamps",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "households_retirement_income",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "housing_built_1939_or_earlier",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "housing_built_2000_to_2004",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "housing_built_2005_or_later",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "housing_units",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "housing_units_renter_occupied",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "in_grades_1_to_4",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "in_grades_5_to_8",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "in_grades_9_to_12",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "in_school",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "in_undergrad_college",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "income_100000_124999",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "income_10000_14999",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "income_125000_149999",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "income_150000_199999",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "income_15000_19999",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "income_200000_or_more",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "income_20000_24999",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "income_25000_29999",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "income_30000_34999",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "income_35000_39999",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "income_40000_44999",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "income_45000_49999",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "income_50000_59999",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "income_60000_74999",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "income_75000_99999",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "income_less_10000",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "income_per_capita",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "less_one_year_college",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "less_than_high_school_graduate",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "male_10_to_14",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "male_15_to_17",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "male_18_to_19",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "male_20",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "male_21",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "male_22_to_24",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "male_25_to_29",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "male_30_to_34",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "male_35_to_39",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "male_40_to_44",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "male_45_64_associates_degree",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "male_45_64_bachelors_degree",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "male_45_64_grade_9_12",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "male_45_64_graduate_degree",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "male_45_64_high_school",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "male_45_64_less_than_9_grade",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "male_45_64_some_college",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "male_45_to_49",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "male_45_to_64",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "male_50_to_54",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "male_55_to_59",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "male_5_to_9",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "male_60_to_61",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "male_62_to_64",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "male_65_to_66",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "male_67_to_69",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "male_70_to_74",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "male_75_to_79",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "male_80_to_84",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "male_85_and_over",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "male_male_households",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "male_pop",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "male_under_5",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "management_business_sci_arts_employed",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "married_households",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "masters_degree",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "median_age",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "median_income",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "median_rent",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "median_year_structure_built",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "million_dollar_housing_units",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "mobile_homes",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "mortgaged_housing_units",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "no_car",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "no_cars",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "nonfamily_households",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "not_hispanic_pop",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "not_in_labor_force",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "not_us_citizen_pop",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "occupation_management_arts",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "occupation_natural_resources_construction_maintenance",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "occupation_production_transportation_material",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "occupation_sales_office",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "occupation_services",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "occupied_housing_units",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "one_car",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "one_parent_families_with_young_children",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "one_year_more_college",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "other_race_pop",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "owner_occupied_housing_units",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "owner_occupied_housing_units_lower_value_quartile",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "owner_occupied_housing_units_median_value",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "owner_occupied_housing_units_upper_value_quartile",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "percent_income_spent_on_rent",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "pop_16_over",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "pop_25_64",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "pop_25_years_over",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "pop_5_years_over",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "pop_determined_poverty_status",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "pop_in_labor_force",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "population_1_year_and_over",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "population_3_years_over",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "poverty",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "rent_10_to_15_percent",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "rent_15_to_20_percent",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "rent_20_to_25_percent",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "rent_25_to_30_percent",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "rent_30_to_35_percent",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "rent_35_to_40_percent",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "rent_40_to_50_percent",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "rent_burden_not_computed",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "rent_over_50_percent",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "rent_under_10_percent",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "renter_occupied_housing_units_paying_cash_median_gross_rent",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "sales_office_employed",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "some_college_and_associates_degree",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "speak_only_english_at_home",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "speak_spanish_at_home",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "speak_spanish_at_home_low_english",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "three_cars",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "total_pop",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "two_cars",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "two_or_more_races_pop",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "two_parent_families_with_young_children",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "two_parents_father_in_labor_force_families_with_young_children",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "two_parents_in_labor_force_families_with_young_children",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "two_parents_mother_in_labor_force_families_with_young_children",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "two_parents_not_in_labor_force_families_with_young_children",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "unemployed_pop",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "vacant_housing_units",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "vacant_housing_units_for_rent",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "vacant_housing_units_for_sale",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "walked_to_work",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "white_including_hispanic",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "white_male_45_54",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "white_male_55_64",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "white_pop",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "worked_at_home",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  },
+  {
+    "name": "workers_16_and_over",
+    "type": "FLOAT",
+    "mode": "NULLABLE"
+  }
+]
