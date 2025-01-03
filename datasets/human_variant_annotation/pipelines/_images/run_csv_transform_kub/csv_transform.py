@@ -49,7 +49,10 @@ def main(
 
 def get_dates() -> typing.List[str]:
     today = datetime.datetime.now()
-    start_date = datetime.datetime(today.year, today.month - 1, 1)
+    if today.month == 1:
+        start_date = datetime.datetime(today.year - 1, 12, 1)  # December of the previous year
+    else:
+        start_date = datetime.datetime(today.year, today.month - 1, 1)  # Previous month
     end_date = today
     delta = datetime.timedelta(days=1)
     dates = []
