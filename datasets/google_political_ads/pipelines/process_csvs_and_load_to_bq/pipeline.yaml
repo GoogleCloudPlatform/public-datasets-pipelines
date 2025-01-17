@@ -952,7 +952,10 @@ dag:
               "spend_range_min_zar",
               "spend_range_max_zar",
               "spend_range_min_clp",
-              "spend_range_max_clp"
+              "spend_range_max_clp",
+              "spend_range_min_mxn",
+              "spend_range_max_mxn",
+              "is_funded_by_google_ad_grants"
             ]
           RENAME_MAPPINGS: >-
             {
@@ -1013,7 +1016,10 @@ dag:
               "Geo_Targeting_Included": "geo_targeting_included",
               "Geo_Targeting_Excluded": "geo_targeting_excluded",
               "First_Served_Timestamp": "first_served_timestamp",
-              "Last_Served_Timestamp": "last_served_timestamp"
+              "Last_Served_Timestamp": "last_served_timestamp",
+              "Spend_Range_Min_MXN": "spend_range_min_mxn",
+              "Spend_Range_Max_MXN": "spend_range_max_mxn",
+              "Is_Funded_By_Google_Ad_Grants": "is_funded_by_google_ad_grants"
             }
         container_resources:
           memory:
@@ -1258,6 +1264,18 @@ dag:
           - name: "spend_range_max_clp"
             type: "integer"
             description: "Upper bound of the amount in CLP spent by the advertiser on the election ad."
+            mode: "nullable"
+          - name: "spend_range_min_mxn"
+            type: "integer"
+            description: "Lower bound of the amount in MXN spent by the advertiser on the election ad."
+            mode: "nullable"
+          - name: "spend_range_max_mxn"
+            type: "integer"
+            description: "Upper bound of the amount in MXN spent by the advertiser on the election ad."
+            mode: "nullable"
+          - name: "is_funded_by_google_ad_grants"
+            type: "integer"
+            description: "Indicates whether the ad is funded by an in-kind donation through Google Ad Grants. Google ad Grants donates Search advertising to eligible organizations. Google does not endorse these ad."
             mode: "nullable"
 
     - operator: "GKEStartPodOperator"
