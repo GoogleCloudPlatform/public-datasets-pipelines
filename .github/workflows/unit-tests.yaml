@@ -35,7 +35,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install poetry
-        run: curl -sSL https://install.python-poetry.org | python3 - --preview
+        run: curl -sSL https://install.python-poetry.org | python3 - --version 1.8.4
       - name: Install dependencies
         run: poetry install --only pipelines
       - name: Initialize Airflow

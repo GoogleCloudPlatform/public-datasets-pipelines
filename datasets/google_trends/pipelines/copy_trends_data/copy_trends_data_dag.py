@@ -27,7 +27,7 @@ with DAG(
     dag_id="google_trends.copy_trends_data",
     default_args=default_args,
     max_active_runs=1,
-    schedule_interval="@daily",
+    schedule_interval="0 2 * * *",
     catchup=False,
     default_view="graph",
 ) as dag:
