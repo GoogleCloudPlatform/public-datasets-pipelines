@@ -913,6 +913,7 @@ dag:
               "gender_targeting",
               "geo_targeting_included",
               "geo_targeting_excluded",
+              "is_funded_by_google_ad_grants",
               "spend_range_min_usd",
               "spend_range_max_usd",
               "spend_range_min_eur",
@@ -954,8 +955,7 @@ dag:
               "spend_range_min_clp",
               "spend_range_max_clp",
               "spend_range_min_mxn",
-              "spend_range_max_mxn",
-              "is_funded_by_google_ad_grants"
+              "spend_range_max_mxn"
             ]
           RENAME_MAPPINGS: >-
             {
@@ -1112,6 +1112,10 @@ dag:
           - name: "geo_targeting_excluded"
             type: "string"
             description: "Geographic locations excluded in the ad's targeting."
+            mode: "nullable"
+          - name: "is_funded_by_google_ad_grants"
+            type: "bool"
+            description: "Indicates whether the ad is funded by an in-kind donation through Google Ad Grants. Google ad Grants donates Search advertising to eligible organizations. Google does not endorse these ad."
             mode: "nullable"
           - name: "spend_range_min_usd"
             type: "integer"
@@ -1272,10 +1276,6 @@ dag:
           - name: "spend_range_max_mxn"
             type: "integer"
             description: "Upper bound of the amount in MXN spent by the advertiser on the election ad."
-            mode: "nullable"
-          - name: "is_funded_by_google_ad_grants"
-            type: "integer"
-            description: "Indicates whether the ad is funded by an in-kind donation through Google Ad Grants. Google ad Grants donates Search advertising to eligible organizations. Google does not endorse these ad."
             mode: "nullable"
 
     - operator: "GKEStartPodOperator"
