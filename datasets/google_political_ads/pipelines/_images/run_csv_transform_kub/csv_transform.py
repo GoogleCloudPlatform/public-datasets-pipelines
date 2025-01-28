@@ -120,6 +120,7 @@ def main(
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
 
+
 def new_func(csv_file, df):
     logging.info(f"Transforming.. {csv_file}")
     if "Spend_MXN" not in df.columns:
