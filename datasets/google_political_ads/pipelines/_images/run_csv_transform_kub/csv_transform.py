@@ -29,7 +29,6 @@ SPEND_RANGE_COLUMNS = [
     "spend_range_max_eur",
     "spend_range_max_inr",
     "spend_range_max_bgn",
-    "spend_range_max_hrk",
     "spend_range_max_czk",
     "spend_range_max_dkk",
     "spend_range_max_huf",
@@ -47,7 +46,6 @@ NUMERIC_COLUMNS = [
     "spend_inr",
     "spend_bgn",
     "spend_czk",
-    "spend_hrk",
     "spend_dkk",
     "spend_huf",
     "spend_pln",
@@ -62,6 +60,7 @@ NUMERIC_COLUMNS = [
     "spend_ars",
     "spend_zar",
     "spend_clp",
+    "spend_mxn",
 ]
 
 
@@ -92,13 +91,7 @@ def main(
     logging.info(f"Opening file {zip_file}")
     df = read_csv_file(zip_file, csv_file)
 
-    logging.info(f"Transforming.. {csv_file}")
-    if "Spend_HRK" not in df.columns:
-        df["Spend_HRK"] = 0
-    if "Spend_Range_Max_HRK" not in df.columns:
-        df["Spend_Range_Max_HRK"] = 0
-    if "Spend_Range_Min_HRK" not in df.columns:
-        df["Spend_Range_Min_HRK"] = 0
+    new_func(csv_file, df)
 
     logging.info(f"Transform: Rename columns for {table_name}..")
     rename_headers(df, rename_mappings)
@@ -126,6 +119,15 @@ def main(
         f"Google Political Ads {table_name} process completed at "
         + str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     )
+
+def new_func(csv_file, df):
+    logging.info(f"Transforming.. {csv_file}")
+    if "Spend_MXN" not in df.columns:
+        df["Spend_MXN"] = 0
+    if "Spend_Range_Max_MXN" not in df.columns:
+        df["Spend_Range_Max_MXN"] = 0
+    if "Spend_Range_Min_MXN" not in df.columns:
+        df["Spend_Range_Min_MXN"] = 0
 
 
 def save_to_new_file(df: pd.DataFrame, file_path: str, table_name: str) -> None:
