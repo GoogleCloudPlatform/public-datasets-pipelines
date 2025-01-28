@@ -370,9 +370,7 @@ dag:
           - name: "spend_mxn"
             type: "integer"
             description: "Total amount in MXN spent on election ads in this region."
-            mode: "nullable"  
-
-    # advertiser_stats
+            mode: "nullable"
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
@@ -573,9 +571,7 @@ dag:
           - name: "spend_mxn"
             type: "integer"
             description: "Total amount in MXN spent on election ads by the advertiser."
-            mode: "nullable"  
-
-    # advertiser_weekly_spend
+            mode: "nullable"
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
@@ -764,8 +760,7 @@ dag:
           - name: "spend_mxn"
             type: "integer"
             description: "The amount in MXN spent on election ads during the given week by the advertiser."
-            mode: "nullable"  
-
+            mode: "nullable"
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
@@ -1273,7 +1268,6 @@ dag:
             type: "integer"
             description: "Upper bound of the amount in MXN spent by the advertiser on the election ad."
             mode: "nullable"
-
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
@@ -1455,8 +1449,7 @@ dag:
           - name: "spend_mxn"
             type: "integer"
             description: "Total amount in MXN spent on election ads in this region."
-            mode: "nullable" 
-
+            mode: "nullable"
     - operator: "GKEStartPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
