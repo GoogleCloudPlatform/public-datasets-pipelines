@@ -36,8 +36,9 @@ with DAG(
     copy_bq_datasets = kubernetes_pod.KubernetesPodOperator(
         task_id="copy_bq_datasets",
         name="copy_bq_datasets",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.open_targets.container_registry.copy_bq_datasets }}",
         env_vars={
@@ -47,11 +48,6 @@ with DAG(
             "TRANSFER_CONFIG_NAME": "open-targets-platform",
             "SOURCE_DATASET_NAME": "{{ var.json.open_targets.platform.source_dataset_name }}",
             "TARGET_DATASET_NAME": "{{ var.json.open_targets.platform.target_dataset_name }}",
-        },
-        resources={
-            "request_memory": "128M",
-            "request_cpu": "200m",
-            "request_ephemeral_storage": "5G",
         },
     )
 
