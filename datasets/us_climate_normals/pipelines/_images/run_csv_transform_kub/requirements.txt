@@ -41,4 +41,4 @@ google-cloud-vision==1.0.2
 google-cloud-workflows==1.6.2
 google-crc32c
 googleapis-common-protos==1.56.2
-protobuf==3.17.3
+protobuf==6.30.0
