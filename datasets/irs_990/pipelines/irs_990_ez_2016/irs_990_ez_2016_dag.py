@@ -44,7 +44,7 @@ with DAG(
         image_pull_policy="Always",
         image="{{ var.json.irs_990.container_registry.run_csv_transform_kub }}",
         env_vars={
-            "SOURCE_URL": "https://www.irs.gov/pub/irs-soi/16eofinextractez.dat",
+            "SOURCE_URL": "https://www.irs.gov/pub/irs-soi/16eofinextractez.zip",
             "SOURCE_FILE": "files/data.dat",
             "TARGET_FILE": "files/data_output.csv",
             "TARGET_GCS_BUCKET": "{{ var.value.composer_bucket }}",
