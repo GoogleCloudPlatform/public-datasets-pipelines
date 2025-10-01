@@ -292,7 +292,7 @@ resources:
 
   - type: bigquery_table
     table_id: structural_alerts_30
-    description: "Table storing a list of structural features (encoded as SMARTS) that are potentially undesirable in drug discovery context. It should be noted some alerts/alert sets are more permissive than others and may flag a large number of compounds. Results should be interpreted with care, depending on the use-case, and not treated as a blanket filter (e.g., around 50% of approved drugs have 1 or more alerts from these sets)."
+    description: "Table storing a list of structural features (encoded as SMARTS) that are potentially undesirable in a drug discovery context. It should be noted some alerts/alert sets are more permissive than others and may flag a large number of compounds. Results should be interpreted with care, depending on the use-case, and not treated as a blanket filter (e.g., around 50% of approved drugs have 1 or more alerts from these sets)."
 
   - type: bigquery_table
     table_id: target_components_30
@@ -367,7 +367,7 @@ dag:
           curl -o ./files/chembl_30_postgresql.tar.gz https://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBLdb/releases/chembl_30/chembl_30_postgresql.tar.gz ;
           cd files ;
           tar --strip-components=2 -xzvf chembl_30_postgresql.tar.gz chembl_30/chembl_30_postgresql/chembl_30_postgresql.dmp ;
-          gsutil cp chembl_30_postgresql.dmp gs://{{ var.value.composer_bucket }}/data/ebi_chembl/chembl/chembl_30/chembl_30_postgresql.dmp ;
+          gcloud storage cp chembl_30_postgresql.dmp gs://{{ var.value.composer_bucket }}/data/ebi_chembl/chembl/chembl_30/chembl_30_postgresql.dmp ;
           cd .. ;
 
     - operator: "GKEStartPodOperator"
