@@ -119,8 +119,22 @@ def get_composer_bucket(
     return composer_bucket
 
 
-def run_gsutil_cmd(args: typing.List[str], cwd: pathlib.Path):
-    subprocess.check_call(["gsutil"] + args, cwd=cwd)
+def run_gcloud_storage_cmd(args: typing.List[str], cwd: pathlib.Path):
+    command = ["gcloud"]
+    top_level_flags = []
+    storage_args = []
+
+    # Separate top-level flags like -q
+    for arg in args:
+        if arg in ["-q"]:
+            top_level_flags.append(arg)
+        else:
+            storage_args.append(arg)
+
+    command.extend(top_level_flags)
+    command.append("storage")
+    command.extend(storage_args)
+    subprocess.check_call(command, cwd=cwd)
 
 
 def check_and_configure_airflow_variables(
@@ -306,7 +320,13 @@ def copy_data_folder_to_composer_bucket(
         f"Data folder exists: {data_folder}.\nCopying contents into Composer bucket.."
     )
     gcs_uri = f"gs://{composer_bucket}/data/{dataset_id}/{pipeline}"
-    run_gsutil_cmd(["-q", "cp", "-r", f"{data_folder}/*", gcs_uri], data_folder)
+    run_gcloud_storage_cmd([
+        "-q",
+        "cp",
+        "--recursive",
+        f"{data_folder}/*",
+        gcs_uri,
+    ], data_folder)
 
     print("Done. Files uploaded to GCS:")
     for file in data_folder.iterdir():
@@ -358,7 +378,7 @@ def import_variables_to_cloud_composer(
         f"  Source:\n  {cwd / filename}\n\n"
         f"  Destination:\n  {gcs_uri}\n"
     )
-    run_gsutil_cmd(["cp", filename, gcs_uri], cwd=cwd)
+    run_gcloud_storage_cmd(["cp", filename, gcs_uri], cwd=cwd)
 
     print(f"\nImporting Airflow variables from {gcs_uri} ({airflow_path})...\n")
     run_cloud_composer_vars_import(composer_env, composer_region, airflow_path, cwd=cwd)
@@ -373,7 +393,7 @@ def copy_generated_dag_to_airflow_dags_folder(
     """
     Runs the command
 
-        gsutil cp {PIPELINE_ID}_dag.py gs://{COMPOSER_BUCKET}/dags/{DATASET_ID}__{PIPELINE_ID}_dag.py
+        gcloud storage cp {PIPELINE_ID}_dag.py gs://{COMPOSER_BUCKET}/dags/{DATASET_ID}__{PIPELINE_ID}_dag.py
 
     inside $DATASET/pipelines/$PIPELINE
     """
@@ -386,7 +406,7 @@ def copy_generated_dag_to_airflow_dags_folder(
         f"  Source:\n  {cwd / filename}\n\n"
         f"  Destination:\n  {target}\n"
     )
-    run_gsutil_cmd(["cp", filename, target], cwd=cwd)
+    run_gcloud_storage_cmd(["cp", filename, target], cwd=cwd)
 
 
 def copy_custom_callables_to_airflow_dags_folder(
@@ -398,7 +418,7 @@ def copy_custom_callables_to_airflow_dags_folder(
     """
     Runs the command
 
-        gsutil cp -r custom gs://$COMPOSER_BUCKET/dags/$DATASET/$PIPELINE_ID/
+        gcloud storage cp --recursive custom gs://$COMPOSER_BUCKET/dags/$DATASET/$PIPELINE_ID/
 
     inside $DATASET/pipelines/$PIPELINE.
     """
@@ -413,7 +433,7 @@ def copy_custom_callables_to_airflow_dags_folder(
         f"  Source:\n  {cwd / 'custom'}\n\n"
         f"  Destination:\n  {target}\n"
     )
-    run_gsutil_cmd(["-m", "cp", "-r", "custom", target], cwd=cwd)
+    run_gcloud_storage_cmd(["cp", "--recursive", "custom", target], cwd=cwd)
 
 
 def check_existence_of_variables_file(file_path: pathlib.Path):

@@ -54,7 +54,7 @@ with DAG(
     # Fetch data gcs - gcs
     download_chembl_source_data = bash.BashOperator(
         task_id="download_chembl_source_data",
-        bash_command="mkdir ./files ;\ncurl -o ./files/chembl_30_postgresql.tar.gz https://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBLdb/releases/chembl_30/chembl_30_postgresql.tar.gz ;\ncd files ;\ntar --strip-components=2 -xzvf chembl_30_postgresql.tar.gz chembl_30/chembl_30_postgresql/chembl_30_postgresql.dmp ;\ngsutil cp chembl_30_postgresql.dmp gs://{{ var.value.composer_bucket }}/data/ebi_chembl/chembl/chembl_30/chembl_30_postgresql.dmp ;\ncd .. ;\n",
+        bash_command="mkdir ./files ;\ncurl -o ./files/chembl_30_postgresql.tar.gz https://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBLdb/releases/chembl_30/chembl_30_postgresql.tar.gz ;\ncd files ;\ntar --strip-components=2 -xzvf chembl_30_postgresql.tar.gz chembl_30/chembl_30_postgresql/chembl_30_postgresql.dmp ;\ngcloud storage cp chembl_30_postgresql.dmp gs://{{ var.value.composer_bucket }}/data/ebi_chembl/chembl/chembl_30/chembl_30_postgresql.dmp ;\ncd .. ;\n",
     )
 
     # Copy files to GCS on the specified date

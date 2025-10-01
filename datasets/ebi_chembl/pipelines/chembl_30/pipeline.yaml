@@ -367,7 +367,7 @@ dag:
           curl -o ./files/chembl_30_postgresql.tar.gz https://ftp.ebi.ac.uk/pub/databases/chembl/ChEMBLdb/releases/chembl_30/chembl_30_postgresql.tar.gz ;
           cd files ;
           tar --strip-components=2 -xzvf chembl_30_postgresql.tar.gz chembl_30/chembl_30_postgresql/chembl_30_postgresql.dmp ;
-          gsutil cp chembl_30_postgresql.dmp gs://{{ var.value.composer_bucket }}/data/ebi_chembl/chembl/chembl_30/chembl_30_postgresql.dmp ;
+          gcloud storage cp chembl_30_postgresql.dmp gs://{{ var.value.composer_bucket }}/data/ebi_chembl/chembl/chembl_30/chembl_30_postgresql.dmp ;
           cd .. ;
 
     - operator: "GKEStartPodOperator"
@@ -2984,7 +2984,7 @@ dag:
           - name: "nda_type"
             type: "string"
             mode: "nullable"
-            description: " Abbreviated New Drug Applications (ANDA or generic) are “A”."
+            description: " Abbreviated New Drug Applications (ANDA or generic) are \"A\"."
 
 
     - operator: "GoogleCloudStorageToBigQueryOperator"

@@ -55,7 +55,7 @@ def save_to_new_file(df, file_path):
 def download_file(source_url: str, source_file: pathlib.Path) -> None:
     logging.info(f"Downloading files at {source_url}")
     subprocess.check_call(
-        ["gsutil", "-m", "cp", "-r", f"{source_url}", f"{source_file}"]
+        ["gcloud", "storage", "cp", "--recursive", f"{source_url}", f"{source_file}"]
     )
 
 
@@ -75,9 +75,9 @@ def concatenate_files(source_folder: str, source_file: str) -> None:
 def resolve_source_data_issues(path: str, file: str) -> None:
     cmd_list = [
         # resolve newlines in quoted text
-        f"sed -zi 's/\\n\\\"\\n/\\\"\\n/g' {file}",
-        f"sed -zi 's/\\n\\\",,,,,\\n/\\\",,,,,\\n/g' {file}",
-        f"sed -i '/^\\\",,,,,/d'  {file}",
+        f"sed -zi 's/\\n\\"\\n/\\"\\n/g' {file}",
+        f"sed -zi 's/\\n\\",,,,,\\n/\\",,,,,\\n/g' {file}",
+        f"sed -i '/^\\",,,,,/d'  {file}",
         # remove NUL characters
         "sed -i 's/\\x0//g' " + file,
         # remove trailer text from all source files under the source path recursively

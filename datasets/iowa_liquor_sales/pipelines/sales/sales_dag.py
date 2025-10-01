@@ -37,7 +37,7 @@ with DAG(
     # Download data
     bash_download = bash.BashOperator(
         task_id="bash_download",
-        bash_command="curl https://data.iowa.gov/api/views/m3tr-qhgy/rows.csv | gsutil cp - gs://{{ var.value.composer_bucket }}/data/iowa_liquor_sales/raw_files/data.csv\n",
+        bash_command="curl https://data.iowa.gov/api/views/m3tr-qhgy/rows.csv | gcloud storage cp - gs://{{ var.value.composer_bucket }}/data/iowa_liquor_sales/raw_files/data.csv\n",
     )
 
     # Split data file into smaller chunks
@@ -249,13 +249,13 @@ with DAG(
             {
                 "name": "volume_sold_liters",
                 "type": "FLOAT",
-                "description": 'Total volume of liquor ordered in liters. (i.e. (Bottle Volume (ml) x Bottles Sold)/1,000)"',
+                "description": '"Total volume of liquor ordered in liters. (i.e. (Bottle Volume (ml) x Bottles Sold)/1,000)"',
                 "mode": "NULLABLE",
             },
             {
                 "name": "volume_sold_gallons",
                 "type": "FLOAT",
-                "description": 'Total volume of liquor ordered in gallons. (i.e. (Bottle Volume (ml) x Bottles Sold)/3785.411784)"',
+                "description": '"Total volume of liquor ordered in gallons. (i.e. (Bottle Volume (ml) x Bottles Sold)/3785.411784)"',
                 "mode": "NULLABLE",
             },
         ],
