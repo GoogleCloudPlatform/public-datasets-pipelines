@@ -145,10 +145,8 @@ def move_dir_contents_to_gcs(
 ) -> None:
     subprocess.check_call(
         [
-            "gsutil",
-            "-m",
-            "-o",
-            "GSUtil:parallel_composite_upload_threshold=250M",
+            "gcloud",
+            "storage",
             "cp",
             f"{dir_}/{date_prefix}/*.nc4",
             f"gs://{target_bucket}/{date_prefix}",
@@ -170,7 +168,7 @@ def delete_temp_pcu_objects(target_bucket: str) -> None:
     See https://cloud.google.com/storage/docs/uploads-downloads#gsutil-pcu
     """
     res = subprocess.run(
-        ["gsutil", "ls", f"gs://{target_bucket}"],
+        ["gcloud", "storage", "ls", f"gs://{target_bucket}"],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True,
@@ -180,7 +178,7 @@ def delete_temp_pcu_objects(target_bucket: str) -> None:
         object_name = uri.split(target_bucket + "/")[-1]
         if not object_name.startswith("Y"):
             subprocess.check_call(
-                ["gsutil", "rm", "-r", f"gs://{target_bucket}/{object_name}"],
+                ["gcloud", "storage", "rm", "--recursive", f"gs://{target_bucket}/{object_name}"],
             )
 
 
@@ -196,7 +194,8 @@ def update_manifest_file(
         f.write("\n")
     subprocess.check_call(
         [
-            "gsutil",
+            "gcloud",
+            "storage",
             "cp",
             str(manifest_path),
             f"gs://{target_bucket}/{date_prefix}/{MANIFEST_FILE}",

@@ -48,7 +48,7 @@ dag:
     #     task_id: "transfer_zip_files"
     #     bash_command: |
     #         echo Copying source files from $SOURCE_BUCKET to $TARGET_BUCKET started;
-    #         gsutil -m cp "$SOURCE_BUCKET" "$TARGET_BUCKET" 1> /dev/null;
+    #         gcloud storage cp "$SOURCE_BUCKET" "$TARGET_BUCKET" 1> /dev/null;
     #         echo Copying source files from $SOURCE_BUCKET to $TARGET_BUCKET completed;
     #     env:
     #       SOURCE_BUCKET: "gs://gcs-public-data-trafficvision"

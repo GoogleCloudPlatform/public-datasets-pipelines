@@ -36,7 +36,7 @@ with DAG(
     # Copy data gcs to gcs
     bash_gcs_to_gcs = bash.BashOperator(
         task_id="bash_gcs_to_gcs",
-        bash_command="gsutil cp gs://pdp-feeds-staging/RelayWorldBank/WDI_csv/WDICountry-Series.csv gs://{{ var.value.composer_bucket }}/data/world_bank_wdi/raw_files/ ;\ngsutil cp gs://pdp-feeds-staging/RelayWorldBank/WDI_csv/WDICountry.csv gs://{{ var.value.composer_bucket }}/data/world_bank_wdi/raw_files/ ;\ngsutil cp gs://pdp-feeds-staging/RelayWorldBank/WDI_csv/WDIFootNote.csv gs://{{ var.value.composer_bucket }}/data/world_bank_wdi/raw_files/ ;\ngsutil cp gs://pdp-feeds-staging/RelayWorldBank/WDI_csv/WDISeries.csv gs://{{ var.value.composer_bucket }}/data/world_bank_wdi/raw_files/ ;\ngsutil cp gs://pdp-feeds-staging/RelayWorldBank/WDI_csv/WDISeries-Time.csv gs://{{ var.value.composer_bucket }}/data/world_bank_wdi/raw_files/ ;\n",
+        bash_command="gcloud storage cp gs://pdp-feeds-staging/RelayWorldBank/WDI_csv/WDICountry-Series.csv gs://{{ var.value.composer_bucket }}/data/world_bank_wdi/raw_files/ ;\ngcloud storage cp gs://pdp-feeds-staging/RelayWorldBank/WDI_csv/WDICountry.csv gs://{{ var.value.composer_bucket }}/data/world_bank_wdi/raw_files/ ;\ngcloud storage cp gs://pdp-feeds-staging/RelayWorldBank/WDI_csv/WDIFootNote.csv gs://{{ var.value.composer_bucket }}/data/world_bank_wdi/raw_files/ ;\ngcloud storage cp gs://pdp-feeds-staging/RelayWorldBank/WDI_csv/WDISeries.csv gs://{{ var.value.composer_bucket }}/data/world_bank_wdi/raw_files/ ;\ngcloud storage cp gs://pdp-feeds-staging/RelayWorldBank/WDI_csv/WDISeries-Time.csv gs://{{ var.value.composer_bucket }}/data/world_bank_wdi/raw_files/ ;\n",
     )
     create_cluster = kubernetes_engine.GKECreateClusterOperator(
         task_id="create_cluster",

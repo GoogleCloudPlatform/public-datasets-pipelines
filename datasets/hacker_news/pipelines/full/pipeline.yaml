@@ -37,8 +37,8 @@ dag:
       args:
         task_id: "bash_gcs_to_gcs"
         bash_command: |
-          gsutil -m rm -a gs://{{ var.value.composer_bucket }}/data/hacker_news/batch/**
-          gsutil cp `gsutil ls gs://hacker-news-backups/*_data.json |sort |tail -n 2 |head -n 1` gs://{{ var.value.composer_bucket }}/data/hacker_news/source_file.json
+          gcloud storage rm --recursive --all-versions gs://{{ var.value.composer_bucket }}/data/hacker_news/batch/**
+          gcloud storage cp `gcloud storage ls gs://hacker-news-backups/*_data.json |sort |tail -n 2 |head -n 1` gs://{{ var.value.composer_bucket }}/data/hacker_news/source_file.json
 
     - operator: "GKECreateClusterOperator"
       args:

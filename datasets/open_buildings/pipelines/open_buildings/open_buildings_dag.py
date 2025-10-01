@@ -36,7 +36,7 @@ with DAG(
     # Fetch data gcs - gcs
     bash_gcs_to_gcs = bash.BashOperator(
         task_id="bash_gcs_to_gcs",
-        bash_command="gsutil cp -R gs://open-buildings-data/v1/polygons_s2_level_4_gzip gs://{{ var.value.composer_bucket }}/data/open_buildings/source_files/",
+        bash_command="gcloud storage cp --recursive gs://open-buildings-data/v1/polygons_s2_level_4_gzip gs://{{ var.value.composer_bucket }}/data/open_buildings/source_files/",
     )
 
     # Unzip data

@@ -101,8 +101,8 @@ def copy_source_files_gcs_to_gcs(
     logging.info(
         f"Copying from gs://{source_bucket} to gs://{destination_bucket}/{destination_folder}"
     )
-    subprocess.check_call("which gsutil", shell=True)
-    cmd = f"gsutil -m cp -n gs://{source_bucket} gs://{destination_bucket}/{destination_folder}"
+    subprocess.check_call("which gcloud", shell=True)
+    cmd = f"gcloud storage cp --no-clobber gs://{source_bucket} gs://{destination_bucket}/{destination_folder}"
     if silent:
         cmd += " 2> /dev/null"
     subprocess.check_call([cmd], shell=True)
@@ -313,10 +313,10 @@ def download_file_gcs(
 def add_id_column(source_json_file: str, destination_json_file: str, guid: str):
     shutil.copyfile(source_json_file, destination_json_file)
     cmd = (
-        f'sed -i -e \'s/{{\\"frame\\"/{{"id": \\"{guid}\\", \\"frame\\"/g\'{destination_json_file}'
-        # 'sed -i -e \'s/{\\"frame\\"/{"id": "'
+        f'sed -i -e \'s/{{\\"frame\\"/{{\"id\": \\"{guid}\\", \\"frame\\"/g\'{destination_json_file}'
+        # 'sed -i -e \'s/{\\"frame\\"/{\"id\": "'
         # + guid
-        # + '"\, "frame"/g\' '
+        # + '"\, \"frame\"/g\' '
         # + destination_json_file
     )
     logging.info(f"cmd = {cmd}")

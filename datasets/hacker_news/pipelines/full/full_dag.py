@@ -37,7 +37,7 @@ with DAG(
     # Fetch data gcs - gcs
     bash_gcs_to_gcs = bash.BashOperator(
         task_id="bash_gcs_to_gcs",
-        bash_command="gsutil -m rm -a gs://{{ var.value.composer_bucket }}/data/hacker_news/batch/**\ngsutil cp `gsutil ls gs://hacker-news-backups/*_data.json |sort |tail -n 2 |head -n 1` gs://{{ var.value.composer_bucket }}/data/hacker_news/source_file.json\n",
+        bash_command="gcloud storage rm --all-versions gs://{{ var.value.composer_bucket }}/data/hacker_news/batch/**\ngcloud storage cp `gcloud storage ls gs://hacker-news-backups/*_data.json |sort |tail -n 2 |head -n 1` gs://{{ var.value.composer_bucket }}/data/hacker_news/source_file.json\n",
     )
     create_cluster = kubernetes_engine.GKECreateClusterOperator(
         task_id="create_cluster",

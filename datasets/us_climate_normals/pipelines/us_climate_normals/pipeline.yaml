@@ -39,7 +39,7 @@ dag:
         bash_command: |
           mkdir -p /home/airflow/gcs/data/us_climate_normals/schema ;
           mkdir -p /home/airflow/gcs/data/us_climate_normals ;
-          gsutil -m cp -r gs://normals/* gs://{{ var.value.composer_bucket }}/data/us_climate_normals ;
+          gcloud storage cp --recursive gs://normals/* gs://{{ var.value.composer_bucket }}/data/us_climate_normals ;
     - operator: "KubernetesPodOperator"
       description: "Run CSV transform within kubernetes pod"
       args:
