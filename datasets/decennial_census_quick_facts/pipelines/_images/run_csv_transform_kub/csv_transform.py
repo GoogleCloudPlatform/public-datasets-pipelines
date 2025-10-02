@@ -75,7 +75,15 @@ def save_to_new_file(df: pd.DataFrame, file_path: str) -> None:
 
 
 def download_file(source_url: str, source_file: pathlib.Path) -> None:
-    subprocess.check_call(["gsutil", "cp", "-r", f"{source_url}", f"{source_file}"])
+    # Note: Parallelism by Default: gcloud storage cp performs parallel uploads and downloads by default for improved performance. gsutil requires the top-level -m flag to enable this behavior.
+    # Note: Parallel Invocations: gcloud storage does not support parallel invocations (running the CLI from multiple terminals at the same time), which can lead to flaky behaviour.
+    # Note: Handling of Empty Directories: Folders created via the Cloud Console are 0-byte placeholder objects. gcloud storage cp copies these placeholders, while gsutil is designed to skip them.
+    # Note: Argument Handling for -I: There are several known issues where gsutil cp -I behaves differently than gcloud storage cp --read-paths-from-stdin, particularly around not copying entire directories or not detecting all files specified in the input.
+    # Note: Error Handling: gcloud storage cp will attempt to copy all valid sources even if one of the specified sources is invalid. In contrast, gsutil cp may halt the entire operation if an early source argument is invalid.
+    # Note: Local Directory Creation: When downloading an object, gcloud storage cp will create any missing local directories in the destination path. gsutil cp will fail if the destination directory does not exist.
+    subprocess.check_call(
+        ["gcloud", "storage", "cp", "--recursive", f"{source_url}", f"{source_file}"]
+    )
 
 
 def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:

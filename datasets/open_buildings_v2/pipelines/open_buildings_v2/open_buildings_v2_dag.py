@@ -28,7 +28,7 @@ with DAG(
     dag_id="open_buildings_v2.open_buildings_v2",
     default_args=default_args,
     max_active_runs=1,
-    schedule_interval="@yearly",
+    schedule_interval=" @yearly",
     catchup=False,
     default_view="graph",
 ) as dag:
@@ -36,7 +36,7 @@ with DAG(
     # Fetch data gcs - gcs
     bash_gcs_to_gcs = bash.BashOperator(
         task_id="bash_gcs_to_gcs",
-        bash_command="gsutil -m cp -R gs://open-buildings-data/v2/polygons_s2_level_4_gzip gs://{{ var.value.composer_bucket }}/data/open_buildings_v2/source_files/",
+        bash_command="gcloud storage cp --recursive gs://open-buildings-data/v2/polygons_s2_level_4_gzip gs://{{ var.value.composer_bucket }}/data/open_buildings_v2/source_files/",
     )
 
     # Unzip data

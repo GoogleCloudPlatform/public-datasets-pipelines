@@ -40,7 +40,7 @@ dag:
       depends_on_past: False
       start_date: "2022-10-10"
     max_active_runs: 1
-    schedule_interval: "@monthly"
+    schedule_interval: " @monthly"
     catchup: False
     default_view: graph
 
@@ -50,10 +50,10 @@ dag:
       args:
         task_id: "copy_gcs_to_gcs"
         bash_command: |
-          gsutil cp gs://pdp-feeds-staging/RelayWorldBank/IDS_CSV/IDSCountry-Series.csv gs://{{ var.value.composer_bucket }}/data/world_bank_intl_debt/raw_files/ ;
-          gsutil cp gs://pdp-feeds-staging/RelayWorldBank/IDS_CSV/IDSCountry.csv gs://{{ var.value.composer_bucket }}/data/world_bank_intl_debt/raw_files/ ;
-          gsutil cp gs://pdp-feeds-staging/RelayWorldBank/IDS_CSV/IDSSeries.csv gs://{{ var.value.composer_bucket }}/data/world_bank_intl_debt/raw_files/ ;
-          gsutil cp gs://pdp-feeds-staging/RelayWorldBank/IDS_CSV/IDSSeries-Time.csv gs://{{ var.value.composer_bucket }}/data/world_bank_intl_debt/raw_files/ ;
+          gcloud storage cp gs://pdp-feeds-staging/RelayWorldBank/IDS_CSV/IDSCountry-Series.csv gs://{{ var.value.composer_bucket }}/data/world_bank_intl_debt/raw_files/ ;
+          gcloud storage cp gs://pdp-feeds-staging/RelayWorldBank/IDS_CSV/IDSCountry.csv gs://{{ var.value.composer_bucket }}/data/world_bank_intl_debt/raw_files/ ;
+          gcloud storage cp gs://pdp-feeds-staging/RelayWorldBank/IDS_CSV/IDSSeries.csv gs://{{ var.value.composer_bucket }}/data/world_bank_intl_debt/raw_files/ ;
+          gcloud storage cp gs://pdp-feeds-staging/RelayWorldBank/IDS_CSV/IDSSeries-Time.csv gs://{{ var.value.composer_bucket }}/data/world_bank_intl_debt/raw_files/ ;
 
     - operator: "GKECreateClusterOperator"
       args:
