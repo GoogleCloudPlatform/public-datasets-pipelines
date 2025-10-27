@@ -2824,167 +2824,167 @@ dag:
               "base_url"
             ]
 
-    - operator: "GKEStartPodOperator"
-      description: "Run NOAA load processes - GSOD By Year"
-      args:
-        task_id: "noaa_gsod_by_year"
-        name: "noaa.gsod_by_year"
-        project_id: "{{ var.value.gcp_project }}"
-        location: "us-central1-c"
-        cluster_name: noaa
-        namespace: "default"
-        image_pull_policy: "Always"
-        image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
-        env_vars:
-          PIPELINE_NAME: "NOAA GSOD By Year"
-          START_YEAR: "1929"
-          SOURCE_URL: >-
-            {
-              "noaa_gsod_by_year": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/"
-            }
-          SOURCE_FILE: "files/data_gsod_.csv"
-          TARGET_FILE: "files/data_output_gsod_.csv"
-          CHUNKSIZE: "100000"
-          PROJECT_ID: "{{ var.value.gcp_project }}"
-          DATASET_ID: "noaa_gsod"
-          TABLE_ID: "gsod"
-          TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
-          TARGET_GCS_PATH: "data/noaa/gsod_by_year/data_output.csv"
-          SCHEMA_PATH: "data/noaa/schema/noaa_gsod_by_year_schema.json"
-          DROP_DEST_TABLE: "N"
-          INPUT_FIELD_DELIMITER: ","
-          FULL_DATA_LOAD: "N"
-          REMOVE_SOURCE_FILE: "N"
-          DELETE_TARGET_FILE: "Y"
-          NUMBER_OF_HEADER_ROWS: "1"
-          INPUT_CSV_HEADERS: >-
-            [
-              "STATION",
-              "DATE",
-              "LATITUDE",
-              "LONGITUDE",
-              "ELEVATION",
-              "NAME",
-              "TEMP",
-              "TEMP_ATTRIBUTES",
-              "DEWP",
-              "DEWP_ATTRIBUTES",
-              "SLP",
-              "SLP_ATTRIBUTES",
-              "STP",
-              "STP_ATTRIBUTES",
-              "VISIB",
-              "VISIB_ATTRIBUTES",
-              "WDSP",
-              "WDSP_ATTRIBUTES",
-              "MXSPD",
-              "GUST",
-              "MAX",
-              "MAX_ATTRIBUTES",
-              "MIN",
-              "MIN_ATTRIBUTES",
-              "PRCP",
-              "PRCP_ATTRIBUTES",
-              "SNDP",
-              "FRSHTT"
-            ]
-          RENAME_HEADERS_LIST: >-
-            {
-              "TEMP": "temp",
-              "TEMP_ATTRIBUTES": "count_temp",
-              "DEWP": "dewp",
-              "DEWP_ATTRIBUTES": "count_dewp",
-              "SLP": "slp",
-              "SLP_ATTRIBUTES": "count_slp",
-              "STP": "stp",
-              "STP_ATTRIBUTES": "count_stp",
-              "VISIB": "visib",
-              "VISIB_ATTRIBUTES": "count_visib",
-              "WDSP": "wdsp",
-              "WDSP_ATTRIBUTES": "count_wdsp",
-              "MXSPD": "mxspd",
-              "GUST": "gust",
-              "MAX": "max",
-              "MAX_ATTRIBUTES": "flag_max",
-              "MIN": "min",
-              "MIN_ATTRIBUTES": "flag_min",
-              "PRCP": "prcp",
-              "PRCP_ATTRIBUTES": "flag_prcp",
-              "SNDP": "sndp",
-              "DATE": "date"
-            }
-          TRIM_WHITESPACE_LIST: >-
-            [
-              "stn",
-              "wban",
-              "year",
-              "mo",
-              "da",
-              "date",
-              "temp",
-              "count_temp",
-              "dewp",
-              "count_dewp",
-              "slp",
-              "count_slp",
-              "stp",
-              "count_stp",
-              "visib",
-              "count_visib",
-              "wdsp",
-              "count_wdsp",
-              "mxspd",
-              "gust",
-              "max",
-              "flag_max",
-              "min",
-              "flag_min",
-              "prcp",
-              "flag_prcp",
-              "sndp",
-              "fog",
-              "rain_drizzle",
-              "snow_ice_pellets",
-              "hail",
-              "thunder",
-              "tornado_funnel_cloud"
-            ]
-          REORDER_HEADERS_LIST: >-
-            [
-              "stn",
-              "wban",
-              "date",
-              "year",
-              "mo",
-              "da",
-              "temp",
-              "count_temp",
-              "dewp",
-              "count_dewp",
-              "slp",
-              "count_slp",
-              "stp",
-              "count_stp",
-              "visib",
-              "count_visib",
-              "wdsp",
-              "count_wdsp",
-              "mxspd",
-              "gust",
-              "max",
-              "flag_max",
-              "min",
-              "flag_min",
-              "prcp",
-              "flag_prcp",
-              "sndp",
-              "fog",
-              "rain_drizzle",
-              "snow_ice_pellets",
-              "hail",
-              "thunder",
-              "tornado_funnel_cloud"
-            ]
+    # - operator: "GKEStartPodOperator"
+    #   description: "Run NOAA load processes - GSOD By Year"
+    #   args:
+    #     task_id: "noaa_gsod_by_year"
+    #     name: "noaa.gsod_by_year"
+    #     project_id: "{{ var.value.gcp_project }}"
+    #     location: "us-central1-c"
+    #     cluster_name: noaa
+    #     namespace: "default"
+    #     image_pull_policy: "Always"
+    #     image: "{{ var.json.noaa.container_registry.run_csv_transform_kub }}"
+    #     env_vars:
+    #       PIPELINE_NAME: "NOAA GSOD By Year"
+    #       START_YEAR: "1929"
+    #       SOURCE_URL: >-
+    #         {
+    #           "noaa_gsod_by_year": "https://www.ncei.noaa.gov/data/global-summary-of-the-day/access/"
+    #         }
+    #       SOURCE_FILE: "files/data_gsod_.csv"
+    #       TARGET_FILE: "files/data_output_gsod_.csv"
+    #       CHUNKSIZE: "100000"
+    #       PROJECT_ID: "{{ var.value.gcp_project }}"
+    #       DATASET_ID: "noaa_gsod"
+    #       TABLE_ID: "gsod"
+    #       TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
+    #       TARGET_GCS_PATH: "data/noaa/gsod_by_year/data_output.csv"
+    #       SCHEMA_PATH: "data/noaa/schema/noaa_gsod_by_year_schema.json"
+    #       DROP_DEST_TABLE: "N"
+    #       INPUT_FIELD_DELIMITER: ","
+    #       FULL_DATA_LOAD: "N"
+    #       REMOVE_SOURCE_FILE: "N"
+    #       DELETE_TARGET_FILE: "Y"
+    #       NUMBER_OF_HEADER_ROWS: "1"
+    #       INPUT_CSV_HEADERS: >-
+    #         [
+    #           "STATION",
+    #           "DATE",
+    #           "LATITUDE",
+    #           "LONGITUDE",
+    #           "ELEVATION",
+    #           "NAME",
+    #           "TEMP",
+    #           "TEMP_ATTRIBUTES",
+    #           "DEWP",
+    #           "DEWP_ATTRIBUTES",
+    #           "SLP",
+    #           "SLP_ATTRIBUTES",
+    #           "STP",
+    #           "STP_ATTRIBUTES",
+    #           "VISIB",
+    #           "VISIB_ATTRIBUTES",
+    #           "WDSP",
+    #           "WDSP_ATTRIBUTES",
+    #           "MXSPD",
+    #           "GUST",
+    #           "MAX",
+    #           "MAX_ATTRIBUTES",
+    #           "MIN",
+    #           "MIN_ATTRIBUTES",
+    #           "PRCP",
+    #           "PRCP_ATTRIBUTES",
+    #           "SNDP",
+    #           "FRSHTT"
+    #         ]
+    #       RENAME_HEADERS_LIST: >-
+    #         {
+    #           "TEMP": "temp",
+    #           "TEMP_ATTRIBUTES": "count_temp",
+    #           "DEWP": "dewp",
+    #           "DEWP_ATTRIBUTES": "count_dewp",
+    #           "SLP": "slp",
+    #           "SLP_ATTRIBUTES": "count_slp",
+    #           "STP": "stp",
+    #           "STP_ATTRIBUTES": "count_stp",
+    #           "VISIB": "visib",
+    #           "VISIB_ATTRIBUTES": "count_visib",
+    #           "WDSP": "wdsp",
+    #           "WDSP_ATTRIBUTES": "count_wdsp",
+    #           "MXSPD": "mxspd",
+    #           "GUST": "gust",
+    #           "MAX": "max",
+    #           "MAX_ATTRIBUTES": "flag_max",
+    #           "MIN": "min",
+    #           "MIN_ATTRIBUTES": "flag_min",
+    #           "PRCP": "prcp",
+    #           "PRCP_ATTRIBUTES": "flag_prcp",
+    #           "SNDP": "sndp",
+    #           "DATE": "date"
+    #         }
+    #       TRIM_WHITESPACE_LIST: >-
+    #         [
+    #           "stn",
+    #           "wban",
+    #           "year",
+    #           "mo",
+    #           "da",
+    #           "date",
+    #           "temp",
+    #           "count_temp",
+    #           "dewp",
+    #           "count_dewp",
+    #           "slp",
+    #           "count_slp",
+    #           "stp",
+    #           "count_stp",
+    #           "visib",
+    #           "count_visib",
+    #           "wdsp",
+    #           "count_wdsp",
+    #           "mxspd",
+    #           "gust",
+    #           "max",
+    #           "flag_max",
+    #           "min",
+    #           "flag_min",
+    #           "prcp",
+    #           "flag_prcp",
+    #           "sndp",
+    #           "fog",
+    #           "rain_drizzle",
+    #           "snow_ice_pellets",
+    #           "hail",
+    #           "thunder",
+    #           "tornado_funnel_cloud"
+    #         ]
+    #       REORDER_HEADERS_LIST: >-
+    #         [
+    #           "stn",
+    #           "wban",
+    #           "date",
+    #           "year",
+    #           "mo",
+    #           "da",
+    #           "temp",
+    #           "count_temp",
+    #           "dewp",
+    #           "count_dewp",
+    #           "slp",
+    #           "count_slp",
+    #           "stp",
+    #           "count_stp",
+    #           "visib",
+    #           "count_visib",
+    #           "wdsp",
+    #           "count_wdsp",
+    #           "mxspd",
+    #           "gust",
+    #           "max",
+    #           "flag_max",
+    #           "min",
+    #           "flag_min",
+    #           "prcp",
+    #           "flag_prcp",
+    #           "sndp",
+    #           "fog",
+    #           "rain_drizzle",
+    #           "snow_ice_pellets",
+    #           "hail",
+    #           "thunder",
+    #           "tornado_funnel_cloud"
+    #         ]
     - operator: "GKEDeleteClusterOperator"
       args:
         task_id: "delete_cluster"
@@ -2993,4 +2993,4 @@ dag:
         name: noaa
 
   graph_paths:
-    - "create_cluster >> [ ghcnd_inventory, spc_hail, spc_wind, spc_tornado, ghcnd_states, ghcnd_stations, gsod_stations, ghcnd_countries, noaa_goes16_mcmip, noaa_goes16_cmip, noaa_goes16_glm, noaa_goes16_radiance, noaa_goes17_mcmip, noaa_goes17_cmip, noaa_goes17_glm, noaa_goes17_radiance] >> ghcnd_hurricanes >> ghcnd_by_year >> lightning_strikes_by_year >> noaa_ghcn_m  >> storms_database_by_year >> noaa_gsod_by_year >> delete_cluster"
+    - "create_cluster >> [ ghcnd_inventory, spc_hail, spc_wind, spc_tornado, ghcnd_states, ghcnd_stations, gsod_stations, ghcnd_countries, noaa_goes16_mcmip, noaa_goes16_cmip, noaa_goes16_glm, noaa_goes16_radiance, noaa_goes17_mcmip, noaa_goes17_cmip, noaa_goes17_glm, noaa_goes17_radiance] >> ghcnd_hurricanes >> ghcnd_by_year >> lightning_strikes_by_year >> noaa_ghcn_m  >> storms_database_by_year >> delete_cluster"
