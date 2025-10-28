@@ -2357,6 +2357,14 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "json5"
+version = "0.9.25"
+description = "A Python implementation of the JSON5 data format."
+category = "dev"
+optional = false
+python-versions = ">=3.8"
+
+[[package]]
 name = "jsonpath-ng"
 version = "1.5.3"
 description = "A final implementation of JSONPath for Python that aims to be standard compliant, including arithmetic and binary comparison operators and providing clear AST for metaprogramming."
@@ -2389,7 +2397,7 @@ format-nongpl = ["idna", "jsonpointer (>1.13)", "rfc3339-validator", "rfc3986-va
 
 [[package]]
 name = "jupyter"
-version = "1.0.0"
+version = "1.1.1"
 description = "Jupyter metapackage. Install all the Jupyter components in one go."
 category = "dev"
 optional = false
@@ -2399,9 +2407,9 @@ python-versions = "*"
 ipykernel = "*"
 ipywidgets = "*"
 jupyter-console = "*"
+jupyterlab = "*"
 nbconvert = "*"
 notebook = "*"
-qtconsole = "*"
 
 [[package]]
 name = "jupyter-client"
@@ -2485,6 +2493,49 @@ websocket-client = "*"
 
 [package.extras]
 test = ["coverage", "ipykernel", "pytest (>=6.0)", "pytest-console-scripts", "pytest-cov", "pytest-mock", "pytest-timeout", "pytest-tornasync", "requests"]
+
+[[package]]
+name = "jupyterlab"
+version = "3.3.4"
+description = "JupyterLab computational environment"
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+
+[package.dependencies]
+ipython = "*"
+jinja2 = ">=2.1"
+jupyter-core = "*"
+jupyter-server = ">=1.4,<2.0"
+jupyterlab-server = ">=2.10,<3.0"
+nbclassic = ">=0.2,<1.0"
+packaging = "*"
+tornado = ">=6.1.0"
+
+[package.extras]
+test = ["check-manifest", "coverage", "jupyterlab-server[test]", "pre-commit", "pytest (>=6.0)", "pytest-check-links (>=0.5)", "pytest-console-scripts", "pytest-cov", "requests", "requests-cache", "virtualenv"]
+ui-tests = ["build"]
+
+[[package]]
+name = "jupyterlab-server"
+version = "2.10.3"
+description = "A set of server components for JupyterLab and JupyterLab like applications ."
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+babel = "*"
+entrypoints = ">=0.2.2"
+jinja2 = ">=2.10"
+json5 = "*"
+jsonschema = ">=3.0.1"
+jupyter-server = ">=1.4,<2.0"
+packaging = "*"
+requests = "*"
+
+[package.extras]
+test = ["codecov", "ipykernel", "jupyter-server[test]", "openapi-core (>=0.14.0,<0.15.0)", "pytest (>=5.3.2)", "pytest-console-scripts", "pytest-cov", "ruamel.yaml", "strict-rfc3339", "wheel"]
 
 [[package]]
 name = "jupyterlab-widgets"
@@ -3596,42 +3647,6 @@ python-versions = ">=3.6"
 [package.dependencies]
 cffi = {version = "*", markers = "implementation_name == \"pypy\""}
 py = {version = "*", markers = "implementation_name == \"pypy\""}
-
-[[package]]
-name = "qtconsole"
-version = "5.3.2"
-description = "Jupyter Qt console"
-category = "dev"
-optional = false
-python-versions = ">= 3.7"
-
-[package.dependencies]
-ipykernel = ">=4.1"
-ipython-genutils = "*"
-jupyter-client = ">=4.1"
-jupyter-core = "*"
-pygments = "*"
-pyzmq = ">=17.1"
-qtpy = ">=2.0.1"
-traitlets = "<5.2.1 || >5.2.1,<5.2.2 || >5.2.2"
-
-[package.extras]
-doc = ["Sphinx (>=1.3)"]
-test = ["flaky", "pytest", "pytest-qt"]
-
-[[package]]
-name = "QtPy"
-version = "2.2.1"
-description = "Provides an abstraction layer on top of the various Qt bindings (PyQt5/6 and PySide2/6)."
-category = "dev"
-optional = false
-python-versions = ">=3.7"
-
-[package.dependencies]
-packaging = "*"
-
-[package.extras]
-test = ["pytest (>=6,!=7.0.0,!=7.0.1)", "pytest-cov (>=3.0.0)", "pytest-qt"]
 
 [[package]]
 name = "redshift-connector"
@@ -5394,6 +5409,10 @@ joblib = [
 json-merge-patch = [
     {file = "json-merge-patch-0.2.tar.gz", hash = "sha256:09898b6d427c08754e2a97c709cf2dfd7e28bd10c5683a538914975eab778d39"},
 ]
+json5 = [
+    {file = "json5-0.9.25-py3-none-any.whl", hash = "sha256:34ed7d834b1341a86987ed52f3f76cd8ee184394906b6e22a1e0deb9ab294e8f"},
+    {file = "json5-0.9.25.tar.gz", hash = "sha256:548e41b9be043f9426776f05df8635a00fe06104ea51ed24b67f908856e151ae"},
+]
 jsonpath-ng = [
     {file = "jsonpath-ng-1.5.3.tar.gz", hash = "sha256:a273b182a82c1256daab86a313b937059261b5c5f8c4fa3fc38b882b344dd567"},
     {file = "jsonpath_ng-1.5.3-py2-none-any.whl", hash = "sha256:f75b95dbecb8a0f3b86fd2ead21c2b022c3f5770957492b9b6196ecccfeb10aa"},
@@ -5404,9 +5423,8 @@ jsonschema = [
     {file = "jsonschema-3.2.0.tar.gz", hash = "sha256:c8a85b28d377cc7737e46e2d9f2b4f44ee3c0e1deac6bf46ddefc7187d30797a"},
 ]
 jupyter = [
-    {file = "jupyter-1.0.0-py2.py3-none-any.whl", hash = "sha256:5b290f93b98ffbc21c0c7e749f054b3267782166d72fa5e3ed1ed4eaf34a2b78"},
-    {file = "jupyter-1.0.0.tar.gz", hash = "sha256:d9dc4b3318f310e34c82951ea5d6683f67bed7def4b259fafbfe4f1beb1d8e5f"},
-    {file = "jupyter-1.0.0.zip", hash = "sha256:3e1f86076bbb7c8c207829390305a2b1fe836d471ed54be66a3b8c41e7f46cc7"},
+    {file = "jupyter-1.1.1-py2.py3-none-any.whl", hash = "sha256:7a59533c22af65439b24bbe60373a4e95af8f16ac65a6c00820ad378e3f7cc83"},
+    {file = "jupyter-1.1.1.tar.gz", hash = "sha256:d55467bceabdea49d7e3624af7e33d59c37fff53ed3a350e1ac957bed731de7a"},
 ]
 jupyter-client = [
     {file = "jupyter_client-7.4.4-py3-none-any.whl", hash = "sha256:1c1d418ef32a45a1fae0b243e6f01cc9bf65fa8ddbd491a034b9ba6ac6502951"},
@@ -5423,6 +5441,14 @@ jupyter-core = [
 jupyter-server = [
     {file = "jupyter_server-1.15.6-py3-none-any.whl", hash = "sha256:e393934c19fcc324a7fca77f811eacd91201440f04c6fbb15c959c463baaa9c5"},
     {file = "jupyter_server-1.15.6.tar.gz", hash = "sha256:56bd6f580d1f46b62294990e8e78651025729f5d3fc798f10f2c03f0cdcbf28d"},
+]
+jupyterlab = [
+    {file = "jupyterlab-3.3.4-py3-none-any.whl", hash = "sha256:87121636963027a0477e50ea8f366acf1ab06bb05d7e581cd2ec8c00f6e741a5"},
+    {file = "jupyterlab-3.3.4.tar.gz", hash = "sha256:e04355848b3d91ac4d95c2e3846a0429b33e9c2edc79668fb4fc4d212f1e5107"},
+]
+jupyterlab-server = [
+    {file = "jupyterlab_server-2.10.3-py3-none-any.whl", hash = "sha256:62f3c598f1d48dfb9b27729ed17772e38115cbe61e7d60fe68a853791bdf1038"},
+    {file = "jupyterlab_server-2.10.3.tar.gz", hash = "sha256:3fb84a5813d6d836ceda773fb2d4e9ef3c7944dbc1b45a8d59d98641a80de80a"},
 ]
 jupyterlab-widgets = [
     {file = "jupyterlab_widgets-3.0.3-py3-none-any.whl", hash = "sha256:6aa1bc0045470d54d76b9c0b7609a8f8f0087573bae25700a370c11f82cb38c8"},
@@ -6471,14 +6497,6 @@ pyzmq = [
     {file = "pyzmq-24.0.1-pp39-pypy39_pp73-win_amd64.whl", hash = "sha256:687700f8371643916a1d2c61f3fdaa630407dd205c38afff936545d7b7466066"},
     {file = "pyzmq-24.0.1.tar.gz", hash = "sha256:216f5d7dbb67166759e59b0479bca82b8acf9bed6015b526b8eb10143fb08e77"},
 ]
-qtconsole = [
-    {file = "qtconsole-5.3.2-py3-none-any.whl", hash = "sha256:c29d24464f57cdbaa17d6f6060be6e6d5e29126e7feb57eebc1747433382b3d1"},
-    {file = "qtconsole-5.3.2.tar.gz", hash = "sha256:8eadf012e83ab018295803c247c6ab7eacd3d5ab1e1d88a0f37fdcfdab9295a3"},
-]
-QtPy = [
-    {file = "QtPy-2.2.1-py3-none-any.whl", hash = "sha256:268cf5328f41353be1b127e04a81bc74ec9a9b54c9ac75dd8fe0ff48d8ad6ead"},
-    {file = "QtPy-2.2.1.tar.gz", hash = "sha256:7d5231133b772e40b4ee514b6673aca558331e4b88ca038b26c9e16c5c95524f"},
-]
 redshift-connector = [
     {file = "redshift_connector-2.0.909-py3-none-any.whl", hash = "sha256:9fb0e25c2af961d268189c0718c4f48e842cf09070e05ba7343b9a8d491df443"},
 ]
@@ -6608,7 +6626,11 @@ ruamel-yaml = [
     {file = "ruamel.yaml.clib-0.2.7-cp310-cp310-win32.whl", hash = "sha256:763d65baa3b952479c4e972669f679fe490eee058d5aa85da483ebae2009d231"},
     {file = "ruamel.yaml.clib-0.2.7-cp310-cp310-win_amd64.whl", hash = "sha256:d000f258cf42fec2b1bbf2863c61d7b8918d31ffee905da62dede869254d3b8a"},
     {file = "ruamel.yaml.clib-0.2.7-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:045e0626baf1c52e5527bd5db361bc83180faaba2ff586e763d3d5982a876a9e"},
-    {file = "ruamel.yaml.clib-0.2.7-cp311-cp311-macosx_12_6_arm64.whl", hash = "sha256:721bc4ba4525f53f6a611ec0967bdcee61b31df5a56801281027a3a6d1c2daf5"},
+    {file = "ruamel.yaml.clib-0.2.7-cp311-cp311-macosx_13_0_arm64.whl", hash = "sha256:1a6391a7cabb7641c32517539ca42cf84b87b667bad38b78d4d42dd23e957c81"},
+    {file = "ruamel.yaml.clib-0.2.7-cp311-cp311-manylinux2014_aarch64.whl", hash = "sha256:9c7617df90c1365638916b98cdd9be833d31d337dbcd722485597b43c4a215bf"},
+    {file = "ruamel.yaml.clib-0.2.7-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_24_x86_64.whl", hash = "sha256:41d0f1fa4c6830176eef5b276af04c89320ea616655d01327d5ce65e50575c94"},
+    {file = "ruamel.yaml.clib-0.2.7-cp311-cp311-win32.whl", hash = "sha256:f6d3d39611ac2e4f62c3128a9eed45f19a6608670c5a2f4f07f24e8de3441d38"},
+    {file = "ruamel.yaml.clib-0.2.7-cp311-cp311-win_amd64.whl", hash = "sha256:da538167284de58a52109a9b89b8f6a53ff8437dd6dc26d33b57bf6699153122"},
     {file = "ruamel.yaml.clib-0.2.7-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:4b3a93bb9bc662fc1f99c5c3ea8e623d8b23ad22f861eb6fce9377ac07ad6072"},
     {file = "ruamel.yaml.clib-0.2.7-cp36-cp36m-macosx_12_0_arm64.whl", hash = "sha256:a234a20ae07e8469da311e182e70ef6b199d0fbeb6c6cc2901204dd87fb867e8"},
     {file = "ruamel.yaml.clib-0.2.7-cp36-cp36m-manylinux2014_aarch64.whl", hash = "sha256:15910ef4f3e537eea7fe45f8a5d19997479940d9196f357152a09031c5be59f3"},
@@ -6721,6 +6743,18 @@ setproctitle = [
     {file = "setproctitle-1.3.2-cp310-cp310-musllinux_1_1_x86_64.whl", hash = "sha256:7f2719a398e1a2c01c2a63bf30377a34d0b6ef61946ab9cf4d550733af8f1ef1"},
     {file = "setproctitle-1.3.2-cp310-cp310-win32.whl", hash = "sha256:e425be62524dc0c593985da794ee73eb8a17abb10fe692ee43bb39e201d7a099"},
     {file = "setproctitle-1.3.2-cp310-cp310-win_amd64.whl", hash = "sha256:e85e50b9c67854f89635a86247412f3ad66b132a4d8534ac017547197c88f27d"},
+    {file = "setproctitle-1.3.2-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:2a97d51c17d438cf5be284775a322d57b7ca9505bb7e118c28b1824ecaf8aeaa"},
+    {file = "setproctitle-1.3.2-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:587c7d6780109fbd8a627758063d08ab0421377c0853780e5c356873cdf0f077"},
+    {file = "setproctitle-1.3.2-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:d7d17c8bd073cbf8d141993db45145a70b307385b69171d6b54bcf23e5d644de"},
+    {file = "setproctitle-1.3.2-cp311-cp311-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:e932089c35a396dc31a5a1fc49889dd559548d14cb2237adae260382a090382e"},
+    {file = "setproctitle-1.3.2-cp311-cp311-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:8e4f8f12258a8739c565292a551c3db62cca4ed4f6b6126664e2381acb4931bf"},
+    {file = "setproctitle-1.3.2-cp311-cp311-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:570d255fd99c7f14d8f91363c3ea96bd54f8742275796bca67e1414aeca7d8c3"},
+    {file = "setproctitle-1.3.2-cp311-cp311-musllinux_1_1_aarch64.whl", hash = "sha256:a8e0881568c5e6beff91ef73c0ec8ac2a9d3ecc9edd6bd83c31ca34f770910c4"},
+    {file = "setproctitle-1.3.2-cp311-cp311-musllinux_1_1_i686.whl", hash = "sha256:4bba3be4c1fabf170595b71f3af46c6d482fbe7d9e0563999b49999a31876f77"},
+    {file = "setproctitle-1.3.2-cp311-cp311-musllinux_1_1_ppc64le.whl", hash = "sha256:37ece938110cab2bb3957e3910af8152ca15f2b6efdf4f2612e3f6b7e5459b80"},
+    {file = "setproctitle-1.3.2-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:db684d6bbb735a80bcbc3737856385b55d53f8a44ce9b46e9a5682c5133a9bf7"},
+    {file = "setproctitle-1.3.2-cp311-cp311-win32.whl", hash = "sha256:ca58cd260ea02759238d994cfae844fc8b1e206c684beb8f38877dcab8451dfc"},
+    {file = "setproctitle-1.3.2-cp311-cp311-win_amd64.whl", hash = "sha256:88486e6cce2a18a033013d17b30a594f1c5cb42520c49c19e6ade40b864bb7ff"},
     {file = "setproctitle-1.3.2-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:92c626edc66169a1b09e9541b9c0c9f10488447d8a2b1d87c8f0672e771bc927"},
     {file = "setproctitle-1.3.2-cp37-cp37m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:710e16fa3bade3b026907e4a5e841124983620046166f355bbb84be364bf2a02"},
     {file = "setproctitle-1.3.2-cp37-cp37m-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:1f29b75e86260b0ab59adb12661ef9f113d2f93a59951373eb6d68a852b13e83"},
@@ -7049,6 +7083,16 @@ wrapt = [
     {file = "wrapt-1.14.1-cp310-cp310-musllinux_1_1_x86_64.whl", hash = "sha256:8ad85f7f4e20964db4daadcab70b47ab05c7c1cf2a7c1e51087bfaa83831854c"},
     {file = "wrapt-1.14.1-cp310-cp310-win32.whl", hash = "sha256:a9a52172be0b5aae932bef82a79ec0a0ce87288c7d132946d645eba03f0ad8a8"},
     {file = "wrapt-1.14.1-cp310-cp310-win_amd64.whl", hash = "sha256:6d323e1554b3d22cfc03cd3243b5bb815a51f5249fdcbb86fda4bf62bab9e164"},
+    {file = "wrapt-1.14.1-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:ecee4132c6cd2ce5308e21672015ddfed1ff975ad0ac8d27168ea82e71413f55"},
+    {file = "wrapt-1.14.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:2020f391008ef874c6d9e208b24f28e31bcb85ccff4f335f15a3251d222b92d9"},
+    {file = "wrapt-1.14.1-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:2feecf86e1f7a86517cab34ae6c2f081fd2d0dac860cb0c0ded96d799d20b335"},
+    {file = "wrapt-1.14.1-cp311-cp311-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:240b1686f38ae665d1b15475966fe0472f78e71b1b4903c143a842659c8e4cb9"},
+    {file = "wrapt-1.14.1-cp311-cp311-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a9008dad07d71f68487c91e96579c8567c98ca4c3881b9b113bc7b33e9fd78b8"},
+    {file = "wrapt-1.14.1-cp311-cp311-musllinux_1_1_aarch64.whl", hash = "sha256:6447e9f3ba72f8e2b985a1da758767698efa72723d5b59accefd716e9e8272bf"},
+    {file = "wrapt-1.14.1-cp311-cp311-musllinux_1_1_i686.whl", hash = "sha256:acae32e13a4153809db37405f5eba5bac5fbe2e2ba61ab227926a22901051c0a"},
+    {file = "wrapt-1.14.1-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:49ef582b7a1152ae2766557f0550a9fcbf7bbd76f43fbdc94dd3bf07cc7168be"},
+    {file = "wrapt-1.14.1-cp311-cp311-win32.whl", hash = "sha256:358fe87cc899c6bb0ddc185bf3dbfa4ba646f05b1b0b9b5a27c2cb92c2cea204"},
+    {file = "wrapt-1.14.1-cp311-cp311-win_amd64.whl", hash = "sha256:26046cd03936ae745a502abf44dac702a5e6880b2b01c29aea8ddf3353b68224"},
     {file = "wrapt-1.14.1-cp35-cp35m-manylinux1_i686.whl", hash = "sha256:43ca3bbbe97af00f49efb06e352eae40434ca9d915906f77def219b88e85d907"},
     {file = "wrapt-1.14.1-cp35-cp35m-manylinux1_x86_64.whl", hash = "sha256:6b1a564e6cb69922c7fe3a678b9f9a3c54e72b469875aa8018f18b4d1dd1adf3"},
     {file = "wrapt-1.14.1-cp35-cp35m-manylinux2010_i686.whl", hash = "sha256:00b6d4ea20a906c0ca56d84f93065b398ab74b927a7a3dbd470f6fc503f95dc3"},
