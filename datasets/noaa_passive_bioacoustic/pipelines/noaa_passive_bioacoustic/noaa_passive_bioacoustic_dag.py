@@ -49,8 +49,9 @@ with DAG(
         task_id="kub_gcs_to_bq",
         startup_timeout_seconds=1000,
         name="load_data",
-        namespace="composer",
-        service_account_name="datasets",
+        namespace="composer-user-workloads",
+        service_account_name="default",
+        config_file="/home/airflow/composer_kube_config",
         image_pull_policy="Always",
         image="{{ var.json.noaa_passive_bioacoustic.container_registry.run_csv_transform_kub }}",
         env_vars={
@@ -61,11 +62,6 @@ with DAG(
             "GCS_BUCKET": "{{ var.value.composer_bucket }}",
             "SCHEMA_FILEPATH": "schema.json",
             "HEADER": '["CLOUD_PATH" ,"FILE_NAME" ,"START_DATE" ,"START_TIME" ,"DATA_COLLECTION_NAME" ,"SOURCE_ORGANIZATION" ,"FUNDING_ORGANIZATION" ,"PROJECT_NAME" ,"SENSOR_DEPTH" ,"SAMPLE_RATE" ,"DURATION" ,"PLATFORM_NAME" ,"SHAPE1" ,"SHAPE2" ,"SHAPE3" ,"SHAPE4" ,"SHAPE5" ,"SHAPE6" ,"SHAPE7" ,"SHAPE8" ,"SHAPE9" ,"SHAPE10" ]',
-        },
-        resources={
-            "request_memory": "2G",
-            "request_cpu": "1",
-            "request_ephemeral_storage": "10G",
         },
     )
 
