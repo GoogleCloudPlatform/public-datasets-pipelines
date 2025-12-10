@@ -349,18 +349,18 @@ def upload_to_bucket(
 # utility class
 class DataUtil:
     def child_created_at(
-        self, probability: str = "uniform"
-    ) -> datetime.datetime:  # returns a random timestamp between now and parent date
+            self, probability: str = "uniform"
+        ) -> datetime.datetime:
+        # Calculate the total time elapsed since the parent was created
         time_between_dates = datetime.datetime.now() - self.parent.created_at
-        days_between_dates = time_between_dates.days
-        if days_between_dates <= 1:
-            days_between_dates = 2
-        random_number_of_days = random.randrange(
-            1, days_between_dates
-        )  # generates random day between now and when user initially got created
+            
+        # Calculate a random time delta within that duration
+        random_time_seconds = random.randrange(int(time_between_dates.total_seconds()))
+            
+        # The new created_at is the parent's created_at plus the random time delta
         created_at = self.parent.created_at + datetime.timedelta(
-            days=random_number_of_days
-        )
+            seconds=random_time_seconds
+        )    
         return created_at
 
     def random_item(
