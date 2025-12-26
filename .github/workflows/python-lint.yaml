@@ -4,19 +4,29 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Setup Python
-        uses: actions/setup-python@v2
-      - name: Install dependencies
-        run:
-          python -m pip install flake8 isort nbqa
-      - uses: psf/black@stable
+        uses: actions/setup-python@v5
         with:
-          options: "--check"
-          version: "22.3.0"
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install flake8 isort nbqa
+
+      - name: Run black code style check
+        uses: psf/black@stable
+        with:
+          options: "--check --diff"
+          version: "~=24.10"
+          src: "./"
+
       - name: Run Flake8 Linter
-        run: flake8
+        run: flake8 .
+
       - name: Run isort
         run: isort --check-only --profile black --diff .
+
       - name: Run flake8 on notebooks
         run: nbqa flake8 .
