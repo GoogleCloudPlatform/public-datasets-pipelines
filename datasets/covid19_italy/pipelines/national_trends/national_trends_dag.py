@@ -115,7 +115,7 @@ with DAG(
     # Task to copy bq uploadable data file to bucket in EU
     copy_data_file_EU = bash.BashOperator(
         task_id="copy_data_file_EU",
-        bash_command="gsutil cp gs://{{ var.value.composer_bucket }}/data/covid19_italy/national_trends/data_output.csv {{ var.json.covid19_italy.destination_gcs_national_trends }}",
+        bash_command="gcloud storage cp gs://{{ var.value.composer_bucket }}/data/covid19_italy/national_trends/data_output.csv {{ var.json.covid19_italy.destination_gcs_national_trends }}",
     )
 
     # Task to load CSV data to a BigQuery table
