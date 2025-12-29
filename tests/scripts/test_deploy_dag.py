@@ -183,7 +183,7 @@ def test_script_can_deploy_without_variables_files(
         / f"{dataset_path.name}_variables.json"
     ).exists()
 
-    mocker.patch("scripts.deploy_dag.run_gsutil_cmd")
+    mocker.patch("scripts.deploy_dag.run_gcloud_storage_cmd")
     mocker.patch("scripts.deploy_dag.run_cloud_composer_vars_import")
     mocker.patch("scripts.deploy_dag.composer_airflow_version", return_value=2)
 
@@ -235,7 +235,7 @@ def test_vars_yaml_generates_pipeline_vars_json_file(
 
     # Patch remote calls
     mocker.patch("scripts.deploy_dag.run_cloud_composer_vars_import")
-    mocker.patch("scripts.deploy_dag.run_gsutil_cmd")
+    mocker.patch("scripts.deploy_dag.run_gcloud_storage_cmd")
     mocker.patch("scripts.deploy_dag.composer_airflow_version", return_value=2)
 
     deploy_dag.main(
@@ -292,7 +292,7 @@ def test_vars_not_imported_to_composer_when_local_and_remote_vars_are_equal(
 
     # Patch remote calls
     mocker.patch("scripts.deploy_dag.run_cloud_composer_vars_import")
-    mocker.patch("scripts.deploy_dag.run_gsutil_cmd")
+    mocker.patch("scripts.deploy_dag.run_gcloud_storage_cmd")
     mocker.patch("scripts.deploy_dag.composer_airflow_version", return_value=2)
 
     deploy_dag.main(
@@ -336,7 +336,7 @@ def test_vars_not_imported_to_composer_when_local_and_remote_vars_are_null(
 
     # Patch remote calls
     mocker.patch("scripts.deploy_dag.run_cloud_composer_vars_import")
-    mocker.patch("scripts.deploy_dag.run_gsutil_cmd")
+    mocker.patch("scripts.deploy_dag.run_gcloud_storage_cmd")
     mocker.patch("scripts.deploy_dag.composer_airflow_version", return_value=2)
 
     deploy_dag.main(
@@ -381,7 +381,7 @@ def test_vars_not_imported_to_composer_when_local_vars_are_null_but_remote_vars_
 
     # Patch remote calls
     mocker.patch("scripts.deploy_dag.run_cloud_composer_vars_import")
-    mocker.patch("scripts.deploy_dag.run_gsutil_cmd")
+    mocker.patch("scripts.deploy_dag.run_gcloud_storage_cmd")
     mocker.patch("scripts.deploy_dag.composer_airflow_version", return_value=2)
 
     deploy_dag.main(
@@ -426,7 +426,7 @@ def test_resulting_vars_when_user_gets_prompted_and_chooses_remote_vars(
 
     # Patch remote calls
     mocker.patch("scripts.deploy_dag.run_cloud_composer_vars_import")
-    mocker.patch("scripts.deploy_dag.run_gsutil_cmd")
+    mocker.patch("scripts.deploy_dag.run_gcloud_storage_cmd")
     mocker.patch("scripts.deploy_dag.composer_airflow_version", return_value=2)
 
     # User chooses to use remote variable
@@ -475,7 +475,7 @@ def test_resulting_vars_when_user_gets_prompted_and_chooses_local_vars(
 
     # Patch remote calls
     mocker.patch("scripts.deploy_dag.run_cloud_composer_vars_import")
-    mocker.patch("scripts.deploy_dag.run_gsutil_cmd")
+    mocker.patch("scripts.deploy_dag.run_gcloud_storage_cmd")
     mocker.patch("scripts.deploy_dag.composer_airflow_version", return_value=2)
 
     # User chooses to use local variable
@@ -524,7 +524,7 @@ def test_resulting_vars_when_user_gets_prompted_and_chooses_to_merge_local_and_r
 
     # Patch remote calls
     mocker.patch("scripts.deploy_dag.run_cloud_composer_vars_import")
-    mocker.patch("scripts.deploy_dag.run_gsutil_cmd")
+    mocker.patch("scripts.deploy_dag.run_gcloud_storage_cmd")
     mocker.patch("scripts.deploy_dag.composer_airflow_version", return_value=2)
 
     # User chooses to merge local and remote variables
