@@ -75,7 +75,7 @@ def save_to_new_file(df: pd.DataFrame, file_path: str) -> None:
 
 
 def download_file(source_url: str, source_file: pathlib.Path) -> None:
-    subprocess.check_call(["gsutil", "cp", "-r", f"{source_url}", f"{source_file}"])
+    subprocess.check_call(["gcloud", "storage", "cp", "--recursive", f"{source_url}", f"{source_file}"])
 
 
 def upload_file_to_gcs(file_path: pathlib.Path, gcs_bucket: str, gcs_path: str) -> None:
