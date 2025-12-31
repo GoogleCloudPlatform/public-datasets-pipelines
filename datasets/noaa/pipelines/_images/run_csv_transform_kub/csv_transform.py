@@ -720,7 +720,7 @@ def process_ghcn_m_file(
         field_name = str(schema[0])
         col_spec_x = int(schema[1])
         col_spec_y = int(schema[2]) + 1
-        field_names += [field_name]
+        field_names += [(field_name)]
         col_specs += [(col_spec_x, col_spec_y)]
     df = pd.read_fwf(source_file_name, colspecs=col_specs, names=field_names)
     return df
