@@ -35,11 +35,11 @@ dag:
       args:
         task_id: "bash_gcs_to_gcs"
         bash_command: |
-          gsutil cp gs://pdp-feeds-staging/RelayWorldBank/WDI_csv/WDICountry-Series.csv gs://{{ var.value.composer_bucket }}/data/world_bank_wdi/raw_files/ ;
-          gsutil cp gs://pdp-feeds-staging/RelayWorldBank/WDI_csv/WDICountry.csv gs://{{ var.value.composer_bucket }}/data/world_bank_wdi/raw_files/ ;
-          gsutil cp gs://pdp-feeds-staging/RelayWorldBank/WDI_csv/WDIFootNote.csv gs://{{ var.value.composer_bucket }}/data/world_bank_wdi/raw_files/ ;
-          gsutil cp gs://pdp-feeds-staging/RelayWorldBank/WDI_csv/WDISeries.csv gs://{{ var.value.composer_bucket }}/data/world_bank_wdi/raw_files/ ;
-          gsutil cp gs://pdp-feeds-staging/RelayWorldBank/WDI_csv/WDISeries-Time.csv gs://{{ var.value.composer_bucket }}/data/world_bank_wdi/raw_files/ ;
+          gcloud storage cp gs://pdp-feeds-staging/RelayWorldBank/WDI_csv/WDICountry-Series.csv gs://{{ var.value.composer_bucket }}/data/world_bank_wdi/raw_files/ ;
+          gcloud storage cp gs://pdp-feeds-staging/RelayWorldBank/WDI_csv/WDICountry.csv gs://{{ var.value.composer_bucket }}/data/world_bank_wdi/raw_files/ ;
+          gcloud storage cp gs://pdp-feeds-staging/RelayWorldBank/WDI_csv/WDIFootNote.csv gs://{{ var.value.composer_bucket }}/data/world_bank_wdi/raw_files/ ;
+          gcloud storage cp gs://pdp-feeds-staging/RelayWorldBank/WDI_csv/WDISeries.csv gs://{{ var.value.composer_bucket }}/data/world_bank_wdi/raw_files/ ;
+          gcloud storage cp gs://pdp-feeds-staging/RelayWorldBank/WDI_csv/WDISeries-Time.csv gs://{{ var.value.composer_bucket }}/data/world_bank_wdi/raw_files/ ;
 
     - operator: "GKECreateClusterOperator"
       args:
