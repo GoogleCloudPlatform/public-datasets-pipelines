@@ -1,3 +1,6 @@
+**DEPRECATED: this repository is not accepting new PRs**
+
+
 # Google Cloud Datasets: Data Pipelines and Documentation Set
 
 ![public-datasets-pipelines](https://github.com/GoogleCloudPlatform/public-datasets-pipelines/blob/main/images/architecture.png)
