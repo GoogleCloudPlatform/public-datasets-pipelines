@@ -262,7 +262,7 @@ def gcs_file_exists(bucket: str, file_path: str) -> bool:
 
 
 def prefix_files_exist(gcs_bucket: str, prefix: str, folder_to_process: str) -> bool:
-    command = f"gsutil ls gs://{gcs_bucket}/{folder_to_process}/* |grep '\\.csv'"
+    command = f"gcloud storage ls gs://{gcs_bucket}/{folder_to_process}/* |grep '\\.csv'"
     files = sorted(str(subprocess.check_output(command, shell=True)).split("\\n"))
     return len(files) > 0
 
@@ -270,7 +270,7 @@ def prefix_files_exist(gcs_bucket: str, prefix: str, folder_to_process: str) -> 
 def return_first_file_for_prefix(
     gcs_bucket: str, prefix: str, folder_to_process: str
 ) -> str:
-    command = f"gsutil ls gs://{gcs_bucket}/{folder_to_process}/{prefix}* |grep '.csv'"
+    command = f"gcloud storage ls gs://{gcs_bucket}/{folder_to_process}/{prefix}* |grep '.csv'"
     files = sorted(str(subprocess.check_output(command, shell=True)).split("\\n"))
     df = pd.DataFrame(files, columns=["filename"])
     df = df[df["filename"] != "'"]

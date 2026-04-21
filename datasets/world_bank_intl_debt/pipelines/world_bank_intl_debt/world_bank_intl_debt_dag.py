@@ -37,7 +37,7 @@ with DAG(
     # Copy the source files
     copy_gcs_to_gcs = bash.BashOperator(
         task_id="copy_gcs_to_gcs",
-        bash_command="gsutil cp gs://pdp-feeds-staging/RelayWorldBank/IDS_CSV/IDSCountry-Series.csv gs://{{ var.value.composer_bucket }}/data/world_bank_intl_debt/raw_files/ ;\ngsutil cp gs://pdp-feeds-staging/RelayWorldBank/IDS_CSV/IDSCountry.csv gs://{{ var.value.composer_bucket }}/data/world_bank_intl_debt/raw_files/ ;\ngsutil cp gs://pdp-feeds-staging/RelayWorldBank/IDS_CSV/IDSSeries.csv gs://{{ var.value.composer_bucket }}/data/world_bank_intl_debt/raw_files/ ;\ngsutil cp gs://pdp-feeds-staging/RelayWorldBank/IDS_CSV/IDSSeries-Time.csv gs://{{ var.value.composer_bucket }}/data/world_bank_intl_debt/raw_files/ ;\n",
+        bash_command="gcloud storage cp gs://pdp-feeds-staging/RelayWorldBank/IDS_CSV/IDSCountry-Series.csv gs://{{ var.value.composer_bucket }}/data/world_bank_intl_debt/raw_files/ ;\ngcloud storage cp gs://pdp-feeds-staging/RelayWorldBank/IDS_CSV/IDSCountry.csv gs://{{ var.value.composer_bucket }}/data/world_bank_intl_debt/raw_files/ ;\ngcloud storage cp gs://pdp-feeds-staging/RelayWorldBank/IDS_CSV/IDSSeries.csv gs://{{ var.value.composer_bucket }}/data/world_bank_intl_debt/raw_files/ ;\ngcloud storage cp gs://pdp-feeds-staging/RelayWorldBank/IDS_CSV/IDSSeries-Time.csv gs://{{ var.value.composer_bucket }}/data/world_bank_intl_debt/raw_files/ ;\n",
     )
     create_cluster = kubernetes_engine.GKECreateClusterOperator(
         task_id="create_cluster",
