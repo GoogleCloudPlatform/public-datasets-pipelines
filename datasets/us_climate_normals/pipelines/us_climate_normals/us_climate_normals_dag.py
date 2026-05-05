@@ -36,7 +36,7 @@ with DAG(
     # Task to copy over to pod, the source data and structure from GCS
     download_source_from_gcs = bash.BashOperator(
         task_id="download_source_from_gcs",
-        bash_command="mkdir -p /home/airflow/gcs/data/us_climate_normals/schema ;\nmkdir -p /home/airflow/gcs/data/us_climate_normals ;\ngsutil -m cp -r gs://normals/* gs://{{ var.value.composer_bucket }}/data/us_climate_normals ;\n",
+        bash_command="mkdir -p /home/airflow/gcs/data/us_climate_normals/schema ;\nmkdir -p /home/airflow/gcs/data/us_climate_normals ;\ngcloud storage cp --recursive gs://normals/* gs://{{ var.value.composer_bucket }}/data/us_climate_normals ;\n",
     )
 
     # Run CSV transform within kubernetes pod
