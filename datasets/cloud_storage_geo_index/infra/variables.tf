@@ -20,4 +20,7 @@ variable "bucket_name_prefix" {}
 variable "impersonating_acct" {}
 variable "region" {}
 variable "env" {}
+variable "iam_policies" {
+  default = {}
+}
 
