@@ -14,7 +14,7 @@ google-cloud-automl==2.7.2
 google-cloud-bigtable==1.7.2
 google-cloud-build==3.8.2
 google-cloud-container==2.10.7
-google-cloud-core==2.3.2
+google-cloud-core==2.4.1
 google-cloud-datacatalog==3.8.0
 google-cloud-dataplex==1.0.0
 google-cloud-dataproc==4.0.2
