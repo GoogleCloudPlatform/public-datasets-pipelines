@@ -47,9 +47,9 @@ dag:
       args:
         task_id: "copy_gcs_to_gcs"
         bash_command: |
-          gsutil cp gs://pdp-feeds-staging/RelayWorldBank/Edstats_csv/EdStatsCountry-Series.csv gs://{{ var.value.composer_bucket }}/data/world_bank_intl_education/raw_files/ ;
-          gsutil cp gs://pdp-feeds-staging/RelayWorldBank/Edstats_csv/EdStatsCountry.csv gs://{{ var.value.composer_bucket }}/data/world_bank_intl_education/raw_files/ ;
-          gsutil cp gs://pdp-feeds-staging/RelayWorldBank/Edstats_csv/EdStatsSeries.csv gs://{{ var.value.composer_bucket }}/data/world_bank_intl_education/raw_files/ ;
+          gcloud storage cp gs://pdp-feeds-staging/RelayWorldBank/Edstats_csv/EdStatsCountry-Series.csv gs://{{ var.value.composer_bucket }}/data/world_bank_intl_education/raw_files/ ;
+          gcloud storage cp gs://pdp-feeds-staging/RelayWorldBank/Edstats_csv/EdStatsCountry.csv gs://{{ var.value.composer_bucket }}/data/world_bank_intl_education/raw_files/ ;
+          gcloud storage cp gs://pdp-feeds-staging/RelayWorldBank/Edstats_csv/EdStatsSeries.csv gs://{{ var.value.composer_bucket }}/data/world_bank_intl_education/raw_files/ ;
 
     - operator: "GKECreateClusterOperator"
       args:
