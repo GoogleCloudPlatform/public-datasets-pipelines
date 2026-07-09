@@ -55,7 +55,7 @@ def save_to_new_file(df, file_path):
 def download_file(source_url: str, source_file: pathlib.Path) -> None:
     logging.info(f"Downloading files at {source_url}")
     subprocess.check_call(
-        ["gsutil", "-m", "cp", "-r", f"{source_url}", f"{source_file}"]
+        ["gcloud", "storage", "cp", "--recursive", f"{source_url}", f"{source_file}"]
     )
 
 
