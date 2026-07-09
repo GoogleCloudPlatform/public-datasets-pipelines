@@ -37,7 +37,7 @@ with DAG(
     # Fetch data gcs - 311
     austin_311_source_data_to_gcs = bash.BashOperator(
         task_id="austin_311_source_data_to_gcs",
-        bash_command="curl https://data.austintexas.gov/api/views/xwdj-i9he/rows.csv | gsutil cp - gs://{{ var.value.composer_bucket }}/data/austin/austin_311_service_requests_source.csv\n",
+        bash_command="curl https://data.austintexas.gov/api/views/xwdj-i9he/rows.csv | gcloud storage cp - gs://{{ var.value.composer_bucket }}/data/austin/austin_311_service_requests_source.csv\n",
     )
 
     # Run CSV transform within kubernetes pod
@@ -88,7 +88,7 @@ with DAG(
     # Fetch data gcs - gcs
     austin_bs_trips_source_data_to_gcs = bash.BashOperator(
         task_id="austin_bs_trips_source_data_to_gcs",
-        bash_command="curl https://data.austintexas.gov/api/views/tyfh-5r8s/rows.csv | gsutil cp - gs://{{ var.value.composer_bucket }}/data/austin/austin_bs_trips_source.csv\n",
+        bash_command="curl https://data.austintexas.gov/api/views/tyfh-5r8s/rows.csv | gcloud storage cp - gs://{{ var.value.composer_bucket }}/data/austin/austin_bs_trips_source.csv\n",
     )
 
     # Run CSV transform within kubernetes pod
@@ -137,7 +137,7 @@ with DAG(
     # Fetch data gcs - gcs
     austin_bs_stations_source_data_to_gcs = bash.BashOperator(
         task_id="austin_bs_stations_source_data_to_gcs",
-        bash_command="curl https://data.austintexas.gov/api/views/qd73-bsdg/rows.csv | gsutil cp - gs://{{ var.value.composer_bucket }}/data/austin/austin_bs_stations_source.csv\n",
+        bash_command="curl https://data.austintexas.gov/api/views/qd73-bsdg/rows.csv | gcloud storage cp - gs://{{ var.value.composer_bucket }}/data/austin/austin_bs_stations_source.csv\n",
     )
 
     # Run CSV transform within kubernetes pod
@@ -186,7 +186,7 @@ with DAG(
     # Fetch data gcs - crime
     austin_crime_source_data_to_gcs = bash.BashOperator(
         task_id="austin_crime_source_data_to_gcs",
-        bash_command="gsutil cp gs://pdp-feeds-staging/Austin_Crime/Annual_Crime_2014.csv gs://{{ var.value.composer_bucket }}/data/austin/austin_crime/austin_crime_2014_source.csv ; gsutil cp gs://pdp-feeds-staging/Austin_Crime/Annual_Crime_Dataset_2015.csv gs://{{ var.value.composer_bucket }}/data/austin/austin_crime/austin_crime_2015_source.csv ; gsutil cp gs://pdp-feeds-staging/Austin_Crime/2016_Annual_Crime_Data.csv gs://{{ var.value.composer_bucket }}/data/austin/austin_crime/austin_crime_2016_source.csv ;",
+        bash_command="gcloud storage cp gs://pdp-feeds-staging/Austin_Crime/Annual_Crime_2014.csv gs://{{ var.value.composer_bucket }}/data/austin/austin_crime/austin_crime_2014_source.csv ; gcloud storage cp gs://pdp-feeds-staging/Austin_Crime/Annual_Crime_Dataset_2015.csv gs://{{ var.value.composer_bucket }}/data/austin/austin_crime/austin_crime_2015_source.csv ; gcloud storage cp gs://pdp-feeds-staging/Austin_Crime/2016_Annual_Crime_Data.csv gs://{{ var.value.composer_bucket }}/data/austin/austin_crime/austin_crime_2016_source.csv ;",
     )
 
     # Run CSV transform within kubernetes pod
@@ -283,7 +283,7 @@ with DAG(
     # Fetch data austin waste
     austin_waste_source_data_to_gcs = bash.BashOperator(
         task_id="austin_waste_source_data_to_gcs",
-        bash_command="curl https://data.austintexas.gov/api/views/mbnu-4wq9/rows.csv | gsutil cp - gs://{{ var.value.composer_bucket }}/data/austin/austin_waste/austin_waste_source.csv\n",
+        bash_command="curl https://data.austintexas.gov/api/views/mbnu-4wq9/rows.csv | gcloud storage cp - gs://{{ var.value.composer_bucket }}/data/austin/austin_waste/austin_waste_source.csv\n",
     )
 
     # Run CSV transform within kubernetes pod

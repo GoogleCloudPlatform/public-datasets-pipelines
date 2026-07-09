@@ -37,7 +37,7 @@ with DAG(
     # Copy the source files
     copy_gcs_to_gcs = bash.BashOperator(
         task_id="copy_gcs_to_gcs",
-        bash_command="gsutil cp gs://pdp-feeds-staging/RelayWorldBank/hnp_stats_csv/HNP_StatsCountry-Series.csv gs://{{ var.value.composer_bucket }}/data/world_bank_health_population/raw_files/ ;\ngsutil cp gs://pdp-feeds-staging/RelayWorldBank/hnp_stats_csv/HNP_StatsCountry.csv gs://{{ var.value.composer_bucket }}/data/world_bank_health_population/raw_files/ ;\ngsutil cp gs://pdp-feeds-staging/RelayWorldBank/hnp_stats_csv/HNP_StatsSeries.csv gs://{{ var.value.composer_bucket }}/data/world_bank_health_population/raw_files/ ;\ngsutil cp gs://pdp-feeds-staging/RelayWorldBank/hnp_stats_csv/HNP_StatsSeries-Time.csv gs://{{ var.value.composer_bucket }}/data/world_bank_health_population/raw_files/ ;\n",
+        bash_command="gcloud storage cp gs://pdp-feeds-staging/RelayWorldBank/hnp_stats_csv/HNP_StatsCountry-Series.csv gs://{{ var.value.composer_bucket }}/data/world_bank_health_population/raw_files/ ;\ngcloud storage cp gs://pdp-feeds-staging/RelayWorldBank/hnp_stats_csv/HNP_StatsCountry.csv gs://{{ var.value.composer_bucket }}/data/world_bank_health_population/raw_files/ ;\ngcloud storage cp gs://pdp-feeds-staging/RelayWorldBank/hnp_stats_csv/HNP_StatsSeries.csv gs://{{ var.value.composer_bucket }}/data/world_bank_health_population/raw_files/ ;\ngcloud storage cp gs://pdp-feeds-staging/RelayWorldBank/hnp_stats_csv/HNP_StatsSeries-Time.csv gs://{{ var.value.composer_bucket }}/data/world_bank_health_population/raw_files/ ;\n",
     )
     create_cluster = kubernetes_engine.GKECreateClusterOperator(
         task_id="create_cluster",
