@@ -362,7 +362,7 @@ def replace_unicode(df: pd.DataFrame, col: str, match: str, replace: str) -> Non
     logging.info(
         f"Replacing unicode char in '{col}' replacing '{match}' with '{replace}'."
     )
-    df[col] = df[col].apply(lambda data: data.replace(match, replace))
+    df[col] = df[col].astype(str).str.replace(match, replace, regex=False)
 
 
 def coldata_replace(df: pd.DataFrame, col: str, replace_dict: dict) -> None:
