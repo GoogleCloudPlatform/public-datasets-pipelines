@@ -18,11 +18,13 @@ import logging
 import os
 import pathlib
 import sys
+import time
 import typing
 
 import numpy as np
 import pandas as pd
 import requests
+import urllib3
 from google.api_core.exceptions import NotFound
 from google.cloud import bigquery, storage
 
@@ -102,9 +104,17 @@ def execute_pipeline(
     json_obj_state_code = open("state_codes.json")
     state_code = json.load(json_obj_state_code)
     logging.info("Extracting the data from API and loading into dataframe...")
+    force_pause_batch_size = 100
+    force_pause_wait_time = 3
     if report_level == "national_level":
         df = extract_data_and_convert_to_df_national_level(
-            group_id, year_report, api_naming_convention, source_url, destination_table
+            group_id,
+            year_report,
+            api_naming_convention,
+            source_url,
+            destination_table,
+            force_pause_batch_size,
+            force_pause_wait_time,
         )
     elif report_level == "state_level":
         df = extract_data_and_convert_to_df_state_level(
@@ -114,6 +124,8 @@ def execute_pipeline(
             api_naming_convention,
             source_url,
             destination_table,
+            force_pause_batch_size,
+            force_pause_wait_time,
         )
     save_to_new_file(df, source_file, sep=",")
     process_source_file(
@@ -208,7 +220,7 @@ def process_source_file(
                 input_headers=input_headers,
                 target_file=target_file,
                 chunk_number=chunk_number,
-                data_dtypes=data_dtypes,
+                # data_dtypes=data_dtypes,
                 geography=geography,
                 rename_mappings_list=rename_mappings_list,
                 concat_col_list=concat_col_list,
@@ -238,7 +250,7 @@ def process_dataframe_chunk(
     input_headers: typing.List[str],
     target_file: str,
     chunk_number: int,
-    data_dtypes: dict,
+    # data_dtypes: dict,
     geography: str,
     rename_mappings_list: dict,
     concat_col_list: typing.List[str],
@@ -446,35 +458,51 @@ def extract_data_and_convert_to_df_national_level(
     api_naming_convention: str,
     source_url: str,
     destination_table: str,
+    force_pause_batch_size: int,
+    force_pause_wait_time: int,
 ) -> pd.DataFrame:
     list_temp = []
     flag = 0
+    batch_size = 0
+    urllib3.disable_warnings()
     for key in group_id:
-        logging.info(f"reading data from API for KPI {key}...")
         str1 = source_url.replace("~year_report~", year_report)
         str2 = str1.replace("~group_id~", key[0:-3])
         str3 = str2.replace("~row_position~", key[-3:])
         source_url_new = str3.replace("~api_naming_convention~", api_naming_convention)
+        if (
+            force_pause_wait_time != 0
+            and batch_size > 0
+            and (batch_size % force_pause_batch_size == 0)
+        ):
+            logging.info(
+                f" ... Pausing for batch sleep time {force_pause_wait_time} seconds."
+            )
+            time.sleep(force_pause_wait_time)
+        logging.info(f"Source url : {source_url_new}")
+        batch_size = batch_size + 1
         try:
             r = requests.get(source_url_new, stream=True, verify=False, timeout=200)
             if r.status_code == 200:
-                logging.info("Data source valid for at least one entity")
+                # logging.info("Data source valid for at least one entity")
                 flag = 1
                 text = r.json()
                 frame = load_nested_list_into_df_without_headers(text)
                 frame["KPI_Name"] = key
                 list_temp.append(frame)
-            elif 400 >= r.status_code <= 499:
+            elif 400:
+                pass
+            elif 399 >= r.status_code <= 499:
                 logging.info(r.status_code)
             else:
-                logging.info(f"Source url : {source_url_new}")
-                logging.info(f"status code : {r.status_code}")
+                logging.info(f"Status code : {str(r.status_code)}... pausing")
+                time.sleep(5)
         except OSError as e:
             logging.info(f"error : {e}")
     if flag == 0:
         logging.info(f"Data not available for {destination_table} yet")
         sys.exit(0)
-    logging.info("creating the dataframe...")
+    logging.info("Creating the dataframe...")
     df = pd.concat(list_temp)
     return df
 
@@ -492,9 +520,12 @@ def extract_data_and_convert_to_df_state_level(
     api_naming_convention: str,
     source_url: str,
     destination_table: str,
+    force_pause_batch_size: int,
+    force_pause_wait_time: int,
 ) -> pd.DataFrame:
     list_temp = []
     flag = 0
+    batch_size = 0
     for key in group_id:
         for sc in state_code:
             logging.info(f"reading data from API for KPI {key}...")
@@ -504,10 +535,21 @@ def extract_data_and_convert_to_df_state_level(
             str3 = str2.replace("~row_position~", key[-3:])
             str4 = str3.replace("~api_naming_convention~", api_naming_convention)
             source_url_new = str4.replace("~state_code~", sc)
+            if (
+                force_pause_wait_time != 0
+                and batch_size > 0
+                and (batch_size % force_pause_batch_size == 0)
+            ):
+                logging.info(
+                    f" ... Pausing for batch sleep time {force_pause_wait_time} seconds."
+                )
+                time.sleep(force_pause_wait_time)
+            logging.info(f"Source url : {source_url_new}")
+            batch_size = batch_size + 1
             try:
                 r = requests.get(source_url_new, stream=True, verify=False, timeout=200)
                 if r.status_code == 200:
-                    logging.info("Data source valid for at least one entity")
+                    # logging.info("Data source valid for at least one entity")
                     flag = 1
                     text = r.json()
                     frame = load_nested_list_into_df_without_headers(text)
