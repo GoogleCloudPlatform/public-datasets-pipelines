@@ -68,7 +68,7 @@ def download_file(
 ) -> None:
     for url, file in zip(source_urls, source_files):
         logging.info(f"Downloading file from {url} ...")
-        subprocess.check_call(["gsutil", "cp", f"{url}", f"{file}"])
+        subprocess.check_call(["gcloud", "storage", "cp", f"{url}", f"{file}"])
 
 
 def load_helper_dataframe(source_file: str) -> pd.DataFrame:
