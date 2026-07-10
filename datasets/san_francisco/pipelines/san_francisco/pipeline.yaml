@@ -30,14 +30,31 @@ dag:
     catchup: False
     default_view: graph
   tasks:
-    - operator: "KubernetesPodOperator"
+    - operator: "GKECreateClusterOperator"
+      args:
+        task_id: "create_cluster"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        body:
+          name: pdp-san-francisco
+          initial_node_count: 2
+          network: "{{ var.value.vpc_network }}"
+          node_config:
+            machine_type: e2-standard-16
+            oauth_scopes:
+              - https://www.googleapis.com/auth/devstorage.read_write
+              - https://www.googleapis.com/auth/cloud-platform
+
+    - operator: "GKEStartPodOperator"
       description: "Run New York 311 Service Requests Pipeline"
       args:
         task_id: "sf_311_service_requests"
         name: "sf_311_service_requests"
         startup_timeout_seconds: 600
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: pdp-san-francisco
         image_pull_policy: "Always"
         image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -148,17 +165,22 @@ dag:
                 "longitude",
                 "police_district"
             ]
-        resources:
-          limit_memory: "8G"
-          limit_cpu: "3"
-          request_ephemeral_storage: "10G"
-    - operator: "KubernetesPodOperator"
+        container_resources:
+          memory:
+            request: "16Gi"
+          cpu:
+            request: "1"
+          ephemeral-storage:
+            request: "10Gi"
+    - operator: "GKEStartPodOperator"
       description: "Run San Francisco Municipal Calendar Pipeline"
       args:
         task_id: "sf_calendar"
         name: "calendar"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: pdp-san-francisco
         image_pull_policy: "Always"
         image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -215,17 +237,22 @@ dag:
                 "date": "exceptions",
                 "exception_type_str": "exception_type"
             }
-        resources:
-          limit_memory: "8G"
-          limit_cpu: "3"
-          request_ephemeral_storage: "10G"
-    - operator: "KubernetesPodOperator"
+        container_resources:
+          memory:
+            request: "16Gi"
+          cpu:
+            request: "1"
+          ephemeral-storage:
+            request: "10Gi"
+    - operator: "GKEStartPodOperator"
       description: "Run San Francisco Municipal Routes Pipeline"
       args:
         task_id: "sf_muni_routes"
         name: "muni_routes"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: pdp-san-francisco
         image_pull_policy: "Always"
         image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -251,17 +278,22 @@ dag:
               "route_long_name",
               "route_type"
             ]
-        resources:
-          limit_memory: "8G"
-          limit_cpu: "3"
-          request_ephemeral_storage: "10G"
-    - operator: "KubernetesPodOperator"
+        container_resources:
+          memory:
+            request: "16Gi"
+          cpu:
+            request: "1"
+          ephemeral-storage:
+            request: "10Gi"
+    - operator: "GKEStartPodOperator"
       description: "Run San Francisco Municipal Shapes Pipeline"
       args:
         task_id: "sf_muni_shapes"
         name: "muni_shapes"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: pdp-san-francisco
         image_pull_policy: "Always"
         image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -296,17 +328,22 @@ dag:
               "shape_point_geom",
               "shape_distance_traveled"
             ]
-        resources:
-          limit_memory: "8G"
-          limit_cpu: "3"
-          request_ephemeral_storage: "10G"
-    - operator: "KubernetesPodOperator"
+        container_resources:
+          memory:
+            request: "16Gi"
+          cpu:
+            request: "1"
+          ephemeral-storage:
+            request: "10Gi"
+    - operator: "GKEStartPodOperator"
       description: "Run San Francisco Municipal Stops Pipeline"
       args:
         task_id: "sf_muni_stops"
         name: "muni_stops"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: pdp-san-francisco
         image_pull_policy: "Always"
         image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -333,17 +370,22 @@ dag:
               "stop_lon",
               "stop_geom"
             ]
-        resources:
-          limit_memory: "8G"
-          limit_cpu: "3"
-          request_ephemeral_storage: "10G"
-    - operator: "KubernetesPodOperator"
+        container_resources:
+          memory:
+            request: "16Gi"
+          cpu:
+            request: "1"
+          ephemeral-storage:
+            request: "10Gi"
+    - operator: "GKEStartPodOperator"
       description: "Run San Francisco Municipal Stop Times Pipeline"
       args:
         task_id: "sf_muni_stop_times"
         name: "muni_stop_times"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: pdp-san-francisco
         image_pull_policy: "Always"
         image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -423,17 +465,22 @@ dag:
               "dropoff_type",
               "exact_timepoint"
             ]
-        resources:
-          limit_memory: "8G"
-          limit_cpu: "3"
-          request_ephemeral_storage: "10G"
-    - operator: "KubernetesPodOperator"
+        container_resources:
+          memory:
+            request: "16Gi"
+          cpu:
+            request: "1"
+          ephemeral-storage:
+            request: "10Gi"
+    - operator: "GKEStartPodOperator"
       description: "Run San Francisco Municipal Fares Pipeline"
       args:
         task_id: "sf_muni_fares"
         name: "muni_fares"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: pdp-san-francisco
         image_pull_policy: "Always"
         image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -476,17 +523,22 @@ dag:
               "transfers_permitted",
               "transfer_duration"
             ]
-        resources:
-          limit_memory: "8G"
-          limit_cpu: "3"
-          request_ephemeral_storage: "10G"
-    - operator: "KubernetesPodOperator"
+        container_resources:
+          memory:
+            request: "16Gi"
+          cpu:
+            request: "1"
+          ephemeral-storage:
+            request: "10Gi"
+    - operator: "GKEStartPodOperator"
       description: "Run San Francisco Municipal Trips Pipeline"
       args:
         task_id: "sf_muni_trips"
         name: "muni_trips"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: pdp-san-francisco
         image_pull_policy: "Always"
         image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -530,17 +582,22 @@ dag:
               "shape_id",
               "trip_shape"
             ]
-        resources:
-          limit_memory: "8G"
-          limit_cpu: "3"
-          request_ephemeral_storage: "10G"
-    - operator: "KubernetesPodOperator"
+        container_resources:
+          memory:
+            request: "16Gi"
+          cpu:
+            request: "1"
+          ephemeral-storage:
+            request: "10Gi"
+    - operator: "GKEStartPodOperator"
       description: "Run San Francisco Police Department Incidents Pipeline"
       args:
         task_id: "sfpd_incidents"
         name: "sfpd_incidents"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: pdp-san-francisco
         image_pull_policy: "Always"
         image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -599,17 +656,22 @@ dag:
               "pdid",
               "timestamp"
             ]
-        resources:
-          limit_memory: "8G"
-          limit_cpu: "3"
-          request_ephemeral_storage: "10G"
-    - operator: "KubernetesPodOperator"
+        container_resources:
+          memory:
+            request: "16Gi"
+          cpu:
+            request: "1"
+          ephemeral-storage:
+            request: "10Gi"
+    - operator: "GKEStartPodOperator"
       description: "Run San Francisco Bikeshare Stations Pipeline"
       args:
         task_id: "sf_bikeshare_stations"
         name: "bikeshare_stations"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: pdp-san-francisco
         image_pull_policy: "Always"
         image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -684,17 +746,22 @@ dag:
               "has_kiosk",
               "station_geom"
             ]
-        resources:
-          limit_memory: "8G"
-          limit_cpu: "3"
-          request_ephemeral_storage: "10G"
-    - operator: "KubernetesPodOperator"
+        container_resources:
+          memory:
+            request: "16Gi"
+          cpu:
+            request: "1"
+          ephemeral-storage:
+            request: "10Gi"
+    - operator: "GKEStartPodOperator"
       description: "Run San Francisco Bikeshare Status Pipeline"
       args:
         task_id: "sf_bikeshare_status"
         name: "bikeshare_status"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: pdp-san-francisco
         image_pull_policy: "Always"
         image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -749,17 +816,22 @@ dag:
               "num_ebikes_available",
               "eightd_has_available_keys"
             ]
-        resources:
-          limit_memory: "8G"
-          limit_cpu: "3"
-          request_ephemeral_storage: "10G"
-    - operator: "KubernetesPodOperator"
+        container_resources:
+          memory:
+            request: "16Gi"
+          cpu:
+            request: "1"
+          ephemeral-storage:
+            request: "10Gi"
+    - operator: "GKEStartPodOperator"
       description: "Run San Francisco Bikeshare Trips Pipeline"
       args:
         task_id: "sf_bikeshare_trips"
         name: "sf_bikeshare_trips"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: pdp-san-francisco
         image_pull_policy: "Always"
         image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -939,17 +1011,22 @@ dag:
               "start_station_geom",
               "end_station_geom"
             ]
-        resources:
-          limit_memory: "8G"
-          limit_cpu: "3"
-          request_ephemeral_storage: "10G"
-    - operator: "KubernetesPodOperator"
+        container_resources:
+          memory:
+            request: "16Gi"
+          cpu:
+            request: "1"
+          ephemeral-storage:
+            request: "10Gi"
+    - operator: "GKEStartPodOperator"
       description: "Run San Francisco Film Locations Pipeline"
       args:
         task_id: "sf_film_locations"
         name: "sf_film_locations"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: pdp-san-francisco
         image_pull_policy: "Always"
         image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -1005,17 +1082,22 @@ dag:
               "actor_2",
               "actor_3"
             ]
-        resources:
-          limit_memory: "8G"
-          limit_cpu: "3"
-          request_ephemeral_storage: "10G"
-    - operator: "KubernetesPodOperator"
+        container_resources:
+          memory:
+            request: "16Gi"
+          cpu:
+            request: "1"
+          ephemeral-storage:
+            request: "10Gi"
+    - operator: "GKEStartPodOperator"
       description: "Run San Francisco Fire Department Service Calls Pipeline"
       args:
         task_id: "sffd_service_calls"
         name: "sffd_service_calls"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: pdp-san-francisco
         image_pull_policy: "Always"
         image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -1195,17 +1277,22 @@ dag:
               "neighborhood_name",
               "location_geom"
             ]
-        resources:
-          limit_memory: "8G"
-          limit_cpu: "3"
-          request_ephemeral_storage: "10G"
-    - operator: "KubernetesPodOperator"
+        container_resources:
+          memory:
+            request: "16Gi"
+          cpu:
+            request: "1"
+          ephemeral-storage:
+            request: "10Gi"
+    - operator: "GKEStartPodOperator"
       description: "Run San Francisco Street Trees Pipeline"
       args:
         task_id: "sf_street_trees"
         name: "sf_street_trees"
-        namespace: "composer"
-        service_account_name: "datasets"
+        namespace: "default"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        cluster_name: pdp-san-francisco
         image_pull_policy: "Always"
         image: "{{ var.json.san_francisco.container_registry.run_csv_transform_kub }}"
         env_vars:
@@ -1314,10 +1401,20 @@ dag:
               "longitude",
               "location"
             ]
-        resources:
-          limit_memory: "8G"
-          limit_cpu: "3"
-          request_ephemeral_storage: "10G"
+        container_resources:
+          memory:
+            request: "16Gi"
+          cpu:
+            request: "1"
+          ephemeral-storage:
+            request: "10Gi"
+
+    - operator: "GKEDeleteClusterOperator"
+      args:
+        task_id: "delete_cluster"
+        project_id: "{{ var.value.gcp_project }}"
+        location: "us-central1-c"
+        name: pdp-san-francisco
 
   graph_paths:
-    - "[ sf_bikeshare_stations, sf_bikeshare_status, sf_film_locations, sf_street_trees ] >> sf_bikeshare_trips >> [ sf_calendar, sf_muni_routes, sf_muni_shapes, sf_muni_stops, sf_muni_stop_times, sf_muni_fares, sf_muni_trips ] >> sffd_service_calls >> sfpd_incidents >> sf_311_service_requests"
+    - "create_cluster >> [ sf_bikeshare_stations, sf_bikeshare_status, sf_film_locations, sf_street_trees ] >> sf_bikeshare_trips >> [ sf_calendar, sf_muni_routes, sf_muni_shapes, sf_muni_stops, sf_muni_stop_times, sf_muni_fares, sf_muni_trips ] >> sffd_service_calls >> sfpd_incidents >> sf_311_service_requests >> delete_cluster"
