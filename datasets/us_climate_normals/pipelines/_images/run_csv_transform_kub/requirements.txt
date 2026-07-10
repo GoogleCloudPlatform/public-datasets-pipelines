@@ -8,7 +8,7 @@ google-auth==2.9.1
 google-auth-httplib2==0.1.0
 google-auth-oauthlib==0.4.6
 google-cloud-aiplatform==1.13.1
-google-cloud-appengine-logging==1.1.1
+google-cloud-appengine-logging==1.4.5
 google-cloud-audit-log==0.2.3
 google-cloud-automl==2.7.2
 google-cloud-bigtable==1.7.2
