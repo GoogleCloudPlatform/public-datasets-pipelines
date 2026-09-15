@@ -7,7 +7,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: 0.15.1
+          terraform_version: 1.16.2
       - name: Terraform fmt
         run: terraform fmt -check -recursive
         continue-on-error: true
