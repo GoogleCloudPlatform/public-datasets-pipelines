@@ -67,7 +67,7 @@ dag:
           SOURCE_URL: "https://download.cms.gov/nppes/NPPES_Data_Dissemination_MM_YYYY.zip"
           SOURCE_FILE: "files/data.csv"
           TARGET_FILE: "files/data_output.csv"
-          SOURCE_NPI_DATA_FILE_REGEXP: "npidata_pfile_[0-9]+-[0-9]+.csv"
+          SOURCE_NPI_DATA_FILE_REGEXP: "npidata_pfile_[0-9]+-[0-9]+[.]csv"
           TARGET_GCS_BUCKET: "{{ var.value.composer_bucket }}"
           TARGET_GCS_PATH: "data/nppes/npi_data_output.csv"
           PROJECT_ID: "{{ var.value.gcp_project }}"

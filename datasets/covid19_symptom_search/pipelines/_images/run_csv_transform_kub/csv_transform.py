@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import pathlib
+import re
 import shutil
 import subprocess
 import typing
@@ -11,6 +12,9 @@ from zipfile import ZipFile
 
 from google.api_core.exceptions import NotFound
 from google.cloud import bigquery, storage
+
+# Zip member names must never be trusted or passed through a shell.
+SAFE_FILENAME_REGEXP = re.compile(r"^[A-Za-z0-9_.-]+$")
 
 
 def main(
@@ -86,8 +90,7 @@ def compress_source_files(
             destination_folder=download_path,
             filename_override=os.path.basename(staged_file),
         )
-        cmd = f"sed -i '1d' {staged_file}"
-        subprocess.check_call(cmd, shell=True)
+        subprocess.check_call(["sed", "-i", "1d", staged_file])
         append_datafile_to_zipfile(
             zipfile_archive_name=archive_name, append_data_file=staged_file
         )
@@ -111,9 +114,11 @@ def generate_load_batch_data_file(
         listOfFileNames = src_zip.namelist()
         lastFileName = str("".join(sorted(listOfFileNames)[-1:])).strip()
         for fileName in sorted(listOfFileNames):
+            if not SAFE_FILENAME_REGEXP.fullmatch(fileName):
+                raise ValueError(f"Unsafe zip member name: {fileName!r}")
             unzip_fileName = f"{unzip_path}/{fileName}"
-            cmd = f"unzip -p {input_zip} {fileName} > {unzip_fileName}"
-            subprocess.run(cmd, shell=True)
+            with src_zip.open(fileName) as src, open(unzip_fileName, "wb") as dst:
+                shutil.copyfileobj(src, dst)
             batch_file = f"{unzip_path}/data_batch_{str(batch_number).zfill(15)}.csv"
             number_lines_batch_file = count_lines_file(batch_file)
             number_lines_data_file = count_lines_file(unzip_fileName)
@@ -151,9 +156,12 @@ def generate_load_batch_data_file(
 
 
 def count_lines_file(input_file: str) -> int:
-    cmd = f"wc -l {input_file}"
     returnval = (
-        str(subprocess.run(cmd, shell=True, capture_output=True, text=True).stdout)
+        str(
+            subprocess.run(
+                ["wc", "-l", input_file], capture_output=True, text=True
+            ).stdout
+        )
         .split("\n")[0]
         .split(" ")[0]
     )  # .strip()
@@ -166,8 +174,8 @@ def count_lines_file(input_file: str) -> int:
 def append_file_to_batchfile(
     batch_file: str, file_to_append: str, remove_file: bool = True
 ) -> None:
-    cmd = f"cat {file_to_append} >> {batch_file}"
-    subprocess.run(cmd, shell=True)
+    with open(file_to_append, "rb") as src, open(batch_file, "ab") as dst:
+        shutil.copyfileobj(src, dst)
     number_lines_batch_file = count_lines_file(batch_file)
     number_lines_data_file = count_lines_file(file_to_append)
     logging.info(
