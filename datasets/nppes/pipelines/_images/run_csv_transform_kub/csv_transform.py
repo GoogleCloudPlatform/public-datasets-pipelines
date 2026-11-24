@@ -19,6 +19,7 @@ import logging
 import os
 import pathlib
 import re
+import shlex
 import subprocess
 import typing
 from zipfile import ZipFile
@@ -28,6 +29,16 @@ import requests
 from dateutil.relativedelta import relativedelta
 from google.api_core.exceptions import NotFound
 from google.cloud import bigquery, storage
+
+# Zip member names come from an external source and must never be trusted.
+SAFE_FILENAME_REGEXP = re.compile(r"^[A-Za-z0-9_.-]+$")
+
+
+def is_safe_member_name(file_name: str, source_regexp: str) -> bool:
+    return bool(
+        SAFE_FILENAME_REGEXP.fullmatch(file_name)
+        and re.fullmatch(source_regexp, file_name)
+    )
 
 
 def main(
@@ -60,8 +71,10 @@ def main(
         with ZipFile(src_zip_file, "r") as src_zip:
             listOfFileNames = src_zip.namelist()
             for fileName in listOfFileNames:
-                if re.match(rf"{source_npi_data_file_regexp}", fileName):
+                if is_safe_member_name(fileName, source_npi_data_file_regexp):
                     source_file_list += [fileName]
+                elif re.match(rf"{source_npi_data_file_regexp}", fileName):
+                    logging.warning(f"Skipping unsafe zip member name: {fileName!r}")
         logging.info(source_file_list)
         for fileName in source_file_list:
             process_source_file(
@@ -103,8 +116,33 @@ def process_source_file(
 ) -> None:
     logging.info(f"Found data file {fileName}, extracting and splitting ...")
     zip_path = os.path.dirname(input_zip)
-    cmd = f"unzip -p {input_zip} {fileName} | tail -n +2 | split -l {str(chunk_size)} --additional-suffix '.csv' -d --filter='gzip -v9 > {zip_path}/$FILE.gz'"
-    subprocess.run(cmd, shell=True)
+    if not SAFE_FILENAME_REGEXP.fullmatch(fileName):
+        raise ValueError(f"Unsafe zip member name: {fileName!r}")
+    # Build the pipeline from argv lists so no externally supplied value is
+    # ever interpreted by a shell.
+    unzip_proc = subprocess.Popen(
+        ["unzip", "-p", input_zip, fileName], stdout=subprocess.PIPE
+    )
+    tail_proc = subprocess.Popen(
+        ["tail", "-n", "+2"], stdin=unzip_proc.stdout, stdout=subprocess.PIPE
+    )
+    unzip_proc.stdout.close()
+    subprocess.run(
+        [
+            "split",
+            "-l",
+            str(chunk_size),
+            "--additional-suffix",
+            ".csv",
+            "-d",
+            f"--filter=gzip -v9 > {shlex.quote(zip_path)}/$FILE.gz",
+        ],
+        stdin=tail_proc.stdout,
+        check=True,
+    )
+    tail_proc.stdout.close()
+    tail_proc.wait()
+    unzip_proc.wait()
     logging.info("Copying zip files to GCS bucket ...")
     for zip_file in sorted(pathlib.Path(zip_path).glob("x*.csv.gz")):
         gcs_zip_file_path = (
@@ -152,8 +190,7 @@ def transform_data(
     logging.info("Transforms ...")
     logging.info(" ... Transform -> Adding header")
     csv_header = ",".join(str(itm) for itm in csv_headers)
-    cmd = f"sed -i '1s/^/{csv_header}\\n/' {fileName}"
-    subprocess.run(cmd, shell=True)
+    subprocess.run(["sed", "-i", f"1s/^/{csv_header}\\n/", fileName], check=True)
     logging.info(" ... Transform -> Resolving date format")
     df = pd.read_csv(fileName, sep=",", dtype=data_dtypes)
     logging.info("Transforming int columns")
